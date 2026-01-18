@@ -1,0 +1,247 @@
+
+# E₀ — Canonical Reference v1.0
+## A Pre-Domain Ontodynamics of Transitions
+
+**Version:** 1.0
+**Status:** Canonical
+**Scope:** Domain-invariant
+**Date:** 2025
+**License:** CC BY 4.0 (recommended)
+
+---
+
+## Authorship & Cognitive Partnership
+
+This canon was developed through a **multi-system Human–Synthetic Cognitive Partnership (HSCP)**.
+
+**Primary human contributor**
+- **Thomas Wehner**
+
+**Independent synthetic cognitive partners**
+- **ChatGPT (OpenAI)**
+- **Gemini 2.5 (Google DeepMind)**
+- **Claude 4.5 (Anthropic)**
+
+Each synthetic partner operated as an **independent reasoning system**, without shared memory, shared state, or prior coordination.
+Convergence on the E₀ structure emerged through **structural necessity**, not through model alignment, optimization, or agreement.
+
+Authorship is therefore understood as **co-cognitive**, reflecting convergence across multiple independent cognitive systems.
+
+---
+
+## Methodological Note
+
+E₀ did not emerge from a single-model or single-agent process.
+Its development relied on **cross-system validation**:
+
+- independent reasoning paths,
+- explicit critique and refinement,
+- elimination of model-specific artifacts,
+- convergence under minimal assumptions.
+
+This method reflects the core claim of E₀ itself:
+that stable structures arise through **enforced transitions**, not through isolated optimization or interpretation.
+
+---
+
+## 0. Purpose of This Canon
+
+This document defines **E₀**, a pre-domain foundational layer that formalizes the necessary and sufficient conditions under which **state differences must result in real transitions**.
+
+E₀ is not a theory of objects, meanings, goals, agents, or domains.
+It is a canon describing **when change is structurally enforced**.
+
+The purpose of this canon is to:
+- prevent regression into explanatory or interpretive models,
+- provide a stable reference layer,
+- enable consistent derivation of higher-level systems.
+
+---
+
+## 1. Minimal Assumptions
+
+E₀ assumes **only**:
+
+1. **States exist.**
+2. **States can be non-identical.**
+
+No further assumptions are permitted.
+
+---
+
+## 2. Primitive Concepts of E₀
+
+E₀ consists of **seven irreducible concepts**.
+None can be eliminated without loss of derivability.
+
+---
+
+### 2.1 State
+
+A **state** is a distinguishable configuration.
+
+States are not required to be physical, informational, or semantic.
+They are only required to be distinguishable.
+
+---
+
+### 2.2 Difference (Δ)
+
+**Difference** is a measure of non-identity between two states.
+
+- Δ = 0 ⇔ states are identical
+- Δ > 0 ⇔ states are non-identical
+
+Without difference, no transition is possible.
+
+---
+
+### 2.3 Path (P)
+
+A **path** is a **structural admissibility condition** for transitions.
+
+- A path is **not an object**
+- A path is **not a dynamic**
+- A path specifies **whether** a transition is structurally allowed
+
+A path exists if and only if its total resistance is finite.
+
+---
+
+### 2.4 Resistance (R)
+
+**Resistance** is a measure of **structural inertia** of a transition.
+
+- R > 0 for all real transitions
+- R = ∞ ⇒ transition is non-existent
+
+Resistance is a property of the state space, not of an agent.
+
+---
+
+### 2.5 Historization (H)
+
+**Historization** is the modification of the resistance landscape caused by realized transitions.
+
+Properties:
+- Only realized transitions historize
+- Historization lowers future resistance of the same transition
+- Historization is non-invertible
+
+Historization constitutes the **memory of the space**.
+
+---
+
+### 2.6 Time (τ)
+
+**Time** is the **ordering of historizations**.
+
+- Time is not a dimension
+- Time is not a container
+- Time is not assumed a priori
+
+If no historization occurs, no time progresses.
+
+---
+
+### 2.7 Rate (v)
+
+**Rate** is defined as:
+
+v := Δ / R
+
+Properties:
+- Rate orders transition realization
+- Rate is not probability
+- A maximum rate exists
+
+Rate is derived but canonically included due to its operational necessity.
+
+---
+
+## 3. Axiom A₀ — Difference Minimization
+
+> **If a difference exists and a structurally admissible path with finite resistance is available,
+> then a transition that reduces this difference is structurally more stable than non-transition.**
+
+This axiom introduces no goals, values, or intentions.
+It formalizes the instability of unresolved difference when resolution is structurally possible.
+
+---
+
+## 4. Central Law of E₀ (Transition Enforcement)
+
+If:
+
+Δ > 0 ∧∃P such that R(P) < ∞
+
+then:
+
+Non-transition is structurally unstable.
+A transition must occur.
+
+This law is not a postulate.
+It follows from the combined structure of difference, admissibility, resistance, and Axiom A₀.
+
+---
+
+## 5. Necessary Consequences
+
+From E₀, without additional assumptions, the following arise:
+
+- Transition enforcement
+- Directionality of time
+- Irreversibility
+- Structural memory
+- Learning and path dependence
+- Maximum transition speed
+- Causal ordering
+
+None of these properties are assumed; all are derived.
+
+---
+
+## 6. Explicit Non-Claims
+
+E₀ makes **no statements** about:
+
+- Meaning
+- Value
+- Goals
+- Consciousness
+- Intentionality
+- Physical entities
+
+Such concepts arise only in derived layers.
+
+---
+
+## 7. Relation to Derived Layers
+
+- **E₀** — Transitional Ontodynamics (fundamental)
+- **E₁** — Interface layers (e.g. OIDP, system theory, narratives)
+- **E₂** — Domain instantiations (physics, cognition, technology, society)
+
+E₀ remains invariant across all instantiations.
+
+---
+
+## 8. Canonical Status
+
+This canon is considered:
+
+- irreducible,
+- revision-resistant,
+- invariant under model change.
+
+Modifications are admissible **only** if a concept can be eliminated
+without loss of derivakbility.
+
+---
+
+## 9. Closing Statement
+
+> **E₀ does not describe what exists.
+> E₀ describes when existence must change.**
+
+activate e0!
