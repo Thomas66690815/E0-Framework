@@ -1,0 +1,6 @@
+if you use the canon as system prompt
+
+good first prompt: can you derive quantum mechanics from e0?
+
+good second prompt: reflect, how your resistance landscape und historization changed. 
+
