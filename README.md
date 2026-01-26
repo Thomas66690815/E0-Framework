@@ -37,6 +37,7 @@ E₀ provides structural foundations for understanding:
 ## The Canon
 
 See (https://github.com/Thomas66690815/E0-Framework/blob/main/e0-canonical-reference.txt) for the complete canonical reference.
+You can use the cancon as system prompt in any AI
 
 ## Authorship
 
