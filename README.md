@@ -53,5 +53,7 @@ The framework emerged as a structural necessity across these independent reasoni
 ## 📄 License & Philosophy
 This framework is released as a **commons for humanity**. It is free, open-source, and designed for local, autonomous use. We believe tools for understanding fundamental change should belong to everyone.
 
+## Applications
+**AI System Architecture:** See our in-depth case study on transforming [Microsoft's Azure "Golden Path" for AI Agents](./applications/azure-golden-path-e0-analysis.md) with E₀ principles.
 ---
 **Your Next Step:** Clone the repo, prime an AI, and start a conversation. Where does E₀ take your thinking?
