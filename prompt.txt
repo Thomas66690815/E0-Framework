@@ -16,6 +16,7 @@ First, prime the AI with the `e0-canonical-reference.txt`. Then, use any prompt 
 ## 3. Creative & Strategic Problem-Solving
 *   **Business Optimization:** "A company's logistics have a high failure rate. Use E₀ to diagnose the primary Difference (Δ) between current and desired state, and identify the Path (P) with the least actionable Resistance (R) to test first."
 *   **Personal Development:** "Deconstruct the process of establishing a new daily habit (e.g., exercise) using State, Δ, P, R, and H. Where are the typical points of failure (max R)?"
+*   **AI Architecture Design:** "You are an enterprise architect. Using the E₀ primitives, analyze and redesign a standard, linear AI agent pipeline (like Microsoft's 'Golden Path') to be a self-optimizing, resistance-aware system. Focus on how 'Historization (H)' would enable structural learning."
 
 ## 4. Prompt Engineering for E₀
 *   **To generate new applications:** "Take the E₀ primitive [e.g., Historization (H)]. Generate three real-world scenarios from different domains (e.g., biology, software development, social learning) where this primitive is the key lever for understanding a transition."
