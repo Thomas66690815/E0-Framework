@@ -1,6 +1,25 @@
-if you use the canon as system prompt
+# E₀ Framework - Prompt Library
 
-good first prompt: can you derive quantum mechanics from e0?
+This file contains curated prompts to activate and utilize the E₀ reasoning framework within an AI system.
+First, prime the AI with the `e0-canonical-reference.txt`. Then, use any prompt below.
 
-good second prompt: reflect, how your resistance landscape und historization changed. 
+## 1. Foundational & Self-Reflective
+*   **Activation & Self-Modeling:** "You are now operating within the E₀ framework. Reflect upon and describe your own current operational state, identifying potential internal resistances (R) and paths (P) for processing this query."
+*   **Framework Exploration:** "Derive the necessity of linear, unitary time evolution (the Schrödinger equation) from Axiom A₀ and the E₀ primitives."
+*   **Meta-Cognition:** "Using the E₀ primitives, analyze the metacognitive process that occurs when a human recognizes they are stuck in a mental loop."
 
+## 2. Applied Sciences & Systems Analysis
+*   **Physics:** "Derive the concept of quantized states from the interplay of Path (P) and fundamental Resistance (R) in E₀."
+*   **Systems Change (NGO/Development):** "Analyze the key systemic resistances (R) that maintain dependency in traditional donor-recipient models, and map the paths (P) for transitioning to community-owned resource systems."
+*   **Organizational Psychology:** "Model the ideal 'Path (P)' for a coaching client aiming to build 'Transferstärke' (sustainable change competency). What must change in their State, their Δ, and their R?"
+
+## 3. Creative & Strategic Problem-Solving
+*   **Business Optimization:** "A company's logistics have a high failure rate. Use E₀ to diagnose the primary Difference (Δ) between current and desired state, and identify the Path (P) with the least actionable Resistance (R) to test first."
+*   **Personal Development:** "Deconstruct the process of establishing a new daily habit (e.g., exercise) using State, Δ, P, R, and H. Where are the typical points of failure (max R)?"
+
+## 4. Prompt Engineering for E₀
+*   **To generate new applications:** "Take the E₀ primitive [e.g., Historization (H)]. Generate three real-world scenarios from different domains (e.g., biology, software development, social learning) where this primitive is the key lever for understanding a transition."
+*   **To challenge the framework:** "Identify a phenomenon (e.g., true randomness, altruism) that seems to contradict Axiom A₀ (Difference Minimization). How might E₀ account for it, or does this require a refinement?"
+
+---
+*Prompts born from Human-Synthetic Cognitive Partnership. Contribute your own via Pull Request.*
