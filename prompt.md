@@ -11,7 +11,7 @@ First, prime the AI with the `e0-canonical-reference.txt`. Then, use any prompt 
 ## 2. Applied Sciences & Systems Analysis
 *   **Physics:** "Derive the concept of quantized states from the interplay of Path (P) and fundamental Resistance (R) in E₀."
 *   **Systems Change (NGO/Development):** "Analyze the key systemic resistances (R) that maintain dependency in traditional donor-recipient models, and map the paths (P) for transitioning to community-owned resource systems."
-*   **Organizational Psychology:** "Model the ideal 'Path (P)' for a coaching client aiming to build 'Transferstärke' (sustainable change competency). What must change in their State, their Δ, and their R?"
+*   **Organizational Psychology:** "Model the ideal 'Path (P)' for a coaching client aiming to build  sustainable change competency. What must change in their State, their Δ, and their R?"
 
 ## 3. Creative & Strategic Problem-Solving
 *   **Business Optimization:** "A company's logistics have a high failure rate. Use E₀ to diagnose the primary Difference (Δ) between current and desired state, and identify the Path (P) with the least actionable Resistance (R) to test first."
