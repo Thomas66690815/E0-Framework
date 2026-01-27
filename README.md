@@ -41,7 +41,7 @@ E₀ provides structural foundations for understanding:
 
 ## 📖 The Canon & Its Origin
 *   **The Formal Core:** The complete, concise specification is in the [`e0-canonical-reference.txt`](./e0-canonical-reference.txt).
-*   **The Human Story:** Read how E₀ emerged from a convergent partnership between human intuition and independent AI reasoning in our origin story: [`HISTORY.md`](./HISTORY.md).
+*   **The Human Story:** Read how E₀ emerged from a convergent partnership between human intuition and independent AI reasoning in our origin story: [`HISTORY.md`](./ORIGIN.md).
 
 ## ✍️ Authorship: A Convergent Discovery
 E₀ was not invented in isolation. It was **discovered through convergence** in a Human–Synthetic Cognitive Partnership (HSCP):
