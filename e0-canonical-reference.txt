@@ -235,7 +235,7 @@ This canon is considered:
 - invariant under model change.
 
 Modifications are admissible **only** if a concept can be eliminated
-without loss of derivakbility.
+without loss of derivability.
 
 ---
 
