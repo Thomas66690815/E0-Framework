@@ -202,6 +202,28 @@ python -m e0_middleware.local_model  # Real GPT-2 with E₀ measurements (requir
 To use with a real API model, set `OPENAI_API_KEY` as an environment variable.
 To run local models: `pip install -r requirements.txt`
 
+**`e0_start.py`** — Practical initialization for humans
+
+The lowest-resistance entry point. Run it, and it works:
+
+```
+python e0_start.py                    GPT-2 on CPU (always works)
+python e0_start.py --model X          Any HuggingFace model
+python e0_start.py --detail           Show token-level measurements
+python e0_start.py --lang de          German guidance
+```
+
+The script:
+1. Loads a local model
+2. Feeds the reduced E0 canon automatically
+3. Measures the response
+4. **Explains what the measurements mean** in plain language
+5. Enters an interactive session with contextual guidance
+
+After each exchange, it tells you whether R is dropping (structure absorbed), rising (try simpler), or stable. Commands: `/help` (explains all numbers), `/report` (session trajectory), `/again` (re-initialize), `/detail` (token trace), `/quit`.
+
+No prior knowledge of E0 required.
+
 **`e0_chat.py`** — Terminal chat interface
 
 Interactive REPL where every exchange carries its E₀ structural signature. Human writes, system responds, both sides see the same structural measurements.
@@ -282,6 +304,8 @@ Iterate — do not rush to conclusions
 Only then explore Ontodynamics or the AGI Blueprint
 
 If you want to see E₀ in motion:
+
+run `python e0_start.py` — **start here** — initialize a local model with E₀ and get guided through what happens
 
 run `python -m e0_core.demo` — watch transitions select themselves
 
