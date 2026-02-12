@@ -1,0 +1,15 @@
+# E₀ Framework — Python Dependencies
+#
+# e0_core/ requires NO external dependencies.
+# It runs on any Python >= 3.8.
+#
+# e0_middleware/ has two tiers:
+#
+#   Tier 1 — Simulation mode (no API key, no GPU):
+#     No dependencies needed. Works out of the box.
+#
+#   Tier 2 — Real local models (CPU, no GPU required):
+#     Install with: pip install -r requirements.txt
+
+torch --index-url https://download.pytorch.org/whl/cpu
+transformers

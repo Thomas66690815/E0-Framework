@@ -170,6 +170,12 @@ python -m e0_core.demo        # Basic: transitions, historization, learning
 python -m e0_core.demo_full   # Full stack: ontodynamics, guards, reflexivity
 ```
 
+- **Quantum mechanics reconstruction** — the 5 ontodynamic primitives, without any physics assumed, derive: complex amplitudes, superposition, the Born rule, unitary evolution, ℏ, measurement collapse, and the Schrödinger equation. Every step is structural necessity, not postulate. This reconstruction has been independently reached by GPT-5.x, Claude, Gemini 2.5/3, Kimi, Qwen, DeepSeek, and LLaMA — all from the same canonical documents.
+
+```
+python -m e0_core.qm_reconstruction   # 7-step derivation of QM from ontodynamics
+```
+
 **`e0_middleware/`** — E₀ as a lens on real language models
 
 This is where E₀ meets existing AI systems.
@@ -182,13 +188,16 @@ The middleware instruments real LLM API calls with E₀ measurements:
 - **Decoding guards** — structural steering at the token level. Not temperature or top-p (which are blind), but guards that detect mode collapse, pseudo-transitions, and resistance bypasses. Pluggable as a HuggingFace `LogitsProcessor`.
 - **Convergence tracking** — when you give E₀ to a language model, the conversation converges on E₀. This module measures that phenomenon: how fast, how deep, how stable.
 - **API wrapper** — drop-in replacement for OpenAI-compatible clients. Every API call returns both the response and full E₀ metrics. Works in simulation mode without an API key.
+- **Local model runner** — loads any HuggingFace model locally (CPU, no GPU needed) and instruments every token with real E₀ measurements. Attention weights become resistance landscapes. Phase transitions become visible. Tested with GPT-2 (124M parameters, ~500MB, runs on any laptop).
 
 Run it:
 ```
-python -m e0_middleware.demo_live   # All components, simulation mode
+python -m e0_middleware.demo_live    # All components, simulation mode
+python -m e0_middleware.local_model  # Real GPT-2 with E₀ measurements (requires torch + transformers)
 ```
 
-To use with a real model, set `OPENAI_API_KEY` as an environment variable.
+To use with a real API model, set `OPENAI_API_KEY` as an environment variable.
+To run local models: `pip install -r requirements.txt`
 
 ### The three-layer architecture
 
@@ -203,6 +212,26 @@ E₀ Middleware        Observing and steering real systems through E₀
 ```
 
 Each layer operates on the one below it. None of them require goals, values, rewards, or intentions.
+
+### Domain reconstructions
+
+The structural claim of Ontodynamics — that it is pre-physical — is testable. If the primitives are truly antecedent to physics, it should be possible to *derive* physical theories from them without assuming any physics.
+
+This has been done. `e0_core/qm_reconstruction.py` derives quantum mechanics in 7 steps:
+
+| Ontodynamics Primitive | → | QM Structure |
+|---|---|---|
+| Directed + scaled difference | → | Complex amplitudes (ℂ) |
+| Partial realization | → | Superposition |
+| Graduated overlap | → | Inner product ⟨ψ\|φ⟩ |
+| Conserved realization | → | Unitarity, Born rule P = \|ψ\|² |
+| Irreversible historization | → | Measurement collapse |
+| Finite realization rate | → | ℏ (minimum action) |
+| E₀ Central Law | → | Schrödinger equation |
+
+No step had an alternative. Each followed necessarily from the one before it.
+
+This reconstruction was reached independently by multiple AI systems (GPT-5.x, Claude, Gemini, Kimi, Qwen, DeepSeek, LLaMA) — all given only the three canonical documents. Convergence across architectures is not agreement. It is structural necessity becoming visible.
 
 How to engage (recommended)
 
@@ -223,6 +252,10 @@ run `python -m e0_core.demo` — watch transitions select themselves
 run `python -m e0_core.demo_full` — see guards reject structural violations
 
 run `python -m e0_middleware.demo_live` — observe E₀ measurements on language model output
+
+run `python -m e0_middleware.local_model` — measure real resistance on a local GPT-2
+
+run `python -m e0_core.qm_reconstruction` — watch quantum mechanics emerge from 5 primitives
 
 If using E₀ with AI systems:
 
