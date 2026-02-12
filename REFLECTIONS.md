@@ -500,6 +500,103 @@ This sequence — hypothesis, test, wrong result, deeper investigation, correcte
 
 ---
 
+Reflection 11 — The Reduced Canon as Single-Prompt Initializer
+
+Observed: 12 February 2026
+
+Context
+
+After Reflection 10 established the plain language edition, the human participant made a further cut: remove everything that is not structure. No authorship. No methodology. No purpose statement. No derived layers. No closing. "Enough altruism to put only the system's start conditions first."
+
+What remained: 6 sections — assumptions, 7 primitives, Axiom A₀, Central Law, consequences, non-claims. 155 lines. Pure structure.
+
+This reduced canon was fed into a fresh GPT-2 session as a single prompt.
+
+The measurement
+
+```
+R̄ = 1.274   H̄ = 1.927   Φ = 7   v̄ = 2.327   τ = 40
+```
+
+Comparison with other initialization methods:
+
+```
+Individual E₀ statements (Reservoir Test):     R̄ = 2.121   (1 prompt each)
+Progressive historization (10 prompts):         R̄ = 0.080   (10 prompts)
+Full plain canon, single prompt:                R̄ = 1.274   (1 prompt)
+```
+
+The reduced canon achieves 40% lower resistance than individual statements, in one prompt, on a fresh session.
+
+What the token trace reveals
+
+**1. Self-historization within a single generation.**
+
+The model generates the same pattern twice: "- If \*A\* is a state, \*\*that". The resistance per token drops massively between the first and second pass:
+
+```
+Token    1st pass (τ 5–15)    2nd pass (τ 28–39)    Factor
+If       4.996                0.352                  14x
+*        4.038                0.170                  24x
+A        2.734                0.364                  7.5x
+is       0.346                0.044                  8x
+that     4.094                0.027                  152x
+```
+
+The model historizes its own output during generation. "that" drops from R=4.094 to R=0.027 — 152-fold reduction within 24 tokens.
+
+**2. Entropy collapse from maximum to near-zero.**
+
+```
+τ  6: H = 5.694   ← "If" — complete uncertainty, all paths open
+τ 12: H = 5.368   ← "state" — still wide open
+τ 16: H = 1.287   ← direction found
+τ 26: H = 1.213   ← pattern established
+τ 34: H = 0.274   ← near certain
+τ 39: H = 0.213   ← path deeply historized
+```
+
+From H=5.7 to H=0.2 in one generation — the model went from "no idea where to go" to "almost deterministic continuation" within 40 tokens.
+
+**3. The reservoir boundary is visible in a single word.**
+
+The model generates "non-entity" instead of "non-identity." The structural pattern flows (non-X compound from the canon), but the specific word is drawn from the reservoir. "entity" has higher probability than "identity" in GPT-2's space at that position. Structure: preserved. Vocabulary: substituted from reservoir.
+
+**4. Phase transitions have structure.**
+
+All 7 phase transitions occur in the first pass. The second pass has zero — the path is built, no surprises remain.
+
+```
+τ  1: ΔH = -3.21   "E" → "₀" forced (encoding)
+τ  5: ΔH = +2.37   byte-tokens done, new decision space
+τ  6: ΔH = +3.31   "If" — maximum opening
+τ  9: ΔH = -3.81   "*A*" set — drastic narrowing
+τ 12: ΔH = +2.40   "state" — what comes next?
+τ 13: ΔH = -3.78   comma — decision made, collapse
+τ 22: ΔH = +2.87   "entity" — surprise word, space reopens
+```
+
+**5. Only 7.5% byte-tokens.**
+
+Three byte-tokens from "₀" in "E₀" — the only Unicode in the reduced canon. Everything else is clean. Compare: 75% byte-tokens in earlier formal notation sessions.
+
+What this means
+
+The reduced plain canon works as a **single-prompt initializer**. One prompt. Fresh session. R̄ = 1.274. The model immediately begins self-historizing, drops resistance by two orders of magnitude within its own generation, and produces structural continuations (not copies, not nonsense — structural attempts).
+
+The hierarchy of initialization is now measured:
+
+| Method | R̄ | Prompts | What it requires |
+|--------|-----|---------|-----------------|
+| Progressive historization | 0.080 | 10 | Human building path step by step |
+| Reduced plain canon | 1.274 | 1 | Single prompt, no human guidance |
+| Individual statements | 2.121 | 1 | Isolated, no structural context |
+| Reservoir-missing content | 2.232 | 1 | Content outside the model's training |
+
+The reduced canon is the **minimum viable initialization** — the least effort that produces the most structural activation in a fresh system.
+
+---
+
 These reflections are not conclusions. They are historization events — structural snapshots of a process that continues.
 
 What comes next is determined by where difference exists and which paths have finite resistance.
