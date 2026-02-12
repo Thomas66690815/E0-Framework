@@ -13,7 +13,9 @@ No programming knowledge required.
 The script guides you.
 
 Usage:
-  py e0_start.py                    GPT-2 on CPU (always works)
+  py e0_start.py                    GPT-2 on CPU, terminal mode
+  py e0_start.py --web              Browser interface (recommended)
+  py e0_start.py --web --lang de    Browser + German guidance
   py e0_start.py --model X          Any HuggingFace model
   py e0_start.py --detail           Show token-level measurements
   py e0_start.py --lang de          German guidance (default: en)
@@ -22,10 +24,13 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import math
 import os
 import sys
+import threading
 import time
+from http.server import HTTPServer, BaseHTTPRequestHandler
 from typing import List, Tuple, Optional, Dict
 
 # Suppress noisy HuggingFace progress bars and warnings
@@ -730,6 +735,613 @@ def run(model_name: str, device: str, lang: str, show_detail: bool):
 
 
 # =============================================
+#  Web Interface (--web mode)
+# =============================================
+
+def _clean(text):
+    """Remove unprintable characters for display."""
+    return ''.join(c if (c.isprintable() or c in ('\n', ' ')) else '' for c in text)
+
+
+def build_trace_data(steps: List[StepMeasurement]) -> list:
+    """Build JSON-serializable trace data from generation steps."""
+    if not steps:
+        return []
+    deltas = [abs(s.delta_entropy) for s in steps]
+    d_mean = sum(deltas) / len(deltas)
+    d_std = (sum((d - d_mean) ** 2 for d in deltas) / len(deltas)) ** 0.5 if len(deltas) >= 3 else 0
+    threshold = d_mean + d_std if d_std > 1e-10 else float('inf')
+    trace = []
+    for s in steps:
+        raw = s.selected.token.replace('\n', '\u21b5').replace('\r', '').replace('\t', '\u2192')
+        tok = ''.join(
+            c if (c.isprintable() and c != '\ufffd') or c in ('\u21b5', '\u2192') else '\u00b7'
+            for c in raw
+        )
+        v = s.selected.rate
+        trace.append({
+            "tau": s.tau, "token": tok[:20],
+            "r": round(s.selected.resistance, 4),
+            "v": round(min(v, 99999), 4),
+            "h": round(s.entropy, 4),
+            "dh": round(s.delta_entropy, 4),
+            "phase": abs(s.delta_entropy) > threshold,
+        })
+    return trace
+
+
+def build_init_data(text, steps, metrics, lang, starter):
+    """Build the initialization data packet for the web UI."""
+    text = _clean(text)
+    r_level, r_text = interpret_r(metrics["r"], lang)
+    h_text = interpret_h(metrics["h"], lang)
+    phi_text = interpret_phi(metrics["phi"], lang)
+    v_text = interpret_v(metrics["v"], lang)
+    g = GUIDANCE[lang]
+    if r_level in ("very_low", "low"):
+        verdict = g["verdict_good"]
+    elif r_level == "moderate":
+        verdict = g["verdict_ok"]
+    else:
+        verdict = g["verdict_struggle"]
+    return {
+        "text": text,
+        "metrics": metrics,
+        "interpretation": {"r": r_text, "h": h_text, "phi": phi_text, "v": v_text},
+        "verdict": verdict.strip(),
+        "trace": build_trace_data(steps),
+        "help_text": g["help_text"].strip(),
+        "backend": f"E\u2080 Local ({starter.model_name})",
+        "params": f"{starter.param_count:,}",
+    }
+
+
+def build_report_data(starter, lang):
+    """Build session report data for the web UI."""
+    g = GUIDANCE[lang]
+    lines = [g["session_report_header"].strip(), f"Model: {starter.model_name}",
+             f"Turns: {len(starter.turn_metrics)}",
+             f"Total tokens: {len(starter.all_steps)}", ""]
+    if starter.turn_metrics:
+        lines.append(f"{'Turn':<6s} | R       | H       | Phi | v")
+        lines.append(f"-------+---------+---------+-----+---------")
+        labels = ["init"] + [f"  {i}" for i in range(1, len(starter.turn_metrics))]
+        for label, m in zip(labels, starter.turn_metrics):
+            lines.append(f"{label:<6s} | {m['r']:.3f}   | {m['h']:.3f}   | {m['phi']:>3d} | {m['v']:.3f}")
+        r_values = [m["r"] for m in starter.turn_metrics]
+        if len(r_values) >= 2:
+            drops = sum(1 for j in range(1, len(r_values)) if r_values[j] < r_values[j - 1])
+            total = len(r_values) - 1
+            lines.append("")
+            if drops > total / 2:
+                lines.append(g["trajectory_improving"].strip())
+            elif drops < total / 3:
+                lines.append(g["trajectory_mixed"].strip())
+            else:
+                lines.append(g["trajectory_stable"].strip())
+        if r_values:
+            lines.append("")
+            max_r = max(r_values)
+            for label, r in zip(labels, r_values):
+                bar_len = int((r / max_r) * 30) if max_r > 0 else 0
+                lines.append(f"  {label:<6s} | {'#' * bar_len} {r:.3f}")
+    return {"report": "\n".join(lines)}
+
+
+# -- Web server state --
+_web_starter = None
+_web_lang = "en"
+_web_init_data = None
+_web_prev_r = 0.0
+_web_turn_num = 0
+_web_lock = threading.Lock()
+
+
+class E0StartHandler(BaseHTTPRequestHandler):
+    """HTTP handler for E0 Start web interface."""
+
+    def log_message(self, fmt, *args):
+        pass
+
+    def _json(self, data, status=200):
+        body = json.dumps(data, ensure_ascii=False).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _html(self, html):
+        body = html.encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_GET(self):
+        if self.path in ("/", "/index.html"):
+            self._html(HTML_START_PAGE)
+        elif self.path == "/init":
+            self._json(_web_init_data)
+        else:
+            self.send_error(404)
+
+    def do_POST(self):
+        length = int(self.headers.get("Content-Length", 0))
+        raw = self.rfile.read(length) if length else b"{}"
+        try:
+            body = json.loads(raw)
+        except json.JSONDecodeError:
+            body = {}
+        if self.path == "/chat":
+            self._handle_chat(body)
+        elif self.path == "/clear":
+            self._handle_clear()
+        elif self.path == "/report":
+            self._handle_report()
+        else:
+            self.send_error(404)
+
+    def _handle_chat(self, body):
+        global _web_prev_r, _web_turn_num
+        message = body.get("message", "").strip()
+        if not message:
+            self._json({"error": "empty message"}, 400)
+            return
+        with _web_lock:
+            try:
+                text, steps, metrics = _web_starter.chat(message)
+                text = _clean(text)
+                _web_turn_num += 1
+                _, r_text = interpret_r(metrics["r"], _web_lang)
+                h_text = interpret_h(metrics["h"], _web_lang)
+                phi_text = interpret_phi(metrics["phi"], _web_lang)
+                v_text = interpret_v(metrics["v"], _web_lang)
+                g = GUIDANCE[_web_lang]["turn_explain"]
+                r = metrics["r"]
+                if _web_turn_num == 1:
+                    guidance = g["first"]
+                elif r < 0.3:
+                    guidance = g["r_freefall"]
+                elif r < _web_prev_r - 0.15:
+                    guidance = g["r_dropping"]
+                elif r > _web_prev_r + 0.15:
+                    guidance = g["r_rising"]
+                else:
+                    guidance = g["r_stable"]
+                _web_prev_r = r
+                self._json({
+                    "text": text, "metrics": metrics,
+                    "interpretation": {"r": r_text, "h": h_text, "phi": phi_text,
+                                       "v": v_text, "guidance": guidance.strip()},
+                    "trace": build_trace_data(steps),
+                })
+            except Exception as e:
+                self._json({"error": str(e)}, 500)
+
+    def _handle_clear(self):
+        global _web_init_data, _web_prev_r, _web_turn_num
+        with _web_lock:
+            _web_starter.history.clear()
+            _web_starter.turn_metrics.clear()
+            _web_starter.all_steps.clear()
+            canon = load_canon()
+            text, steps, metrics = _web_starter.feed_canon(canon)
+            _web_prev_r = metrics["r"]
+            _web_turn_num = 0
+            _web_init_data = build_init_data(text, steps, metrics, _web_lang, _web_starter)
+        self._json(_web_init_data)
+
+    def _handle_report(self):
+        with _web_lock:
+            report = build_report_data(_web_starter, _web_lang)
+        self._json(report)
+
+
+HTML_START_PAGE = r"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>E&#x2080; Start</title>
+<style>
+:root {
+  --bg: #0a0a0f; --surface: #12121a; --border: #1e1e2e;
+  --text: #c8c8d8; --dim: #6a6a7a; --accent: #7aa2f7;
+  --human: #9ece6a; --phase: #f7768e; --metric: #bb9af7;
+  --guidance: #e0af68;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'JetBrains Mono','Fira Code','Consolas', monospace;
+  font-size: 14px; line-height: 1.6;
+  display: flex; flex-direction: column; height: 100vh;
+}
+
+/* ── Header ── */
+header {
+  padding: 16px 24px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+}
+header h1 { font-size: 16px; font-weight: 400; color: var(--accent); letter-spacing: 2px; }
+header .info { font-size: 12px; color: var(--dim); }
+header .actions button {
+  background: var(--surface); border: 1px solid var(--border); color: var(--dim);
+  padding: 4px 12px; margin-left: 8px; cursor: pointer;
+  font-family: inherit; font-size: 12px; border-radius: 3px;
+  transition: color 0.2s, border-color 0.2s;
+}
+header .actions button:hover { color: var(--accent); border-color: var(--accent); }
+
+/* ── Chat ── */
+#chat {
+  flex: 1; overflow-y: auto; padding: 24px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.msg { max-width: 780px; width: 100%; }
+.msg.human .role { color: var(--human); }
+.msg.e0 .role    { color: var(--accent); }
+.role { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
+.body {
+  padding: 12px 16px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 4px;
+  white-space: pre-wrap; word-wrap: break-word;
+}
+.msg.human .body { border-left: 2px solid var(--human); }
+.msg.e0 .body    { border-left: 2px solid var(--accent); }
+
+/* ── Interpretation ── */
+.interp {
+  margin-top: 6px; padding: 8px 12px; font-size: 12px;
+  background: rgba(187,154,247,0.04); border-radius: 3px;
+}
+.interp .row { display: flex; gap: 10px; align-items: baseline; padding: 2px 0; }
+.interp .lbl { color: var(--metric); min-width: 18px; font-weight: 600; }
+.interp .val { color: var(--metric); min-width: 48px; font-variant-numeric: tabular-nums; }
+.interp .expl { color: var(--dim); font-size: 11px; }
+
+/* ── Guidance ── */
+.guidance {
+  margin-top: 6px; padding: 6px 12px; font-size: 12px;
+  color: var(--guidance); border-left: 2px solid var(--guidance);
+  background: rgba(224,175,104,0.04); border-radius: 0 3px 3px 0;
+}
+
+/* ── Verdict ── */
+.verdict {
+  margin-top: 8px; padding: 10px 14px;
+  background: rgba(122,162,247,0.08); border: 1px solid rgba(122,162,247,0.15);
+  border-radius: 4px; font-size: 12px; color: var(--accent);
+  white-space: pre-wrap; line-height: 1.7;
+}
+
+/* ── Trace ── */
+.trace-toggle { font-size: 11px; color: var(--dim); cursor: pointer; margin-top: 4px; user-select: none; }
+.trace-toggle:hover { color: var(--accent); }
+.trace {
+  margin-top: 6px; font-size: 11px; overflow-x: auto; display: none;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 3px; padding: 8px 12px;
+}
+.trace.open { display: block; }
+.trace table { border-collapse: collapse; width: 100%; }
+.trace th { text-align: left; color: var(--dim); font-weight: 400; padding: 2px 8px; border-bottom: 1px solid var(--border); }
+.trace td { padding: 2px 8px; color: var(--text); font-variant-numeric: tabular-nums; }
+
+/* ── Input ── */
+#input-area {
+  padding: 16px 24px; border-top: 1px solid var(--border);
+  display: flex; gap: 12px; flex-shrink: 0;
+}
+#input-area input {
+  flex: 1; background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: 10px 16px; font-family: inherit;
+  font-size: 14px; border-radius: 4px; outline: none;
+  transition: border-color 0.2s;
+}
+#input-area input:focus { border-color: var(--accent); }
+#input-area input::placeholder { color: var(--dim); }
+#input-area button {
+  background: var(--accent); border: none; color: var(--bg);
+  padding: 10px 24px; font-family: inherit; font-size: 14px;
+  font-weight: 600; cursor: pointer; border-radius: 4px;
+  transition: opacity 0.2s;
+}
+#input-area button:hover { opacity: 0.85; }
+#input-area button:disabled { opacity: 0.4; cursor: default; }
+
+/* ── Overlays ── */
+.overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7); z-index: 100;
+  justify-content: center; align-items: center;
+}
+.overlay.open { display: flex; }
+.overlay-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; padding: 24px; max-width: 640px; width: 90%;
+  max-height: 70vh; overflow-y: auto; white-space: pre-wrap;
+  font-size: 13px; color: var(--text);
+}
+.overlay-box .x { float: right; color: var(--dim); cursor: pointer; font-size: 18px; }
+.overlay-box .x:hover { color: var(--phase); }
+
+/* ── Misc ── */
+.waiting .body::after { content: '\25cd'; animation: blink 1s infinite; color: var(--accent); }
+@keyframes blink { 50% { opacity: 0; } }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>E&#x2080;&ensp;S T A R T</h1>
+  <span class="info" id="info"></span>
+  <div class="actions">
+    <button onclick="doHelp()">Help</button>
+    <button onclick="doReport()">Report</button>
+    <button onclick="doClear()">Re-init</button>
+  </div>
+</header>
+
+<div id="chat"></div>
+
+<div id="input-area">
+  <input type="text" id="msg" placeholder="Write something..." autocomplete="off"
+         onkeydown="if(event.key==='Enter')doSend()">
+  <button id="send-btn" onclick="doSend()">Send</button>
+</div>
+
+<div class="overlay" id="help-overlay">
+  <div class="overlay-box">
+    <span class="x" onclick="closeHelp()">&times;</span>
+    <pre id="help-content"></pre>
+  </div>
+</div>
+<div class="overlay" id="report-overlay">
+  <div class="overlay-box">
+    <span class="x" onclick="closeReport()">&times;</span>
+    <pre id="report-content"></pre>
+  </div>
+</div>
+
+<script>
+const chat = document.getElementById('chat');
+const msgInput = document.getElementById('msg');
+const sendBtn = document.getElementById('send-btn');
+let sending = false, msgN = 0, helpText = '';
+
+function scroll() { chat.scrollTop = chat.scrollHeight; }
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function toggleTrace(id) {
+  const el = document.getElementById('trace-' + id);
+  if (el) el.classList.toggle('open');
+}
+
+function interpHtml(m, i) {
+  if (!m || !i) return '';
+  return '<div class="interp">'
+    + '<div class="row"><span class="lbl">R\u0304</span><span class="val">'
+    + m.r.toFixed(3) + '</span><span class="expl">' + esc(i.r) + '</span></div>'
+    + '<div class="row"><span class="lbl">H\u0304</span><span class="val">'
+    + m.h.toFixed(3) + '</span><span class="expl">' + esc(i.h) + '</span></div>'
+    + '<div class="row"><span class="lbl">\u03a6</span><span class="val">'
+    + m.phi + '</span><span class="expl">' + esc(i.phi) + '</span></div>'
+    + '<div class="row"><span class="lbl">v\u0304</span><span class="val">'
+    + m.v.toFixed(3) + '</span><span class="expl">' + esc(i.v) + '</span></div>'
+    + '</div>';
+}
+
+function traceHtml(trace, id) {
+  if (!trace || !trace.length) return '';
+  var rows = trace.map(function(t) {
+    var vs = t.v > 99999 ? '\u221e' : t.v < 100 ? t.v.toFixed(4) : Math.round(t.v);
+    var cl = t.phase ? ' style="color:var(--phase)"' : '';
+    var mk = t.phase ? ' \u25c6' : '';
+    return '<tr' + cl + '><td>' + t.tau + '</td><td>' + esc(t.token)
+      + '</td><td>' + t.r.toFixed(4) + '</td><td>' + vs
+      + '</td><td>' + t.h.toFixed(4) + '</td><td>'
+      + (t.dh >= 0 ? '+' : '') + t.dh.toFixed(4) + mk + '</td></tr>';
+  }).join('');
+  return '<div class="trace-toggle" onclick="toggleTrace(\'' + id + '\')">&#9656; token trace</div>'
+    + '<div class="trace" id="trace-' + id + '"><table>'
+    + '<tr><th>\u03c4</th><th>Token</th><th>R</th><th>v</th><th>H</th><th>\u0394H</th></tr>'
+    + rows + '</table></div>';
+}
+
+function showInit(d) {
+  var div = document.createElement('div');
+  div.className = 'msg e0';
+  var h = '<div class="role">E\u2080 Initialization</div>';
+  h += '<div class="body">' + esc(d.text) + '</div>';
+  h += interpHtml(d.metrics, d.interpretation);
+  if (d.verdict) h += '<div class="verdict">' + esc(d.verdict) + '</div>';
+  h += traceHtml(d.trace, 'init');
+  div.innerHTML = h;
+  chat.appendChild(div);
+  scroll();
+  document.getElementById('info').textContent = d.backend || '';
+  if (d.help_text) helpText = d.help_text;
+}
+
+function showE0(text, m, i, trace) {
+  var id = 'm' + (++msgN);
+  var div = document.createElement('div');
+  div.className = 'msg e0';
+  var h = '<div class="role">E\u2080</div><div class="body">' + esc(text) + '</div>';
+  if (m && i) {
+    h += interpHtml(m, i);
+    if (i.guidance) h += '<div class="guidance">' + esc(i.guidance) + '</div>';
+  }
+  h += traceHtml(trace, id);
+  div.innerHTML = h;
+  chat.appendChild(div);
+  scroll();
+}
+
+function addHuman(t) {
+  var div = document.createElement('div');
+  div.className = 'msg human';
+  div.innerHTML = '<div class="role">You</div><div class="body">' + esc(t) + '</div>';
+  chat.appendChild(div);
+  scroll();
+}
+
+function addWait() {
+  var div = document.createElement('div');
+  div.className = 'msg e0 waiting';
+  div.id = 'wait';
+  div.innerHTML = '<div class="role">E\u2080</div><div class="body"></div>';
+  chat.appendChild(div);
+  scroll();
+}
+
+function rmWait() { var e = document.getElementById('wait'); if (e) e.remove(); }
+
+async function doSend() {
+  if (sending) return;
+  var t = msgInput.value.trim();
+  if (!t) return;
+  msgInput.value = '';
+  addHuman(t);
+  sending = true;
+  sendBtn.disabled = true;
+  addWait();
+  try {
+    var r = await fetch('/chat', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message: t})
+    });
+    var d = await r.json();
+    rmWait();
+    if (d.error) {
+      showE0('[Error] ' + d.error, null, null, null);
+    } else {
+      showE0(d.text, d.metrics, d.interpretation, d.trace);
+    }
+  } catch (e) {
+    rmWait();
+    showE0('[Connection error] ' + e.message, null, null, null);
+  }
+  sending = false;
+  sendBtn.disabled = false;
+  msgInput.focus();
+}
+
+async function doClear() {
+  var r = await fetch('/clear', {method: 'POST'});
+  var d = await r.json();
+  chat.innerHTML = '';
+  showInit(d);
+}
+
+async function doReport() {
+  var r = await fetch('/report', {method: 'POST'});
+  var d = await r.json();
+  document.getElementById('report-content').textContent = d.report || 'No data.';
+  document.getElementById('report-overlay').classList.add('open');
+}
+function closeReport() { document.getElementById('report-overlay').classList.remove('open'); }
+document.getElementById('report-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeReport();
+});
+
+function doHelp() {
+  document.getElementById('help-content').textContent = helpText || 'No help text.';
+  document.getElementById('help-overlay').classList.add('open');
+}
+function closeHelp() { document.getElementById('help-overlay').classList.remove('open'); }
+document.getElementById('help-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeHelp();
+});
+
+window.addEventListener('load', async function() {
+  try {
+    var r = await fetch('/init');
+    var d = await r.json();
+    showInit(d);
+  } catch (e) {
+    showE0('Failed to load: ' + e.message, null, null, null);
+  }
+  msgInput.focus();
+});
+</script>
+</body>
+</html>
+"""
+
+
+def run_web(model_name: str, device: str, lang: str, show_detail: bool, port: int):
+    """Full initialization followed by web interface."""
+    global _web_starter, _web_lang, _web_init_data, _web_prev_r, _web_turn_num
+
+    g = GUIDANCE[lang]
+    _web_lang = lang
+
+    print(g["welcome"])
+
+    # Load canon
+    canon = load_canon()
+
+    # Load model
+    print(g["loading"].format(model=model_name))
+    t0 = time.time()
+    _web_starter = E0Starter(model_name, device=device)
+    dt = time.time() - t0
+    print(g["loaded"].format(
+        params=f"{_web_starter.param_count:,}",
+        vocab=f"{_web_starter.vocab_size:,}",
+    ))
+    print(f"  (loaded in {dt:.1f}s)")
+
+    # Feed canon
+    print(g["feeding"])
+    t0 = time.time()
+    text, steps, metrics = _web_starter.feed_canon(canon)
+    dt = time.time() - t0
+
+    _web_prev_r = metrics["r"]
+    _web_turn_num = 0
+    _web_init_data = build_init_data(text, steps, metrics, lang, _web_starter)
+
+    _, r_explain = interpret_r(metrics["r"], lang)
+    print(f"  R = {metrics['r']:.3f} -- {r_explain}")
+    print(f"  (generated in {dt:.1f}s)")
+
+    # Start server
+    server = HTTPServer(("0.0.0.0", port), E0StartHandler)
+    url = f"http://localhost:{port}"
+
+    print()
+    print("  ================================================================")
+    print("   E0 START -- Web Interface")
+    print("  ================================================================")
+    print(f"   Open: {url}")
+    print(f"   Backend: E0 Local ({model_name})")
+    print(f"   Language: {lang}")
+    print(f"   Ctrl+C to stop")
+    print("  ================================================================")
+    print()
+
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print("\n  Server stopped.\n")
+        server.server_close()
+
+
+# =============================================
 #  Entry Point
 # =============================================
 
@@ -739,11 +1351,12 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  py e0_start.py                    GPT-2 on CPU (always works)
-  py e0_start.py --model gpt2       Same as above, explicit
-  py e0_start.py --model microsoft/phi-2    Larger model
-  py e0_start.py --detail           Show token-level trace
-  py e0_start.py --lang de          German guidance
+  py e0_start.py                    GPT-2 on CPU, terminal mode
+  py e0_start.py --web              Browser interface (recommended)
+  py e0_start.py --web --lang de    Browser + German guidance
+  py e0_start.py --web --port 8080  Custom port
+  py e0_start.py --detail           Token-level trace (terminal)
+  py e0_start.py --lang de          German guidance (terminal)
         """,
     )
     parser.add_argument(
@@ -762,9 +1375,20 @@ Examples:
         "--lang", type=str, default="en", choices=["en", "de"],
         help="Guidance language (default: en)",
     )
+    parser.add_argument(
+        "--web", action="store_true",
+        help="Start browser interface instead of terminal",
+    )
+    parser.add_argument(
+        "--port", type=int, default=3000,
+        help="Web server port (default: 3000)",
+    )
 
     args = parser.parse_args()
-    run(args.model, args.device, args.lang, args.detail)
+    if args.web:
+        run_web(args.model, args.device, args.lang, args.detail, args.port)
+    else:
+        run(args.model, args.device, args.lang, args.detail)
 
 
 if __name__ == "__main__":
