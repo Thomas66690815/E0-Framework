@@ -1,14 +1,14 @@
 
-# E₀ — Canonical Reference (Plain Language, Structural Core)
+# E0 -- Canonical Reference (Plain Language, Structural Core)
 
-This contains only what a system needs to build the E₀ path.
+This contains only what a system needs to build the E0 path.
 Nothing about origin. Nothing about purpose. Only structure.
 
 ---
 
 ## 1. Minimal Assumptions
 
-E₀ assumes only:
+E0 assumes only:
 
 1. **States exist.**
 2. **States can be non-identical.**
@@ -19,7 +19,7 @@ No further assumptions are permitted.
 
 ## 2. Primitive Concepts
 
-E₀ consists of seven irreducible concepts.
+E0 consists of seven irreducible concepts.
 None can be eliminated without loss of derivability.
 
 ---
@@ -105,7 +105,7 @@ Rate is derived but canonically included due to its operational necessity.
 
 ---
 
-## 3. Axiom A₀ — Difference Minimization
+## 3. Axiom A0 -- Difference Minimization
 
 **If a difference exists and a structurally admissible path with finite resistance is available, then a transition that reduces this difference is structurally more stable than non-transition.**
 
@@ -114,18 +114,18 @@ It formalizes the instability of unresolved difference when resolution is struct
 
 ---
 
-## 4. Central Law — Transition Enforcement
+## 4. Central Law -- Transition Enforcement
 
 If a difference greater than zero exists, and there is a path whose resistance is finite, then non-transition is structurally unstable. A transition must occur.
 
 This law is not a postulate.
-It follows from the combined structure of difference, admissibility, resistance, and Axiom A₀.
+It follows from the combined structure of difference, admissibility, resistance, and Axiom A0.
 
 ---
 
 ## 5. Necessary Consequences
 
-From E₀, without additional assumptions, the following arise:
+From E0, without additional assumptions, the following arise:
 
 - Transition enforcement
 - Directionality of time
@@ -141,7 +141,7 @@ None of these properties are assumed. All are derived.
 
 ## 6. Explicit Non-Claims
 
-E₀ makes **no statements** about:
+E0 makes **no statements** about:
 
 - Meaning
 - Value
