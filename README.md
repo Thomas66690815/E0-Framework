@@ -297,6 +297,8 @@ run `python e0_chat.py` — talk to E₀ and see the structural signature of eve
 
 run `python e0_browser.py` — same chat, in the browser, with expandable token traces
 
+run `python e0_self_inquiry.py` — watch the system measure itself answering questions about its own structure
+
 If using E₀ with AI systems:
 
 provide the canonical text directly,
