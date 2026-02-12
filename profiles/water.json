@@ -1,0 +1,29 @@
+{
+  "name": "Water Management",
+  "description": "E\u2080 initialization for water resource management. Maps E\u2080 primitives to water systems, flow, distribution, and infrastructure.",
+
+  "model": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+  "language": "en",
+  "canon_r_threshold": 0.5,
+
+  "primers": [
+    {
+      "name": "Water as state difference",
+      "prompt": "Within the E\u2080 framework, water management is pure structural dynamics. Water at source is one state. Water at point of need is a different state. The difference between these states -- measurable in distance, elevation, purity -- drives all water transitions. A river flows because difference exists and the path has finite resistance. Water does not decide to flow. The structure enforces the transition.",
+      "r_threshold": 0.8
+    },
+    {
+      "name": "Infrastructure as resistance modification",
+      "prompt": "Infrastructure is resistance modification. A pipe lowers the resistance between water source and destination. A pump lowers resistance against gravity. A filter lowers resistance on the purity-transition path. Building infrastructure is not adding capability -- it is lowering resistance. The question is never 'what should we build' but 'where is resistance highest on the most critical difference path?' That is where structural pressure is greatest.",
+      "r_threshold": 0.8
+    },
+    {
+      "name": "Seasonal cycles and distribution",
+      "prompt": "Water historization: a well that has been dug lowers future access resistance permanently. A canal that has been maintained historizes the flow path. Seasonal variation is periodic resistance change -- rain lowers source-difference, drought raises it. Distribution fairness in E\u2080 terms: if multiple communities have differences to water, the one with lowest total path resistance gets water first. To equalize, you equalize resistances -- not outcomes.",
+      "r_threshold": 0.8
+    }
+  ],
+
+  "readiness_r": 0.5,
+  "interface": "web"
+}

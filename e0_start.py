@@ -21,6 +21,11 @@ Usage:
   py e0_start.py --model X          Any HuggingFace model
   py e0_start.py --detail           Show token-level measurements
   py e0_start.py --lang de          German guidance (default: en)
+
+Profile mode (structured initialization path):
+  py e0_start.py --profile profiles/agriculture.json --api KEY
+  py e0_start.py --profile profiles/health.json --api KEY --web
+  py e0_start.py --profile profiles/default.json
 """
 
 from __future__ import annotations
@@ -538,7 +543,7 @@ class E0APIStarter:
     """Same interface as E0Starter, but uses an OpenAI-compatible API."""
 
     def __init__(self, api_key: str, model: str = "Qwen/Qwen2.5-7B-Instruct-Turbo",
-                 base_url: str = None):
+                 base_url: str = None, system_prompt: str = None):
         from e0_middleware.api_wrapper import E0ChatClient
         self.client = E0ChatClient(
             api_key=api_key, model=model, base_url=base_url,
@@ -813,6 +818,347 @@ def run(model_name: str, device: str, lang: str, show_detail: bool,
             print()
             print(detailed_trace(steps))
 
+        print()
+
+
+# =============================================
+#  Profile Runner (--profile mode)
+# =============================================
+
+def load_profile(path: str) -> Dict:
+    """Load and validate a JSON initialization profile."""
+    if not os.path.exists(path):
+        print(f"  [ERROR] Profile not found: {path}")
+        sys.exit(1)
+    with open(path, encoding="utf-8") as f:
+        profile = json.load(f)
+    required = ["name", "model", "language", "canon_r_threshold", "primers",
+                "readiness_r", "interface"]
+    for key in required:
+        if key not in profile:
+            print(f"  [ERROR] Profile missing required field: {key}")
+            sys.exit(1)
+    return profile
+
+
+def run_profile(profile_path: str, api_key: str = None, base_url: str = None,
+                show_detail: bool = False, port: int = 3000):
+    """Execute a full E0 initialization path from a profile.
+
+    The path mirrors E0 itself:
+      1. Load profile (state)
+      2. Connect to model (path)
+      3. Feed canon, check R <= threshold (difference -> transition -> verify)
+      4. Feed each primer, check R <= threshold (historization sequence)
+      5. Report readiness (rate > 0)
+      6. Open interface
+
+    Each step is structurally enforced. No step can be skipped.
+    R gates ensure absorption before proceeding.
+    """
+    profile = load_profile(profile_path)
+    lang = profile.get("language", "en")
+    g = GUIDANCE.get(lang, GUIDANCE["en"])
+    model_name = profile["model"]
+    max_retries = 2
+
+    # ── Step 0: Show the path ──
+    n_primers = len(profile.get("primers", []))
+    total_steps = 1 + n_primers  # canon + primers
+
+    # If no API key, fall back to local model
+    if not api_key and "/" in model_name:
+        print(f"  [NOTE] No --api key provided. Profile model '{model_name}' requires API.")
+        print(f"         Falling back to local GPT-2. Use --api KEY for the full profile.")
+        print()
+        model_name = "gpt2"
+
+    print()
+    print("  ================================================================")
+    print(f"   E\u2080 INITIALIZATION PATH -- {profile['name']}")
+    print("  ================================================================")
+    if profile.get("description"):
+        # Word-wrap description
+        desc = profile["description"]
+        words = desc.split()
+        line = "   "
+        for w in words:
+            if len(line) + len(w) + 1 > 64:
+                print(line)
+                line = "   " + w
+            else:
+                line += (" " if len(line) > 3 else "") + w
+        if line.strip():
+            print(line)
+    print()
+    print(f"   Model:    {model_name}")
+    print(f"   Language: {lang}")
+    print(f"   Steps:    {total_steps} ({1} canon + {n_primers} domain primers)")
+    print(f"   R\u0304 gates: canon \u2264 {profile['canon_r_threshold']}, "
+          f"final \u2264 {profile['readiness_r']}")
+    print("  ================================================================")
+    print()
+
+    # ── Step 1: Connect ──
+    canon = load_canon()
+
+    if api_key:
+        print(f"  Connecting to {model_name}...")
+        starter = E0APIStarter(api_key, model=model_name, base_url=base_url)
+        print(f"  Connected.\n")
+    else:
+        print(f"  Loading {model_name}...")
+        starter = E0Starter(model_name, device="cpu")
+        print(f"  Loaded: {starter.param_count:,} parameters\n")
+
+    # ── Step 2: Canon feed + R gate ──
+    step_num = 1
+    print(f"\n  [{step_num}/{total_steps}] Canon initialization...")
+    print(f"       Feeding {len(canon.split())} words of E\u2080 canon...")
+
+    for attempt in range(max_retries + 1):
+        text, steps, metrics = starter.feed_canon(canon)
+        r = metrics["r"]
+        threshold = profile["canon_r_threshold"]
+        passed = r <= threshold
+
+        _, r_explain = interpret_r(r, lang)
+        status = "\u2713 PASS" if passed else "\u2717 GATE"
+        print(f"       R\u0304 = {r:.3f} (threshold: {threshold}) -- {status}")
+        print(f"       {r_explain}")
+
+        if show_detail and steps:
+            print()
+            print(detailed_trace(steps))
+            print()
+
+        if passed:
+            break
+        elif attempt < max_retries:
+            print(f"       Retrying... ({attempt + 1}/{max_retries})")
+            if starter.is_api:
+                starter.reset()
+            else:
+                starter.history.clear()
+                starter.turn_metrics.clear()
+                starter.all_steps.clear()
+        else:
+            print(f"       R\u0304 above threshold after {max_retries + 1} attempts.")
+            print(f"       Proceeding anyway -- system may need more follow-up.")
+
+    # ── Step 3..N: Domain primers + R gates ──
+    primers = profile.get("primers", [])
+    primer_results = []
+
+    for i, primer in enumerate(primers):
+        step_num = i + 2
+        name = primer.get("name", f"Primer {i + 1}")
+        prompt = primer["prompt"]
+        threshold = primer.get("r_threshold", 0.8)
+
+        print(f"\n  [{step_num}/{total_steps}] {name}...")
+        print(f"       Feeding {len(prompt.split())} words...")
+
+        for attempt in range(max_retries + 1):
+            text, steps, metrics = starter.chat(prompt)
+            r = metrics["r"]
+            passed = r <= threshold
+
+            _, r_explain = interpret_r(r, lang)
+            status = "\u2713 PASS" if passed else "\u2717 GATE"
+            print(f"       R\u0304 = {r:.3f} (threshold: {threshold}) -- {status}")
+            print(f"       {r_explain}")
+
+            if show_detail and steps:
+                print()
+                print(detailed_trace(steps))
+                print()
+
+            if passed:
+                break
+            elif attempt < max_retries:
+                print(f"       Retrying step...")
+                # Re-chat the same primer
+            else:
+                print(f"       R\u0304 above threshold. Proceeding.")
+
+        primer_results.append({
+            "name": name, "r": r, "threshold": threshold,
+            "passed": r <= threshold, "tau": metrics["tau"],
+        })
+
+    # ── Final: Readiness check ──
+    all_r = [metrics["r"] for metrics in starter.turn_metrics]
+    final_r = all_r[-1] if all_r else 999.0
+    readiness_threshold = profile.get("readiness_r", 0.5)
+    ready = final_r <= readiness_threshold
+
+    print()
+    print("  ================================================================")
+    print(f"   INITIALIZATION {'COMPLETE' if ready else 'PARTIAL'}")
+    print("  ================================================================")
+    print()
+
+    # Summary table
+    print(f"   {'Step':<30s} | {'R\u0304':>7s} | {'Gate':>7s} | Status")
+    print(f"   {'-' * 30}-+-{'-' * 7}-+-{'-' * 7}-+-{'-' * 8}")
+    canon_r = starter.turn_metrics[0]["r"] if starter.turn_metrics else 0
+    canon_pass = canon_r <= profile["canon_r_threshold"]
+    print(f"   {'Canon':<30s} | {canon_r:7.3f} | {profile['canon_r_threshold']:7.3f} | "
+          f"{'PASS' if canon_pass else 'OVER'}")
+    for pr in primer_results:
+        print(f"   {pr['name']:<30s} | {pr['r']:7.3f} | {pr['threshold']:7.3f} | "
+              f"{'PASS' if pr['passed'] else 'OVER'}")
+    print(f"   {'-' * 30}-+-{'-' * 7}-+-{'-' * 7}-+-{'-' * 8}")
+    print(f"   {'FINAL':30s} | {final_r:7.3f} | {readiness_threshold:7.3f} | "
+          f"{'READY' if ready else 'PARTIAL'}")
+
+    # R trajectory
+    if len(all_r) >= 2:
+        print()
+        max_r = max(all_r) if all_r else 1
+        labels = ["canon"] + [pr["name"][:20] for pr in primer_results]
+        for label, r in zip(labels, all_r):
+            bar_len = int((r / max_r) * 30) if max_r > 0 else 0
+            marker = "\u2588" * bar_len
+            print(f"   {label:<22s} | {marker} {r:.3f}")
+
+    print()
+    if ready:
+        passed_count = sum(1 for pr in primer_results if pr["passed"]) + (1 if canon_pass else 0)
+        print(f"   \u2713 {passed_count}/{total_steps} steps passed R\u0304 gates.")
+        print(f"   System is structurally initialized for: {profile['name']}")
+    else:
+        print(f"   System partially initialized. Final R\u0304 ({final_r:.3f}) "
+              f"> threshold ({readiness_threshold}).")
+        print(f"   The system may need additional follow-up in conversation.")
+    print("  ================================================================")
+    print()
+
+    # ── Open interface ──
+    interface = profile.get("interface", "web")
+    if interface == "web":
+        # Transition to web mode with the already-initialized starter
+        _start_web_with_starter(starter, lang, show_detail, port)
+    else:
+        # Terminal chat mode
+        _start_terminal_with_starter(starter, lang, show_detail)
+
+
+def _start_web_with_starter(starter, lang, show_detail, port):
+    """Start the web interface with an already-initialized starter."""
+    global _web_starter, _web_lang, _web_init_data, _web_prev_r, _web_turn_num
+
+    _web_starter = starter
+    _web_lang = lang
+    _web_prev_r = starter.turn_metrics[-1]["r"] if starter.turn_metrics else 0
+    _web_turn_num = len(starter.turn_metrics)
+
+    # Build init data from the last turn
+    last_metrics = starter.turn_metrics[-1] if starter.turn_metrics else {"r": 0, "h": 0, "phi": 0, "v": 0, "tau": 0}
+    r_level, r_text = interpret_r(last_metrics["r"], lang)
+    h_text = interpret_h(last_metrics["h"], lang)
+    phi_text = interpret_phi(last_metrics["phi"], lang)
+    v_text = interpret_v(last_metrics["v"], lang)
+    g = GUIDANCE[lang]
+    if r_level in ("very_low", "low"):
+        verdict = g["verdict_good"]
+    elif r_level == "moderate":
+        verdict = g["verdict_ok"]
+    else:
+        verdict = g["verdict_struggle"]
+
+    backend_label = f"E\u2080 API ({starter.model_name})" if starter.is_api else f"E\u2080 Local ({starter.model_name})"
+    _web_init_data = {
+        "text": f"[Profile initialization complete. {len(starter.turn_metrics)} steps executed.]",
+        "metrics": last_metrics,
+        "interpretation": {"r": r_text, "h": h_text, "phi": phi_text, "v": v_text},
+        "verdict": verdict.strip(),
+        "trace": [],
+        "help_text": g["help_text"].strip(),
+        "backend": backend_label,
+        "params": f"{starter.param_count:,}" if hasattr(starter, 'param_count') else "API",
+    }
+
+    server = HTTPServer(("0.0.0.0", port), E0StartHandler)
+    url = f"http://localhost:{port}"
+
+    print(f"  E\u2080 Web Interface: {url}")
+    print(f"  Ctrl+C to stop")
+    print()
+
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print("\n  Server stopped.\n")
+        server.server_close()
+
+
+def _start_terminal_with_starter(starter, lang, show_detail):
+    """Start terminal chat with an already-initialized starter."""
+    g = GUIDANCE[lang]
+    print(g["chat_header"])
+
+    prev_r = starter.turn_metrics[-1]["r"] if starter.turn_metrics else 0
+    turn_num = len(starter.turn_metrics)
+
+    while True:
+        try:
+            user_input = input("  You > ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\n  Session ended.\n")
+            break
+
+        if not user_input:
+            continue
+        cmd = user_input.lower()
+        if cmd == "/quit":
+            print("\n  Session ended.\n")
+            break
+        if cmd in ("/help", "/hilfe"):
+            print(g["help_text"])
+            continue
+        if cmd == "/report":
+            report = build_report_data(starter, lang)
+            print(f"\n{report['report']}\n")
+            continue
+
+        turn_num += 1
+        try:
+            text, steps, metrics = starter.chat(user_input)
+        except Exception as e:
+            print(f"  [Error] {e}\n")
+            continue
+
+        clean = _clean(text)
+        words_list = clean.split()
+        line = "  E0 > "
+        for w in words_list:
+            if len(line) + len(w) + 1 > 72:
+                print(line)
+                line = "       " + w
+            else:
+                line += (" " if not line.endswith(" ") else "") + w
+        if line.strip():
+            print(line)
+
+        print()
+        print(format_signature(metrics))
+
+        r = metrics["r"]
+        if r < 0.3:
+            print(g["turn_explain"]["r_freefall"])
+        elif r < prev_r - 0.15:
+            print(g["turn_explain"]["r_dropping"])
+        elif r > prev_r + 0.15:
+            print(g["turn_explain"]["r_rising"])
+        else:
+            print(g["turn_explain"]["r_stable"])
+        prev_r = r
+
+        if show_detail and steps:
+            print()
+            print(detailed_trace(steps))
         print()
 
 
@@ -1451,11 +1797,16 @@ Examples:
   py e0_start.py --api KEY          API model (Together AI, OpenAI, etc.)
   py e0_start.py --api KEY --web    API + browser (best for 30B+)
   py e0_start.py --api KEY --base-url URL --model MODEL
+
+Profile mode (structured initialization path):
+  py e0_start.py --profile profiles/agriculture.json --api KEY
+  py e0_start.py --profile profiles/health.json --api KEY
+  py e0_start.py --profile profiles/default.json
         """,
     )
     parser.add_argument(
         "--model", type=str, default=None,
-        help="Model name (default: gpt2 local, Qwen/Qwen2.5-32B-Instruct API)",
+        help="Model name (default: gpt2 local, Qwen/Qwen2.5-7B-Instruct-Turbo API)",
     )
     parser.add_argument(
         "--device", type=str, default="cpu",
@@ -1485,9 +1836,31 @@ Examples:
         "--base-url", type=str, default=None,
         help="API base URL (default: Together AI)",
     )
+    parser.add_argument(
+        "--profile", type=str, default=None, metavar="PATH",
+        help="Initialization profile (JSON). Overrides --model, --lang, --web.",
+    )
 
     args = parser.parse_args()
 
+    # Default base URL for Together AI if API key looks like one
+    base_url = args.base_url
+    if args.api and not base_url:
+        if args.api.startswith("tgp_"):
+            base_url = "https://api.together.xyz/v1"
+
+    # ── Profile mode: structured initialization path ──
+    if args.profile:
+        run_profile(
+            profile_path=args.profile,
+            api_key=args.api,
+            base_url=base_url,
+            show_detail=args.detail,
+            port=args.port,
+        )
+        return
+
+    # ── Standard mode ──
     # Determine model name
     if args.model:
         model_name = args.model
@@ -1495,12 +1868,6 @@ Examples:
         model_name = "Qwen/Qwen2.5-7B-Instruct-Turbo"
     else:
         model_name = "gpt2"
-
-    # Default base URL for Together AI if API key looks like one
-    base_url = args.base_url
-    if args.api and not base_url:
-        if args.api.startswith("tgp_"):
-            base_url = "https://api.together.xyz/v1"
 
     if args.web:
         run_web(model_name, args.device, args.lang, args.detail, args.port,

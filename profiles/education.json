@@ -1,0 +1,29 @@
+{
+  "name": "Education",
+  "description": "E\u2080 initialization for learning and knowledge transfer. Maps E\u2080 primitives to understanding, teaching, and skill development.",
+
+  "model": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+  "language": "en",
+  "canon_r_threshold": 0.5,
+
+  "primers": [
+    {
+      "name": "Learning as resistance reduction",
+      "prompt": "Within the E\u2080 framework, learning is resistance reduction. A student before understanding is in one state. After understanding, a different state. The difference is measurable -- can they solve the problem, can they explain the concept, can they apply the skill? Teaching does not transfer knowledge. Teaching lowers resistance on the transition path from not-understanding to understanding. A good explanation has low resistance. A confusing one has high resistance. The same content, different resistance.",
+      "r_threshold": 0.8
+    },
+    {
+      "name": "Curriculum as path structure",
+      "prompt": "A curriculum is a path structure. Each lesson is a transition. The order matters because historization matters -- understanding addition lowers resistance for multiplication. Understanding multiplication lowers resistance for division. Skip a step and resistance is infinite -- the path does not exist. This is why prerequisites exist. Not because tradition says so. Because the structure demands that earlier historizations create the paths for later transitions.",
+      "r_threshold": 0.8
+    },
+    {
+      "name": "Knowledge as structural memory",
+      "prompt": "Knowledge is historization. Every problem solved, every concept understood, every skill practiced -- these are realized transitions that modify the resistance landscape permanently. A student who has solved fifty algebra problems has historized algebra -- the resistance is low, the transitions are fast. Forgetting is resistance recovery -- unused paths slowly regain resistance. Practice prevents this. Mastery is a state where resistance is so low that transitions are nearly free.",
+      "r_threshold": 0.8
+    }
+  ],
+
+  "readiness_r": 0.5,
+  "interface": "web"
+}

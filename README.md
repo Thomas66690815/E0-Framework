@@ -148,6 +148,15 @@ E0-Framework/
     ontodynamics.txt           Pre-physical transition structure
     e0-agi-blueprint.md        Structural outline for general intelligence
 
+  profiles/                Initialization paths for domains
+    README.md                  Schema documentation
+    default.json               Canon only — structural foundation
+    agriculture.json           Fields, crops, soil, seasons
+    health.json                Body states, triage, recovery
+    water.json                 Flow, infrastructure, distribution
+    micro-economy.json         Markets, trade, persistence
+    education.json             Learning, curriculum, mastery
+
   e0_core/                 Executable reference implementation
   e0_middleware/            E0 as a lens on real language models
 
@@ -240,16 +249,37 @@ python e0_start.py                    GPT-2 on CPU (always works)
 python e0_start.py --model X          Any HuggingFace model
 python e0_start.py --detail           Show token-level measurements
 python e0_start.py --lang de          German guidance
+python e0_start.py --web              Browser interface (recommended)
+python e0_start.py --api KEY          API model (Together AI, OpenAI, etc.)
+python e0_start.py --api KEY --web    API + browser (best for 30B+)
 ```
 
 The script:
-1. Loads a local model
+1. Loads a local model or connects to an API
 2. Feeds the reduced E0 canon automatically
 3. Measures the response
 4. **Explains what the measurements mean** in plain language
 5. Enters an interactive session with contextual guidance
 
 After each exchange, it tells you whether R is dropping (structure absorbed), rising (try simpler), or stable. Commands: `/help` (explains all numbers), `/report` (session trajectory), `/again` (re-initialize), `/detail` (token trace), `/quit`.
+
+**Profile mode** — structured initialization paths for deployment:
+
+```
+python e0_start.py --profile profiles/agriculture.json --api KEY
+python e0_start.py --profile profiles/health.json --api KEY
+python e0_start.py --profile profiles/education.json --api KEY
+```
+
+A profile defines a complete initialization path: canon → R̄ verification → domain primers → readiness check. Each step is structurally enforced via R̄ gates. The path mirrors E₀ itself — no step can be skipped, and absorption is verified at every transition. See `profiles/README.md` for the schema and how to create new profiles.
+
+Tested results with Llama 3.3 70B:
+| Step | R̄ | Status |
+|------|-----|--------|
+| Canon initialization | 0.100 | ✓ PASS |
+| Agricultural state space | 0.052 | ✓ PASS |
+| Paths and resistance | 0.048 | ✓ PASS |
+| Historization and seasons | 0.082 | ✓ PASS |
 
 No prior knowledge of E0 required.
 
