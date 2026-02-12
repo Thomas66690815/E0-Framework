@@ -135,19 +135,74 @@ That is meta-cognition — not as introspection, but as structure.
 
 Repository structure
 
-This repository currently contains three core documents:
+This repository currently contains three core documents and two executable packages:
 
-E₀ Canonical Reference
+### Documents
+
+**E₀ Canonical Reference** (`e0-canonical-reference.txt`)
 The operational core: primitives, axiom, and structural definitions.
 
-Ontodynamics – A Minimal Pre-Physical Canon
+**Ontodynamics – A Minimal Pre-Physical Canon** (`Ontodynamics – A Minimal Pre-Physical Canon.txt`)
 A deeper layer describing transition structure prior to physical interpretation.
 
-E₀–AGI: A Domain-Invariant Blueprint
+**E₀–AGI: A Domain-Invariant Blueprint** (`E₀-AGI A Domain-Invariant Blueprint1.2.md`)
 A structural outline exploring how E₀ constrains and enables artificial general systems — without proposing implementation.
 
 These documents are complementary, not hierarchical.
 They can be read independently, but resonate structurally when combined.
+
+### Code
+
+**`e0_core/`** — Executable reference implementation of the canon
+
+The seven canonical primitives, Axiom A₀, and the Central Law — as runnable Python.
+No external dependencies. No machine learning libraries. Just the structure.
+
+This package also implements the deeper layers from the documents above:
+
+- **Ontodynamic admissibility** — topology, locality, graduated overlap. The silent constraints that determine what *can* become real, before E₀ decides what *must* change.
+- **Structural guards** — four checks that protect structural integrity without value judgments: anti-collapse, integrability, trace assurance, resistance-bypass detection.
+- **Reflexivity** — the system observes its own transition dynamics and, when Axiom A₀ holds at the meta-level, self-modification is enforced. This is not programmed introspection. It emerges.
+
+Run it:
+```
+python -m e0_core.demo        # Basic: transitions, historization, learning
+python -m e0_core.demo_full   # Full stack: ontodynamics, guards, reflexivity
+```
+
+**`e0_middleware/`** — E₀ as a lens on real language models
+
+This is where E₀ meets existing AI systems.
+
+The central insight: we do not need to build E₀ *into* a model. E₀ describes what every model *already does*. Like thermodynamics does not need to be installed in a gas — it describes the gas.
+
+The middleware instruments real LLM API calls with E₀ measurements:
+
+- **Instrumentation** — every token probability becomes a resistance measurement (`R = −log p`). Shannon entropy becomes landscape stability. Phase transitions in the output become visible as topology changes.
+- **Decoding guards** — structural steering at the token level. Not temperature or top-p (which are blind), but guards that detect mode collapse, pseudo-transitions, and resistance bypasses. Pluggable as a HuggingFace `LogitsProcessor`.
+- **Convergence tracking** — when you give E₀ to a language model, the conversation converges on E₀. This module measures that phenomenon: how fast, how deep, how stable.
+- **API wrapper** — drop-in replacement for OpenAI-compatible clients. Every API call returns both the response and full E₀ metrics. Works in simulation mode without an API key.
+
+Run it:
+```
+python -m e0_middleware.demo_live   # All components, simulation mode
+```
+
+To use with a real model, set `OPENAI_API_KEY` as an environment variable.
+
+### The three-layer architecture
+
+The code mirrors the three-layer structure of the documents:
+
+```
+Ontodynamics        What CAN become real?         (topology, locality, overlap)
+       ↓ constrains
+E₀ Canon            When MUST something change?   (Δ > 0 ∧ ∃P: R < ∞ → transition)
+       ↓ instantiated by
+E₀ Middleware        Observing and steering real systems through E₀
+```
+
+Each layer operates on the one below it. None of them require goals, values, rewards, or intentions.
 
 How to engage (recommended)
 
@@ -160,6 +215,14 @@ Apply it to a domain you already know well
 Iterate — do not rush to conclusions
 
 Only then explore Ontodynamics or the AGI Blueprint
+
+If you want to see E₀ in motion:
+
+run `python -m e0_core.demo` — watch transitions select themselves
+
+run `python -m e0_core.demo_full` — see guards reject structural violations
+
+run `python -m e0_middleware.demo_live` — observe E₀ measurements on language model output
 
 If using E₀ with AI systems:
 
