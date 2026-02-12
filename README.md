@@ -222,6 +222,19 @@ Each response is annotated:
 
 Commands: `/help`, `/report` (full session), `/detail` (toggle token trace), `/clear`, `/quit`.
 
+**`e0_browser.py`** — Browser chat interface
+
+Same three backends, same E₀ signatures — in the browser. Single-file Python server, zero dependencies beyond stdlib.
+
+```
+python e0_browser.py                    # Simulation mode → http://localhost:3000
+python e0_browser.py --local            # GPT-2 on CPU
+python e0_browser.py --api sk-...       # OpenAI-compatible API
+python e0_browser.py --port 8080        # Custom port
+```
+
+Every response shows R̄, H̄, Φ, v̄, τ inline. Click "token trace" under any response to expand the full token-by-token E₀ measurement table. Session Report and Reset available from the header.
+
 ### The three-layer architecture
 
 The code mirrors the three-layer structure of the documents:
@@ -281,6 +294,8 @@ run `python -m e0_middleware.local_model` — measure real resistance on a local
 run `python -m e0_core.qm_reconstruction` — watch quantum mechanics emerge from 5 primitives
 
 run `python e0_chat.py` — talk to E₀ and see the structural signature of every exchange
+
+run `python e0_browser.py` — same chat, in the browser, with expandable token traces
 
 If using E₀ with AI systems:
 
