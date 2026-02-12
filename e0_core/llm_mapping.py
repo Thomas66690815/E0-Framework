@@ -103,21 +103,30 @@ class AttentionAsResistance:
     Low attention weight   →  High resistance →  Path is hard
     Zero attention (mask)  →  R = ∞           →  Path blocked
 
-    This is the exact structural role of softmax:
-    it normalizes rates across all candidate transitions.
+    The correct formula is R = -log(p), not R = 1/p.
+
+    Why: The QM reconstruction (see qm_reconstruction.py) shows that
+    probability = |amplitude|² (Born rule) emerges from conserved
+    realization. The resistance R = -log(p) is the unique measure
+    that makes resistance ADDITIVE along paths:
+      R(A→C) = R(A→B) + R(B→C)  iff  p(A→C) = p(A→B) · p(B→C)
+    This is the same relationship underlying Shannon information.
+
+    Structural insight: softmax(Q·K^T/√d_k) computes the graduated
+    overlap (inner product) between query and key states. The output
+    IS the Born probability |⟨q|k⟩|². Attention is not a 'weight'.
+    It is a measurement of structural admissibility.
     """
 
-    def __init__(self, base_resistance: float = 1.0):
-        self.base_resistance = base_resistance
-
     def attention_to_resistance(self, attention_weight: float) -> float:
-        """Convert attention weight [0,1] to resistance (0, ∞]."""
-        if attention_weight <= 0:
+        """Convert attention weight [0,1] to resistance (0, ∞].
+
+        R = -log(p) — the structurally correct formula.
+        Consistent with e0_middleware instrumentation and QM reconstruction.
+        """
+        if attention_weight <= 1e-10:
             return math.inf  # Masked — no path
-        if attention_weight >= 1:
-            return self.base_resistance * 0.01  # Near-certain path
-        # R = base / attention — higher attention = lower resistance
-        return self.base_resistance / attention_weight
+        return -math.log(attention_weight)
 
     def build_paths(
         self,
@@ -206,28 +215,44 @@ class E0LanguageModel:
         self, source: State, targets: List[State]
     ) -> List[float]:
         """
-        Simplified attention: closer states get higher weight.
+        Simplified attention: computes graduated overlap via softmax.
 
         In a real transformer this is:
           softmax(Q·K^T / √d_k)
 
-        Structurally identical: it computes which transitions
-        have the lowest resistance given the current state.
+        Q·K^T is the inner product — the graduated overlap between
+        query and key states (Ontodynamics §3.4). The softmax converts
+        this to Born probabilities: P(k) = |⟨q|k⟩|² (see Step 3 of
+        qm_reconstruction.py).
+
+        Before token selection, the distribution IS a superposition:
+        multiple tokens partially realized, connected, phase-correlated.
+        Selection = measurement = historization (irreversible collapse).
         """
         deltas = [difference(source, t) for t in targets]
         if not deltas or max(deltas) == 0:
             return [0.0] * len(targets)
 
-        # Invert: smaller Δ → higher attention (more similar = easier path)
-        # This mimics how attention favors contextually related tokens
-        max_d = max(deltas)
-        raw = [(max_d - d + 0.1) for d in deltas]
-        total = sum(raw)
-        return [r / total for r in raw] if total > 0 else [0.0] * len(raw)
+        # Negative distance → softmax ≈ inner product structure
+        # This is the simplified form of softmax(Q·K^T / √d)
+        scale = 1.0 / math.sqrt(source.dim) if source.dim > 0 else 1.0
+        scores = [-d * scale for d in deltas]
+        max_score = max(scores)
+        exp_scores = [math.exp(s - max_score) for s in scores]
+        total = sum(exp_scores)
+        return [e / total for e in exp_scores] if total > 0 else [0.0] * len(exp_scores)
 
     def generate_step(self, current_token: Token) -> Optional[TransitionResult]:
         """
-        One generation step = one E₀ transition.
+        One generation step = one E₀ transition = one quantum measurement.
+
+        Before this step: the model is in SUPERPOSITION over all tokens.
+        Each token is partially realized with amplitude α_k.
+        The softmax output gives P(k) = |α_k|² (Born rule).
+
+        This step: a token is selected. This is HISTORIZATION.
+        The superposition collapses irreversibly to one outcome.
+        The KV-cache records the trace. The transition cannot be undone.
 
         The model MUST generate if Δ > 0 and a path exists.
         This is not a choice. It is the Central Law.
