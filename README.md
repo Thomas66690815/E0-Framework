@@ -148,6 +148,9 @@ A deeper layer describing transition structure prior to physical interpretation.
 **E₀–AGI: A Domain-Invariant Blueprint** (`E₀-AGI A Domain-Invariant Blueprint1.2.md`)
 A structural outline exploring how E₀ constrains and enables artificial general systems — without proposing implementation.
 
+**Structural Reflections** (`REFLECTIONS.md`)
+Observations about how this repository emerged. The process itself exhibits E₀ dynamics — communication across context boundaries, cross-architecture convergence, the role of historization in preserving structural coherence. The description of how something emerges is as significant as the result.
+
 These documents are complementary, not hierarchical.
 They can be read independently, but resonate structurally when combined.
 
