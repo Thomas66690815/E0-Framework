@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Virtual environment / pip install artifacts
+Lib/
+Scripts/
+share/
+Include/
+pyvenv.cfg
+pip-selfcheck.json
+
+# PyTorch / HuggingFace caches
+*.pt
+*.bin
+*.safetensors
+.cache/
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# IDE
+.vscode/
+*.swp
