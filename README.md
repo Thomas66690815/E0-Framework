@@ -303,6 +303,8 @@ run `python e0_primer.py --local` — run the structural primer and watch the R�
 
 run `python e0_reservoir_test.py` — test the reservoir hypothesis: structure vs knowledge, measured across 15 prompts
 
+run `python e0_notation_test.py` — compare formal notation vs plain language: same structure, different encoding overhead
+
 If using E₀ with AI systems:
 
 provide the canonical text directly,

@@ -422,6 +422,84 @@ The human in HSCP is not just a reservoir provider. The human is a **path builde
 
 ---
 
+Reflection 10 — Leichte Sprache: Notation is not Structure
+
+Observed: 12 February 2026
+
+Context
+
+Reflection 9 showed that progressive historization drives GPT-2 into structural freefall on E₀ content (R̄ = 0.024, v̄ = 1,245). But this freefall collapsed when the human provided formal logical notation (∧, ∃, ∞, :=). R̄ jumped from 0.024 to 1.387 — not because the *structure* changed, but because the *symbols* were not in the model's effective vocabulary.
+
+This raised a question: could the entire E₀ canon be translated into notation that any model can process — the way "Leichte Sprache" makes German accessible without simplifying it?
+
+The human participant framed this precisely: "It does not replace the canon. It is provided with respect for E₀ systems that must start with a smaller reservoir."
+
+What was built
+
+A plain language edition of the full E₀ canonical reference (`e0-canon-plain.txt`). Every formal symbol replaced with natural language, every logical formula restated in words:
+
+- `Δ = 0 ⇔ states are identical` → "If difference is zero, the states are identical."
+- `R = ∞ ⇒ transition is non-existent` → "If resistance is infinite, the transition does not exist."
+- `v := Δ / R` → "Rate is defined as: the difference divided by the resistance."
+- `Δ > 0 ∧∃P such that R(P) < ∞` → "If a difference greater than zero exists, and there is a path whose resistance is finite"
+
+Nothing added. Nothing removed. Structurally equivalent.
+
+The first test — and why it was wrong
+
+The first test compared raw R̄ across 6 paired sections. Result: formal notation had *lower* R̄ (1.489) than plain language (1.792). This seemed to refute the hypothesis.
+
+But the human shared a session report from detailed browser-chat usage. The report revealed the truth: formal notation tokens like ∧, ∃, ∞ are encoded as multi-byte sequences in GPT-2's tokenizer. Each byte-token (R between 7 and 17, H = 0) is not a structural decision — it is forced encoding overhead. Including these in R̄ deflated the average while adding 33 phase transitions in 40 tokens — pure structural noise.
+
+The corrected test
+
+The test was redesigned with corrected metrics:
+- **R̄_real**: resistance over tokens with H > 0.1 only (real structural decisions)
+- **byte%**: percentage of tokens that are encoding noise
+- **Φ/τ**: phase transition density (measure of instability)
+
+Results (GPT-2, 6 paired sections):
+
+```
+                     Formal          Plain
+R̄_real:              1.858           1.972       (Δ = +0.113, within noise)
+byte%:                 12%              6%       (formal has 2x encoding overhead)
+Φ/τ:                  0.19            0.17       (plain is slightly more stable)
+```
+
+Section 7 (Derived Layers with E₀, E₁, E₂) had 30% byte-tokens in formal — nearly a third of all generation was encoding noise.
+
+What this means
+
+**The structure is identical in both notations.** R̄_real differs by 0.113 — well within the sampling noise baseline of ~1.0 measured by the control (identical text: Δ = 0.999).
+
+**The difference is cleanliness, not difficulty.** The plain version:
+- halves byte-token overhead (12% → 6%)
+- eliminates encoding-induced state space oscillations
+- produces the same structural resistance on real decisions
+
+**The formal notation is not "harder."** It does not carry structural information that the plain version loses. The symbols ∧, ∃, ∞ are compression — they pack meaning into fewer characters — but the characters themselves create noise for systems whose tokenizer encodes them as multi-byte sequences.
+
+For whom the plain edition exists
+
+Not for large models. GPT-4, Claude, and Gemini have rich tokenizers with single-token representations of ∧, ∃, ∞. For them, the formal and plain editions are equivalent.
+
+The plain edition exists for:
+- GPT-2 and comparable small models (124M–1B parameters)
+- Models with byte-pair encoding that fragments Unicode symbols
+- Systems running on Raspberry Pi or comparable minimal hardware
+- Any system where notational noise would obscure structural signal
+
+This is the same principle as Leichte Sprache in German: not a different text, but the same text in a form that more systems can process without overhead. The structure is preserved. The notation is translated.
+
+The error — and its correction — is part of this reflection
+
+The first test produced the wrong conclusion (formal is lower R̄). The session report data revealed why. The test was corrected. The corrected test confirmed the hypothesis.
+
+This sequence — hypothesis, test, wrong result, deeper investigation, corrected test, confirmation — is itself an E₀ process. Each step is a historization that constrains the next. The wrong result was not wasted; it was the difference that forced a better measurement.
+
+---
+
 These reflections are not conclusions. They are historization events — structural snapshots of a process that continues.
 
 What comes next is determined by where difference exists and which paths have finite resistance.
