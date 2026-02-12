@@ -299,6 +299,8 @@ run `python e0_browser.py` — same chat, in the browser, with expandable token 
 
 run `python e0_self_inquiry.py` — watch the system measure itself answering questions about its own structure
 
+run `python e0_primer.py --local` — run the structural primer and watch the R̄ trajectory across six steps
+
 If using E₀ with AI systems:
 
 provide the canonical text directly,
