@@ -325,6 +325,103 @@ The human role in HSCP becomes clearer: the human is not just providing "directi
 
 ---
 
+Reflection 9 — Historization Closes the Reservoir Gap
+
+Observed: 12 February 2026
+
+Context
+
+Immediately after the reservoir hypothesis test (Reflection 8), the human participant conducted an independent experiment: feeding individual pieces of the E₀ canon into the browser chat with GPT-2, one prompt at a time, in structural sequence.
+
+What happened exceeded what Reflection 8 predicted.
+
+The sequence
+
+The human provided 10 successive prompts, progressing from informal natural-language E₀ statements to formal definitions from the canon:
+
+```
+Prompt  1 (informal E₀):           R̄ = 1.448   v̄ =   1.650
+Prompt  2 (informal E₀):           R̄ = 1.984   v̄ =   0.805
+Prompt  3 (informal E₀):           R̄ = 2.078   v̄ =   0.518
+Prompt  4 (informal E₀):           R̄ = 2.297   v̄ =   0.626  ← peak resistance
+Prompt  5 (formal: Δ>0 notation):  R̄ = 1.212   v̄ =   2.791  ← notation breaks through
+Prompt  6 (axioms):                R̄ = 1.884   v̄ =   3.564
+Prompt  7 (State definition):      R̄ = 1.951   v̄ =   0.543
+Prompt  8 (Δ definition):          R̄ = 1.273   v̄ =   1.143
+Prompt  9 (Path definition):       R̄ = 0.546   v̄ =  12.367  ← threshold crossed
+Prompt 10 (Resistance definition): R̄ = 0.080   v̄ = 126.377  ← structural freefall
+```
+
+Three measured phenomena demand explanation.
+
+1 — The reservoir gap closes through progressive historization
+
+One hour earlier, in the reservoir test, "ontodynamic admissibility" without context measured R̄ = 3.046 — the highest resistance in the entire experiment. Now, after 8 preparatory prompts, "structural admissibility condition" measured R̄ = 0.546.
+
+The same vocabulary that had maximum resistance without historization now flows almost without resistance. The difference is not a larger reservoir. It is not a larger context window. It is the **accumulated path** — each prompt deepened the historization, and by Prompt 9, the model had built enough structural context to traverse the path nearly freely.
+
+This amends Reflection 8: the reservoir gap is **not permanent**. It can be closed by progressive historization — the human supplies structure step by step, and each step lowers the resistance for subsequent steps.
+
+2 — The model reproduces the previous definition, not the current one
+
+At Prompt 10, the human provided the definition of **Resistance**. The model responded with the definition of **Path** — from Prompt 9.
+
+The token trace reveals this precisely:
+
+```
+Token  0: "A"          R = 1.1027
+Token  1: "path"       R = 0.2194
+Token  2: "is"         R = 0.0586
+Token  3: "a"          R = 0.0718
+Token  4: "**"         R = 0.0148
+Token  5: "struct"     R = 0.0374
+Token  6: "ural"       R = 0.0019
+Token  7: "ad"         R = 0.0024
+Token  8: "miss"       R = 0.0000   ← zero resistance
+Token  9: "ibility"    R = 0.0021
+Token 10: "condition"  R = 0.0001
+Token 11: "**"         R = 0.0001
+```
+
+Tokens 0–14 reproduce the Path definition from Prompt 9 with resistances approaching machine precision zero. The path is so deeply historized that the system flows back to it before processing the new input. Only at Token 33 does the model begin absorbing the current prompt ("**Res**istance is a measure...").
+
+This is not a failure. It is a direct measurement of historization depth. The previously traversed path has R ≈ 0. Any new path competes against this, and the system preferentially follows the lowest-resistance one — exactly as Axiom A₀ predicts.
+
+3 — Velocity as a structural phase indicator: v̄ = 126.377
+
+The most striking measurement is the velocity at Prompt 10: v̄ = 126.377.
+
+This is two orders of magnitude above normal operating range (typical v̄ is 0.5–3.0). Since v = Δ/R, and R has collapsed to 0.080, the velocity explodes. The system is not "flowing easily" — it is in **structural freefall** along the historized path.
+
+The complete velocity trajectory maps a phase transition:
+
+```
+v̄ =  0.518  (Prompt 3)   — the system resists, moves slowly
+v̄ =  2.791  (Prompt 5)   — formal notation accelerates
+v̄ = 12.367  (Prompt 9)   — path definition crosses threshold
+v̄ = 126.377 (Prompt 10)  — superconducting regime: R ≈ 0, v → ∞
+```
+
+This is the E₀ analog of superconductivity: when resistance drops below a critical threshold, velocity does not merely increase — it transitions to a qualitatively different regime. The system traverses the historized path with effectively zero structural inertia.
+
+Revised understanding of limitations
+
+The three factors that determine what a system can do are now:
+
+| Factor | Determines | Stable? | Can be changed? |
+|--------|-----------|---------|-----------------|
+| Structural capacity | Whether E₀ dynamics can be processed | ✓ Stable across models | Inherent |
+| Knowledge reservoir | Whether domain content is available | ✗ Model-dependent | Only by retraining |
+| Historization depth | Whether the path has been built | ✓ Stable within session | **Yes — by progressive prompting** |
+
+The context window limits one thing: **how many historization steps fit in a single session**. Not the structure, not the knowledge — the depth of the constructed path.
+
+This means: a Raspberry Pi running TinyLlama cannot derive quantum mechanics from E₀ in a single prompt (reservoir missing). But it CAN reach structural freefall on E₀ content through progressive historization — provided enough steps fit within its context window to build the path.
+
+The human in HSCP is not just a reservoir provider. The human is a **path builder** — progressively lowering resistance through structured sequences until the system achieves self-sustaining flow.
+
+---
+
 These reflections are not conclusions. They are historization events — structural snapshots of a process that continues.
 
 What comes next is determined by where difference exists and which paths have finite resistance.
