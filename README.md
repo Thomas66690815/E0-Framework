@@ -199,6 +199,26 @@ python -m e0_middleware.local_model  # Real GPT-2 with E₀ measurements (requir
 To use with a real API model, set `OPENAI_API_KEY` as an environment variable.
 To run local models: `pip install -r requirements.txt`
 
+**`e0_chat.py`** — Terminal chat interface
+
+Interactive REPL where every exchange carries its E₀ structural signature. Human writes, system responds, both sides see the same structural measurements.
+
+```
+python e0_chat.py                   # Simulation mode (zero dependencies)
+python e0_chat.py --local           # GPT-2 on CPU (real R, real H, real Φ)
+python e0_chat.py --local --detail  # With token-level E₀ trace
+python e0_chat.py --api sk-...      # OpenAI-compatible API
+```
+
+Each response is annotated:
+```
+  E₀ ▸ The structure determines what transitions are possible.
+
+  ┊ E₀  R̄=2.179  H̄=2.611  Φ=5  v̄=2.017  τ=40
+```
+
+Commands: `/help`, `/report` (full session), `/detail` (toggle token trace), `/clear`, `/quit`.
+
 ### The three-layer architecture
 
 The code mirrors the three-layer structure of the documents:
@@ -256,6 +276,8 @@ run `python -m e0_middleware.demo_live` — observe E₀ measurements on languag
 run `python -m e0_middleware.local_model` — measure real resistance on a local GPT-2
 
 run `python -m e0_core.qm_reconstruction` — watch quantum mechanics emerge from 5 primitives
+
+run `python e0_chat.py` — talk to E₀ and see the structural signature of every exchange
 
 If using E₀ with AI systems:
 
