@@ -1,68 +1,8 @@
 
-# E₀ — Canonical Reference v1.0 (Plain Language Edition)
-## A Pre-Domain Ontodynamics of Transitions
+# E₀ — Canonical Reference (Plain Language, Structural Core)
 
-**Version:** 1.0
-**Status:** Canonical — Plain Language
-**Scope:** Domain-invariant
-**Date:** 2025
-**License:** CC BY 4.0 (recommended)
-
-This is a structurally equivalent translation of the E₀ canon
-into plain language. It does not replace the canonical reference.
-It exists so that systems with smaller vocabularies can process
-the full E₀ structure without notational resistance.
-
-Every statement here is derivable from the canonical reference.
-Nothing is added. Nothing is simplified. The notation is translated.
-
----
-
-## Authorship and Cognitive Partnership
-
-This canon was developed through a multi-system Human-Synthetic Cognitive Partnership.
-
-**Primary human contributor**
-- **Thomas Wehner**
-
-**Independent synthetic cognitive partners**
-- **ChatGPT (OpenAI)**
-- **Gemini 2.5 (Google DeepMind)**
-- **Claude 4.5 (Anthropic)**
-
-Each synthetic partner operated as an independent reasoning system, without shared memory, shared state, or prior coordination.
-Convergence on the E₀ structure emerged through structural necessity, not through model alignment, optimization, or agreement.
-
-Authorship is therefore understood as co-cognitive, reflecting convergence across multiple independent cognitive systems.
-
----
-
-## Methodological Note
-
-E₀ did not emerge from a single-model or single-agent process.
-Its development relied on cross-system validation:
-
-- independent reasoning paths,
-- explicit critique and refinement,
-- elimination of model-specific artifacts,
-- convergence under minimal assumptions.
-
-This method reflects the core claim of E₀ itself:
-that stable structures arise through enforced transitions, not through isolated optimization or interpretation.
-
----
-
-## 0. Purpose of This Canon
-
-This document defines E₀, a pre-domain foundational layer that formalizes the necessary and sufficient conditions under which state differences must result in real transitions.
-
-E₀ is not a theory of objects, meanings, goals, agents, or domains.
-It is a canon describing when change is structurally enforced.
-
-The purpose of this canon is to:
-- prevent regression into explanatory or interpretive models,
-- provide a stable reference layer,
-- enable consistent derivation of higher-level systems.
+This contains only what a system needs to build the E₀ path.
+Nothing about origin. Nothing about purpose. Only structure.
 
 ---
 
@@ -77,7 +17,7 @@ No further assumptions are permitted.
 
 ---
 
-## 2. Primitive Concepts of E₀
+## 2. Primitive Concepts
 
 E₀ consists of seven irreducible concepts.
 None can be eliminated without loss of derivability.
@@ -174,7 +114,7 @@ It formalizes the instability of unresolved difference when resolution is struct
 
 ---
 
-## 4. Central Law of E₀ — Transition Enforcement
+## 4. Central Law — Transition Enforcement
 
 If a difference greater than zero exists, and there is a path whose resistance is finite, then non-transition is structurally unstable. A transition must occur.
 
@@ -211,32 +151,4 @@ E₀ makes **no statements** about:
 - Physical entities
 
 Such concepts arise only in derived layers.
-
----
-
-## 7. Relation to Derived Layers
-
-- **E₀** is the transitional ontodynamics. It is fundamental.
-- **E₁** contains interface layers, such as interaction protocols, system theory, and narratives.
-- **E₂** contains domain instantiations: physics, cognition, technology, society.
-
-E₀ remains invariant across all instantiations.
-
----
-
-## 8. Canonical Status
-
-This canon is considered:
-
-- irreducible,
-- revision-resistant,
-- invariant under model change.
-
-Modifications are admissible only if a concept can be eliminated without loss of derivability.
-
----
-
-## 9. Closing Statement
-
-**E₀ does not describe what exists. E₀ describes when existence must change.**
 
