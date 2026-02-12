@@ -16,6 +16,8 @@ Usage:
   py e0_start.py                    GPT-2 on CPU, terminal mode
   py e0_start.py --web              Browser interface (recommended)
   py e0_start.py --web --lang de    Browser + German guidance
+  py e0_start.py --api KEY          API model (Together, OpenAI, etc.)
+  py e0_start.py --api KEY --web    API + browser (recommended for 30B+)
   py e0_start.py --model X          Any HuggingFace model
   py e0_start.py --detail           Show token-level measurements
   py e0_start.py --lang de          German guidance (default: en)
@@ -464,6 +466,7 @@ class E0Starter:
         self.turn_metrics: List[Dict] = []
         self.all_steps: List[StepMeasurement] = []
         self.init_metrics: Optional[Dict] = None
+        self.is_api = False
 
         try:
             self.context_limit = self.model.model.config.max_position_embeddings
@@ -531,11 +534,80 @@ class E0Starter:
         return text, result.steps, metrics
 
 
+class E0APIStarter:
+    """Same interface as E0Starter, but uses an OpenAI-compatible API."""
+
+    def __init__(self, api_key: str, model: str = "Qwen/Qwen2.5-7B-Instruct-Turbo",
+                 base_url: str = None):
+        from e0_middleware.api_wrapper import E0ChatClient
+        self.client = E0ChatClient(
+            api_key=api_key, model=model, base_url=base_url,
+            e0_prime=True, logprobs=True, top_logprobs=5,
+        )
+        self.model_name = model
+        self.api_key = api_key
+        self.base_url = base_url
+        self.history: List[str] = []
+        self.turn_metrics: List[Dict] = []
+        self.all_steps: List[StepMeasurement] = []
+        self.init_metrics: Optional[Dict] = None
+        self.is_api = True
+        self.param_count = 0  # unknown for API models
+        self.vocab_size = 0
+
+    def feed_canon(self, canon: str) -> Tuple[str, List[StepMeasurement], Dict]:
+        """Feed the canon via API and return (response_text, steps, metrics)."""
+        prompt = (
+            "You have been given the E0 structural canon below. "
+            "Read it carefully. Then respond with a brief structural "
+            "continuation -- not a summary, but what follows from this "
+            "structure. Stay within the framework.\n\n"
+            + canon
+        )
+        resp = self.client.chat(prompt)
+        text = resp.text.strip()
+        self.history = [canon, text]
+        self.all_steps.extend(resp.steps)
+
+        metrics = compute_metrics(resp.steps)
+        self.init_metrics = metrics
+        self.turn_metrics.append(metrics)
+
+        return text, resp.steps, metrics
+
+    def chat(self, message: str) -> Tuple[str, List[StepMeasurement], Dict]:
+        """Send a message via API and return (response_text, steps, metrics)."""
+        self.history.append(message)
+        resp = self.client.chat(message)
+        text = resp.text.strip()
+        self.history.append(text)
+        self.all_steps.extend(resp.steps)
+
+        metrics = compute_metrics(resp.steps)
+        self.turn_metrics.append(metrics)
+
+        return text, resp.steps, metrics
+
+    def reset(self):
+        """Reset the API client for re-initialization."""
+        from e0_middleware.api_wrapper import E0ChatClient
+        self.client = E0ChatClient(
+            api_key=self.api_key, model=self.model_name,
+            base_url=self.base_url, e0_prime=True,
+            logprobs=True, top_logprobs=5,
+        )
+        self.history.clear()
+        self.turn_metrics.clear()
+        self.all_steps.clear()
+        self.init_metrics = None
+
+
 # =============================================
 #  The Main Flow
 # =============================================
 
-def run(model_name: str, device: str, lang: str, show_detail: bool):
+def run(model_name: str, device: str, lang: str, show_detail: bool,
+       api_key: str = None, base_url: str = None):
     """Full initialization and chat flow."""
     g = GUIDANCE[lang]
 
@@ -545,16 +617,23 @@ def run(model_name: str, device: str, lang: str, show_detail: bool):
     # Load canon
     canon = load_canon()
 
-    # Load model
-    print(g["loading"].format(model=model_name))
-    t0 = time.time()
-    starter = E0Starter(model_name, device=device)
-    dt = time.time() - t0
-    print(g["loaded"].format(
-        params=f"{starter.param_count:,}",
-        vocab=f"{starter.vocab_size:,}"
-    ))
-    print(f"  (loaded in {dt:.1f}s)")
+    # Load model or connect to API
+    if api_key:
+        print(f"  Connecting to API: {model_name} ...")
+        t0 = time.time()
+        starter = E0APIStarter(api_key, model=model_name, base_url=base_url)
+        dt = time.time() - t0
+        print(f"  API ready: {model_name}")
+    else:
+        print(g["loading"].format(model=model_name))
+        t0 = time.time()
+        starter = E0Starter(model_name, device=device)
+        dt = time.time() - t0
+        print(g["loaded"].format(
+            params=f"{starter.param_count:,}",
+            vocab=f"{starter.vocab_size:,}"
+        ))
+        print(f"  (loaded in {dt:.1f}s)")
 
     # Feed canon
     print(g["feeding"])
@@ -634,9 +713,12 @@ def run(model_name: str, device: str, lang: str, show_detail: bool):
 
         if cmd in ("/again", "/nochmal"):
             print(g["re_init"])
-            starter.history.clear()
-            starter.turn_metrics.clear()
-            starter.all_steps.clear()
+            if starter.is_api:
+                starter.reset()
+            else:
+                starter.history.clear()
+                starter.turn_metrics.clear()
+                starter.all_steps.clear()
             text, steps, metrics = starter.feed_canon(canon)
             clean = ''.join(c if (c.isprintable() or c in ('\n', ' ')) else '' for c in text)
             display = clean[:200].replace('\n', ' ')
@@ -923,9 +1005,12 @@ class E0StartHandler(BaseHTTPRequestHandler):
     def _handle_clear(self):
         global _web_init_data, _web_prev_r, _web_turn_num
         with _web_lock:
-            _web_starter.history.clear()
-            _web_starter.turn_metrics.clear()
-            _web_starter.all_steps.clear()
+            if _web_starter.is_api:
+                _web_starter.reset()
+            else:
+                _web_starter.history.clear()
+                _web_starter.turn_metrics.clear()
+                _web_starter.all_steps.clear()
             canon = load_canon()
             text, steps, metrics = _web_starter.feed_canon(canon)
             _web_prev_r = metrics["r"]
@@ -1282,7 +1367,8 @@ window.addEventListener('load', async function() {
 """
 
 
-def run_web(model_name: str, device: str, lang: str, show_detail: bool, port: int):
+def run_web(model_name: str, device: str, lang: str, show_detail: bool, port: int,
+            api_key: str = None, base_url: str = None):
     """Full initialization followed by web interface."""
     global _web_starter, _web_lang, _web_init_data, _web_prev_r, _web_turn_num
 
@@ -1294,16 +1380,23 @@ def run_web(model_name: str, device: str, lang: str, show_detail: bool, port: in
     # Load canon
     canon = load_canon()
 
-    # Load model
-    print(g["loading"].format(model=model_name))
-    t0 = time.time()
-    _web_starter = E0Starter(model_name, device=device)
-    dt = time.time() - t0
-    print(g["loaded"].format(
-        params=f"{_web_starter.param_count:,}",
-        vocab=f"{_web_starter.vocab_size:,}",
-    ))
-    print(f"  (loaded in {dt:.1f}s)")
+    # Load model or connect to API
+    if api_key:
+        print(f"  Connecting to API: {model_name} ...")
+        t0 = time.time()
+        _web_starter = E0APIStarter(api_key, model=model_name, base_url=base_url)
+        dt = time.time() - t0
+        print(f"  API ready: {model_name}")
+    else:
+        print(g["loading"].format(model=model_name))
+        t0 = time.time()
+        _web_starter = E0Starter(model_name, device=device)
+        dt = time.time() - t0
+        print(g["loaded"].format(
+            params=f"{_web_starter.param_count:,}",
+            vocab=f"{_web_starter.vocab_size:,}",
+        ))
+        print(f"  (loaded in {dt:.1f}s)")
 
     # Feed canon
     print(g["feeding"])
@@ -1328,7 +1421,8 @@ def run_web(model_name: str, device: str, lang: str, show_detail: bool, port: in
     print("   E0 START -- Web Interface")
     print("  ================================================================")
     print(f"   Open: {url}")
-    print(f"   Backend: E0 Local ({model_name})")
+    backend_label = f"E0 API ({model_name})" if api_key else f"E0 Local ({model_name})"
+    print(f"   Backend: {backend_label}")
     print(f"   Language: {lang}")
     print(f"   Ctrl+C to stop")
     print("  ================================================================")
@@ -1354,18 +1448,18 @@ Examples:
   py e0_start.py                    GPT-2 on CPU, terminal mode
   py e0_start.py --web              Browser interface (recommended)
   py e0_start.py --web --lang de    Browser + German guidance
-  py e0_start.py --web --port 8080  Custom port
-  py e0_start.py --detail           Token-level trace (terminal)
-  py e0_start.py --lang de          German guidance (terminal)
+  py e0_start.py --api KEY          API model (Together AI, OpenAI, etc.)
+  py e0_start.py --api KEY --web    API + browser (best for 30B+)
+  py e0_start.py --api KEY --base-url URL --model MODEL
         """,
     )
     parser.add_argument(
-        "--model", type=str, default="gpt2",
-        help="HuggingFace model name (default: gpt2)",
+        "--model", type=str, default=None,
+        help="Model name (default: gpt2 local, Qwen/Qwen2.5-32B-Instruct API)",
     )
     parser.add_argument(
         "--device", type=str, default="cpu",
-        help="Device (default: cpu)",
+        help="Device for local model (default: cpu)",
     )
     parser.add_argument(
         "--detail", action="store_true",
@@ -1383,12 +1477,37 @@ Examples:
         "--port", type=int, default=3000,
         help="Web server port (default: 3000)",
     )
+    parser.add_argument(
+        "--api", type=str, default=None, metavar="KEY",
+        help="API key (Together AI, OpenAI, or compatible)",
+    )
+    parser.add_argument(
+        "--base-url", type=str, default=None,
+        help="API base URL (default: Together AI)",
+    )
 
     args = parser.parse_args()
-    if args.web:
-        run_web(args.model, args.device, args.lang, args.detail, args.port)
+
+    # Determine model name
+    if args.model:
+        model_name = args.model
+    elif args.api:
+        model_name = "Qwen/Qwen2.5-7B-Instruct-Turbo"
     else:
-        run(args.model, args.device, args.lang, args.detail)
+        model_name = "gpt2"
+
+    # Default base URL for Together AI if API key looks like one
+    base_url = args.base_url
+    if args.api and not base_url:
+        if args.api.startswith("tgp_"):
+            base_url = "https://api.together.xyz/v1"
+
+    if args.web:
+        run_web(model_name, args.device, args.lang, args.detail, args.port,
+                api_key=args.api, base_url=base_url)
+    else:
+        run(model_name, args.device, args.lang, args.detail,
+            api_key=args.api, base_url=base_url)
 
 
 if __name__ == "__main__":

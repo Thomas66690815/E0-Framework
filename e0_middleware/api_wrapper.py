@@ -208,22 +208,45 @@ class E0ChatClient:
 
         # Extract logprobs if available
         steps: List[StepMeasurement] = []
-        if self.logprobs and choice.get("logprobs") and choice["logprobs"].get("content"):
-            for token_data in choice["logprobs"]["content"]:
-                selected_token = token_data["token"]
-                selected_logprob = token_data["logprob"]
+        lp_data = choice.get("logprobs")
+        if self.logprobs and lp_data:
+            # OpenAI format: logprobs.content is a list of token objects
+            if lp_data.get("content"):
+                for token_data in lp_data["content"]:
+                    selected_token = token_data["token"]
+                    selected_logprob = token_data["logprob"]
 
-                # Build logprob dict from top alternatives
-                logprob_dict = {selected_token: selected_logprob}
-                if token_data.get("top_logprobs"):
-                    for alt in token_data["top_logprobs"]:
-                        logprob_dict[alt["token"]] = alt["logprob"]
+                    # Build logprob dict from top alternatives
+                    logprob_dict = {selected_token: selected_logprob}
+                    if token_data.get("top_logprobs"):
+                        for alt in token_data["top_logprobs"]:
+                            logprob_dict[alt["token"]] = alt["logprob"]
 
-                step = self.instrumenter.measure_step(
-                    logprobs=logprob_dict,
-                    selected_token=selected_token,
-                )
-                steps.append(step)
+                    step = self.instrumenter.measure_step(
+                        logprobs=logprob_dict,
+                        selected_token=selected_token,
+                    )
+                    steps.append(step)
+
+            # Together AI / vLLM format: tokens + token_logprobs + top_logprobs as parallel lists
+            elif lp_data.get("tokens") and lp_data.get("token_logprobs"):
+                tokens = lp_data["tokens"]
+                token_lps = lp_data["token_logprobs"]
+                top_lps = lp_data.get("top_logprobs") or [None] * len(tokens)
+
+                for i, (tok, lp) in enumerate(zip(tokens, token_lps)):
+                    if lp is None:
+                        continue
+                    logprob_dict = {tok: lp}
+                    if i < len(top_lps) and top_lps[i]:
+                        for alt_tok, alt_lp in top_lps[i].items():
+                            logprob_dict[alt_tok] = alt_lp
+
+                    step = self.instrumenter.measure_step(
+                        logprobs=logprob_dict,
+                        selected_token=tok,
+                    )
+                    steps.append(step)
 
         # Store assistant message for conversation continuity
         self.messages.append({"role": "assistant", "content": text})
