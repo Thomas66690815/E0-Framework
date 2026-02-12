@@ -301,6 +301,8 @@ run `python e0_self_inquiry.py` — watch the system measure itself answering qu
 
 run `python e0_primer.py --local` — run the structural primer and watch the R̄ trajectory across six steps
 
+run `python e0_reservoir_test.py` — test the reservoir hypothesis: structure vs knowledge, measured across 15 prompts
+
 If using E₀ with AI systems:
 
 provide the canonical text directly,
