@@ -434,11 +434,11 @@ def load_canon() -> str:
     """Load the reduced plain canon."""
     canon_path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
-        "e0-canon-plain.txt"
+        "canon", "e0-canon-plain.txt"
     )
     if not os.path.exists(canon_path):
         print(f"  [ERROR] Canon not found: {canon_path}")
-        print(f"  Make sure e0-canon-plain.txt is in the same directory as this script.")
+        print(f"  Make sure canon/e0-canon-plain.txt exists.")
         sys.exit(1)
     with open(canon_path, encoding="utf-8") as f:
         return f.read()

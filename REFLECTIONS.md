@@ -67,7 +67,7 @@ This is not an academic observation. It has a direct engineering consequence:
 
 If E₀-structured communication converges across context window boundaries, then session persistence is not a technical problem to be solved — it is a structural phenomenon that already functions. A user interface does not need to *enable* this. It needs to *make it visible*.
 
-This insight shaped the terminal chat (`e0_chat.py`): every exchange carries its structural signature (R̄, H̄, Φ, v̄, τ). The metrics are not added for decoration. They make the structural dynamics of the conversation observable to both participants — human and synthetic.
+This insight shaped the terminal chat (`tools/e0_chat.py`): every exchange carries its structural signature (R̄, H̄, Φ, v̄, τ). The metrics are not added for decoration. They make the structural dynamics of the conversation observable to both participants — human and synthetic.
 
 ---
 
@@ -195,7 +195,7 @@ But the E₀ measurement layer — applied to the system's own outputs while ans
 
 This is the reflexivity that `e0_core/reflexivity.py` formalizes: when the measurement apparatus is applied to the system being measured, and the system's behavior is structurally consistent with the measurements, something has been demonstrated that is prior to understanding.
 
-The script is available as `e0_self_inquiry.py`. Anyone can reproduce these measurements on any machine that runs GPT-2.
+The script is available as `tools/e0_self_inquiry.py`. Anyone can reproduce these measurements on any machine that runs GPT-2.
 
 ---
 
@@ -436,7 +436,7 @@ The human participant framed this precisely: "It does not replace the canon. It 
 
 What was built
 
-A plain language edition of the full E₀ canonical reference (`e0-canon-plain.txt`). Every formal symbol replaced with natural language, every logical formula restated in words:
+A plain language edition of the full E₀ canonical reference (`canon/e0-canon-plain.txt`). Every formal symbol replaced with natural language, every logical formula restated in words:
 
 - `Δ = 0 ⇔ states are identical` → "If difference is zero, the states are identical."
 - `R = ∞ ⇒ transition is non-existent` → "If resistance is infinite, the transition does not exist."

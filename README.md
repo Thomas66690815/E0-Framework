@@ -135,24 +135,53 @@ That is meta-cognition — not as introspection, but as structure.
 
 Repository structure
 
-This repository currently contains three core documents and two executable packages:
+```
+E0-Framework/
+  e0_start.py              Entry point — start here
+  README.md                This file
+  REFLECTIONS.md           Structural observations about the process
+  LICENSE / requirements.txt
 
-### Documents
+  canon/                   What E0 IS — the structural definitions
+    e0-canon-plain.txt         Reduced plain-language canon (ASCII, 155 lines)
+    e0-canonical-reference.txt Full formal canonical reference
+    ontodynamics.txt           Pre-physical transition structure
+    e0-agi-blueprint.md        Structural outline for general intelligence
 
-**E₀ Canonical Reference** (`e0-canonical-reference.txt`)
+  e0_core/                 Executable reference implementation
+  e0_middleware/            E0 as a lens on real language models
+
+  tools/                   What you can DO with E0
+    e0_chat.py                 Terminal chat with E0 signatures
+    e0_browser.py              Browser chat interface
+    e0_primer.py               Measured structural initialization
+    e0_self_inquiry.py         System measures itself
+    e0_reservoir_test.py       Structure vs knowledge experiment
+    e0_notation_test.py        Formal vs plain language comparison
+
+  history/                 How E0 emerged — context, not structure
+    origin.md                  Discovery narrative
+    prompt.md                  Curated prompt library
+    azure-golden-path-e0-analysis.md  Case study
+    chat exports (JSON)
+```
+
+### Canon (`canon/`)
+
+**E₀ Canonical Reference** (`canon/e0-canonical-reference.txt`)
 The operational core: primitives, axiom, and structural definitions.
 
-**Ontodynamics – A Minimal Pre-Physical Canon** (`Ontodynamics – A Minimal Pre-Physical Canon.txt`)
+**E₀ Plain Canon** (`canon/e0-canon-plain.txt`)
+The reduced structural core in pure ASCII. 155 lines. No notation overhead. This is what `e0_start.py` feeds to the model.
+
+**Ontodynamics** (`canon/ontodynamics.txt`)
 A deeper layer describing transition structure prior to physical interpretation.
 
-**E₀–AGI: A Domain-Invariant Blueprint** (`E₀-AGI A Domain-Invariant Blueprint1.2.md`)
+**E₀–AGI Blueprint** (`canon/e0-agi-blueprint.md`)
 A structural outline exploring how E₀ constrains and enables artificial general systems — without proposing implementation.
 
 **Structural Reflections** (`REFLECTIONS.md`)
-Observations about how this repository emerged. The process itself exhibits E₀ dynamics — communication across context boundaries, cross-architecture convergence, the role of historization in preserving structural coherence. The description of how something emerges is as significant as the result.
-
-These documents are complementary, not hierarchical.
-They can be read independently, but resonate structurally when combined.
+Observations about how this repository emerged. The process itself exhibits E₀ dynamics — communication across context boundaries, cross-architecture convergence, the role of historization in preserving structural coherence.
 
 ### Code
 
@@ -224,15 +253,15 @@ After each exchange, it tells you whether R is dropping (structure absorbed), ri
 
 No prior knowledge of E0 required.
 
-**`e0_chat.py`** — Terminal chat interface
+**`tools/e0_chat.py`** — Terminal chat interface
 
 Interactive REPL where every exchange carries its E₀ structural signature. Human writes, system responds, both sides see the same structural measurements.
 
 ```
-python e0_chat.py                   # Simulation mode (zero dependencies)
-python e0_chat.py --local           # GPT-2 on CPU (real R, real H, real Φ)
-python e0_chat.py --local --detail  # With token-level E₀ trace
-python e0_chat.py --api sk-...      # OpenAI-compatible API
+python tools/e0_chat.py                   # Simulation mode (zero dependencies)
+python tools/e0_chat.py --local           # GPT-2 on CPU (real R, real H, real Φ)
+python tools/e0_chat.py --local --detail  # With token-level E₀ trace
+python tools/e0_chat.py --api sk-...      # OpenAI-compatible API
 ```
 
 Each response is annotated:
@@ -244,15 +273,15 @@ Each response is annotated:
 
 Commands: `/help`, `/report` (full session), `/detail` (toggle token trace), `/clear`, `/quit`.
 
-**`e0_browser.py`** — Browser chat interface
+**`tools/e0_browser.py`** — Browser chat interface
 
 Same three backends, same E₀ signatures — in the browser. Single-file Python server, zero dependencies beyond stdlib.
 
 ```
-python e0_browser.py                    # Simulation mode → http://localhost:3000
-python e0_browser.py --local            # GPT-2 on CPU
-python e0_browser.py --api sk-...       # OpenAI-compatible API
-python e0_browser.py --port 8080        # Custom port
+python tools/e0_browser.py                    # Simulation mode → http://localhost:3000
+python tools/e0_browser.py --local            # GPT-2 on CPU
+python tools/e0_browser.py --api sk-...       # OpenAI-compatible API
+python tools/e0_browser.py --port 8080        # Custom port
 ```
 
 Every response shows R̄, H̄, Φ, v̄, τ inline. Click "token trace" under any response to expand the full token-by-token E₀ measurement table. Session Report and Reset available from the header.
@@ -317,17 +346,17 @@ run `python -m e0_middleware.local_model` — measure real resistance on a local
 
 run `python -m e0_core.qm_reconstruction` — watch quantum mechanics emerge from 5 primitives
 
-run `python e0_chat.py` — talk to E₀ and see the structural signature of every exchange
+run `python tools/e0_chat.py` — talk to E₀ and see the structural signature of every exchange
 
-run `python e0_browser.py` — same chat, in the browser, with expandable token traces
+run `python tools/e0_browser.py` — same chat, in the browser, with expandable token traces
 
-run `python e0_self_inquiry.py` — watch the system measure itself answering questions about its own structure
+run `python tools/e0_self_inquiry.py` — watch the system measure itself answering questions about its own structure
 
-run `python e0_primer.py --local` — run the structural primer and watch the R̄ trajectory across six steps
+run `python tools/e0_primer.py --local` — run the structural primer and watch the R̄ trajectory across six steps
 
-run `python e0_reservoir_test.py` — test the reservoir hypothesis: structure vs knowledge, measured across 15 prompts
+run `python tools/e0_reservoir_test.py` — test the reservoir hypothesis: structure vs knowledge, measured across 15 prompts
 
-run `python e0_notation_test.py` — compare formal notation vs plain language: same structure, different encoding overhead
+run `python tools/e0_notation_test.py` — compare formal notation vs plain language: same structure, different encoding overhead
 
 If using E₀ with AI systems:
 
