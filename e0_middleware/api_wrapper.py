@@ -157,6 +157,7 @@ class E0ChatClient:
         e0_structural_context: bool = False,
         logprobs: bool = True,
         top_logprobs: int = 5,
+        max_tokens: int = 1024,
     ):
         self.api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
         self.model = model
@@ -165,6 +166,7 @@ class E0ChatClient:
         self.e0_structural_context = e0_structural_context
         self.logprobs = logprobs
         self.top_logprobs = top_logprobs
+        self.max_tokens = max_tokens
 
         # Session state
         self.messages: List[Dict[str, str]] = []
@@ -199,6 +201,7 @@ class E0ChatClient:
             "messages": self.messages,
             "logprobs": self.logprobs,
             "top_logprobs": self.top_logprobs,
+            "max_tokens": self.max_tokens,
         }
 
     def _parse_response(self, raw_response: Dict[str, Any]) -> E0Response:
