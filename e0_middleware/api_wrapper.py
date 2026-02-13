@@ -180,6 +180,20 @@ class E0ChatClient:
                 "content": E0_SYSTEM_PRIMER,
             })
 
+    def inject_structural_feedback(self, feedback_text: str):
+        """
+        Inject a structural observation as a system message.
+
+        This is part of the E₀ feedback loop: the model sees what
+        the instrumentation observed about its last response.
+        Injected BEFORE the next user message so the model has
+        structural context for the next transition.
+        """
+        self.messages.append({
+            "role": "system",
+            "content": feedback_text,
+        })
+
     def _build_request(self, user_message: str) -> Dict[str, Any]:
         """Build the API request payload."""
         # Optionally prepend structural context

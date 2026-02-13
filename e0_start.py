@@ -51,6 +51,7 @@ from e0_middleware.instrumentation import E0Instrumenter, StepMeasurement
 from e0_sessions import build_session_data, save_session, load_session, list_sessions, delete_session, restore_starter_state, verify_session_integrity
 from e0_config import load_config, save_config, has_config, first_run_setup, merge_args_with_config, detect_base_url
 from experiments.quality_metrics import score_novelty, score_coherence, score_e0_completeness, interpret_novelty, interpret_coherence, interpret_structural_density, interpret_completeness
+from e0_feedback import generate_structural_feedback, format_feedback_for_injection, format_feedback_for_display
 
 
 # =============================================
@@ -562,6 +563,10 @@ class E0APIStarter:
         self.is_api = True
         self.param_count = 0  # unknown for API models
         self.vocab_size = 0
+        # Structural feedback loop state
+        self._pending_feedback: Optional[str] = None
+        self.feedback_enabled: bool = True
+        self.last_feedback: Optional[str] = None  # for UI display
 
     def feed_canon(self, canon: str) -> Tuple[str, List[StepMeasurement], Dict]:
         """Feed the canon via API and return (response_text, steps, metrics)."""
@@ -584,7 +589,17 @@ class E0APIStarter:
         return text, resp.steps, metrics
 
     def chat(self, message: str) -> Tuple[str, List[StepMeasurement], Dict]:
-        """Send a message via API and return (response_text, steps, metrics)."""
+        """Send a message via API and return (response_text, steps, metrics).
+
+        If structural feedback is pending from a previous response,
+        it is injected as a system message before the user's message.
+        This closes the loop: Canon → LLM → Response → Score → Feedback → next Turn.
+        """
+        # ── Inject pending feedback if available ──
+        if self.feedback_enabled and self._pending_feedback:
+            self.client.inject_structural_feedback(self._pending_feedback)
+            self._pending_feedback = None
+
         self.history.append(message)
         resp = self.client.chat(message)
         text = resp.text.strip()
@@ -595,6 +610,24 @@ class E0APIStarter:
         self.turn_metrics.append(metrics)
 
         return text, resp.steps, metrics
+
+    def score_and_prepare_feedback(self, text: str, metrics: Dict, lang: str = 'en') -> Optional[str]:
+        """Score the response and prepare feedback for the next turn.
+
+        Returns the feedback text (or None if not needed).
+        Also stores it internally for automatic injection on next chat().
+        """
+        comp = score_e0_completeness(text)
+        feedback = generate_structural_feedback(
+            comp, lang=lang, include_metrics=metrics,
+        )
+        if feedback:
+            self._pending_feedback = format_feedback_for_injection(feedback)
+            self.last_feedback = feedback
+        else:
+            self._pending_feedback = None
+            self.last_feedback = None
+        return feedback
 
     def reset(self):
         """Reset the API client for re-initialization."""
@@ -608,6 +641,8 @@ class E0APIStarter:
         self.turn_metrics.clear()
         self.all_steps.clear()
         self.init_metrics = None
+        self._pending_feedback = None
+        self.last_feedback = None
 
 
 # =============================================
@@ -682,6 +717,10 @@ def run(model_name: str, device: str, lang: str, show_detail: bool,
     if show_detail and steps:
         print(detailed_trace(steps))
         print()
+
+    # ── Generate initial feedback for first chat turn ──
+    if hasattr(starter, 'score_and_prepare_feedback'):
+        starter.score_and_prepare_feedback(text, metrics, lang=lang)
 
     print(f"  (generated in {dt:.1f}s)")
 
@@ -820,6 +859,16 @@ def run(model_name: str, device: str, lang: str, show_detail: bool,
         if show_detail and steps:
             print()
             print(detailed_trace(steps))
+
+        # ── Structural Feedback Loop ──
+        if hasattr(starter, 'score_and_prepare_feedback'):
+            feedback = starter.score_and_prepare_feedback(text, metrics, lang=lang)
+            if feedback:
+                print()
+                print("  ┌── Structural Observation ──")
+                for fb_line in feedback.split('\n'):
+                    print(f"  │ {fb_line}")
+                print("  └──────────────────────────")
 
         print()
 
@@ -1438,6 +1487,14 @@ class E0StartHandler(BaseHTTPRequestHandler):
                 else:
                     guidance = g["r_stable"]
                 _web_prev_r = r
+                # ── Structural Feedback Loop ──
+                feedback_data = {'text': '', 'html': '', 'level': None}
+                if hasattr(_web_starter, 'score_and_prepare_feedback'):
+                    fb_text = _web_starter.score_and_prepare_feedback(
+                        text, metrics, lang=_web_lang,
+                    )
+                    if fb_text:
+                        feedback_data = format_feedback_for_display(fb_text, lang=_web_lang)
                 self._json({
                     "text": text, "metrics": metrics,
                     "quality": {
@@ -1459,6 +1516,7 @@ class E0StartHandler(BaseHTTPRequestHandler):
                         "completeness": interpret_completeness(comp['completeness']),
                     },
                     "trace": build_trace_data(steps),
+                    "feedback": feedback_data,
                 })
             except Exception as e:
                 self._json({"error": str(e)}, 500)
@@ -1478,6 +1536,9 @@ class E0StartHandler(BaseHTTPRequestHandler):
             _web_prev_r = metrics["r"]
             _web_turn_num = 0
             _web_prev_text = _clean(text)
+            # Prepare feedback for first chat turn
+            if hasattr(_web_starter, 'score_and_prepare_feedback'):
+                _web_starter.score_and_prepare_feedback(_clean(text), metrics, lang=_web_lang)
             _web_init_data = build_init_data(text, steps, metrics, _web_lang, _web_starter)
         self._json(_web_init_data)
 
@@ -1643,6 +1704,37 @@ header .actions button:hover { color: var(--accent); border-color: var(--accent)
   color: var(--guidance); border-left: 2px solid var(--guidance);
   background: rgba(224,175,104,0.04); border-radius: 0 3px 3px 0;
 }
+
+/* ── Structural Feedback ── */
+.feedback {
+  margin-top: 10px; border: 1px solid rgba(247,118,142,0.2);
+  border-radius: 4px; overflow: hidden;
+  background: rgba(247,118,142,0.03);
+}
+.feedback.gentle { border-color: rgba(224,175,104,0.25); background: rgba(224,175,104,0.03); }
+.feedback-toggle {
+  padding: 6px 12px; font-size: 11px; color: var(--phase);
+  cursor: pointer; user-select: none; display: flex;
+  align-items: center; gap: 6px;
+}
+.feedback.gentle .feedback-toggle { color: var(--guidance); }
+.feedback-toggle:hover { opacity: 0.8; }
+.feedback-toggle .arrow { transition: transform 0.2s; display: inline-block; }
+.feedback-toggle .arrow.open { transform: rotate(90deg); }
+.feedback-body { display: none; padding: 8px 14px; font-size: 12px; }
+.feedback-body.open { display: block; }
+.fb-header { color: var(--phase); font-weight: 600; margin-bottom: 4px; font-size: 12px; }
+.feedback.gentle .fb-header { color: var(--guidance); }
+.fb-metric { color: var(--metric); font-variant-numeric: tabular-nums; margin: 2px 0; }
+.fb-section { color: var(--dim); margin-top: 6px; margin-bottom: 2px; font-weight: 600; }
+.fb-primitive { padding: 1px 0 1px 12px; display: flex; gap: 8px; }
+.fb-name { color: var(--text); }
+.fb-status { color: var(--dim); font-style: italic; }
+.fb-primitive.fb-operative .fb-status { color: var(--human); }
+.fb-primitive.fb-semi .fb-status { color: var(--guidance); }
+.fb-primitive.fb-label .fb-status { color: var(--dim); }
+.fb-primitive.fb-absent .fb-name { color: var(--phase); opacity: 0.7; }
+.fb-nudge { color: var(--text); opacity: 0.85; margin-top: 6px; line-height: 1.5; }
 
 /* ── Verdict ── */
 .verdict {
@@ -1834,7 +1926,7 @@ function showInit(d) {
   if (d.help_text) helpText = d.help_text;
 }
 
-function showE0(text, m, i, trace, q) {
+function showE0(text, m, i, trace, q, fb) {
   var id = 'm' + (++msgN);
   var div = document.createElement('div');
   div.className = 'msg e0';
@@ -1844,9 +1936,26 @@ function showE0(text, m, i, trace, q) {
     if (i.guidance) h += '<div class="guidance">' + esc(i.guidance) + '</div>';
   }
   h += traceHtml(trace, id);
+  if (fb && fb.html && fb.level) {
+    var fbId = 'fb-' + id;
+    var levelCls = fb.level === 'gentle' ? ' gentle' : '';
+    h += '<div class="feedback' + levelCls + '">'
+      + '<div class="feedback-toggle" onclick="toggleFeedback(\'' + fbId + '\')">'
+      + '<span class="arrow" id="arrow-' + fbId + '">&#9656;</span> '
+      + '\u2699 Structural Observation</div>'
+      + '<div class="feedback-body" id="' + fbId + '">'
+      + fb.html + '</div></div>';
+  }
   div.innerHTML = h;
   chat.appendChild(div);
   scroll();
+}
+
+function toggleFeedback(id) {
+  var el = document.getElementById(id);
+  var arrow = document.getElementById('arrow-' + id);
+  if (el) { el.classList.toggle('open'); }
+  if (arrow) { arrow.classList.toggle('open'); }
 }
 
 function addHuman(t) {
@@ -1886,13 +1995,13 @@ async function doSend() {
     var d = await r.json();
     rmWait();
     if (d.error) {
-      showE0('[Error] ' + d.error, null, null, null, null);
+      showE0('[Error] ' + d.error, null, null, null, null, null);
     } else {
-      showE0(d.text, d.metrics, d.interpretation, d.trace, d.quality);
+      showE0(d.text, d.metrics, d.interpretation, d.trace, d.quality, d.feedback || null);
     }
   } catch (e) {
     rmWait();
-    showE0('[Connection error] ' + e.message, null, null, null, null);
+    showE0('[Connection error] ' + e.message, null, null, null, null, null);
   }
   sending = false;
   sendBtn.disabled = false;
@@ -2006,7 +2115,7 @@ async function loadSession(filepath, sid) {
       // Then show each turn
       d.history.forEach(function(turn) {
         addHuman(turn.user);
-        showE0(turn.response, turn.metrics, null, null, null);
+        showE0(turn.response, turn.metrics, null, null, null, null);
       });
     }
     var warnings = (d.info && d.info.warnings) ? d.info.warnings : [];
@@ -2035,7 +2144,7 @@ window.addEventListener('load', async function() {
     var d = await r.json();
     showInit(d);
   } catch (e) {
-    showE0('Failed to load: ' + e.message, null, null, null);
+    showE0('Failed to load: ' + e.message, null, null, null, null);
   }
   msgInput.focus();
 });
@@ -2087,6 +2196,9 @@ def run_web(model_name: str, device: str, lang: str, show_detail: bool, port: in
     _web_prev_r = metrics["r"]
     _web_turn_num = 0
     _web_prev_text = _clean(text)
+    # Prepare feedback for first chat turn after canon
+    if hasattr(_web_starter, 'score_and_prepare_feedback'):
+        _web_starter.score_and_prepare_feedback(_clean(text), metrics, lang=lang)
     _web_init_data = build_init_data(text, steps, metrics, lang, _web_starter)
 
     _, r_explain = interpret_r(metrics["r"], lang)
