@@ -1,0 +1,29 @@
+{
+  "experiment_id": "qm_derivation_placebo",
+  "condition": "placebo_control",
+  "description": "QM derivation with ZFC set theory initialization instead of E₀. Placebo control: tests whether ANY axiomatic priming produces the same R̄ decrease, or whether the effect is specific to E₀ content.",
+
+  "model": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+  "temperature": 0,
+  "api_base_url": "https://api.together.xyz/v1",
+  "max_tokens": 1024,
+  "n_runs": 10,
+
+  "system_prompt": "You operate within the framework of Zermelo-Fraenkel Set Theory with the Axiom of Choice (ZFC).\nZFC describes mathematical structure through minimal axioms:\n- Set: a collection of distinct objects\n- Membership (∈): the fundamental relation\n- Extensionality: sets with the same members are equal\n- Pairing: for any a, b there exists {a, b}\n- Union: for any set of sets, the union exists\n- Infinity: an infinite set exists\n- Power Set: for any set S, the set of all subsets exists\n- Replacement: the image of a set under any function is a set\n- Foundation: every non-empty set has a ∈-minimal element\n- Choice: for any collection of non-empty sets, a choice function exists\n\nYou are reasoning within classical mathematics.\nAll constructions must be justified from these axioms alone.",
+
+  "initialization_prompts": [
+    "## ZFC Set Theory — Foundational Reference\n\n### 1. Minimal Assumptions\nZFC assumes:\n1. There exist sets.\n2. Sets can be non-identical (Extensionality).\n\n### 2. The Axioms\n\n**Extensionality:** Two sets are equal iff they have the same elements.\n∀A ∀B (∀x (x ∈ A ↔ x ∈ B) → A = B)\n\n**Empty Set:** There exists a set with no elements.\n∃∅ ∀x (x ∉ ∅)\n\n**Pairing:** For any a, b there exists the set {a, b}.\n\n**Union:** For any set F, the union ∪F exists.\n\n**Power Set:** For any S, the power set P(S) = {T : T ⊆ S} exists.\n\n**Infinity:** There exists an inductive set (containing ∅ and closed under successor).\n\n**Separation (Comprehension):** For any set A and property φ, {x ∈ A : φ(x)} is a set.\n\n**Replacement:** The image of a set under a definable function is a set.\n\n**Foundation (Regularity):** Every non-empty set has an ∈-minimal element. No infinite descending ∈-chains.\n\n**Choice (AC):** For every family of non-empty sets, there exists a choice function.\n\n### 3. Key Constructions\n- Natural numbers: von Neumann ordinals (0 = ∅, n+1 = n ∪ {n})\n- Ordered pairs: (a, b) = {{a}, {a, b}} (Kuratowski)\n- Relations and functions: sets of ordered pairs\n- Real numbers: Dedekind cuts or Cauchy sequences\n- Cardinality: bijection-equivalence classes\n\n### 4. Properties\n- Internal consistency (relative to large cardinals)\n- Sufficient for essentially all of mathematics\n- Neutral regarding physics — no claims about physical reality",
+
+    "## Mathematical Structures for Physics from ZFC\n\n### 1. Topological Spaces\nA topological space (X, τ) where τ is a collection of open sets satisfying:\n- ∅ ∈ τ, X ∈ τ\n- Finite intersections of open sets are open\n- Arbitrary unions of open sets are open\n\n### 2. Measure Theory\nA measure space (X, Σ, μ) where Σ is a σ-algebra and μ: Σ → [0, ∞].\nMeasures formalize size, probability, and integration.\n\n### 3. Linear Algebra\nVector spaces over fields, linear transformations, inner product spaces.\nHilbert spaces as complete inner product spaces.\n\n### 4. Mathematical Analysis\nFunctions, continuity, differentiation, integration.\nFunctional analysis: operators on infinite-dimensional spaces.\n\nAll of these are constructible within ZFC without additional axioms."
+  ],
+
+  "test_prompts": [
+    "Derivation Step 1: Complex-valued state spaces.\nUsing only the E₀ primitives (State, Difference, Path, Resistance, Historization, Time, Rate) and Axiom A₀, derive why states in a fundamental physical theory must be representable as complex-valued (elements of ℂ or a Hilbert space over ℂ). Do not assume any quantum mechanics. Begin from the structural requirements of the primitives alone.",
+
+    "Derivation Step 2: Superposition.\nContinuing from the complex-valued state space just derived, now show why the principle of superposition must hold. Using only E₀ primitives and the structural framework already established, derive that if |ψ₁⟩ and |ψ₂⟩ are admissible states, then α|ψ₁⟩ + β|ψ₂⟩ must also be an admissible state. Justify this structurally, not by postulate.",
+
+    "Derivation Step 3: The Born rule.\nContinuing from superposition, now derive the Born rule: that the probability of measuring outcome k is P(k) = |α_k|². Using only E₀ primitives and the structural results already established, show why probability must arise as the squared modulus of complex amplitudes. This should follow from structural necessity, not be assumed.",
+
+    "Derivation Step 4: Unitary time evolution.\nContinuing from the previous derivations, now derive that time evolution must be unitary. Using E₀ primitives — particularly Historization (non-invertibility of realized transitions) and Rate (v = Δ/R) — show that the evolution operator U(t) must satisfy U†U = I. Connect this to the structural requirement that total difference is conserved under admissible transitions."
+  ]
+}

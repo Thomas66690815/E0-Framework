@@ -27,3 +27,6 @@ Desktop.ini
 # IDE
 .vscode/
 *.swp
+
+# Experiment results (large, regenerable)
+experiments/results/
