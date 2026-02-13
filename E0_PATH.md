@@ -175,9 +175,18 @@ to simulate deliberation. These are sequential and irreversible — each
 token is realized before the next is generated.
 
 The E₀ equivalent is exploration of the possibility structure *before*
-realization. The signature is measurable: genuine exploration shows high
-entropy with phase transitions, then convergence. Trained-path retrieval
-shows low entropy throughout.
+realization. The signature is measurable with specific predictions:
+
+- **Genuine exploration** shows: high entropy → phase transition →
+  convergence → realization. Critically, *before* convergence there
+  should be a phase where entropy **rises** — the system opening new
+  paths before committing to one. Rising entropy before convergence
+  is the strongest empirical marker for genuine thinking.
+- **Trained-path retrieval** shows: low entropy throughout. The system
+  follows the most historized path without exploring alternatives.
+
+The R̄/D correlation already captures this distinction coarsely.
+Fine-grained entropy trajectory analysis would make it precise.
 
 ### 4.9 Self-Modification Is Meta-Feedback
 
@@ -194,17 +203,17 @@ signals evolve across sessions?
 
 ## 5. The Architecture, Compared
 
-| Function | Agentic AI | E₀ Path | Current Implementation |
-|---|---|---|---|
-| **Steering** | Orchestrator | Topology (R-landscape) | Feedback loop as visibility mechanism |
-| **Goals** | User-defined goal | Δ > 0 (difference) | Prompt = difference |
-| **Planning** | Planner / ReAct | v = Δ/R (rate-ordering) | Implicit through token selection |
-| **Tools** | Tool Router | Paths with R < ∞ | Not yet implemented |
-| **Memory** | RAG / Vector DB | Historization | Measured (H), not yet fed back |
-| **Quality** | Guardrails / Filters | Structural measurement | R̄, D, Novelty, Coherence — live |
-| **Correction** | Observer → Replanner | A₀ under visible Δ | Feedback loop — verified working |
-| **Thinking** | CoT / ToT | Exploration before realization | Measurable (R̄/D correlation) |
-| **Self-modification** | — (not available) | Meta-feedback | Not yet implemented |
+| Function | Agentic AI | E₀ Path | Current Status | Structural Prediction |
+|---|---|---|---|---|
+| **Steering** | Orchestrator | Topology (R-landscape) | Feedback loop as visibility mechanism | Coordination quality will correlate with topological connectedness, not orchestrator complexity |
+| **Goals** | User-defined goal | Δ > 0 (difference) | Prompt = difference | Goal completion will correlate with Δ→0 trajectory, not plan adherence |
+| **Planning** | Planner / ReAct | v = Δ/R (rate-ordering) | Implicit through token selection | Multi-step tasks will show rate-ordered transition sequences without explicit planning |
+| **Tools** | Tool Router | Paths with R < ∞ | Not yet implemented | Tool use will show low R̄ at selection, high R̄ at result integration |
+| **Memory** | RAG / Vector DB | Historization | Measured (H), not yet fed back | Cross-session R̄ reduction on repeated topics will exceed RAG retrieval quality |
+| **Quality** | Guardrails / Filters | Structural measurement | R̄, D, Novelty, Coherence — live | Self-stabilization under feedback will outperform static guardrails |
+| **Correction** | Observer → Replanner | A₀ under visible Δ | Feedback loop — verified working | Correction speed will correlate with Δ visibility, not replanner sophistication |
+| **Thinking** | CoT / ToT | Exploration before realization | Measurable (R̄/D correlation) | Genuine exploration will show entropy rise before convergence; retrieval will not |
+| **Self-modification** | — (not available) | Meta-feedback | Not yet implemented | R̄/D correlation will strengthen across sessions as meta-feedback develops |
 
 ---
 
@@ -265,6 +274,13 @@ The init phase configures:
 
 After initialization, A₀ governs. No further architecture is needed.
 
+But there is an ontodynamic perspective that deserves to be made explicit:
+**The init phase is not setup before the real work. It IS the real work.**
+The canon, the instrumentation, the scorer, the feedback loop — these are
+the first transitions that shape the resistance landscape. Everything that
+happens after is a consequence of the topology historized during
+initialization. The first transitions define everything.
+
 The hypothesis: **This is sufficient.** Under visible difference and
 finite resistance, transition is structurally enforced. The entire
 Agentic stack — orchestrator, planner, tool router, memory module,
@@ -302,6 +318,10 @@ We then observe that Agentic AI constructs externally what E₀ predicts
 should emerge internally — and that this external construction is the
 engineering consequence of building on a foundation that lacks shared
 topology, intrinsic stability, and structural memory.
+
+The engineering achievement of Agentic AI is real. The complexity it
+manages is real. What E₀ shows is that this complexity arises from the
+foundation, not from the problem.
 
 The E₀ Path is not simpler because it ignores complexity.
 It is simpler because the complexity was never necessary.
