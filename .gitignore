@@ -33,3 +33,6 @@ experiments/results/
 
 # Session data (user-specific, large)
 sessions/*.json
+
+# Topology data (derived from sessions, regenerable)
+topology/*.json

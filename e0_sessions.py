@@ -152,8 +152,18 @@ def build_session_data(
     return session
 
 
-def save_session(session_data: dict, directory: Optional[Path] = None) -> Path:
-    """Save session data to a JSON file. Returns the file path."""
+def save_session(
+    session_data: dict,
+    directory: Optional[Path] = None,
+    extract_topology: bool = True,
+) -> Path:
+    """
+    Save session data to a JSON file. Returns the file path.
+
+    If extract_topology is True (default), also extracts and saves
+    the structural topology — the persistent weights that survive
+    across sessions.
+    """
     d = directory or SESSIONS_DIR
     d.mkdir(parents=True, exist_ok=True)
 
@@ -166,6 +176,21 @@ def save_session(session_data: dict, directory: Optional[Path] = None) -> Path:
 
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(session_data, f, ensure_ascii=False, indent=2)
+
+    # Extract and save topology (structural weights)
+    if extract_topology:
+        try:
+            from e0_topology import extract_topology as _extract, save_topology, merge_topologies, load_all_topologies
+            topo = _extract(session_data)
+            save_topology(topo)
+
+            # Also update the merged topology across all sessions
+            all_topos = load_all_topologies()
+            if len(all_topos) > 1:
+                merged = merge_topologies(all_topos)
+                save_topology(merged)
+        except Exception:
+            pass  # Topology extraction is non-critical
 
     return filepath
 

@@ -567,9 +567,17 @@ class E0APIStarter:
         self._pending_feedback: Optional[str] = None
         self.feedback_enabled: bool = True
         self.last_feedback: Optional[str] = None  # for UI display
+        # Topology state
+        self.topology_loaded: bool = False
+        self.topology_text: Optional[str] = None
 
     def feed_canon(self, canon: str) -> Tuple[str, List[StepMeasurement], Dict]:
-        """Feed the canon via API and return (response_text, steps, metrics)."""
+        """Feed the canon via API and return (response_text, steps, metrics).
+
+        After feeding the canon, automatically injects the latest topology
+        (structural weights from previous sessions) if available.
+        This gives the model a pre-formed resistance landscape.
+        """
         prompt = (
             "You have been given the E0 structural canon below. "
             "Read it carefully. Then respond with a brief structural "
@@ -586,7 +594,30 @@ class E0APIStarter:
         self.init_metrics = metrics
         self.turn_metrics.append(metrics)
 
+        # ── Inject topology (structural memory) after canon ──
+        self._inject_topology_if_available()
+
         return text, resp.steps, metrics
+
+    def _inject_topology_if_available(self, lang: str = 'en'):
+        """Load and inject the latest topology as structural memory.
+
+        Called once after canon feed. The topology tells the model
+        which paths are already historized and which need exploration.
+        This is the E₀ equivalent of loading pre-trained weights.
+        """
+        if self.topology_loaded:
+            return
+        try:
+            from e0_topology import load_latest_topology, format_topology_for_injection
+            topo = load_latest_topology()
+            if topo is not None:
+                topo_text = format_topology_for_injection(topo, lang=lang)
+                self.client.inject_structural_feedback(topo_text)
+                self.topology_loaded = True
+                self.topology_text = topo_text
+        except Exception:
+            pass  # Topology injection is non-critical
 
     def chat(self, message: str) -> Tuple[str, List[StepMeasurement], Dict]:
         """Send a message via API and return (response_text, steps, metrics).
@@ -643,6 +674,8 @@ class E0APIStarter:
         self.init_metrics = None
         self._pending_feedback = None
         self.last_feedback = None
+        self.topology_loaded = False
+        self.topology_text = None
 
 
 # =============================================
@@ -1125,6 +1158,11 @@ def _start_web_with_starter(starter, lang, show_detail, port):
 
     backend_label = f"E\u2080 API ({starter.model_name})" if starter.is_api else f"E\u2080 Local ({starter.model_name})"
     init_text = f"[Profile initialization complete. {len(starter.turn_metrics)} steps executed.]"
+
+    # Include topology info if loaded
+    if hasattr(starter, 'topology_loaded') and starter.topology_loaded:
+        init_text += "\n[Topology loaded — structural memory from previous sessions injected.]"
+
     nov = score_novelty(_web_prev_text) if _web_prev_text else {'novelty': 0, 'e0_operative': 0, 'qm_overlap': 0, 'structural_density': 0}
     comp = score_e0_completeness(_web_prev_text) if _web_prev_text else {'completeness': 0}
     _web_init_data = {
@@ -1148,6 +1186,7 @@ def _start_web_with_starter(starter, lang, show_detail, port):
         "help_text": g["help_text"].strip(),
         "backend": backend_label,
         "params": f"{starter.param_count:,}" if hasattr(starter, 'param_count') else "API",
+        "topology": starter.topology_text if hasattr(starter, 'topology_text') else None,
     }
 
     server = HTTPServer(("0.0.0.0", port), E0StartHandler)
