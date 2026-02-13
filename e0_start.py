@@ -50,7 +50,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from e0_middleware.instrumentation import E0Instrumenter, StepMeasurement
 from e0_sessions import build_session_data, save_session, load_session, list_sessions, delete_session, restore_starter_state, verify_session_integrity
 from e0_config import load_config, save_config, has_config, first_run_setup, merge_args_with_config, detect_base_url
-from experiments.quality_metrics import score_novelty, score_coherence, score_completeness, interpret_novelty, interpret_coherence, interpret_structural_density, interpret_completeness
+from experiments.quality_metrics import score_novelty, score_coherence, score_e0_completeness, interpret_novelty, interpret_coherence, interpret_structural_density, interpret_completeness
 
 
 # =============================================
@@ -1077,7 +1077,7 @@ def _start_web_with_starter(starter, lang, show_detail, port):
     backend_label = f"E\u2080 API ({starter.model_name})" if starter.is_api else f"E\u2080 Local ({starter.model_name})"
     init_text = f"[Profile initialization complete. {len(starter.turn_metrics)} steps executed.]"
     nov = score_novelty(_web_prev_text) if _web_prev_text else {'novelty': 0, 'e0_operative': 0, 'qm_overlap': 0, 'structural_density': 0}
-    comp = score_completeness(_web_prev_text, 0) if _web_prev_text else {'completeness': 0, 'marker_hits': 0, 'marker_total': 0, 'target': ''}
+    comp = score_e0_completeness(_web_prev_text) if _web_prev_text else {'completeness': 0}
     _web_init_data = {
         "text": init_text,
         "metrics": last_metrics,
@@ -1231,7 +1231,7 @@ def build_init_data(text, steps, metrics, lang, starter):
     nov = score_novelty(text)
     # No previous text for coherence at init
     coh_score = {'coherence': 0.0, 'term_overlap': 0.0, 'forward_refs': 0}
-    comp_score = score_completeness(text, 0)  # step 0 for init
+    comp_score = score_e0_completeness(text)
 
     g = GUIDANCE[lang]
     if r_level in ("very_low", "low"):
@@ -1310,7 +1310,7 @@ def build_report_data(starter, lang):
             label = "init" if i == 0 else f"  {i}"
             nov = score_novelty(resp)
             coh = score_coherence(prev, resp)
-            comp = score_completeness(resp, i)
+            comp = score_e0_completeness(resp)
             prev = resp
             lines.append(f"{label:<6s} | {nov['novelty']:.3f}   | {nov['e0_operative']:.3f}  | {coh['coherence']:.3f}     | {comp['completeness']:.3f}")
 
@@ -1422,7 +1422,7 @@ class E0StartHandler(BaseHTTPRequestHandler):
                 # Quality scores
                 nov = score_novelty(text)
                 coh = score_coherence(_web_prev_text, text)
-                comp = score_completeness(text, _web_turn_num - 1)
+                comp = score_e0_completeness(text)
                 _web_prev_text = text
 
                 g = GUIDANCE[_web_lang]["turn_explain"]

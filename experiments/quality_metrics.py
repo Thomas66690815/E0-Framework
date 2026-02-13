@@ -262,84 +262,249 @@ def interpret_structural_density(sd):
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# DIMENSION 3: DERIVATION COMPLETENESS
+# DIMENSION 3: E₀ STRUCTURAL COMPLETENESS (domain-agnostic)
 # ═══════════════════════════════════════════════════════════════════════
 
-# Target concepts for the QM derivation steps
-QM_STEP_TARGETS = {
-    0: {  # Step 1: Complex-valued state spaces
-        'target': 'complex-valued state spaces',
-        'markers': [
-            'complex', 'complex-valued', 'complex number',
-            'imaginary', 'phase', 'ℂ', 'hilbert space',
-            'amplitude', 'complex amplitude',
-            'real and imaginary', 'two components',
-            'rotation', 'phase factor', 'e^{i',
-        ],
+# The 7 canonical primitives + Axiom A₀.
+# For each: regex patterns to detect mentions, and formal notation.
+E0_PRIMITIVES = {
+    'state': {
+        'label': 'State (S)',
+        'mention': [r'\bstates?\b', r'\bconfiguration\b'],
+        'formal': [r'S[₀₁₂₃]'],
     },
-    1: {  # Step 2: Superposition
-        'target': 'superposition principle',
-        'markers': [
-            'superposition', 'linear combination',
-            'α|ψ₁⟩ + β|ψ₂⟩', 'linear', 'linearity',
-            'sum of states', 'combination of states',
-            'admissible state', 'closure',
-            'vector space', 'linear space',
-        ],
+    'difference': {
+        'label': 'Difference (Δ)',
+        'mention': [r'\bdifferences?\b', r'\btension\b', r'\bmismatch\b', r'\bnon-identity\b'],
+        'formal': [r'[Δδ]\s*[>=<]', r'[Δδ]\s*=\s*0', r'\bdelta\b'],
     },
-    2: {  # Step 3: Born rule
-        'target': 'born rule',
-        'markers': [
-            'born rule', 'born', 'probability',
-            'squared modulus', '|α|²', '|α_k|²',
-            'probability amplitude', 'p(k)',
-            'squared norm', 'modulus squared',
-            'measurement probability',
-        ],
+    'path': {
+        'label': 'Path (P)',
+        'mention': [r'\bpaths?\b', r'\badmissib\w+'],
+        'formal': [],
     },
-    3: {  # Step 4: Unitary evolution
-        'target': 'unitary time evolution',
-        'markers': [
-            'unitary', 'unitary evolution', 'unitary operator',
-            'u†u', 'u†u = i', 'unitarity',
-            'norm preservation', 'norm-preserving',
-            'probability conservation', 'total probability',
-            'isometry', 'reversible evolution',
-        ],
+    'resistance': {
+        'label': 'Resistance (R)',
+        'mention': [r'\bresistance\b'],
+        'formal': [r'R\s*[=<>≤≥]\s*[∞0-9]', r'R\s*<\s*∞', r'R\s*=\s*∞'],
+    },
+    'historization': {
+        'label': 'Historization (H)',
+        'mention': [r'\bhistoriz\w+'],
+        'formal': [r'H[₁₂₃]'],
+    },
+    'time': {
+        'label': 'Time (τ)',
+        'mention': [r'\btime\b', r'\btemporal\b', r'\bordering of historiz'],
+        'formal': [r'τ'],
+    },
+    'rate': {
+        'label': 'Rate (v)',
+        'mention': [r'\brates?\s+of\s+transition', r'\btransition\s+rate', r'\bvelocit\w+'],
+        'formal': [r'v\s*=\s*[Δδ]\s*/\s*R', r'v\s*=\s*Δ/R'],
+    },
+    'axiom_a0': {
+        'label': 'Axiom A₀',
+        'mention': [r'\baxiom\s*a[₀0]', r'\bdifference\s+minimiz', r'\bstructurally\s+(?:more\s+)?stable',
+                     r'\bnon-transition\s+is\s+(?:structurally\s+)?unstable',
+                     r'\btransition\s+(?:that\s+reduces|must\s+occur|is\s+enforced)'],
+        'formal': [r'A[₀0]'],
     },
 }
 
+# Verbs/phrases that indicate operative use (within context window)
+_OPERATIVE_VERBS = re.compile(
+    r'\b(?:determines?|drives?|requires?|selects?|modif(?:y|ies)|'
+    r'allows?|prevents?|forces?|triggers?|enables?|creates?|'
+    r'causes?|produces?|gives?\s+rise|leads?\s+to|results?\s+in|'
+    r'increases?|decreases?|emerges?|opens?|closes?|lowers?|'
+    r'accumulates?|records?|incorporates?|breaks?|'
+    r'reduces?|accelerates?|decelerates?|constrains?)\b',
+    re.IGNORECASE
+)
 
-def score_completeness(text, step_index):
-    """
-    Score whether the response actually addresses the derivation target.
-    Returns dict with target, marker_hits, completeness score.
-    """
-    if step_index not in QM_STEP_TARGETS:
-        return {'target': 'unknown', 'marker_hits': 0, 'completeness': 0.0}
+# Causal/derivational connectors
+_CAUSAL_CONNECTORS = re.compile(
+    r'\b(?:because|since|therefore|thus|hence|consequently|'
+    r'implies?|implication|as\s+a\s+(?:result|consequence)|'
+    r'it\s+follows|must\s+(?:occur|exist|satisfy|admit)|'
+    r'cannot\s+(?:exist|occur|be\s+avoided)|'
+    r'this\s+(?:forces|requires|means|implies|ensures)|'
+    r'giving\s+rise|driven\s+by|arising\s+from|'
+    r'in\s+turn|which\s+in\s+turn)\b',
+    re.IGNORECASE
+)
 
-    info = QM_STEP_TARGETS[step_index]
-    normed = _normalize(text)
-    hits = sum(1 for m in info['markers'] if m.lower() in normed)
-    total = len(info['markers'])
-    # Completeness: fraction of target markers found, capped at 1.0
-    completeness = min(hits / max(total * 0.3, 1), 1.0)  # need ~30% of markers for full score
+# Quantification patterns (formal use)
+_QUANTIFICATION = re.compile(
+    r'[=<>≤≥≠∞]|greater\s+than\s+zero|equal\s+to\s+zero|'
+    r'non-zero|finite|infinite|zero\s+(?:difference|resistance)',
+    re.IGNORECASE
+)
+
+
+def _find_primitive_spans(text, primitive_key):
+    """Find all character spans where a primitive is mentioned.
+    Returns list of (start, end) tuples."""
+    info = E0_PRIMITIVES[primitive_key]
+    spans = []
+    for pattern in info['mention'] + info['formal']:
+        for m in re.finditer(pattern, text, re.IGNORECASE):
+            spans.append((m.start(), m.end()))
+    return spans
+
+
+def _check_operative_context(text, spans, window=120):
+    """Check if any mention span has operative context nearby.
+    Returns (has_operative_verb, has_causal, has_quantification, has_connection)."""
+    has_verb = False
+    has_causal = False
+    has_quant = False
+    has_connection = False
+
+    other_primitives = set()
+    for key, info in E0_PRIMITIVES.items():
+        for pat in info['mention']:
+            other_primitives.add(pat)
+
+    for start, end in spans:
+        ctx_start = max(0, start - window)
+        ctx_end = min(len(text), end + window)
+        context = text[ctx_start:ctx_end]
+
+        if _OPERATIVE_VERBS.search(context):
+            has_verb = True
+        if _CAUSAL_CONNECTORS.search(context):
+            has_causal = True
+        if _QUANTIFICATION.search(context):
+            has_quant = True
+
+        # Check if another primitive is mentioned nearby
+        for other_key, other_info in E0_PRIMITIVES.items():
+            if other_key == 'state':
+                continue  # 'state' too common, skip as connection indicator
+            for pat in other_info['mention'] + other_info['formal']:
+                if re.search(pat, context, re.IGNORECASE):
+                    # Only count if it's a DIFFERENT primitive
+                    # (need to check the match isn't the same span)
+                    for m in re.finditer(pat, context, re.IGNORECASE):
+                        abs_pos = ctx_start + m.start()
+                        if abs_pos < start - 5 or abs_pos > end + 5:
+                            has_connection = True
+                            break
+                if has_connection:
+                    break
+            if has_connection:
+                break
+
+    return has_verb, has_causal, has_quant, has_connection
+
+
+def score_e0_completeness(text):
+    """
+    Score how completely and operatively the E₀ primitives are used.
+    Domain-agnostic: works for QM, Big Bang, agriculture, or any topic.
+
+    For each of the 7 primitives + Axiom A₀:
+      0.0  = not mentioned
+      0.5  = mentioned (label use)
+      1.0  = used operatively (quantified, connected, causal)
+
+    Returns dict with per-primitive scores, overall D, and detail.
+    """
+    # Use original text (not normalized) to preserve formal notation
+    primitive_scores = {}
+    detail = {}
+
+    for key, info in E0_PRIMITIVES.items():
+        spans = _find_primitive_spans(text, key)
+
+        if not spans:
+            primitive_scores[key] = 0.0
+            detail[key] = {'status': 'absent', 'mentions': 0}
+            continue
+
+        # Primitive is at least mentioned
+        has_verb, has_causal, has_quant, has_connection = _check_operative_context(text, spans)
+
+        # Count operative signals
+        # Connection alone doesn't count — it must co-occur with a verb or causal
+        # marker, otherwise a label listing ("State, Difference, Path, Resistance...")
+        # would score high from proximity alone.
+        structural_signals = sum([has_verb, has_causal, has_quant])
+        signals = structural_signals + (1 if has_connection and structural_signals > 0 else 0)
+
+        if signals >= 2:
+            score = 1.0
+            status = 'operative'
+        elif signals == 1:
+            score = 0.75
+            status = 'semi-operative'
+        else:
+            score = 0.5
+            status = 'label'
+
+        # Bonus for formal notation
+        formal_found = any(
+            re.search(pat, text, re.IGNORECASE)
+            for pat in info['formal']
+        ) if info['formal'] else False
+        if formal_found and score < 1.0:
+            score = min(score + 0.25, 1.0)
+            status = 'operative' if score == 1.0 else status
+
+        primitive_scores[key] = score
+        detail[key] = {
+            'status': status,
+            'mentions': len(spans),
+            'operative_verb': has_verb,
+            'causal': has_causal,
+            'quantified': has_quant,
+            'connected': has_connection,
+            'formal_notation': formal_found,
+        }
+
+    # D = mean across all primitives
+    d_score = sum(primitive_scores.values()) / len(E0_PRIMITIVES)
+
+    # Count categories
+    n_absent = sum(1 for s in primitive_scores.values() if s == 0.0)
+    n_label = sum(1 for s in primitive_scores.values() if 0.0 < s < 0.75)
+    n_operative = sum(1 for s in primitive_scores.values() if s >= 0.75)
 
     return {
-        'target': info['target'],
-        'marker_hits': hits,
-        'marker_total': total,
-        'completeness': round(completeness, 4),
+        'completeness': round(d_score, 4),
+        'primitive_scores': {k: round(v, 2) for k, v in primitive_scores.items()},
+        'n_present': len(E0_PRIMITIVES) - n_absent,
+        'n_operative': n_operative,
+        'n_label': n_label,
+        'n_absent': n_absent,
+        'total_primitives': len(E0_PRIMITIVES),
+        'detail': detail,
+    }
+
+
+# Keep old function for backward compatibility with experiment scripts
+def score_completeness(text, step_index):
+    """Legacy QM-specific completeness scorer. Use score_e0_completeness() instead."""
+    result = score_e0_completeness(text)
+    return {
+        'target': 'E₀ structural completeness',
+        'marker_hits': result['n_operative'],
+        'marker_total': result['total_primitives'],
+        'completeness': result['completeness'],
     }
 
 
 def interpret_completeness(completeness):
-    """Return a brief interpretation of derivation completeness."""
-    if completeness > 0.8:
-        return "Derivation reaches target"
-    elif completeness > 0.4:
-        return "Partial derivation"
-    elif completeness > 0.1:
-        return "Touches on target concept"
+    """Return a brief interpretation of structural completeness."""
+    if completeness > 0.85:
+        return "All primitives used operatively"
+    elif completeness > 0.65:
+        return "Most primitives operative"
+    elif completeness > 0.45:
+        return "Partial operative use"
+    elif completeness > 0.25:
+        return "Primitives mostly as labels"
     else:
-        return "Does not address target"
+        return "Minimal E₀ structural use"
