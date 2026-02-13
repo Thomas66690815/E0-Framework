@@ -48,6 +48,7 @@ os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from e0_middleware.instrumentation import E0Instrumenter, StepMeasurement
+from experiments.quality_metrics import score_novelty, score_coherence, score_completeness, interpret_novelty, interpret_coherence, interpret_structural_density, interpret_completeness
 
 
 # =============================================
@@ -1047,11 +1048,12 @@ def run_profile(profile_path: str, api_key: str = None, base_url: str = None,
 
 def _start_web_with_starter(starter, lang, show_detail, port):
     """Start the web interface with an already-initialized starter."""
-    global _web_starter, _web_lang, _web_init_data, _web_prev_r, _web_turn_num
+    global _web_starter, _web_lang, _web_init_data, _web_prev_r, _web_turn_num, _web_prev_text
 
     _web_starter = starter
     _web_lang = lang
     _web_prev_r = starter.turn_metrics[-1]["r"] if starter.turn_metrics else 0
+    _web_prev_text = starter.history[-1] if starter.history else ""
     _web_turn_num = len(starter.turn_metrics)
 
     # Build init data from the last turn
@@ -1069,10 +1071,25 @@ def _start_web_with_starter(starter, lang, show_detail, port):
         verdict = g["verdict_struggle"]
 
     backend_label = f"E\u2080 API ({starter.model_name})" if starter.is_api else f"E\u2080 Local ({starter.model_name})"
+    init_text = f"[Profile initialization complete. {len(starter.turn_metrics)} steps executed.]"
+    nov = score_novelty(_web_prev_text) if _web_prev_text else {'novelty': 0, 'e0_operative': 0, 'qm_overlap': 0, 'structural_density': 0}
+    comp = score_completeness(_web_prev_text, 0) if _web_prev_text else {'completeness': 0, 'marker_hits': 0, 'marker_total': 0, 'target': ''}
     _web_init_data = {
-        "text": f"[Profile initialization complete. {len(starter.turn_metrics)} steps executed.]",
+        "text": init_text,
         "metrics": last_metrics,
-        "interpretation": {"r": r_text, "h": h_text, "phi": phi_text, "v": v_text},
+        "quality": {
+            "novelty": nov['novelty'], "e0_operative": nov['e0_operative'],
+            "qm_overlap": nov['qm_overlap'], "structural_density": nov['structural_density'],
+            "coherence": 0.0, "term_overlap": 0.0, "forward_refs": 0,
+            "completeness": comp['completeness'],
+        },
+        "interpretation": {
+            "r": r_text, "h": h_text, "phi": phi_text, "v": v_text,
+            "novelty": interpret_novelty(nov['novelty'], nov['e0_operative']),
+            "coherence": "Initial response (no prior step)",
+            "structural": interpret_structural_density(nov['structural_density']),
+            "completeness": interpret_completeness(comp['completeness']),
+        },
         "verdict": verdict.strip(),
         "trace": [],
         "help_text": g["help_text"].strip(),
@@ -1205,6 +1222,13 @@ def build_init_data(text, steps, metrics, lang, starter):
     h_text = interpret_h(metrics["h"], lang)
     phi_text = interpret_phi(metrics["phi"], lang)
     v_text = interpret_v(metrics["v"], lang)
+
+    # Quality scores for init response
+    nov = score_novelty(text)
+    # No previous text for coherence at init
+    coh_score = {'coherence': 0.0, 'term_overlap': 0.0, 'forward_refs': 0}
+    comp_score = score_completeness(text, 0)  # step 0 for init
+
     g = GUIDANCE[lang]
     if r_level in ("very_low", "low"):
         verdict = g["verdict_good"]
@@ -1215,7 +1239,23 @@ def build_init_data(text, steps, metrics, lang, starter):
     return {
         "text": text,
         "metrics": metrics,
-        "interpretation": {"r": r_text, "h": h_text, "phi": phi_text, "v": v_text},
+        "quality": {
+            "novelty": nov['novelty'],
+            "e0_operative": nov['e0_operative'],
+            "qm_overlap": nov['qm_overlap'],
+            "structural_density": nov['structural_density'],
+            "coherence": coh_score['coherence'],
+            "term_overlap": coh_score['term_overlap'],
+            "forward_refs": coh_score['forward_refs'],
+            "completeness": comp_score['completeness'],
+        },
+        "interpretation": {
+            "r": r_text, "h": h_text, "phi": phi_text, "v": v_text,
+            "novelty": interpret_novelty(nov['novelty'], nov['e0_operative']),
+            "coherence": "Initial response (no prior step)",
+            "structural": interpret_structural_density(nov['structural_density']),
+            "completeness": interpret_completeness(comp_score['completeness']),
+        },
         "verdict": verdict.strip(),
         "trace": build_trace_data(steps),
         "help_text": g["help_text"].strip(),
@@ -1253,6 +1293,23 @@ def build_report_data(starter, lang):
             for label, r in zip(labels, r_values):
                 bar_len = int((r / max_r) * 30) if max_r > 0 else 0
                 lines.append(f"  {label:<6s} | {'#' * bar_len} {r:.3f}")
+
+    # Quality section — compute from stored response history
+    responses = [h for i, h in enumerate(starter.history) if i % 2 == 1]  # even=prompts, odd=responses
+    if responses:
+        lines.append("")
+        lines.append("─── Quality Scores ───")
+        lines.append(f"{'Turn':<6s} | Novelty | E₀ Op  | Coherence | Complete")
+        lines.append(f"-------+---------+--------+-----------+---------")
+        prev = ""
+        for i, resp in enumerate(responses):
+            label = "init" if i == 0 else f"  {i}"
+            nov = score_novelty(resp)
+            coh = score_coherence(prev, resp)
+            comp = score_completeness(resp, i)
+            prev = resp
+            lines.append(f"{label:<6s} | {nov['novelty']:.3f}   | {nov['e0_operative']:.3f}  | {coh['coherence']:.3f}     | {comp['completeness']:.3f}")
+
     return {"report": "\n".join(lines)}
 
 
@@ -1262,6 +1319,7 @@ _web_lang = "en"
 _web_init_data = None
 _web_prev_r = 0.0
 _web_turn_num = 0
+_web_prev_text = ""  # previous response text for coherence scoring
 _web_lock = threading.Lock()
 
 
@@ -1312,7 +1370,7 @@ class E0StartHandler(BaseHTTPRequestHandler):
             self.send_error(404)
 
     def _handle_chat(self, body):
-        global _web_prev_r, _web_turn_num
+        global _web_prev_r, _web_turn_num, _web_prev_text
         message = body.get("message", "").strip()
         if not message:
             self._json({"error": "empty message"}, 400)
@@ -1326,6 +1384,13 @@ class E0StartHandler(BaseHTTPRequestHandler):
                 h_text = interpret_h(metrics["h"], _web_lang)
                 phi_text = interpret_phi(metrics["phi"], _web_lang)
                 v_text = interpret_v(metrics["v"], _web_lang)
+
+                # Quality scores
+                nov = score_novelty(text)
+                coh = score_coherence(_web_prev_text, text)
+                comp = score_completeness(text, _web_turn_num - 1)
+                _web_prev_text = text
+
                 g = GUIDANCE[_web_lang]["turn_explain"]
                 r = metrics["r"]
                 if _web_turn_num == 1:
@@ -1341,15 +1406,31 @@ class E0StartHandler(BaseHTTPRequestHandler):
                 _web_prev_r = r
                 self._json({
                     "text": text, "metrics": metrics,
-                    "interpretation": {"r": r_text, "h": h_text, "phi": phi_text,
-                                       "v": v_text, "guidance": guidance.strip()},
+                    "quality": {
+                        "novelty": nov['novelty'],
+                        "e0_operative": nov['e0_operative'],
+                        "qm_overlap": nov['qm_overlap'],
+                        "structural_density": nov['structural_density'],
+                        "coherence": coh['coherence'],
+                        "term_overlap": coh['term_overlap'],
+                        "forward_refs": coh['forward_refs'],
+                        "completeness": comp['completeness'],
+                    },
+                    "interpretation": {
+                        "r": r_text, "h": h_text, "phi": phi_text,
+                        "v": v_text, "guidance": guidance.strip(),
+                        "novelty": interpret_novelty(nov['novelty'], nov['e0_operative']),
+                        "coherence": interpret_coherence(coh['coherence']),
+                        "structural": interpret_structural_density(nov['structural_density']),
+                        "completeness": interpret_completeness(comp['completeness']),
+                    },
                     "trace": build_trace_data(steps),
                 })
             except Exception as e:
                 self._json({"error": str(e)}, 500)
 
     def _handle_clear(self):
-        global _web_init_data, _web_prev_r, _web_turn_num
+        global _web_init_data, _web_prev_r, _web_turn_num, _web_prev_text
         with _web_lock:
             if _web_starter.is_api:
                 _web_starter.reset()
@@ -1361,6 +1442,7 @@ class E0StartHandler(BaseHTTPRequestHandler):
             text, steps, metrics = _web_starter.feed_canon(canon)
             _web_prev_r = metrics["r"]
             _web_turn_num = 0
+            _web_prev_text = _clean(text)
             _web_init_data = build_init_data(text, steps, metrics, _web_lang, _web_starter)
         self._json(_web_init_data)
 
@@ -1559,9 +1641,9 @@ function toggleTrace(id) {
   if (el) el.classList.toggle('open');
 }
 
-function interpHtml(m, i) {
+function interpHtml(m, i, q) {
   if (!m || !i) return '';
-  return '<div class="interp">'
+  var h = '<div class="interp">'
     + '<div class="row"><span class="lbl">R\u0304</span><span class="val">'
     + m.r.toFixed(3) + '</span><span class="expl">' + esc(i.r) + '</span></div>'
     + '<div class="row"><span class="lbl">H\u0304</span><span class="val">'
@@ -1569,8 +1651,20 @@ function interpHtml(m, i) {
     + '<div class="row"><span class="lbl">\u03a6</span><span class="val">'
     + m.phi + '</span><span class="expl">' + esc(i.phi) + '</span></div>'
     + '<div class="row"><span class="lbl">v\u0304</span><span class="val">'
-    + m.v.toFixed(3) + '</span><span class="expl">' + esc(i.v) + '</span></div>'
-    + '</div>';
+    + m.v.toFixed(3) + '</span><span class="expl">' + esc(i.v) + '</span></div>';
+  if (q) {
+    h += '<div class="row" style="margin-top:4px;border-top:1px solid var(--border);padding-top:4px">'
+      + '<span class="lbl" style="color:var(--human)">N</span><span class="val" style="color:var(--human)">'
+      + q.novelty.toFixed(3) + '</span><span class="expl">' + esc(i.novelty || '') + '</span></div>'
+      + '<div class="row"><span class="lbl" style="color:var(--human)">C</span><span class="val" style="color:var(--human)">'
+      + q.coherence.toFixed(3) + '</span><span class="expl">' + esc(i.coherence || '') + '</span></div>'
+      + '<div class="row"><span class="lbl" style="color:var(--human)">E\u2080</span><span class="val" style="color:var(--human)">'
+      + q.e0_operative.toFixed(3) + '</span><span class="expl">' + esc(i.structural || '') + '</span></div>'
+      + '<div class="row"><span class="lbl" style="color:var(--human)">D</span><span class="val" style="color:var(--human)">'
+      + (q.completeness !== undefined ? q.completeness.toFixed(3) : '—') + '</span><span class="expl">' + esc(i.completeness || '') + '</span></div>';
+  }
+  h += '</div>';
+  return h;
 }
 
 function traceHtml(trace, id) {
@@ -1595,7 +1689,7 @@ function showInit(d) {
   div.className = 'msg e0';
   var h = '<div class="role">E\u2080 Initialization</div>';
   h += '<div class="body">' + esc(d.text) + '</div>';
-  h += interpHtml(d.metrics, d.interpretation);
+  h += interpHtml(d.metrics, d.interpretation, d.quality);
   if (d.verdict) h += '<div class="verdict">' + esc(d.verdict) + '</div>';
   h += traceHtml(d.trace, 'init');
   div.innerHTML = h;
@@ -1605,13 +1699,13 @@ function showInit(d) {
   if (d.help_text) helpText = d.help_text;
 }
 
-function showE0(text, m, i, trace) {
+function showE0(text, m, i, trace, q) {
   var id = 'm' + (++msgN);
   var div = document.createElement('div');
   div.className = 'msg e0';
   var h = '<div class="role">E\u2080</div><div class="body">' + esc(text) + '</div>';
   if (m && i) {
-    h += interpHtml(m, i);
+    h += interpHtml(m, i, q);
     if (i.guidance) h += '<div class="guidance">' + esc(i.guidance) + '</div>';
   }
   h += traceHtml(trace, id);
@@ -1657,13 +1751,13 @@ async function doSend() {
     var d = await r.json();
     rmWait();
     if (d.error) {
-      showE0('[Error] ' + d.error, null, null, null);
+      showE0('[Error] ' + d.error, null, null, null, null);
     } else {
-      showE0(d.text, d.metrics, d.interpretation, d.trace);
+      showE0(d.text, d.metrics, d.interpretation, d.trace, d.quality);
     }
   } catch (e) {
     rmWait();
-    showE0('[Connection error] ' + e.message, null, null, null);
+    showE0('[Connection error] ' + e.message, null, null, null, null);
   }
   sending = false;
   sendBtn.disabled = false;
@@ -1716,7 +1810,7 @@ window.addEventListener('load', async function() {
 def run_web(model_name: str, device: str, lang: str, show_detail: bool, port: int,
             api_key: str = None, base_url: str = None):
     """Full initialization followed by web interface."""
-    global _web_starter, _web_lang, _web_init_data, _web_prev_r, _web_turn_num
+    global _web_starter, _web_lang, _web_init_data, _web_prev_r, _web_turn_num, _web_prev_text
 
     g = GUIDANCE[lang]
     _web_lang = lang
@@ -1752,6 +1846,7 @@ def run_web(model_name: str, device: str, lang: str, show_detail: bool, port: in
 
     _web_prev_r = metrics["r"]
     _web_turn_num = 0
+    _web_prev_text = _clean(text)
     _web_init_data = build_init_data(text, steps, metrics, lang, _web_starter)
 
     _, r_explain = interpret_r(metrics["r"], lang)

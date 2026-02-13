@@ -5,8 +5,8 @@ Cost Analysis for E₀ Experiments
 Analyzes token usage and API cost across experimental conditions.
 
 Together AI pricing for Llama-3.3-70B-Instruct-Turbo:
-  Input:  $0.88 per million tokens
-  Output: $0.88 per million tokens
+  Realtime: Input $0.88/M, Output $0.88/M
+  Batch:    Input $0.29/M, Output $0.88/M
 
 Key distinction:
   - output_tokens: measured directly (token_count in CSV = logprob tokens)
@@ -33,6 +33,10 @@ from typing import List, Optional
 # Together AI pricing (per token)
 INPUT_PRICE_PER_TOKEN = 0.88 / 1_000_000
 OUTPUT_PRICE_PER_TOKEN = 0.88 / 1_000_000
+
+# Batch pricing
+BATCH_INPUT_PRICE_PER_TOKEN = 0.29 / 1_000_000
+BATCH_OUTPUT_PRICE_PER_TOKEN = 0.88 / 1_000_000
 
 # Estimated token counts for init phase (not measured by runner)
 # These are rough estimates based on typical tokenization of the config content
@@ -198,8 +202,8 @@ def print_report(conditions: List[ConditionCost]):
     print("COST ANALYSIS — E₀ Experiment Battery")
     print("=" * 72)
     print(f"\nTogether AI Pricing: Llama-3.3-70B-Instruct-Turbo")
-    print(f"  Input:  ${INPUT_PRICE_PER_TOKEN * 1_000_000:.2f} / M tokens")
-    print(f"  Output: ${OUTPUT_PRICE_PER_TOKEN * 1_000_000:.2f} / M tokens")
+    print(f"  Realtime: Input ${INPUT_PRICE_PER_TOKEN * 1_000_000:.2f}/M  Output ${OUTPUT_PRICE_PER_TOKEN * 1_000_000:.2f}/M")
+    print(f"  Batch:    Input ${BATCH_INPUT_PRICE_PER_TOKEN * 1_000_000:.2f}/M  Output ${BATCH_OUTPUT_PRICE_PER_TOKEN * 1_000_000:.2f}/M")
     
     print(f"\n{'─' * 72}")
     print(f"{'Condition':<20} {'N':>3} {'Out Tok':>8} {'In Tok*':>8} {'Init Tok*':>9} {'Total $':>8} {'$/run':>7}")
@@ -238,8 +242,9 @@ If E₀ reduces R̄ but not token count → same $ cost, less information conten
 If E₀ reduces BOTH R̄ and token count → less $ AND less information content.
 
 This distinction matters because:
-  - Token pricing treats all tokens equally ($0.88/M regardless of probability)
-  - But from an information-theoretic view, a token with R=0.01 carries 
+  - Realtime pricing: $0.88/M (all tokens equal)
+  - Batch pricing:    $0.29/M input (67% cheaper!)
+  - From an information-theoretic view, a token with R=0.01 carries 
     much less 'surprise' than a token with R=0.19
   - E₀ may make generation more 'efficient' — fewer bits per dollar
 """)
@@ -257,22 +262,32 @@ This distinction matters because:
             print(f"  → E₀ uses {tok_ratio:.0%} of null's tokens at {R_ratio:.0%} of null's R̄")
             print(f"  → Net information ratio: {tok_ratio * R_ratio:.2f}x")
 
+    # Batch pricing comparison
+    print(f"\n{'═' * 72}")
+    print(f"BATCH PRICING COMPARISON")
+    print(f"{'─' * 72}")
+    print(f"{'Condition':<20} {'Realtime $':>11} {'Batch $':>9} {'Savings':>8}")
+    print(f"{'─' * 72}")
+    grand_batch = 0.0
+    for c in conditions:
+        batch_input_cost = c.total_estimated_input_tokens * BATCH_INPUT_PRICE_PER_TOKEN
+        batch_output_cost = (c.total_output_tokens + c.estimated_init_output_tokens) * BATCH_OUTPUT_PRICE_PER_TOKEN
+        batch_total = batch_input_cost + batch_output_cost
+        savings = 1 - (batch_total / c.total_cost_usd) if c.total_cost_usd > 0 else 0
+        grand_batch += batch_total
+        print(f"{c.condition:<20} ${c.total_cost_usd:>10.4f} ${batch_total:>8.4f} {savings:>7.0%}")
+    print(f"{'─' * 72}")
+    print(f"{'TOTAL':<20} ${grand_total:>10.4f} ${grand_batch:>8.4f} {1 - grand_batch/grand_total if grand_total > 0 else 0:>7.0%}")
+
     # Projection for full battery
     print(f"\n{'═' * 72}")
     print(f"PROJECTED COST — FULL BATTERY (4 conditions × 10 runs)")
     print(f"{'─' * 72}")
     
-    e0_cost = next((c for c in conditions if c.condition == "e0_initialized"), None)
-    if e0_cost:
-        per_run = e0_cost.cost_per_run_usd
-        # E₀ and Inverted have same init overhead
-        # Null has less (no init)
-        # Placebo is similar to E₀
-        projected = per_run * 10 * 4  # rough: 4 conditions, ~same cost each
-        print(f"  Based on E₀ cost/run: ${per_run:.4f}")
-        print(f"  Rough projection:     ${projected:.4f} (4 × 10 runs)")
-        print(f"  With safety margin:   ${projected * 1.5:.4f}")
-        print(f"\n  → THE ENTIRE EXPERIMENT BATTERY COSTS < $0.50")
+    print(f"  Actual total (realtime): ${grand_total:.4f}")
+    print(f"  Actual total (batch):    ${grand_batch:.4f}")
+    print(f"\n  → THE ENTIRE EXPERIMENT BATTERY COSTS < ${max(grand_total, 0.50):.2f} (realtime)")
+    print(f"  → WITH BATCH PRICING: < ${max(grand_batch, 0.25):.2f}")
 
 
 def main():
