@@ -1480,15 +1480,49 @@ def _rebuild_chat_history():
         return entries
     # history[0] = canon, history[1] = init response
     # history[2] = user msg 1, history[3] = response 1, ...
+    prev_text = ""
     for i in range(2, len(_web_starter.history), 2):
         user_msg = _web_starter.history[i] if i < len(_web_starter.history) else ""
         resp_text = _web_starter.history[i + 1] if i + 1 < len(_web_starter.history) else ""
         metric_idx = (i // 2)  # turn 1 = index 1 in turn_metrics
         metrics = _web_starter.turn_metrics[metric_idx] if metric_idx < len(_web_starter.turn_metrics) else None
+
+        # Recompute interpretation and quality so session-load shows scores
+        interpretation = None
+        quality = None
+        if metrics:
+            _, r_text = interpret_r(metrics["r"], _web_lang)
+            h_text = interpret_h(metrics["h"], _web_lang)
+            phi_text = interpret_phi(metrics["phi"], _web_lang)
+            v_text = interpret_v(metrics["v"], _web_lang)
+            nov = score_novelty(resp_text)
+            coh = score_coherence(prev_text, resp_text)
+            comp = score_e0_completeness(resp_text)
+            interpretation = {
+                "r": r_text, "h": h_text, "phi": phi_text, "v": v_text,
+                "novelty": interpret_novelty(nov['novelty'], nov['e0_operative']),
+                "coherence": interpret_coherence(coh['coherence']),
+                "structural": interpret_structural_density(nov['structural_density']),
+                "completeness": interpret_completeness(comp['completeness']),
+            }
+            quality = {
+                "novelty": nov['novelty'],
+                "e0_operative": nov['e0_operative'],
+                "qm_overlap": nov['qm_overlap'],
+                "structural_density": nov['structural_density'],
+                "coherence": coh['coherence'],
+                "term_overlap": coh['term_overlap'],
+                "forward_refs": coh['forward_refs'],
+                "completeness": comp['completeness'],
+            }
+        prev_text = resp_text
+
         entries.append({
             "user": user_msg,
             "response": resp_text,
             "metrics": metrics,
+            "interpretation": interpretation,
+            "quality": quality,
         })
     return entries
 
@@ -2225,7 +2259,7 @@ async function loadSession(filepath, sid) {
       // Then show each turn
       d.history.forEach(function(turn) {
         addHuman(turn.user);
-        showE0(turn.response, turn.metrics, null, null, null, null);
+        showE0(turn.response, turn.metrics, turn.interpretation || null, null, turn.quality || null, null);
       });
     }
     var warnings = (d.info && d.info.warnings) ? d.info.warnings : [];
