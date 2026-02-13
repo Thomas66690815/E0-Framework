@@ -48,6 +48,7 @@ os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from e0_middleware.instrumentation import E0Instrumenter, StepMeasurement
+from e0_sessions import build_session_data, save_session, load_session, list_sessions, delete_session, restore_starter_state, verify_session_integrity
 from experiments.quality_metrics import score_novelty, score_coherence, score_completeness, interpret_novelty, interpret_coherence, interpret_structural_density, interpret_completeness
 
 
@@ -1048,12 +1049,14 @@ def run_profile(profile_path: str, api_key: str = None, base_url: str = None,
 
 def _start_web_with_starter(starter, lang, show_detail, port):
     """Start the web interface with an already-initialized starter."""
-    global _web_starter, _web_lang, _web_init_data, _web_prev_r, _web_turn_num, _web_prev_text
+    global _web_starter, _web_lang, _web_init_data, _web_prev_r, _web_turn_num, _web_prev_text, _web_canon_text, _web_session_id
 
     _web_starter = starter
     _web_lang = lang
+    _web_session_id = None
     _web_prev_r = starter.turn_metrics[-1]["r"] if starter.turn_metrics else 0
     _web_prev_text = starter.history[-1] if starter.history else ""
+    _web_canon_text = starter.history[0] if starter.history else ""
     _web_turn_num = len(starter.turn_metrics)
 
     # Build init data from the last turn
@@ -1320,7 +1323,29 @@ _web_init_data = None
 _web_prev_r = 0.0
 _web_turn_num = 0
 _web_prev_text = ""  # previous response text for coherence scoring
+_web_session_id = None  # current session ID (set on first save)
+_web_canon_text = ""   # canon text for session hashing
 _web_lock = threading.Lock()
+
+
+def _rebuild_chat_history():
+    """Rebuild displayable chat history from starter state for session restore."""
+    entries = []
+    if not _web_starter or not _web_starter.history:
+        return entries
+    # history[0] = canon, history[1] = init response
+    # history[2] = user msg 1, history[3] = response 1, ...
+    for i in range(2, len(_web_starter.history), 2):
+        user_msg = _web_starter.history[i] if i < len(_web_starter.history) else ""
+        resp_text = _web_starter.history[i + 1] if i + 1 < len(_web_starter.history) else ""
+        metric_idx = (i // 2)  # turn 1 = index 1 in turn_metrics
+        metrics = _web_starter.turn_metrics[metric_idx] if metric_idx < len(_web_starter.turn_metrics) else None
+        entries.append({
+            "user": user_msg,
+            "response": resp_text,
+            "metrics": metrics,
+        })
+    return entries
 
 
 class E0StartHandler(BaseHTTPRequestHandler):
@@ -1366,6 +1391,14 @@ class E0StartHandler(BaseHTTPRequestHandler):
             self._handle_clear()
         elif self.path == "/report":
             self._handle_report()
+        elif self.path == "/session/save":
+            self._handle_save_session()
+        elif self.path == "/session/list":
+            self._handle_list_sessions()
+        elif self.path == "/session/load":
+            self._handle_load_session(body)
+        elif self.path == "/session/delete":
+            self._handle_delete_session(body)
         else:
             self.send_error(404)
 
@@ -1430,8 +1463,9 @@ class E0StartHandler(BaseHTTPRequestHandler):
                 self._json({"error": str(e)}, 500)
 
     def _handle_clear(self):
-        global _web_init_data, _web_prev_r, _web_turn_num, _web_prev_text
+        global _web_init_data, _web_prev_r, _web_turn_num, _web_prev_text, _web_session_id
         with _web_lock:
+            _web_session_id = None  # new session on re-init
             if _web_starter.is_api:
                 _web_starter.reset()
             else:
@@ -1450,6 +1484,88 @@ class E0StartHandler(BaseHTTPRequestHandler):
         with _web_lock:
             report = build_report_data(_web_starter, _web_lang)
         self._json(report)
+
+    def _handle_save_session(self):
+        global _web_session_id
+        with _web_lock:
+            data = build_session_data(
+                _web_starter, _web_canon_text,
+                session_id=_web_session_id,
+            )
+            filepath = save_session(data)
+            _web_session_id = data["session_id"]
+        self._json({
+            "session_id": data["session_id"],
+            "filepath": str(filepath),
+            "turns": data["observations"]["total_turns"],
+            "tokens": data["observations"]["total_tokens"],
+        })
+
+    def _handle_list_sessions(self):
+        sessions = list_sessions()
+        self._json({"sessions": sessions})
+
+    def _handle_load_session(self, body):
+        global _web_init_data, _web_prev_r, _web_turn_num, _web_prev_text, _web_session_id
+        filepath = body.get("filepath", "").strip()
+        if not filepath:
+            self._json({"error": "no filepath"}, 400)
+            return
+        try:
+            from pathlib import Path
+            session_data = load_session(Path(filepath))
+        except Exception as e:
+            self._json({"error": f"Load failed: {e}"}, 400)
+            return
+        issues = verify_session_integrity(session_data)
+        with _web_lock:
+            # Reset starter before restoring
+            if _web_starter.is_api:
+                _web_starter.reset()
+            else:
+                _web_starter.history.clear()
+                _web_starter.turn_metrics.clear()
+                _web_starter.all_steps.clear()
+            info = restore_starter_state(_web_starter, session_data, _web_canon_text)
+            _web_session_id = session_data["session_id"]
+            # Rebuild web globals from restored state
+            if _web_starter.turn_metrics:
+                _web_prev_r = _web_starter.turn_metrics[-1]["r"]
+            else:
+                _web_prev_r = 0.0
+            _web_turn_num = max(0, len(_web_starter.turn_metrics) - 1)
+            _web_prev_text = _web_starter.history[-1] if _web_starter.history else ""
+            # Rebuild init data from first response
+            if len(_web_starter.history) >= 2 and _web_starter.turn_metrics:
+                init_text = _web_starter.history[1]  # first response after canon
+                init_metrics = _web_starter.turn_metrics[0]
+                _web_init_data = {
+                    "text": init_text,
+                    "metrics": init_metrics,
+                    "quality": {},
+                    "interpretation": {},
+                    "verdict": "",
+                    "trace": [],
+                    "help_text": GUIDANCE[_web_lang]["help_text"].strip(),
+                    "backend": f"E\u2080 ({_web_starter.model_name})",
+                    "params": "restored",
+                }
+        self._json({
+            "status": "restored",
+            "session_id": _web_session_id,
+            "info": info,
+            "issues": issues,
+            "history": _rebuild_chat_history(),
+        })
+
+    def _handle_delete_session(self, body):
+        filepath = body.get("filepath", "").strip()
+        if not filepath:
+            self._json({"error": "no filepath"}, 400)
+            return
+        from pathlib import Path
+        ok = delete_session(Path(filepath))
+        self._json({"deleted": ok})
 
 
 HTML_START_PAGE = r"""<!DOCTYPE html>
@@ -1595,6 +1711,8 @@ header .actions button:hover { color: var(--accent); border-color: var(--accent)
   <h1>E&#x2080;&ensp;S T A R T</h1>
   <span class="info" id="info"></span>
   <div class="actions">
+    <button onclick="doSessions()">Sessions</button>
+    <button onclick="doSave()">Save</button>
     <button onclick="doHelp()">Help</button>
     <button onclick="doReport()">Report</button>
     <button onclick="doClear()">Re-init</button>
@@ -1619,6 +1737,14 @@ header .actions button:hover { color: var(--accent); border-color: var(--accent)
   <div class="overlay-box">
     <span class="x" onclick="closeReport()">&times;</span>
     <pre id="report-content"></pre>
+  </div>
+</div>
+<div class="overlay" id="sessions-overlay">
+  <div class="overlay-box">
+    <span class="x" onclick="closeSessions()">&times;</span>
+    <h3 style="margin:0 0 12px 0;color:var(--e0)">E&#x2080; Sessions</h3>
+    <div id="session-status" style="margin-bottom:8px;font-size:0.85em;color:var(--human)"></div>
+    <div id="sessions-list" style="max-height:60vh;overflow-y:auto"></div>
   </div>
 </div>
 
@@ -1791,6 +1917,108 @@ document.getElementById('help-overlay').addEventListener('click', function(e) {
   if (e.target === this) closeHelp();
 });
 
+// ── Session management ──
+let currentSessionId = null;
+
+async function doSave() {
+  try {
+    var r = await fetch('/session/save', {method: 'POST'});
+    var d = await r.json();
+    currentSessionId = d.session_id;
+    var status = document.getElementById('session-status');
+    if (status) status.textContent = 'Saved: ' + d.session_id + ' (' + d.turns + ' turns, ' + d.tokens + ' tokens)';
+    // Brief visual feedback
+    var btn = document.querySelector('button[onclick="doSave()"]');
+    if (btn) { btn.textContent = '\u2713 Saved'; setTimeout(function() { btn.textContent = 'Save'; }, 2000); }
+  } catch (e) {
+    alert('Save failed: ' + e.message);
+  }
+}
+
+async function doSessions() {
+  document.getElementById('sessions-overlay').classList.add('open');
+  await refreshSessionList();
+}
+function closeSessions() { document.getElementById('sessions-overlay').classList.remove('open'); }
+document.getElementById('sessions-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeSessions();
+});
+
+async function refreshSessionList() {
+  var r = await fetch('/session/list', {method: 'POST'});
+  var d = await r.json();
+  var list = document.getElementById('sessions-list');
+  if (!d.sessions || d.sessions.length === 0) {
+    list.innerHTML = '<p style="color:var(--muted)">No saved sessions yet. Use "Save" to create one.</p>';
+    return;
+  }
+  var html = '<table style="width:100%;font-size:0.85em;border-collapse:collapse">'
+    + '<tr style="border-bottom:1px solid var(--border)"><th style="text-align:left;padding:4px">Session</th>'
+    + '<th style="text-align:right;padding:4px">Turns</th>'
+    + '<th style="text-align:right;padding:4px">Tokens</th>'
+    + '<th style="text-align:left;padding:4px">R\u0304 trajectory</th>'
+    + '<th style="padding:4px"></th></tr>';
+  d.sessions.forEach(function(s) {
+    var rTraj = (s.r_trajectory || []).map(function(v) { return v.toFixed(3); }).join(' \u2192 ');
+    var isCurrent = (s.session_id === currentSessionId) ? ' style="color:var(--e0);font-weight:bold"' : '';
+    html += '<tr style="border-bottom:1px solid var(--border)">'
+      + '<td style="padding:4px"' + isCurrent + '>' + esc(s.session_id) + '<br><span style="font-size:0.8em;color:var(--muted)">' + esc(s.model) + '</span></td>'
+      + '<td style="text-align:right;padding:4px">' + s.turns + '</td>'
+      + '<td style="text-align:right;padding:4px">' + s.tokens + '</td>'
+      + '<td style="padding:4px;font-family:monospace;font-size:0.85em">' + rTraj + '</td>'
+      + '<td style="padding:4px;white-space:nowrap">'
+      + '<button onclick="loadSession(\'' + esc(s.filepath) + '\',\'' + esc(s.session_id) + '\')" style="font-size:0.8em;margin:2px">Load</button>'
+      + '<button onclick="deleteSession(\'' + esc(s.filepath) + '\')" style="font-size:0.8em;margin:2px;color:#c44">Del</button>'
+      + '</td></tr>';
+  });
+  html += '</table>';
+  list.innerHTML = html;
+}
+
+async function loadSession(filepath, sid) {
+  if (!confirm('Load session ' + sid + '? Current unsaved state will be lost.')) return;
+  try {
+    var r = await fetch('/session/load', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({filepath: filepath})
+    });
+    var d = await r.json();
+    if (d.error) { alert('Load failed: ' + d.error); return; }
+    currentSessionId = d.session_id;
+    // Rebuild chat from restored history
+    chat.innerHTML = '';
+    if (d.history && d.history.length > 0) {
+      // Show init first
+      var initR = await fetch('/init');
+      var initD = await initR.json();
+      showInit(initD);
+      // Then show each turn
+      d.history.forEach(function(turn) {
+        addHuman(turn.user);
+        showE0(turn.response, turn.metrics, null, null, null);
+      });
+    }
+    var warnings = (d.info && d.info.warnings) ? d.info.warnings : [];
+    var msg = 'Session restored: ' + d.session_id + ' (' + (d.info ? d.info.turns_restored : '?') + ' turns)';
+    if (warnings.length > 0) msg += '\n\nWarnings:\n' + warnings.join('\n');
+    document.getElementById('session-status').textContent = msg;
+    closeSessions();
+  } catch (e) {
+    alert('Load error: ' + e.message);
+  }
+}
+
+async function deleteSession(filepath) {
+  if (!confirm('Delete this session permanently?')) return;
+  await fetch('/session/delete', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({filepath: filepath})
+  });
+  await refreshSessionList();
+}
+
 window.addEventListener('load', async function() {
   try {
     var r = await fetch('/init');
@@ -1810,15 +2038,17 @@ window.addEventListener('load', async function() {
 def run_web(model_name: str, device: str, lang: str, show_detail: bool, port: int,
             api_key: str = None, base_url: str = None):
     """Full initialization followed by web interface."""
-    global _web_starter, _web_lang, _web_init_data, _web_prev_r, _web_turn_num, _web_prev_text
+    global _web_starter, _web_lang, _web_init_data, _web_prev_r, _web_turn_num, _web_prev_text, _web_canon_text, _web_session_id
 
     g = GUIDANCE[lang]
     _web_lang = lang
+    _web_session_id = None
 
     print(g["welcome"])
 
     # Load canon
     canon = load_canon()
+    _web_canon_text = canon
 
     # Load model or connect to API
     if api_key:
