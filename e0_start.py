@@ -49,6 +49,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from e0_middleware.instrumentation import E0Instrumenter, StepMeasurement
 from e0_sessions import build_session_data, save_session, load_session, list_sessions, delete_session, restore_starter_state, verify_session_integrity
+from e0_config import load_config, save_config, has_config, first_run_setup, merge_args_with_config, detect_base_url
 from experiments.quality_metrics import score_novelty, score_coherence, score_completeness, interpret_novelty, interpret_coherence, interpret_structural_density, interpret_completeness
 
 
@@ -2174,41 +2175,63 @@ Profile mode (structured initialization path):
         "--profile", type=str, default=None, metavar="PATH",
         help="Initialization profile (JSON). Overrides --model, --lang, --web.",
     )
+    parser.add_argument(
+        "--setup", action="store_true",
+        help="Run first-time setup wizard (creates ~/.e0/config.json)",
+    )
+    parser.add_argument(
+        "--no-config", action="store_true",
+        help="Ignore saved config, use only CLI arguments",
+    )
 
     args = parser.parse_args()
 
-    # Default base URL for Together AI if API key looks like one
-    base_url = args.base_url
-    if args.api and not base_url:
-        if args.api.startswith("tgp_"):
-            base_url = "https://api.together.xyz/v1"
+    # ── Explicit setup mode ──
+    if args.setup:
+        first_run_setup(lang=args.lang)
+        return
+
+    # ── Merge CLI args with saved config ──
+    if args.no_config:
+        # Pure CLI mode, no config file
+        api_key = args.api
+        base_url = detect_base_url(api_key, args.base_url)
+        model_name = args.model or ("gpt2" if not api_key else "Qwen/Qwen2.5-7B-Instruct-Turbo")
+        lang = args.lang
+        port = args.port
+    else:
+        # First-run: if no config and no --api, offer setup
+        if not has_config() and not args.api:
+            print()
+            print("  No configuration found and no --api key provided.")
+            print("  Starting first-run setup...")
+            first_run_setup(lang=args.lang)
+        
+        cfg = merge_args_with_config(args)
+        api_key = cfg["api_key"]
+        base_url = cfg["base_url"]
+        model_name = cfg["model"]
+        lang = cfg["lang"]
+        port = cfg["port"]
 
     # ── Profile mode: structured initialization path ──
     if args.profile:
         run_profile(
             profile_path=args.profile,
-            api_key=args.api,
+            api_key=api_key,
             base_url=base_url,
             show_detail=args.detail,
-            port=args.port,
+            port=port,
         )
         return
 
     # ── Standard mode ──
-    # Determine model name
-    if args.model:
-        model_name = args.model
-    elif args.api:
-        model_name = "Qwen/Qwen2.5-7B-Instruct-Turbo"
-    else:
-        model_name = "gpt2"
-
     if args.web:
-        run_web(model_name, args.device, args.lang, args.detail, args.port,
-                api_key=args.api, base_url=base_url)
+        run_web(model_name, args.device, lang, args.detail, port,
+                api_key=api_key, base_url=base_url)
     else:
-        run(model_name, args.device, args.lang, args.detail,
-            api_key=args.api, base_url=base_url)
+        run(model_name, args.device, lang, args.detail,
+            api_key=api_key, base_url=base_url)
 
 
 if __name__ == "__main__":

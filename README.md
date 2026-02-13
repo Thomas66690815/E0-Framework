@@ -9,6 +9,51 @@ It is offered freely, without expectation, ownership, or obligation.
 
 It emerged through sustained Human–Synthetic Cognitive Partnership (HSCP) work across multiple independent AI systems and continuous human reflection. What is shared here is the result — not a claim, not a promise.
 
+---
+
+## Quickstart (3 steps)
+
+**Requirements:** Python 3.8+
+
+```bash
+# 1. Clone and install
+git clone https://github.com/Thomas66690815/E0-Framework.git
+cd E0-Framework
+pip install openai          # only dependency for API mode
+
+# 2. First run — interactive setup wizard
+python e0_start.py --web
+```
+
+On first launch (no config found, no `--api` flag), E₀ runs a **setup wizard** that asks three questions:
+1. **API key** — paste your Together AI key (or press Enter for free local GPT-2 mode)
+2. **Model** — choose from recommended models or enter a custom one
+3. **Language** — English or Deutsch
+
+Your choices are saved to `~/.e0/config.json`. From then on:
+
+```bash
+# 3. Every subsequent launch — just this
+python e0_start.py --web
+```
+
+That's it. Open http://localhost:3000 and start exploring.
+
+**Other ways to start:**
+
+| Command | What it does |
+|---------|-------------|
+| `python e0_start.py` | Terminal mode, local GPT-2 (zero cost, offline) |
+| `python e0_start.py --web` | Browser UI with saved config |
+| `python e0_start.py --api KEY --web` | Override config with a specific key |
+| `python e0_start.py --setup` | Re-run the setup wizard |
+| `python e0_start.py --no-config --api KEY --web` | Ignore saved config entirely |
+| `python -m e0_core.demo` | Watch E₀ transitions select themselves (no LLM needed) |
+
+**API providers that work:** Together AI (recommended, `tgp_` keys auto-detected), OpenAI, any OpenAI-compatible endpoint.
+
+---
+
 What E₀ is
 
 E₀ is a structural description layer for transitions.
@@ -242,16 +287,17 @@ To run local models: `pip install -r requirements.txt`
 
 **`e0_start.py`** — Practical initialization for humans
 
-The lowest-resistance entry point. Run it, and it works:
+The lowest-resistance entry point. On first run, a setup wizard saves your preferences to `~/.e0/config.json`. After that:
 
 ```
-python e0_start.py                    GPT-2 on CPU (always works)
-python e0_start.py --model X          Any HuggingFace model
+python e0_start.py                    Config-based, terminal mode
+python e0_start.py --web              Config-based, browser UI (recommended)
+python e0_start.py --api KEY --web    Explicit API key, browser UI
+python e0_start.py --setup            Re-run setup wizard
+python e0_start.py --no-config        Ignore saved config, CLI only
+python e0_start.py --model X          Any HuggingFace model (local)
 python e0_start.py --detail           Show token-level measurements
 python e0_start.py --lang de          German guidance
-python e0_start.py --web              Browser interface (recommended)
-python e0_start.py --api KEY          API model (Together AI, OpenAI, etc.)
-python e0_start.py --api KEY --web    API + browser (best for 30B+)
 ```
 
 The script:
@@ -354,15 +400,9 @@ How to engage (recommended)
 
 There is no “correct” usage, but experience suggests:
 
-Start with E₀ Canonical Reference
+Start with `python e0_start.py --web` — the browser interface guides you through everything.
 
-Apply it to a domain you already know well
-
-Iterate — do not rush to conclusions
-
-Only then explore Ontodynamics or the AGI Blueprint
-
-If you want to see E₀ in motion:
+If you want to go deeper:
 
 run `python e0_start.py` — **start here** — initialize a local model with E₀ and get guided through what happens
 

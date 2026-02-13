@@ -3,13 +3,20 @@
 # e0_core/ requires NO external dependencies.
 # It runs on any Python >= 3.8.
 #
-# e0_middleware/ has two tiers:
+# e0_middleware/ has three tiers:
 #
 #   Tier 1 — Simulation mode (no API key, no GPU):
 #     No dependencies needed. Works out of the box.
 #
-#   Tier 2 — Real local models (CPU, no GPU required):
-#     Install with: pip install -r requirements.txt
+#   Tier 2 — API mode (recommended, Together AI / OpenAI):
+#     pip install openai
+#
+#   Tier 3 — Local models (CPU, no GPU required):
+#     pip install -r requirements.txt
 
+# API mode (recommended)
+openai
+
+# Local model mode (optional)
 torch --index-url https://download.pytorch.org/whl/cpu
 transformers
