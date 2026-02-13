@@ -59,6 +59,11 @@ class TurnMetrics:
     latency_ms: float      # API call latency
     timestamp: str
 
+    # API usage (from response.usage)
+    prompt_tokens: int = 0       # input tokens (from API)
+    completion_tokens: int = 0   # output tokens (from API)
+    api_total_tokens: int = 0    # total tokens (from API)
+
     # Per-token trace (optional, for detailed analysis)
     token_trace: List[Dict[str, Any]] = field(default_factory=list)
 
@@ -252,9 +257,10 @@ class ExperimentRunner:
     def _make_api_call(
         self,
         messages: List[Dict[str, str]],
-    ) -> Tuple[str, List[StepMeasurement], float]:
+    ) -> Tuple[str, List[StepMeasurement], float, Dict[str, int]]:
         """
-        Make a single API call and return (text, steps, latency_ms).
+        Make a single API call and return (text, steps, latency_ms, usage).
+        usage = {prompt_tokens, completion_tokens, total_tokens}
         """
         import openai
 
@@ -319,7 +325,15 @@ class ExperimentRunner:
                     )
                     steps.append(step)
 
-        return text, steps, latency_ms
+        # Extract usage data
+        usage = raw_dict.get("usage", {})
+        usage_info = {
+            "prompt_tokens": usage.get("prompt_tokens", 0),
+            "completion_tokens": usage.get("completion_tokens", 0),
+            "total_tokens": usage.get("total_tokens", 0),
+        }
+
+        return text, steps, latency_ms, usage_info
 
     def _run_single(self, run_id: int) -> RunResult:
         """Execute one complete run: init phase + test phase."""
@@ -339,9 +353,10 @@ class ExperimentRunner:
             self._log(f"  Init prompt {i + 1}/{len(self.init_prompts)}...")
             messages.append({"role": "user", "content": init_prompt})
             try:
-                text, steps, latency = self._make_api_call(messages)
+                text, steps, latency, usage = self._make_api_call(messages)
                 messages.append({"role": "assistant", "content": text})
-                self._log(f"    → {len(steps)} tokens, {latency:.0f}ms")
+                self._log(f"    → {len(steps)} tokens, {latency:.0f}ms"
+                          f" (in:{usage['prompt_tokens']} out:{usage['completion_tokens']})")
             except Exception as e:
                 self._log(f"    → ERROR in init: {e}")
                 messages.append({"role": "assistant", "content": f"[ERROR: {e}]"})
@@ -352,7 +367,7 @@ class ExperimentRunner:
             messages.append({"role": "user", "content": test_prompt})
 
             try:
-                text, steps, latency = self._make_api_call(messages)
+                text, steps, latency, usage = self._make_api_call(messages)
                 messages.append({"role": "assistant", "content": text})
 
                 turn = compute_turn_metrics(
@@ -362,6 +377,11 @@ class ExperimentRunner:
                     steps=steps,
                     latency_ms=latency,
                 )
+                # Attach API usage data
+                turn.prompt_tokens = usage.get("prompt_tokens", 0)
+                turn.completion_tokens = usage.get("completion_tokens", 0)
+                turn.api_total_tokens = usage.get("total_tokens", 0)
+
                 all_turns.append(turn)
                 total_tokens += turn.token_count
                 total_latency += latency
@@ -370,6 +390,7 @@ class ExperimentRunner:
                     f"    → R̄={turn.R_mean:.4f}  H̄={turn.H_mean:.4f}  "
                     f"Φ={turn.Phi}  v̄={turn.v_mean:.1f}  "
                     f"({turn.token_count} tokens, {latency:.0f}ms)"
+                    f" [in:{turn.prompt_tokens} out:{turn.completion_tokens}]"
                 )
 
             except Exception as e:
@@ -464,6 +485,7 @@ class ExperimentRunner:
             "R_mean", "H_mean", "Phi", "v_mean",
             "R_std", "H_std", "R_min", "R_max",
             "latency_ms", "timestamp",
+            "prompt_tokens", "completion_tokens", "api_total_tokens",
         ]
 
         with open(csv_path, "w", newline="", encoding="utf-8") as f:
@@ -485,6 +507,9 @@ class ExperimentRunner:
                     "R_max": turn.R_max,
                     "latency_ms": turn.latency_ms,
                     "timestamp": turn.timestamp,
+                    "prompt_tokens": turn.prompt_tokens,
+                    "completion_tokens": turn.completion_tokens,
+                    "api_total_tokens": turn.api_total_tokens,
                 })
 
         # Also save token trace for detailed analysis
@@ -530,6 +555,7 @@ class ExperimentRunner:
             "run_id", "turn_index", "prompt",
             "R_mean", "H_mean", "Phi", "v_mean",
             "R_std", "H_std", "token_count", "latency_ms",
+            "prompt_tokens", "completion_tokens", "api_total_tokens",
         ]
 
         with open(csv_path, "w", newline="", encoding="utf-8") as f:
@@ -553,6 +579,9 @@ class ExperimentRunner:
                         "H_std": turn.H_std,
                         "token_count": turn.token_count,
                         "latency_ms": turn.latency_ms,
+                        "prompt_tokens": turn.prompt_tokens,
+                        "completion_tokens": turn.completion_tokens,
+                        "api_total_tokens": turn.api_total_tokens,
                     })
 
         self._log(f"  Saved: {csv_path}")
