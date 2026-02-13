@@ -1487,19 +1487,24 @@ class E0StartHandler(BaseHTTPRequestHandler):
 
     def _handle_save_session(self):
         global _web_session_id
-        with _web_lock:
-            data = build_session_data(
-                _web_starter, _web_canon_text,
-                session_id=_web_session_id,
-            )
-            filepath = save_session(data)
-            _web_session_id = data["session_id"]
-        self._json({
-            "session_id": data["session_id"],
-            "filepath": str(filepath),
-            "turns": data["observations"]["total_turns"],
-            "tokens": data["observations"]["total_tokens"],
-        })
+        try:
+            with _web_lock:
+                data = build_session_data(
+                    _web_starter, _web_canon_text,
+                    session_id=_web_session_id,
+                )
+                filepath = save_session(data)
+                _web_session_id = data["session_id"]
+            self._json({
+                "session_id": data["session_id"],
+                "filepath": str(filepath),
+                "turns": data["observations"]["total_turns"],
+                "tokens": data["observations"]["total_tokens"],
+            })
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            self._json({"error": str(e)}, 500)
 
     def _handle_list_sessions(self):
         sessions = list_sessions()
@@ -1761,6 +1766,9 @@ function esc(s) {
   d.textContent = s;
   return d.innerHTML;
 }
+function escJs(s) {
+  return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
 
 function toggleTrace(id) {
   const el = document.getElementById('trace-' + id);
@@ -1778,7 +1786,7 @@ function interpHtml(m, i, q) {
     + m.phi + '</span><span class="expl">' + esc(i.phi) + '</span></div>'
     + '<div class="row"><span class="lbl">v\u0304</span><span class="val">'
     + m.v.toFixed(3) + '</span><span class="expl">' + esc(i.v) + '</span></div>';
-  if (q) {
+  if (q && q.novelty !== undefined) {
     h += '<div class="row" style="margin-top:4px;border-top:1px solid var(--border);padding-top:4px">'
       + '<span class="lbl" style="color:var(--human)">N</span><span class="val" style="color:var(--human)">'
       + q.novelty.toFixed(3) + '</span><span class="expl">' + esc(i.novelty || '') + '</span></div>'
@@ -1924,6 +1932,7 @@ async function doSave() {
   try {
     var r = await fetch('/session/save', {method: 'POST'});
     var d = await r.json();
+    if (d.error) { alert('Save error: ' + d.error); return; }
     currentSessionId = d.session_id;
     var status = document.getElementById('session-status');
     if (status) status.textContent = 'Saved: ' + d.session_id + ' (' + d.turns + ' turns, ' + d.tokens + ' tokens)';
@@ -1967,8 +1976,8 @@ async function refreshSessionList() {
       + '<td style="text-align:right;padding:4px">' + s.tokens + '</td>'
       + '<td style="padding:4px;font-family:monospace;font-size:0.85em">' + rTraj + '</td>'
       + '<td style="padding:4px;white-space:nowrap">'
-      + '<button onclick="loadSession(\'' + esc(s.filepath) + '\',\'' + esc(s.session_id) + '\')" style="font-size:0.8em;margin:2px">Load</button>'
-      + '<button onclick="deleteSession(\'' + esc(s.filepath) + '\')" style="font-size:0.8em;margin:2px;color:#c44">Del</button>'
+      + '<button onclick="loadSession(\'' + escJs(s.filepath) + '\',\'' + escJs(s.session_id) + '\')" style="font-size:0.8em;margin:2px">Load</button>'
+      + '<button onclick="deleteSession(\'' + escJs(s.filepath) + '\')" style="font-size:0.8em;margin:2px;color:#c44">Del</button>'
       + '</td></tr>';
   });
   html += '</table>';

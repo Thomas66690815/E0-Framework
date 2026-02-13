@@ -30,3 +30,6 @@ Desktop.ini
 
 # Experiment results (large, regenerable)
 experiments/results/
+
+# Session data (user-specific, large)
+sessions/*.json

@@ -35,7 +35,7 @@ from e0_middleware.instrumentation import (
 # Constants
 # ─────────────────────────────────────────────
 
-SESSIONS_DIR = Path("sessions")
+SESSIONS_DIR = Path(os.path.dirname(os.path.abspath(__file__))) / "sessions"
 SESSION_VERSION = 1
 
 
