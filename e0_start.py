@@ -52,6 +52,7 @@ from e0_sessions import build_session_data, save_session, load_session, list_ses
 from e0_config import load_config, save_config, has_config, first_run_setup, merge_args_with_config, detect_base_url
 from experiments.quality_metrics import score_novelty, score_coherence, score_e0_completeness, interpret_novelty, interpret_coherence, interpret_structural_density, interpret_completeness
 from e0_feedback import generate_structural_feedback, format_feedback_for_injection, format_feedback_for_display
+from e0_meta_feedback import generate_adaptive_feedback, generate_meta_observation, compute_cross_session_trends, adapt_feedback_thresholds
 
 
 # =============================================
@@ -570,6 +571,10 @@ class E0APIStarter:
         # Topology state
         self.topology_loaded: bool = False
         self.topology_text: Optional[str] = None
+        # Meta-feedback state
+        self._topology_data: Optional[Dict] = None  # raw topology for adaptive feedback
+        self._meta_trends: Optional[Dict] = None     # cross-session trend data
+        self.meta_observation: Optional[str] = None   # meta-observation text
 
     def feed_canon(self, canon: str) -> Tuple[str, List[StepMeasurement], Dict]:
         """Feed the canon via API and return (response_text, steps, metrics).
@@ -609,13 +614,31 @@ class E0APIStarter:
         if self.topology_loaded:
             return
         try:
-            from e0_topology import load_latest_topology, format_topology_for_injection
+            from e0_topology import load_latest_topology, load_all_topologies, format_topology_for_injection
             topo = load_latest_topology()
             if topo is not None:
                 topo_text = format_topology_for_injection(topo, lang=lang)
                 self.client.inject_structural_feedback(topo_text)
                 self.topology_loaded = True
                 self.topology_text = topo_text
+                self._topology_data = topo
+
+                # Compute cross-session trends for adaptive feedback
+                try:
+                    topos = load_all_topologies()
+                    if len(topos) >= 2:
+                        self._meta_trends = compute_cross_session_trends(topos)
+                except Exception:
+                    pass
+
+                # Inject meta-observation if available
+                try:
+                    meta = generate_meta_observation(topo, lang=lang)
+                    if meta:
+                        self.client.inject_structural_feedback(meta)
+                        self.meta_observation = meta
+                except Exception:
+                    pass
         except Exception:
             pass  # Topology injection is non-critical
 
@@ -643,15 +666,30 @@ class E0APIStarter:
         return text, resp.steps, metrics
 
     def score_and_prepare_feedback(self, text: str, metrics: Dict, lang: str = 'en') -> Optional[str]:
-        """Score the response and prepare feedback for the next turn.
+        """Score the response and prepare adaptive feedback for the next turn.
+
+        Uses topology-aware adaptive feedback when topology is loaded,
+        falls back to standard feedback otherwise.
 
         Returns the feedback text (or None if not needed).
         Also stores it internally for automatic injection on next chat().
         """
         comp = score_e0_completeness(text)
-        feedback = generate_structural_feedback(
-            comp, lang=lang, include_metrics=metrics,
-        )
+
+        # Use adaptive feedback if topology is available
+        if self._topology_data is not None:
+            feedback = generate_adaptive_feedback(
+                comp,
+                topology=self._topology_data,
+                meta_trends=self._meta_trends,
+                lang=lang,
+                include_metrics=metrics,
+            )
+        else:
+            feedback = generate_structural_feedback(
+                comp, lang=lang, include_metrics=metrics,
+            )
+
         if feedback:
             self._pending_feedback = format_feedback_for_injection(feedback)
             self.last_feedback = feedback
@@ -676,6 +714,9 @@ class E0APIStarter:
         self.last_feedback = None
         self.topology_loaded = False
         self.topology_text = None
+        self._topology_data = None
+        self._meta_trends = None
+        self.meta_observation = None
 
 
 # =============================================
