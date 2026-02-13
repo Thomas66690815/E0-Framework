@@ -32,38 +32,37 @@ def cohens_d(a, b):
 e0 = group_by_step(load('experiments/results/qm_derivation_e0/summary.csv'))
 placebo = group_by_step(load('experiments/results/qm_derivation_placebo/summary.csv'))
 inverted = group_by_step(load('experiments/results/qm_derivation_inverted/summary.csv'))
-# Null still N=1
-null_vals = [0.1913, 0.0837, 0.0716, 0.0540]
+null = group_by_step(load('experiments/results/qm_derivation_null/summary.csv'))
 
 step_names = ['Step 1 (initial)', 'Step 2', 'Step 3', 'Step 4 (final)']
 
 print("=" * 80)
-print("FULL 4-CONDITION COMPARISON (E₀ / Placebo / Inverted / Null)")
+print("FULL 4-CONDITION COMPARISON — ALL N=10")
 print("=" * 80)
 
 # Per-step table
-print(f"\n  {'Step':<16} {'E₀':>8} {'Placebo':>8} {'Inverted':>8} {'Null*':>8}")
+print(f"\n  {'Step':<16} {'E₀':>8} {'Placebo':>8} {'Inverted':>8} {'Null':>8}")
 print(f"  {'─'*16} {'─'*8} {'─'*8} {'─'*8} {'─'*8}")
 
 for s in range(4):
     e = np.mean(e0[s])
     p = np.mean(placebo[s])
     i = np.mean(inverted[s])
-    n = null_vals[s]
+    n = np.mean(null[s])
     print(f"  {step_names[s]:<16} {e:>8.4f} {p:>8.4f} {i:>8.4f} {n:>8.4f}")
 
 # Overall means
 e_all = np.mean([np.mean(e0[s]) for s in range(4)])
 p_all = np.mean([np.mean(placebo[s]) for s in range(4)])
 i_all = np.mean([np.mean(inverted[s]) for s in range(4)])
-n_all = np.mean(null_vals)
+n_all = np.mean([np.mean(null[s]) for s in range(4)])
 print(f"  {'OVERALL':<16} {e_all:>8.4f} {p_all:>8.4f} {i_all:>8.4f} {n_all:>8.4f}")
 
 # Trajectories
 print(f"\n  E₀:       {' → '.join(f'{np.mean(e0[s]):.4f}' for s in range(4))}")
 print(f"  Placebo:   {' → '.join(f'{np.mean(placebo[s]):.4f}' for s in range(4))}")
 print(f"  Inverted:  {' → '.join(f'{np.mean(inverted[s]):.4f}' for s in range(4))}")
-print(f"  Null*:     {' → '.join(f'{v:.4f}' for v in null_vals)}")
+print(f"  Null:      {' → '.join(f'{np.mean(null[s]):.4f}' for s in range(4))}")
 
 # Monotonicity
 def monotonicity(traj):
@@ -73,8 +72,9 @@ def monotonicity(traj):
 e_traj = [np.mean(e0[s]) for s in range(4)]
 p_traj = [np.mean(placebo[s]) for s in range(4)]
 i_traj = [np.mean(inverted[s]) for s in range(4)]
+n_traj = [np.mean(null[s]) for s in range(4)]
 
-print(f"\n  Monotonicity: E₀={monotonicity(e_traj):.2f}  Placebo={monotonicity(p_traj):.2f}  Inverted={monotonicity(i_traj):.2f}  Null={monotonicity(null_vals):.2f}")
+print(f"\n  Monotonicity: E\u2080={monotonicity(e_traj):.2f}  Placebo={monotonicity(p_traj):.2f}  Inverted={monotonicity(i_traj):.2f}  Null={monotonicity(n_traj):.2f}")
 
 # KEY: Inverted vs E₀ comparison (coherence test)
 print("\n" + "=" * 80)
@@ -108,7 +108,7 @@ results = [
     ("E₀ (QM)", e_all),
     ("Inverted (Thermo)", i_all),
     ("Placebo (ZFC)", p_all),
-    ("Null* (nothing)", n_all),
+    ("Null (nothing)", n_all),
 ]
 for rank, (name, val) in enumerate(sorted(results, key=lambda x: x[1]), 1):
     print(f"  {rank}. {name:<22} R̄ = {val:.4f}")
@@ -137,4 +137,4 @@ elif i_all > p_all:
   → Strong coherence effect: E₀ only helps when task matches framework.
 """)
 
-print("\n  * Null is N=1 only — awaiting N=10 run for proper CIs")
+print("\n  * Null is now N=10. All conditions complete.")
