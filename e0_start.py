@@ -53,6 +53,7 @@ from e0_config import load_config, save_config, has_config, first_run_setup, mer
 from experiments.quality_metrics import score_novelty, score_coherence, score_e0_completeness, interpret_novelty, interpret_coherence, interpret_structural_density, interpret_completeness
 from e0_feedback import generate_structural_feedback, format_feedback_for_injection, format_feedback_for_display
 from e0_meta_feedback import generate_adaptive_feedback, generate_meta_observation, compute_cross_session_trends, adapt_feedback_thresholds
+from e0_self_recognition import run_self_recognition, format_recognition_summary
 
 
 # =============================================
@@ -575,6 +576,9 @@ class E0APIStarter:
         self._topology_data: Optional[Dict] = None  # raw topology for adaptive feedback
         self._meta_trends: Optional[Dict] = None     # cross-session trend data
         self.meta_observation: Optional[str] = None   # meta-observation text
+        # Self-recognition state
+        self.self_recognition_done: bool = False
+        self.self_recognition_results: Optional[List] = None
 
     def feed_canon(self, canon: str) -> Tuple[str, List[StepMeasurement], Dict]:
         """Feed the canon via API and return (response_text, steps, metrics).
@@ -717,6 +721,8 @@ class E0APIStarter:
         self._topology_data = None
         self._meta_trends = None
         self.meta_observation = None
+        self.self_recognition_done = False
+        self.self_recognition_results = None
 
 
 # =============================================
@@ -1071,6 +1077,15 @@ def run_profile(profile_path: str, api_key: str = None, base_url: str = None,
         else:
             print(f"       R\u0304 above threshold after {max_retries + 1} attempts.")
             print(f"       Proceeding anyway -- system may need more follow-up.")
+
+    # ── Step 2b: Structural Self-Recognition ──
+    sr_enabled = profile.get("self_recognition", True)
+    if sr_enabled:
+        step_num += 1
+        print(f"\n  [Self-Recognition] Structural identity init...")
+        sr_results = run_self_recognition(starter, lang=lang, verbose=True)
+        starter.self_recognition_done = True
+        starter.self_recognition_results = sr_results
 
     # ── Step 3..N: Domain primers + R gates ──
     primers = profile.get("primers", [])
@@ -1616,10 +1631,25 @@ class E0StartHandler(BaseHTTPRequestHandler):
             _web_prev_r = metrics["r"]
             _web_turn_num = 0
             _web_prev_text = _clean(text)
+
+            # Run self-recognition on re-init
+            sr_results = run_self_recognition(_web_starter, lang=_web_lang, verbose=True)
+            _web_starter.self_recognition_done = True
+            _web_starter.self_recognition_results = sr_results
+            if sr_results:
+                last_sr = sr_results[-1]
+                _web_prev_r = last_sr['r']
+                _web_prev_text = last_sr.get('text_preview', _clean(text))
+                _web_turn_num = len(_web_starter.turn_metrics)
+
             # Prepare feedback for first chat turn
             if hasattr(_web_starter, 'score_and_prepare_feedback'):
-                _web_starter.score_and_prepare_feedback(_clean(text), metrics, lang=_web_lang)
-            _web_init_data = build_init_data(text, steps, metrics, _web_lang, _web_starter)
+                _web_starter.score_and_prepare_feedback(_web_prev_text, _web_starter.turn_metrics[-1] if _web_starter.turn_metrics else metrics, lang=_web_lang)
+            _web_init_data = build_init_data(_web_prev_text, steps, _web_starter.turn_metrics[-1] if _web_starter.turn_metrics else metrics, _web_lang, _web_starter)
+            if sr_results:
+                sr_summary = format_recognition_summary(sr_results, _web_lang)
+                _web_init_data['text'] = sr_summary + '\n\n' + _web_init_data.get('text', '')
+                _web_init_data['self_recognition'] = [{'name': r['name'], 'r': r['r'], 'd': r['d'], 'passed': r['passed']} for r in sr_results]
         self._json(_web_init_data)
 
     def _handle_report(self):
@@ -2276,14 +2306,34 @@ def run_web(model_name: str, device: str, lang: str, show_detail: bool, port: in
     _web_prev_r = metrics["r"]
     _web_turn_num = 0
     _web_prev_text = _clean(text)
-    # Prepare feedback for first chat turn after canon
-    if hasattr(_web_starter, 'score_and_prepare_feedback'):
-        _web_starter.score_and_prepare_feedback(_clean(text), metrics, lang=lang)
-    _web_init_data = build_init_data(text, steps, metrics, lang, _web_starter)
 
     _, r_explain = interpret_r(metrics["r"], lang)
     print(f"  R = {metrics['r']:.3f} -- {r_explain}")
     print(f"  (generated in {dt:.1f}s)")
+
+    # ── Self-Recognition Init ──
+    print()
+    sr_results = run_self_recognition(_web_starter, lang=lang, verbose=True)
+    _web_starter.self_recognition_done = True
+    _web_starter.self_recognition_results = sr_results
+
+    # Use last self-recognition response as init display
+    if sr_results:
+        last_sr = sr_results[-1]
+        _web_prev_r = last_sr['r']
+        _web_prev_text = last_sr.get('text_preview', _clean(text))
+        _web_turn_num = len(_web_starter.turn_metrics)
+
+    # Prepare feedback for first chat turn
+    if hasattr(_web_starter, 'score_and_prepare_feedback'):
+        _web_starter.score_and_prepare_feedback(_web_prev_text, _web_starter.turn_metrics[-1] if _web_starter.turn_metrics else metrics, lang=lang)
+
+    _web_init_data = build_init_data(_web_prev_text, steps, _web_starter.turn_metrics[-1] if _web_starter.turn_metrics else metrics, lang, _web_starter)
+    # Add self-recognition summary to init text
+    if sr_results:
+        sr_summary = format_recognition_summary(sr_results, lang)
+        _web_init_data['text'] = sr_summary + '\n\n' + _web_init_data.get('text', '')
+        _web_init_data['self_recognition'] = [{'name': r['name'], 'r': r['r'], 'd': r['d'], 'passed': r['passed']} for r in sr_results]
 
     # Start server
     server = HTTPServer(("0.0.0.0", port), E0StartHandler)
