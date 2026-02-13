@@ -82,7 +82,50 @@ ACTUAL OUTCOME:
 
 ---
 
-## 5. Future Experiments (After Core Battery)
+## 5. Next Development Priorities
+
+### ✅ Quality Scorer — COMPLETE (commit d4ded17)
+- Shared module: `experiments/quality_metrics.py`
+- 4 dimensions: Novelty, Coherence, E₀ Operative, Completeness
+- Integrated into Web UI (live per-turn scoring)
+- Key finding: Completeness validates control design (Inverted = 0.076 vs E₀ = 0.998)
+
+### ✅ Batch Pricing Analysis — COMPLETE (commit d4ded17)
+- Realtime: $0.69 total battery | Batch: $0.33 (52% savings)
+
+### 🔴 Priority A: Persistent Sessions
+**Status:** NOT STARTED — NEXT FOCUS  
+Sessions currently exist only in memory. When the web server stops, everything is lost.
+
+What this needs:
+- Save session state (history, metrics, quality scores) to disk
+- Resume a session from saved state
+- Session browser in web UI (list, load, compare)
+- Export session as reproducible artifact (JSON + metadata)
+
+Why this matters:
+- E₀ is a process, not a snapshot. The trajectory IS the data.
+- Without persistence, every insight requires re-derivation.
+- Enables longitudinal analysis: how does R̄ evolve across sessions?
+
+### 🟡 Priority B: Better Onboarding Path
+**Status:** NOT STARTED — MUST NOT BE LEFT OPEN  
+Current onboarding: clone repo → install deps → configure API key → run CLI command with flags.
+
+What this needs:
+- Single-command startup: `py e0_start.py` (interactive setup if no config)
+- First-run wizard: choose API provider, enter key, select model
+- Config file persistence (~/.e0/config.json or similar)
+- Clear "what just happened?" explanation after first canon feed
+- README update with 3-step quickstart
+
+Why this matters:
+- E₀ is public. Anyone can find it. Few can currently USE it.
+- The framework is complete — the barrier is now purely ergonomic.
+
+---
+
+## 6. Future Experiments (After Core Battery)
 
 | Experiment | Config | Purpose |
 |------------|--------|---------|
@@ -93,13 +136,13 @@ ACTUAL OUTCOME:
 
 ---
 
-## 6. Technical Reference
+## 7. Technical Reference
 
 - **Python:** `py` command → C:/Python312/python.exe (3.12.4)
-- **API:** Together AI, key in commands above
+- **API:** Together AI (realtime $0.88/M, batch $0.29/M input)
 - **Model:** meta-llama/Llama-3.3-70B-Instruct-Turbo
 - **Results directory:** `experiments/results/` (gitignored)
-- **All analysis tools:** `experiments/analyze_results.py`, `experiments/baseline.py`, `experiments/compare.py`, `experiments/stats.py`
+- **Analysis tools:** `analyze_all.py`, `analyze_cost.py`, `quality_scorer.py`, `quality_metrics.py`, `baseline.py`, `compare.py`, `stats.py`
 - **Protocol:** `experiments/PROTOCOL.md`
 
 ---
