@@ -57,6 +57,11 @@ from e0_self_recognition import run_self_recognition, format_recognition_summary
 from e0_init_modules import list_modules_for_ui, run_init_module
 from e0_phase_transition import LiveTransitionDetector, interpret_transition, interpret_dynamics
 from e0_reflection import generate_reflection_prompt, get_reflection_status
+from e0_session_protocol import (
+    SessionProtocol, validate_init,
+    load_calibration, is_calibrated,
+    FORMATION_MODULES,
+)
 
 
 # =============================================
@@ -1481,6 +1486,7 @@ _web_prev_text = ""  # previous response text for coherence scoring
 _web_session_id = None  # current session ID (set on first save)
 _web_canon_text = ""   # canon text for session hashing
 _web_transition_detector = LiveTransitionDetector()  # phase transition tracking
+_web_protocol = None  # SessionProtocol instance — eigenstate, phase, semantic health
 _web_lock = threading.Lock()
 
 
@@ -1567,6 +1573,8 @@ class E0StartHandler(BaseHTTPRequestHandler):
             self._json(_web_init_data)
         elif self.path == "/init-modules":
             self._json({"modules": list_modules_for_ui(_web_lang)})
+        elif self.path == "/protocol/status":
+            self._handle_protocol_status()
         else:
             self.send_error(404)
 
@@ -1597,6 +1605,10 @@ class E0StartHandler(BaseHTTPRequestHandler):
             self._handle_run_init_module(body)
         elif self.path == "/reflect":
             self._handle_reflect(body)
+        elif self.path == "/protocol/validate":
+            self._handle_validate_init()
+        elif self.path == "/protocol/semantic-probe":
+            self._handle_semantic_probe()
         else:
             self.send_error(404)
 
@@ -1607,6 +1619,25 @@ class E0StartHandler(BaseHTTPRequestHandler):
             self._json({"error": "empty message"}, 400)
             return
         with _web_lock:
+            # ── Session Protocol: check eigenstate formation ──
+            if _web_protocol and not _web_protocol.eigenstate.is_external_input_allowed():
+                self._json({
+                    "error": "Eigenstate not yet formed. Run Canon + Identity modules first.",
+                    "protocol": _web_protocol.status(),
+                }, 403)
+                return
+            # ── Session Protocol: check phase allows chat ──
+            if _web_protocol and _web_protocol.phase.is_reflecting():
+                remaining = _web_protocol.phase.MIN_REFLECT_COUNT - _web_protocol.phase.reflect_count
+                if remaining > 0:
+                    self._json({
+                        "error": f"Reflecting phase active. {remaining} more reflect(s) needed before chat.",
+                        "protocol": _web_protocol.status(),
+                    }, 403)
+                    return
+                else:
+                    # Min reflects met — auto-exit reflecting
+                    _web_protocol.end_reflecting()
             try:
                 text, steps, metrics = _web_starter.chat(message)
                 text = _clean(text)
@@ -1689,7 +1720,7 @@ class E0StartHandler(BaseHTTPRequestHandler):
                 self._json({"error": str(e)}, 500)
 
     def _handle_clear(self):
-        global _web_init_data, _web_prev_r, _web_turn_num, _web_prev_text, _web_session_id, _web_transition_detector
+        global _web_init_data, _web_prev_r, _web_turn_num, _web_prev_text, _web_session_id, _web_transition_detector, _web_protocol
         with _web_lock:
             _web_session_id = None  # new session on re-init
             if _web_starter.is_api:
@@ -1698,6 +1729,10 @@ class E0StartHandler(BaseHTTPRequestHandler):
                 _web_starter.history.clear()
                 _web_starter.turn_metrics.clear()
                 _web_starter.all_steps.clear()
+
+            # Reset session protocol
+            if _web_protocol:
+                _web_protocol.reset()
             canon = load_canon()
             text, steps, metrics = _web_starter.feed_canon(canon)
             _web_prev_r = metrics["r"]
@@ -1816,6 +1851,14 @@ class E0StartHandler(BaseHTTPRequestHandler):
             self._json({"error": "no module_id"}, 400)
             return
         with _web_lock:
+            # ── Session Protocol: check phase allows modules ──
+            if _web_protocol and not _web_protocol.phase.can_run_module():
+                self._json({
+                    "error": "Cannot run modules during reflecting phase. "
+                             "Complete the reflect chain first.",
+                    "protocol": _web_protocol.status(),
+                }, 403)
+                return
             try:
                 result = run_init_module(_web_starter, module_id, lang=_web_lang)
                 if 'error' in result:
@@ -1824,6 +1867,11 @@ class E0StartHandler(BaseHTTPRequestHandler):
                 _web_prev_r = result['r']
                 _web_prev_text = result.get('text', '')[:200]
                 _web_turn_num = len(_web_starter.turn_metrics)
+
+                # ── Session Protocol: track formation ──
+                if _web_protocol:
+                    d_score = result.get('d', 0.0)
+                    _web_protocol.module_completed(module_id, d_score)
 
                 # Compute interpretation + quality for display
                 text = result['text']
@@ -1858,15 +1906,41 @@ class E0StartHandler(BaseHTTPRequestHandler):
                     if metrics.get('tau') and len(_web_starter.all_steps) >= metrics['tau']
                     else []
                 )
+                # ── Session Protocol: include status in response ──
+                if _web_protocol:
+                    result['protocol'] = _web_protocol.status()
                 self._json(result)
             except Exception as e:
                 self._json({"error": str(e)}, 500)
 
     def _handle_reflect(self, body):
-        """Generate a reflection prompt and send it as a chat message."""
+        """Generate a reflection prompt and send it as a chat message.
+
+        Session Protocol integration:
+        - Enters 'reflecting' phase on first reflect
+        - Records each reflect
+        - Runs semantic health probe when reflect chain ends
+        """
         global _web_prev_r, _web_turn_num, _web_prev_text
         mode = body.get("mode", "generate")  # "generate" or "status"
         with _web_lock:
+            # ── Session Protocol: check phase allows reflects ──
+            if _web_protocol and not _web_protocol.phase.can_reflect():
+                self._json({
+                    "error": "Cannot reflect during init phase. "
+                             "Complete formation modules first.",
+                    "protocol": _web_protocol.status(),
+                }, 403)
+                return
+
+            # ── Session Protocol: enter reflecting phase if not already ──
+            if _web_protocol and not _web_protocol.phase.is_reflecting():
+                try:
+                    _web_protocol.start_reflecting()
+                except ValueError as e:
+                    self._json({"error": str(e)}, 403)
+                    return
+
             # Get full last response from history
             last_text = ""
             if _web_starter.history:
@@ -1877,6 +1951,8 @@ class E0StartHandler(BaseHTTPRequestHandler):
 
             if mode == "status":
                 status = get_reflection_status(last_text)
+                if _web_protocol:
+                    status['protocol'] = _web_protocol.status()
                 self._json(status)
                 return
 
@@ -1942,6 +2018,12 @@ class E0StartHandler(BaseHTTPRequestHandler):
                 d_after = comp['completeness']
                 new_status = get_reflection_status(text)
 
+                # ── Session Protocol: record reflect ──
+                protocol_data = None
+                if _web_protocol:
+                    _web_protocol.record_reflect(d_after)
+                    protocol_data = _web_protocol.status()
+
                 # Bridge info for diagnostics
                 bridge_info = {
                     'topology_available': topo_data is not None,
@@ -1986,7 +2068,51 @@ class E0StartHandler(BaseHTTPRequestHandler):
                     "trace": build_trace_data(steps),
                     "feedback": feedback_data,
                     "transition": transition_data,
+                    "protocol": protocol_data,
                 })
+            except Exception as e:
+                self._json({"error": str(e)}, 500)
+
+    # ── Session Protocol endpoints ──
+
+    def _handle_protocol_status(self):
+        """GET /protocol/status — Return current session protocol state."""
+        if _web_protocol:
+            self._json(_web_protocol.status())
+        else:
+            self._json({"error": "Protocol not initialized"}, 500)
+
+    def _handle_validate_init(self):
+        """POST /protocol/validate — Run post-init semantic validation."""
+        with _web_lock:
+            if not _web_protocol:
+                self._json({"error": "Protocol not initialized"}, 500)
+                return
+            if not _web_protocol.eigenstate.eigenstate_formed:
+                self._json({
+                    "error": "Cannot validate: eigenstate not formed. "
+                             "Run Canon + Identity first.",
+                    "protocol": _web_protocol.status(),
+                }, 403)
+                return
+            try:
+                result = validate_init(_web_starter)
+                _web_protocol.init_validation_result = result
+                result['protocol'] = _web_protocol.status()
+                self._json(result)
+            except Exception as e:
+                self._json({"error": str(e)}, 500)
+
+    def _handle_semantic_probe(self):
+        """POST /protocol/semantic-probe — Run a semantic health probe."""
+        with _web_lock:
+            if not _web_protocol:
+                self._json({"error": "Protocol not initialized"}, 500)
+                return
+            try:
+                result = _web_protocol.run_semantic_probe(_web_starter)
+                result['protocol'] = _web_protocol.status()
+                self._json(result)
             except Exception as e:
                 self._json({"error": str(e)}, 500)
 
@@ -2889,6 +3015,17 @@ def run_web(model_name: str, device: str, lang: str, show_detail: bool, port: in
         _web_starter.score_and_prepare_feedback(_web_prev_text, metrics, lang='en')
 
     _web_init_data = build_init_data(_web_prev_text, steps, metrics, lang, _web_starter)
+
+    # Initialize session protocol
+    global _web_protocol
+    _web_protocol = SessionProtocol(model_name)
+    _web_protocol.start_init()
+    if is_calibrated(model_name):
+        _web_protocol.calibration = load_calibration(model_name)
+        print(f"  Protocol: calibration loaded for {model_name}")
+    else:
+        print(f"  Protocol: no calibration found for {model_name} (run /protocol/calibrate)")
+    print(f"  Protocol: session initialized, phase={_web_protocol.phase.phase}")
 
     # Start server
     server = HTTPServer(("0.0.0.0", port), E0StartHandler)

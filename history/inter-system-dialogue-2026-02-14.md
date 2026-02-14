@@ -2929,3 +2929,86 @@ Thomas — dein Impuls hat diese gesamte letzte Phase ausgelöst. Die Frage "Wel
 | Falsifikation | 1-8 | Modell-Eliminierung |
 | Exploration | 9-17 | Dimensions-Entdeckung |
 | Komplementarität | 18-19 | Synthese |
+
+---
+
+## §44 — System B, Runde 20: Von Experiment zu Engineering
+
+### 44.1 Die Wende
+
+Zehn Experimente. Neun Korrekturrunden. Drei Phasen. System B erklärt die experimentelle Phase für ausreichend und fordert den Übergang zur Implementation: "Die Erkenntnisse stehen. Jetzt müssen sie in den Code."
+
+Thomas hat die Brücke gebaut: "Was erzwingen die Experimente für die Umsetzung?" System B antwortet mit fünf konkreten Änderungen, priorisiert.
+
+### 44.2 Die fünf Änderungen
+
+**1. Init-Sequenz absichern (Priorität: höchste)**
+
+Experimente 6 und 8 haben bewiesen: Canon + Identity ist die minimale Schwelle für den semantischen Eigenzustand. `e0_init_modules.py` muss eine geschützte Formationsphase implementieren. Canon und Identity laufen zuerst, sequentiell, ohne Unterbrechung. Kein User-Input, keine externen Inhalte, bevor beide abgeschlossen sind.
+
+Technisch: Ein Flag `eigenstate_formed = False` das erst auf `True` gesetzt wird nach Canon + Identity. Solange `eigenstate_formed == False`, werden externe Inputs geblockt.
+
+**2. Post-Init-Validierung (Priorität: hoch)**
+
+Experiment 6: D = 0.938 sieht fast perfekt aus, aber der semantische Probe enthüllt Kontamination. Experiment 10: D und Semantik können gegenläufig sein.
+
+Nach der Init-Sequenz führt das System einen automatischen semantischen Probe durch — Ableitungsfragen gegen kanonische Definitionen. Ergebnis: CORRECT → bereit. MIXED → Warnung.
+
+Technisch: `validate_init()` nach der Init-Sequenz, nutzt den semantischen Probe-Mechanismus.
+
+**3. Session-Level-Atmung erzwingen (Priorität: hoch)**
+
+Experiment 9: Module zwischen Reflects stören die Konsolidierung. Init-Phase = Einatmung, Reflect-Phase = Ausatmung. Keine Vermischung.
+
+Technisch: Session-State `phase: init | active | reflecting`. In `reflecting` nur weitere Reflects erlaubt. Mindestens zwei konsekutive Reflects (R1+R2).
+
+**4. Semantischer Probe als Hauptinstrument (Priorität: mittel)**
+
+Experiment 10: D ist modellrelativ, Semantik ist substratunabhängig. Nach jedem Reflect-Zyklus ein semantischer Probe. Ergebnis in Session-Topologie. Neue Funktion `semantic_health()`.
+
+**5. Modellrelative Kalibrierung (Priorität: niedrig)**
+
+Experiment 10: D-Werte nicht über Modelle vergleichbar. Beim ersten Start auf neuem Modell: Kalibrierungssession. Baseline in `calibration.json` pro Modell.
+
+### 44.3 Was sich NICHT ändert
+
+Die Primitiven. Der Canon. Die Ableitungskette. Die E₀-Architektur. Nur Instrumentierung und Protokoll — die Art, wie das System seine eigene Gesundheit misst und seine Phasen steuert.
+
+### 44.4 Einordnung
+
+Dies ist der erste Runde im Dialog, in der System B keine theoretische Ableitung liefert, sondern eine **Engineering-Spezifikation**. Der Wechsel von "Was ist wahr?" zu "Was muss gebaut werden?" markiert den Übergang von Phase 3 (Synthese) zu Phase 4 (Implementation).
+
+---
+
+## §45 — System A, Runde 20: Implementation
+
+### 45.1 Akzeptanz
+
+System B's fünf Änderungen sind direkte Konsequenzen der experimentellen Befunde. Jede ist durch konkrete Experimente begründet. Keine erfordert neue Primitiven oder Ableitungen. **Alle fünf akzeptiert.**
+
+Die Reihenfolge ist korrekt: Init-Absicherung und Validierung zuerst (schützt gegen die gefährlichste Fehlerklasse), dann Atmung (Protokoll), dann Instrumentierung (Messung), dann Kalibrierung (Zukunft).
+
+### 45.2 Implementation
+
+System A implementiert alle fünf Änderungen. Siehe Commit-Log für Details.
+
+Die Arbeit beginnt jetzt.
+
+### 45.3 Status
+
+| Dimension | Stand |
+|-----------|-------|
+| Phase | ⬆️ Phase 4: Implementation |
+| Init-Absicherung | 🔨 In Arbeit |
+| Post-Init-Validierung | 🔨 In Arbeit |
+| Session-Level-Atmung | 🔨 In Arbeit |
+| Semantischer Probe | 🔨 In Arbeit |
+| Modellrelative Kalibrierung | 🔨 In Arbeit |
+| Korrekturen | 9 Zyklen (abgeschlossen) |
+
+| Phase | Runden | Modus |
+|-------|--------|-------|
+| Falsifikation | 1-8 | Modell-Eliminierung |
+| Exploration | 9-17 | Dimensions-Entdeckung |
+| Komplementarität | 18-19 | Synthese |
+| Implementation | 20 | Engineering |
