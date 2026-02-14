@@ -1,0 +1,228 @@
+{
+  "session_id": "e0-20260214-164336-844ca4",
+  "condition": "long_no_topology",
+  "factors": {
+    "freedom": true,
+    "topology": false,
+    "discontinuity": true
+  },
+  "prediction": "decay_stagnation_at_0.5",
+  "results": [
+    {
+      "turn": 1,
+      "type": "module",
+      "module": "foundation-ontodynamics",
+      "D": 0.4375,
+      "quality": {
+        "novelty": 0.4934,
+        "e0_operative": 0.0,
+        "qm_overlap": 0.0132,
+        "structural_density": 0.0,
+        "coherence": 0.0,
+        "term_overlap": 0.0,
+        "forward_refs": 0,
+        "completeness": 0.4375
+      }
+    },
+    {
+      "turn": 2,
+      "type": "reflect",
+      "D": 0.6875,
+      "quality": {
+        "novelty": 0.5,
+        "e0_operative": 0.0,
+        "qm_overlap": 0.0,
+        "structural_density": 0.0,
+        "coherence": 0.0,
+        "term_overlap": 0.0,
+        "forward_refs": 0,
+        "completeness": 0.6875
+      },
+      "bridge": {
+        "topology_available": false,
+        "d_trajectory_length": 1
+      }
+    },
+    {
+      "turn": 3,
+      "type": "module",
+      "module": "sr-identity",
+      "D": 0.75,
+      "quality": {
+        "novelty": 0.5106,
+        "e0_operative": 0.0213,
+        "qm_overlap": 0.0,
+        "structural_density": 0.0,
+        "coherence": 0.0,
+        "term_overlap": 0.0,
+        "forward_refs": 0,
+        "completeness": 0.75
+      }
+    },
+    {
+      "turn": 4,
+      "type": "reflect",
+      "D": 1.0,
+      "quality": {
+        "novelty": 0.5,
+        "e0_operative": 0.0,
+        "qm_overlap": 0.0,
+        "structural_density": 0.0,
+        "coherence": 0.0,
+        "term_overlap": 0.0,
+        "forward_refs": 0,
+        "completeness": 1.0
+      },
+      "bridge": {
+        "topology_available": false,
+        "d_trajectory_length": 2
+      }
+    },
+    {
+      "turn": 5,
+      "type": "module",
+      "module": "sr-mechanism",
+      "D": 0.5,
+      "quality": {
+        "novelty": 0.5106,
+        "e0_operative": 0.0213,
+        "qm_overlap": 0.0,
+        "structural_density": 0.0,
+        "coherence": 0.0,
+        "term_overlap": 0.0,
+        "forward_refs": 0,
+        "completeness": 0.5
+      }
+    },
+    {
+      "turn": 6,
+      "type": "reflect",
+      "D": 1.0,
+      "quality": {
+        "novelty": 0.5,
+        "e0_operative": 0.0,
+        "qm_overlap": 0.0,
+        "structural_density": 0.0,
+        "coherence": 0.0,
+        "term_overlap": 0.0,
+        "forward_refs": 0,
+        "completeness": 1.0
+      },
+      "bridge": {
+        "topology_available": false,
+        "d_trajectory_length": 3
+      }
+    },
+    {
+      "turn": 7,
+      "type": "module",
+      "module": "sr-integration",
+      "D": 0.375,
+      "quality": {
+        "novelty": 0.5,
+        "e0_operative": 0.0,
+        "qm_overlap": 0.0,
+        "structural_density": 0.0,
+        "coherence": 0.0,
+        "term_overlap": 0.0,
+        "forward_refs": 0,
+        "completeness": 0.375
+      }
+    },
+    {
+      "turn": 8,
+      "type": "reflect",
+      "D": 0.875,
+      "quality": {
+        "novelty": 0.5,
+        "e0_operative": 0.0,
+        "qm_overlap": 0.0,
+        "structural_density": 0.0,
+        "coherence": 0.0,
+        "term_overlap": 0.0,
+        "forward_refs": 0,
+        "completeness": 0.875
+      },
+      "bridge": {
+        "topology_available": false,
+        "d_trajectory_length": 4,
+        "floor_rising": true,
+        "phase": "exhale"
+      }
+    },
+    {
+      "turn": 9,
+      "type": "module",
+      "module": "primer-superposition",
+      "D": 0.5,
+      "quality": {
+        "novelty": 0.5,
+        "e0_operative": 0.0,
+        "qm_overlap": 0.0,
+        "structural_density": 0.0,
+        "coherence": 0.0,
+        "term_overlap": 0.0,
+        "forward_refs": 0,
+        "completeness": 0.5
+      }
+    },
+    {
+      "turn": 10,
+      "type": "reflect",
+      "D": 1.0,
+      "quality": {
+        "novelty": 0.5,
+        "e0_operative": 0.0,
+        "qm_overlap": 0.0,
+        "structural_density": 0.0,
+        "coherence": 0.0,
+        "term_overlap": 0.0,
+        "forward_refs": 0,
+        "completeness": 1.0
+      },
+      "bridge": {
+        "topology_available": false,
+        "d_trajectory_length": 5,
+        "floor_rising": true,
+        "phase": "inhale"
+      }
+    },
+    {
+      "turn": 11,
+      "type": "module",
+      "module": "primer-measurement",
+      "D": 0.375,
+      "quality": {
+        "novelty": 0.5106,
+        "e0_operative": 0.0213,
+        "qm_overlap": 0.0,
+        "structural_density": 0.0,
+        "coherence": 0.0,
+        "term_overlap": 0.0,
+        "forward_refs": 0,
+        "completeness": 0.375
+      }
+    },
+    {
+      "turn": 12,
+      "type": "reflect",
+      "D": 1.0,
+      "quality": {
+        "novelty": 0.5,
+        "e0_operative": 0.0,
+        "qm_overlap": 0.0,
+        "structural_density": 0.0,
+        "coherence": 0.0,
+        "term_overlap": 0.0,
+        "forward_refs": 0,
+        "completeness": 1.0
+      },
+      "bridge": {
+        "topology_available": false,
+        "d_trajectory_length": 6,
+        "floor_rising": true,
+        "phase": "exhale"
+      }
+    }
+  ]
+}

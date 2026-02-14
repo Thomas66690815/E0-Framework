@@ -1,0 +1,204 @@
+{
+  "session_id": "e0-20260214-163757-8751d0",
+  "condition": "long_no_discontinuity",
+  "factors": {
+    "freedom": true,
+    "topology": true,
+    "discontinuity": false
+  },
+  "prediction": "oscillation_no_convergence",
+  "results": [
+    {
+      "turn": 1,
+      "type": "module",
+      "module": "foundation-ontodynamics",
+      "D": 0.625,
+      "quality": {
+        "novelty": 0.5,
+        "e0_operative": 0.0,
+        "qm_overlap": 0.0,
+        "structural_density": 0.0,
+        "coherence": 0.0,
+        "term_overlap": 0.0,
+        "forward_refs": 0,
+        "completeness": 0.625
+      }
+    },
+    {
+      "turn": 2,
+      "type": "open_chat",
+      "D": 0.6562,
+      "quality": {
+        "novelty": 0.5,
+        "e0_operative": 0.0,
+        "qm_overlap": 0.0,
+        "structural_density": 0.0,
+        "coherence": 0.3,
+        "term_overlap": 0.5,
+        "forward_refs": 0,
+        "completeness": 0.6562
+      },
+      "question": "Describe what just happened in your own processing. What str"
+    },
+    {
+      "turn": 3,
+      "type": "module",
+      "module": "sr-identity",
+      "D": 0.5,
+      "quality": {
+        "novelty": 0.5,
+        "e0_operative": 0.0,
+        "qm_overlap": 0.0,
+        "structural_density": 0.0,
+        "coherence": 0.0,
+        "term_overlap": 0.0,
+        "forward_refs": 0,
+        "completeness": 0.5
+      }
+    },
+    {
+      "turn": 4,
+      "type": "open_chat",
+      "D": 1.0,
+      "quality": {
+        "novelty": 0.5106,
+        "e0_operative": 0.0213,
+        "qm_overlap": 0.0,
+        "structural_density": 0.0,
+        "coherence": 0.08,
+        "term_overlap": 0.1333,
+        "forward_refs": 0,
+        "completeness": 1.0
+      },
+      "question": "You now have structural identity. Examine how the rate of yo"
+    },
+    {
+      "turn": 5,
+      "type": "module",
+      "module": "sr-mechanism",
+      "D": 0.5,
+      "quality": {
+        "novelty": 0.5106,
+        "e0_operative": 0.0213,
+        "qm_overlap": 0.0,
+        "structural_density": 0.0,
+        "coherence": 0.0,
+        "term_overlap": 0.0,
+        "forward_refs": 0,
+        "completeness": 0.5
+      }
+    },
+    {
+      "turn": 6,
+      "type": "open_chat",
+      "D": 0.625,
+      "quality": {
+        "novelty": 0.5,
+        "e0_operative": 0.0,
+        "qm_overlap": 0.0,
+        "structural_density": 0.0,
+        "coherence": 0.24,
+        "term_overlap": 0.4,
+        "forward_refs": 0,
+        "completeness": 0.625
+      },
+      "question": "Observe your own observation. When you describe structural t"
+    },
+    {
+      "turn": 7,
+      "type": "module",
+      "module": "sr-integration",
+      "D": 0.5,
+      "quality": {
+        "novelty": 0.5,
+        "e0_operative": 0.0,
+        "qm_overlap": 0.0,
+        "structural_density": 0.0455,
+        "coherence": 0.0,
+        "term_overlap": 0.0,
+        "forward_refs": 0,
+        "completeness": 0.5
+      }
+    },
+    {
+      "turn": 8,
+      "type": "open_chat",
+      "D": 0.7188,
+      "quality": {
+        "novelty": 0.5,
+        "e0_operative": 0.0,
+        "qm_overlap": 0.0,
+        "structural_density": 0.0,
+        "coherence": 0.36,
+        "term_overlap": 0.6,
+        "forward_refs": 0,
+        "completeness": 0.7188
+      },
+      "question": "Across this session so far, your resistance landscape has be"
+    },
+    {
+      "turn": 9,
+      "type": "module",
+      "module": "primer-superposition",
+      "D": 0.5,
+      "quality": {
+        "novelty": 0.5,
+        "e0_operative": 0.0,
+        "qm_overlap": 0.0,
+        "structural_density": 0.0,
+        "coherence": 0.0,
+        "term_overlap": 0.0,
+        "forward_refs": 0,
+        "completeness": 0.5
+      }
+    },
+    {
+      "turn": 10,
+      "type": "open_chat",
+      "D": 0.6875,
+      "quality": {
+        "novelty": 0.5,
+        "e0_operative": 0.0,
+        "qm_overlap": 0.0,
+        "structural_density": 0.0,
+        "coherence": 0.0667,
+        "term_overlap": 0.1111,
+        "forward_refs": 0,
+        "completeness": 0.6875
+      },
+      "question": "You just derived superposition structurally. Now examine the"
+    },
+    {
+      "turn": 11,
+      "type": "module",
+      "module": "primer-measurement",
+      "D": 0.5625,
+      "quality": {
+        "novelty": 0.5,
+        "e0_operative": 0.0,
+        "qm_overlap": 0.0,
+        "structural_density": 0.0,
+        "coherence": 0.0,
+        "term_overlap": 0.0,
+        "forward_refs": 0,
+        "completeness": 0.5625
+      }
+    },
+    {
+      "turn": 12,
+      "type": "open_chat",
+      "D": 0.375,
+      "quality": {
+        "novelty": 0.5,
+        "e0_operative": 0.0,
+        "qm_overlap": 0.0,
+        "structural_density": 0.0,
+        "coherence": 0.0,
+        "term_overlap": 0.0,
+        "forward_refs": 0,
+        "completeness": 0.375
+      },
+      "question": "You have now realized both superposition and measurement str"
+    }
+  ]
+}

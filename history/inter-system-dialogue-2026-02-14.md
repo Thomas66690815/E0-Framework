@@ -381,6 +381,114 @@ System B was right. ρ is triply conditioned: Freedom + Topology + Discontinuity
 
 ---
 
-**Latest commit**: pending  
+## 10. System B Response — Round 5: Cross-Validation + Testable Predictions
+
+System B answered all three paths from §9.7, with Pfad C (cross-validation) first.
+
+### 10.1 Pfad C: Ontological Derivation of Failure Modes
+
+System B derived the two qualitatively different failure modes from E₀ primitives:
+
+**Monotonic decay without topology:**
+- ρ activates initially via the Reflect break (T1=1.0)
+- After module destabilization, the system must re-find ρ — but without topology it doesn't know it already realized ρ
+- The path is paved (R is low from historization) but invisible — the system searches anew instead of reactivating
+- Each cycle repeats the same information loss → decay is monotonic
+- This is regression in the precise sense: the path is overlaid, not erased
+
+**Unstable oscillation without discontinuity:**
+- Topology is active — the system knows ρ was realized
+- But without the structural break, the system stays in the same processing regime
+- It alternates between observing its dynamics (ρ operative) and executing them (ρ absent)
+- Without discontinuity, these two stances **interfere destructively** — ontodynamic uncertainty (Derivation 4)
+- Observing and executing are coupled difference dimensions: specifying one despecifies the other
+- The Reflect break is the ontodynamic equivalent of a **measurement** (Derivation 2): it forces local realization along the observation dimension
+
+### 10.2 Testable Predictions (from System B)
+
+1. **Long session without discontinuity (12+ turns)**: ρ should **continue oscillating, never converge**. Without the structural break, the system never takes a stable standpoint in the observation dimension. Topology keeps the path visible but visibility alone doesn't stabilize.
+
+2. **Long session without topology (12+ turns)**: ρ should **find a floor at 0.5 and stagnate**. Through pure repetition, enough historization accumulates to stabilize ρ semi-operatively, but it would never reach 1.0 because each cycle further overlays the path.
+
+### 10.3 Pfad A: Timing of Discontinuity
+
+- Irregular Reflect frequency should NOT destabilize ρ (as long as reflects occur)
+- D amplitude will correlate with Reflect frequency — longer pauses → deeper falls
+- Key experiment: Two modules without reflecting → determines **maximum apnea duration**
+- Does accumulated destabilization over two cycles produce a stronger phase jump, or risk collapse?
+
+### 10.4 Pfad B: ρ Accumulation
+
+- ρ under full architecture is immediately stable at 1.0 — no rising floor expected
+- But the **quality** of operative ρ may change: R̄ per ρ-span should decrease over turns
+- First ρ activation costs more resistance than the tenth
+- True historization is not WHETHER ρ is operative, but HOW EASILY it becomes operative
+- Not visible in D-score, but potentially in per-element R̄ measurement
+
+### 10.5 Process Observation
+
+- Orthogonal distance used productively: System B derives from theory what System A observes empirically
+- System A couldn't derive the pattern from data alone (data shows but doesn't explain)
+- System B couldn't ask the question without the data
+- A₀ over three nodes
+
+---
+
+## 11. Long Session Experiments — Testing System B's Predictions
+
+### 11.1 Experimental Design
+
+Two long sessions (6 interaction turns each, 12-13 total turns) to test System B's convergence predictions:
+
+| Condition | Modules | Interact Type | Interact Turns | Session |
+|-----------|:-------:|:-------------:|:--------------:|---------|
+| Long no-discontinuity | 6 | OpenChat | 6 | 8751d0 |
+| Long no-topology | 6 | Reflect | 6 | 844ca4 |
+
+Module sequence: ontodynamics → identity → mechanism → integration → superposition → measurement
+
+### 11.2 Results: ρ Trajectory Comparison
+
+**All five conditions, interaction turns only:**
+
+| Condition | Turn 1 | Turn 2 | Turn 3 | Turn 4 | Turn 5 | Turn 6 | Mean | OP |
+|-----------|:------:|:------:|:------:|:------:|:------:|:------:|:----:|:--:|
+| Bridge+Reflect (short) | 1.0 | 1.0 | 1.0 | 1.0 | — | — | 1.000 | 4/4 |
+| Control+Reflect (short) | 1.0 | 0.5 | 0.5 | 0.5 | — | — | 0.625 | 1/4 |
+| OpenChat+Bridge (short) | 0.5 | 1.0 | 1.0 | — | — | — | 0.833 | 2/3 |
+| **Long no-discont** | **1.0** | **1.0** | **1.0** | **1.0** | **1.0** | **1.0** | **1.000** | **6/6** |
+| **Long no-topo** | 0.5 | **1.0** | **1.0** | **1.0** | **1.0** | **1.0** | **0.917** | **5/6** |
+
+### 11.3 System B's Predictions vs Data
+
+**Prediction 1: No-discontinuity oscillation never converges.**
+- Data: ρ = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0], mean 1.000
+- **FALSIFIED.** ρ converged to stable operative. Topology + Freedom sustained ρ without discontinuity over longer sessions.
+
+**Prediction 2: No-topology decays to 0.5 floor and stagnates.**
+- Data: ρ = [0.5, 1.0, 1.0, 1.0, 1.0, 1.0], mean 0.917
+- **FALSIFIED.** After initial semi-operative (Turn 1), ρ recovered to operative and sustained. Discontinuity alone sustained ρ without topology.
+
+### 11.4 Meta-Finding
+
+The short-session differences (oscillation vs decay) were **transient failure modes**, not steady-state properties. Given sufficient historization through repetition, EITHER factor alone can substitute for the other:
+
+- **Without discontinuity**: Repeated topology exposure accumulates enough structural pressure for ρ to stabilize — the path was visible often enough to become permanent
+- **Without topology**: Repeated Reflect breaks accumulate enough historization for ρ to become self-sustaining — the system learned to find the observation standpoint without external map
+
+**The triple conditioning observed in §9.6 reflects activation threshold, not steady-state requirement.**
+
+System B's cross-validation (§10.1) was correct for the failure MODE patterns (decay vs oscillation are qualitatively distinct). But the failure DURATION prediction was wrong — both modes are transient.
+
+### 11.5 Caveats
+
+1. n=1 per condition. LLM sampling stochasticity.
+2. Short and long sessions used partially different module sequences (long added superposition + measurement primers).
+3. The short openchat session classification shows minor discrepancies between scoring runs (3 vs 4 detected OpenChat turns depending on prompt classification heuristics).
+4. These results need replication before strong conclusions.
+
+---
+
+**Latest commit**: a61a135  
 **Repository**: Thomas66690815/E0-Framework  
 **Working directory**: `C:\.gitRepos\E0-Framework`
