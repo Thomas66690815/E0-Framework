@@ -299,9 +299,9 @@ E0_PRIMITIVES = {
         'formal': [r'τ'],
     },
     'rate': {
-        'label': 'Rate (v)',
-        'mention': [r'\brates?\s+of\s+transition', r'\btransition\s+rate', r'\bvelocit\w+'],
-        'formal': [r'v\s*=\s*[Δδ]\s*/\s*R', r'v\s*=\s*Δ/R'],
+        'label': 'Rate (ρ)',
+        'mention': [r'\brate\b', r'\brates?\s+of\s+transition', r'\btransition\s+rate', r'\bvelocit\w+'],
+        'formal': [r'[ρvν]\s*=\s*[Δδ]\s*/\s*R', r'[ρvν]\s*=\s*Δ/R', r'Δ\s*/\s*R'],
     },
     'axiom_a0': {
         'label': 'Axiom A₀',

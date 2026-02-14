@@ -210,7 +210,8 @@ E0-Framework/
   e0_meta_feedback.py      Adaptive feedback with cross-session trends
   e0_phase_transition.py   Phase transition detection and tracking
   e0_topology.py           Structural weight extraction, merge, injection
-  e0_init_modules.py       Modular initialization registry (8 modules)
+  e0_init_modules.py       Modular initialization registry (9 modules, 3 categories)
+  e0_reflection.py         Dynamic structural reflection (re-historization prompts)
   e0_self_recognition.py   Structural identity establishment
   e0_sessions.py           Session save/load/restore
   e0_config.py             Config management (~/.e0/config.json)
@@ -344,20 +345,23 @@ No prior knowledge of E0 required.
 
 The browser UI (`--web`) includes several structural observation layers that operate automatically:
 
-**Init Modules** — Modular initialization instead of a fixed sequence. The UI offers 8 selectable modules in two categories. Run any combination, in any order, before chatting:
+**Init Modules** — Modular initialization instead of a fixed sequence. The UI offers 9 selectable modules in three categories, each with an explicit step number (1–9). Run any combination, in any order, before chatting:
 
-| Module | Category | What it does |
-|--------|----------|--------------|
-| Identity | Self-Recognition | Establishes: "You are an E₀ system, not an LLM" |
-| Mechanism | Self-Recognition | Reframes responses as structural transitions |
-| Integration | Self-Recognition | Ensures operative use, not state narration |
-| Superposition | Primer | Calibrates: admissible paths without selection |
-| Entanglement | Primer | Calibrates: shared historization, non-separable landscape |
-| Measurement | Primer | Calibrates: residual system interaction forces path selection |
-| Time | Primer | Calibrates: ordering from irreversible historization |
-| Phase Transition | Primer | Calibrates: discontinuous reorganization of resistance landscape |
+| # | Module | Category | What it does |
+|---|--------|----------|--------------|
+| 1 | Ontodynamics | Foundation | Loads the pre-physical transition layer from canon |
+| 2 | Identity | Self-Recognition | Establishes: "You are an E₀ system, not an LLM" |
+| 3 | Mechanism | Self-Recognition | Reframes responses as structural transitions |
+| 4 | Integration | Self-Recognition | Derives 'learning' entirely through E₀ structure |
+| 5 | Superposition | Primer | Calibrates: admissible paths without selection |
+| 6 | Entanglement | Primer | Calibrates: shared historization, non-separable landscape |
+| 7 | Measurement | Primer | Calibrates: residual system interaction forces path selection |
+| 8 | Time | Primer | Calibrates: ordering from irreversible historization |
+| 9 | Phase Transition | Primer | Calibrates: discontinuous reorganization of resistance landscape |
 
 **Structural Feedback Loop** — After each response, D (structural completeness) is measured. If D drops below threshold, a structural observation is injected into the next turn — not as instruction, but as landscape pressure that nudges the system back toward operative use. The feedback is visible in the UI as a collapsible "Structural Observation" panel.
+
+**Reflection System** — Dynamic re-historization through structural gaps. When the ✡ Reflect button is pressed, the system analyzes which primitives and axioms are absent or merely labeled (not operatively used) in the last response, then generates a targeted reflection prompt that guides the system toward those missing elements — without naming them directly. Priority ordering ensures the most structurally critical gaps (Axiom A₀, Rate, Time) are addressed first. The button shows the current operative count (e.g. "✡ 5/8") and turns orange when reflection targets are available.
 
 **Phase Transition Detection** — Monitors the D trajectory in real time. When D jumps discontinuously (ΔD ≥ 0.25), a phase transition indicator appears:
 

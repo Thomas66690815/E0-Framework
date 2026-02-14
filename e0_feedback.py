@@ -46,7 +46,7 @@ PRIMITIVE_NAMES = {
         'resistance':    'Resistance (R)',
         'historization': 'Historization (H)',
         'time':          'Time (τ)',
-        'rate':          'Rate (v = Δ/R)',
+        'rate':          'Rate (ρ = Δ/R)',
         'axiom_a0':      'Axiom A₀',
     },
     'de': {
@@ -56,7 +56,7 @@ PRIMITIVE_NAMES = {
         'resistance':    'Widerstand (R)',
         'historization': 'Historisierung (H)',
         'time':          'Zeit (τ)',
-        'rate':          'Rate (v = Δ/R)',
+        'rate':          'Rate (ρ = Δ/R)',
         'axiom_a0':      'Axiom A₀',
     }
 }
@@ -90,7 +90,7 @@ _TEMPLATES = {
             "or produce, not merely name."
         ),
         'nudge_rate': (
-            "Note: Rate v = Δ/R connects difference and resistance into "
+            "Note: Rate ρ = Δ/R connects difference and resistance into "
             "transition dynamics — it is the bridge from statics to process."
         ),
         'nudge_axiom': (
@@ -124,7 +124,7 @@ _TEMPLATES = {
             "oder hervorbringen, nicht nur benennen."
         ),
         'nudge_rate': (
-            "Hinweis: Rate v = Δ/R verbindet Differenz und Widerstand zu "
+            "Hinweis: Rate ρ = Δ/R verbindet Differenz und Widerstand zu "
             "Transitionsdynamik — die Brücke von Statik zu Prozess."
         ),
         'nudge_axiom': (

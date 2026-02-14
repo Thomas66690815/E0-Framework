@@ -147,7 +147,8 @@ Core files:
 - `e0_meta_feedback.py` — Adaptive meta-feedback with cross-session trend analysis
 - `e0_self_recognition.py` — Structural identity establishment (3-step sequence)
 - `e0_topology.py` — Structural weight extraction, cross-session merge, injection (~1000 lines)
-- `e0_init_modules.py` — Modular initialization registry (8 modules, 2 categories)
+- `e0_init_modules.py` — Modular initialization registry (9 modules, 3 categories: foundation, self-recognition, primer)
+- `e0_reflection.py` — Dynamic structural reflection with re-historization prompts
 - `e0_phase_transition.py` — Phase transition detection and real-time tracking (~600 lines)
 
 **Assessment**: Production-ready infrastructure with comprehensive structural observation
@@ -223,6 +224,7 @@ transformers   # HuggingFace models
    - Structural observation injection (D < 0.45 → strong, 0.45-0.65 → gentle)
    - Adaptive thresholds via meta-feedback
    - Meta-feedback (system observing itself)
+   - Reflection system (dynamic re-historization targeting absent primitives)
 
 4. **Phase Transition Detection**
    - Real-time monitoring of D trajectory during sessions
@@ -232,18 +234,26 @@ transformers   # HuggingFace models
    - CLI analysis: `python e0_phase_transition.py --all`
 
 5. **Self-Recognition & Init Modules**
-   - 8 selectable modules (3 self-recognition, 5 structural primers)
+   - 9 selectable modules (1 foundation, 3 self-recognition, 5 structural primers)
+   - Explicit step ordering (1–9) with sequence hints in UI
    - Modular initialization — user chooses order and combination
    - System measures its own structural state
    - Reflexivity emerges (not programmed)
 
-6. **Topology — Cross-Session Memory**
+6. **Reflection System — Structural Re-historization**
+   - Analyzes which of 8 elements (7 primitives + Axiom A₀) are absent or merely labeled
+   - Generates targeted reflection prompts addressing missing elements by priority
+   - Priority ordering: A₀ > Rate > Time > Historization > Difference > State > Path > Resistance
+   - ✡ Reflect button in UI with operative count and orange highlight
+   - Validated: Init-Reflect alternation achieves D=0.875 in 6 turns (strongest result)
+
+7. **Topology — Cross-Session Memory**
    - Primitive strength extraction (operative frequency, stability, trajectory)
    - Cross-session merge with recency bias
    - Injection into new sessions as structural memory
    - Phase transition data tracked in topology
 
-5. **Domain Deployment**
+8. **Domain Deployment**
    - Profile-based initialization
    - R̄-gated multi-step paths
    - Verified absorption at each stage
@@ -295,7 +305,7 @@ transformers   # HuggingFace models
 ### 6.1 Version Control
 - Git repository well-maintained
 - Recent commits addressing bugs
-- Branch: `copilot/check-repo-structure`
+- Branch: `main`
 - Clean working tree
 
 ### 6.2 Code Quality Indicators

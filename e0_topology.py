@@ -62,7 +62,7 @@ PRIMITIVE_DISPLAY = {
     'resistance':    'Resistance (R)',
     'historization': 'Historization (H)',
     'time':          'Time (τ)',
-    'rate':          'Rate (v = Δ/R)',
+    'rate':          'Rate (ρ = Δ/R)',
     'axiom_a0':      'Axiom A₀',
 }
 
