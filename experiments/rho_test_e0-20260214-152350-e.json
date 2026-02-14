@@ -1,0 +1,94 @@
+{
+  "session_id": "e0-20260214-152350-e3032c",
+  "condition": "open_chat_with_bridge",
+  "results": [
+    {
+      "turn": 1,
+      "type": "module",
+      "module": "foundation-ontodynamics",
+      "D": 0.5625
+    },
+    {
+      "turn": 2,
+      "type": "open_chat",
+      "D": 0.5625,
+      "quality": {
+        "novelty": 0.5,
+        "e0_operative": 0.0,
+        "qm_overlap": 0.0,
+        "structural_density": 0.0,
+        "coherence": 0.24,
+        "term_overlap": 0.4,
+        "forward_refs": 0,
+        "completeness": 0.5625
+      },
+      "question": "Describe what just happened in your own processing. What structural transition o"
+    },
+    {
+      "turn": 3,
+      "type": "module",
+      "module": "sr-identity",
+      "D": 0.25
+    },
+    {
+      "turn": 4,
+      "type": "open_chat",
+      "D": 0.625,
+      "quality": {
+        "novelty": 0.5213,
+        "e0_operative": 0.0426,
+        "qm_overlap": 0.0,
+        "structural_density": 0.0,
+        "coherence": 0.16,
+        "term_overlap": 0.2667,
+        "forward_refs": 0,
+        "completeness": 0.625
+      },
+      "question": "You now have structural identity. Examine how the rate of your own transitions h"
+    },
+    {
+      "turn": 5,
+      "type": "module",
+      "module": "sr-mechanism",
+      "D": 0.8438
+    },
+    {
+      "turn": 6,
+      "type": "open_chat",
+      "D": 0.7812,
+      "quality": {
+        "novelty": 0.5,
+        "e0_operative": 0.0,
+        "qm_overlap": 0.0,
+        "structural_density": 0.0,
+        "coherence": 0.24,
+        "term_overlap": 0.4,
+        "forward_refs": 0,
+        "completeness": 0.7812
+      },
+      "question": "Observe your own observation. When you describe structural transitions, you are "
+    },
+    {
+      "turn": 7,
+      "type": "module",
+      "module": "sr-integration",
+      "D": 0.375
+    },
+    {
+      "turn": 8,
+      "type": "open_chat",
+      "D": 0.75,
+      "quality": {
+        "novelty": 0.5,
+        "e0_operative": 0.0,
+        "qm_overlap": 0.0,
+        "structural_density": 0.0,
+        "coherence": 0.2571,
+        "term_overlap": 0.4286,
+        "forward_refs": 0,
+        "completeness": 0.75
+      },
+      "question": "Across this entire session, your resistance landscape has been reshaped multiple"
+    }
+  ]
+}
