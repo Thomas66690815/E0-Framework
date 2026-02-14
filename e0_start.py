@@ -56,6 +56,7 @@ from e0_meta_feedback import generate_adaptive_feedback, generate_meta_observati
 from e0_self_recognition import run_self_recognition, format_recognition_summary
 from e0_init_modules import list_modules_for_ui, run_init_module
 from e0_phase_transition import LiveTransitionDetector, interpret_transition, interpret_dynamics
+from e0_reflection import generate_reflection_prompt, get_reflection_status
 
 
 # =============================================
@@ -1594,6 +1595,8 @@ class E0StartHandler(BaseHTTPRequestHandler):
             self._handle_delete_session(body)
         elif self.path == "/init-module/run":
             self._handle_run_init_module(body)
+        elif self.path == "/reflect":
+            self._handle_reflect(body)
         else:
             self.send_error(404)
 
@@ -1859,6 +1862,115 @@ class E0StartHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 self._json({"error": str(e)}, 500)
 
+    def _handle_reflect(self, body):
+        """Generate a reflection prompt and send it as a chat message."""
+        global _web_prev_r, _web_turn_num, _web_prev_text
+        mode = body.get("mode", "generate")  # "generate" or "status"
+        with _web_lock:
+            # Get full last response from history
+            last_text = ""
+            if _web_starter.history:
+                last_text = _web_starter.history[-1]
+            if not last_text:
+                self._json({"error": "No previous response to reflect on"}, 400)
+                return
+
+            if mode == "status":
+                status = get_reflection_status(last_text)
+                self._json(status)
+                return
+
+            # Generate & execute reflection
+            prompt, missing, d_before = generate_reflection_prompt(last_text)
+            if not prompt:
+                self._json({
+                    "error": "All elements operative (D=1.0) — no reflection needed",
+                    "d": d_before,
+                })
+                return
+
+            try:
+                text, steps, metrics = _web_starter.chat(prompt)
+                text = _clean(text)
+                _web_turn_num += 1
+                _web_prev_text = text[:200]
+
+                # Score the reflection response
+                nov = score_novelty(text)
+                coh = score_coherence('', text)
+                comp = score_e0_completeness(text)
+
+                _, r_text = interpret_r(metrics["r"], _web_lang)
+                h_text = interpret_h(metrics["h"], _web_lang)
+                phi_text = interpret_phi(metrics["phi"], _web_lang)
+                v_text = interpret_v(metrics["v"], _web_lang)
+
+                # Feedback
+                feedback_data = {'text': '', 'html': '', 'level': None}
+                if hasattr(_web_starter, 'score_and_prepare_feedback'):
+                    fb_text = _web_starter.score_and_prepare_feedback(
+                        text, metrics, lang='en',
+                    )
+                    if fb_text:
+                        feedback_data = format_feedback_for_display(fb_text, lang=_web_lang)
+
+                # Phase transition
+                transition_event = _web_transition_detector.update(
+                    comp['completeness'], metrics['r'],
+                    feedback_injected=bool(feedback_data.get('level')),
+                )
+                transition_data = None
+                if transition_event:
+                    transition_data = {
+                        'type': transition_event.type,
+                        'turn': transition_event.turn,
+                        'd_before': transition_event.d_before,
+                        'd_after': transition_event.d_after,
+                        'delta_d': transition_event.delta_d,
+                        'magnitude': transition_event.magnitude,
+                        'interpretation': interpret_transition(transition_event),
+                    }
+
+                # Reflection-specific: what was targeted, what improved?
+                d_after = comp['completeness']
+                new_status = get_reflection_status(text)
+
+                self._json({
+                    "text": text,
+                    "metrics": metrics,
+                    "reflection": {
+                        "prompt": prompt,
+                        "targeted": missing,
+                        "d_before": round(d_before, 3),
+                        "d_after": round(d_after, 3),
+                        "delta_d": round(d_after - d_before, 3),
+                        "still_missing": new_status['missing'],
+                    },
+                    "quality": {
+                        "novelty": nov['novelty'],
+                        "e0_operative": nov['e0_operative'],
+                        "qm_overlap": nov['qm_overlap'],
+                        "structural_density": nov['structural_density'],
+                        "coherence": coh['coherence'],
+                        "term_overlap": coh['term_overlap'],
+                        "forward_refs": coh['forward_refs'],
+                        "completeness": comp['completeness'],
+                    },
+                    "interpretation": {
+                        "r": r_text, "h": h_text, "phi": phi_text,
+                        "v": v_text,
+                        "novelty": interpret_novelty(nov['novelty'], nov['e0_operative']),
+                        "coherence": interpret_coherence(coh['coherence']),
+                        "structural": interpret_structural_density(nov['structural_density']),
+                        "completeness": interpret_completeness(comp['completeness']),
+                    },
+                    "trace": build_trace_data(steps),
+                    "feedback": feedback_data,
+                    "transition": transition_data,
+                })
+            except Exception as e:
+                self._json({"error": str(e)}, 500)
+
 
 HTML_START_PAGE = r"""<!DOCTYPE html>
 <html lang="en">
@@ -1994,6 +2106,29 @@ header .actions button:hover { color: var(--accent); border-color: var(--accent)
   0%, 100% { opacity: 1; }
   50% { opacity: 0.7; }
 }
+
+/* ── Reflect Button ── */
+#reflect-btn {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--dim); font-family: inherit; font-size: 12px;
+  padding: 6px 14px; border-radius: 4px; cursor: pointer;
+  transition: all 0.2s; white-space: nowrap;
+}
+#reflect-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+#reflect-btn:disabled { opacity: 0.3; cursor: default; }
+#reflect-btn.has-target { border-color: rgba(224,175,104,0.5); color: #e0af68; }
+#reflect-btn .reflect-hint {
+  font-size: 10px; color: var(--dim); margin-left: 4px;
+  max-width: 200px; overflow: hidden; text-overflow: ellipsis;
+}
+.reflect-info {
+  margin-top: 6px; padding: 8px 14px;
+  border: 1px solid rgba(224,175,104,0.3); background: rgba(224,175,104,0.05);
+  border-radius: 4px; font-size: 11px; color: #e0af68;
+}
+.reflect-info .ri-label { font-weight: 600; margin-bottom: 3px; }
+.reflect-info .ri-delta { font-family: monospace; font-size: 12px; }
+.reflect-info .ri-targeted { color: var(--dim); margin-top: 3px; }
 
 /* ── Verdict ── */
 .verdict {
@@ -2158,6 +2293,7 @@ header .actions button:hover { color: var(--accent); border-color: var(--accent)
 <div id="input-area">
   <input type="text" id="msg" placeholder="Write something..." autocomplete="off"
          onkeydown="if(event.key==='Enter')doSend()">
+  <button id="reflect-btn" onclick="doReflect()" disabled title="Structural reflection on missing elements">✡ Reflect</button>
   <button id="send-btn" onclick="doSend()">Send</button>
 </div>
 
@@ -2356,6 +2492,76 @@ async function doSend() {
   }
   sending = false;
   sendBtn.disabled = false;
+  updateReflectStatus();
+  msgInput.focus();
+}
+
+var reflectBtn = document.getElementById('reflect-btn');
+
+async function updateReflectStatus() {
+  try {
+    var r = await fetch('/reflect', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({mode: 'status'})
+    });
+    var s = await r.json();
+    if (s.available) {
+      reflectBtn.disabled = false;
+      reflectBtn.className = 'has-target';
+      reflectBtn.title = s.hint + ' (D=' + s.d.toFixed(3) + ', ' + s.operative_count + '/8 operative)';
+      reflectBtn.innerHTML = '\u2721 Reflect <span class=\"reflect-hint\">' + s.operative_count + '/8</span>';
+    } else {
+      reflectBtn.disabled = true;
+      reflectBtn.className = '';
+      reflectBtn.title = 'All elements operative';
+      reflectBtn.innerHTML = '\u2721 Reflect <span class=\"reflect-hint\">8/8 \u2713</span>';
+    }
+  } catch (e) {
+    reflectBtn.disabled = true;
+  }
+}
+
+async function doReflect() {
+  if (sending) return;
+  sending = true;
+  sendBtn.disabled = true;
+  reflectBtn.disabled = true;
+  addHuman('\u2721 Structural Reflection');
+  addWait();
+  try {
+    var r = await fetch('/reflect', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({mode: 'generate'})
+    });
+    var d = await r.json();
+    rmWait();
+    if (d.error) {
+      showE0('[Reflect] ' + d.error, null, null, null, null, null, null);
+    } else {
+      showE0(d.text, d.metrics, d.interpretation, d.trace, d.quality, d.feedback || null, d.transition || null);
+      // Show reflection summary
+      if (d.reflection) {
+        var ri = d.reflection;
+        var riDiv = document.createElement('div');
+        riDiv.className = 'reflect-info';
+        riDiv.innerHTML = '<div class=\"ri-label\">\u2721 Reflection Result</div>'
+          + '<div class=\"ri-delta\">D: ' + ri.d_before.toFixed(3) + ' \u2192 ' + ri.d_after.toFixed(3)
+          + ' (\u0394' + (ri.delta_d >= 0 ? '+' : '') + ri.delta_d.toFixed(3) + ')</div>'
+          + '<div class=\"ri-targeted\">Targeted: ' + ri.targeted.join(', ')
+          + (ri.still_missing.length ? ' | Still missing: ' + ri.still_missing.join(', ') : ' | All resolved \u2713') + '</div>';
+        chat.appendChild(riDiv);
+        scroll();
+      }
+    }
+  } catch (e) {
+    rmWait();
+    showE0('[Reflect error] ' + e.message, null, null, null, null, null, null);
+  }
+  sending = false;
+  sendBtn.disabled = false;
+  updateReflectStatus();
   msgInput.focus();
 }
 
@@ -2364,6 +2570,7 @@ async function doClear() {
   var d = await r.json();
   chat.innerHTML = '';
   showInit(d);
+  updateReflectStatus();
 }
 
 async function doReport() {
@@ -2587,6 +2794,7 @@ async function runInitModule(moduleId) {
     alert('Failed: ' + e.message);
   }
   if (btn) btn.classList.remove('running');
+  updateReflectStatus();
 }
 
 window.addEventListener('load', async function() {
@@ -2598,6 +2806,7 @@ window.addEventListener('load', async function() {
     showE0('Failed to load: ' + e.message, null, null, null, null, null, null);
   }
   msgInput.focus();
+  updateReflectStatus();
 });
 </script>
 </body>
