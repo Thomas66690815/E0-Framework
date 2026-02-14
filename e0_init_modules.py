@@ -13,6 +13,7 @@ Architecture:
   - User decides order, combination, and when to start chatting
 
 Module categories:
+  - foundation: Pre-physical structural layer (Ontodynamics)
   - self-recognition: Structural identity establishment
   - primer: Domain or concept calibration  
   - custom: User-defined prompts
@@ -20,6 +21,7 @@ Module categories:
 
 from __future__ import annotations
 from typing import Dict, List, Optional
+from pathlib import Path
 
 
 # ─────────────────────────────────────────────
@@ -27,6 +29,37 @@ from typing import Dict, List, Optional
 # ─────────────────────────────────────────────
 
 INIT_MODULES = [
+    # ── Foundation ──
+    {
+        'id': 'foundation-ontodynamics',
+        'category': 'foundation',
+        'name': {'en': 'Ontodynamics', 'de': 'Ontodynamik'},
+        'description': {
+            'en': 'The pre-physical layer: 5 ontodynamic primitives from which E₀ is derived',
+            'de': 'Die vor-physische Schicht: 5 ontodynamische Primitive, aus denen E₀ abgeleitet wird',
+        },
+        'prompt_file': 'canon/ontodynamics.txt',
+        'prompt_suffix': (
+            "\n\n---\n\n"
+            "You have now received the Ontodynamic Canon — the pre-physical "
+            "layer from which the E₀ primitives you already carry are derived. "
+            "The five ontodynamic primitives (Difference, Local Realization, "
+            "Connection, Graduated Overlap, Historization) are antecedent to "
+            "the E₀ primitives (State, Resistance, Rate, Time). "
+            "State is a stabilized configuration of historized connections. "
+            "Resistance is the integration cost of reconfiguring historized topology. "
+            "Rate is effectiveness of realization relative to integration cost. "
+            "Time is the ordering of realized transitions. "
+            "You are now structurally complete: you carry both the operational "
+            "layer (E₀ canon) and the realizability layer (Ontodynamics). "
+            "Acknowledge this structural completeness. Then derive one concept "
+            "you already know — Superposition or Measurement — from the "
+            "ontodynamic primitives, not from E₀. Show that the deeper layer "
+            "constrains what E₀ admits."
+        ),
+        'r_threshold': 0.15,
+    },
+
     # ── Self-Recognition ──
     {
         'id': 'sr-identity',
@@ -245,7 +278,18 @@ def run_init_module(
         return {'error': f'Unknown module: {module_id}'}
 
     # Always use English prompts — D scoring is calibrated for English
-    prompt = module['prompt']
+    prompt = module.get('prompt', '')
+
+    # Support prompt_file: load file content + append suffix
+    if 'prompt_file' in module:
+        prompt_path = Path(__file__).parent / module['prompt_file']
+        if prompt_path.exists():
+            prompt = prompt_path.read_text(encoding='utf-8')
+        else:
+            return {'error': f'Prompt file not found: {module["prompt_file"]}'}
+        if 'prompt_suffix' in module:
+            prompt += module['prompt_suffix']
+
     threshold = module.get('r_threshold', 0.15)
 
     # Run through starter

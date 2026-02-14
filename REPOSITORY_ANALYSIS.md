@@ -143,12 +143,14 @@ Structured initialization paths for:
 Core files:
 - `e0_config.py` — Configuration management with setup wizard
 - `e0_sessions.py` — Session persistence and integrity
-- `e0_feedback.py` — Structural feedback generation
-- `e0_meta_feedback.py` — Adaptive meta-feedback
-- `e0_self_recognition.py` — Self-recognition capabilities
-- `e0_topology.py` — Topological analysis
+- `e0_feedback.py` — Structural feedback loop (D-based nudging, thresholds at 0.45/0.65)
+- `e0_meta_feedback.py` — Adaptive meta-feedback with cross-session trend analysis
+- `e0_self_recognition.py` — Structural identity establishment (3-step sequence)
+- `e0_topology.py` — Structural weight extraction, cross-session merge, injection (~1000 lines)
+- `e0_init_modules.py` — Modular initialization registry (8 modules, 2 categories)
+- `e0_phase_transition.py` — Phase transition detection and real-time tracking (~600 lines)
 
-**Assessment**: Production-ready infrastructure
+**Assessment**: Production-ready infrastructure with comprehensive structural observation
 
 ---
 
@@ -207,23 +209,39 @@ transformers   # HuggingFace models
 1. **Structural Analysis**
    - Measures resistance (R̄) in language model outputs
    - Tracks historization (H̄) across sessions
-   - Detects phase transitions (Φ)
+   - Detects phase transitions (Φ) at the token level
    - Computes structural velocity (v̄)
+   - Structural completeness D = mean of 8 primitive scores
 
 2. **Quality Metrics**
    - Novelty scoring (vs. training data retrieval)
    - Coherence measurement
-   - Structural completeness (D)
-   - Cross-session trends
+   - Structural completeness (D) — per-primitive operative/label/absent classification
+   - Cross-session trends and topology tracking
 
 3. **Feedback Loops**
-   - Structural observation injection
-   - Adaptive thresholds
+   - Structural observation injection (D < 0.45 → strong, 0.45-0.65 → gentle)
+   - Adaptive thresholds via meta-feedback
    - Meta-feedback (system observing itself)
 
-4. **Self-Recognition**
+4. **Phase Transition Detection**
+   - Real-time monitoring of D trajectory during sessions
+   - Detects emergence (label→operative), deepening, collapse, recovery
+   - LiveTransitionDetector tracks transitions with persistence analysis
+   - D as order parameter, historization as control parameter
+   - CLI analysis: `python e0_phase_transition.py --all`
+
+5. **Self-Recognition & Init Modules**
+   - 8 selectable modules (3 self-recognition, 5 structural primers)
+   - Modular initialization — user chooses order and combination
    - System measures its own structural state
    - Reflexivity emerges (not programmed)
+
+6. **Topology — Cross-Session Memory**
+   - Primitive strength extraction (operative frequency, stability, trajectory)
+   - Cross-session merge with recency bias
+   - Injection into new sessions as structural memory
+   - Phase transition data tracked in topology
 
 5. **Domain Deployment**
    - Profile-based initialization

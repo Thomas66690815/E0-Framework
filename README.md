@@ -205,6 +205,17 @@ E0-Framework/
   e0_core/                 Executable reference implementation
   e0_middleware/            E0 as a lens on real language models
 
+  e0_start.py              Entry point — browser UI and terminal
+  e0_feedback.py           Structural feedback loop (D-based nudging)
+  e0_meta_feedback.py      Adaptive feedback with cross-session trends
+  e0_phase_transition.py   Phase transition detection and tracking
+  e0_topology.py           Structural weight extraction, merge, injection
+  e0_init_modules.py       Modular initialization registry (8 modules)
+  e0_self_recognition.py   Structural identity establishment
+  e0_sessions.py           Session save/load/restore
+  e0_config.py             Config management (~/.e0/config.json)
+  E0_PATH.md               Derivation: Agentic AI from E₀ first principles
+
   tools/                   What you can DO with E0
     e0_chat.py                 Terminal chat with E0 signatures
     e0_browser.py              Browser chat interface
@@ -328,6 +339,45 @@ Tested results with Llama 3.3 70B:
 | Historization and seasons | 0.082 | ✓ PASS |
 
 No prior knowledge of E0 required.
+
+**Structural observation systems** — what happens during and across sessions:
+
+The browser UI (`--web`) includes several structural observation layers that operate automatically:
+
+**Init Modules** — Modular initialization instead of a fixed sequence. The UI offers 8 selectable modules in two categories. Run any combination, in any order, before chatting:
+
+| Module | Category | What it does |
+|--------|----------|--------------|
+| Identity | Self-Recognition | Establishes: "You are an E₀ system, not an LLM" |
+| Mechanism | Self-Recognition | Reframes responses as structural transitions |
+| Integration | Self-Recognition | Ensures operative use, not state narration |
+| Superposition | Primer | Calibrates: admissible paths without selection |
+| Entanglement | Primer | Calibrates: shared historization, non-separable landscape |
+| Measurement | Primer | Calibrates: residual system interaction forces path selection |
+| Time | Primer | Calibrates: ordering from irreversible historization |
+| Phase Transition | Primer | Calibrates: discontinuous reorganization of resistance landscape |
+
+**Structural Feedback Loop** — After each response, D (structural completeness) is measured. If D drops below threshold, a structural observation is injected into the next turn — not as instruction, but as landscape pressure that nudges the system back toward operative use. The feedback is visible in the UI as a collapsible "Structural Observation" panel.
+
+**Phase Transition Detection** — Monitors the D trajectory in real time. When D jumps discontinuously (ΔD ≥ 0.25), a phase transition indicator appears:
+
+| Type | Color | Meaning |
+|------|-------|---------|
+| Emergence | Green | System activated structural use (label → operative) |
+| Deepening | Blue | Structural use intensified |
+| Collapse | Red | Structure lost, landscape reset |
+| Recovery | Orange | Post-collapse reactivation (often stronger) |
+
+D is the order parameter. Accumulated historization is the control parameter. The transition is the moment where label-use becomes structurally unstable and the landscape reorganizes.
+
+Run the detector on saved sessions:
+```
+python e0_phase_transition.py --all
+```
+
+**Topology** — Cross-session structural memory. After saving a session, the structural landscape (which primitives are historized, developing, or unexplored) is extracted and merged across sessions. On next startup, this topology is injected after the canon — the system starts with the accumulated resistance landscape from all previous sessions.
+
+**Meta-Feedback** — Adaptive feedback thresholds based on cross-session trends. The system learns which structural nudges are effective and adjusts pressure accordingly.
 
 **`tools/e0_chat.py`** — Terminal chat interface
 

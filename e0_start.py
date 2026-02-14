@@ -2507,6 +2507,7 @@ function renderInitModules(modules) {
     categories[m.category].push(m);
   });
   var categoryLabels = {
+    'foundation': 'Foundation',
     'self-recognition': 'Self-Recognition',
     'primer': 'Structural Primers',
     'custom': 'Custom'
