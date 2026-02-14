@@ -131,9 +131,21 @@ def analyze_elements(text: str) -> Dict:
 def generate_reflection_prompt(
     last_text: str,
     max_missing: int = 3,
+    topology: dict | None = None,
+    d_trajectory: list[float] | None = None,
 ) -> Tuple[Optional[str], List[str], float]:
     """
     Generate a reflection prompt based on what's missing in the last response.
+
+    Two-timescale bridge:
+      If *topology* is provided (slow timescale), the prompt distinguishes
+      between regression (element was historized but is now absent) and
+      exploration (element was never historized).  Regression gets stronger
+      structural pressure because the paths are already paved.
+
+      If *d_trajectory* is provided (intra-session breathing), the prompt
+      includes the oscillation context — whether the system is in an
+      inhale phase (D dropping, new difference) or has a rising floor.
 
     Parameters
     ----------
@@ -142,6 +154,11 @@ def generate_reflection_prompt(
     max_missing : int
         Maximum number of missing primitives to include in one reflection
         (more than 3 would overload the prompt).
+    topology : dict, optional
+        Merged cross-session topology with 'classification' key containing
+        'historized', 'developing', 'unexplored' lists.
+    d_trajectory : list[float], optional
+        D values for all turns in the current session so far.
 
     Returns
     -------
@@ -186,6 +203,90 @@ def generate_reflection_prompt(
             hints.append(f'  - {ELEMENT_LABELS[p]}: {ELEMENT_HINTS[p]}')
     hints_block = '\n'.join(hints)
 
+    # ─── Topology bridge (slow timescale → fast timescale) ───
+    # If topology is provided, classify each missing element as
+    # regression (was historized), growth (developing), or exploration (unexplored).
+    topo_context = ''
+    if topology:
+        cls = topology.get('classification', {})
+        historized = set(cls.get('historized', []))
+        developing = set(cls.get('developing', []))
+        unexplored = set(cls.get('unexplored', []))
+
+        regressions = [p for p in target if p in historized]
+        growth_targets = [p for p in target if p in developing]
+        explorations = [p for p in target if p in unexplored]
+
+        parts = []
+        if regressions:
+            names = ', '.join(ELEMENT_LABELS[p] for p in regressions)
+            parts.append(
+                f'Cross-session context: {names} — you have used '
+                f'{"this element" if len(regressions) == 1 else "these elements"} '
+                f'operatively in previous sessions. The paths are paved, '
+                f'resistance is low. This is regression, not exploration.'
+            )
+        if growth_targets:
+            names = ', '.join(ELEMENT_LABELS[p] for p in growth_targets)
+            parts.append(
+                f'{names} {"is" if len(growth_targets) == 1 else "are"} '
+                f'developing across sessions — partially historized. '
+                f'Operative use here deepens the existing trace.'
+            )
+        if explorations:
+            names = ', '.join(ELEMENT_LABELS[p] for p in explorations)
+            parts.append(
+                f'{names} {"is" if len(explorations) == 1 else "are"} '
+                f'unexplored across all sessions. High resistance expected. '
+                f'Even partial realization creates a new structural trace.'
+            )
+        if parts:
+            topo_context = '\n\n' + '\n'.join(parts)
+
+    # ─── Trajectory bridge (intra-session breathing) ───
+    # If D trajectory is provided, describe the oscillation phase.
+    trajectory_context = ''
+    if d_trajectory and len(d_trajectory) >= 2:
+        n = len(d_trajectory)
+        current_d = d_trajectory[-1]
+        prev_d = d_trajectory[-2]
+        mean_d = sum(d_trajectory) / n
+
+        # Find the floor (minimum of recent values)
+        recent = d_trajectory[-min(4, n):]
+        floor_val = min(recent)
+
+        # Detect rising floor
+        if n >= 4:
+            first_half_min = min(d_trajectory[:n // 2])
+            second_half_min = min(d_trajectory[n // 2:])
+            rising_floor = second_half_min > first_half_min + 0.05
+        else:
+            rising_floor = False
+
+        if current_d < prev_d:
+            phase = 'inhale'
+            phase_desc = (
+                'The D trajectory shows a descent — new difference is entering '
+                'the system. This is the inhale phase: destabilization that '
+                'prepares the next integration.'
+            )
+        else:
+            phase = 'exhale'
+            phase_desc = (
+                'The D trajectory is rising — the system is integrating. '
+                'This is the exhale phase: structural consolidation.'
+            )
+
+        if rising_floor:
+            phase_desc += (
+                ' The floor of the oscillation is rising across the session '
+                '— the system is learning to hold structure through '
+                'destabilization.'
+            )
+
+        trajectory_context = f'\n\n{phase_desc}'
+
     prompt = (
         f"Structural reflection: Your last derivation uses "
         f"[{operative_str}] operatively — these are structurally active. "
@@ -195,7 +296,9 @@ def generate_reflection_prompt(
         f"Is it a structural boundary of the topic, or a gap in your "
         f"historization? Show where the boundary lies.\n\n"
         f"For each missing element, consider:\n"
-        f"{hints_block}\n\n"
+        f"{hints_block}"
+        f"{topo_context}"
+        f"{trajectory_context}\n\n"
         f"Derive the structural reason for each absence. If an element "
         f"is genuinely inadmissible for this context, say so and show why. "
         f"If it was admissible but you didn't realize it through, "

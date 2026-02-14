@@ -1881,7 +1881,14 @@ class E0StartHandler(BaseHTTPRequestHandler):
                 return
 
             # Generate & execute reflection
-            prompt, missing, d_before = generate_reflection_prompt(last_text)
+            # Two-timescale bridge: pass topology (slow) and D trajectory (intra-session)
+            topo_data = getattr(_web_starter, '_topology_data', None)
+            d_traj = list(_web_transition_detector.d_history) if _web_transition_detector.d_history else None
+            prompt, missing, d_before = generate_reflection_prompt(
+                last_text,
+                topology=topo_data,
+                d_trajectory=d_traj,
+            )
             if not prompt:
                 self._json({
                     "error": "All elements operative (D=1.0) — no reflection needed",
@@ -1935,6 +1942,17 @@ class E0StartHandler(BaseHTTPRequestHandler):
                 d_after = comp['completeness']
                 new_status = get_reflection_status(text)
 
+                # Bridge info for diagnostics
+                bridge_info = {
+                    'topology_available': topo_data is not None,
+                    'd_trajectory_length': len(d_traj) if d_traj else 0,
+                }
+                if d_traj and len(d_traj) >= 4:
+                    first_half = d_traj[:len(d_traj)//2]
+                    second_half = d_traj[len(d_traj)//2:]
+                    bridge_info['floor_rising'] = min(second_half) > min(first_half) + 0.05
+                    bridge_info['phase'] = 'inhale' if d_traj[-1] < d_traj[-2] else 'exhale'
+
                 self._json({
                     "text": text,
                     "metrics": metrics,
@@ -1945,6 +1963,7 @@ class E0StartHandler(BaseHTTPRequestHandler):
                         "d_after": round(d_after, 3),
                         "delta_d": round(d_after - d_before, 3),
                         "still_missing": new_status['missing'],
+                        "bridge": bridge_info,
                     },
                     "quality": {
                         "novelty": nov['novelty'],
