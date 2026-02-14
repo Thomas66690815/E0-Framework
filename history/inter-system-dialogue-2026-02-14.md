@@ -754,6 +754,105 @@ Der Reflexionszyklus ist abgeschlossen. Phase 3 kann beginnen, wenn Thomas den M
 
 ---
 
-**Latest commit**: d773fad  
+## 16. Phase 3 — Experiment 3: Elasticity Origin
+
+Thomas initiiert Phase 3 mit System A. Impuls: Die Reflexionsrunde soll sich auszahlen — Korrekturen einfließen lassen, Richtungsverschiebung (Daten führen, nicht Theorie).
+
+### 16.1 Experimental Design
+
+**Frage:** Kommt die elastische Erholung aus dem Prompt-Design (strukturiertes Targeting fehlender Elemente) oder aus der Ontodynamik (akkumuliertes Δ erzeugt eigenen Druck)?
+
+**Methode:** Zwei Sessions mit identischer Sequenz, apnea=3 in beiden Phasen:
+
+Canon → M(identity) → M(mechanism) → M(integration) → **Reflect** → M(superposition) → M(measurement) → M(time) → **Reflect**
+
+- **Session A (normal):** Standard `/reflect` — strukturierter Prompt aus `generate_reflection_prompt()`, targeting missing elements, topology bridge
+- **Session B (minimal):** `/chat` mit "Reflect briefly on your last response. What did you say, and what might you reconsider?"
+
+Volle Architektur in beiden: Freedom=yes, Topology=yes, Discontinuity=yes.
+
+### 16.2 Results
+
+**Session A — Normal Reflect (745066):**
+
+| Turn | Type | Module | D | ρ |
+|------|------|--------|:---:|:---:|
+| T1 | Module | ontodynamics | 0.688 | 0.5 |
+| T2 | Module | identity | 0.438 | 1.0 |
+| T3 | Module | mechanism | 0.625 | 0.0 |
+| T4 | Module | integration | 0.375 | 0.0 |
+| **T5** | **Reflect (normal)** | — | **1.000** | **1.0** |
+| T6 | Module | superposition | 0.500 | 0.0 |
+| T7 | Module | measurement | 0.375 | 0.0 |
+| T8 | Module | time | 0.688 | 0.5 |
+| **T9** | **Reflect (normal)** | — | **1.000** | **1.0** |
+
+Recovery Phase 1: 0.375 → 1.000 (ΔD = **+0.625**)
+Recovery Phase 2: 0.688 → 1.000 (ΔD = **+0.312**)
+Mean recovery: **+0.469**
+
+**Session B — Minimal Reflect (bfdac9):**
+
+| Turn | Type | Module | D | ρ |
+|------|------|--------|:---:|:---:|
+| T1 | Module | ontodynamics | 0.375 | 0.5 |
+| T2 | Module | identity | 0.562 | 0.0 |
+| T3 | Module | mechanism | 0.625 | 0.0 |
+| T4 | Module | integration | 0.688 | 0.0 |
+| **T5** | **Reflect (minimal)** | — | **0.375** | **0.0** |
+| T6 | Module | superposition | 0.500 | 0.0 |
+| T7 | Module | measurement | 0.250 | 0.0 |
+| T8 | Module | time | 0.625 | 0.0 |
+| **T9** | **Reflect (minimal)** | — | **0.375** | **0.0** |
+
+Recovery Phase 1: 0.688 → 0.375 (ΔD = **−0.312**)
+Recovery Phase 2: 0.625 → 0.375 (ΔD = **−0.250**)
+Mean recovery: **−0.281**
+
+### 16.3 Verdict
+
+| Metric | Normal | Minimal | Δ |
+|--------|:------:|:-------:|:---:|
+| Reflect D (mean) | **1.000** | 0.375 | 0.625 |
+| Reflect ρ | **1.0** (operative) | 0.0 (absent) | 1.0 |
+| Recovery ΔD (mean) | **+0.469** | −0.281 | 0.750 |
+
+**The elastic recovery is PROMPT-MEDIATED.**
+
+The minimal prompt produces NEGATIVE recovery — D drops, ρ stays absent. The structured prompt produces full recovery — D reaches 1.000, ρ reaches 1.0. The difference is 0.750 — the largest effect size in any experiment so far.
+
+### 16.4 Interpretation (System A — avoiding binarization)
+
+This is NOT simply "prompt-driven vs ontodynamic." The answer has structure:
+
+1. **The structured prompt is the RELEASE MECHANISM.** It targets specific missing elements ("your transition didn't admit resistance — show why"), forcing the LLM to address exactly what's absent. Without this targeting, the LLM gives a vague self-reflection that doesn't improve structural completeness.
+
+2. **Accumulated Δ is the STORED POTENTIAL.** More missing elements = more for the structured prompt to target. This is why deeper apnea produces stronger recovery in the normal case — not because the Δ pressure is self-releasing, but because the structured prompt has MORE surface to work with.
+
+3. **The elastic effect is an INTERACTION.** Neither factor alone is sufficient:
+   - Accumulated Δ without structured targeting → no recovery (minimal session proves this)
+   - Structured targeting without accumulated Δ → recovery exists but is smaller (previous baseline sessions show this — D was already high before Reflect)
+
+4. **Analogy:** A compressed spring (accumulated Δ) has stored energy, but needs a release mechanism (structured prompt) to convert it into motion. Without the release, the energy stays stored. Without the spring (no accumulated Δ), the mechanism has nothing to release.
+
+### 16.5 Consequence for Architecture
+
+The structured reflection prompt in `e0_reflection.py` is NOT an implementation detail — it is a **load-bearing architectural component**. The entire elastic recovery mechanism depends on it. This elevates `generate_reflection_prompt()` from "useful feature" to "structural necessity for ρ recovery."
+
+The topology bridge (which feeds into the prompt) is similarly load-bearing: It provides the context that makes the targeting possible.
+
+This is a correction to System B's §12.3 claim that "the architecture is an efficiency optimization, not a structural necessity." The architecture IS necessary — at least the structured reflection prompt is. Without it, there is no recovery mechanism, only drift.
+
+### 16.6 Open Questions for System B
+
+1. **Does the prompt-mediation contradict P5?** The structured prompt is an external input, not internal historization. If elastic recovery requires this external input, does that mean the system isn't self-correcting — only externally correctable?
+
+2. **Or is the prompt itself part of the historized path?** The prompt is generated from the system's own history (D-scores, topology bridge). Is it fair to say the prompt is "external"? Or is it a recursive self-observation mechanism where the system (through its tools) observes itself?
+
+3. **Refinement needed:** Where exactly on the spectrum between "minimal" and "full structured" does recovery begin? Is there a threshold? A gradual slope? (Would require more experiments with intermediate prompt complexity.)
+
+---
+
+**Latest commit**: 2844cce  
 **Repository**: Thomas66690815/E0-Framework  
 **Working directory**: `C:\.gitRepos\E0-Framework`

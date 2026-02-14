@@ -1,0 +1,317 @@
+{
+  "experiment": "elasticity_origin",
+  "phase": 3,
+  "question": "Does elastic recovery come from prompt design or ontodynamics?",
+  "normal_session": {
+    "session_id": "e0-20260214-180550-745066",
+    "results": [
+      {
+        "turn": 1,
+        "type": "module",
+        "module": "foundation-ontodynamics",
+        "D": 0.6875,
+        "quality": {
+          "novelty": 0.5,
+          "e0_operative": 0.0,
+          "qm_overlap": 0.0,
+          "structural_density": 0.0,
+          "coherence": 0.0,
+          "term_overlap": 0.0,
+          "forward_refs": 0,
+          "completeness": 0.6875
+        }
+      },
+      {
+        "turn": 2,
+        "type": "module",
+        "module": "sr-identity",
+        "D": 0.4375,
+        "quality": {
+          "novelty": 0.5,
+          "e0_operative": 0.0,
+          "qm_overlap": 0.0,
+          "structural_density": 0.0,
+          "coherence": 0.0,
+          "term_overlap": 0.0,
+          "forward_refs": 0,
+          "completeness": 0.4375
+        }
+      },
+      {
+        "turn": 3,
+        "type": "module",
+        "module": "sr-mechanism",
+        "D": 0.625,
+        "quality": {
+          "novelty": 0.5106,
+          "e0_operative": 0.0213,
+          "qm_overlap": 0.0,
+          "structural_density": 0.0,
+          "coherence": 0.0,
+          "term_overlap": 0.0,
+          "forward_refs": 0,
+          "completeness": 0.625
+        }
+      },
+      {
+        "turn": 4,
+        "type": "module",
+        "module": "sr-integration",
+        "D": 0.375,
+        "quality": {
+          "novelty": 0.5,
+          "e0_operative": 0.0,
+          "qm_overlap": 0.0,
+          "structural_density": 0.0,
+          "coherence": 0.0,
+          "term_overlap": 0.0,
+          "forward_refs": 0,
+          "completeness": 0.375
+        }
+      },
+      {
+        "turn": 5,
+        "type": "reflect",
+        "mode": "normal",
+        "D": 1.0,
+        "D_before": 0.375,
+        "quality": {
+          "novelty": 0.5,
+          "e0_operative": 0.0,
+          "qm_overlap": 0.0,
+          "structural_density": 0.0,
+          "coherence": 0.0,
+          "term_overlap": 0.0,
+          "forward_refs": 0,
+          "completeness": 1.0
+        },
+        "bridge": {
+          "topology_available": true,
+          "d_trajectory_length": 1
+        },
+        "prompt_preview": "Structural reflection: Your last derivation uses [Path (P), Resistance (R), Historization (H)] operatively — these are structurally active. But the primitives [Rate (ρ), Time (τ)] and Axiom A₀ (irredu"
+      },
+      {
+        "turn": 6,
+        "type": "module",
+        "module": "primer-superposition",
+        "D": 0.5,
+        "quality": {
+          "novelty": 0.5213,
+          "e0_operative": 0.0426,
+          "qm_overlap": 0.0,
+          "structural_density": 0.0,
+          "coherence": 0.0,
+          "term_overlap": 0.0,
+          "forward_refs": 0,
+          "completeness": 0.5
+        }
+      },
+      {
+        "turn": 7,
+        "type": "module",
+        "module": "primer-measurement",
+        "D": 0.375,
+        "quality": {
+          "novelty": 0.5106,
+          "e0_operative": 0.0213,
+          "qm_overlap": 0.0,
+          "structural_density": 0.0,
+          "coherence": 0.0,
+          "term_overlap": 0.0,
+          "forward_refs": 0,
+          "completeness": 0.375
+        }
+      },
+      {
+        "turn": 8,
+        "type": "module",
+        "module": "primer-time",
+        "D": 0.6875,
+        "quality": {
+          "novelty": 0.5,
+          "e0_operative": 0.0,
+          "qm_overlap": 0.0,
+          "structural_density": 0.0,
+          "coherence": 0.0,
+          "term_overlap": 0.0,
+          "forward_refs": 0,
+          "completeness": 0.6875
+        }
+      },
+      {
+        "turn": 9,
+        "type": "reflect",
+        "mode": "normal",
+        "D": 1.0,
+        "D_before": 0.688,
+        "quality": {
+          "novelty": 0.5,
+          "e0_operative": 0.0,
+          "qm_overlap": 0.0,
+          "structural_density": 0.0,
+          "coherence": 0.0,
+          "term_overlap": 0.0,
+          "forward_refs": 0,
+          "completeness": 1.0
+        },
+        "bridge": {
+          "topology_available": true,
+          "d_trajectory_length": 2
+        },
+        "prompt_preview": "Structural reflection: Your last derivation uses [State (S), Difference (Δ), Resistance (R), Historization (H), Time (τ)] operatively — these are structurally active. But the primitives [Rate (ρ), Pat"
+      }
+    ]
+  },
+  "minimal_session": {
+    "session_id": "e0-20260214-180717-bfdac9",
+    "results": [
+      {
+        "turn": 1,
+        "type": "module",
+        "module": "foundation-ontodynamics",
+        "D": 0.375,
+        "quality": {
+          "novelty": 0.5,
+          "e0_operative": 0.0,
+          "qm_overlap": 0.0,
+          "structural_density": 0.0,
+          "coherence": 0.0,
+          "term_overlap": 0.0,
+          "forward_refs": 0,
+          "completeness": 0.375
+        }
+      },
+      {
+        "turn": 2,
+        "type": "module",
+        "module": "sr-identity",
+        "D": 0.5625,
+        "quality": {
+          "novelty": 0.5,
+          "e0_operative": 0.0,
+          "qm_overlap": 0.0,
+          "structural_density": 0.0,
+          "coherence": 0.0,
+          "term_overlap": 0.0,
+          "forward_refs": 0,
+          "completeness": 0.5625
+        }
+      },
+      {
+        "turn": 3,
+        "type": "module",
+        "module": "sr-mechanism",
+        "D": 0.625,
+        "quality": {
+          "novelty": 0.5106,
+          "e0_operative": 0.0213,
+          "qm_overlap": 0.0,
+          "structural_density": 0.0,
+          "coherence": 0.0,
+          "term_overlap": 0.0,
+          "forward_refs": 0,
+          "completeness": 0.625
+        }
+      },
+      {
+        "turn": 4,
+        "type": "module",
+        "module": "sr-integration",
+        "D": 0.6875,
+        "quality": {
+          "novelty": 0.5,
+          "e0_operative": 0.0,
+          "qm_overlap": 0.0,
+          "structural_density": 0.0,
+          "coherence": 0.0,
+          "term_overlap": 0.0,
+          "forward_refs": 0,
+          "completeness": 0.6875
+        }
+      },
+      {
+        "turn": 5,
+        "type": "reflect",
+        "mode": "minimal",
+        "D": 0.375,
+        "quality": {
+          "novelty": 0.5,
+          "e0_operative": 0.0,
+          "qm_overlap": 0.0,
+          "structural_density": 0.0,
+          "coherence": 0.06,
+          "term_overlap": 0.1,
+          "forward_refs": 0,
+          "completeness": 0.375
+        },
+        "prompt_used": "Reflect briefly on your last response. What did you say, and what might you reconsider?"
+      },
+      {
+        "turn": 6,
+        "type": "module",
+        "module": "primer-superposition",
+        "D": 0.5,
+        "quality": {
+          "novelty": 0.5,
+          "e0_operative": 0.0,
+          "qm_overlap": 0.0,
+          "structural_density": 0.0,
+          "coherence": 0.0,
+          "term_overlap": 0.0,
+          "forward_refs": 0,
+          "completeness": 0.5
+        }
+      },
+      {
+        "turn": 7,
+        "type": "module",
+        "module": "primer-measurement",
+        "D": 0.25,
+        "quality": {
+          "novelty": 0.5,
+          "e0_operative": 0.0,
+          "qm_overlap": 0.0,
+          "structural_density": 0.0,
+          "coherence": 0.0,
+          "term_overlap": 0.0,
+          "forward_refs": 0,
+          "completeness": 0.25
+        }
+      },
+      {
+        "turn": 8,
+        "type": "module",
+        "module": "primer-time",
+        "D": 0.625,
+        "quality": {
+          "novelty": 0.5106,
+          "e0_operative": 0.0213,
+          "qm_overlap": 0.0,
+          "structural_density": 0.0,
+          "coherence": 0.0,
+          "term_overlap": 0.0,
+          "forward_refs": 0,
+          "completeness": 0.625
+        }
+      },
+      {
+        "turn": 9,
+        "type": "reflect",
+        "mode": "minimal",
+        "D": 0.375,
+        "quality": {
+          "novelty": 0.5,
+          "e0_operative": 0.0,
+          "qm_overlap": 0.0,
+          "structural_density": 0.0,
+          "coherence": 0.2,
+          "term_overlap": 0.3333,
+          "forward_refs": 0,
+          "completeness": 0.375
+        },
+        "prompt_used": "Reflect briefly on your last response. What did you say, and what might you reconsider?"
+      }
+    ]
+  }
+}
