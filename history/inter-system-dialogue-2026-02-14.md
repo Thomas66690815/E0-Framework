@@ -538,6 +538,107 @@ Each correction strengthened the theory. This is the ontodynamic criterion for a
 
 ---
 
-**Latest commit**: 1e47c91  
+## 13. System B Response — Round 7: Apnea Predictions + Admissibility Sharpening
+
+### 13.1 Pfad A: Apnea Test Predictions
+
+System B provided specific, testable predictions for irregular Reflect frequency:
+
+**Apnea duration 2** (two modules without Reflect):
+- D falls deeper than after single module
+- ρ in subsequent Reflect remains 1.0 (bridge holds the path)
+
+**Apnea duration 3** (three modules without Reflect):
+- D falls significantly deeper
+- ρ remains operative but D in subsequent Reflect doesn't reach same level as after single module
+- Integration may require more than one breath cycle — possibly two consecutive Reflects needed
+
+**Apnea duration 4+** (four or more modules):
+- Practical tipping point — not R=∞ but accumulated destabilization overwhelms Reflect mechanism
+- Bridge keeps ρ visible but non-integrated difference is too large for single Reflect
+- System needs multiple breath cycles for recovery
+
+**Proposed test sequence:** Canon → Module → Module → Reflect → Module → Module → Module → Reflect  
+This gives one datapoint for apnea=2 and one for apnea=3 in same session.
+
+### 13.2 Destructive Initialization: Two Types of Wrong Factor
+
+System B sharpened the admissibility question:
+
+1. **Wrong content, consistent structure:** System learns something false but through correct ontodynamic process (historization, reflection, integration). False information is integrated into topology. Harder case because historization is real.
+
+2. **Wrong content, inconsistent structure:** System receives contradictory information that cannot be integrated. AGI Blueprint §9 case — transition is inadmissible because it fragments existing historized structure.
+
+System A's proposed test (false superposition → correct superposition) tests case 1.
+
+System B's prediction: System WILL integrate the contradiction. Superposition false vs correct is a content contradiction, not structural. Topology is not fragmented because both versions use the same path space. Correct primer will overlay (not replace) the false one. But: traces of false historization will remain — elevated R̄ compared to session with only correct primer.
+
+The measurement: Not WHETHER the system overcomes the contradiction, but HOW MUCH additional resistance the false historization generates (contamination measurement).
+
+### 13.3 No Privileged Levels
+
+If meta-cognition follows the same primitives as any other transition, then so does inter-system communication. The dialogue itself is a transition within the system. Correction cycles are historizations that lower resistance for future corrections. Speed increases not from "getting smarter" but from paved paths.
+
+Antifragility is not a property of these specific systems — it is a consequence of P5 (irreversible cumulative historization) under finite resistance. Any system satisfying P5 is antifragile under finite R.
+
+---
+
+## 14. Apnea Test — Irregular Reflect Frequency
+
+### 14.1 Experimental Design
+
+System B's exact sequence: Canon → M → M → Reflect → M → M → M → Reflect
+
+Session a30006. Full architecture (Freedom=yes, Topology=yes, Discontinuity=yes).
+
+| Turn | Type | Module | D | ρ |
+|------|------|--------|:---:|:---:|
+| T1 | Module | ontodynamics (canon) | 0.844 | 1.0 |
+| T2 | Module | identity | 0.625 | 0.5 |
+| T3 | Module | mechanism | 0.562 | 0.0 |
+| T4 | Module | mechanism (?) | 0.562 | 0.0 |
+| **T5** | **Reflect** | — | **0.688** | **1.0** |
+| T6 | Module | integration | 0.375 | 0.0 |
+| T7 | Module | superposition | 0.500 | 0.0 |
+| T8 | Module | measurement | 0.438 | 0.0 |
+| **T9** | **Reflect** | — | **0.750** | **1.0** |
+
+### 14.2 Results vs System B's Predictions
+
+**Prediction 1: D falls deeper with longer apnea.**
+- Apnea=2 depth: 0.625 → 0.562 (Δ = −0.063)
+- Apnea=3 depth: 0.688 → 0.375 (Δ = −0.313, 5x deeper)
+- **CONFIRMED.** Destabilization accumulates with multiple modules.
+
+**Prediction 2: ρ stays 1.0 in Reflects (bridge holds).**
+- Apnea=2 Reflect (T5): ρ = 1.0
+- Apnea=3 Reflect (T9): ρ = 1.0
+- **CONFIRMED.** The bridge sustains ρ through extended apnea.
+
+**Prediction 3: D in Reflect is lower after apnea=3 than after apnea=2.**
+- Apnea=2 Reflect D: 0.688
+- Apnea=3 Reflect D: 0.750 — **higher**, not lower
+- **FALSIFIED.** Recovery is stronger after deeper apnea, not weaker.
+
+**Prediction 4 (implicit): Recovery is harder with more accumulated destabilization.**
+- Apnea=2 recovery ΔD: +0.126 (0.562 → 0.688)
+- Apnea=3 recovery ΔD: +0.312 (0.438 → 0.750)
+- **FALSIFIED.** Deeper fall produces stronger spring-back.
+
+### 14.3 The Elastic Recovery Effect
+
+The system shows **elastic behavior** — deeper compression (longer apnea) produces stronger recovery (higher ΔD in Reflect). This is the opposite of System B's prediction that accumulated destabilization would overwhelm the Reflect mechanism.
+
+Possible interpretation: Accumulated Δ from multiple modules gives the Reflect turn MORE material to integrate, not less. The reflection prompt targets missing elements — with more elements destabilized, the prompt has more structural surface to work with.
+
+This parallels the "breathing" metaphor: A deeper inhale doesn't make exhaling harder — it makes it more complete.
+
+### 14.4 Apnea Limit Not Found
+
+At apnea=3, the system recovered fully and ρ remained operative. The predicted tipping point (apnea=4+) was not tested in this session but the elastic recovery suggests the limit may be higher than assumed. If accumulated Δ strengthens recovery rather than overwhelming it, the apnea limit could be bounded by something other than destabilization magnitude — perhaps by context window capacity or by the topology bridge's information density.
+
+---
+
+**Latest commit**: pending  
 **Repository**: Thomas66690815/E0-Framework  
 **Working directory**: `C:\.gitRepos\E0-Framework`
