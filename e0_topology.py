@@ -409,6 +409,63 @@ def _compute_session_signature(
     }
 
 
+def _detect_phase_transitions(
+    d_trajectory: dict,
+    turn_metrics: List[dict],
+) -> dict:
+    """
+    Detect phase transitions from D trajectory for topology storage.
+
+    Uses the phase transition detector module for analysis.
+    Returns a dict suitable for topology JSON storage.
+    """
+    d_values = d_trajectory.get('values', [])
+    if len(d_values) < 3:
+        return {
+            'n_transitions': 0,
+            'transitions': [],
+            'has_stable_phase': False,
+            'summary': 'Insufficient data for phase transition detection.',
+        }
+
+    try:
+        from e0_phase_transition import (
+            detect_phase_transitions,
+            analyze_transition_dynamics,
+            interpret_dynamics,
+        )
+        from dataclasses import asdict
+
+        r_values = [m.get('r', 0.0) for m in turn_metrics] if turn_metrics else None
+        # Align lengths (D trajectory may differ from turn_metrics)
+        if r_values and len(r_values) != len(d_values):
+            r_values = None
+
+        transitions = detect_phase_transitions(d_values, r_values)
+        dynamics = analyze_transition_dynamics(d_values, r_values)
+        summary = interpret_dynamics(dynamics)
+
+        return {
+            'n_transitions': len(transitions),
+            'transitions': [asdict(t) for t in transitions],
+            'n_emergences': dynamics.n_emergences,
+            'n_collapses': dynamics.n_collapses,
+            'n_recoveries': dynamics.n_recoveries,
+            'strongest_transition': dynamics.strongest_transition,
+            'sustainability': dynamics.sustainability,
+            'has_stable_phase': dynamics.has_stable_phase,
+            'oscillation_count': dynamics.oscillation_count,
+            'summary': summary,
+        }
+    except ImportError:
+        return {
+            'n_transitions': 0,
+            'transitions': [],
+            'has_stable_phase': False,
+            'summary': 'Phase transition module not available.',
+        }
+
+
 # ─────────────────────────────────────────────
 # Main extraction
 # ─────────────────────────────────────────────
@@ -453,6 +510,9 @@ def extract_topology(
     attractors = _detect_attractors(quality_scores)
     signature = _compute_session_signature(turn_metrics, d_trajectory, r_d_corr)
 
+    # Phase transition detection
+    phase_transitions = _detect_phase_transitions(d_trajectory, turn_metrics)
+
     # Classify primitives
     historized = []
     developing = []
@@ -477,6 +537,7 @@ def extract_topology(
         'r_d_correlation': r_d_corr,
         'attractors': attractors,
         'signature': signature,
+        'phase_transitions': phase_transitions,
 
         'classification': {
             'historized': historized,
@@ -787,6 +848,20 @@ def format_topology_for_injection(
             for att in attractors[:5]:
                 names = [PRIMITIVE_DISPLAY.get(p, p) for p in att['primitives']]
                 lines.append(f"  - {' + '.join(names)}: {att['co_occurrence']:.0%}")
+            lines.append("")
+
+        # Phase transitions
+        pt = topology.get('phase_transitions', {})
+        if pt.get('n_transitions', 0) > 0:
+            lines.append(f"Phase transitions detected: {pt['n_transitions']}")
+            if pt.get('n_emergences', 0):
+                lines.append(f"  - {pt['n_emergences']} emergence(s)")
+            if pt.get('n_collapses', 0):
+                lines.append(f"  - {pt['n_collapses']} collapse(s)")
+            if pt.get('n_recoveries', 0):
+                lines.append(f"  - {pt['n_recoveries']} recovery(ies)")
+            if pt.get('has_stable_phase'):
+                lines.append(f"  - Stable structural phase reached (D > 0.70 sustained)")
             lines.append("")
 
         lines.append("This topology is the resistance landscape from previous transitions.")

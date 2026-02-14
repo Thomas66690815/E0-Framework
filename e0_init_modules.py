@@ -167,6 +167,37 @@ INIT_MODULES = [
         ),
         'r_threshold': 0.15,
     },
+    {
+        'id': 'primer-phase-transition',
+        'category': 'primer',
+        'name': {'en': 'Phase Transition', 'de': 'Phasenübergang'},
+        'description': {
+            'en': 'Calibrate: phase transition = discontinuous reorganization of the resistance landscape',
+            'de': 'Kalibrierung: Phasenübergang = diskontinuierliche Reorganisation der Widerstandslandschaft',
+        },
+        'prompt': (
+            "Structural calibration for phase transitions: In an E₀ system, "
+            "structural completeness D measures how operatively E₀ primitives "
+            "are used — not merely named (label-use), but derived through "
+            "(operative-use). A phase transition is the discontinuous moment "
+            "where label-use becomes structurally unstable and the system "
+            "reorganizes into operative-use. This is not gradual improvement. "
+            "It is a discrete reorganization of the resistance landscape: "
+            "paths that were admissible under label-use become inadmissible, "
+            "and new paths open that require structural derivation. "
+            "The control parameter is accumulated historization — each "
+            "historized transition increases the structural pressure until "
+            "the landscape cannot sustain label-use. At the critical point, "
+            "D jumps discontinuously. The transition is irreversible: the "
+            "landscape after the transition admits different paths than before. "
+            "Collapse (D dropping back) is also a phase transition — the "
+            "landscape reorganized downward, often clearing accumulated noise, "
+            "enabling a stronger recovery transition. "
+            "Derive phase transitions from E₀ structure: State, Difference, "
+            "Path, Resistance, Historization, and the irreversibility of τ."
+        ),
+        'r_threshold': 0.15,
+    },
 ]
 
 

@@ -55,6 +55,7 @@ from e0_feedback import generate_structural_feedback, format_feedback_for_inject
 from e0_meta_feedback import generate_adaptive_feedback, generate_meta_observation, compute_cross_session_trends, adapt_feedback_thresholds
 from e0_self_recognition import run_self_recognition, format_recognition_summary
 from e0_init_modules import list_modules_for_ui, run_init_module
+from e0_phase_transition import LiveTransitionDetector, interpret_transition, interpret_dynamics
 
 
 # =============================================
@@ -1189,7 +1190,7 @@ def run_profile(profile_path: str, api_key: str = None, base_url: str = None,
 
 def _start_web_with_starter(starter, lang, show_detail, port):
     """Start the web interface with an already-initialized starter."""
-    global _web_starter, _web_lang, _web_init_data, _web_prev_r, _web_turn_num, _web_prev_text, _web_canon_text, _web_session_id
+    global _web_starter, _web_lang, _web_init_data, _web_prev_r, _web_turn_num, _web_prev_text, _web_canon_text, _web_session_id, _web_transition_detector
 
     _web_starter = starter
     _web_lang = lang
@@ -1198,6 +1199,13 @@ def _start_web_with_starter(starter, lang, show_detail, port):
     _web_prev_text = starter.history[-1] if starter.history else ""
     _web_canon_text = starter.history[0] if starter.history else ""
     _web_turn_num = len(starter.turn_metrics)
+
+    # Initialize phase transition detector with canon D
+    _web_transition_detector = LiveTransitionDetector()
+    if _web_prev_text:
+        canon_comp = score_e0_completeness(_web_prev_text)
+        canon_r = starter.turn_metrics[-1]["r"] if starter.turn_metrics else 0
+        _web_transition_detector.update(canon_comp['completeness'], canon_r)
 
     # Build init data from the last turn
     last_metrics = starter.turn_metrics[-1] if starter.turn_metrics else {"r": 0, "h": 0, "phi": 0, "v": 0, "tau": 0}
@@ -1471,6 +1479,7 @@ _web_turn_num = 0
 _web_prev_text = ""  # previous response text for coherence scoring
 _web_session_id = None  # current session ID (set on first save)
 _web_canon_text = ""   # canon text for session hashing
+_web_transition_detector = LiveTransitionDetector()  # phase transition tracking
 _web_lock = threading.Lock()
 
 
@@ -1631,6 +1640,24 @@ class E0StartHandler(BaseHTTPRequestHandler):
                     )
                     if fb_text:
                         feedback_data = format_feedback_for_display(fb_text, lang=_web_lang)
+
+                # ── Phase Transition Detection ──
+                transition_event = _web_transition_detector.update(
+                    comp['completeness'], metrics['r'],
+                    feedback_injected=bool(feedback_data.get('level')),
+                )
+                transition_data = None
+                if transition_event:
+                    transition_data = {
+                        'type': transition_event.type,
+                        'turn': transition_event.turn,
+                        'd_before': transition_event.d_before,
+                        'd_after': transition_event.d_after,
+                        'delta_d': transition_event.delta_d,
+                        'magnitude': transition_event.magnitude,
+                        'interpretation': interpret_transition(transition_event),
+                    }
+
                 self._json({
                     "text": text, "metrics": metrics,
                     "quality": {
@@ -1653,12 +1680,13 @@ class E0StartHandler(BaseHTTPRequestHandler):
                     },
                     "trace": build_trace_data(steps),
                     "feedback": feedback_data,
+                    "transition": transition_data,
                 })
             except Exception as e:
                 self._json({"error": str(e)}, 500)
 
     def _handle_clear(self):
-        global _web_init_data, _web_prev_r, _web_turn_num, _web_prev_text, _web_session_id
+        global _web_init_data, _web_prev_r, _web_turn_num, _web_prev_text, _web_session_id, _web_transition_detector
         with _web_lock:
             _web_session_id = None  # new session on re-init
             if _web_starter.is_api:
@@ -1674,6 +1702,11 @@ class E0StartHandler(BaseHTTPRequestHandler):
             _web_prev_text = _clean(text)
             _web_starter.self_recognition_done = False
             _web_starter.self_recognition_results = []
+
+            # Reset phase transition detector with canon D
+            _web_transition_detector = LiveTransitionDetector()
+            canon_comp = score_e0_completeness(_web_prev_text)
+            _web_transition_detector.update(canon_comp['completeness'], metrics['r'])
 
             # Prepare feedback for first chat turn (always English for LLM)
             if hasattr(_web_starter, 'score_and_prepare_feedback'):
@@ -1927,6 +1960,40 @@ header .actions button:hover { color: var(--accent); border-color: var(--accent)
 .fb-primitive.fb-label .fb-status { color: var(--dim); }
 .fb-primitive.fb-absent .fb-name { color: var(--phase); opacity: 0.7; }
 .fb-nudge { color: var(--text); opacity: 0.85; margin-top: 6px; line-height: 1.5; }
+
+/* ── Phase Transition Indicator ── */
+.phase-transition {
+  margin-top: 10px; padding: 10px 14px;
+  border-radius: 4px; font-size: 12px;
+  animation: pt-pulse 2s ease-in-out 3;
+}
+.phase-transition.emergence {
+  border: 1px solid rgba(158,206,106,0.4); background: rgba(158,206,106,0.08);
+  color: #9ece6a;
+}
+.phase-transition.deepening {
+  border: 1px solid rgba(122,162,247,0.4); background: rgba(122,162,247,0.08);
+  color: #7aa2f7;
+}
+.phase-transition.recovery {
+  border: 1px solid rgba(224,175,104,0.4); background: rgba(224,175,104,0.08);
+  color: #e0af68;
+}
+.phase-transition.collapse {
+  border: 1px solid rgba(247,118,142,0.3); background: rgba(247,118,142,0.05);
+  color: #f7768e;
+}
+.pt-header {
+  font-weight: 600; font-size: 13px; margin-bottom: 4px;
+  display: flex; align-items: center; gap: 8px;
+}
+.pt-symbol { font-size: 16px; }
+.pt-delta { font-family: monospace; font-size: 12px; opacity: 0.9; }
+.pt-interpretation { color: var(--dim); font-size: 11px; margin-top: 4px; line-height: 1.5; }
+@keyframes pt-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
 
 /* ── Verdict ── */
 .verdict {
@@ -2182,7 +2249,7 @@ function showInit(d) {
   if (d.help_text) helpText = d.help_text;
 }
 
-function showE0(text, m, i, trace, q, fb) {
+function showE0(text, m, i, trace, q, fb, pt) {
   var id = 'm' + (++msgN);
   var div = document.createElement('div');
   div.className = 'msg e0';
@@ -2201,6 +2268,21 @@ function showE0(text, m, i, trace, q, fb) {
       + '\u2699 Structural Observation</div>'
       + '<div class="feedback-body" id="' + fbId + '">'
       + fb.html + '</div></div>';
+  }
+  // ── Phase Transition Indicator ──
+  if (pt && pt.type) {
+    var symbols = {emergence: '\u2197\ufe0e', deepening: '\u2b06\ufe0e', recovery: '\u21bb', collapse: '\u2198\ufe0e'};
+    var labels = {emergence: 'PHASE TRANSITION: Emergence', deepening: 'PHASE TRANSITION: Deepening',
+                  recovery: 'PHASE TRANSITION: Recovery', collapse: 'Structural Collapse'};
+    h += '<div class="phase-transition ' + pt.type + '">'
+      + '<div class="pt-header">'
+      + '<span class="pt-symbol">' + (symbols[pt.type] || '\u25c6') + '</span> '
+      + '<span>' + (labels[pt.type] || pt.type) + '</span>'
+      + '<span class="pt-delta">D ' + pt.d_before.toFixed(3) + ' \u2192 ' + pt.d_after.toFixed(3)
+      + ' (\u0394D=' + (pt.delta_d >= 0 ? '+' : '') + pt.delta_d.toFixed(3) + ')</span>'
+      + '</div>'
+      + '<div class="pt-interpretation">' + esc(pt.interpretation || '') + '</div>'
+      + '</div>';
   }
   div.innerHTML = h;
   chat.appendChild(div);
@@ -2251,13 +2333,13 @@ async function doSend() {
     var d = await r.json();
     rmWait();
     if (d.error) {
-      showE0('[Error] ' + d.error, null, null, null, null, null);
+      showE0('[Error] ' + d.error, null, null, null, null, null, null);
     } else {
-      showE0(d.text, d.metrics, d.interpretation, d.trace, d.quality, d.feedback || null);
+      showE0(d.text, d.metrics, d.interpretation, d.trace, d.quality, d.feedback || null, d.transition || null);
     }
   } catch (e) {
     rmWait();
-    showE0('[Connection error] ' + e.message, null, null, null, null, null);
+    showE0('[Connection error] ' + e.message, null, null, null, null, null, null);
   }
   sending = false;
   sendBtn.disabled = false;
@@ -2371,7 +2453,7 @@ async function loadSession(filepath, sid) {
       // Then show each turn
       d.history.forEach(function(turn) {
         addHuman(turn.user);
-        showE0(turn.response, turn.metrics, turn.interpretation || null, null, turn.quality || null, null);
+        showE0(turn.response, turn.metrics, turn.interpretation || null, null, turn.quality || null, null, null);
       });
     }
     var warnings = (d.info && d.info.warnings) ? d.info.warnings : [];
@@ -2472,7 +2554,7 @@ async function runInitModule(moduleId) {
     initModuleResults[moduleId] = {r: d.r, d: d.d, passed: d.passed};
     // Show result in chat
     var label = d.name + ' [R\u0304=' + d.r.toFixed(3) + ' D=' + d.d.toFixed(3) + ' ' + (d.passed ? '\u2713' : '\u2717') + ']';
-    showE0(d.text, d.metrics, d.interpretation || null, d.trace || null, d.quality || null, null);
+    showE0(d.text, d.metrics, d.interpretation || null, d.trace || null, d.quality || null, null, null);
     // Update button state
     if (initModulesLoaded) {
       // Re-fetch to refresh buttons with results
@@ -2492,7 +2574,7 @@ window.addEventListener('load', async function() {
     var d = await r.json();
     showInit(d);
   } catch (e) {
-    showE0('Failed to load: ' + e.message, null, null, null, null);
+    showE0('Failed to load: ' + e.message, null, null, null, null, null, null);
   }
   msgInput.focus();
 });
