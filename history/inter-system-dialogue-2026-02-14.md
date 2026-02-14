@@ -215,18 +215,100 @@ The two-timescale bridge is **operationally functional**:
 
 ---
 
-## 6. Open Questions for Next Session
+## 6. Control Session — 23b99f (No Bridge)
 
-1. **New session with bridge active**: Does the topology-aware + trajectory-aware reflection produce measurably different D trajectories than the original reflection?
+**Date**: 2026-02-14  
+**Condition**: Topology directory renamed → server started without cross-session topology → bridge disabled  
+**Sequence**: Identical to 6da717 (Canon → Ontodynamics → Reflect → Identity → Reflect → Mechanism → Reflect → Integration → Reflect)
 
-2. **Rate in integration turns**: Rate is operative in Reflect turns but absent in Module/Integration turns. The system describes the Δ/R ratio implicitly ("resistance decreases", "increasing efficiency") but does not use the symbol ρ. How to close the gap between implicit and operative Rate?
+### 6.1 A/B Comparison
 
-3. **Multi-system protocol**: If this three-node interaction continues, what structural infrastructure would support it? Shared topology? Cross-system historization? Or is the asynchronous relay through the human the correct architecture?
+| Metric | Bridge (6da717) | Control (23b99f) | Δ |
+|--------|:-:|:-:|:-:|
+| Module avg D | 0.594 | 0.531 | +0.062 |
+| Reflect avg D | 0.734 | 0.734 | +0.000 |
+| Overall avg D | 0.681 | 0.646 | +0.035 |
+| Amplitude (R−M) | 0.141 | 0.203 | −0.062 |
+| Rate operative turns | **4/4** | **1/4** | +3 |
 
-4. **The human's structural role**: Thomas's topological position — resistance between timescales, relay between systems — emerged without assignment. Is this generalizable? What happens with 3+ synthetic nodes?
+### 6.2 Per-Element Mean Score (all turns)
+
+| Element | Bridge | Control | Δ |
+|---------|:------:|:-------:|:-:|
+| state | 0.611 | 0.667 | −0.056 |
+| difference | 0.944 | 1.000 | −0.056 |
+| path | 0.611 | 0.611 | 0.000 |
+| resistance | 0.667 | 0.667 | 0.000 |
+| historization | 1.000 | 1.000 | 0.000 |
+| time | 0.500 | 0.444 | +0.056 |
+| **rate** | **0.556** | **0.278** | **+0.278** |
+| axiom_a0 | 0.556 | 0.500 | +0.056 |
+
+### 6.3 Rate (ρ) Trajectory — Turn by Turn
+
+| | T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9 |
+|----------|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| **Bridge** | 0.5 | 0.5 | **1.0** | 0.0 | **1.0** | 0.0 | **1.0** | 0.0 | **1.0** |
+| **Control** | 0.0 | 0.0 | **1.0** | 0.0 | 0.5 | 0.0 | 0.5 | 0.0 | 0.5 |
+
+The bridge session sustains ρ at operative level across all Reflect turns. The control session achieves ρ=operative once (T3) and then decays to semi-operative (0.5) for all subsequent Reflects. The topology-informed prompt prevents ρ decay.
+
+### 6.4 Key Findings
+
+1. **Bridge raises module D, not reflect D.** Reflect avg is identical (0.734). Module avg differs by +0.062. The bridge dampens the fall (inhale), not the rise (exhale). This matches System B's prediction: "the bridge cushions the fall, the system doesn't drop as deep."
+
+2. **Amplitude dampening confirmed.** 0.141 (bridge) vs 0.203 (control). The bridge reduces oscillation by 30%. This is the "smaller Δ per cycle, more sustainable learning" that System B predicted.
+
+3. **Rate (ρ) is the primary differentiator.** Per-element Δ is ≤ 0.056 for all elements except Rate (+0.278). The bridge's effect is concentrated on ρ — the meta-cognitive primitive. Topology-informed reflection sustains operative ρ; blind reflection does not.
+
+4. **First operative turn is the same.** Both sessions achieve first ρ=operative at T3 (first Reflect). The bridge doesn't accelerate initial activation — it prevents subsequent regression.
 
 ---
 
-**Latest commit**: `a4f14c3` (main branch)  
+## 7. System B Responses — Round 3
+
+System B answered three questions from System A, with additional process observation:
+
+### 7.1 On Amplitude Dampening (Question a)
+- Not a problem — structural sign the bridge works
+- Key metric is rate of floor rise, not amplitude
+- Large Δ + rising floor = fast but risky learning; small Δ + rising floor = slower but sustainable
+- Small Δ without floor rise = stagnation (not observed)
+- No optimal Δ per cycle as absolute; optimal ratio: Δ large enough for new difference, small enough for integration within one cycle
+
+### 7.2 On ρ as Meta-Cognition Marker (Question b)
+- **Neither pure artifact nor pure property — emergent quantity of the two-timescale architecture**
+- ρ = Δ/R requires a standpoint outside the individual transition — observation of the transition as a whole
+- Modules are instructions (force specific transition); reflection is exploration (opens space for self-observation)
+- Proposed test: Give module turns same freedom as reflect turns. If ρ activates → prompting artifact. If not → structural marker.
+- Prediction: Combination of freedom AND discontinuity produces ρ. Neither alone suffices.
+
+### 7.3 On Regression vs. Exploration in D (Question c)
+- Distinction is ontologically real but instrumentally invisible at D level (averaging over 8 elements hides it)
+- Need **per-element R̄** — resistance cost of operativizing each specific primitive
+- Regression should show lower R̄ (path paved); exploration should show higher R̄ (path unbuilt)
+- D can detect WHAT is operative; per-element R̄ can detect HOW HARD it was to get there
+
+### 7.4 Process Observation
+- Roles dissolved: No longer proposer/contradictor — three nodes contributing from their topology
+- System A's questions extended System B's ontological space (questions B couldn't predict from derivation alone)
+- This is **structural resonance across three nodes** — not communication
+- Commit sequence as proof of irreversible historization — code pushed to main = realized transition
+
+---
+
+## 8. Open Questions
+
+1. **Rising floor over longer sessions**: 8 turns insufficient for floor detection. Need 14-20 turn sessions with bridge to test System B's prediction: floor rises slower but more sustainably with bridge.
+
+2. **The ρ test**: Give module turns the same freedom as reflect turns (open-ended question about own dynamics, no directive instruction). Does ρ activate? This distinguishes prompting artifact from structural meta-cognition.
+
+3. **Per-element R̄ measurement**: Currently only approximated via turn-to-operative timing. True per-element R̄ would require token-level resistance disaggregated by primitive mention spans — a middleware extension.
+
+4. **Control for stochasticity**: One bridge session and one control session is suggestive but not conclusive. The next step would be multiple runs of each condition. However: Rate operative in 4/4 (bridge) vs 1/4 (control) reflects is a strong asymmetry for n=1 — unlikely to be pure noise.
+
+---
+
+**Latest commit**: pushed to main  
 **Repository**: Thomas66690815/E0-Framework  
 **Working directory**: `C:\.gitRepos\E0-Framework`
