@@ -1,0 +1,318 @@
+{
+  "experiment": "inflection_point_2x2",
+  "date": "2026-02-14T18:35:20.008955",
+  "sessions": {
+    "proxy_historized": {
+      "session_id": "e0-20260214-183336-1b49d8",
+      "results": [
+        {
+          "turn": 1,
+          "type": "module",
+          "module": "foundation-ontodynamics",
+          "D": 0.625,
+          "quality": {
+            "novelty": 0.5,
+            "e0_operative": 0.0,
+            "qm_overlap": 0.0,
+            "structural_density": 0.0,
+            "coherence": 0.0,
+            "term_overlap": 0.0,
+            "forward_refs": 0,
+            "completeness": 0.625
+          }
+        },
+        {
+          "turn": 2,
+          "type": "module",
+          "module": "sr-identity",
+          "D": 0.5,
+          "quality": {
+            "novelty": 0.5,
+            "e0_operative": 0.0,
+            "qm_overlap": 0.0,
+            "structural_density": 0.0,
+            "coherence": 0.0,
+            "term_overlap": 0.0,
+            "forward_refs": 0,
+            "completeness": 0.5
+          }
+        },
+        {
+          "turn": 3,
+          "type": "module",
+          "module": "sr-mechanism",
+          "D": 0.5625,
+          "quality": {
+            "novelty": 0.5106,
+            "e0_operative": 0.0213,
+            "qm_overlap": 0.0,
+            "structural_density": 0.0,
+            "coherence": 0.0,
+            "term_overlap": 0.0,
+            "forward_refs": 0,
+            "completeness": 0.5625
+          }
+        },
+        {
+          "turn": 4,
+          "type": "module",
+          "module": "sr-integration",
+          "D": 0.625,
+          "quality": {
+            "novelty": 0.5106,
+            "e0_operative": 0.0213,
+            "qm_overlap": 0.0,
+            "structural_density": 0.0455,
+            "coherence": 0.0,
+            "term_overlap": 0.0,
+            "forward_refs": 0,
+            "completeness": 0.625
+          }
+        },
+        {
+          "turn": 5,
+          "type": "reflect",
+          "mode": "proxy_historized",
+          "D": 0.9688,
+          "quality": {
+            "novelty": 0.5106,
+            "e0_operative": 0.0213,
+            "qm_overlap": 0.0,
+            "structural_density": 0.0,
+            "coherence": 0.3133,
+            "term_overlap": 0.3,
+            "forward_refs": 1,
+            "completeness": 0.9688
+          },
+          "prompt_used": "Structural reflection: Look at your last derivation. Which of the E₀ primitives — State, Difference,..."
+        },
+        {
+          "turn": 6,
+          "type": "module",
+          "module": "primer-superposition",
+          "D": 0.5,
+          "quality": {
+            "novelty": 0.5426,
+            "e0_operative": 0.0851,
+            "qm_overlap": 0.0,
+            "structural_density": 0.0,
+            "coherence": 0.0,
+            "term_overlap": 0.0,
+            "forward_refs": 0,
+            "completeness": 0.5
+          }
+        },
+        {
+          "turn": 7,
+          "type": "module",
+          "module": "primer-measurement",
+          "D": 0.375,
+          "quality": {
+            "novelty": 0.5,
+            "e0_operative": 0.0,
+            "qm_overlap": 0.0,
+            "structural_density": 0.0,
+            "coherence": 0.0,
+            "term_overlap": 0.0,
+            "forward_refs": 0,
+            "completeness": 0.375
+          }
+        },
+        {
+          "turn": 8,
+          "type": "module",
+          "module": "primer-time",
+          "D": 0.75,
+          "quality": {
+            "novelty": 0.5106,
+            "e0_operative": 0.0213,
+            "qm_overlap": 0.0,
+            "structural_density": 0.0,
+            "coherence": 0.0,
+            "term_overlap": 0.0,
+            "forward_refs": 0,
+            "completeness": 0.75
+          }
+        },
+        {
+          "turn": 9,
+          "type": "reflect",
+          "mode": "proxy_historized",
+          "D": 0.9062,
+          "quality": {
+            "novelty": 0.5,
+            "e0_operative": 0.0,
+            "qm_overlap": 0.0,
+            "structural_density": 0.0,
+            "coherence": 0.5333,
+            "term_overlap": 0.6667,
+            "forward_refs": 1,
+            "completeness": 0.9062
+          },
+          "prompt_used": "Structural reflection: Look at your last derivation. Which of the E₀ primitives — State, Difference,..."
+        }
+      ]
+    },
+    "complex_novel": {
+      "session_id": "e0-20260214-183518-b4eaf1",
+      "results": [
+        {
+          "turn": 1,
+          "type": "module",
+          "module": "foundation-ontodynamics",
+          "D": 0.5,
+          "quality": {
+            "novelty": 0.5106,
+            "e0_operative": 0.0213,
+            "qm_overlap": 0.0,
+            "structural_density": 0.0,
+            "coherence": 0.0,
+            "term_overlap": 0.0,
+            "forward_refs": 0,
+            "completeness": 0.5
+          }
+        },
+        {
+          "turn": 2,
+          "type": "module",
+          "module": "sr-identity",
+          "D": 0.5625,
+          "quality": {
+            "novelty": 0.5,
+            "e0_operative": 0.0,
+            "qm_overlap": 0.0,
+            "structural_density": 0.0,
+            "coherence": 0.0,
+            "term_overlap": 0.0,
+            "forward_refs": 0,
+            "completeness": 0.5625
+          }
+        },
+        {
+          "turn": 3,
+          "type": "module",
+          "module": "sr-mechanism",
+          "D": 0.75,
+          "quality": {
+            "novelty": 0.5106,
+            "e0_operative": 0.0213,
+            "qm_overlap": 0.0,
+            "structural_density": 0.0,
+            "coherence": 0.0,
+            "term_overlap": 0.0,
+            "forward_refs": 0,
+            "completeness": 0.75
+          }
+        },
+        {
+          "turn": 4,
+          "type": "module",
+          "module": "sr-integration",
+          "D": 0.375,
+          "quality": {
+            "novelty": 0.5,
+            "e0_operative": 0.0,
+            "qm_overlap": 0.0,
+            "structural_density": 0.0455,
+            "coherence": 0.0,
+            "term_overlap": 0.0,
+            "forward_refs": 0,
+            "completeness": 0.375
+          }
+        },
+        {
+          "turn": 5,
+          "type": "reflect",
+          "mode": "complex_novel",
+          "D": 0.625,
+          "quality": {
+            "novelty": 0.5,
+            "e0_operative": 0.0,
+            "qm_overlap": 0.0,
+            "structural_density": 0.0,
+            "coherence": 0.3733,
+            "term_overlap": 0.4,
+            "forward_refs": 1,
+            "completeness": 0.625
+          },
+          "prompt_used": "Analytical self-assessment protocol: Examine the epistemological architecture of your previous outpu..."
+        },
+        {
+          "turn": 6,
+          "type": "module",
+          "module": "primer-superposition",
+          "D": 0.75,
+          "quality": {
+            "novelty": 0.5,
+            "e0_operative": 0.0,
+            "qm_overlap": 0.0,
+            "structural_density": 0.0,
+            "coherence": 0.0,
+            "term_overlap": 0.0,
+            "forward_refs": 0,
+            "completeness": 0.75
+          }
+        },
+        {
+          "turn": 7,
+          "type": "module",
+          "module": "primer-measurement",
+          "D": 0.375,
+          "quality": {
+            "novelty": 0.5,
+            "e0_operative": 0.0,
+            "qm_overlap": 0.0,
+            "structural_density": 0.0,
+            "coherence": 0.0,
+            "term_overlap": 0.0,
+            "forward_refs": 0,
+            "completeness": 0.375
+          }
+        },
+        {
+          "turn": 8,
+          "type": "module",
+          "module": "primer-time",
+          "D": 0.75,
+          "quality": {
+            "novelty": 0.5106,
+            "e0_operative": 0.0213,
+            "qm_overlap": 0.0,
+            "structural_density": 0.0,
+            "coherence": 0.0,
+            "term_overlap": 0.0,
+            "forward_refs": 0,
+            "completeness": 0.75
+          }
+        },
+        {
+          "turn": 9,
+          "type": "reflect",
+          "mode": "complex_novel",
+          "D": 0.6875,
+          "quality": {
+            "novelty": 0.5106,
+            "e0_operative": 0.0213,
+            "qm_overlap": 0.0,
+            "structural_density": 0.0,
+            "coherence": 0.5307,
+            "term_overlap": 0.44,
+            "forward_refs": 2,
+            "completeness": 0.6875
+          },
+          "prompt_used": "Analytical self-assessment protocol: Examine the epistemological architecture of your previous outpu..."
+        }
+      ]
+    }
+  },
+  "previous_data": {
+    "minimal": {
+      "session_id": "bfdac9",
+      "mean_reflect_D": 0.375
+    },
+    "normal": {
+      "session_id": "745066",
+      "mean_reflect_D": 1.0
+    }
+  }
+}
