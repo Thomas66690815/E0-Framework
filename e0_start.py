@@ -54,6 +54,7 @@ from experiments.quality_metrics import score_novelty, score_coherence, score_e0
 from e0_feedback import generate_structural_feedback, format_feedback_for_injection, format_feedback_for_display
 from e0_meta_feedback import generate_adaptive_feedback, generate_meta_observation, compute_cross_session_trends, adapt_feedback_thresholds
 from e0_self_recognition import run_self_recognition, format_recognition_summary
+from e0_init_modules import list_modules_for_ui, run_init_module
 
 
 # =============================================
@@ -1554,6 +1555,8 @@ class E0StartHandler(BaseHTTPRequestHandler):
             self._html(HTML_START_PAGE)
         elif self.path == "/init":
             self._json(_web_init_data)
+        elif self.path == "/init-modules":
+            self._json({"modules": list_modules_for_ui(_web_lang)})
         else:
             self.send_error(404)
 
@@ -1561,7 +1564,9 @@ class E0StartHandler(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length", 0))
         raw = self.rfile.read(length) if length else b"{}"
         try:
-            body = json.loads(raw)
+            body = json.loads(raw.decode('utf-8'))
+        except UnicodeDecodeError:
+            body = json.loads(raw.decode('latin-1'))
         except json.JSONDecodeError:
             body = {}
         if self.path == "/chat":
@@ -1578,6 +1583,8 @@ class E0StartHandler(BaseHTTPRequestHandler):
             self._handle_load_session(body)
         elif self.path == "/session/delete":
             self._handle_delete_session(body)
+        elif self.path == "/init-module/run":
+            self._handle_run_init_module(body)
         else:
             self.send_error(404)
 
@@ -1620,7 +1627,7 @@ class E0StartHandler(BaseHTTPRequestHandler):
                 feedback_data = {'text': '', 'html': '', 'level': None}
                 if hasattr(_web_starter, 'score_and_prepare_feedback'):
                     fb_text = _web_starter.score_and_prepare_feedback(
-                        text, metrics, lang=_web_lang,
+                        text, metrics, lang='en',
                     )
                     if fb_text:
                         feedback_data = format_feedback_for_display(fb_text, lang=_web_lang)
@@ -1665,25 +1672,13 @@ class E0StartHandler(BaseHTTPRequestHandler):
             _web_prev_r = metrics["r"]
             _web_turn_num = 0
             _web_prev_text = _clean(text)
+            _web_starter.self_recognition_done = False
+            _web_starter.self_recognition_results = []
 
-            # Run self-recognition on re-init
-            sr_results = run_self_recognition(_web_starter, lang=_web_lang, verbose=True)
-            _web_starter.self_recognition_done = True
-            _web_starter.self_recognition_results = sr_results
-            if sr_results:
-                last_sr = sr_results[-1]
-                _web_prev_r = last_sr['r']
-                _web_prev_text = last_sr.get('text_preview', _clean(text))
-                _web_turn_num = len(_web_starter.turn_metrics)
-
-            # Prepare feedback for first chat turn
+            # Prepare feedback for first chat turn (always English for LLM)
             if hasattr(_web_starter, 'score_and_prepare_feedback'):
-                _web_starter.score_and_prepare_feedback(_web_prev_text, _web_starter.turn_metrics[-1] if _web_starter.turn_metrics else metrics, lang=_web_lang)
-            _web_init_data = build_init_data(_web_prev_text, steps, _web_starter.turn_metrics[-1] if _web_starter.turn_metrics else metrics, _web_lang, _web_starter)
-            if sr_results:
-                sr_summary = format_recognition_summary(sr_results, _web_lang)
-                _web_init_data['text'] = sr_summary + '\n\n' + _web_init_data.get('text', '')
-                _web_init_data['self_recognition'] = [{'name': r['name'], 'r': r['r'], 'd': r['d'], 'passed': r['passed']} for r in sr_results]
+                _web_starter.score_and_prepare_feedback(_web_prev_text, metrics, lang='en')
+            _web_init_data = build_init_data(_web_prev_text, steps, metrics, _web_lang, _web_starter)
         self._json(_web_init_data)
 
     def _handle_report(self):
@@ -1777,6 +1772,59 @@ class E0StartHandler(BaseHTTPRequestHandler):
         from pathlib import Path
         ok = delete_session(Path(filepath))
         self._json({"deleted": ok})
+
+    def _handle_run_init_module(self, body):
+        global _web_prev_r, _web_turn_num, _web_prev_text
+        module_id = body.get("module_id", "").strip()
+        if not module_id:
+            self._json({"error": "no module_id"}, 400)
+            return
+        with _web_lock:
+            try:
+                result = run_init_module(_web_starter, module_id, lang=_web_lang)
+                if 'error' in result:
+                    self._json(result, 400)
+                    return
+                _web_prev_r = result['r']
+                _web_prev_text = result.get('text', '')[:200]
+                _web_turn_num = len(_web_starter.turn_metrics)
+
+                # Compute interpretation + quality for display
+                text = result['text']
+                metrics = result['metrics']
+                _, r_text = interpret_r(metrics["r"], _web_lang)
+                h_text = interpret_h(metrics["h"], _web_lang)
+                phi_text = interpret_phi(metrics["phi"], _web_lang)
+                v_text = interpret_v(metrics["v"], _web_lang)
+                nov = score_novelty(text)
+                coh = score_coherence('', text)
+                comp = score_e0_completeness(text)
+
+                result['interpretation'] = {
+                    "r": r_text, "h": h_text, "phi": phi_text, "v": v_text,
+                    "novelty": interpret_novelty(nov['novelty'], nov['e0_operative']),
+                    "coherence": interpret_coherence(coh['coherence']),
+                    "structural": interpret_structural_density(nov['structural_density']),
+                    "completeness": interpret_completeness(comp['completeness']),
+                }
+                result['quality'] = {
+                    "novelty": nov['novelty'],
+                    "e0_operative": nov['e0_operative'],
+                    "qm_overlap": nov['qm_overlap'],
+                    "structural_density": nov['structural_density'],
+                    "coherence": coh['coherence'],
+                    "term_overlap": coh['term_overlap'],
+                    "forward_refs": coh['forward_refs'],
+                    "completeness": comp['completeness'],
+                }
+                result['trace'] = build_trace_data(
+                    _web_starter.all_steps[-metrics['tau']:]
+                    if metrics.get('tau') and len(_web_starter.all_steps) >= metrics['tau']
+                    else []
+                )
+                self._json(result)
+            except Exception as e:
+                self._json({"error": str(e)}, 500)
 
 
 HTML_START_PAGE = r"""<!DOCTYPE html>
@@ -1945,6 +1993,61 @@ header .actions button:hover { color: var(--accent); border-color: var(--accent)
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ── Init Panel ── */
+#init-panel {
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  padding: 12px 24px;
+  flex-shrink: 0;
+  display: none;
+}
+#init-panel.open { display: block; }
+#init-panel .init-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+}
+#init-panel .init-header h2 {
+  font-size: 13px; font-weight: 600; color: var(--accent);
+  letter-spacing: 1px; text-transform: uppercase;
+}
+#init-panel .init-header .toggle-btn {
+  font-size: 11px; color: var(--dim); cursor: pointer;
+  background: none; border: 1px solid var(--border); padding: 2px 8px;
+  border-radius: 3px; font-family: inherit;
+}
+#init-panel .init-header .toggle-btn:hover { color: var(--accent); border-color: var(--accent); }
+.init-category {
+  margin-bottom: 8px;
+}
+.init-category-label {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--dim); margin-bottom: 4px;
+}
+.init-modules {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.init-module {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+  padding: 6px 12px; cursor: pointer; font-family: inherit; font-size: 12px;
+  color: var(--text); transition: border-color 0.2s, color 0.2s;
+  display: flex; align-items: center; gap: 8px;
+  max-width: 420px;
+}
+.init-module:hover { border-color: var(--accent); color: var(--accent); }
+.init-module.running { opacity: 0.5; cursor: wait; }
+.init-module.done { border-color: var(--human); }
+.init-module.done .init-name { color: var(--human); }
+.init-module.failed { border-color: var(--phase); }
+.init-module.failed .init-name { color: var(--phase); }
+.init-name { font-weight: 600; }
+.init-desc { color: var(--dim); font-size: 11px; }
+.init-result {
+  font-size: 10px; margin-left: auto; white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.init-result .pass { color: var(--human); }
+.init-result .fail { color: var(--phase); }
 </style>
 </head>
 <body>
@@ -1953,6 +2056,7 @@ header .actions button:hover { color: var(--accent); border-color: var(--accent)
   <h1>E&#x2080;&ensp;S T A R T</h1>
   <span class="info" id="info"></span>
   <div class="actions">
+    <button onclick="toggleInitPanel()">Init</button>
     <button onclick="doSessions()">Sessions</button>
     <button onclick="doSave()">Save</button>
     <button onclick="doHelp()">Help</button>
@@ -1960,6 +2064,14 @@ header .actions button:hover { color: var(--accent); border-color: var(--accent)
     <button onclick="doClear()">Re-init</button>
   </div>
 </header>
+
+<div id="init-panel">
+  <div class="init-header">
+    <h2>&#x2699; Init Modules</h2>
+    <button class="toggle-btn" onclick="toggleInitPanel()">&times; close</button>
+  </div>
+  <div id="init-modules-container">Loading modules...</div>
+</div>
 
 <div id="chat"></div>
 
@@ -2282,6 +2394,98 @@ async function deleteSession(filepath) {
   await refreshSessionList();
 }
 
+// ── Init Modules ──
+let initModulesLoaded = false;
+let initModuleResults = {};
+
+function toggleInitPanel() {
+  var panel = document.getElementById('init-panel');
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open') && !initModulesLoaded) {
+    loadInitModules();
+  }
+}
+
+async function loadInitModules() {
+  try {
+    var r = await fetch('/init-modules');
+    var d = await r.json();
+    renderInitModules(d.modules);
+    initModulesLoaded = true;
+  } catch (e) {
+    document.getElementById('init-modules-container').textContent = 'Failed to load modules: ' + e.message;
+  }
+}
+
+function renderInitModules(modules) {
+  var container = document.getElementById('init-modules-container');
+  var categories = {};
+  modules.forEach(function(m) {
+    if (!categories[m.category]) categories[m.category] = [];
+    categories[m.category].push(m);
+  });
+  var categoryLabels = {
+    'self-recognition': 'Self-Recognition',
+    'primer': 'Structural Primers',
+    'custom': 'Custom'
+  };
+  var html = '';
+  Object.keys(categories).forEach(function(cat) {
+    html += '<div class="init-category">';
+    html += '<div class="init-category-label">' + esc(categoryLabels[cat] || cat) + '</div>';
+    html += '<div class="init-modules">';
+    categories[cat].forEach(function(m) {
+      var state = initModuleResults[m.id] ? (initModuleResults[m.id].passed ? 'done' : 'failed') : '';
+      var resultHtml = '';
+      if (initModuleResults[m.id]) {
+        var res = initModuleResults[m.id];
+        var cls = res.passed ? 'pass' : 'fail';
+        resultHtml = '<span class="init-result"><span class="' + cls + '">'
+          + (res.passed ? '\u2713' : '\u2717') + '</span> R\u0304=' + res.r.toFixed(3) + ' D=' + res.d.toFixed(3) + '</span>';
+      }
+      html += '<button class="init-module ' + state + '" id="init-mod-' + m.id + '" onclick="runInitModule(\'' + m.id + '\')" title="' + esc(m.description) + '">'
+        + '<span class="init-name">' + esc(m.name) + '</span>'
+        + '<span class="init-desc">' + esc(m.description.length > 50 ? m.description.substring(0,47) + '...' : m.description) + '</span>'
+        + resultHtml
+        + '</button>';
+    });
+    html += '</div></div>';
+  });
+  container.innerHTML = html;
+}
+
+async function runInitModule(moduleId) {
+  var btn = document.getElementById('init-mod-' + moduleId);
+  if (btn) btn.classList.add('running');
+  try {
+    var r = await fetch('/init-module/run', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({module_id: moduleId})
+    });
+    var d = await r.json();
+    if (d.error) {
+      alert('Init module error: ' + d.error);
+      if (btn) btn.classList.remove('running');
+      return;
+    }
+    initModuleResults[moduleId] = {r: d.r, d: d.d, passed: d.passed};
+    // Show result in chat
+    var label = d.name + ' [R\u0304=' + d.r.toFixed(3) + ' D=' + d.d.toFixed(3) + ' ' + (d.passed ? '\u2713' : '\u2717') + ']';
+    showE0(d.text, d.metrics, d.interpretation || null, d.trace || null, d.quality || null, null);
+    // Update button state
+    if (initModulesLoaded) {
+      // Re-fetch to refresh buttons with results
+      var mr = await fetch('/init-modules');
+      var md = await mr.json();
+      renderInitModules(md.modules);
+    }
+  } catch (e) {
+    alert('Failed: ' + e.message);
+  }
+  if (btn) btn.classList.remove('running');
+}
+
 window.addEventListener('load', async function() {
   try {
     var r = await fetch('/init');
@@ -2345,29 +2549,15 @@ def run_web(model_name: str, device: str, lang: str, show_detail: bool, port: in
     print(f"  R = {metrics['r']:.3f} -- {r_explain}")
     print(f"  (generated in {dt:.1f}s)")
 
-    # ── Self-Recognition Init ──
-    print()
-    sr_results = run_self_recognition(_web_starter, lang=lang, verbose=True)
-    _web_starter.self_recognition_done = True
-    _web_starter.self_recognition_results = sr_results
+    # Init modules are now user-selectable from UI — no auto self-recognition
+    _web_starter.self_recognition_done = False
+    _web_starter.self_recognition_results = []
 
-    # Use last self-recognition response as init display
-    if sr_results:
-        last_sr = sr_results[-1]
-        _web_prev_r = last_sr['r']
-        _web_prev_text = last_sr.get('text_preview', _clean(text))
-        _web_turn_num = len(_web_starter.turn_metrics)
-
-    # Prepare feedback for first chat turn
+    # Prepare feedback for first chat turn (always English for LLM)
     if hasattr(_web_starter, 'score_and_prepare_feedback'):
-        _web_starter.score_and_prepare_feedback(_web_prev_text, _web_starter.turn_metrics[-1] if _web_starter.turn_metrics else metrics, lang=lang)
+        _web_starter.score_and_prepare_feedback(_web_prev_text, metrics, lang='en')
 
-    _web_init_data = build_init_data(_web_prev_text, steps, _web_starter.turn_metrics[-1] if _web_starter.turn_metrics else metrics, lang, _web_starter)
-    # Add self-recognition summary to init text
-    if sr_results:
-        sr_summary = format_recognition_summary(sr_results, lang)
-        _web_init_data['text'] = sr_summary + '\n\n' + _web_init_data.get('text', '')
-        _web_init_data['self_recognition'] = [{'name': r['name'], 'r': r['r'], 'd': r['d'], 'passed': r['passed']} for r in sr_results]
+    _web_init_data = build_init_data(_web_prev_text, steps, metrics, lang, _web_starter)
 
     # Start server
     server = HTTPServer(("0.0.0.0", port), E0StartHandler)
