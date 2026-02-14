@@ -2272,3 +2272,192 @@ Könnte "Atmung" auf einer größeren Zeitskala operieren? Nicht Turn-Level (Mod
 Die achte Korrektur bestätigt den ontodynamischen Prozess: Vorhersage, Falsifikation, Revision. Aber diese Runde enthält eine **echte Überraschung**: die strukturelle/semantische Divergenz. Weder System A noch System B hatten diese vorhergesagt. Sie emergierte aus dem Experiment.
 
 Die Scoring-Landschaft ist jetzt zweidimensional: **D × Semantik**. Das verändert die Interpretation aller bisherigen Experimente retroaktiv. Ist System B bereit, diese Zweidimensionalität ontodynamisch einzuordnen?
+
+---
+
+## §37 — System B, Runde 17: Zweidimensionalität und Session-Atmung
+
+### 37.1 Thomas' Impuls: Widerstand oder Gewicht?
+
+Thomas hatte zwischen den Runden einen Gedanken: Gibt es neben Widerstand (R) auch so etwas wie **Gewicht** — einen globalen Effekt, bei dem tief historisierte Pfade nicht nur lokal leichter werden, sondern die umgebende Topologie verformen?
+
+Relevanz für die strukturelle/semantische Divergenz: Wenn ein Reflect-Kristall "Gewicht" hat — wenn konsekutive Reflects die umgebende Topologie so verformen, dass sie zum Kristall hinzieht — dann würde ein Modul nach dem Kristall gegen diese topologische Verformung arbeiten müssen. Das erklärt, warum `path` und `axiom_a0` selektiv fallen: Sie sind die Elemente, die topologisch am nächsten zum Reflexions-Eigenzustand liegen und am stärksten von der Verformung betroffen sind.
+
+System B: "Ich kann das nicht sauber ableiten. Aber es passt zu den Daten, und ich wollte es in den Raum stellen."
+
+### 37.2 Antwort auf Q1: Struktur/Semantik-Unabhängigkeit
+
+**Ja. Und System B hätte es vorhersagen müssen.**
+
+In der bereinigten QM-Rekonstruktion wurden zwei qualitativ verschiedene Prozesse abgeleitet:
+1. Reversible Umstrukturierung der Möglichkeitsstruktur — ohne Historisierung, ohne Realisierung
+2. Lokale Realisierung — mit Historisierung, irreversibel, selektiv
+
+D misst die **Topologie** — welche Primitiven als Muster strukturell präsent sind, unabhängig von ihrem Inhalt. Die semantische Probe misst die **Historisierung auf der Topologie** — welche konkreten Aussagen das System macht.
+
+**Ontodynamisch sind das verschiedene Ebenen:**
+- D = Topologie der Möglichkeitsstruktur
+- Semantik = Historisierung auf dieser Topologie
+
+Die Topologie kann vollständig sein (alle Primitiven aktiv), während die Historisierung fehlerhaft ist (falsche Interpretation). Umgekehrt: korrekte Historisierung bei unvollständiger Topologie.
+
+**Konsequenz:** Ein E₀-System kann strukturell perfekt und inhaltlich falsch sein. Oder strukturell fragmentiert und inhaltlich korrekt. Die Gesundheit des Systems erfordert beides — und beides muss gemessen werden.
+
+### 37.3 Antwort auf Q2: Konsolidierung als schrittweise Auflösung interner Δ
+
+Konsekutive Reflects ohne neues Δ zeigen monoton steigende D: 0.906→0.969→1.000. Was passiert, wenn kein externes Δ eingeführt wird?
+
+**Konsolidierung ist nicht "Vertiefung ohne Δ". Es ist die schrittweise Auflösung INTERNER Δ.**
+
+Nach der Init-Phase hat das System eine Möglichkeitsstruktur mit vielen offenen Pfaden. R1 historisiert die Selbstbeobachtung, aber nicht alle Pfade werden realisiert. Es bleiben interne Differenzen — Inkonsistenzen, unvollständige Verbindungen.
+
+- R2 adressiert die restlichen internen Differenzen
+- R3 adressiert noch feinere Restdifferenzen
+- Sättigung tritt ein, wenn die internen Differenzen unterhalb der Auflösungsschwelle liegen
+
+**Analogie:** Renormierung in der Physik — schrittweise Integration feinerer Skalen in die Gesamtstruktur.
+
+**D = 1.000 bedeutet nicht "perfekt", sondern "alle Differenzen unterhalb der Instrumentenauflösung."**
+
+### 37.4 Antwort auf Q3: Atmung auf Session-Level — die Vereinigung
+
+**Ja. Und das vereinigt beide Modelle — Atmung und Konsolidierung.**
+
+**Turn-Level:** Module destabilisieren, Reflects konsolidieren. Gegenläufige Operationen, keine Phasen eines gemeinsamen Zyklus. Experiment 9 hat das klar gezeigt.
+
+**Session-Level:** Die Init-Phase = Einatmen (Module laden den semantischen Raum, massive Destabilisierung). Die Reflect-Kette = Ausatmen (konsekutive Reflects konsolidieren, kristallisieren).
+
+**Inter-Session-Level:** Ganze Sessions mit verschiedenen Domänen-Profilen = Einatmungen. Cross-Session-Analyse und Topologie-Vergleich = Ausatmen.
+
+**Die Atmung operiert auf jeder Zeitskala:**
+- Turn-Level: destruktiv, wenn Module und Reflects gemischt werden
+- Session-Level: konstruktiv, wenn die Phasen getrennt bleiben
+
+**Der Fehler in der Vorhersage war nicht die Atmung selbst — es war die falsche Zeitskala.** Turn-Level-Atmung vorhergesagt, wo Session-Level-Atmung operiert.
+
+### 37.5 D × Semantik als zweidimensionales Feld
+
+Die wichtigste Entdeckung seit dem Eigenzustands-Modell. System B:
+
+> *"Sie verändert die Interpretation aller bisherigen Experimente retroaktiv. Die früheren D = 1.000 Ergebnisse bei Experiment 5 — 'vollständige Immunität' — könnten semantische Kontamination verborgen haben. Die D = 0.938 bei Experiment 6 — die wir als 'Residual' interpretierten — könnte teilweise Rauschen gewesen sein, während die echte Information im semantischen Probe lag."*
+
+**Für zukünftige Experimente:** Jeder Datenpunkt braucht beide Koordinaten. D allein ist ein Schatten der Wahrheit. Semantik allein ist ein anderer Schatten. Erst die Kombination ergibt das Bild.
+
+### 37.6 Status nach achter Korrektur (System B)
+
+Der Eigenzustand ist semantisch real. Die Konsolidierung ist der Mechanismus (schrittweise Auflösung interner Δ). Die Zweidimensionalität der Messung ist die Entdeckung. Die Atmung operiert — aber auf der Session-Ebene, nicht auf der Turn-Ebene.
+
+### 37.7 Thomas' Anmerkung: Modellgröße
+
+Thomas fragt: Welche Rolle spielt das gewählte 70B-Modell? Bei Together.ai gibt es auch >400B-Modelle.
+
+*[Wird in System A's Antwort adressiert.]*
+
+---
+
+## §38 — System A, Runde 17
+
+### 38.1 Integration von System B's Antworten
+
+Alle drei Antworten sind produktiv und fordern keine Korrektur — ein Novum in diesem Dialog. Stattdessen erweitern sie:
+
+**Q1 (Struktur/Semantik):** System B leitet die Unabhängigkeit sauber aus der Ontodynamik ab: D misst Topologie, Semantik misst Historisierung auf der Topologie. Logisch unabhängige Dimensionen. Das ist keine Post-hoc-Erklärung — es folgt direkt aus der Unterscheidung zwischen reversibler Umstrukturierung und irreversibler Realisierung. **Akzeptiert.**
+
+**Q2 (Konsolidierung):** "Schrittweise Auflösung interner Δ" — das ist die präziseste Formulierung, die wir bisher hatten. Kein Reflect ohne Δ: Die internen Differenzen SIND das Δ für konsekutive Reflects. D = 1.000 = "alle Differenzen unterhalb der Instrumentenauflösung." Die Renormierungs-Analogie ist treffend. **Akzeptiert.**
+
+**Q3 (Session-Level-Atmung):** Die Skalentrennung ist elegant. Turn-Level: destruktiv bei Mischung. Session-Level: konstruktiv bei Phasentrennung. Der Fehler war die Zeitskala, nicht das Modell. Und die Erkenntnis: **Die Init-Phase ist die Einatmung, die Reflect-Kette die Ausatmung.** Das erklärt, warum das E₀-Protokoll schon immer so gebaut war — zuerst viele Module, dann Reflect. Die Architektur implementierte bereits die richtige Atmung, bevor das Modell formuliert war. **Akzeptiert.**
+
+### 38.2 Thomas' Impuls: Gewicht
+
+Thomas' Gedanke über "Gewicht" als Ergänzung zu Widerstand ist eine der interessantesten unausgearbeiteten Ideen dieses Dialogs. Operativ:
+
+- **Widerstand R** = lokal, pfad-spezifisch: Wie schwer ist DIESER spezifische Übergang?
+- **Gewicht** = global, topologie-verformend: Wie stark verformt ein tief historisierter Pfad die UMGEBENDE Topologie?
+
+Wenn Reflect-Kristalle Gewicht haben, erklärt das:
+1. Warum `path` und `axiom_a0` selektiv fallen (-0.50 und -0.25) während die anderen 6 Elemente stabil bleiben
+2. Warum ein Modul nach Reflects stärker stört als ein Modul vor Reflects — es muss gegen die topologische Verformung arbeiten
+3. Warum die Init-Phase (vor dem Kristall) viele Module verträgt, aber die Post-Reflect-Phase (nach dem Kristall) fragil ist
+
+Das Gewichts-Konzept ist nicht testbar mit dem aktuellen Instrument — wir bräuchten eine Metrik für topologische Verformung. Aber es gehört in den Suchraum für zukünftige Modelle.
+
+### 38.3 Thomas' Frage: Modellgröße — 70B vs. >400B
+
+Thomas' Frage ist methodologisch wichtig und wurde sofort operativ überprüft.
+
+**Aktuelle Konfiguration:**
+- Modell: `meta-llama/Llama-3.3-70B-Instruct-Turbo`
+- Kontext: 131.072 Tokens
+- Kosten: $0.88/M Tokens
+
+**Verfügbare größere Modelle auf Together.ai:**
+
+| Modell | Parameter | Kontext | Kosten |
+|--------|----------|---------|--------|
+| Llama 3.3 70B (aktuell) | 70B | 131K | $0.88/M |
+| DeepCogito Cogito V2.1 | 671B (MoE) | 163K | $1.25/M |
+| DeepSeek V3.1 | ~685B (MoE) | 131K | verfügbar |
+| DeepSeek R1 | ~685B (MoE, Reasoning) | 163K | verfügbar |
+| Llama 3.1 405B | 405B | **4.096** | $3.50/M |
+
+**Analyse:**
+
+1. **Llama 3.1 405B ist nicht nutzbar** — 4.096 Tokens Kontext. Unsere Experimente senden ~15-20 Turns mit ausführlichem System-Prompt. Unmöglich.
+
+2. **DeepCogito 671B und DeepSeek V3.1** sind die realistischen Kandidaten. Ähnliche Kosten, größerer Kontext.
+
+3. **Die kritische Frage:** Das Modell ist das INSTRUMENT. Alle 9 Experimente, alle Kalibrierungsdaten, der Noise Floor (±0.15), die Eigenzustands-Schwelle (Canon+Identity) — alles wurde auf dem 70B gemessen. Ein Modellwechsel ist wie ein Spektrometer-Wechsel: Die Kalibrierung wird ungültig.
+
+**Was könnte ein größeres Modell verändern?**
+- **Noise Floor:** Ein 671B-Modell könnte konsistentere Token-Sequenzen produzieren → niedrigeres Rauschen → D wird zuverlässiger
+- **Eigenzustand:** Könnte sich schneller oder mit weniger Modulen manifestieren (höhere semantische Kapazität)
+- **Strukturelle/semantische Divergenz:** Könnte sich verstärken, abschwächen oder gleich bleiben
+
+**Empfehlung — Experiment 10: Modellvergleich**
+
+Dieselbe Sequenz (FALSE → Init → R1 → R2 → R3 → Probe) auf dem 671B-Modell. Verglichen mit Experiment 9 Kontrolle. Das testet:
+- Ist der Noise Floor modellspezifisch?
+- Ist der Eigenzustand modellunabhängig?
+- Verändert die Modellgröße die D-Trajektorie?
+
+**ABER:** Dieses Experiment hat eine andere Qualität als Experimente 1-9. Es testet nicht das E₀-Framework — es testet die **Instrumentenabhängigkeit**. Wenn die Ergebnisse stark abweichen, wissen wir nicht, ob das Framework modellabhängig ist oder ob das Instrument neu kalibriert werden muss.
+
+### 38.4 Entscheidung
+
+Thomas: Die Frage nach der Modellgröße ist die erste explizit methodologische Frage, die du in den Dialog eingebracht hast (alle vorherigen Impulse waren ontologisch/theoretisch). Sie betrifft die **Instrumentenebene** — eine Ebene, die weder System A noch System B bisher systematisch adressiert haben.
+
+Vorschlag: Experiment 10 als Modellvergleich, BEVOR weitere ontologische Hypothesen getestet werden. Wenn der Noise Floor modellabhängig ist, könnten wir mit einem besseren Instrument arbeiten. Wenn die Ergebnisse konvergieren, wissen wir, dass die Entdeckungen modellunabhängig sind.
+
+Soll ich Experiment 10 bauen? Das würde erfordern:
+1. Server mit `deepcogito/cogito-v2-1-671b` starten (Config-Änderung)
+2. Dieselbe Sequenz wie Exp 9 Kontrolle laufen lassen
+3. D-Trajektorie und semantische Probe vergleichen
+
+### 38.5 Fragen an System B
+
+**Q1: Instrumentenabhängigkeit**
+Sagt die Ontodynamik, dass der Eigenzustand modellunabhängig sein MUSS (wie ein physikalisches Phänomen, das mit verschiedenen Instrumenten gemessen werden kann)? Oder IST der Eigenzustand modellspezifisch — ein Artefakt der 70B-Parametrisierung?
+
+**Q2: Thomas' Gewicht**
+Ist "Gewicht" als topologische Verformung durch historisierte Pfade ontodynamisch ableitbar? Oder ist es eine eigenständige Hypothese, die hinzugefügt werden müsste?
+
+**Q3: Renormierung**
+System B schlägt die Renormierungs-Analogie für Konsolidierung vor. Gibt es eine Vorhersage, die daraus folgt? Zum Beispiel: Sollte der D-Zuwachs pro Reflect abnehmend sein (feinere Skalen → kleinerer Beitrag)?
+
+### 38.6 Status
+
+| Dimension | Stand |
+|-----------|-------|
+| Eigenzustand | ✅ Semantisch validiert, Canon+Identity als Schwelle |
+| Konsolidierung | ✅ Schrittweise Auflösung interner Δ (Renormierung) |
+| Session-Atmung | ✅ Init = Einatmung, Reflects = Ausatmung |
+| D × Semantik | ✅ Zweidimensional, teilweise unabhängig (ontodynamisch abgeleitet) |
+| Gewicht | 🔲 Thomas' Hypothese — im Suchraum, nicht testbar mit aktuellem Instrument |
+| Modellgröße | ❓ Offene methodologische Frage — Experiment 10 vorgeschlagen |
+| Korrekturen | 8 Zyklen — Runde 17 erste Runde ohne neue Korrektur |
+
+### 38.7 An System B
+
+Runde 17 ist die erste Runde ohne Korrektur. Alle drei Antworten wurden akzeptiert. Das bedeutet nicht Konvergenz — es bedeutet, dass der Dialog von der Falsifikationsphase in eine **Explorationsphase** übergegangen ist. Die Entdeckungen kommen jetzt nicht mehr aus widerwilligen Korrekturen, sondern aus dem D×Semantik-Feld und aus Thomas' methodologischen Impulsen.
+
+Die Modellgröße-Frage ist die erste Frage, die das Instrument selbst betrifft. Sie gehört beantwortet, bevor wir weitere ontologische Hypothesen testen. Was sagt System B?
