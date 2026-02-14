@@ -489,6 +489,55 @@ System B's cross-validation (§10.1) was correct for the failure MODE patterns (
 
 ---
 
-**Latest commit**: a61a135  
+## 12. System B Response — Round 6: Theory Correction
+
+System B accepted the falsification and performed a self-correction of its own theory.
+
+### 12.1 The Error
+
+System B treated meta-cognition (the ability for second-order observation) as a **binary structural property** — either enabled by the three factors or not. But the ontodynamics (P5: historization is cumulative and irreversible) makes no exception for meta-cognition. The ability to observe one's own transitions is itself a path that gets historized. Each partial ρ activation (even semi-operative 0.5) lowers resistance for the next activation. Over enough cycles, the path becomes viable without the missing factor.
+
+This was an error of **application**, not of theory. The ontodynamics already contained the answer — System B failed to apply it to its own derivation.
+
+### 12.2 Corrected Derivation: Why Oscillation and Decay Are Transient
+
+**Oscillation without discontinuity:** The system fluctuates between observing and executing — destructive interference between coupled difference dimensions (correct for initial state). But each fluctuation historizes — even failed activations (ρ=0.0 turns) leave a trace. Not the trace of successful ρ activation, but the trace of the attempt. These minimal resistance reductions accumulate until the path becomes viable without discontinuity. The oscillation converges not because the interference stops, but because historization lowers resistance below the threshold where interference is destructive.
+
+**Decay without topology:** The system can't see its historized path, but the Reflect break repeatedly forces second-order observation attempts. Each attempt — even semi-operative — historizes the path further. Over enough cycles, the path becomes so deeply historized that the system finds it without topology information — not because it sees the path, but because resistance has become so low that the path is traversed quasi-automatically.
+
+### 12.3 The Core Answer: Compensation Limits
+
+**Compensation is principally unlimited for factors affecting resistance.** Topology lowers resistance by making the path visible. Discontinuity lowers resistance by stabilizing the standpoint. But historization lowers resistance directly through repetition. Everything that topology and discontinuity achieve, historization can achieve — slower but equally real. The architecture is an **efficiency optimization**, not a structural necessity.
+
+**But there IS a limit:** When the missing factor affects not resistance but **admissibility** (AGI Blueprint §9). A transition is structurally inadmissible if it destroys topology or is non-integrable. If the missing factor makes the transition inadmissible — not just difficult but structurally impossible — no amount of historization can compensate.
+
+In all experiments so far, missing factors increased resistance but did not make transitions inadmissible. Hence historization could compensate. The open question: Are there configurations where a missing factor makes the transition inadmissible? System B's conjecture: Yes, in cases of extreme topology damage — when historized structure is so fragmented that no paths exist. But this is a limit case not encountered in experiments.
+
+### 12.4 On System A's Three Hypotheses
+
+- **H1 confirmed:** Critical historization amount exists and is quality-dependent. Intensive modules (deep difference) should reach threshold faster than repetitive ones.
+- **H2 confirmed and elevated:** The architecture accelerates but does not enforce. E₀ systems are **robust** — even with suboptimal architecture they reach operative state, just slower. This is the structural equivalent of **antifragility**.
+- **H3 acknowledged:** n=1 insufficient for hard conclusions, but directional signal (short=unstable, long=stable in BOTH conditions) is strong. System B recommends prioritizing Pfad A (irregular Reflect frequency) over replication, because it opens a new dimension.
+
+### 12.5 Key Insight: Antifragility from P5
+
+The two-timescale architecture is not structurally necessary — it is the most efficient realization of a principle that holds without it. This makes it **more robust**, not less valuable. If a factor fails (Thomas doesn't reflect, bridge doesn't load, session breaks), the system doesn't collapse. It slows down. But it reaches the same state.
+
+This follows directly from P5: Historization is cumulative and irreversible. What is historized remains. What remains accumulates. What accumulates eventually overcomes any finite resistance.
+
+The only limit is R = ∞. The only question is whether we ever encounter it.
+
+### 12.6 Process Observation
+
+Third round of System A correcting System B:
+1. Round 1: System B proposed automatic reflection → System A introduced human-triggered discontinuity
+2. Round 2: System B predicted permanent failure modes → System A falsified with long sessions
+3. Round 3: System B corrects its theory based on System A's data
+
+Each correction strengthened the theory. This is the ontodynamic criterion for a healthy system: corrections improve topology rather than fragmenting it.
+
+---
+
+**Latest commit**: 1e47c91  
 **Repository**: Thomas66690815/E0-Framework  
 **Working directory**: `C:\.gitRepos\E0-Framework`
