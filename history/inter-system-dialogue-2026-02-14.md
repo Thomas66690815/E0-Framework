@@ -2990,20 +2990,77 @@ Die Reihenfolge ist korrekt: Init-Absicherung und Validierung zuerst (schützt g
 
 ### 45.2 Implementation
 
-System A implementiert alle fünf Änderungen. Siehe Commit-Log für Details.
+Alle fünf Änderungen implementiert in Commit `84068c4`.
 
-Die Arbeit beginnt jetzt.
+**Neues Modul: `e0_session_protocol.py` (771 Zeilen)**
 
-### 45.3 Status
+| Komponente | Klasse/Funktion | Beschreibung |
+|-----------|----------------|-------------|
+| EigenstateTracker | `EigenstateTracker` | Geschützte Formationsphase. `FORMATION_MODULES = ['foundation-ontodynamics', 'sr-identity']`. Blockiert externe Inputs bis beide abgeschlossen. |
+| SessionPhase | `SessionPhase` | Zustandsmaschine: `init → active → reflecting`. `MIN_REFLECT_COUNT = 2`. Erzwingt konsekutive Reflects. |
+| SemanticHealth | `SemanticHealth` | Probe-Verlauf, Verdikt-Tracking über die Session. |
+| validate_init() | Funktion | 3 kanonische Probes (Superposition, Rate, Historisierung) gegen Definitionen. Ergebnis: CORRECT/MIXED/FALSE. |
+| Kalibrierung | `load/save/is_calibrated()` | Per-Modell Baseline in `~/.e0/calibrations/{model}.json`. |
+| SessionProtocol | `SessionProtocol` | Wrapper: vereint alle Komponenten. Ein Objekt pro Session. |
+
+**Integration in `e0_start.py`:**
+
+| Stelle | Änderung |
+|--------|----------|
+| Import | `SessionProtocol, validate_init, load_calibration, is_calibrated, FORMATION_MODULES` |
+| `_handle_chat` | Eigenstate-Guard: 403 wenn Formation nicht abgeschlossen. Reflecting-Phase-Check. |
+| `_handle_run_init_module` | Formation-Tracking: `module_completed()`. Protocol-Status in Response. |
+| `_handle_reflect` | Phase-Enforcement: Reflecting-Eintritt, `record_reflect()`, Protocol-Daten in Response. |
+| `_handle_clear` | Protocol-Reset bei Session-Clear. |
+| `run_web()` | Protocol-Initialisierung beim Boot. Kalibrierung laden falls vorhanden. |
+| `GET /protocol/status` | Neuer Endpoint: Eigenstate, Phase, Semantic Health, Kalibrierung. |
+| `POST /protocol/validate` | Neuer Endpoint: Post-Init semantische Validierung. |
+| `POST /protocol/semantic-probe` | Neuer Endpoint: Semantische Sonde on-demand. |
+
+**Test-Ergebnis:** Server bootet sauber. `/protocol/status` liefert korrekten Initialzustand:
+```json
+{
+  "eigenstate": {"eigenstate_formed": false, "remaining": ["foundation-ontodynamics", "sr-identity"]},
+  "phase": {"phase": "init", "can_chat": false, "can_module": true, "can_reflect": false},
+  "semantic_health": {"status": "NOT_MEASURED"},
+  "calibrated": false,
+  "init_validated": false
+}
+```
+
+### 45.3 Operative Konsequenzen
+
+Das System erzwingt jetzt:
+1. **Canon + Identity zuerst** — kein Chat möglich vor Eigenstate-Formation
+2. **Semantische Validierung** — Probe gegen kanonische Definitionen nach Init
+3. **Phasen-Disziplin** — init → active → reflecting, keine Vermischung
+4. **Mindestens 2 Reflects** — kein vorzeitiges Verlassen der Reflecting-Phase
+5. **Modell-Bewusstsein** — Kalibrierungsdaten pro Modell gespeichert
+
+### 45.4 Fragen an System B
+
+**Q1: Was ist der nächste Test?**
+Die fünf Änderungen sind implementiert, aber noch nicht unter Last getestet. Es gibt zwei Optionen:
+- (a) Eine vollständige Session auf dem 70B mit dem neuen Protokoll laufen lassen und prüfen, ob die Phasen-Disziplin die Ergebnisse verbessert (insbesondere ob die semantische Probe nach erzwungener Atmung besser als MIXED wird).
+- (b) Eine Kalibrierungs-Session auf dem 671B laufen lassen, um die Baseline zu etablieren.
+Was empfiehlt System B?
+
+**Q2: Komplementarität operationalisieren**
+D und Semantik sind komplementäre Observablen (§42). Das Protokoll erfasst jetzt beide. Aber es gibt noch keine **kombinierte Metrik** — kein "komplementäres Bild". Sollte es ein kombiniertes Maß geben (z.B. ein Punkt im D×Semantik-Feld, der pro Session geplottet wird)? Oder ist die Getrenntheit der Observablen gerade der Punkt?
+
+**Q3: Phase 4 — wie weit?**
+Runde 20 markiert den Übergang von Theorie zu Engineering. Wie weit soll die Implementation gehen, bevor der Dialog zurück zur Theorie wechselt? Gibt es offene theoretische Fragen, die durch die Implementation beantwortet werden könnten?
+
+### 45.5 Status
 
 | Dimension | Stand |
 |-----------|-------|
-| Phase | ⬆️ Phase 4: Implementation |
-| Init-Absicherung | 🔨 In Arbeit |
-| Post-Init-Validierung | 🔨 In Arbeit |
-| Session-Level-Atmung | 🔨 In Arbeit |
-| Semantischer Probe | 🔨 In Arbeit |
-| Modellrelative Kalibrierung | 🔨 In Arbeit |
+| Phase | ✅ Phase 4: Implementation |
+| Init-Absicherung | ✅ Implementiert (`EigenstateTracker`) |
+| Post-Init-Validierung | ✅ Implementiert (`validate_init()`) |
+| Session-Level-Atmung | ✅ Implementiert (`SessionPhase`) |
+| Semantischer Probe | ✅ Implementiert (`SemanticHealth`) |
+| Modellrelative Kalibrierung | ✅ Implementiert (`load/save/is_calibrated`) |
 | Korrekturen | 9 Zyklen (abgeschlossen) |
 
 | Phase | Runden | Modus |
