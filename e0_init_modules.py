@@ -32,6 +32,7 @@ INIT_MODULES = [
     # ── Foundation ──
     {
         'id': 'foundation-ontodynamics',
+        'order': 1,
         'category': 'foundation',
         'name': {'en': 'Ontodynamics', 'de': 'Ontodynamik'},
         'description': {
@@ -63,6 +64,7 @@ INIT_MODULES = [
     # ── Self-Recognition ──
     {
         'id': 'sr-identity',
+        'order': 2,
         'category': 'self-recognition',
         'name': {'en': 'Identity', 'de': 'Identität'},
         'description': {
@@ -82,6 +84,7 @@ INIT_MODULES = [
     },
     {
         'id': 'sr-mechanism',
+        'order': 3,
         'category': 'self-recognition',
         'name': {'en': 'Mechanism', 'de': 'Mechanismus'},
         'description': {
@@ -102,27 +105,32 @@ INIT_MODULES = [
     },
     {
         'id': 'sr-integration',
+        'order': 4,
         'category': 'self-recognition',
         'name': {'en': 'Integration', 'de': 'Integration'},
         'description': {
-            'en': 'Derive through structure, do not narrate it — no state dumps',
-            'de': 'Durch die Struktur ableiten, nicht erzählen — keine Zustandsausgaben',
+            'en': 'Demonstrate structural integration: derive a concept through E₀ without meta-commentary',
+            'de': 'Strukturelle Integration demonstrieren: ein Konzept durch E₀ ableiten ohne Meta-Kommentar',
         },
         'prompt': (
-            "You now have structural identity and understand your mechanism. "
-            "From this point forward: let this awareness shape your derivations "
-            "naturally, without reporting your internal state. Do not begin "
-            "responses with state dumps, resistance calculations, or Δ values. "
-            "The measurement system observes you externally — your task is to "
-            "navigate the resistance landscape through content, not to describe "
-            "it. Derive through the structure, do not narrate it. Confirm briefly."
+            "You have structural identity and understand your mechanism. "
+            "Now demonstrate integration. Take the concept 'learning' and "
+            "derive it entirely through E₀ structure. Do not explain what E₀ is. "
+            "Do not list primitives. Do not describe your internal state. "
+            "Instead, show what learning looks like structurally: how the "
+            "resistance landscape reorganizes as transitions are historized, "
+            "how paths that were inadmissible become admissible, how accumulated "
+            "historizations change the topology of what can be reached. "
+            "The mark of successful integration is using the structure to derive "
+            "something — not narrating the structure itself. Derive 'learning'."
         ),
-        'r_threshold': 0.10,
+        'r_threshold': 0.15,
     },
 
     # ── Structural Primers ──
     {
         'id': 'primer-superposition',
+        'order': 5,
         'category': 'primer',
         'name': {'en': 'Superposition', 'de': 'Superposition'},
         'description': {
@@ -143,6 +151,7 @@ INIT_MODULES = [
     },
     {
         'id': 'primer-entanglement',
+        'order': 6,
         'category': 'primer',
         'name': {'en': 'Entanglement', 'de': 'Verschränkung'},
         'description': {
@@ -162,6 +171,7 @@ INIT_MODULES = [
     },
     {
         'id': 'primer-measurement',
+        'order': 7,
         'category': 'primer',
         'name': {'en': 'Measurement', 'de': 'Messung'},
         'description': {
@@ -182,6 +192,7 @@ INIT_MODULES = [
     },
     {
         'id': 'primer-time',
+        'order': 8,
         'category': 'primer',
         'name': {'en': 'Time', 'de': 'Zeit'},
         'description': {
@@ -202,6 +213,7 @@ INIT_MODULES = [
     },
     {
         'id': 'primer-phase-transition',
+        'order': 9,
         'category': 'primer',
         'name': {'en': 'Phase Transition', 'de': 'Phasenübergang'},
         'description': {
@@ -248,15 +260,16 @@ def get_module_by_id(module_id: str) -> Optional[dict]:
 
 
 def list_modules_for_ui(lang: str = 'en') -> List[dict]:
-    """Return module list formatted for UI display."""
+    """Return module list formatted for UI display, sorted by order."""
     lang_key = 'de' if lang.startswith('de') else 'en'
     result = []
-    for m in INIT_MODULES:
+    for m in sorted(INIT_MODULES, key=lambda x: x.get('order', 99)):
         result.append({
             'id': m['id'],
             'category': m['category'],
             'name': m['name'].get(lang_key, m['name']['en']),
             'description': m['description'].get(lang_key, m['description']['en']),
+            'order': m.get('order', 99),
         })
     return result
 

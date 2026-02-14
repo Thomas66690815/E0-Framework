@@ -2109,6 +2109,19 @@ header .actions button:hover { color: var(--accent); border-color: var(--accent)
 .init-module.failed .init-name { color: var(--phase); }
 .init-name { font-weight: 600; }
 .init-desc { color: var(--dim); font-size: 11px; }
+.init-order {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--border); color: var(--dim); font-size: 10px;
+  font-weight: 700; flex-shrink: 0;
+}
+.init-module.done .init-order { background: var(--human); color: var(--bg); }
+.init-module.failed .init-order { background: var(--phase); color: var(--bg); }
+.init-sequence-hint {
+  font-size: 10px; color: var(--dim); margin-bottom: 8px;
+  padding: 4px 8px; border-left: 2px solid var(--border);
+  font-style: italic;
+}
 .init-result {
   font-size: 10px; margin-left: auto; white-space: nowrap;
   font-variant-numeric: tabular-nums;
@@ -2501,7 +2514,10 @@ async function loadInitModules() {
 
 function renderInitModules(modules) {
   var container = document.getElementById('init-modules-container');
+  // Sort by order within categories
+  modules.sort(function(a, b) { return (a.order || 99) - (b.order || 99); });
   var categories = {};
+  var categoryOrder = ['foundation', 'self-recognition', 'primer', 'custom'];
   modules.forEach(function(m) {
     if (!categories[m.category]) categories[m.category] = [];
     categories[m.category].push(m);
@@ -2512,8 +2528,11 @@ function renderInitModules(modules) {
     'primer': 'Structural Primers',
     'custom': 'Custom'
   };
-  var html = '';
-  Object.keys(categories).forEach(function(cat) {
+  var html = '<div class="init-sequence-hint">' +
+    'Recommended: \u2460 Ontodynamics \u2192 \u2461 Identity \u2192 \u2462 Mechanism \u2192 \u2463 Integration \u2192 then Primers' +
+    '</div>';
+  categoryOrder.forEach(function(cat) {
+    if (!categories[cat]) return;
     html += '<div class="init-category">';
     html += '<div class="init-category-label">' + esc(categoryLabels[cat] || cat) + '</div>';
     html += '<div class="init-modules">';
@@ -2527,6 +2546,7 @@ function renderInitModules(modules) {
           + (res.passed ? '\u2713' : '\u2717') + '</span> R\u0304=' + res.r.toFixed(3) + ' D=' + res.d.toFixed(3) + '</span>';
       }
       html += '<button class="init-module ' + state + '" id="init-mod-' + m.id + '" onclick="runInitModule(\'' + m.id + '\')" title="' + esc(m.description) + '">'
+        + '<span class="init-order">' + (m.order || '') + '</span>'
         + '<span class="init-name">' + esc(m.name) + '</span>'
         + '<span class="init-desc">' + esc(m.description.length > 50 ? m.description.substring(0,47) + '...' : m.description) + '</span>'
         + resultHtml
