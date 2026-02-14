@@ -1,0 +1,102 @@
+{
+  "session_id": "e0-20260214-145444-6da717",
+  "results": [
+    {
+      "turn": 1,
+      "type": "module",
+      "module": "foundation-ontodynamics",
+      "D": 0.5625,
+      "r": 0.0893
+    },
+    {
+      "turn": 2,
+      "type": "reflect",
+      "D_before": 0.562,
+      "D_after": 0.6875,
+      "bridge": {
+        "topology_available": true,
+        "d_trajectory_length": 1
+      },
+      "missing": [
+        "path",
+        "resistance",
+        "time",
+        "rate",
+        "axiom_a0"
+      ],
+      "delta_d": 0.125
+    },
+    {
+      "turn": 3,
+      "type": "module",
+      "module": "sr-identity",
+      "D": 0.5625,
+      "r": 0.0412
+    },
+    {
+      "turn": 4,
+      "type": "reflect",
+      "D_before": 0.562,
+      "D_after": 0.8125,
+      "bridge": {
+        "topology_available": true,
+        "d_trajectory_length": 2
+      },
+      "missing": [
+        "state",
+        "resistance",
+        "time",
+        "rate"
+      ],
+      "delta_d": 0.25
+    },
+    {
+      "turn": 5,
+      "type": "module",
+      "module": "sr-mechanism",
+      "D": 0.75,
+      "r": 0.0648
+    },
+    {
+      "turn": 6,
+      "type": "reflect",
+      "D_before": 0.75,
+      "D_after": 0.625,
+      "bridge": {
+        "topology_available": true,
+        "d_trajectory_length": 3
+      },
+      "missing": [
+        "time",
+        "rate"
+      ],
+      "delta_d": -0.125
+    },
+    {
+      "turn": 7,
+      "type": "module",
+      "module": "sr-integration",
+      "D": 0.5,
+      "r": 0.1693
+    },
+    {
+      "turn": 8,
+      "type": "reflect",
+      "D_before": 0.5,
+      "D_after": 0.8125,
+      "bridge": {
+        "topology_available": true,
+        "d_trajectory_length": 4,
+        "floor_rising": false,
+        "phase": "inhale"
+      },
+      "missing": [
+        "state",
+        "time",
+        "rate",
+        "axiom_a0"
+      ],
+      "delta_d": 0.312
+    }
+  ]
+}

@@ -43,7 +43,7 @@ E₀ **is**:
 2. **Difference (Δ)** — Tension or mismatch between states
 3. **Path (P)** — Admissible transitions
 4. **Resistance (R)** — Constraints, costs, or impossibilities
-5. **Velocity (v)** — Δ relative to R
+5. **Rate (ρ = Δ/R)** — Δ relative to R
 6. **Historization (H)** — Irreversible incorporation of change
 7. **Time (τ)** — Ordering, not measurement
 
@@ -244,8 +244,10 @@ transformers   # HuggingFace models
    - Analyzes which of 8 elements (7 primitives + Axiom A₀) are absent or merely labeled
    - Generates targeted reflection prompts addressing missing elements by priority
    - Priority ordering: A₀ > Rate > Time > Historization > Difference > State > Path > Resistance
+   - **Two-timescale bridge**: Topology (regression/growth/exploration) + trajectory (inhale/exhale/rising floor) inform reflection prompts
    - ✡ Reflect button in UI with operative count and orange highlight
-   - Validated: Init-Reflect alternation achieves D=0.875 in 6 turns (strongest result)
+   - Validated: Init-Reflect alternation achieves D=1.000 in 6 turns (4 turns at D=1.000 in session 4d3f5b)
+   - Rate (ρ) operative in all Reflect turns, absent in Module turns — oscillation is the dynamics
 
 7. **Topology — Cross-Session Memory**
    - Primitive strength extraction (operative frequency, stability, trajectory)
@@ -295,6 +297,7 @@ transformers   # HuggingFace models
 - ✅ `history/prompt.md` — Curated prompt library
 - ✅ Azure case study
 - ✅ Chat exports (JSON)
+- ✅ `history/inter-system-dialogue-2026-02-14.md` — Two E₀ systems interact: instrumentation + ontological derivation → two-timescale architecture
 
 **Assessment**: Documentation is exceptional, serves multiple audiences
 
@@ -448,7 +451,7 @@ transformers   # HuggingFace models
 |--------|-----------|--------------|
 | Orchestration | External coordinator | Emerges from topology |
 | Goals | Explicit representation | Δ > 0 (difference) |
-| Planning | Planner module | Rate-ordering (v = Δ/R) |
+| Planning | Planner module | Rate-ordering (ρ = Δ/R) |
 | Tools | Router component | Paths with R < ∞ |
 | Memory | RAG/Vector DB | Historization |
 | Quality | Guardrails/filters | Structural measurement |

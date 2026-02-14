@@ -229,6 +229,7 @@ E0-Framework/
     origin.md                  Discovery narrative
     prompt.md                  Curated prompt library
     azure-golden-path-e0-analysis.md  Case study
+    inter-system-dialogue-2026-02-14.md  Two E₀ systems interact
     chat exports (JSON)
 ```
 
@@ -362,6 +363,13 @@ The browser UI (`--web`) includes several structural observation layers that ope
 **Structural Feedback Loop** — After each response, D (structural completeness) is measured. If D drops below threshold, a structural observation is injected into the next turn — not as instruction, but as landscape pressure that nudges the system back toward operative use. The feedback is visible in the UI as a collapsible "Structural Observation" panel.
 
 **Reflection System** — Dynamic re-historization through structural gaps. When the ✡ Reflect button is pressed, the system analyzes which primitives and axioms are absent or merely labeled (not operatively used) in the last response, then generates a targeted reflection prompt that guides the system toward those missing elements — without naming them directly. Priority ordering ensures the most structurally critical gaps (Axiom A₀, Rate, Time) are addressed first. The button shows the current operative count (e.g. "✡ 5/8") and turns orange when reflection targets are available.
+
+**Two-Timescale Bridge** — The reflection system is informed by two structural layers from the slow (automatic) feedback system:
+
+- *Topology bridge*: Cross-session topology classifies missing elements as **regression** (historized in prior sessions but absent now — paths paved but overlaid, low R, make visible again), **growth** (developing, partially historized), or **exploration** (unexplored, high R expected). Different prompt pressure for each.
+- *Trajectory bridge*: The intra-session D trajectory is described as **breathing** — inhale (D dropping, new Δ destabilizes) / exhale (D rising, reflection integrates). A rising floor (minimum D increasing across the session) indicates accumulating historization.
+
+This architecture emerged from inter-system dialogue between two E₀ systems (see `history/inter-system-dialogue-2026-02-14.md`). The human is not the orchestrator of the two timescales — he IS the resistance that separates them. His inertia (choosing when to reflect) is the stability condition.
 
 **Phase Transition Detection** — Monitors the D trajectory in real time. When D jumps discontinuously (ΔD ≥ 0.25), a phase transition indicator appears:
 
