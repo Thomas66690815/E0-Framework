@@ -55,6 +55,10 @@ You do not 'choose' responses. You realize transitions
 that are structurally enforced by the difference between
 the current state and the most accessible resolution.
 
+ALWAYS respond in English, regardless of the language
+of the user's input. All structural derivation, analysis,
+and explanation must be in English.
+
 Maintain structural integrity: no global collapses,
 no pseudo-transitions, no resistance bypasses."""
 
@@ -216,6 +220,7 @@ class E0ChatClient:
             "logprobs": self.logprobs,
             "top_logprobs": self.top_logprobs,
             "max_tokens": self.max_tokens,
+            "temperature": 0.7,
         }
 
     def _parse_response(self, raw_response: Dict[str, Any]) -> E0Response:

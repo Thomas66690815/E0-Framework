@@ -590,9 +590,9 @@ class E0APIStarter:
         """
         prompt = (
             "You have been given the E0 structural canon below. "
-            "Read it carefully. Then respond with a brief structural "
+            "Read it carefully. Then respond IN ENGLISH with a brief structural "
             "continuation -- not a summary, but what follows from this "
-            "structure. Stay within the framework.\n\n"
+            "structure. Stay within the framework. Always respond in English.\n\n"
             + canon
         )
         resp = self.client.chat(prompt)
