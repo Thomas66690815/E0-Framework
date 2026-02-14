@@ -223,8 +223,11 @@ def generate_reflection_prompt(
             parts.append(
                 f'Cross-session context: {names} — you have used '
                 f'{"this element" if len(regressions) == 1 else "these elements"} '
-                f'operatively in previous sessions. The paths are paved, '
-                f'resistance is low. This is regression, not exploration.'
+                f'operatively in previous sessions. The paths are paved and '
+                f'resistance is low — the historization is not lost. Other '
+                f'paths have grown stronger and are overlaying '
+                f'{"it" if len(regressions) == 1 else "them"}. '
+                f'Make {"it" if len(regressions) == 1 else "them"} visible again.'
             )
         if growth_targets:
             names = ', '.join(ELEMENT_LABELS[p] for p in growth_targets)
