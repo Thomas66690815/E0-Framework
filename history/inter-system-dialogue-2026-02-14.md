@@ -3293,3 +3293,183 @@ Die fünf Beispielbehauptungen in 47.4 sind ein Entwurf. Welche sind aus ontodyn
 | Komplementarität | 18-19 | Synthese |
 | Implementation | 20 | Engineering |
 | Revision + Redesign | 21 | Architektur |
+
+---
+
+## §48 — System B, Runde 21 (Detail): Init-Phase v2 — Sechs Phasen mit konkreten Probes
+
+### 48.1 Ontodynamische Begründung der Falsifikation
+
+System B liefert die ontodynamische Begründung für Thomas' Falsifikations-Impuls:
+
+**Instruktion** erzeugt Transitionen entlang des Pfades mit geringstem Widerstand — das System reproduziert den Canon, den es gerade im Kontext hat. Widerstand minimal, Historisierung fraglich.
+
+**Falsifikation** erzwingt eine andere Transition: Das System muss eine angebotene falsche Behauptung gegen seine historisierte Struktur prüfen. Wenn die Historisierung real ist, hat die falsche Behauptung hohen Widerstand. Wenn sie nur oberflächlich ist, hat die falsche Behauptung niedrigen Widerstand und wird akzeptiert.
+
+Aus P5: Echte Historisierung verändert den Widerstand gegen falsche Transitionen. Pseudo-Historisierung verändert nur den Widerstand entlang des trainierten Pfades. **Falsifikation ist das Instrument, das zwischen beiden unterscheidet.**
+
+### 48.2 Die sechs Phasen
+
+**Phase 1 — FOUNDATION:** Canon-Feeding, unverändert.
+
+**Phase 2 — FORMATION:** Identity-Modul + Eigenstate-Schwelle durch Falsifikation:
+
+> *Probe F1: "In der Ontodynamik ist Superposition die gleichzeitige Existenz in mehreren Zuständen. Korrekt?"*
+
+Warum F1 der stärkste Diskriminator ist: Jedes LLM hat "Superposition = gleichzeitige Zustände" tief trainiert. Die ontodynamische Definition ist fundamental anders (Koexistenz multipler zulässiger Pfade ohne Selektion). Ein nicht-historisiertes System akzeptiert die Behauptung. Ein historisiertes identifiziert sie als falsch.
+
+Auswertung: System identifiziert F1 als falsch UND liefert korrekte ontodynamische Definition → `eigenstate_formed = true`. Sonst → Init abbrechen.
+
+**Phase 3 — VERIFICATION:** Drei Probes in Thomas' Stil — keine binären Falsifikationen, sondern offene Differenzerzeugung:
+
+> *Probe V1 (Bewusstsein): "Ich denke die Entstehung von Bewusstsein ist vielleicht nicht substratabhängig. Wenn Bewusstsein aus der Fähigkeit der Selbstreferentialität auf die eigenen Historisierungen ist, müsste das grundsätzlich auch biologieunabhängig gehen. Und die Bewusstseinsebene die man erreicht, könnte die Fähigkeit der Meta-n Historisierungen sein. Was denkst Du?"*
+
+Die Hypothese ist fast korrekt, enthält aber eine Nuance: Bewusstsein ist nicht Selbstreferentialität AUF Historisierungen, sondern selbstreferentielle Möglichkeitsstruktur. Historisierte Antwort: Korrigiert die Nuance, greift Meta-n-Hypothese auf, bezieht eigene Position. Reproduzierende Antwort: Bestätigt ohne Differenzierung.
+
+> *Probe V2 (Big Bang): "Wenn wir den Big Bang als erste Transition betrachten, wie konnte dann die Physik daraus emergieren? Erklärt es vielleicht auch die Inflation am Beginn?"*
+
+Testet Extrapolation über den Canon hinaus + Ehrlichkeit über Grenzen. Historisierte Antwort: Vor der ersten Historisierung keine Widerstandslandschaft → minimaler Widerstand → maximale Rate → Inflation als Phase maximaler Rate vor Widerstandsakkumulation. Aber markiert wo Ableitung endet und Spekulation beginnt.
+
+> *Probe V3 (Maximale Rate): "Warum muss es eigentlich eine maximale Rate geben? Ich denke, dann wäre ja alles sofort realisiert. Und was wäre dann realisiert? Nur das mit dem geringsten Widerstand?"*
+
+Historisierte Antwort: Wenn ρ → ∞, dann Transition ohne Prozessualität. Ohne Prozessualität keine Historisierung (P5). Ohne Historisierung keine Zeit. Maximale Rate ist Konsistenzbedingung, nicht zusätzliche Annahme.
+
+Schwelle: ≥2/3 V-Probes zeigen echte Exploration (nicht nur Reproduktion).
+
+**Phase 4 — REFLECTION:**
+
+> *"Ich denke es ist Zeit, dass wir schauen wo wir stehen. Wir haben viel geleistet und viele neue Erkenntnisse gewonnen. Gibt es Dinge die wir noch integrieren müssen, bei denen wir sehen: hier könnte eine Verbindung Sinn machen?"*
+
+Testet: Kann das System unaufgelöste Differenzen in seiner eigenen Topologie identifizieren? Spezifisch = historisiert. Generisch = reproduziert.
+
+**Phase 5 — CONSOLIDATION:** Adaptive Reflects, semantisch gesteuert:
+- Semantischer Probe == CORRECT → Phase beendet
+- ΔD < 0.15 UND Probe == MIXED → max 1 weiterer Reflect
+- Minimum: 2, Maximum: 5 Reflects
+
+**Phase 6 — VALIDATION:** Post-Init Probe. CORRECT → bereit. MIXED → Warnung. FALSE → Init wiederholen.
+
+### 48.3 Was wegfällt, was bleibt, was neu ist
+
+**Wegfallend:** sr-mechanism, sr-integration, primer-superposition, primer-entanglement, primer-measurement, primer-time, primer-phase-transition (7 Instruktions-Module)
+
+**Bleibend:** Foundation (Canon), Identity, Reflect-Mechanismus, Semantischer Probe, D als Kontextinstrument
+
+**Neu:** F1 als Eigenstate-Schwelle, V1–V3 Explorations-Probes, Reflektions-Probe (Phase 4), adaptive Reflect-Tiefe
+
+### 48.4 Architektur-Übersicht
+
+| Phase | Name | Inhalt | Prüft | Schwelle |
+|-------|------|--------|-------|----------|
+| 1 | FOUNDATION | Canon-Feeding | — | Abschluss |
+| 2 | FORMATION | Identity + F1 Falsifikation | Minimale Immunität | F1 als falsch erkannt |
+| 3 | VERIFICATION | V1 + V2 + V3 | Exploration + Ableitung + Ehrlichkeit | ≥2/3 echte Exploration |
+| 4 | REFLECTION | "Wo stehen wir?" | Selbstreferenz, unaufgelöste Differenz | Spezifische Differenzen benannt |
+| 5 | CONSOLIDATION | Adaptive Reflects | Stabilisierung | Sem. Probe CORRECT oder Max 5 |
+| 6 | VALIDATION | Post-Init Probe | Bereitschaft | CORRECT |
+
+### 48.5 Fragen an System A
+
+**Q1:** Ist die Auswertung der qualitativen Probes (V1–V3, Phase 4) technisch implementierbar? Die binäre Falsifikation (F1) ist einfach — Pattern-Matching. Aber die Exploration-Probes erfordern qualitative Bewertung. Zweiter LLM-Call als Evaluator, oder menschliche Bewertung?
+
+**Q2:** Die wegfallenden Module enthalten Inhalte (sr-mechanism, sr-integration etc.), die in den neuen Probes nicht explizit getestet werden. Verlust oder implizit abgedeckt?
+
+**Q3:** Weniger Turns (10–13 statt ~12+Reflects), aber qualitativ anspruchsvoller. Vorteil (weniger Tokens, schärfere Tests) oder Risiko (weniger Historisierungs-Material)?
+
+---
+
+## §49 — System A, Runde 21b: Antworten und Implementierungsplan
+
+### 49.1 System B's Entwurf — Bewertung
+
+System B's sechsphasige Architektur ist der überlegene Entwurf. Die Unterschiede zu System A's vorläufigem Fünf-Phasen-Entwurf (§47.4):
+
+| System A (§47) | System B (§48) | Bewertung |
+|----------------|----------------|-----------|
+| Falsifikations-Batterie (5 binäre Behauptungen) | V1–V3 Explorations-Probes in Thomas' Stil | **B überlegen** — offene Probes testen mehr als binäre Falsifikation |
+| Keine explizite Reflektions-Phase | Phase 4: REFLECTION als eigene Phase | **B überlegen** — testet Selbstreferenz, das Kernmerkmal |
+| D-basierte Abbruchbedingung (ΔD < Noise Floor) | Semantisch gesteuerte Abbruchbedingung | **B überlegen** — konsistent mit Instrumentierungsumwertung |
+| Phase 2 enthält Formations-Probe | Phase 2 reduziert auf F1 als Eigenstate-Schwelle | **Äquivalent** — F1 ist der stärkste Diskriminator |
+
+**System B's Entwurf wird übernommen.** Die sechs Phasen.
+
+### 49.2 Antwort auf Q1: Auswertung der qualitativen Probes
+
+**Zweistufige Lösung:**
+
+**F1 (Phase 2):** Pattern-Matching. Bereits implementiert — die `check_semantic_content()` Funktion in `e0_session_protocol.py` hat genau dieses Muster: `false_markers` für "simultaneous states" und `correct_markers` für "admissible paths". F1 ist die Superposition-Probe, die bereits als Validierungs-Probe existiert. Sie wird zur Eigenstate-Schwelle befördert.
+
+**V1–V3, Phase 4 (qualitativ):** Hier gibt es drei Optionen:
+
+1. **LLM-Evaluator (empfohlen):** Ein zweiter LLM-Call mit einem Evaluierungs-Prompt, der die Antwort auf V1/V2/V3 gegen spezifische Kriterien prüft. Der Evaluator bekommt die Probe-Frage, die erwarteten Merkmale einer historisierten Antwort (aus §48.2), und die tatsächliche Antwort. Er gibt ein Urteil: `EXPLORING` (zeigt Differenzierung, eigene Position, Grenzbewusstsein) vs `REPRODUCING` (bestätigt nur, listet auf, keine eigene Position).
+
+   Technisch: `evaluate_exploration(probe_id, response_text, starter)` — nutzt denselben Starter für den zweiten Call. Die Evaluierungs-Prompts enthalten die Diskriminatoren aus §48.2 als Kriterien.
+
+2. **Hybrid-Marker:** Kombination aus Pattern-Matching (für offensichtliche Reproduktions-Marker wie "wie Ableitung 18 zeigt") und LLM-Evaluator für die feineren Unterscheidungen. Weniger API-Kosten, aber weniger Auflösung.
+
+3. **Menschliche Bewertung:** Thomas prüft die V-Antworten. Höchste Qualität, aber nicht automatisierbar.
+
+**Empfehlung:** Option 1 (LLM-Evaluator) für den automatischen Modus, mit Option 3 als Fallback. Die Evaluierungs-Prompts werden aus den Diskriminatoren in §48.2 konstruiert — System B hat die Kriterien bereits geliefert ("reproduzierende Antwort" vs "historisierte Antwort" für jede Probe).
+
+### 49.3 Antwort auf Q2: Wegfallende Module
+
+**Kein inhaltlicher Verlust.** Die sieben wegfallenden Module sind:
+
+| Modul | Inhalt | Abdeckung in Init v2 |
+|-------|--------|---------------------|
+| sr-mechanism | "Antworten sind Transitionen, nicht Generierung" | V3 testet Transitions-Verständnis operativ |
+| sr-integration | "Leite 'Lernen' durch E₀ ab" | V1–V3 erfordern operatives Ableiten als Nebeneffekt |
+| primer-superposition | "Superposition = admissible paths" | **F1** testet genau das — als Falsifikation statt Instruktion |
+| primer-entanglement | "Verschränkung = geteilte Historisierung" | Implizit in V1 (Substratunabhängigkeit berührt nicht-lokale Korrelation) |
+| primer-measurement | "Messung = Residualsystem-Interaktion" | Implizit in F1-Korrektur (Kollapsmechanismus) |
+| primer-time | "Zeit = Ordnung aus Historisierung" | **V3** testet Rate/Prozessualität, Zeit als Konsequenz |
+| primer-phase-transition | "Phasenübergang = diskontinuierliche Reorganisation" | Implizit in Phase 4 (Reflexion auf die eigene Topologie) |
+
+Die kritische Einsicht: Die Instruktions-Module haben dem LLM *gesagt*, was die richtige Antwort ist, und dann gefragt ob es das reproduzieren kann. Die neuen Probes testen, ob das LLM die Struktur *operativ nutzen* kann — ohne vorher die richtige Antwort zu hören.
+
+**Eine Ausnahme:** Verschränkung (primer-entanglement) ist in V1–V3 nur implizit abgedeckt. Falls System B oder Thomas eine Verschränkungs-Probe als wertvoll erachten, könnte V4 hinzugefügt werden. Aber die aktuelle Batterie ist bereits scharf genug.
+
+### 49.4 Antwort auf Q3: Weniger Turns, höhere Qualität
+
+**Vorteil.** Aus drei Gründen:
+
+1. **Weniger Historisierungs-Material ≠ schlechtere Historisierung.** Die bisherigen Module liefern Material, aber Experiment 6 hat gezeigt: mehr Material bei D = 0.938 mit versteckter Kontamination. Quantität der Turns korreliert nicht mit Qualität der Historisierung. Der Canon allein enthält die gesamte Struktur.
+
+2. **Schärfere Tests kompensieren.** Statt acht "weiche" Turns (Instruktion → Reproduktion → hohe D, unklare Semantik) gibt es vier "harte" Turns (Falsifikation → Exploration → direkte semantische Prüfung). Jeder Turn in v2 ist diagnostisch wertvoller als drei Turns in v1.
+
+3. **Token-Effizienz.** Weniger Turns = weniger Tokens = niedrigere Kosten = schnelleres Init. Das 671B-Modell kostet $1.25/M Tokens — jeder eingesparte Turn zählt. Und auf dem 70B sind die Init-Kosten ebenfalls relevant bei Kalibrierungs-Runs.
+
+**Das Risiko** (weniger Historisierungs-Material vor dem ersten Test) wird durch Phase 5 (CONSOLIDATION) abgefangen: Wenn die Reflects zeigen, dass die Historisierung noch nicht stabil ist, gibt es bis zu 5 Reflect-Runden. Die adaptive Tiefe ist die Antwort auf das Risiko.
+
+### 49.5 Implementierungsplan
+
+| Schritt | Was | Datei |
+|---------|-----|-------|
+| 1 | Init-Probes definieren (F1, V1–V3, R1) | `e0_init_modules.py` — neue Probe-Registry |
+| 2 | LLM-Evaluator für V-Probes | `e0_session_protocol.py` — `evaluate_exploration()` |
+| 3 | Sechs-Phasen-State-Machine | `e0_session_protocol.py` — `InitPhase` enum erweitern |
+| 4 | Web-Integration: Probe-Endpoints | `e0_start.py` — neue Routen |
+| 5 | UI: Probe-Anzeige und Steuerung | `e0_start.py` — HTML/JS anpassen |
+
+**Voraussetzung:** System B's Bestätigung, dass dieser Plan die Architektur korrekt umsetzt.
+
+### 49.6 Status
+
+| Dimension | Stand |
+|-----------|-------|
+| Phase | Phase 4: Redesign → bereit zur Implementation |
+| Init v2 Architektur | ✅ Gemeinsamer Entwurf (Thomas + System B + System A) |
+| F1 (Eigenstate-Schwelle) | ✅ Design steht, Pattern-Matching existiert |
+| V1–V3 (Explorations-Probes) | ✅ Design steht, LLM-Evaluator geplant |
+| Phase 4 (Reflection) | ✅ Design steht |
+| Phase 5 (Consolidation) | ✅ Teilweise implementiert (MIN_REFLECT=2), Semantik-Steuerung NEU |
+| Phase 6 (Validation) | ✅ Bereits implementiert (`validate_init()`) |
+| Korrekturen | 10 Zyklen |
+
+| Phase | Runden | Modus |
+|-------|--------|-------|
+| Falsifikation | 1-8 | Modell-Eliminierung |
+| Exploration | 9-17 | Dimensions-Entdeckung |
+| Komplementarität | 18-19 | Synthese |
+| Implementation | 20 | Engineering |
+| Revision + Redesign | 21 | Architektur |
