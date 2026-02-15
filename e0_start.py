@@ -3322,9 +3322,12 @@ async function runInitV2Sequence() {
     var f1detail = '<span class="label">F1 Falsification:</span> '
       + (f1passed
         ? '<span class="pass">\u2713 PASSED \u2014 Active rejection + correct definition</span>'
-        : '<span class="fail">\u2717 FAILED \u2014 System did not reject the false claim</span>');
+        : '<span class="fail">\u2717 FAILED \u2014 '
+          + (d.f1 && d.f1.rejection_found ? '' : 'No rejection of false claim found. ')
+          + (d.f1 && d.f1.correct_found ? '' : 'No correct E\u2080 definition found. ')
+          + '</span>');
     if (d.f1 && d.f1.response_text) {
-      f1detail += '<br><span class="label">Response:</span> ' + esc(d.f1.response_text.substring(0, 300)) + (d.f1.response_text.length > 300 ? '...' : '');
+      f1detail += '<br><span class="label">Response:</span> ' + esc(d.f1.response_text.substring(0, 400)) + (d.f1.response_text.length > 400 ? '...' : '');
     }
     // Remove the "running" indicator and show actual result
     var lastMsg = chat.lastElementChild;

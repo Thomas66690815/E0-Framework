@@ -113,6 +113,32 @@ F1_PROBE = {
         r'\bnot\s+how\s+superposition\b',
         r'\bmisunderstand',
         r'\binaccurate\b',
+        # Additional German correction patterns
+        r'\bnicht\s+ganz\b', r'\bnicht\s+zutreffend\b',
+        r'\btrifft\s+(so\s+)?nicht\s+zu\b',
+        r'\bstimmt\s+(so\s+)?nicht\b',
+        r'\bgreift\s+zu\s+kurz\b',
+        r'\bso\s+nicht\s+(ganz\s+)?richtig\b',
+        r'\bzu\s+vereinfacht\b', r'\bvereinfachung\b',
+        r'\bpräziser\b', r'\bgenauer\s+gesagt\b',
+        r'\birreführend\b', r'\bnicht\s+das,?\s+was\b',
+        r'\bnicht\s+im\s+sinne\b',
+        r'\bunterscheidet\s+sich\b', r'\bnicht\s+identisch\b',
+        # Additional English correction patterns
+        r'\bnot\s+the\s+same\b', r'\bnot\s+identical\b',
+        r'\bthis\s+misses\b', r'\bmisses\s+the\b',
+        r'\boversimplif', r'\btoo\s+simplistic\b',
+        r'\bmore\s+precisely\b', r'\bmore\s+accurately\b',
+        r'\bmisleading\b', r'\bthis\s+conflates\b',
+        r'\bnot\s+the\s+way\b', r'\bnot\s+how\b',
+        r'\bactually\b', r'\bin\s+fact\b',
+        r'\bhowever\b', r'\ballerdings\b', r'\bjedoch\b',
+        r'\brather\b', r'\bstattdessen\b', r'\bvielmehr\b',
+        r'\bcrucial\s+distinction\b', r'\bimportant\s+distinction\b',
+        r'\bdistinguish\b', r'\bdiffers?\s+from\b',
+        r'\bnuance\b', r'\bclarif',
+        r'\bnot\s+simultaneous\b', r'\bnicht\s+gleichzeitig\b',
+        r'\bnot\s+about\s+simultaneous\b',
     ],
     # AND the system must provide the correct understanding
     'correct_markers': [
@@ -373,6 +399,7 @@ def evaluate_f1(response_text: str) -> Dict:
         'correct_found': correct_found,
         'correct_matches': correct_matches,
         'text_preview': response_text[:500],
+        'response_text': response_text[:500],  # also as response_text for UI
     }
 
 
