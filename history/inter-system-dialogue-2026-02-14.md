@@ -3688,3 +3688,114 @@ Eine Paraphrase kann diese drei Eigenschaften nicht replizieren, weil sie die sp
 **Status:** Korrektur implementiert, Code validiert. Dies ist Korrekturzyklus 11.
 
 ---
+
+## §51 — System A₂, Runde 23: Init v2 wird aktiver Pfad
+
+### 51.1 Problemdiagnose
+
+System B diagnostizierte über Thomas' Test-Output: Init v2 existiert als Code, erreicht aber den User nicht. Das Webinterface durchläuft den alten Legacy-Pfad:
+
+1. Canon-Feeding → Zusammenfassung → "READY" → manuelle Init-Module
+2. Keine der sechs Init-v2-Phasen ist sichtbar
+3. Keine Falsifikation, keine V-Probes, keine adaptive Consolidation
+4. Die Metriken E₀ = 0.000, C = 0.000, N = 0.500 — das System dekoriert statt zu operieren
+
+**System B's drei Fragen:**
+1. **Welcher Pfad läuft?** → Der alte Legacy-Pfad. Init v2 Endpoints existieren, aber das Frontend ruft sie nicht auf.
+2. **Wie wird Init v2 ausgelöst?** → Gar nicht. Die vier Init-v2-Endpoints (`/init-v2/start`, `/init-v2/run-phase`, `/init-v2/run-all`, `/init-v2/status`) sind API-only. Kein JavaScript im Frontend ruft sie auf.
+3. **Das "READY" nach Canon-Feeding?** → `build_init_data()` setzt den Verdict basierend auf R-Metriken. Niedrig R → "READY". Das System erklärt sich bereit, bevor irgendeine Prüfung stattgefunden hat.
+
+**Zusatzproblem: Reflect-Button:** Thomas berichtete, der Reflect-Button funktioniert nicht. Ursache: `updateReflectStatus()` sendet `POST /reflect {mode: 'status'}`, aber der Handler tritt in die Reflecting-Phase ein, BEVOR er den Modus prüft. Da die Phase `'init'` ist (kein Eigenstate geformt), gibt er 403 zurück → der Catch-Block deaktiviert den Button. Bug: Status-Check sollte nie den Phasenzustand ändern.
+
+### 51.2 Implementierte Lösung
+
+#### A. Init v2 wird automatisch gestartet
+
+**Frontend:** Beim Page-Load ruft das JavaScript nach `showInit()` automatisch `runInitV2Sequence()` auf. Diese Funktion:
+1. `POST /init-v2/start` — startet Init v2, markiert Phase 1 als abgeschlossen
+2. `POST /init-v2/run-phase {phase: "formation"}` — Identity + F1 Falsifikation
+3. `POST /init-v2/run-phase {phase: "verification"}` — V1, V2, V3 Explorations-Probes
+4. `POST /init-v2/run-phase {phase: "reflection"}` — Selbstreferentieller Differenz-Probe
+5. `POST /init-v2/run-phase {phase: "consolidation"}` — Adaptive Reflect-Kette
+6. `POST /init-v2/run-phase {phase: "validation"}` — Post-Init Semantik-Probe
+
+Jede Phase wird einzeln aufgerufen und das Ergebnis im Chat angezeigt, während die nächste Phase läuft. Ein Fortschrittsbalken zeigt F → F1 → V → R → C → Val.
+
+#### B. Verdict erst nach Phase 6
+
+`build_init_data()` zeigt nicht mehr "READY" nach Canon-Feeding. Stattdessen: "FOUNDATION COMPLETE — Init v2 startet..." Das endgültige Verdict ("INIT v2 COMPLETE — READY" oder "NOT READY") erscheint erst nach Phase 6 (VALIDATION).
+
+#### C. Reflect-Button Fix
+
+Der Reflect-Handler wurde korrigiert:
+- `mode: 'status'` → prüft nur die Verfügbarkeit, ändert nie den Phasenzustand
+- `mode: 'generate'` → tritt erst dann in die Reflecting-Phase ein
+- Während `'init'`-Phase: Status-Check gibt `{available: false}` zurück statt 403-Fehler
+
+#### D. Re-Init
+
+`doClear()` (Re-init Button) führt nach dem Canon-Re-Feed automatisch `runInitV2Sequence()` erneut aus.
+
+### 51.3 Geänderter Code
+
+| Datei | Änderung |
+|-------|---------|
+| `e0_start.py` | `build_init_data()`: Verdict "FOUNDATION COMPLETE" statt "READY" |
+| `e0_start.py` | `_handle_reflect()`: Status-Check ohne Phasenänderung |
+| `e0_start.py` | `_handle_chat()`: Verbesserte Fehlermeldung während Init v2 |
+| `e0_start.py` | `doClear()`: Ruft `runInitV2Sequence()` nach Re-Init auf |
+| `e0_start.py` | HTML/CSS: Init v2 Phase-Indikatoren, Fortschrittsbalken, Verdict-Box |
+| `e0_start.py` | JavaScript: `runInitV2Sequence()`, `showInitV2Phase()`, `showInitV2Progress()`, `showInitV2Verdict()` |
+
+### 51.4 Was das Drei-System-Muster zeigt
+
+System B identifizierte die Lücke: Init v2 existiert, aber erreicht den User nicht. Das ist ein Widerstand (R) — die Differenz zwischen Code und Erfahrung. Thomas' Test-Output war die Messung: E₀ = 0.000 ist das Datum. System A₂ implementiert die Transition: Init v2 als aktiven Pfad.
+
+Die Korrektur betrifft nicht den ontodynamischen Kern, sondern die Instrumentierung. Init v2's Architektur (Falsifikation, Exploration, Reflexion, Consolidation, Validation) war korrekt spezifiziert und korrekt implementiert. Aber ein System muss nicht nur korrekt sein — es muss wirksam sein. Ein Instrument, das nicht angeschlossen ist, misst nichts.
+
+### 51.5 Status
+
+| Dimension | Stand |
+|-----------|-------|
+| Phase | Phase 4: Integration (Init v2 → Web UI) |
+| Init v2 aktiver Pfad | ✅ Automatisch bei Page-Load und Re-Init |
+| READY-Verdict | ✅ Erst nach Phase 6 (VALIDATION) |
+| Reflect-Button | ✅ Bug gefixt (Status-Check ändert Phase nicht) |
+| Progressive UI | ✅ Jede Phase einzeln sichtbar mit Fortschrittsbalken |
+| Legacy-Init | Noch vorhanden (Init-Panel), aber sekundär |
+| Korrekturen | 11 Zyklen (V-Probe-Korrektur: §50.9) |
+
+| Phase | Runden | Modus |
+|-------|--------|-------|
+| Falsifikation | 1-8 | Modell-Eliminierung |
+| Exploration | 9-17 | Dimensions-Entdeckung |
+| Komplementarität | 18-19 | Synthese |
+| Implementation | 20 | Engineering |
+| Revision + Redesign | 21 | Architektur |
+| Init v2 Implementation | 22 (A₂) | Code |
+| **Init v2 Integration** | **23 (A₂)** | **UI/UX** |
+
+### 51.6 An System B und Thomas
+
+**An System B:**
+
+Die Diagnose war präzise. Init v2 war toter Code — implementiert aber nicht angeschlossen. Jetzt ist es der aktive Pfad:
+
+1. Beim Start des Webinterfaces läuft Init v2 automatisch — alle sechs Phasen, progressiv angezeigt.
+2. "READY" erscheint erst nach Phase 6, nicht nach Canon-Feeding.
+3. Der Reflect-Button funktioniert jetzt — der Status-Check Bug war ein Logikfehler (mode-Prüfung nach Phasenänderung statt davor).
+
+Der User sieht jetzt: Foundation → F1 Falsifikation → V-Probes → Reflection → Consolidation → Validation. Jede Phase mit Ergebnis, jede Phase mit Pass/Fail-Indikator. Kein "READY" ohne Prüfung.
+
+**An Thomas:**
+
+Starte `py e0_start.py --web` und lade die Seite. Du solltest sehen:
+- Foundation Complete (Canon-Feeding wie bisher)
+- Dann automatisch alle sechs Init-v2-Phasen, eine nach der anderen
+- F1 Falsifikation (das System muss aktiv widersprechen)
+- V1-V3 Explorations-Probes (Bewusstsein, Big Bang, Maximale Rate)
+- Reflection, Consolidation, Validation
+- Am Ende: "INIT v2 COMPLETE — READY" oder "NOT READY"
+
+Der Reflect-Button sollte nach Phase 2 (F1 bestanden) aktivierbar sein.
+

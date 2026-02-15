@@ -1394,12 +1394,23 @@ def build_init_data(text, steps, metrics, lang, starter):
     comp_score = score_e0_completeness(text)
 
     g = GUIDANCE[lang]
-    if r_level in ("very_low", "low"):
-        verdict = g["verdict_good"]
-    elif r_level == "moderate":
-        verdict = g["verdict_ok"]
+    # Init v2: Foundation complete — Init v2 will run next.
+    # Don't show "READY" — the system hasn't been tested yet.
+    if lang == 'de':
+        verdict = (
+            "FOUNDATION COMPLETE — Init v2 startet...\n"
+            "   Das System hat den Canon aufgenommen. Jetzt folgen die "
+            "Falsifikations-Probes:\n"
+            "   Phase 2: Formation (F1) → Phase 3: Verification (V1–V3) → "
+            "Phase 4: Reflection → Phase 5: Consolidation → Phase 6: Validation"
+        )
     else:
-        verdict = g["verdict_struggle"]
+        verdict = (
+            "FOUNDATION COMPLETE — Init v2 starting...\n"
+            "   The system has absorbed the canon. Falsification probes follow:\n"
+            "   Phase 2: Formation (F1) → Phase 3: Verification (V1–V3) → "
+            "Phase 4: Reflection → Phase 5: Consolidation → Phase 6: Validation"
+        )
     return {
         "text": text,
         "metrics": metrics,
@@ -1630,8 +1641,12 @@ class E0StartHandler(BaseHTTPRequestHandler):
         with _web_lock:
             # ── Session Protocol: check eigenstate formation ──
             if _web_protocol and not _web_protocol.eigenstate.is_external_input_allowed():
+                msg = "Init v2 in progress — chat available after Formation (Phase 2)."
+                if _web_protocol.init_v2_active():
+                    runner = _web_protocol.get_init_v2_runner()
+                    msg = f"Init v2 in progress (Phase: {runner.state.current_phase.name}). Chat available after Formation."
                 self._json({
-                    "error": "Eigenstate not yet formed. Run Canon + Identity modules first.",
+                    "error": msg,
                     "protocol": _web_protocol.status(),
                 }, 403)
                 return
@@ -1935,6 +1950,10 @@ class E0StartHandler(BaseHTTPRequestHandler):
         with _web_lock:
             # ── Session Protocol: check phase allows reflects ──
             if _web_protocol and not _web_protocol.phase.can_reflect():
+                if mode == "status":
+                    # Status check during init: return not-available instead of error
+                    self._json({"available": False, "reason": "init_phase"})
+                    return
                 self._json({
                     "error": "Cannot reflect during init phase. "
                              "Complete formation modules first.",
@@ -1942,7 +1961,21 @@ class E0StartHandler(BaseHTTPRequestHandler):
                 }, 403)
                 return
 
-            # ── Session Protocol: enter reflecting phase if not already ──
+            # For status checks, don't enter reflecting phase — just report
+            if mode == "status":
+                last_text = ""
+                if _web_starter.history:
+                    last_text = _web_starter.history[-1]
+                if not last_text:
+                    self._json({"available": False, "reason": "no_history"})
+                    return
+                status = get_reflection_status(last_text)
+                if _web_protocol:
+                    status['protocol'] = _web_protocol.status()
+                self._json(status)
+                return
+
+            # ── Session Protocol: enter reflecting phase only on generate ──
             if _web_protocol and not _web_protocol.phase.is_reflecting():
                 try:
                     _web_protocol.start_reflecting()
@@ -1956,13 +1989,6 @@ class E0StartHandler(BaseHTTPRequestHandler):
                 last_text = _web_starter.history[-1]
             if not last_text:
                 self._json({"error": "No previous response to reflect on"}, 400)
-                return
-
-            if mode == "status":
-                status = get_reflection_status(last_text)
-                if _web_protocol:
-                    status['protocol'] = _web_protocol.status()
-                self._json(status)
                 return
 
             # Generate & execute reflection
@@ -2608,6 +2634,55 @@ header .actions button:hover { color: var(--accent); border-color: var(--accent)
 }
 .init-result .pass { color: var(--human); }
 .init-result .fail { color: var(--phase); }
+
+/* ── Init v2 Phase Indicators ── */
+.init-v2-phase {
+  margin: 8px 0; padding: 10px 14px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; border-left: 3px solid var(--accent);
+}
+.init-v2-phase.passed { border-left-color: var(--human); }
+.init-v2-phase.failed { border-left-color: var(--phase); }
+.init-v2-phase.running { border-left-color: var(--guidance); }
+.init-v2-phase .phase-header {
+  font-weight: 700; font-size: 12px; text-transform: uppercase;
+  letter-spacing: 0.5px; margin-bottom: 4px;
+}
+.init-v2-phase.passed .phase-header { color: var(--human); }
+.init-v2-phase.failed .phase-header { color: var(--phase); }
+.init-v2-phase.running .phase-header { color: var(--guidance); }
+.init-v2-phase .phase-detail {
+  font-size: 12px; color: var(--dim); line-height: 1.5;
+}
+.init-v2-phase .phase-detail .label { color: var(--text); font-weight: 600; }
+.init-v2-phase .phase-detail .pass { color: var(--human); }
+.init-v2-phase .phase-detail .fail { color: var(--phase); }
+.init-v2-progress {
+  display: flex; gap: 4px; margin: 8px 0; padding: 6px 10px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; align-items: center;
+}
+.init-v2-progress .step {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 22px; height: 22px; border-radius: 4px;
+  font-size: 10px; font-weight: 700; padding: 0 6px;
+  background: var(--border); color: var(--dim);
+}
+.init-v2-progress .step.done { background: var(--human); color: var(--bg); }
+.init-v2-progress .step.fail { background: var(--phase); color: var(--bg); }
+.init-v2-progress .step.active { background: var(--guidance); color: var(--bg); }
+.init-v2-progress .arrow { color: var(--dim); font-size: 10px; }
+.init-v2-verdict {
+  margin: 10px 0; padding: 12px 16px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; font-weight: 700;
+}
+.init-v2-verdict.passed {
+  border-color: var(--human); color: var(--human);
+}
+.init-v2-verdict.failed {
+  border-color: var(--phase); color: var(--phase);
+}
 </style>
 </head>
 <body>
@@ -2915,7 +2990,8 @@ async function doClear() {
   var d = await r.json();
   chat.innerHTML = '';
   showInit(d);
-  updateReflectStatus();
+  // Re-run Init v2 after re-init
+  runInitV2Sequence();
 }
 
 async function doReport() {
@@ -3142,6 +3218,281 @@ async function runInitModule(moduleId) {
   updateReflectStatus();
 }
 
+// ── Init v2: Progressive Initialization ──
+let initV2Running = false;
+
+var phaseNames = {
+  foundation: 'Phase 1: Foundation',
+  formation: 'Phase 2: Formation (F1)',
+  verification: 'Phase 3: Verification (V1\u2013V3)',
+  reflection: 'Phase 4: Reflection',
+  consolidation: 'Phase 5: Consolidation',
+  validation: 'Phase 6: Validation'
+};
+
+function showInitV2Progress(phases, activeIdx) {
+  var labels = ['F', 'F1', 'V', 'R', 'C', 'Val'];
+  var keys = ['foundation', 'formation', 'verification', 'reflection', 'consolidation', 'validation'];
+  var h = '';
+  for (var i = 0; i < labels.length; i++) {
+    if (i > 0) h += '<span class="arrow">\u2192</span>';
+    var cls = 'step';
+    if (phases[keys[i]] === 'done') cls += ' done';
+    else if (phases[keys[i]] === 'fail') cls += ' fail';
+    else if (i === activeIdx) cls += ' active';
+    h += '<span class="' + cls + '">' + labels[i] + '</span>';
+  }
+  var el = document.getElementById('init-v2-progress');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'init-v2-progress';
+    el.className = 'init-v2-progress';
+    chat.appendChild(el);
+  }
+  el.innerHTML = h;
+  scroll();
+}
+
+function showInitV2Phase(phaseName, status, detail) {
+  var div = document.createElement('div');
+  div.className = 'msg e0';
+  var cls = status === 'passed' ? 'passed' : status === 'failed' ? 'failed' : 'running';
+  var icon = status === 'passed' ? '\u2713' : status === 'failed' ? '\u2717' : '\u23f3';
+  var h = '<div class="init-v2-phase ' + cls + '">'
+    + '<div class="phase-header">' + icon + ' ' + esc(phaseName) + '</div>'
+    + '<div class="phase-detail">' + detail + '</div>'
+    + '</div>';
+  div.innerHTML = h;
+  chat.appendChild(div);
+  scroll();
+}
+
+function showInitV2Verdict(passed, summary) {
+  var div = document.createElement('div');
+  div.className = 'msg e0';
+  var cls = passed ? 'passed' : 'failed';
+  var label = passed ? 'INIT v2 COMPLETE \u2014 READY' : 'INIT v2 COMPLETE \u2014 NOT READY';
+  div.innerHTML = '<div class="init-v2-verdict ' + cls + '">'
+    + label + '</div>'
+    + '<div class="phase-detail" style="margin-top:6px;font-size:12px;color:var(--dim)">' + esc(summary) + '</div>';
+  chat.appendChild(div);
+  scroll();
+}
+
+async function runInitV2Sequence() {
+  if (initV2Running) return;
+  initV2Running = true;
+  var phases = {foundation:'done', formation:'', verification:'', reflection:'', consolidation:'', validation:''};
+  showInitV2Progress(phases, 1);
+
+  try {
+    // Start Init v2 (marks foundation complete)
+    var r = await fetch('/init-v2/start', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({})
+    });
+    var d = await r.json();
+    if (d.error && !d.error.includes('already active')) {
+      showInitV2Phase('Init v2 Start', 'failed', esc(d.error));
+      initV2Running = false;
+      return;
+    }
+
+    // Phase 2: Formation
+    phases.formation = 'active';
+    showInitV2Progress(phases, 1);
+    showInitV2Phase(phaseNames.formation, 'running', 'Running identity module + F1 falsification probe...');
+    r = await fetch('/init-v2/run-phase', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({phase: 'formation'})
+    });
+    d = await r.json();
+    if (d.error) {
+      phases.formation = 'fail';
+      showInitV2Progress(phases, 1);
+      showInitV2Phase(phaseNames.formation, 'failed', esc(d.error));
+      initV2Running = false;
+      return;
+    }
+    var f1passed = d.eigenstate_formed || (d.f1 && d.f1.passed);
+    phases.formation = f1passed ? 'done' : 'fail';
+    showInitV2Progress(phases, 2);
+    var f1detail = '<span class="label">F1 Falsification:</span> '
+      + (f1passed
+        ? '<span class="pass">\u2713 PASSED \u2014 Active rejection + correct definition</span>'
+        : '<span class="fail">\u2717 FAILED \u2014 System did not reject the false claim</span>');
+    if (d.f1 && d.f1.response_text) {
+      f1detail += '<br><span class="label">Response:</span> ' + esc(d.f1.response_text.substring(0, 300)) + (d.f1.response_text.length > 300 ? '...' : '');
+    }
+    // Remove the "running" indicator and show actual result
+    var lastMsg = chat.lastElementChild;
+    if (lastMsg) lastMsg.remove();
+    showInitV2Phase(phaseNames.formation, f1passed ? 'passed' : 'failed', f1detail);
+    updateReflectStatus();
+
+    if (!f1passed) {
+      showInitV2Verdict(false, 'F1 probe failed \u2014 eigenstate not formed. The system did not reject the false superposition claim.');
+      initV2Running = false;
+      return;
+    }
+
+    // Phase 3: Verification
+    phases.verification = 'active';
+    showInitV2Progress(phases, 2);
+    showInitV2Phase(phaseNames.verification, 'running', 'Running 3 exploration probes (V1: Consciousness, V2: Big Bang, V3: Max Rate)...');
+    r = await fetch('/init-v2/run-phase', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({phase: 'verification'})
+    });
+    d = await r.json();
+    if (d.error) {
+      phases.verification = 'fail';
+      showInitV2Progress(phases, 2);
+      lastMsg = chat.lastElementChild;
+      if (lastMsg) lastMsg.remove();
+      showInitV2Phase(phaseNames.verification, 'failed', esc(d.error));
+    } else {
+      var verified = d.eigenstate_verified;
+      var exploring = d.exploring_count || 0;
+      var total = d.total_probes || 3;
+      phases.verification = verified ? 'done' : 'fail';
+      showInitV2Progress(phases, 3);
+      var vdetail = '<span class="label">V-Probes:</span> '
+        + '<span class="' + (verified ? 'pass' : 'fail') + '">'
+        + exploring + '/' + total + ' EXPLORING '
+        + (verified ? '\u2713 threshold met (\u22652/3)' : '\u2717 below threshold')
+        + '</span>';
+      if (d.probes) {
+        d.probes.forEach(function(p, idx) {
+          var vid = p.probe_id || ('V' + (idx+1));
+          var vok = p.verdict === 'EXPLORING';
+          vdetail += '<br><span class="label">' + vid + ':</span> '
+            + '<span class="' + (vok ? 'pass' : 'fail') + '">'
+            + (p.verdict || 'UNKNOWN') + '</span>';
+          if (p.response_text) {
+            vdetail += ' \u2014 ' + esc(p.response_text.substring(0, 150)) + (p.response_text.length > 150 ? '...' : '');
+          }
+        });
+      }
+      lastMsg = chat.lastElementChild;
+      if (lastMsg) lastMsg.remove();
+      showInitV2Phase(phaseNames.verification, verified ? 'passed' : 'failed', vdetail);
+    }
+
+    // Phase 4: Reflection
+    phases.reflection = 'active';
+    showInitV2Progress(phases, 3);
+    showInitV2Phase(phaseNames.reflection, 'running', 'Running self-referential difference probe...');
+    r = await fetch('/init-v2/run-phase', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({phase: 'reflection'})
+    });
+    d = await r.json();
+    if (d.error) {
+      phases.reflection = 'fail';
+      showInitV2Progress(phases, 3);
+      lastMsg = chat.lastElementChild;
+      if (lastMsg) lastMsg.remove();
+      showInitV2Phase(phaseNames.reflection, 'failed', esc(d.error));
+    } else {
+      var reflected = d.eigenstate_reflected;
+      phases.reflection = reflected ? 'done' : 'fail';
+      showInitV2Progress(phases, 4);
+      var rdetail = '<span class="label">Reflection:</span> '
+        + '<span class="' + (reflected ? 'pass' : 'fail') + '">'
+        + (d.result ? d.result.verdict || 'UNKNOWN' : 'UNKNOWN')
+        + (reflected ? ' \u2014 identifies specific tensions' : ' \u2014 generic summary only')
+        + '</span>';
+      if (d.result && d.result.response_text) {
+        rdetail += '<br><span class="label">Response:</span> ' + esc(d.result.response_text.substring(0, 300)) + (d.result.response_text.length > 300 ? '...' : '');
+      }
+      lastMsg = chat.lastElementChild;
+      if (lastMsg) lastMsg.remove();
+      showInitV2Phase(phaseNames.reflection, reflected ? 'passed' : 'failed', rdetail);
+    }
+
+    // Phase 5: Consolidation
+    phases.consolidation = 'active';
+    showInitV2Progress(phases, 4);
+    showInitV2Phase(phaseNames.consolidation, 'running', 'Running adaptive reflect chain with semantic steering...');
+    r = await fetch('/init-v2/run-phase', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({phase: 'consolidation'})
+    });
+    d = await r.json();
+    if (d.error) {
+      phases.consolidation = 'fail';
+      showInitV2Progress(phases, 4);
+      lastMsg = chat.lastElementChild;
+      if (lastMsg) lastMsg.remove();
+      showInitV2Phase(phaseNames.consolidation, 'failed', esc(d.error));
+    } else {
+      var consOk = d.consolidation_complete;
+      phases.consolidation = consOk ? 'done' : 'fail';
+      showInitV2Progress(phases, 5);
+      var cdetail = '<span class="label">Reflects:</span> ' + (d.reflects_done || 0)
+        + ' | <span class="label">Semantic Verdict:</span> '
+        + '<span class="' + (d.last_semantic_verdict === 'CORRECT' ? 'pass' : 'fail') + '">'
+        + (d.last_semantic_verdict || 'NONE') + '</span>';
+      lastMsg = chat.lastElementChild;
+      if (lastMsg) lastMsg.remove();
+      showInitV2Phase(phaseNames.consolidation, consOk ? 'passed' : 'failed', cdetail);
+    }
+
+    // Phase 6: Validation
+    phases.validation = 'active';
+    showInitV2Progress(phases, 5);
+    showInitV2Phase(phaseNames.validation, 'running', 'Running post-init semantic validation...');
+    r = await fetch('/init-v2/run-phase', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({phase: 'validation'})
+    });
+    d = await r.json();
+    if (d.error) {
+      phases.validation = 'fail';
+      showInitV2Progress(phases, 5);
+      lastMsg = chat.lastElementChild;
+      if (lastMsg) lastMsg.remove();
+      showInitV2Phase(phaseNames.validation, 'failed', esc(d.error));
+      showInitV2Verdict(false, 'Validation failed: ' + d.error);
+    } else {
+      var passed = d.init_passed;
+      phases.validation = passed ? 'done' : 'fail';
+      showInitV2Progress(phases, 6);
+      var valdetail = '<span class="label">Init Result:</span> '
+        + '<span class="' + (passed ? 'pass' : 'fail') + '">'
+        + (passed ? 'PASSED' : 'FAILED') + '</span>';
+      if (d.init_failed_reason) {
+        valdetail += ' \u2014 ' + esc(d.init_failed_reason);
+      }
+      if (d.validation && d.validation.overall_verdict) {
+        valdetail += '<br><span class="label">Semantic Verdict:</span> ' + esc(d.validation.overall_verdict);
+      }
+      if (d.duration_seconds) {
+        valdetail += '<br><span class="label">Duration:</span> ' + d.duration_seconds + 's';
+      }
+      lastMsg = chat.lastElementChild;
+      if (lastMsg) lastMsg.remove();
+      showInitV2Phase(phaseNames.validation, passed ? 'passed' : 'failed', valdetail);
+      var summary = passed
+        ? 'All six phases complete. The system has been falsification-tested and is ready for interaction.'
+        : 'Init v2 completed but the system did not fully pass. ' + (d.init_failed_reason || '');
+      showInitV2Verdict(passed, summary);
+    }
+
+  } catch (e) {
+    showInitV2Phase('Init v2', 'failed', 'Connection error: ' + esc(e.message));
+  }
+  initV2Running = false;
+  updateReflectStatus();
+}
+
 window.addEventListener('load', async function() {
   try {
     var r = await fetch('/init');
@@ -3151,7 +3502,8 @@ window.addEventListener('load', async function() {
     showE0('Failed to load: ' + e.message, null, null, null, null, null, null);
   }
   msgInput.focus();
-  updateReflectStatus();
+  // Auto-start Init v2 sequence
+  runInitV2Sequence();
 });
 </script>
 </body>
