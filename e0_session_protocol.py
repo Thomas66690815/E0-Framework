@@ -165,13 +165,22 @@ class EigenstateTracker:
     def is_external_input_allowed(self) -> bool:
         """Whether external (user) input is allowed.
 
-        Returns False during the protected formation phase.
-        Returns True once eigenstate_formed is True or if
-        formation hasn't started yet (pre-init state).
+        Returns False only while formation is actively running
+        (F1 not yet attempted).  Returns True once eigenstate_formed,
+        or once F1 has been attempted (regardless of outcome),
+        or if formation hasn't started yet (pre-init state).
         """
         if self.formation_start_time is None:
             return True  # Pre-init: allow input (legacy behavior)
-        return self.eigenstate_formed
+        if self.eigenstate_formed:
+            return True  # F1 passed — eigenstate formed
+        # Init v2: allow chat once F1 has been attempted (pass or fail).
+        # The protection only blocks during ACTIVE formation, not after
+        # a failed attempt — the user must be able to chat or retry.
+        if (self._init_v2_state is not None
+                and self._init_v2_state.f1_result is not None):
+            return True
+        return False
 
     def queue_input(self, message: str):
         """Queue an external input received during formation."""
