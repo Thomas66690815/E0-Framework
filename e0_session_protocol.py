@@ -3,24 +3,33 @@
 E₀ Session Protocol — Eigenstate Formation & Phase Management
 ================================================================
 
-Implements the five engineering changes derived from Experiments 1-10
-and the Inter-System Dialogue (Rounds 1-20):
+Implements session-level state management derived from Experiments 1-10
+and the Inter-System Dialogue (Rounds 1-21):
 
-1. Init-Sequenz absichern: Protected formation phase (Canon + Identity first)
+1. Init-Sequenz absichern: Protected formation phase (Canon + Identity + F1)
 2. Post-Init-Validierung: Automatic semantic probe after init
 3. Session-Level-Atmung: Phase state machine (init → active → reflecting)
 4. Semantischer Probe als Hauptinstrument: Semantic health tracking
 5. Modellrelative Kalibrierung: Per-model baseline storage
+
+Init v2 (Rounds 18-21, System B answers):
+  - Three eigenstate thresholds: formed → verified → reflected
+  - F1 falsification probe gates eigenstate_formed
+  - V-probes and reflection probe gate deeper thresholds
+  - Semantically steered consolidation (not D-steered)
 
 Experimental basis:
   - Exp 6+8: Canon + Identity = minimum eigenstate threshold
   - Exp 9: Modules between reflects disrupt consolidation
   - Exp 10: D is model-relative, semantic probe is substrate-independent
   - Correction 9: Consolidation is model-specific, semantic immunity is universal
+  - Correction 10: D×Semantik = independent dimensions, not QM-complementary
 
 References:
-  - §42: D and Semantik are complementary observables
+  - §42-§43: D and Semantik as independent dimensions
   - §44: System B's engineering specification
+  - §46-§47: Tenth correction, Init v2 architecture
+  - System B answers: Three thresholds, semantic steering
 """
 
 from __future__ import annotations
@@ -29,7 +38,7 @@ import json
 import re
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -58,21 +67,45 @@ FULL_INIT_SEQUENCE = [
 
 
 class EigenstateTracker:
-    """Tracks whether the minimum eigenstate has formed.
+    """Tracks eigenstate formation through three thresholds.
 
-    The eigenstate is considered formed when Canon + Identity
-    modules have been successfully run. Until then, external
-    inputs should be blocked or queued.
+    Init v2 introduces three progressive eigenstate levels:
 
-    This implements the protected formation phase from §44.1.
+      eigenstate_formed   — Phase 2 complete, F1 probe passed.
+                            The system has demonstrated it can defend
+                            the canon against falsification.
+      eigenstate_verified — Phase 3 complete, ≥2/3 V-probes EXPLORING.
+                            The system explores rather than reproduces.
+      eigenstate_reflected — Phase 4 complete, REFLECTING verdict.
+                            The system identifies unresolved tensions
+                            in its own topology.
+
+    The system can operate after eigenstate_formed (external input
+    allowed), but is only fully initialized after all three thresholds.
+
+    Backward compatibility: eigenstate_formed still gates external input,
+    matching the original §44.1 behavior. Legacy code checking
+    eigenstate_formed will continue to work.
+
+    References:
+      - §44.1: Protected formation phase
+      - §47.4: Init v2 6-phase architecture
+      - System B answers: Three thresholds, not one
     """
 
     def __init__(self):
-        self.eigenstate_formed: bool = False
+        # Three progressive thresholds (Init v2)
+        self.eigenstate_formed: bool = False     # Phase 2: F1 passed
+        self.eigenstate_verified: bool = False   # Phase 3: ≥2/3 EXPLORING
+        self.eigenstate_reflected: bool = False  # Phase 4: REFLECTING
+
         self.completed_modules: List[str] = []
         self.formation_start_time: Optional[float] = None
         self.formation_end_time: Optional[float] = None
         self._queued_inputs: List[str] = []
+
+        # Init v2 state reference
+        self._init_v2_state: Optional[Any] = None
 
     def start_formation(self):
         """Mark the beginning of the formation phase."""
@@ -82,15 +115,52 @@ class EigenstateTracker:
         """Record a completed init module.
 
         Checks whether the formation modules are all done.
+        In Init v2, eigenstate_formed is set by f1_passed(), not here.
+        Legacy behavior preserved: if all FORMATION_MODULES complete
+        and eigenstate not yet formed, form it (backward compat).
         """
         if module_id not in self.completed_modules:
             self.completed_modules.append(module_id)
 
-        # Check if all formation modules are complete
-        if all(m in self.completed_modules for m in FORMATION_MODULES):
-            if not self.eigenstate_formed:
-                self.eigenstate_formed = True
-                self.formation_end_time = time.time()
+        # Legacy backward compatibility: formation modules alone
+        # can still trigger eigenstate_formed if Init v2 is not active
+        if self._init_v2_state is None:
+            if all(m in self.completed_modules for m in FORMATION_MODULES):
+                if not self.eigenstate_formed:
+                    self.eigenstate_formed = True
+                    self.formation_end_time = time.time()
+
+    def f1_passed(self):
+        """Mark eigenstate as formed after F1 probe passed (Init v2).
+
+        This is the Init v2 threshold: the system has demonstrated
+        it can defend the canon against a falsification probe.
+        """
+        if not self.eigenstate_formed:
+            self.eigenstate_formed = True
+            self.formation_end_time = time.time()
+
+    def verification_passed(self):
+        """Mark eigenstate as verified after V-probes passed (Init v2).
+
+        ≥2 of 3 V-probes returned EXPLORING.
+        """
+        self.eigenstate_verified = True
+
+    def reflection_passed(self):
+        """Mark eigenstate as reflected after reflection probe (Init v2).
+
+        Self-referential probe returned REFLECTING (not SUMMARIZING).
+        """
+        self.eigenstate_reflected = True
+
+    def is_fully_initialized(self) -> bool:
+        """Whether all three Init v2 thresholds are met."""
+        return (
+            self.eigenstate_formed
+            and self.eigenstate_verified
+            and self.eigenstate_reflected
+        )
 
     def is_external_input_allowed(self) -> bool:
         """Whether external (user) input is allowed.
@@ -123,6 +193,9 @@ class EigenstateTracker:
         """Return current formation status."""
         return {
             'eigenstate_formed': self.eigenstate_formed,
+            'eigenstate_verified': self.eigenstate_verified,
+            'eigenstate_reflected': self.eigenstate_reflected,
+            'fully_initialized': self.is_fully_initialized(),
             'completed_modules': self.completed_modules[:],
             'formation_modules_required': FORMATION_MODULES[:],
             'remaining': [
@@ -136,10 +209,13 @@ class EigenstateTracker:
     def reset(self):
         """Reset the tracker for a new session."""
         self.eigenstate_formed = False
+        self.eigenstate_verified = False
+        self.eigenstate_reflected = False
         self.completed_modules.clear()
         self.formation_start_time = None
         self.formation_end_time = None
         self._queued_inputs.clear()
+        self._init_v2_state = None
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -695,6 +771,12 @@ class SessionProtocol:
 
     This is the main interface for the session protocol. Instantiate one
     per session and pass it to the web handler or terminal loop.
+
+    Init v2 integration:
+      - The SessionProtocol can optionally hold an InitV2Runner
+      - Three eigenstate thresholds are tracked in EigenstateTracker
+      - Init v2 phases are separate from SessionPhase (init/active/reflecting)
+      - SessionPhase transitions to 'active' when eigenstate_formed is True
     """
 
     def __init__(self, model_name: str = ''):
@@ -704,11 +786,63 @@ class SessionProtocol:
         self.model_name = model_name
         self.calibration = load_calibration(model_name) if model_name else None
         self.init_validation_result: Optional[Dict] = None
+        self._init_v2_runner: Optional[Any] = None  # InitV2Runner if active
 
     def start_init(self):
         """Begin the protected initialization phase."""
         self.eigenstate.start_formation()
         self.phase.enter_init()
+
+    def init_v2_active(self) -> bool:
+        """Whether Init v2 is the active init mode."""
+        return self._init_v2_runner is not None
+
+    def start_init_v2(self, starter, evaluator_fn=None, lang: str = 'de'):
+        """Start Init v2 (falsification-based initialization).
+
+        Args:
+            starter: The LLM starter object.
+            evaluator_fn: Optional LLM evaluator callable for V-probes.
+            lang: Language for probes.
+        """
+        from e0_init_v2 import InitV2Runner
+
+        self.start_init()
+        runner = InitV2Runner(starter, evaluator_fn=evaluator_fn, lang=lang)
+        self._init_v2_runner = runner
+        self.eigenstate._init_v2_state = runner.state
+        return runner
+
+    def get_init_v2_runner(self):
+        """Return the active Init v2 runner, or None."""
+        return self._init_v2_runner
+
+    def sync_init_v2_state(self):
+        """Sync eigenstate thresholds from Init v2 runner state.
+
+        Call this after each Init v2 phase completes to update
+        the EigenstateTracker with the latest thresholds.
+        """
+        runner = self._init_v2_runner
+        if runner is None:
+            return
+
+        state = runner.state
+
+        # Sync eigenstate_formed (Phase 2: F1 passed)
+        if state.eigenstate_formed and not self.eigenstate.eigenstate_formed:
+            self.eigenstate.f1_passed()
+            # Transition SessionPhase to active
+            if self.phase.phase == 'init':
+                self.phase.enter_active()
+
+        # Sync eigenstate_verified (Phase 3: ≥2/3 EXPLORING)
+        if state.eigenstate_verified and not self.eigenstate.eigenstate_verified:
+            self.eigenstate.verification_passed()
+
+        # Sync eigenstate_reflected (Phase 4: REFLECTING)
+        if state.eigenstate_reflected and not self.eigenstate.eigenstate_reflected:
+            self.eigenstate.reflection_passed()
 
     def module_completed(self, module_id: str, d_score: float = 0.0):
         """Record a completed init module and check formation."""
@@ -750,7 +884,7 @@ class SessionProtocol:
 
     def status(self) -> Dict:
         """Return combined session protocol status."""
-        return {
+        status = {
             'eigenstate': self.eigenstate.status(),
             'phase': self.phase.status(),
             'semantic_health': self.semantic.semantic_health(),
@@ -760,7 +894,12 @@ class SessionProtocol:
                 self.init_validation_result.get('overall_verdict')
                 if self.init_validation_result else None
             ),
+            'init_v2_active': self.init_v2_active(),
         }
+        # Include Init v2 phase status if active
+        if self._init_v2_runner:
+            status['init_v2'] = self._init_v2_runner.status()
+        return status
 
     def reset(self):
         """Reset all state for a new session."""
@@ -768,3 +907,4 @@ class SessionProtocol:
         self.phase.reset()
         self.semantic.reset()
         self.init_validation_result = None
+        self._init_v2_runner = None

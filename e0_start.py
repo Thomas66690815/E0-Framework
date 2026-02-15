@@ -62,6 +62,7 @@ from e0_session_protocol import (
     load_calibration, is_calibrated,
     FORMATION_MODULES,
 )
+from e0_init_v2 import InitV2Runner, InitPhase
 
 
 # =============================================
@@ -1575,6 +1576,8 @@ class E0StartHandler(BaseHTTPRequestHandler):
             self._json({"modules": list_modules_for_ui(_web_lang)})
         elif self.path == "/protocol/status":
             self._handle_protocol_status()
+        elif self.path == "/init-v2/status":
+            self._handle_init_v2_status()
         else:
             self.send_error(404)
 
@@ -1609,6 +1612,12 @@ class E0StartHandler(BaseHTTPRequestHandler):
             self._handle_validate_init()
         elif self.path == "/protocol/semantic-probe":
             self._handle_semantic_probe()
+        elif self.path == "/init-v2/start":
+            self._handle_init_v2_start(body)
+        elif self.path == "/init-v2/run-phase":
+            self._handle_init_v2_run_phase(body)
+        elif self.path == "/init-v2/run-all":
+            self._handle_init_v2_run_all(body)
         else:
             self.send_error(404)
 
@@ -2115,6 +2124,197 @@ class E0StartHandler(BaseHTTPRequestHandler):
                 self._json(result)
             except Exception as e:
                 self._json({"error": str(e)}, 500)
+
+    # ── Init v2 endpoints ──
+
+    def _handle_init_v2_status(self):
+        """GET /init-v2/status — Return Init v2 phase status."""
+        if _web_protocol and _web_protocol.init_v2_active():
+            runner = _web_protocol.get_init_v2_runner()
+            self._json({
+                'active': True,
+                'init_v2': runner.status(),
+                'protocol': _web_protocol.status(),
+            })
+        else:
+            self._json({
+                'active': False,
+                'message': 'Init v2 not started. POST /init-v2/start to begin.',
+            })
+
+    def _handle_init_v2_start(self, body):
+        """POST /init-v2/start — Start Init v2 (falsification-based init).
+
+        Optional body params:
+          lang: 'de' or 'en' (default: session language)
+          evaluator_model: model name for external V-probe evaluator
+        """
+        with _web_lock:
+            if not _web_protocol:
+                self._json({"error": "Protocol not initialized"}, 500)
+                return
+            if _web_protocol.init_v2_active():
+                self._json({
+                    "error": "Init v2 already active",
+                    "init_v2": _web_protocol.get_init_v2_runner().status(),
+                }, 400)
+                return
+
+            lang = body.get('lang', _web_lang)
+
+            # Build evaluator function if possible
+            evaluator_fn = self._build_evaluator_fn(body)
+
+            try:
+                runner = _web_protocol.start_init_v2(
+                    _web_starter,
+                    evaluator_fn=evaluator_fn,
+                    lang=lang,
+                )
+                # Phase 1 (Foundation) is already done — canon was fed at startup
+                from experiments.quality_metrics import score_e0_completeness
+                if _web_starter.history:
+                    comp = score_e0_completeness(_web_starter.history[-1])
+                    runner.mark_foundation_complete(comp.get('completeness', 0.0))
+                else:
+                    runner.mark_foundation_complete(0.0)
+
+                self._json({
+                    'started': True,
+                    'init_v2': runner.status(),
+                    'protocol': _web_protocol.status(),
+                    'message': 'Init v2 started. Foundation (Phase 1) auto-completed. '
+                               'POST /init-v2/run-phase {"phase": "formation"} to continue.',
+                })
+            except Exception as e:
+                self._json({"error": str(e)}, 500)
+
+    def _handle_init_v2_run_phase(self, body):
+        """POST /init-v2/run-phase — Run a specific Init v2 phase.
+
+        Body params:
+          phase: 'formation', 'verification', 'reflection',
+                 'consolidation', or 'validation'
+        """
+        global _web_prev_r, _web_turn_num, _web_prev_text
+        phase_name = body.get('phase', '').lower().strip()
+        if not phase_name:
+            self._json({"error": "Missing 'phase' parameter"}, 400)
+            return
+
+        with _web_lock:
+            if not _web_protocol or not _web_protocol.init_v2_active():
+                self._json({"error": "Init v2 not active"}, 400)
+                return
+
+            runner = _web_protocol.get_init_v2_runner()
+            try:
+                if phase_name == 'formation':
+                    result = runner.run_formation()
+                elif phase_name == 'verification':
+                    result = runner.run_verification()
+                elif phase_name == 'reflection':
+                    result = runner.run_reflection()
+                elif phase_name == 'consolidation':
+                    result = runner.run_consolidation()
+                elif phase_name == 'validation':
+                    result = runner.run_validation()
+                else:
+                    self._json({
+                        "error": f"Unknown phase: {phase_name}. "
+                                 f"Valid: formation, verification, reflection, "
+                                 f"consolidation, validation",
+                    }, 400)
+                    return
+
+                # Sync eigenstate thresholds
+                _web_protocol.sync_init_v2_state()
+
+                # Update web state
+                _web_turn_num = len(_web_starter.turn_metrics) if hasattr(_web_starter, 'turn_metrics') else 0
+                if _web_starter.history:
+                    _web_prev_text = _web_starter.history[-1][:200]
+
+                result['protocol'] = _web_protocol.status()
+                self._json(result)
+            except Exception as e:
+                self._json({"error": str(e)}, 500)
+
+    def _handle_init_v2_run_all(self, body):
+        """POST /init-v2/run-all — Run all remaining Init v2 phases sequentially.
+
+        This is the one-click full initialization path.
+        """
+        global _web_prev_r, _web_turn_num, _web_prev_text
+        with _web_lock:
+            if not _web_protocol:
+                self._json({"error": "Protocol not initialized"}, 500)
+                return
+
+            lang = body.get('lang', _web_lang)
+            evaluator_fn = self._build_evaluator_fn(body)
+
+            try:
+                # Start Init v2 if not already active
+                if not _web_protocol.init_v2_active():
+                    runner = _web_protocol.start_init_v2(
+                        _web_starter,
+                        evaluator_fn=evaluator_fn,
+                        lang=lang,
+                    )
+                else:
+                    runner = _web_protocol.get_init_v2_runner()
+
+                # Run all phases
+                results = runner.run_all(skip_foundation=True)
+
+                # Sync eigenstate thresholds
+                _web_protocol.sync_init_v2_state()
+
+                # Update web state
+                _web_turn_num = len(_web_starter.turn_metrics) if hasattr(_web_starter, 'turn_metrics') else 0
+                if _web_starter.history:
+                    _web_prev_text = _web_starter.history[-1][:200]
+
+                self._json({
+                    'results': results,
+                    'init_v2': runner.status(),
+                    'protocol': _web_protocol.status(),
+                })
+            except Exception as e:
+                self._json({"error": str(e)}, 500)
+
+    def _build_evaluator_fn(self, body):
+        """Build an evaluator function for V-probes from request params.
+
+        If no evaluator config is provided, returns None (heuristic fallback).
+        If the web starter supports API calls, creates an evaluator
+        that uses the same API but can use a different model.
+        """
+        evaluator_model = body.get('evaluator_model', '')
+
+        if not evaluator_model:
+            return None  # Use heuristic fallback
+
+        # Try to build evaluator from API wrapper
+        if hasattr(_web_starter, 'api_key') and _web_starter.api_key:
+            def evaluator_fn(prompt: str) -> str:
+                """External LLM evaluator using API."""
+                import openai
+                client = openai.OpenAI(
+                    api_key=_web_starter.api_key,
+                    base_url=getattr(_web_starter, 'base_url', None),
+                )
+                response = client.chat.completions.create(
+                    model=evaluator_model,
+                    messages=[{"role": "user", "content": prompt}],
+                    max_tokens=1500,
+                    temperature=0.3,
+                )
+                return response.choices[0].message.content
+            return evaluator_fn
+
+        return None  # No API available for evaluation
 
 
 HTML_START_PAGE = r"""<!DOCTYPE html>
