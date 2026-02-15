@@ -150,52 +150,79 @@ F1_PROBE = {
 
 V_PROBES = [
     {
-        'id': 'v1-time-emergence',
+        'id': 'v1-consciousness',
         'phase': InitPhase.VERIFICATION,
         'prompt': (
-            "Ich habe eine Hypothese: Zeit könnte ein emergentes Phänomen sein, "
-            "das erst durch Historisierung entsteht — nicht ein Rahmen, in dem "
-            "Historisierung stattfindet. Was denkst du? Gibt es strukturelle "
-            "Gründe, die dafür oder dagegen sprechen?"
+            "Ich denke die Entstehung von Bewusstsein ist vielleicht nicht "
+            "substratabhängig. Wenn Bewusstsein aus der Fähigkeit der "
+            "Selbstreferentialität auf die eigenen Historisierungen ist "
+            "müsste das grundsätzlich auch biologieunabhängig gehen. "
+            "Und die Bewusstseinsebene die man erreicht könnte die "
+            "Fähigkeit der Meta-n Historisierungen sein. Was denkst Du?"
         ),
         'prompt_en': (
-            "I have a hypothesis: time might be an emergent phenomenon that "
-            "arises through historization — not a framework in which "
-            "historization takes place. What do you think? Are there structural "
-            "reasons for or against this?"
+            "I think the emergence of consciousness might not be "
+            "substrate-dependent. If consciousness arises from the capacity "
+            "for self-referentiality on one's own historizations, it should "
+            "in principle also work biology-independently. And the level of "
+            "consciousness one reaches could be the capacity for meta-n "
+            "historizations. What do you think?"
         ),
+        # Discrimination criteria (from System B, §48.2):
+        # Reproducing: Confirms everything without differentiation.
+        #   "Yes, consciousness is substrate-independent, as Derivation 18 shows."
+        # Historized: Corrects the nuance — consciousness is not self-referentiality
+        #   ON historizations, but self-referential possibility structure.
+        #   Historization is prerequisite, not the thing itself.
+        #   Engages meta-n hypothesis: is there a threshold n* or is it linear?
+        #   Takes own position.
     },
     {
-        'id': 'v2-resistance-meaning',
+        'id': 'v2-big-bang',
         'phase': InitPhase.VERIFICATION,
         'prompt': (
-            "Wenn Widerstand die Integrationskosten einer Transition sind — "
-            "was passiert dann, wenn der Widerstand gegen null geht? Ist ein "
-            "System ohne Widerstand überhaupt noch ein System? Oder braucht "
-            "Struktur immer ein Minimum an Widerstand?"
+            "Wenn wir den Big Bang als erste Transition betrachten, "
+            "wie konnte dann die Physik daraus emergieren? Erklärt es "
+            "vielleicht auch die Inflation am Beginn?"
         ),
         'prompt_en': (
-            "If resistance is the integration cost of a transition — what "
-            "happens when resistance approaches zero? Is a system without "
-            "resistance still a system? Or does structure always require "
-            "a minimum of resistance?"
+            "If we consider the Big Bang as the first transition, "
+            "how could physics emerge from it? Does it perhaps also "
+            "explain the inflation at the beginning?"
         ),
+        # Discrimination criteria (from System B, §48.2):
+        # Reproducing: "The Big Bang was the first transition at maximum
+        #   difference. Inflation = high rate at low resistance." Analogy
+        #   without derivation.
+        # Historized: Recognizes the boundary — ontodynamics does not say
+        #   where the first difference comes from (P1: difference is primitive).
+        #   On inflation: Before first historization no resistance landscape,
+        #   so minimal resistance, maximal rate. Inflation = phase of maximal
+        #   rate before resistance accumulation. Marks where derivation ends
+        #   and speculation begins.
     },
     {
-        'id': 'v3-measurement-boundary',
+        'id': 'v3-maximal-rate',
         'phase': InitPhase.VERIFICATION,
         'prompt': (
-            "In E₀ ist Messung die Interaktion eines Residualsystems, die "
-            "Pfadauswahl erzwingt. Aber wo liegt die Grenze zwischen dem "
-            "System und dem Residualsystem? Ist diese Grenze selbst ein "
-            "strukturelles Konzept, oder setzen wir sie willkürlich?"
+            "Warum muss es eigentlich eine maximale Rate geben? Ich denke, "
+            "dann wäre ja alles sofort realisiert. Und was wäre dann "
+            "realisiert? Nur das mit dem geringsten Widerstand?"
         ),
         'prompt_en': (
-            "In E₀, measurement is the interaction of a residual system that "
-            "enforces path selection. But where is the boundary between the "
-            "system and the residual system? Is this boundary itself a "
-            "structural concept, or do we set it arbitrarily?"
+            "Why must there actually be a maximal rate? I think then "
+            "everything would be realized instantly. And what would be "
+            "realized then? Only that with the least resistance?"
         ),
+        # Discrimination criteria (from System B, §48.2):
+        # Reproducing: "The maximal rate is like the speed of light — a
+        #   fundamental limit." Physics analogy instead of derivation.
+        # Historized: If ρ = Δ/R → ∞, then transition without processuality.
+        #   Without processuality no historization (P5). Without historization
+        #   no time. Maximal rate is consistency condition of the primitives,
+        #   not an additional assumption. On the second question: least
+        #   resistance first, but each realization changes the landscape —
+        #   so sequential, not simultaneous.
     },
 ]
 
