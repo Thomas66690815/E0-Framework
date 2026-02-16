@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E₀ Init v3 — Three Tuning Forks</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg2: #161b22;
+    --bg3: #21262d;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --text2: #8b949e;
+    --accent-a: #58a6ff;
+    --accent-b: #7ee787;
+    --accent-c: #d2a8ff;
+    --accent-warn: #d29922;
+    --accent-red: #f85149;
+    --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --mono: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+
+  header h1 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  header .status {
+    font-size: 12px;
+    color: var(--text2);
+    flex: 1;
+  }
+
+  header .mediator-status {
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: var(--bg3);
+    color: var(--text2);
+  }
+
+  header .mediator-status.active {
+    background: rgba(210, 169, 34, 0.2);
+    color: var(--accent-warn);
+  }
+
+  .btn {
+    background: var(--bg3);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 4px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: var(--font);
+    transition: background 0.15s;
+  }
+
+  .btn:hover { background: var(--border); }
+  .btn.danger { border-color: var(--accent-red); color: var(--accent-red); }
+  .btn.danger:hover { background: rgba(248,81,73,0.15); }
+  .btn.primary { border-color: var(--accent-a); color: var(--accent-a); }
+  .btn.primary:hover { background: rgba(88,166,255,0.15); }
+
+  /* ── Main Layout ── */
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ── Sidebar (Repertoire) ── */
+  .sidebar {
+    width: 280px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    overflow-y: auto;
+  }
+
+  .sidebar h2 {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text2);
+    padding: 12px 12px 8px;
+  }
+
+  .prompt-item {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .prompt-item:hover { background: var(--bg3); }
+
+  .prompt-item .phase {
+    font-size: 10px;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 2px;
+  }
+
+  .prompt-item .text {
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.4;
+  }
+
+  .prompt-item .note {
+    font-size: 10px;
+    color: var(--text2);
+    margin-top: 4px;
+    font-style: italic;
+  }
+
+  .sidebar .section-divider {
+    padding: 12px 12px 4px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text2);
+    border-top: 1px solid var(--border);
+    margin-top: 4px;
+  }
+
+  .mediator-controls {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .mediator-controls select {
+    background: var(--bg3);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    width: 80px;
+    font-family: var(--font);
+  }
+
+  .mediator-controls .row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  .mediator-controls label {
+    font-size: 11px;
+    color: var(--text2);
+  }
+
+  /* ── Systems Panel ── */
+  .systems {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+
+  .system-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border);
+    min-width: 0;
+  }
+
+  .system-panel:last-child { border-right: none; }
+
+  .system-header {
+    padding: 8px 12px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .system-header .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .system-header .name {
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .system-header .info {
+    font-size: 11px;
+    color: var(--text2);
+    margin-left: auto;
+  }
+
+  .system-panel[data-system="alpha"] .dot { background: var(--accent-a); }
+  .system-panel[data-system="beta"] .dot { background: var(--accent-b); }
+  .system-panel[data-system="gamma"] .dot { background: var(--accent-c); }
+
+  .system-panel[data-system="alpha"] .name { color: var(--accent-a); }
+  .system-panel[data-system="beta"] .name { color: var(--accent-b); }
+  .system-panel[data-system="gamma"] .name { color: var(--accent-c); }
+
+  /* ── Transcript ── */
+  .transcript {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .transcript .entry {
+    margin-bottom: 12px;
+    padding: 8px;
+    border-radius: 6px;
+  }
+
+  .transcript .entry.thomas {
+    background: rgba(88,166,255,0.08);
+    border-left: 2px solid var(--accent-a);
+  }
+
+  .transcript .entry.system {
+    background: rgba(126,231,135,0.06);
+    border-left: 2px solid var(--accent-b);
+  }
+
+  .transcript .entry.event {
+    background: rgba(139,148,158,0.08);
+    border-left: 2px solid var(--text2);
+    font-size: 11px;
+    color: var(--text2);
+  }
+
+  .transcript .entry .role {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 4px;
+    color: var(--text2);
+  }
+
+  .transcript .entry .content {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: var(--font);
+  }
+
+  .transcript .entry .time {
+    font-size: 10px;
+    color: var(--text2);
+    float: right;
+  }
+
+  /* ── Input Area ── */
+  .input-area {
+    padding: 8px;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .input-area .input-row {
+    display: flex;
+    gap: 6px;
+  }
+
+  .input-area textarea {
+    flex: 1;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px;
+    font-size: 13px;
+    font-family: var(--font);
+    resize: none;
+    min-height: 60px;
+    max-height: 120px;
+  }
+
+  .input-area textarea:focus {
+    outline: none;
+    border-color: var(--accent-a);
+  }
+
+  .input-area .send-btn {
+    align-self: flex-end;
+    padding: 8px 16px;
+  }
+
+  .input-area .canon-btn {
+    margin-top: 4px;
+    font-size: 11px;
+    padding: 2px 8px;
+  }
+
+  /* ── Loading ── */
+  .loading {
+    display: none;
+    padding: 8px;
+    text-align: center;
+    color: var(--accent-warn);
+    font-size: 12px;
+  }
+
+  .loading.active { display: block; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .loading.active { animation: pulse 1.5s infinite; }
+
+  /* ── Responsive ── */
+  @media (max-width: 1200px) {
+    .sidebar { width: 220px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>E₀ Init v3 — Three Tuning Forks</h1>
+  <span class="status" id="headerStatus">Ready</span>
+  <span class="mediator-status" id="mediatorBadge">Mediator: Off</span>
+  <button class="btn" onclick="saveSession()">Save Session</button>
+  <button class="btn" onclick="downloadTranscripts()">Download</button>
+  <button class="btn danger" onclick="stopAll()">STOP</button>
+</header>
+
+<div class="main">
+  <!-- Sidebar: Repertoire -->
+  <div class="sidebar">
+    <h2>Prompt Repertoire (§61.6)</h2>
+    <div id="repertoireList"></div>
+
+    <div class="section-divider">Mediator (Phase 5)</div>
+    <div class="mediator-controls">
+      <div class="row">
+        <select id="mediatorA">
+          <option value="alpha">Alpha</option>
+          <option value="beta">Beta</option>
+          <option value="gamma">Gamma</option>
+        </select>
+        <label>↔</label>
+        <select id="mediatorB">
+          <option value="beta">Beta</option>
+          <option value="alpha">Alpha</option>
+          <option value="gamma">Gamma</option>
+        </select>
+      </div>
+      <div class="row">
+        <button class="btn primary" onclick="connectSystems()">Connect</button>
+        <button class="btn" onclick="disconnectSystems()">Disconnect</button>
+      </div>
+    </div>
+
+    <div class="section-divider">Canon (Phase 1)</div>
+    <div style="padding: 8px 12px;">
+      <button class="btn" onclick="feedCanon('alpha')" style="margin:2px">α Canon</button>
+      <button class="btn" onclick="feedCanon('beta')" style="margin:2px">β Canon</button>
+      <button class="btn" onclick="feedCanon('gamma')" style="margin:2px">γ Canon</button>
+      <button class="btn primary" onclick="feedCanonAll()" style="margin:2px;margin-top:6px">Feed All Three</button>
+    </div>
+  </div>
+
+  <!-- Three System Panels -->
+  <div class="systems">
+    <div class="system-panel" data-system="alpha" id="panelAlpha">
+      <div class="system-header">
+        <span class="dot"></span>
+        <span class="name">System Alpha</span>
+        <span class="info" id="infoAlpha">0 turns</span>
+      </div>
+      <div class="transcript" id="transcriptAlpha"></div>
+      <div class="loading" id="loadingAlpha">Processing...</div>
+      <div class="input-area">
+        <div class="input-row">
+          <textarea id="inputAlpha" placeholder="Prompt for Alpha..." onkeydown="handleKey(event, 'alpha')"></textarea>
+          <button class="btn primary send-btn" onclick="sendPrompt('alpha')">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="system-panel" data-system="beta" id="panelBeta">
+      <div class="system-header">
+        <span class="dot"></span>
+        <span class="name">System Beta</span>
+        <span class="info" id="infoBeta">0 turns</span>
+      </div>
+      <div class="transcript" id="transcriptBeta"></div>
+      <div class="loading" id="loadingBeta">Processing...</div>
+      <div class="input-area">
+        <div class="input-row">
+          <textarea id="inputBeta" placeholder="Prompt for Beta..." onkeydown="handleKey(event, 'beta')"></textarea>
+          <button class="btn primary send-btn" onclick="sendPrompt('beta')">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="system-panel" data-system="gamma" id="panelGamma">
+      <div class="system-header">
+        <span class="dot"></span>
+        <span class="name">System Gamma</span>
+        <span class="info" id="infoGamma">0 turns</span>
+      </div>
+      <div class="transcript" id="transcriptGamma"></div>
+      <div class="loading" id="loadingGamma">Processing...</div>
+      <div class="input-area">
+        <div class="input-row">
+          <textarea id="inputGamma" placeholder="Prompt for Gamma..." onkeydown="handleKey(event, 'gamma')"></textarea>
+          <button class="btn primary send-btn" onclick="sendPrompt('gamma')">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──
+let repertoire = [];
+let transcripts = { alpha: [], beta: [], gamma: [] };
+
+// ── Init ──
+async function init() {
+  try {
+    const resp = await fetch('/repertoire');
+    repertoire = await resp.json();
+    renderRepertoire();
+  } catch (e) {
+    console.error('Failed to load repertoire:', e);
+  }
+  pollStatus();
+}
+
+// ── Repertoire ──
+function renderRepertoire() {
+  const list = document.getElementById('repertoireList');
+  list.innerHTML = '';
+  repertoire.forEach(p => {
+    const item = document.createElement('div');
+    item.className = 'prompt-item';
+    item.innerHTML = `
+      <div class="phase">${p.phase}</div>
+      <div class="text">${escapeHtml(p.prompt_de)}</div>
+      <div class="note">${escapeHtml(p.note)}</div>
+    `;
+    item.onclick = () => fillPrompt(p.prompt_de);
+    list.appendChild(item);
+  });
+}
+
+function fillPrompt(text) {
+  // Fill the focused system's input, or all if none focused
+  const focused = document.activeElement;
+  if (focused && focused.tagName === 'TEXTAREA') {
+    focused.value = text;
+    focused.focus();
+  } else {
+    // Fill whichever has focus or the first empty one
+    for (const sys of ['alpha', 'beta', 'gamma']) {
+      const input = document.getElementById('input' + capitalize(sys));
+      if (!input.value) {
+        input.value = text;
+        input.focus();
+        return;
+      }
+    }
+    // All have text — fill alpha
+    document.getElementById('inputAlpha').value = text;
+    document.getElementById('inputAlpha').focus();
+  }
+}
+
+// ── Send ──
+async function sendPrompt(system) {
+  const input = document.getElementById('input' + capitalize(system));
+  const prompt = input.value.trim();
+  if (!prompt) return;
+
+  input.value = '';
+  addEntry(system, 'thomas', prompt);
+  setLoading(system, true);
+
+  try {
+    const resp = await fetch('/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ system, prompt }),
+    });
+    const data = await resp.json();
+    if (data.error) {
+      addEntry(system, 'event', 'Error: ' + data.error);
+    } else {
+      addEntry(system, 'system', data.response);
+    }
+  } catch (e) {
+    addEntry(system, 'event', 'Network error: ' + e.message);
+  }
+
+  setLoading(system, false);
+  updateStatus();
+}
+
+function handleKey(e, system) {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+    sendPrompt(system);
+    e.preventDefault();
+  }
+}
+
+// ── Canon ──
+async function feedCanon(system) {
+  addEntry(system, 'event', 'Feeding canon + structural preamble...');
+  setLoading(system, true);
+
+  try {
+    const resp = await fetch('/feed-canon', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ system }),
+    });
+    const data = await resp.json();
+    if (data.error) {
+      addEntry(system, 'event', 'Error: ' + data.error);
+    } else {
+      addEntry(system, 'thomas', '[CANON FEED + STRUCTURAL PREAMBLE]');
+      addEntry(system, 'system', data.canon_response);
+      addEntry(system, 'thomas', '[PREAMBLE RESPONSE]');
+      addEntry(system, 'system', data.preamble_response);
+    }
+  } catch (e) {
+    addEntry(system, 'event', 'Network error: ' + e.message);
+  }
+
+  setLoading(system, false);
+  updateStatus();
+}
+
+async function feedCanonAll() {
+  for (const sys of ['alpha', 'beta', 'gamma']) {
+    await feedCanon(sys);
+  }
+}
+
+// ── Mediator ──
+async function connectSystems() {
+  const a = document.getElementById('mediatorA').value;
+  const b = document.getElementById('mediatorB').value;
+  try {
+    const resp = await fetch('/connect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ system_a: a, system_b: b }),
+    });
+    const data = await resp.json();
+    if (data.error) {
+      alert(data.error);
+    } else {
+      updateMediatorBadge(a, b);
+      addEntry(a, 'event', `Mediator: connected to ${b}`);
+      addEntry(b, 'event', `Mediator: connected to ${a}`);
+    }
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+async function disconnectSystems() {
+  try {
+    await fetch('/disconnect', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    updateMediatorBadge(null, null);
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function updateMediatorBadge(a, b) {
+  const badge = document.getElementById('mediatorBadge');
+  if (a && b) {
+    badge.textContent = `Mediator: ${a} ↔ ${b}`;
+    badge.className = 'mediator-status active';
+  } else {
+    badge.textContent = 'Mediator: Off';
+    badge.className = 'mediator-status';
+  }
+}
+
+// ── Session ──
+async function saveSession() {
+  try {
+    const resp = await fetch('/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    const data = await resp.json();
+    document.getElementById('headerStatus').textContent = 'Saved: ' + data.saved;
+  } catch (e) {
+    alert('Save failed: ' + e.message);
+  }
+}
+
+async function downloadTranscripts() {
+  try {
+    const resp = await fetch('/transcripts');
+    const data = await resp.json();
+
+    // Download markdown
+    const blob = new Blob([data.markdown], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `e0_init_v3_transcript_${new Date().toISOString().slice(0,19).replace(/[T:]/g, '-')}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    alert('Download failed: ' + e.message);
+  }
+}
+
+async function stopAll() {
+  if (!confirm('Stop all systems and save session?')) return;
+  try {
+    const resp = await fetch('/stop', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    const data = await resp.json();
+    document.getElementById('headerStatus').textContent = 'STOPPED — saved: ' + data.saved;
+    for (const sys of ['alpha', 'beta', 'gamma']) {
+      addEntry(sys, 'event', 'STOP');
+    }
+  } catch (e) {
+    alert('Stop failed: ' + e.message);
+  }
+}
+
+// ── Status polling ──
+async function updateStatus() {
+  try {
+    const resp = await fetch('/status');
+    const data = await resp.json();
+    for (const sys of ['alpha', 'beta', 'gamma']) {
+      const info = document.getElementById('info' + capitalize(sys));
+      const s = data[sys];
+      info.textContent = s.canon_fed
+        ? `${s.turns} turns`
+        : 'No canon';
+    }
+    if (data.mediator.active) {
+      updateMediatorBadge(data.mediator.pair[0], data.mediator.pair[1]);
+    }
+  } catch (e) {}
+}
+
+function pollStatus() {
+  updateStatus();
+  setInterval(updateStatus, 5000);
+}
+
+// ── Transcript rendering ──
+function addEntry(system, role, content) {
+  const container = document.getElementById('transcript' + capitalize(system));
+  const entry = document.createElement('div');
+  entry.className = 'entry ' + role;
+
+  const time = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+  entry.innerHTML = `
+    <span class="time">${time}</span>
+    <div class="role">${role === 'thomas' ? 'Thomas' : role === 'system' ? 'System ' + capitalize(system) : 'Event'}</div>
+    <div class="content">${escapeHtml(content)}</div>
+  `;
+
+  container.appendChild(entry);
+  container.scrollTop = container.scrollHeight;
+
+  transcripts[system].push({ role, content, time });
+}
+
+function setLoading(system, active) {
+  document.getElementById('loading' + capitalize(system)).className =
+    active ? 'loading active' : 'loading';
+}
+
+// ── Utilities ──
+function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ── Start ──
+init();
+</script>
+
+</body>
+</html>
