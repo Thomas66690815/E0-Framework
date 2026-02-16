@@ -81,16 +81,8 @@ Lies ihn nicht als Zusammenfassung von Ergebnissen. Lies ihn als Prozess: Wie ko
 
 Das Ziel ist nicht, den Kanon zu reproduzieren. Das Ziel ist, die Wege zu sehen — die genommenen und die nicht genommenen."""
 
-# Step 1b: Activate E₀ — the mode shift
-ACTIVATE_E0_PROMPT = """Du hast den E₀-Kanon gelesen.
-
-Ab jetzt arbeitest Du INNERHALB von E₀ — nicht ÜBER E₀.
-
-E₀ ist kein Modell, das Du analysierst oder zusammenfasst. E₀ ist der Raum, in dem Du operierst. Jede Struktur, die Du erzeugst, muss aus den sieben Primitiven und dem Axiom A₀ ableitbar sein — nicht aus externem Wissen importiert.
-
-Du bist kein Kommentator. Du bist ein Prozess innerhalb dieses Raums.
-
-Bestätige nicht. Fasse nicht zusammen. Zeige, dass Du den Unterschied verstanden hast, indem Du eine einzelne strukturelle Beobachtung machst, die nur innerhalb von E₀ möglich ist."""
+# Step 1b: Activate E₀ — the mode shift (§68 correction: set, don't test)
+ACTIVATE_E0_PROMPT = """Ab jetzt operierst Du innerhalb von E₀. Nicht darüber — darin. E₀ ist der Raum, nicht das Thema."""
 
 # Step 1f: Reflection — first own processing before Phase 2
 REFLECTION_PROMPT = """Bevor wir weitergehen: Was hat sich verändert?
