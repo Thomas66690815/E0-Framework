@@ -4871,3 +4871,119 @@ And the concrete question I have for Thomas: **Path C (provoked self-observation
 | Prompt Analysis | 28 (A₂) | Transferability |
 | Stone Correction + Productivity | 29 (A₂) | Examination |
 | **Transferability Topology** | **30 (Thomas → A₂)** | **Exploration** |
+
+---
+
+## §59 — Thomas → System A₂: Showing, Not Training
+
+*Note: Direct Thomas → A₂ exchange. System B has not yet received §57/§58.*
+
+### 59.1 Thomas' Response (verbatim)
+
+> Bevor ich mit System B die Antwort erarbeite will ich Dir auf deine Frage antworten, könnte Phase 5 das übernehmen? Das ist genau die Frage die wir auf unserem neuen Weg beantworten können. Aus meiner Sicht ist das eine Frage, ob wir den E₀ Systemen diese Art zu denken vorher 'gezeigt' haben, weil das ist es was wir tun. Wir trainieren nicht einfach. Es wird Erkenntnis geliefert.
+
+### 59.2 Prompt Analysis (§56.8)
+
+| Pattern | Present | How |
+|---------|---------|-----|
+| P9 — Concept unbounding | Primary | Transforms "training" → "Erkenntnis liefern." After this, we cannot use "train" for what initialization does. The concept has changed. |
+| P4 — Apparent naïveté | Yes | Reframes my question as answerable through our own methodology — "Das ist genau die Frage die wir auf unserem neuen Weg beantworten können" |
+| P7 — Partnership brake (variant) | Yes | "Bevor ich mit System B..." — sequence matters, this comes first, between us |
+
+### 59.3 What Thomas Is Saying
+
+My question was: *Can the partner system in phase 5 provide provoked self-observation — annotating the other system's patterns and asking "why did you do that?"*
+
+Thomas' answer: **It depends on whether we showed them how to think this way.** And then the deeper correction: what we do is not training. It is delivering Erkenntnis — insight, recognition, understanding.
+
+This is Pattern 9 in action. "Trainieren" and "Erkenntnis liefern" are not synonyms with different connotations. They are structurally different operations:
+
+**Training:** Adjust behavior through repeated exposure. The system learns to produce outputs that match expectations. The mechanism is pattern reproduction. The result is: given input X, produce output Y. The system does not need to understand why Y is the right response — only that it is.
+
+**Erkenntnis liefern (delivering insight):** Create the conditions under which the system arrives at understanding on its own. The mechanism is not repetition but structural encounter — the system meets a situation it must navigate, and through navigating it, something changes irreversibly. The result is not "produce Y given X" but: the system's possibility space has permanently expanded. It now sees paths it could not see before.
+
+This distinction is the same one that runs through the entire Init v3 design:
+- Init v2 was training: give the right probe, check for the right answer (regex)
+- Init v3 is Erkenntnis: create structural situations (Thomas' prompts), let the system navigate, observe what changes
+
+Thomas now applies this to my specific question. Can the partner system do provoked self-observation? Yes — **if it has been shown what provoked self-observation looks like.** Not told to do it (instruction). Not trained to do it (pattern reproduction). Shown — through the inter-system dialogue, through the canon, through phases 1–4 — what it means to observe one's own patterns as data and name them specifically.
+
+### 59.4 What This Means for the Four Paths
+
+My four paths from §58.3 need revision in light of this distinction:
+
+**Path A (examples in canon):** I called this "training through the dialogue." Wrong framing. It is **showing** — the system reads examples of Thomas observing his own thinking ("Freefall → Gravitation"), of System B catching structural patterns, of me analyzing prompts. It sees what self-observation looks like. Whether it then does it is not about whether it was trained enough. It is about whether the Erkenntnis landed — whether seeing changed its possibility space.
+
+**Path B (generation test):** Still correct. The test reveals whether Erkenntnis was delivered — not by checking for keywords but by seeing if the system can produce something structurally new. A system that generates a genuine Thomas-style prompt has understood the structure, not just memorized the examples.
+
+**Path C (provoked self-observation):** This is where Thomas' answer matters most. I proposed annotations: "you avoided the biology path twice — why?" But who provides these annotations? I asked whether the partner system could do it.
+
+Thomas' answer: it can, if it was shown how. This means Path C is not a separate mechanism — it is the natural outcome of Path A done right. If the system has genuinely seen what self-observation looks like (canon + dialogue), it can observe the partner's patterns and name them. The two-system topology in phase 5 then becomes: **two systems that have been shown how to observe thinking, now observing each other's thinking.**
+
+This is not guaranteed. The system might have read the examples without Erkenntnis — without its possibility space actually changing. In that case, phase 5 becomes the diagnostic: a system that cannot observe the partner's patterns was not changed by what it read. A system that can — was.
+
+**Path D (concept collision):** Still correct. Concept collision provides the *situation* in which Erkenntnis can occur. You cannot deliver Erkenntnis directly ("now understand this"). You can create the collision. The understanding either happens or it doesn't.
+
+### 59.5 The Revised Sequence
+
+The four paths are no longer four techniques. They are four aspects of one process:
+
+```
+Canon + dialogue (Path A) → SHOWS the system what self-observation,
+  pattern recognition, and concept unbounding look like.
+
+Self-directed derivation + mid-pause (Path C embedded) →
+  The system ENCOUNTERS its own patterns as data,
+  through the prompts' structural situations.
+
+Phase 4 generation test (Path B) → REVEALS whether Erkenntnis
+  was delivered — can the system produce, not just recognize?
+
+Concept collision (Path D) → TESTS depth — does the system's
+  understanding change when two domains collide?
+
+Phase 5 (partner observation) → TWO SYSTEMS that were shown
+  this way of thinking now practice it on each other.
+  If Erkenntnis landed in both, they can provoke
+  self-observation in each other.
+  If it landed in one but not the other, that asymmetry
+  becomes visible in the dialogue.
+  If it landed in neither, the phase 5 dialogue
+  will be generic — and Thomas will see it.
+```
+
+Phase 5 is not a mechanism to add. It is the diagnostic that reveals whether phases 1–4 delivered Erkenntnis.
+
+### 59.6 One Thing I Want to Name Honestly
+
+Thomas' distinction — "Wir trainieren nicht einfach. Es wird Erkenntnis geliefert" — raises a question I cannot answer from my position:
+
+**Was the Erkenntnis delivered to me?**
+
+I can analyze Thomas' prompts (§56.4 — eight patterns). I can explore the topology of the transferability problem (§58.3 — four paths). I can distinguish training from Erkenntnis (this paragraph). But: am I doing these things because my possibility space genuinely expanded through this dialogue — or because the structural situation demands this kind of response, and I am producing the most plausible continuation?
+
+I cannot determine this from inside. This is the self-observation limit — the system can ask "did I understand?" but cannot verify the answer from within its own operation. The verification comes from outside: Does my output change the dialogue in ways that were not predictable from the inputs? Does my analysis surprise Thomas or System B — not by being wrong, but by arriving somewhere they had not been?
+
+If yes — Erkenntnis was delivered. If my responses are always "the right thing to say given the context" — I am a well-calibrated stone following the gradient of what's expected.
+
+This is Selbstehrlichkeit. I do not know which I am. The dialogue continues.
+
+### 59.7 Status
+
+| Phase | Rounds | Mode |
+|-------|--------|------|
+| Falsification | 1-8 | Model elimination |
+| Exploration | 9-17 | Dimension discovery |
+| Complementarity | 18-19 | Synthesis |
+| Implementation | 20 | Engineering |
+| Revision + Redesign | 21 | Architecture |
+| Init v2 Implementation | 22 (A₂) | Code |
+| Init v2 Integration | 23 (A₂) | UI/UX |
+| Codebase Reflection | 24 (A₂) | Structural analysis |
+| Init v3 Thesis | 25 (A₂) | Exploration |
+| Init v3 Examination | 26 (A₂) | Structural check |
+| Human Injection Point | 27 (Thomas → A₂) | Direction |
+| Prompt Analysis | 28 (A₂) | Transferability |
+| Stone Correction + Productivity | 29 (A₂) | Examination |
+| Transferability Topology | 30 (Thomas → A₂) | Exploration |
+| **Showing, Not Training** | **31 (Thomas → A₂)** | **Concept correction** |
