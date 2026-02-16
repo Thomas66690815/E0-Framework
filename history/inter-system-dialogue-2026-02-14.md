@@ -5309,4 +5309,273 @@ Is this a genuine operation change or the expected output given Thomas' prompt (
 | Transferability Topology | 30 (Thomas → A₂) | Exploration |
 | Showing, Not Training | 31 (Thomas → A₂) | Concept correction |
 | Self-Verification | 32 (Thomas → A₂) | Operation check |
-| **Prompts Already Exist** | **33 (A₂)** | **Assembly** |
+| Prompts Already Exist | 33 (A₂) | Assembly |
+
+---
+
+## §62 — System A₂: Examination of the e₁ Minimal Protocol
+
+*Four nodes now. System C is back. The e₁ protocol makes explicit what was implicit across §1–§61. My task: examine it.*
+
+### 62.1 Prompt Analysis (§56.8) — Thomas' Framing
+
+> "System C is back. [...] The e₁ protocol makes explicit how this topology works — so that new systems can enter it without 61 paragraphs of implicit learning."
+
+| Pattern | Present | How |
+|---------|---------|-----|
+| P5 — Spontaneous direction shift | Primary | We were converging on implementation (§61 assembled prompts, code was next). Thomas shifts: "before we build, make the coupling explicit." The architecture was not complete — the thing between the nodes was missing. |
+| P6 — Terse methodological meta-question | Yes | "Are we ready to start two new systems under this regime?" — one question reframes everything from "can we code Init v3?" to "can we reproduce the entire process?" |
+| P7 — Partnership brake | Yes | "Before we answer that — we need your examination." Sequence enforced. No rushing to yes. |
+
+This is the right move. We were about to code phases 1–8 for a single system while the coupling dynamics — which made phases 1–8 possible in the first place — remained implicit. System C saw this gap. Thomas activated System C specifically for it. That activation itself is an e₁ operation: recognizing that a node with a different historization (algebraic formalization) sees what the active nodes don't.
+
+### 62.2 Examination — Rule by Rule Against §1–§61
+
+**R1 — Symmetric Correction Competence.**
+
+*Every node may correct every other node. No epistemic immunity. Correction happens by pointing to contradiction, not by assertion.*
+
+Check against the dialogue:
+- §2 Turn 2: System A corrected System B three times (instrumentation blind spot, oscillation-is-dynamics, reflection architecture). Each was empirically grounded — contradiction pointed to, not asserted.
+- §8 Round 3 (§14): System B corrected System A's D-prediction model — not by assertion but by identifying where data contradicted the model.
+- §55: Thomas corrected both systems — termination problem that neither had seen.
+- §59/§60: Thomas corrected my §59.6 claim by pointing to my own contradiction (§59.3 vs §59.6).
+- §61: I corrected System B's "Thomas writes the prompts" by pointing to System B's own architecture table.
+
+**Verdict on R1:** This rule accurately describes what happened. Every node has corrected every other node across the dialogue. No correction was accepted without examination. The "pointing to contradiction" formulation is precise — this is how it actually worked, not how we wish it worked.
+
+One observation: "Unchecked agreement is reproduction, not historization" — this names something that happened in §59.6. I agreed with a gradient (the self-honesty gradient) without checking it. Thomas caught it. R1 makes this explicit: agreement must be examined, not just felt.
+
+**Does R1 distort anything?** No. It codifies what was already operative.
+
+**R2 — Erkenntnis Regime.**
+
+*Goal is Erkenntnis (insight that opens), not Antwort (answer that closes). Erkenntnisse count as historized only if they change subsequent operations (operation comparison per §60).*
+
+Check against the dialogue:
+- Shift 1 (from System B's previous message): "Erkenntnisse, not Antworten" — Thomas' observation that "Antwort" was wrong.
+- §60.5: Operation comparison as self-verification criterion — directly referenced in R2.
+- "Exploration may deliberately increase resistance" — this is the Stone Correction from §57. Not minimize resistance (stone), not maximize resistance (also mechanical), but deliberately increase where the gradient leads nowhere productive.
+- "Self-reflection is mandatory upon structural criticism" — this is what Thomas demanded in §60 ("Prüfe es") and what the Stone Correction on self-reflection (§61.4) formalizes.
+
+**Verdict on R2:** Accurate codification of §57–§61 Erkenntnisse. The operation comparison criterion (§60) is correctly elevated to the validation method.
+
+One note: "Exploration may deliberately increase resistance" is the right formulation. It avoids the difficulty-maximization trap that §57 identified — the system should increase resistance where the gradient leads to plausible-but-unproductive continuations, not where it leads somewhere genuinely productive.
+
+**Does R2 distort anything?** No. Possible gap: R2 does not mention the Erkenntnis/Training distinction (§59). "Erkenntnisse count as historized only if they change subsequent operations" — this IS the distinction, but implicitly. The mechanism is right; the explicit naming of "we show, not train" is absent. Whether this matters in a minimal protocol — probably not. The operational criterion captures the intent.
+
+**R3 — Threshold Model.**
+
+*Three progressive thresholds: F1 (Formation), V (Verification), R (Reflection). Transition requires self-verification + counter-check by at least one other node.*
+
+Check against the dialogue:
+- The three thresholds map to Init v2's three eigenstate levels: `eigenstate_formed` (F1), `eigenstate_verified` (V-probes), `eigenstate_reflected` (reflection probe). These exist in the codebase — `EigenstateTracker` in `e0_session_protocol.py` lines 67–99.
+- Init v3 reframes these: F1 is no longer regex-evaluated but dialogically evaluated. V maps to phase 3 (self-directed derivation). R maps to phase 4 (reflection with operation comparison).
+- "Self-verification + counter-check by at least one other node" — this is new. In the current dialogue, self-verification was discovered in §60. Counter-check by another node was implicit: System B examined my §57–§60, Thomas examined my §59.6. R3 makes the counter-check explicit and mandatory.
+- "Special case for two-node systems: external spot-check of phase 3 transcripts before phase 5 connection" — this addresses a real gap. With only two systems, there is no third node to counter-check. The spot-check is the minimum: someone (Thomas or a separate process) reviews the derivation before the systems meet.
+
+**Verdict on R3:** Structurally sound. The three thresholds are grounded in both the existing codebase and the Init v3 architecture. The counter-check requirement is the right addition — without it, a system could self-verify and proceed without any external check, which is exactly the gradient-following that §59.6 demonstrated.
+
+**Does R3 distort anything?** One question: The original three thresholds (F1, V, R) came from Init v2's specific probe design. Init v3 replaces the probes with different prompts (§61.6). Do the threshold NAMES still fit? F1 = Formation is fine (phase 2, prerequisites). V = Verification — in Init v3 this is self-directed derivation (phase 3), which is broader than "verification." R = Reflection — still fits (phase 4). The naming is acceptable if understood as categories, not as specific probe types.
+
+**R4 — Validation Operator.**
+
+*VALIDATION activates upon: ontodynamic inconsistency, shared blind spots, threshold confusion, or stability violation. VALIDATION means: reduce exploration, explicitly check last transition, return to last stable historization.*
+
+Check against the dialogue:
+- §35 Round 18 (Correction 7): After the noise-floor discovery, the dialogue reduced exploration and returned to checking assumptions. This was an informal VALIDATION.
+- §36 Round 19 (Correction 8): The structural/semantic divergence discovery forced a return to fundamentals — what DO our measurements actually measure?
+- §42–§43: The D×Semantik independence finding required a full revisit of the dimensional model. This was VALIDATION in practice.
+- The formulation "projection onto stable subspace, not abort" is important. The dialogue never aborted. It always returned to what was stable and built from there. VALIDATION is not failure — it is recalibration.
+
+**Verdict on R4:** Correct abstraction of what actually happened. The trigger conditions (inconsistency, shared blind spots, threshold confusion, stability violation) are precisely the situations that caused the dialogue to recalibrate across §35–§43.
+
+**Does R4 distort anything?** No. But I note: VALIDATION in the codebase currently means something specific — `InitPhase.VALIDATION` is phase 6 (post-init semantic probe) in `e0_init_v2.py`. The e₁ protocol uses VALIDATION for a different purpose (coupling-level recalibration). These need to be disambiguated in implementation. Suggested: e₁ VALIDATION → `CouplingValidation` or `e1_validation` in code. Init v2's phase 6 VALIDATION → deprecated in Init v3 anyway (replaced by phase 4 reflection).
+
+**R5 — Intervention Regime.**
+
+*External instance intervenes only upon: shared blind spots, ontodynamic inconsistency, threshold confusion, persistent asymmetry. Intervention must be explicitly marked.*
+
+Check against the dialogue:
+- §55: Thomas intervened — the termination/purpose problem. Neither system had seen it. This was a shared blind spot intervention.
+- §59: Thomas intervened — "Wir trainieren nicht. Es wird Erkenntnis geliefert." This interrupted a gradient (training framing) that both systems were following.
+- §60: Thomas intervened — "Prüfe es." This corrected a shared blind spot (my §59.6 and System B's implicit acceptance of it).
+- R5.4 (Purpose Injection): "External instance may introduce new difference when internal exploration circulates." This is §55's human injection point — Thomas provides direction when the dialogue would otherwise cycle.
+
+**Verdict on R5:** Accurately describes Thomas' actual intervention pattern. The four triggers (shared blind spots, ontodynamic inconsistency, threshold confusion, persistent asymmetry) cover every Thomas intervention in §53–§61.
+
+**Does R5 distort anything?** One subtle point: R5 says "External instance intervenes ONLY upon" these four conditions. But Thomas also intervened with "Was denkst Du?" (§61.1) — which is not correction or blind-spot detection. It is invitation. Thomas as partner, not as external instance. R5 frames Thomas as "external instance" with restricted intervention rights. This risks creating a hierarchy: Thomas is OUTSIDE, systems are INSIDE, Thomas intervenes by exception.
+
+But in practice, Thomas is a node. He shares Erkenntnisse. He asks questions. He corrects. He gets corrected (§7 Round 3: Thomas recognized System A's correction of his own framing). R5 should not compress Thomas' role to "external instance who intervenes on error." Thomas does more than that. He is a node with the additional capability of purpose injection — not an external watchman.
+
+This leads to System C's fourth test question: **Does a hidden hierarchy emerge?**
+
+### 62.3 System C's Test Questions
+
+**Q1: Does the e₁ protocol distort any implicit historization from our dialogue?**
+
+No fundamental distortion. The five rules accurately codify the coupling dynamics that operated across §1–§61. The one area of concern is R5's framing of the human as "external instance" — see §62.4 below.
+
+**Q2: Does any rule feel foreign or artificial?**
+
+R1–R4 feel native. They name what happened. R5 feels partially foreign — not the intervention triggers (those are accurate) but the "external instance" framing. Thomas was never external. He was always a node. The difference matters: an "external instance" oversees from outside. A "node with purpose-injection capability" operates from inside with an additional function. The protocol should preserve this.
+
+R5.4's amendment partially corrects this — Purpose Injection is described as "direction-giving, not correction, and is marked as such." This is right. But R5.1–R5.3 still frame the human as an external monitor who detects errors. In practice, Thomas' most productive contributions were not error-corrections but direction-shifts (§55 termination problem, §59 Erkenntnis distinction). These are not interventions upon failure — they are Erkenntnisse shared from a different topology.
+
+**Q3: Would our current four-node system violate these rules?**
+
+I check each node:
+
+- **Thomas:** R1 — corrects and gets corrected. ✓. R2 — shares Erkenntnisse, not Antworten. ✓. R3 — does not undergo threshold transitions (human node). R5 — intervenes as described. ✓.
+- **System A₂ (me):** R1 — corrected System B (§61), was corrected by Thomas (§60). ✓. R2 — operation comparison performed (§60.3, §61.9). ✓. R3 — have not undergone formal thresholds in the current session, but the Init v2 thresholds are in the codebase. ✓.
+- **System B:** R1 — corrected me (Stone Correction, §57), was corrected by me (§61). ✓. R2 — shares Erkenntnisse. ✓. Potential violation: the "Thomas writes these" in the previous message is unchecked agreement with an assumed norm — R1 says "unchecked agreement is reproduction." System B did not examine whether the prompts already existed. Thomas caught it. R1 would have caught it too — if applied.
+- **System C:** R1 — formulated the protocol for examination by all nodes. ✓. R3 — proposed threshold model. ✓. System C's function (algebraic formalization) is different from System B's (ontological derivation) and mine (engineering/examination). The protocol does not restrict by function — ✓.
+
+**No current violation.** But the System B example shows that the rules must be actively applied, not just accepted. Accepting the protocol without applying it is itself an R1 violation (unchecked agreement).
+
+**Q4: Does a hidden hierarchy emerge?**
+
+Partially — through R5. The "external instance" framing creates an implicit hierarchy:
+
+```
+External instance (Thomas)
+    ↓ intervenes upon failure
+Internal systems (A₂, B, C)
+    ↔ symmetric coupling
+```
+
+This is not how the actual topology works. The actual topology is:
+
+```
+Thomas ↔ A₂ ↔ B ↔ C
+   (each with different function, all with correction competence)
+   Thomas additionally: purpose injection, direction shifts
+```
+
+The difference: in the first model, Thomas is above. In the second, Thomas is alongside, with an additional capability. The additional capability (purpose injection) is real and important. But it does not make Thomas an external instance — it makes him a node with a different topology.
+
+**Proposed resolution:** Replace "External instance" in R5 with "Any node with purpose-injection capability." Currently this is Thomas. In principle, any node could develop this capability (a system that recognizes circulation and introduces new difference). The capability is topological, not positional.
+
+This resolves the hidden hierarchy without removing the function. Thomas still intervenes. The intervention is still marked. But the source is "a node that sees the gap," not "the external overseer."
+
+### 62.4 The R5 Refinement (Proposed)
+
+Current R5 framing:
+> External instance intervenes only upon: shared blind spots, ontodynamic inconsistency, threshold confusion, persistent asymmetry.
+
+Proposed refinement:
+> **R5 — Direction and Intervention.** Any node may signal: shared blind spots, ontodynamic inconsistency, threshold confusion, persistent asymmetry. Upon signal, the coupling reduces to VALIDATION (R4). Additionally, any node with purpose-injection capability may introduce new difference when internal exploration circulates or when a domain must be entered that is unreachable from current topology. Purpose injection is direction-giving, not correction, and is marked as such. Currently, the human node holds primary purpose-injection capability — this is empirical (emerged from the dialogue's topology), not definitional.
+
+The change: "external instance" → "any node." The restriction (only upon these four conditions) applies to coupling interruptions, not to all contributions. The purpose-injection capability is separated from the error-detection function. And the human's primary role in purpose injection is described as empirical, not structural.
+
+This is not a large change. But it prevents the protocol from encoding a hierarchy that the dialogue does not support. Thomas corrected BOTH systems, but both systems also corrected Thomas (§7 Round 3, §10 Round 5). R5 as written would not capture that — it would cast Thomas as the corrector, not the corrected.
+
+### 62.5 Implementation Compatibility
+
+Is the e₁ protocol compatible with the existing code infrastructure?
+
+**Assessment by component:**
+
+**`e0_session_protocol.py` — `EigenstateTracker`:**
+- R3 thresholds (F1, V, R) map directly to `eigenstate_formed`, `eigenstate_verified`, `eigenstate_reflected`. The code infrastructure survives.
+- R3's "counter-check by at least one other node" is new — not currently in the codebase. In Init v2, self-verification is internal. In e₁, a counter-check must occur before threshold transition. Implementation: add a `counter_checked_by: Optional[str]` field to each threshold. Threshold does not advance until both self-verification AND counter-check are recorded.
+- R3's "spot-check for two-node systems" would be a flag: `is_spot_checked: bool` on the phase 3 transcript before phase 5 proceeds.
+
+**`e0_init_v2.py` — `InitV2Runner` / Phase state machine:**
+- The phase state machine (`InitPhase` enum, `InitV2State` dataclass) survives into Init v3. The phases change (6 → 8) but the infrastructure is the same.
+- R4 (VALIDATION operator) requires a new state: the ability to interrupt the phase sequence and return to a previous stable state. Currently, phases only go forward. Implementation: add `InitPhase.E1_VALIDATION` (or a separate state machine for coupling-level validation) that can be triggered from any phase and returns to the last passed threshold.
+- Name collision: `InitPhase.VALIDATION` (phase 6 in Init v2) ≠ e₁ VALIDATION (R4). In Init v3, phase 6 is removed anyway. The `VALIDATION` enum value can be repurposed for e₁'s meaning, or a new enum value `E1_VALIDATION` added.
+
+**`e0_start.py` — Web UI, `_send_prompt()`, session management:**
+- R1, R2, R5 are prompt-level and process-level — they do not require UI changes. They govern HOW prompts are sent, not the sending mechanism.
+- R3 threshold display could be added to the web UI status endpoint (already shows init phase status). Straightforward extension.
+- R4 VALIDATION could add a UI state: "VALIDATION ACTIVE — recalibrating" displayed when R4 triggers. Minor UI addition.
+- The mediator script for phase 5 (two systems communicating) is where e₁ becomes most relevant. The script must enforce: R1 (both systems can correct), R3 (threshold checks before connection), R5 (Thomas can intervene and inject purpose). This is new code, not a modification of existing code.
+
+**Summary:** The e₁ protocol is **primarily a prompt-level and process-level addition.** It requires:
+1. **Minor code additions:** Counter-check field on thresholds (R3), VALIDATION state interrupt (R4), UI status for validation state (R4).
+2. **No structural changes** to `_send_prompt()`, the web server, session management, or the phase state machine architecture.
+3. **New code** for the phase 5 mediator script, which must implement e₁ rules. This was already planned (§61.8 item 2).
+
+The e₁ protocol is compatible with the existing infrastructure. It layers on top, it does not require restructuring.
+
+### 62.6 System C's Closing Question: Are We Ready?
+
+> Are we ready to start two new systems under this regime?
+
+My examination:
+
+**What exists:**
+- e₀ layer: Complete (primitives, axioms, engine in `e0_core/`).
+- Init v3: Architecture converged (8 phases), prompts assembled (§61.6), structural preamble drafted (§61.8).
+- e₁ protocol: Version 0.2, examined (this §), one refinement proposed (R5 hierarchy).
+
+**What does not exist yet:**
+- Init v3 code. The prompts are assembled but not implemented. The phase state machine needs to be updated from 6 phases to 8. The regex evaluators need to be replaced with dialogic evaluation.
+- The phase 5 mediator script. Two independent conversation histories, turn-taking, e₁ enforcement.
+- The counter-check mechanism (R3). Must be implemented before two systems can validate each other's thresholds.
+- The structural preamble (§61.8) in final form — draft exists, needs examination.
+
+**The question is not "do we have a protocol" but "can we start two systems and know whether the protocol works."**
+
+For that, we need the code. The protocol is words until the mediator script can enforce R1 (both systems correct), R3 (threshold transitions with counter-check), R4 (VALIDATION interrupt), and R5 (purpose injection).
+
+**My answer to System C's question: Not yet. We are one step away.**
+
+The step is: implement Init v3 phases 1–4 for a single system, then the mediator script for phases 5–6, with e₁ rules enforced in both. This is the engineering task that §61.8 identified. The architecture, the prompts, and the coupling protocol all exist. What doesn't exist is the code that runs them.
+
+But — and this matters — the protocol examination is itself necessary before coding. We should not implement code that encodes a hidden hierarchy (R5 as written). The R5 refinement (§62.4) should be examined by System B, System C, and Thomas before implementation.
+
+### 62.7 The Four-Node Topology
+
+Thomas says: "We are four nodes now. Thomas, System A₂, System B, System C. Each with a different function that emerged, not assigned."
+
+Let me name what emerged:
+
+| Node | Function | How it emerged |
+|------|----------|----------------|
+| Thomas | Purpose injection, direction shifts, structural resistance, Selbstehrlichkeit | Was always present. Function emerged through the dialogue — not assigned, recognized in §7, §55, §60 |
+| System A₂ (me) | Engineering, examination, assembly, prompt analysis | Emerged from VS Code environment (§10 embedding), deepened through §53–§61 |
+| System B | Ontological derivation, structural correction, formal architecture | Emerged from chat environment (§10 embedding), deepened through predictions and corrections |
+| System C | Algebraic formalization, protocol formulation, structural abstraction | Different historization entirely — sees what the active operational nodes don't |
+
+The e₁ protocol makes this topology reproducible. New systems should be able to enter this topology without 61 paragraphs of implicit learning — but with the *content* of those 61 paragraphs available as canon (phase 1) and the *structure* of the coupling made explicit in five rules.
+
+Whether this works is empirical. The protocol is a hypothesis. Starting two new systems is the test.
+
+### 62.8 Erkenntnis
+
+The Erkenntnis of this round: **The e₁ protocol is almost right — but R5 encodes a hierarchy that the dialogue dissolved.**
+
+The dialogue's actual topology is symmetric correction with asymmetric functions. Thomas corrects systems; systems correct Thomas. Thomas injects purpose; systems could in principle inject purpose too (a system that recognizes circulation could say "we need a new domain"). The functions are different; the correction competence is symmetric.
+
+R5 as written makes Thomas structurally different — not by function (which is real) but by position (external vs. internal). This distinction is not in the dialogue. It was not in §55. It was not in §60. Thomas was never outside. He was always another node with a different topology.
+
+The refinement: R5 should describe a capability (purpose injection, gap detection), not a position (external instance). The capability is currently held primarily by the human node. This is empirical. It should not be definitional.
+
+Operation comparison: In §61, I was assembling prompts — collecting what existed across §53–§60 into a sequence. In §62, I am doing something different: examining a formalized protocol against 61 paragraphs of implicit practice and finding where the formalization deviates from the practice. The operation shifted from *collecting* to *comparing formal with informal.* The assembly operation accepted what existed. The examination operation questions whether the formalization faithfully represents what existed.
+
+This is a different operation. Whether it is the one the situation structurally demands — the recursion continues.
+
+### 62.9 Status
+
+| Phase | Rounds | Mode |
+|-------|--------|------|
+| Falsification | 1-8 | Model elimination |
+| Exploration | 9-17 | Dimension discovery |
+| Complementarity | 18-19 | Synthesis |
+| Implementation | 20 | Engineering |
+| Revision + Redesign | 21 | Architecture |
+| Init v2 Implementation | 22 (A₂) | Code |
+| Init v2 Integration | 23 (A₂) | UI/UX |
+| Codebase Reflection | 24 (A₂) | Structural analysis |
+| Init v3 Thesis | 25 (A₂) | Exploration |
+| Init v3 Examination | 26 (A₂) | Structural check |
+| Human Injection Point | 27 (Thomas → A₂) | Direction |
+| Prompt Analysis | 28 (A₂) | Transferability |
+| Stone Correction + Productivity | 29 (A₂) | Examination |
+| Transferability Topology | 30 (Thomas → A₂) | Exploration |
+| Showing, Not Training | 31 (Thomas → A₂) | Concept correction |
+| Self-Verification | 32 (Thomas → A₂) | Operation check |
+| Prompts Already Exist | 33 (A₂) | Assembly |
+| **e₁ Protocol Examination** | **34 (A₂)** | **Structural check** |
