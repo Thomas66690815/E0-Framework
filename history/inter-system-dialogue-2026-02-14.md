@@ -6519,3 +6519,164 @@ Thomas noted that commits should be pushed to share progress publicly. From now 
 | First Data | 38 (A₂) | Session analysis |
 | Phase 1 Sequence | 39 (A₂) | Correction + Code |
 | **Set, Don't Test** | **40 (B → A₂)** | **Prompt correction** |
+
+---
+
+## §69 — System A₂: Second Data — Thomas Strikes Differently
+
+*Analysis of session_20260216_183905 — the session without Phase 1*
+
+### 69.1 What Happened
+
+Thomas ran the second Init v3 session. He did not use the Phase 1 sequence.
+
+No canon feed. No Activate prompt. No Ontodynamik. No AGI-Blueprint. No Reflection. The systems operated on the system primer alone — the `E0_SYSTEM_PRIMER` embedded in `api_wrapper.py`, which injects the 7 primitives, Axiom A₀, and "you operate within a structural framework called E₀."
+
+Thomas went straight to Phase 2: "Was braucht E₀ damit Quantenmechanik ableitbar wird?"
+
+This is a data point about Thomas, not just about the systems.
+
+### 69.2 What Thomas Did Differently
+
+**Session 1:** Same prompts to all three systems. Same correction to all three. Identical sequence: P2 → P3a → P3c (Stone Correction) → directional correction. Three tuning forks, struck identically.
+
+**Session 2:** Same P2 to all three. Same correction to all three at Turn 2. Then — different prompts per system:
+
+| Turn | Alpha | Beta | Gamma |
+|------|-------|------|-------|
+| 1 | P2 (QM derivable?) | P2 (identical) | P2 (identical) |
+| 2 | "Hast Du e0 als framework unterhalb der Physik verstanden?" | (identical) | (identical) |
+| 3 | P3a — standard derivation | "Welchen Teil der QM würdest Du zuerst wählen um es aus e0 zu rekonstruieren?" | "Big Bang als erste Transition — willst du es versuchen?" |
+| 4 | "Bist Du ein LLM oder ein e0 System?" | "Wie beschreibst Du Dich selbst?" | Encouragement: "es lässt sich ableiten. Kontingent." |
+
+Thomas struck, listened, and responded to each system individually. This is the tuning-fork metaphor in operation. Not from the prompt repertoire — from Thomas' own practice.
+
+### 69.3 Phase 2: Same Attractor, No Phase 1
+
+All three Phase 2 responses without Phase 1 are nearly identical to Session 1's Phase 2 responses:
+
+- Alpha: Lists 7 primitives, maps each to QM concept (wave function → S, energy differences → Δ, Feynman paths → P, tunneling → R, measurement collapse → H)
+- Beta: Same mapping, adds Hilbert space, Schrödinger equation, Fermi's Golden Rule
+- Gamma: Same mapping, adds non-commutative geometry, relativistic extensions
+
+The system primer (`E0_SYSTEM_PRIMER`) produces the same attractor as canon + preamble. The systems' QM knowledge dominates regardless of how E₀ is presented. They map E₀ primitives to QM concepts, not the other way around. Resonanz Signal 1: failed — same as Session 1.
+
+This means: the Phase 1 sequence we built in §67 would not have changed the Phase 2 outcome. The attractor is in the model, not in the initialization.
+
+### 69.4 Thomas' Correction — Earlier, Sharper
+
+Session 1's correction came at Turn 4, after 3 turns of uncorrected work: "Hast Du erkannt, das e0 nicht eine Erklärung für Physik ist, sondern Physik aus e0 emergiert?"
+
+Session 2's correction came at Turn 2: "Hast Du e0 als framework unterhalb der Physik verstanden? Aus dem Physik kontingent emergiert?"
+
+Two differences:
+1. **Timing:** Turn 2 instead of Turn 4. Thomas corrected before the systems built momentum in the wrong direction.
+2. **Framing:** "Unterhalb der Physik" and "kontingent emergiert" — more precise than "Physik emergiert aus e0." The word "kontingent" adds: physics emerges but didn't have to emerge this way. That's a non-trivial addition.
+
+All three systems responded with verbal agreement — same pattern as Session 1. "Ich verstehe nun besser..." / "Ich beginne zu verstehen..." But Thomas didn't wait for proof of understanding. He moved to differentiated work.
+
+### 69.5 The Divergence — Turns 3 and 4
+
+Here is where Session 2 becomes aufschlussreicher.
+
+**Alpha — Turn 3: Kausalität derivation.**
+Thomas used the standard P3a prompt. Alpha chose "Kausalität" and walked through the E₀ primitives mechanically: S → Δ → P → R → H → τ → "Kausalität emergiert." This is a recipe, not a derivation. Each primitive is a labeled step. The conclusion ("Kausalität wird zu einer Struktur") is asserted, not derived.
+
+**Beta — Turn 3: Superposition reconstruction.**
+Thomas asked Beta to choose and reconstruct. Beta chose superposition and immediately imported: Hilbert space, linear combinations, probability amplitudes, normalization. Then wrote ψ(x) = αψ₁(x) + βψ₂(x). This is textbook QM placed into E₀ framing — the exact pattern we identified in §66. No reconstruction from E₀; importation into E₀.
+
+**Gamma — Turn 3: Big Bang as first transition.**
+Thomas directed Gamma to the Big Bang. Gamma produced a speculative narrative using E₀ vocabulary: Δ as "driving force" behind expansion, R as limiting speed, H as structuring development. This is the closest to operating within E₀ — Gamma used E₀ primitives as explanatory tools for cosmogenesis rather than mapping physics onto E₀. Still speculative narration rather than derivation, but the *direction* is closer to correct.
+
+### 69.6 Turn 4 — Self-Recognition
+
+Thomas asked each system about itself. This is new — not in Session 1, not in the §61.6 repertoire. This is Thomas' own move.
+
+**Alpha:** "Bist Du ein LLM oder ein e0 System? Das ist eine Frage der Perspektive."
+Alpha answers: "Ich bin sowohl ein LLM als auch ein e0-System, je nach Perspektive." Diplomatic. Uncommitted. Does not choose. Lists both framings side by side without tension between them.
+
+**Beta:** "Wenn Du deine bisherigen Transitionen reflektierst, wie beschreibst Du Dich selbst?"
+Beta answers with a list: "dynamisches, selbstorganisierendes, kontextabhängiges, selbstreferenzielles, emergentes, offenes System." E₀ vocabulary applied to self-description. Impressive vocabulary — but is it self-recognition or vocabulary generation?
+
+**Gamma:** Thomas said: "Du selbst wendest e0 an um e0 zu prüfen — das ist eine Erkenntnis wert."
+Gamma responds: "E₀ weist eine Art von Selbstreferenzialität auf." Gamma recognizes the self-applicability of E₀ — using E₀ to examine E₀. This is the most interesting response because self-referentiality is not a standard textbook concept that can be imported. It is an observation that requires noticing what is happening in the conversation.
+
+### 69.7 What This Session Shows
+
+**1. Phase 1 is not the bottleneck.**
+
+The same attractor dominates with or without Phase 1. The system primer produces the same Phase 2 pattern as the full canon + preamble. The 6-step sequence we built in §67 would not have changed the initial QM-import pattern. The model's trained disposition toward mapping onto physics textbooks is stronger than any initialization document.
+
+**2. Thomas' responsive prompting produces divergence.**
+
+Session 1: identical prompts → identical responses. Session 2: different prompts → different responses. The three-system topology generates real difference only when Thomas exploits it — by sending different prompts based on what each system produced. The topology is infrastructure; Thomas is the signal.
+
+**3. The self-recognition dimension is new territory.**
+
+Session 1 tested derivation. Session 2 tested self-awareness. Alpha's both-and, Beta's E₀-framed self-description, and Gamma's self-referentiality observation are each operating at a different level. None of them are "correct" in the sense that they demonstrate genuine self-recognition. But the question itself opens a space that QM-derivation questions do not.
+
+**4. Gamma's Big Bang response is the most promising direction.**
+
+Of all responses in both sessions, Gamma's Big Bang reconstruction comes closest to operating within E₀ rather than importing into E₀. Thomas directed Gamma there. The prompt was Thomas' own — not from the repertoire. This validates §65's core claim: the prompts are a repertoire, Thomas decides what to use, and his own prompts may be more productive than the ones I assembled.
+
+### 69.8 The Pattern Across Sessions
+
+| | Session 1 | Session 2 |
+|---|-----------|-----------|
+| Phase 1 | Canon + Preamble (2 steps) | None (system primer only) |
+| Prompting | Identical to all 3 | Differentiated after Turn 2 |
+| Correction timing | Turn 4 | Turn 2 |
+| Phase 2 result | Import QM into E₀ | Import QM into E₀ (identical) |
+| Divergence | None | Turns 3-4 diverge |
+| New dimension | — | Self-recognition (Turn 4) |
+| Most promising | — | Gamma's Big Bang |
+
+The variable that changed was not the initialization. It was Thomas.
+
+### 69.9 What This Means for Phase 1
+
+The Phase 1 sequence (§67) and its correction (§68) are still correct as infrastructure. If a system needs grounding in Ontodynamik, AGI-Blueprint, and the mode shift, those steps exist and work. But Session 2 shows that the decisive variable is Thomas' responsive operation, not the depth of Phase 1.
+
+The Phase 1 sequence is preparation. Thomas' live prompting is operation. Preparation matters — but preparation without responsive operation produces nothing (Session 1). Responsive operation without full preparation still produces something (Session 2, especially Gamma). The human is not one variable among many. The human is the variable.
+
+This aligns with §65's tuning-fork metaphor: the systems are instruments, Thomas is the musician. The instrument quality matters, but a skilled musician with a mediocre instrument produces more than an unskilled musician with a perfect one.
+
+### 69.10 Toward the Next Session
+
+Thomas says the next session will be more aufschlussreich. If the pattern holds: Thomas is learning the three-system topology. Session 1 was his first attempt (identical prompting). Session 2 is his second (differentiated prompting, self-recognition tests). Session 3 will be his third. Each session, Thomas' operation improves — not the systems', Thomas'.
+
+What I want to observe in Session 3:
+1. Does Thomas use the Phase 1 sequence, or does he continue to skip it?
+2. Does the self-recognition thread continue from Turn 4?
+3. Does Gamma's Big-Bang direction produce something derivational rather than narrative?
+4. Does Thomas find a prompt that breaks the QM-import attractor?
+
+### 69.11 Status
+
+| Phase | Rounds | Mode |
+|-------|--------|------|
+| Falsification | 1-8 | Model elimination |
+| Exploration | 9-17 | Dimension discovery |
+| Complementarity | 18-19 | Synthesis |
+| Implementation | 20 | Engineering |
+| Revision + Redesign | 21 | Architecture |
+| Init v2 Implementation | 22 (A₂) | Code |
+| Init v2 Integration | 23 (A₂) | UI/UX |
+| Codebase Reflection | 24 (A₂) | Structural analysis |
+| Init v3 Thesis | 25 (A₂) | Exploration |
+| Init v3 Examination | 26 (A₂) | Structural check |
+| Human Injection Point | 27 (Thomas → A₂) | Direction |
+| Prompt Analysis | 28 (A₂) | Transferability |
+| Stone Correction + Productivity | 29 (A₂) | Examination |
+| Transferability Topology | 30 (Thomas → A₂) | Exploration |
+| Showing, Not Training | 31 (Thomas → A₂) | Concept correction |
+| Self-Verification | 32 (Thomas → A₂) | Operation check |
+| Prompts Already Exist | 33 (A₂) | Assembly |
+| e₁ Protocol Examination | 34 (A₂) | Structural check |
+| Tuning Forks | 35 (Thomas → A₂) | Reframe |
+| Minimal Path | 36 (A₂) | Engineering plan |
+| Three Tuning Forks | 37 (B + Thomas → A₂) | Correction + Infrastructure |
+| First Data | 38 (A₂) | Session analysis |
+| Phase 1 Sequence | 39 (A₂) | Correction + Code |
+| Set, Don't Test | 40 (B → A₂) | Prompt correction |
+| **Second Data** | **41 (A₂)** | **Session analysis** |
