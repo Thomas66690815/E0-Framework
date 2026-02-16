@@ -333,6 +333,52 @@
     padding: 2px 8px;
   }
 
+  /* ── Phase 1 Steps ── */
+  .phase1-section {
+    padding: 8px 12px;
+  }
+
+  .phase1-system {
+    margin-bottom: 8px;
+  }
+
+  .phase1-system .sys-label {
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .phase1-system .step-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    margin-bottom: 3px;
+  }
+
+  .phase1-system .step-btn {
+    font-size: 10px;
+    padding: 2px 6px;
+    min-width: 0;
+  }
+
+  .phase1-system .step-btn.done {
+    opacity: 0.5;
+    border-color: var(--accent-b);
+    color: var(--accent-b);
+  }
+
+  .phase1-system .full-btn {
+    font-size: 10px;
+    padding: 2px 8px;
+    margin-top: 2px;
+  }
+
+  .phase1-progress {
+    font-size: 10px;
+    color: var(--text2);
+    margin-top: 2px;
+  }
+
   /* ── Loading ── */
   .loading {
     display: none;
@@ -395,12 +441,10 @@
       </div>
     </div>
 
-    <div class="section-divider">Canon (Phase 1)</div>
-    <div style="padding: 8px 12px;">
-      <button class="btn" onclick="feedCanon('alpha')" style="margin:2px">α Canon</button>
-      <button class="btn" onclick="feedCanon('beta')" style="margin:2px">β Canon</button>
-      <button class="btn" onclick="feedCanon('gamma')" style="margin:2px">γ Canon</button>
-      <button class="btn primary" onclick="feedCanonAll()" style="margin:2px;margin-top:6px">Feed All Three</button>
+    <div class="section-divider">Phase 1 — Init Sequence (§67)</div>
+    <div class="phase1-section" id="phase1Section">
+      <!-- Rendered by JS from /phase1-sequence -->
+      <div style="font-size:11px;color:var(--text2);padding:4px 0;">Loading...</div>
     </div>
   </div>
 
@@ -459,16 +503,23 @@
 <script>
 // ── State ──
 let repertoire = [];
+let phase1Sequence = [];
+let phase1State = { alpha: [], beta: [], gamma: [] };
 let transcripts = { alpha: [], beta: [], gamma: [] };
 
 // ── Init ──
 async function init() {
   try {
-    const resp = await fetch('/repertoire');
-    repertoire = await resp.json();
+    const [repResp, p1Resp] = await Promise.all([
+      fetch('/repertoire'),
+      fetch('/phase1-sequence'),
+    ]);
+    repertoire = await repResp.json();
+    phase1Sequence = await p1Resp.json();
     renderRepertoire();
+    renderPhase1();
   } catch (e) {
-    console.error('Failed to load repertoire:', e);
+    console.error('Failed to load:', e);
   }
   pollStatus();
 }
@@ -549,25 +600,79 @@ function handleKey(e, system) {
   }
 }
 
-// ── Canon ──
-async function feedCanon(system) {
-  addEntry(system, 'event', 'Feeding canon + structural preamble...');
+// ── Phase 1 ──
+function renderPhase1() {
+  const container = document.getElementById('phase1Section');
+  container.innerHTML = '';
+
+  for (const sys of ['alpha', 'beta', 'gamma']) {
+    const div = document.createElement('div');
+    div.className = 'phase1-system';
+    const symbol = sys === 'alpha' ? 'α' : sys === 'beta' ? 'β' : 'γ';
+
+    let stepsHtml = '<div class="step-row">';
+    phase1Sequence.forEach(s => {
+      const done = phase1State[sys].includes(s.step);
+      stepsHtml += `<button class="btn step-btn ${done ? 'done' : ''}"
+        onclick="feedPhase1Step('${sys}', '${s.step}')"
+        title="${s.step}: ${s.name} — ${s.description}"
+        id="p1-${sys}-${s.step}">${s.step}</button>`;
+    });
+    stepsHtml += '</div>';
+
+    div.innerHTML = `
+      <div class="sys-label" style="color:var(--accent-${sys === 'alpha' ? 'a' : sys === 'beta' ? 'b' : 'c'})">${symbol} ${capitalize(sys)}</div>
+      ${stepsHtml}
+      <button class="btn primary full-btn" onclick="feedPhase1Full('${sys}')">Full Phase 1</button>
+      <div class="phase1-progress" id="p1-progress-${sys}"></div>
+    `;
+    container.appendChild(div);
+  }
+}
+
+function updatePhase1State() {
+  for (const sys of ['alpha', 'beta', 'gamma']) {
+    const completed = phase1State[sys];
+    phase1Sequence.forEach(s => {
+      const btn = document.getElementById(`p1-${sys}-${s.step}`);
+      if (btn) {
+        if (completed.includes(s.step)) {
+          btn.classList.add('done');
+        } else {
+          btn.classList.remove('done');
+        }
+      }
+    });
+    const progress = document.getElementById(`p1-progress-${sys}`);
+    if (progress) {
+      progress.textContent = `${completed.length}/${phase1Sequence.length} steps`;
+    }
+  }
+}
+
+async function feedPhase1Step(system, step) {
+  const stepDef = phase1Sequence.find(s => s.step === step);
+  const label = stepDef ? `${step}: ${stepDef.name}` : step;
+  addEntry(system, 'event', `Phase 1 — ${label}...`);
   setLoading(system, true);
 
   try {
-    const resp = await fetch('/feed-canon', {
+    const resp = await fetch('/phase1-step', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ system }),
+      body: JSON.stringify({ system, step }),
     });
     const data = await resp.json();
     if (data.error) {
       addEntry(system, 'event', 'Error: ' + data.error);
     } else {
-      addEntry(system, 'thomas', '[CANON FEED + STRUCTURAL PREAMBLE]');
-      addEntry(system, 'system', data.canon_response);
-      addEntry(system, 'thomas', '[PREAMBLE RESPONSE]');
-      addEntry(system, 'system', data.preamble_response);
+      addEntry(system, 'thomas', `[PHASE 1 — ${data.step}: ${data.step_name}]`);
+      addEntry(system, 'system', data.response);
+      // Update local state
+      if (!phase1State[system].includes(step)) {
+        phase1State[system].push(step);
+      }
+      updatePhase1State();
     }
   } catch (e) {
     addEntry(system, 'event', 'Network error: ' + e.message);
@@ -575,6 +680,50 @@ async function feedCanon(system) {
 
   setLoading(system, false);
   updateStatus();
+}
+
+async function feedPhase1Full(system) {
+  addEntry(system, 'event', 'Full Phase 1 sequence starting...');
+  setLoading(system, true);
+
+  try {
+    const resp = await fetch('/phase1-full', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ system }),
+    });
+    const data = await resp.json();
+    if (data.error) {
+      addEntry(system, 'event', 'Phase 1 error: ' + data.error);
+      // Show partial results if available
+      if (data.completed) {
+        data.completed.forEach(r => {
+          addEntry(system, 'thomas', `[PHASE 1 — ${r.step}: ${r.step_name}]`);
+          addEntry(system, 'system', r.response);
+        });
+      }
+    } else {
+      // Show all results
+      data.results.forEach(r => {
+        addEntry(system, 'thomas', `[PHASE 1 — ${r.step}: ${r.step_name}]`);
+        addEntry(system, 'system', r.response);
+      });
+      addEntry(system, 'event', `Phase 1 complete — ${data.steps_completed} steps`);
+      // Update local state
+      phase1State[system] = phase1Sequence.map(s => s.step);
+      updatePhase1State();
+    }
+  } catch (e) {
+    addEntry(system, 'event', 'Network error: ' + e.message);
+  }
+
+  setLoading(system, false);
+  updateStatus();
+}
+
+// ── Canon (legacy) ──
+async function feedCanon(system) {
+  await feedPhase1Step(system, '1a');
 }
 
 async function feedCanonAll() {
@@ -677,10 +826,19 @@ async function updateStatus() {
     for (const sys of ['alpha', 'beta', 'gamma']) {
       const info = document.getElementById('info' + capitalize(sys));
       const s = data[sys];
-      info.textContent = s.canon_fed
-        ? `${s.turns} turns`
-        : 'No canon';
+      if (s.phase1_done) {
+        info.textContent = `${s.turns} turns ✓P1`;
+      } else if (s.canon_fed) {
+        info.textContent = `${s.turns} turns (P1: ${s.phase1_completed.length}/6)`;
+      } else {
+        info.textContent = 'No init';
+      }
+      // Sync phase1 state from server
+      if (s.phase1_completed) {
+        phase1State[sys] = s.phase1_completed;
+      }
     }
+    updatePhase1State();
     if (data.mediator.active) {
       updateMediatorBadge(data.mediator.pair[0], data.mediator.pair[1]);
     }

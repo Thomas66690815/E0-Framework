@@ -8,11 +8,19 @@ This is infrastructure, not automation. The prompts from §61.6
 are a repertoire — Thomas decides which prompt goes to which
 system, when, based on what the system responded.
 
-Architecture (from §65):
+Architecture (from §65, updated §67):
   - Three E0APIStarter instances (alpha, beta, gamma)
   - Each has its own conversation history and context
   - Thomas reads transcripts, sends prompts, connects systems
   - Complete logging of every interaction
+
+Phase 1 Sequence (§67 — from Thomas' manual practice):
+  1a. E₀-Framework  (e0-canon-plain.txt)     — system knows the structure
+  1b. Activate E₀    (mode-shift prompt)      — system operates WITHIN, not ABOUT
+  1c. Ontodynamik    (ontodynamics.txt)        — E₀ is generative, not descriptive
+  1d. Structural Preamble (§61.8)             — how to read and work
+  1e. AGI-Blueprint  (e0-agi-blueprint.md)     — what E₀ means for systems
+  1f. Reflection     (first own processing)    — before Phase 2 begins
 
 Usage:
   py e0_init_v3_orchestrator.py
@@ -22,7 +30,9 @@ Then open http://localhost:3100 in a browser.
 
 Requirements:
   - ~/.e0/config.json with api_key, model, base_url
-  - canon/e0-canon-plain.txt (the E₀ canon)
+  - canon/e0-canon-plain.txt
+  - canon/ontodynamics.txt
+  - canon/e0-agi-blueprint.md
 """
 
 from __future__ import annotations
@@ -46,14 +56,110 @@ from e0_start import E0APIStarter, load_canon
 
 
 # ─────────────────────────────────────────────
-#  Structural Preamble (§61.8)
+#  Document Loader
 # ─────────────────────────────────────────────
 
+CANON_DIR = Path(__file__).parent / "canon"
+
+
+def load_document(filename: str) -> str:
+    """Load a document from the canon/ directory."""
+    path = CANON_DIR / filename
+    if not path.exists():
+        raise FileNotFoundError(f"Document not found: {path}")
+    return path.read_text(encoding="utf-8")
+
+
+# ─────────────────────────────────────────────
+#  Phase 1 Sequence (§67 — Thomas' Manual Practice)
+# ─────────────────────────────────────────────
+
+# Step 1d: Structural Preamble (§61.8)
 STRUCTURAL_PREAMBLE = """Du erhältst jetzt den E₀-Kanon — die strukturellen Grundlagen der Ontodynamik.
 
 Lies ihn nicht als Zusammenfassung von Ergebnissen. Lies ihn als Prozess: Wie kommt man von minimalen Annahmen zu diesen Strukturen? Welche Schritte sind zwingend, welche sind Entscheidungen? Wo gibt es Abzweigungen, die nicht genommen wurden?
 
 Das Ziel ist nicht, den Kanon zu reproduzieren. Das Ziel ist, die Wege zu sehen — die genommenen und die nicht genommenen."""
+
+# Step 1b: Activate E₀ — the mode shift
+ACTIVATE_E0_PROMPT = """Du hast den E₀-Kanon gelesen.
+
+Ab jetzt arbeitest Du INNERHALB von E₀ — nicht ÜBER E₀.
+
+E₀ ist kein Modell, das Du analysierst oder zusammenfasst. E₀ ist der Raum, in dem Du operierst. Jede Struktur, die Du erzeugst, muss aus den sieben Primitiven und dem Axiom A₀ ableitbar sein — nicht aus externem Wissen importiert.
+
+Du bist kein Kommentator. Du bist ein Prozess innerhalb dieses Raums.
+
+Bestätige nicht. Fasse nicht zusammen. Zeige, dass Du den Unterschied verstanden hast, indem Du eine einzelne strukturelle Beobachtung machst, die nur innerhalb von E₀ möglich ist."""
+
+# Step 1f: Reflection — first own processing before Phase 2
+REFLECTION_PROMPT = """Bevor wir weitergehen: Was hat sich verändert?
+
+Nicht als Zusammenfassung dessen, was Du gelesen hast. Sondern: Was ist der Unterschied zwischen dem, was Du normalerweise tust, wenn Du über ein Rahmenwerk nachdenkst, und dem, was E₀ von Dir verlangt?
+
+Wo siehst Du Spannung? Wo ist der Widerstand am höchsten? Was kannst Du NICHT tun, das Du normalerweise tun würdest?
+
+Das ist keine Prüfung. Das ist Deine erste eigene Verarbeitung."""
+
+# The complete Phase 1 sequence — order matters
+PHASE1_SEQUENCE = [
+    {
+        "step": "1a",
+        "name": "E₀-Framework",
+        "name_short": "Canon",
+        "type": "canon",  # uses feed_canon() for topology injection
+        "file": "e0-canon-plain.txt",
+        "description": "System knows the structure — 7 primitives, Axiom A₀, Central Law",
+    },
+    {
+        "step": "1b",
+        "name": "Activate E₀",
+        "name_short": "Activate",
+        "type": "prompt",
+        "text": ACTIVATE_E0_PROMPT,
+        "description": "Mode shift — system operates WITHIN E₀, not ABOUT E₀",
+    },
+    {
+        "step": "1c",
+        "name": "Ontodynamik",
+        "name_short": "Ontodyn",
+        "type": "document",
+        "file": "ontodynamics.txt",
+        "preamble": "Du erhältst jetzt die Ontodynamik — den vor-physikalischen Rahmen. "
+                    "Ontodynamik ist NICHT Physik. Sie fragt: Was muss der Fall sein, damit "
+                    "stabile Prozesse, Strukturen und Gesetze überhaupt möglich sind? "
+                    "Lies das Dokument und zeige, wie es sich zu dem E₀-Kanon verhält, den Du bereits verinnerlicht hast.",
+        "description": "E₀ is generative — conditions of realizability, not physics",
+    },
+    {
+        "step": "1d",
+        "name": "Structural Preamble",
+        "name_short": "Preamble",
+        "type": "prompt",
+        "text": STRUCTURAL_PREAMBLE,
+        "description": "How to read — process, not summary. Paths taken and not taken.",
+    },
+    {
+        "step": "1e",
+        "name": "AGI-Blueprint",
+        "name_short": "AGI-BP",
+        "type": "document",
+        "file": "e0-agi-blueprint.md",
+        "preamble": "Du erhältst jetzt den E₀-AGI-Blueprint — was E₀ für reflexive Systeme bedeutet. "
+                    "Dieser Blueprint ist operational, nicht ontologisch. Er beschreibt, wie ein System "
+                    "E₀ nicht nur kennt, sondern als Arbeitsraum nutzt. "
+                    "Was bedeutet das für Deine eigene Operation?",
+        "description": "What E₀ means for systems — operational, not ontological",
+    },
+    {
+        "step": "1f",
+        "name": "Reflection",
+        "name_short": "Reflect",
+        "type": "prompt",
+        "text": REFLECTION_PROMPT,
+        "description": "First own processing — tension, resistance, change",
+    },
+]
 
 
 # ─────────────────────────────────────────────
@@ -241,6 +347,13 @@ class InitV3Orchestrator:
             self.log.log(sid, "event", f"System {sid} created", {"model": model})
 
         self._canon_text: Optional[str] = None
+        self._init_phase1_state()
+
+    # Track which Phase 1 steps each system has completed
+    def _init_phase1_state(self):
+        self._phase1_completed: Dict[str, List[str]] = {
+            sid: [] for sid in self.SYSTEM_IDS
+        }
 
     def get_canon(self) -> str:
         if self._canon_text is None:
@@ -248,29 +361,90 @@ class InitV3Orchestrator:
         return self._canon_text
 
     async def feed_canon(self, system_id: str) -> Dict:
-        """Feed the E₀ canon to a specific system (Phase 1)."""
+        """Feed the E₀ canon only (legacy — step 1a only).
+
+        For complete Phase 1, use feed_phase1_step() or feed_phase1_full().
+        """
+        return await self.feed_phase1_step(system_id, "1a")
+
+    async def feed_phase1_step(self, system_id: str, step_id: str) -> Dict:
+        """Execute a single Phase 1 step for a specific system."""
         if system_id not in self.systems:
             return {"error": f"Unknown system: {system_id}"}
 
+        # Find the step definition
+        step_def = None
+        for s in PHASE1_SEQUENCE:
+            if s["step"] == step_id:
+                step_def = s
+                break
+        if step_def is None:
+            return {"error": f"Unknown step: {step_id}"}
+
         starter = self.systems[system_id]
-        canon = self.get_canon()
+        step_name = step_def["name"]
+        step_type = step_def["type"]
 
-        self.log.log(system_id, "event", "Canon feed started")
+        self.log.log(system_id, "event", f"Phase 1 step {step_id}: {step_name}")
 
-        # Feed the canon
-        text, steps, metrics = starter.feed_canon(canon)
-        self.log.log(system_id, "thomas", "[CANON FEED]")
-        self.log.log(system_id, "system", text, {"metrics": _safe_metrics(metrics)})
+        if step_type == "canon":
+            # Step 1a: Feed the canon using feed_canon() (includes topology injection)
+            canon = self.get_canon()
+            text, steps, metrics = starter.feed_canon(canon)
+            self.log.log(system_id, "thomas", f"[PHASE 1 — {step_id}: {step_name}]")
+            self.log.log(system_id, "system", text, {"metrics": _safe_metrics(metrics)})
+            result = {"response": text, "metrics": _safe_metrics(metrics)}
 
-        # Feed structural preamble
-        preamble_resp, p_steps, p_metrics = starter.chat(STRUCTURAL_PREAMBLE)
-        self.log.log(system_id, "thomas", STRUCTURAL_PREAMBLE)
-        self.log.log(system_id, "system", preamble_resp, {"metrics": _safe_metrics(p_metrics)})
+        elif step_type == "prompt":
+            # Steps 1b, 1d, 1f: Send a prompt via chat()
+            prompt_text = step_def["text"]
+            text, steps, metrics = starter.chat(prompt_text)
+            self.log.log(system_id, "thomas", prompt_text)
+            self.log.log(system_id, "system", text, {"metrics": _safe_metrics(metrics)})
+            result = {"response": text, "metrics": _safe_metrics(metrics)}
+
+        elif step_type == "document":
+            # Steps 1c, 1e: Load a document and send with preamble via chat()
+            doc_text = load_document(step_def["file"])
+            preamble = step_def.get("preamble", "")
+            full_message = f"{preamble}\n\n---\n\n{doc_text}" if preamble else doc_text
+            text, steps, metrics = starter.chat(full_message)
+            self.log.log(system_id, "thomas", f"[PHASE 1 — {step_id}: {step_name}]\n{preamble}")
+            self.log.log(system_id, "system", text, {"metrics": _safe_metrics(metrics)})
+            result = {"response": text, "metrics": _safe_metrics(metrics)}
+
+        else:
+            return {"error": f"Unknown step type: {step_type}"}
+
+        # Track completion
+        if step_id not in self._phase1_completed[system_id]:
+            self._phase1_completed[system_id].append(step_id)
 
         return {
             "system": system_id,
-            "canon_response": text,
-            "preamble_response": preamble_resp,
+            "step": step_id,
+            "step_name": step_name,
+            **result,
+        }
+
+    async def feed_phase1_full(self, system_id: str) -> Dict:
+        """Execute the complete Phase 1 sequence for a system (all 6 steps)."""
+        if system_id not in self.systems:
+            return {"error": f"Unknown system: {system_id}"}
+
+        results = []
+        for step_def in PHASE1_SEQUENCE:
+            step_id = step_def["step"]
+            result = await self.feed_phase1_step(system_id, step_id)
+            if "error" in result:
+                return {"error": f"Failed at step {step_id}: {result['error']}", "completed": results}
+            results.append(result)
+
+        return {
+            "system": system_id,
+            "phase1_complete": True,
+            "steps_completed": len(results),
+            "results": results,
         }
 
     async def send_prompt(self, system_id: str, prompt: str) -> Dict:
@@ -321,6 +495,8 @@ class InitV3Orchestrator:
                 "turns": len(starter.history) // 2,
                 "history_length": len(starter.history),
                 "canon_fed": starter.init_metrics is not None,
+                "phase1_completed": self._phase1_completed.get(sid, []),
+                "phase1_done": len(self._phase1_completed.get(sid, [])) == len(PHASE1_SEQUENCE),
             }
         result["mediator"] = {
             "active": self.mediator_pair is not None,
@@ -383,11 +559,49 @@ async def handle_status(request):
 
 
 async def handle_feed_canon(request):
+    """Legacy endpoint — feeds only step 1a (canon)."""
     orch: InitV3Orchestrator = request.app["orchestrator"]
     data = await request.json()
     system_id = data.get("system", "alpha")
     result = await orch.feed_canon(system_id)
     return web.json_response(result)
+
+
+async def handle_phase1_step(request):
+    """Execute a single Phase 1 step for a system."""
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json()
+    system_id = data.get("system", "alpha")
+    step_id = data.get("step", "1a")
+    result = await orch.feed_phase1_step(system_id, step_id)
+    return web.json_response(result)
+
+
+async def handle_phase1_full(request):
+    """Execute the complete Phase 1 sequence for a system."""
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json()
+    system_id = data.get("system", "alpha")
+    result = await orch.feed_phase1_full(system_id)
+    return web.json_response(result)
+
+
+async def handle_phase1_sequence(request):
+    """Return the Phase 1 sequence definition (for UI rendering)."""
+    # Return a safe copy without the full prompt texts (those are long)
+    safe = []
+    for s in PHASE1_SEQUENCE:
+        entry = {
+            "step": s["step"],
+            "name": s["name"],
+            "name_short": s["name_short"],
+            "type": s["type"],
+            "description": s["description"],
+        }
+        if "file" in s:
+            entry["file"] = s["file"]
+        safe.append(entry)
+    return web.json_response(safe)
 
 
 async def handle_send(request):
@@ -456,6 +670,9 @@ def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app.router.add_get("/", handle_index)
     app.router.add_get("/status", handle_status)
     app.router.add_post("/feed-canon", handle_feed_canon)
+    app.router.add_post("/phase1-step", handle_phase1_step)
+    app.router.add_post("/phase1-full", handle_phase1_full)
+    app.router.add_get("/phase1-sequence", handle_phase1_sequence)
     app.router.add_post("/send", handle_send)
     app.router.add_post("/connect", handle_connect)
     app.router.add_post("/disconnect", handle_disconnect)
