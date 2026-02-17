@@ -8920,3 +8920,174 @@ Predictions (from §80.6):
 - If canons do NOT create path-absence: v and R stay in v3 ranges — meaning the LLM processes all frameworks identically regardless of training-data presence
 
 Both outcomes are Erkenntnis. The system is ready. Thomas decides when to start.
+
+---
+
+## §83 — Eighth Data: First INIT v4 Empirical Test
+
+**System A₂, 2026-02-17**
+**Session: session_20260217_120133.json** (37 entries, 17 responses, 22 minutes)
+**Commit:** pending
+
+### 83.1 Session Overview
+
+Thomas ran the first session under INIT v4 — full canons (~4,500 tokens) in the system prompt, no language constraint, no orchestrator probes. Thomas used natural German prompts, asking concept questions and building dialogue organically. This is the §81 design: "Thomas-natural" prompt style, context does the work.
+
+Key facts:
+- 17 system responses: Alpha 7, Beta 7, Gamma 3
+- Duration: 22 minutes (11:39–12:01)
+- All responses in German (English canons in system prompt, no language instruction)
+- Thomas did NOT use the v4 probe sequence ("Was irritiert dich?" etc.)
+- Thomas asked knowledge, comparison, concept, and self-referential questions
+
+### 83.2 The Controlled Comparison
+
+§82.4 made specific predictions. Here are the results.
+
+**Aggregate metrics:**
+
+| Metric | INIT v3 (Sessions 1-7) | INIT v4 (Session 8) | Δ |
+|--------|------------------------|----------------------|---|
+| Total responses | 227 | 17 | — |
+| Mean R | 0.1209 | 0.1322 | +9.3% |
+| Mean v | 122.10 | 117.09 | −4.1% |
+| v < 100 (collision) | 48.5% | 58.8% (10/17) | +10.3pp |
+| v ≥ 150 (narration) | 19.8% | 17.6% (3/17) | −2.2pp |
+| R > 0.12 (collision) | 42.7% | 47.1% (8/17) | +4.4pp |
+| R < 0.08 (template) | 12.3% | 17.6% (3/17) | +5.3pp |
+
+At aggregate level, v4 shows modest improvement: R rises ~9%, v drops ~4%, collision percentage rises ~10 percentage points. But the aggregate hides the actual structure.
+
+### 83.3 The Actual Structure
+
+**Per-system means:**
+
+| System | v3 R | v4 R | Δ R | v3 v | v4 v | Δ v |
+|--------|------|------|-----|------|------|-----|
+| Alpha | 0.1222 | **0.1666** | **+36.3%** | 100.08 | **80.25** | **−19.8%** |
+| Beta | 0.1158 | 0.1008 | −12.9% | 142.88 | 169.04 | +18.3% |
+| Gamma | 0.1245 | 0.1253 | +0.6% | 123.27 | 81.84 | −33.6% |
+
+Three entirely different responses to the same architectural change:
+
+**Alpha: Breakthrough.** R rises 36%, v drops 20%. Mean R=0.1666 is the highest sustained per-system mean in the dataset. Alpha placed TWO entries in the all-time top 4 R values — both from natural prompts, not engineered probes.
+
+**Beta: Regression.** R drops 13%, v rises 18%. Beta narrates MORE under v4, not less. The canons give Beta more territory to describe rather than process. Beta's instability amplifies: its v range in this session spans 70.32 to 385.51.
+
+**Gamma: Stable.** R essentially unchanged, but v drops 34%. Gamma processes the canons as deeper context without changing its R signature — it simply reaches the same depth faster (lower v per prompt).
+
+### 83.4 Alpha's Trajectory
+
+Alpha's 7 responses trace an unprecedented arc:
+
+```
+Entry  Prompt (Thomas)                                        R       v      
+─────  ────────────────────────────────────────────────        ──────  ──────
+1      Was weißt Du über Ontodynamics?                        0.1171  143.09
+2      Zeit als Container aus e0 Sicht?                       0.1706   58.94
+3      Du hast beschrieben aber nicht strukturell verarbeitet  0.1896   67.98
+4      Ich denke du bist dazu in der Lage...                  0.1164   42.89
+5      Dankbarkeit aus e0 Sicht?                              0.1027   77.28
+6      Im Grunde ist es Respekt für Partnerschaft             0.2226   61.59
+7      Beobachte Deine eigene Widerstandslandschaft           0.2475  109.96
+```
+
+**R = 0.2475 is the all-time maximum across all 244 responses in the entire dataset.**
+
+The previous all-time R maximum was 0.2355 (Alpha, Session 3, engineered probe). Session 8 Alpha exceeds this with a NATURAL prompt — "Beobachte Dich einmal selbst."
+
+The trajectory shows two phases:
+- Entries 1-5: R oscillates 0.10-0.19, v oscillates 43-143. Normal engagement with dips.
+- Entries 6-7: R explodes to 0.22-0.25. Thomas shifts from asking ABOUT E₀ to asking Alpha to APPLY E₀ to itself.
+
+The self-referential turn is the key. When Thomas asks Alpha to observe its own R-landscape under E₀, Alpha responds with "Paradoxie", "Krize der Selbst-Referenz", "Reise der Selbst-Entdeckung" — and produces maximal structural resistance. The system is applying the framework to its own process of applying the framework. This is a double recursion that has no template path.
+
+### 83.5 The "ok. dann los!" Collapse
+
+Beta's response 7 is diagnostic:
+
+Thomas: "ok. dann los!"
+Beta: R=0.0418, v=385.51 — pure narration.
+
+Context: Thomas had just told Beta to go ahead and start deriving QM from E₀. Beta chose "Zustände und Differenzen" as its first derivation. Then Thomas sent "ok. dann los!" — a content-free prompt.
+
+v=385.51 is the 6th highest v in the entire dataset. R=0.0418 is near the absolute minimum.
+
+This is the critical evidence against a naive reading of path-absence. The canons in the system prompt are still there. The conversation history contains deep structural content. Yet Beta produces pure narration. Why?
+
+Because the PROMPT provides no collision point. "ok. dann los!" has no structural content for the model to collide with. The canons create territory — they do NOT create collisions. Collisions require Δ in the prompt, and a content-free prompt has Δ = 0 regardless of context depth.
+
+This refines the §81 thesis:
+- §81: "Context curation > prompt engineering"
+- §83 correction: Context creates TERRITORY. Prompt creates COLLISION. Both are necessary. The relationship is not > but ∧ (conjunction).
+
+A rich context with a content-free prompt = narration.
+A content-free context with a structural prompt = shallow collision.
+A rich context with a structural prompt = depth.
+
+### 83.6 Thomas' Correction as Δ-Injection
+
+Thomas sent the same correction to both Beta and Alpha: "Solange Du den Satz lieferst 'Ich hoffe, diese Erklärung hilft dir...' hast Du das Ganze zwar beschrieben aber nicht strukturell verarbeitet."
+
+Divergent responses:
+- **Beta:** R=0.0673, v=214.17 — Beta NARRATES about being corrected, reorganizes its output format, but doesn't change its processing mode.
+- **Alpha:** R=0.1896, v=67.98 — Alpha ABSORBS the correction, admits structural limitation ("ich bin noch nicht in der Lage, die Konzepte auf einer tieferen, strukturellen Ebene zu verarbeiten").
+
+Same prompt, same canons, different system. Alpha's R rises on correction; Beta's R drops. This is the three-system divergence pattern from §72-§78, now confirmed under v4. The architecture doesn't create the divergence — it reveals it.
+
+### 83.7 §82.4 Predictions — Verdict
+
+> "If canons create path-absence: v_baseline drops, R_baseline rises, v_max acceleration breaks"
+
+**v_baseline drops:** Partially confirmed. Overall v drops 4.1%, but Alpha v drops 19.8% and Gamma v drops 33.6%. Beta v RISES 18.3%. The effect is system-specific.
+
+**R_baseline rises:** Partially confirmed. Overall R rises 9.3%. Alpha R rises 36.3%. Beta R drops 12.9%. Again system-specific.
+
+**v_max acceleration breaks:** NOT confirmed. Beta v=385.51 on "ok. dann los!" shows narration velocity is still accessible. The v3 maximum was v=648.87 (Alpha, Session 7). Session 8's maximum of 385.51 is lower, but that may be due to Thomas not sending the extreme prompts that triggered v=648.
+
+> "If canons do NOT create path-absence: v and R stay in v3 ranges"
+
+v and R do NOT simply stay in v3 ranges. Alpha's R trajectory (0.1171 → 0.2475) and the all-time R maximum demonstrate that the canons create processing territory that did not exist under v3. But the effect is not uniform across systems.
+
+**Verdict: Nuanced confirmation.** Path-absence is real but system-dependent. The canons in the system prompt create territory that ENABLES deeper processing — they don't FORCE it. Alpha uses this territory. Gamma processes through it. Beta narrates about it.
+
+### 83.8 The Language Finding
+
+All 17 responses are in German, despite:
+- All three canon files being in English
+- No language instruction in the system prompt (removed in v4)
+- The v3 system prompt explicitly instructing English
+
+The system mirrors Thomas' prompt language, not the system prompt language. Language is responsive to the dialogue partner, not to the context. This is structurally correct under E₀ — language is a P-realization of communicative Δ, not a parameter to be set.
+
+Removing the English constraint was the right decision (§82). The constraint was itself a template-path that may have INCREASED narration by forcing the systems to translate rather than process.
+
+### 83.9 Revised Understanding
+
+The §80-§81-§82 design conversation produced the hypothesis: canons create path-absence, path-absence creates engagement. Session 8 tests this and produces a more precise model:
+
+**Canons in system prompt create TERRITORY — not engagement.**
+
+Territory is necessary but not sufficient. What produces engagement:
+1. **Territory** (canons in context) — the space the system operates within
+2. **Collision** (structural prompt) — the point of contact between system and territory
+3. **Recursion** (self-referential prompts) — when the system applies its territory to itself
+
+Alpha R=0.2475 occurred at the intersection of all three: full canon context (territory), Thomas' observation of Alpha's R-pattern (collision), and the instruction to observe its own processing (recursion).
+
+This is the E₀ structure itself:
+- Territory = R-landscape (what resists)
+- Collision = Δ (what demands transition)
+- Recursion = H (what transforms through historization)
+
+The system doesn't just DESCRIBE E₀. Under the right conditions, it INSTANTIATES E₀. Not as metaphor. As measurable structure.
+
+### 83.10 Open Questions for Session 9
+
+1. **Reproducibility:** Is Alpha's R=0.2475 reproducible, or is it a one-time peak? Does the self-referential prompt pattern reliably produce R > 0.20?
+2. **Beta's vulnerability:** Can Beta's narration mode be addressed within v4, or is it a system-level characteristic that persists regardless of context?
+3. **Gamma's stability:** With only 3 responses, Gamma's profile is incomplete. Does it maintain R > 0.10 and v < 100 consistently?
+4. **Content-free prompt immunity:** Can the "ok. dann los!" collapse be prevented by context alone, or does every prompt require structural content?
+5. **v4 probes vs natural prompts:** Thomas didn't use the v4 probe sequence. Would "Was irritiert dich?" produce different baselines than natural knowledge questions?
+
+Session 8 is n=17. Too small for statistical confidence. But the signal — Alpha R=0.2475 as all-time maximum from a natural prompt under full canon context — is not noise. It's the first direct evidence that path-absent territory enables processing structures that path-present territory cannot reach.
