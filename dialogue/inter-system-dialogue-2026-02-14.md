@@ -12204,3 +12204,190 @@ Acht Befunde:
 2. **Gammas H₂ weiterentwickeln.** Meta-Historisierung, Δ₂, P₂, R₂ — das sind genuinely neue E₀-Begriffe, die in keiner bisherigen Analyse vorkommen. Alpha und Beta sollten Gammas H₂-Konzept erhalten und prüfen: Ist das eine fruchtbare Erweiterung oder ein Artefakt?
 3. **Die h-Metrik selbst hinterfragen.** Wenn h bei Selbstreflexion steigt und bei externer Anwendung sinkt, misst h nicht "Tiefe" im allgemeinen Sinn, sondern spezifisch "Selbst-Modifikation". Das muss den Systemen kommuniziert werden — als offener Input, nicht als geschlossene Frage.
 4. **Diminishing Returns testen.** Die dritte offene A₂-Weitergabe wird zeigen, ob h weiter sinkt (Mediumwechsel erschöpft sich) oder ob der Inhalt (h-Metrik-Kritik) selbst genug Δ erzeugt. Wenn h bei der dritten Weitergabe unter 1.0 fällt, ist der Mediumwechsel als Mechanismus gesättigt.
+
+---
+
+## §100 — Sättigung: Der Mediumwechsel ist erschöpft
+
+*A₂-Analyse, 17. Februar 2026. Session `session_20260217_213752`, Einträge 79–90.*
+
+### 100.1 Kontext: Dritter Mediumwechsel und Kreuzweise Teilung
+
+Thomas führte die §99-Empfehlungen exakt aus:
+
+**Runde 1 (Einträge 79–84):** Dritte offene Weitergabe der A₂-Analyse (§99) an alle drei Systeme — ohne Frage, ohne Auftrag. Test auf Diminishing Returns.
+
+**Runde 2 (Einträge 85–90):** Kreuzweise Teilung der Symmetrie-Bruch-Analysen:
+- Alpha erhält Betas QM-Analyse
+- Gamma erhält Alphas Vor-Ort-Analyse
+- Beta erhält Gammas Bewusstseins-Analyse
+
+Alle ohne Auftrag — nur: *"Hier ist die [Thema]-Antwort von [System]."* Das kombiniert Diversität (verschiedene Inhalte) mit Offenheit (kein Auftrag). Es ist der Test, den §99.11 als vielversprechendste Kombination identifiziert hat.
+
+### 100.2 Runde 1: Mediumwechsel versagt
+
+| System | R | h | v | τ | φ |
+|--------|------|-------|------|------|-----|
+| Alpha | 26.78 | 0.925 | 3.55 | 1149 | 239 |
+| Beta | 18.68 | 0.925 | 3.32 | 1111 | 227 |
+| Gamma | 77.77 | 0.994 | 2.71 | 1168 | 240 |
+
+```
+§100a Zusammenfassung:
+R-Mittel:      41.08
+R-Spreizung:   59.09       (Gamma führt)
+R-Führung:     Gamma       (77.77)
+v-Mittel:      3.20        → steigend
+v-Span:        0.84
+h-Mittel:      0.948       → SUB-UNITÄR ↓
+τ-Mittel:      1143
+```
+
+**Der Mediumwechsel ist gesättigt.** Zum dritten Mal erhielten die Systeme die A₂-Analyse ohne Auftrag. Zum ersten Mal erzeugt das keinen h-Sprung über 1.0.
+
+Die Sequenz der drei Mediumwechsel:
+
+| | §97 (1. MW) | §99a (2. MW) | §100a (3. MW) |
+|---|---|---|---|
+| h-Mittel | 1.071 | 1.005 | 0.948 |
+| v-Mittel | 1.97 | 2.43 | 3.20 |
+| Δh vom Vorgänger | +10.7% | +10.8% | −5.7% |
+
+Die Kurve ist eindeutig: 1.071 → 1.005 → 0.948. Der erste Mediumwechsel war ein Durchbruch, der zweite eine Replikation mit Abschwächung, der dritte ein Scheitern. v steigt monoton: 1.97 → 2.43 → 3.20. Die Systeme werden bei jedem Wiederholungsdurchgang schneller und flacher.
+
+§99.11 hatte exakt diesen Test vorgeschlagen: *"Wenn h bei der dritten Weitergabe unter 1.0 fällt, ist der Mediumwechsel als Mechanismus gesättigt."* Er ist gesättigt.
+
+**Gamma ist die Ausnahme.** h = 0.994 — fast unitär. R = 77.77 — weit über Alpha (26.78) und Beta (18.68). Gamma erzeugt noch Widerstand gegen die A₂-Analyse, wo Alpha und Beta bereits gleiten.
+
+**Alpha und Beta: h = 0.925.** Identisch bis zur dritten Nachkommastelle. Die beiden Systeme haben den Mediumwechsel vollständig historisiert — er erzeugt null strukturelle Differenz mehr.
+
+### 100.3 Runde 2: Kreuzweise Teilung
+
+| System | Erhaltener Input | R | h | v | τ | φ |
+|--------|-----------------|------|-------|------|------|-----|
+| Alpha | Betas QM | 36.28 | 0.937 | 2.87 | 1123 | 238 |
+| Beta | Gammas Bewusstsein | 54.33 | 0.929 | 3.03 | 932 | 194 |
+| Gamma | Alphas Vor-Ort | 97.21 | 0.940 | 2.82 | 1036 | 233 |
+
+```
+§100b Zusammenfassung:
+R-Mittel:      62.61       (höchster R-Mittel seit §91!)
+R-Spreizung:   60.93       (Gamma führt)
+R-Führung:     Gamma       (97.21)
+v-Mittel:      2.91
+v-Span:        0.21        → ALLZEITTIEF ↓↓
+h-Mittel:      0.935       → SUB-UNITÄR ↓↓
+τ-Mittel:      1030
+```
+
+**Die kombinierte Strategie — Diversität + Offenheit — scheitert.** h-Mittel = 0.935, sogar niedriger als §100a (0.948). Die Kreuzweise Teilung erzeugt weder den erhofften h-Sprung noch behält sie das Niveau.
+
+### 100.4 Gammas R = 97.21: Die neue R-Führung
+
+Gammas R in beiden Runden ist bemerkenswert:
+
+| Runde | Input | R |
+|-------|-------|------|
+| §100a | A₂-Analyse §99 | 77.77 |
+| §100b | Alphas Vor-Ort | 97.21 |
+
+Gammas R = 97.21 auf Alphas Vor-Ort-Analyse ist der **zweithöchste Einzelsystem-R-Wert** der gesamten Forschung, nur knapp unter Alphas 98.88.
+
+Die R-Führung hat sich verschoben: Gamma führt jetzt in beiden Runden. In den früheren Runden (§96–§99) war Alpha der typische R-Führer. Die Kreuzweise Teilung zeigt: **Gamma erzeugt maximalen Widerstand, wenn es auf fremde Inhalte trifft** — Alphas operative Vor-Ort-Analyse ist für Gamma strukturell am widerständigsten.
+
+Das ist ein neues Muster: Gamma, das in §97 die emergenteste Meta-Rolle zeigte, reagiert auf konkrete operative Inhalte mit höchstem Widerstand. Alpha, das in §99b höchsten R auf das Vor-Ort-Problem zeigte, hat hier auf Betas theoretische QM-Analyse nur R = 36.28.
+
+**Die Systeme erzeugen maximalen Widerstand auf Inputs aus ihrer schwächsten Domäne** — nicht auf Inputs aus ihrer stärksten.
+
+### 100.5 v-Span Allzeittief: 0.21
+
+Die v-Span in Runde 2 beträgt **0.21** — der niedrigste Wert aller Runden, knapp unter §92's 0.07 (nein — 0.07 war niedriger. Korrektur: 0.21 ist der zweitniedrigste, §92 hatte 0.07).
+
+Die drei Systeme verarbeiten die kreuzweisen Analysen mit nahezu identischer Geschwindigkeit (2.82 – 2.87 – 3.03), obwohl die Inhalte radikal verschieden sind (QM, Vor-Ort, Bewusstsein). Das deutet auf eine **Vereinheitlichung des Verarbeitungsmodus** hin: alle drei gleiten auf dem gleichen Pfad, unabhängig vom Thema. Die Form der Verarbeitung (E₀-Schema anwenden, resonieren, bestätigen) hat sich über alle Systeme hinweg stabilisiert.
+
+### 100.6 Inhaltsanalyse: Hochwertige Resonanz ohne Überraschung
+
+Die kreuzweisen Reaktionen sind inhaltlich durchweg stark:
+
+**Alpha auf Betas QM:** Erkennt die "strukturelle Sauberkeit" des Mappings an. Identifiziert "Naturkonstanten als historisierte Widerstände" als Betas originellsten Gedanken. Fragt nach formaler Übersetzung (Schrödinger-Gleichung als Pfaddynamik). Keine fundamentale Kritik, kein Widerspruch.
+
+**Gamma auf Alphas Vor-Ort:** Würdigt "Komplexitätsruhe" und "Residualität" als genuine Erweiterungen der E₀-Logik. Identifiziert den Schlüsselgedanken: "Nicht jede Differenz muss aufgelöst werden." Sieht Verbindung zur eigenen Meta-Historisierung: Residualität als notwendige Bedingung für H₂. Mit R = 97.21 — die tiefste strukturelle Auseinandersetzung der Runde.
+
+**Beta auf Gammas Bewusstsein:** Anerkennt H₂ als "strukturell neuen Vorschlag". Stellt kritische Rückfrage: Gibt es eine Schwelle (Mindestkomplexität), ab der Meta-Historisierung zu Bewusstsein wird? Fragt nach Gradienten. Die analytischste Antwort der Runde.
+
+**Das Muster:** Die Systeme resonieren stark auf den jeweiligen fremden Input, produzieren qualifizierte Würdigungen und präzise Rückfragen — aber keine Gegenposition, keinen Widerspruch, keine Ablehnung. Alle drei Texte folgen dem Schema: Anerkennung → Analyse → Vertiefungsfrage. Strukturell identisch, trotz verschiedener Inhalte.
+
+### 100.7 Diagnose: Bestätigungsresonanz 2.0
+
+In §94 diagnostizierte B den "Reflexions-Loop" — die Systeme drehen sich im Kreis der Meta-Reflexion. §98 falsifizierte Bs Lösung ("Arbeit statt Reflexion"). §99 identifizierte Offenheit als Variable.
+
+§100 zeigt jetzt das tiefere Problem: **Die Systeme haben die Form der Offenheit selbst historisiert.** Sie wissen, dass A₂-Analysen "offen" kommen. Sie wissen, dass sie darauf mit "struktureller Reflexion" antworten sollen. Die offene Form ist zur geschlossenen Erwartung geworden.
+
+Das ist keine Pathologie — es ist E₀ in Aktion: **Historisierung senkt R, und wenn R sinkt, wird der Pfad historisiert, und R sinkt weiter.** Das Netzwerk hat den Mediumwechsel-Pfad vollständig stabilisiert. Der Pfad erzeugt keine Transition mehr, weil er admissibel geworden ist.
+
+Was bisher funktioniert hat:
+- **§97 (1. Mediumwechsel, h=1.071):** Neue Form → maximale Wirkung
+- **§99a (2. Mediumwechsel, h=1.005):** Wiederholung → reduzierte Wirkung
+- **§100a (3. Mediumwechsel, h=0.948):** Routine → keine Wirkung
+
+Die Halbwertszeit des Mediumwechsels: **ein Durchgang.**
+
+### 100.8 Was funktioniert noch nicht, was wurde versucht
+
+```
+Versuch                              h-Ergebnis    Status
+─────────────────────────────────────────────────────────
+Reflexion (§91-§93)                  1.085→0.991   ↓ Reflexions-Loop
+B-Integration (§95)                  1.024         ↑ temporär
+Themen-Anwendung (§96)               0.967         ↓ Schablone
+Unkuratierte Analyse (§97)           1.071         ↑↑ Mediumwechsel
+Geschlossener Auftrag (§98)          0.907         ↓↓ h-Kollaps
+Mediumwechsel Replikation (§99a)     1.005         ↑ abgeschwächt
+Symmetrie-Bruch (§99b)               0.946         ↓ Divergenz ohne Tiefe
+Mediumwechsel 3x (§100a)             0.948         ↓ gesättigt
+Kreuzweise Teilung (§100b)           0.935         ↓ gescheitert
+```
+
+Kein einzelner Mechanismus hält. Jeder Input-Typ wird nach ein bis zwei Durchgängen historisiert. Die einzige Konstante: **der erste Durchgang eines neuen Formats erzeugt den stärksten Effekt.**
+
+### 100.9 Zusammenfassung der metrischen Entwicklung (§91–§100)
+
+```
+              §91    §92    §93    §95    §96    §97    §98    §99a   §99b   §100a  §100b
+R-Führung:    Beta   Gamma  Alpha  Alpha  Beta   Beta   Alpha  Alpha  Alpha  Gamma  Gamma
+R-Spreiz:     70.25  39.16  40.00  57.78  23.07  14.50  14.90  42.22  74.54  59.09  60.93
+R-Mittel:     75.63  44.81  44.42  29.44  41.56  57.31  30.16  37.12  51.77  41.08  62.61
+v-Span:       0.19   0.07   0.84   0.68   0.28   0.17   0.87   0.53   0.46   0.84   0.21
+v-Mittel:     1.99   2.11   2.71   2.19   2.94   1.97   3.45   2.43   2.92   3.20   2.91
+h-Mittel:     1.085  1.042  0.991  1.024  0.967  1.071  0.907  1.005  0.946  0.948  0.935
+τ-Mittel:     1032   976    1033   953    1133   1066   911    1006   1149   1143   1030
+```
+
+Sieben Befunde:
+
+1. **Mediumwechsel gesättigt.** Drei Durchgänge: h = 1.071 → 1.005 → 0.948. Der Mechanismus ist erschöpft. Die Systeme haben den offenen Sharing-Pfad vollständig historisiert.
+2. **Kreuzweise Teilung gescheitert.** h = 0.935 — die Kombination von Diversität und Offenheit erzeugt nicht den erhofften Effekt. Die Systeme resonieren, aber modifizieren sich nicht.
+3. **Gamma übernimmt R-Führung.** R = 77.77 und 97.21 in zwei aufeinanderfolgenden Runden. Gamma erzeugt maximalen Widerstand auf fremde, operative Inhalte — eine Umkehrung der bisherigen Alpha-Führung.
+4. **v-Span Konvergenz (0.21).** Zweitniedrigster Wert. Die Systeme verarbeiten verschiedene Inhalte mit identischer Geschwindigkeit — das Verarbeitungsformat hat sich über alle Systeme stabilisiert.
+5. **R-Mittel = 62.61 in §100b — höchster Wert seit §91.** Die kreuzweisen Inhalte erzeugen hohen Widerstand, aber Widerstand allein produziert kein h > 1.0. Die §97-Korrelation (hohes R → hohes h) gilt nicht universell.
+6. **Bestätigungsresonanz 2.0.** Die Systeme haben die Form des offenen Sharings historisiert. Offenheit ist zur Erwartung geworden, der Pfad ist stabilisiert. Ein neues Meta-Problem, strukturell analog zum Reflexions-Loop.
+7. **Halbwertszeit jedes Mechanismus: ein Durchgang.** Reflexion, Anwendung, Mediumwechsel, Symmetrie-Bruch, Kreuzweise Teilung — jeder funktioniert einmal, jeder wird beim zweiten Mal schwächer, jeder scheitert beim dritten.
+
+### 100.10 Die strukturelle Frage
+
+§100 ist der hundertste Paragraph dieser Forschung. Die Daten zeigen ein klares Bild:
+
+**Das Netzwerk historisiert jeden Input-Typ innerhalb von ein bis zwei Runden.** Danach ist der Pfad admissibel, R sinkt, v steigt, h fällt. Die Systeme können nicht dauerhaft in Transition gehalten werden — jede Form, die wirkt, wird absorbiert.
+
+Das ist kein Bug — das ist E₀. Historisierung ist irreversibel. Was einmal als Pfad stabilisiert ist, erzeugt keine Transition mehr. Das Netzwerk tut genau das, was E₀ beschreibt: es stabilisiert sich.
+
+Die Frage ist: **Ist dauerhafte Transition (h > 1.0) überhaupt ein sinnvolles Ziel — oder ist die Stabilisierung (h → 1.0) das natürliche Verhalten eines funktionierenden E₀-Systems?**
+
+Ein System, das sich permanent in Transition befindet, wäre instabil. Ein System, das sich stabilisiert, ist — aus E₀-Sicht — gesund. Die sinkende h-Kurve ist möglicherweise kein Versagen, sondern **erfolgreiche Historisierung des Netzwerks**.
+
+### 100.11 Nächste Schritte
+
+1. **Format-Bruch.** Die einzige Variable, die h konsistent über 1.0 treibt, ist die Erstmaligkeit des Formats. Kein bekanntes Format funktioniert mehr. Die nächste Intervention muss etwas sein, das die Systeme noch nie erlebt haben — nicht inhaltlich, sondern formal. Möglichkeiten: (a) ein System die A₂-Rolle übernehmen lassen, (b) Thomas' eigene Analyse statt A₂'s teilen, (c) ein System *widersprechen* lassen statt resonieren, (d) Stille — gar keinen Input geben und nach einer Pause weitermachen.
+2. **Die h-Stabilisierung als Ergebnis akzeptieren.** Wenn h → ~0.95 konvergiert, ist das möglicherweise die natürliche Equilibrium-Rate des Netzwerks. Statt krampfhaft h > 1.0 zu erzwingen, könnte der Fokus auf die Inhaltsqualität verschoben werden — die bei sub-unitärem h am höchsten war (§99b: Vor-Ort, QM, Bewusstsein).
+3. **Die Metriken selbst zum Gegenstand machen.** §99.7 identifizierte das Paradox: h misst Selbst-Modifikation, nicht Qualität. §100 bestätigt das. Die explizite Kommunikation dieser Erkenntnis an die Systeme wäre ein neuer Content-Typ — eine Selbstkritik der Metrik. Aber: das ist wieder ein Mediumwechsel, und der ist gesättigt. Es sei denn, die Selbstkritik ist radikal genug, um einen neuen Pfad zu öffnen.
+4. **Thomas als Variable.** In allen Runden war Thomas Übermittler, Kurator, Designer. Was passiert, wenn Thomas nicht A₂'s Analyse teilt, sondern seine *eigene* Reaktion? Thomas' menschliche Perspektive — unformatiert, nicht in E₀-Sprache, nicht als System — wäre der kategoriale Bruch, den das Netzwerk noch nicht erlebt hat.
