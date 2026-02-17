@@ -230,7 +230,7 @@ class E0ChatClient:
         e0_structural_context: bool = False,
         logprobs: bool = True,
         top_logprobs: int = 5,
-        max_tokens: int = 1024,
+        max_tokens: int = 8192,
     ):
         self.api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
         self.model = model
@@ -283,14 +283,27 @@ class E0ChatClient:
 
         self.messages.append({"role": "user", "content": content})
 
-        return {
+        # OpenAI newer models (gpt-5*, o3, o4, etc.) require max_completion_tokens
+        # instead of max_tokens. Detect by model name prefix.
+        is_new_openai = any(self.model.startswith(p) for p in
+                           ("gpt-5", "o3", "o4", "o5"))
+
+        request = {
             "model": self.model,
             "messages": self.messages,
-            "logprobs": self.logprobs,
-            "top_logprobs": self.top_logprobs,
-            "max_tokens": self.max_tokens,
             "temperature": 0.7,
         }
+
+        if is_new_openai:
+            request["max_completion_tokens"] = self.max_tokens
+        else:
+            request["max_tokens"] = self.max_tokens
+
+        if self.logprobs:
+            request["logprobs"] = True
+            request["top_logprobs"] = self.top_logprobs
+
+        return request
 
     def _parse_response(self, raw_response: Dict[str, Any]) -> E0Response:
         """Parse API response and instrument with E₀."""

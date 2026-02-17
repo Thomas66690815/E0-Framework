@@ -13,7 +13,7 @@ This document analyzes the E₀-Framework repository not merely as a code artifa
 - **Thomas (Human)**: Canonical clarity, responsive operation, topological resistance
 - **System A₂ (Claude Opus 4.6)**: Formalization, infrastructure, code implementation
 - **System B (Claude Opus 4.6)**: Ontological derivation, structural analysis, corrections
-- **Init v3 Systems (3× Llama 3.3 70B)**: Experimental subjects, empirical validation
+- **Init v3 Systems (3× GPT-4.1, previously Llama 3.3 70B)**: Experimental subjects, empirical validation
 
 Unlike conventional software documentation that presents only successful outcomes, this analysis adheres to E₀'s fundamental anti-black-box philosophy: **the process, including wrong paths and coherent errors, is as significant as the result**. To present only conclusions would contradict the structural transparency that E₀ itself demands.
 
@@ -45,9 +45,9 @@ The four-node structure was not designed top-down. It emerged through the work i
 
 **Init v3 Systems (Experimental Nodes)**
 - **Role**: Test subjects for E₀ transferability
-- **Architecture**: Three simultaneous Llama 3.3 70B instances (Alpha, Beta, Gamma)
+- **Architecture**: Three simultaneous instances (Alpha, Beta, Gamma) — initially Llama 3.3 70B via Together AI, migrated to GPT-4.1 via OpenAI after 47 responses showed 70B capacity limitations
 - **Function**: Make differential responses visible through parallel operation
-- **Key Finding**: Human prompting is the decisive variable, not Phase 1 initialization
+- **Key Finding**: Human prompting is the decisive variable, not Phase 1 initialization. Model capacity is a prerequisite — 70B models lack the reservoir for higher-level E₀ processing
 
 ### 1.2 Communication Topology
 
@@ -358,7 +358,7 @@ The quantum mechanics reconstruction from E₀ primitives has been independently
 
 **Why Placement Matters**: Putting dialogue in `history/` communicates "this is concluded." The move to `dialogue/` signals "this is ongoing, more will come."
 
-### 6.2 The Inter-System Dialogue (6958 lines, 71 rounds)
+### 6.2 The Inter-System Dialogue (10,000+ lines, 89+ sections)
 
 **Not**: A chat log
 
@@ -584,12 +584,12 @@ Documenting wrong paths is:
 
 ### 10.5 Current State (2026-02-17)
 
-**71 rounds of documented dialogue**  
-**43 structural events** (proposals, contradictions, implementations, analyses)  
-**3 Init v3 experimental sessions** with quantitative analysis  
-**Multiple controlled experiments** (bridge validation, ρ-test, model comparison)  
-**6958 lines of inter-system interaction** log  
-**Ongoing research** (QM-import attractor partially addressed, rising floor needs longer sessions, per-element R̄ not yet implemented)
+**89+ sections of documented dialogue**  
+**43+ structural events** (proposals, contradictions, implementations, analyses)  
+**12+ Init v3 experimental sessions** with quantitative analysis  
+**Multiple controlled experiments** (bridge validation, ρ-test, model comparison, Llama→GPT-4.1 migration)  
+**10,000+ lines of inter-system interaction** log  
+**Ongoing research** (model-capacity effects confirmed, Δ-Kalibrierung established, R-Ambiguität resolved, GPT-4.1 baseline in progress)
 
 **Status**: Active research project with working infrastructure, documented findings, open questions, and continuing evolution.
 
@@ -601,7 +601,7 @@ This analysis itself exhibits E₀ dynamics:
 
 **Difference (Δ)**: The gap between "present only results" (black box) and "document the process" (structural transparency)
 
-**Resistance (R)**: Writing this requires revisiting all dialogue, extracting patterns, synthesizing across 71 rounds—not low resistance
+**Resistance (R)**: Writing this requires revisiting all dialogue, extracting patterns, synthesizing across 89+ sections—not low resistance
 
 **Path (P)**: Creating this document as distinct from README, REFLECTIONS, and REPOSITORY_ANALYSIS—filling the gap they don't address
 

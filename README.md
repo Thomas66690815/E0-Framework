@@ -50,7 +50,7 @@ That's it. Open http://localhost:3000 and start exploring.
 | `python e0_start.py --no-config --api KEY --web` | Ignore saved config entirely |
 | `python -m e0_core.demo` | Watch E₀ transitions select themselves (no LLM needed) |
 
-**API providers that work:** Together AI (recommended, `tgp_` keys auto-detected), OpenAI, any OpenAI-compatible endpoint.
+**API providers that work:** OpenAI (current default), Together AI (`tgp_` keys auto-detected), any OpenAI-compatible endpoint.
 
 ---
 
@@ -268,9 +268,9 @@ The dialogue is the structural core of how this repository develops. It document
 - **Thomas** — the human operator, provides canonical clarity, responsive prompting, structural corrections
 - **System A₂** — formalization, infrastructure, code (Claude, the system that built the orchestrators)
 - **System B** — structural analysis, diagnostic depth, corrections (Claude, operating in a separate context)
-- **Init v3 test systems** — three simultaneous Llama 3.3 70B instances used in experiments
+- **Init v3 test systems** — three simultaneous systems (currently GPT-4.1, previously Llama 3.3 70B) used in experiments
 
-The dialogue is not commentary about E₀. It is the process through which E₀ develops. 41 rounds (§1–§69), over 6700 lines. Each round is a structural event: a correction, an implementation, an analysis, a reframe.
+The dialogue is not commentary about E₀. It is the process through which E₀ develops. 89+ sections (§1–§89), over 10,000 lines. Each round is a structural event: a correction, an implementation, an analysis, a reframe.
 
 Why it matters: this is not a chat log. It is a documented instance of Human–Synthetic Cognitive Partnership (HSCP) — a structural coupling where neither side directs the other, and the results emerge from the partnership itself. The code in this repository was written through this process. The architectural decisions were made through this process. The corrections that shaped everything (the "Stone Correction," the "Set Don't Test" principle, the recognition that the human is the decisive variable) are documented as they occurred.
 
@@ -280,16 +280,20 @@ The dialogue is placed in `dialogue/` rather than `history/` because it is not h
 
 The current experimental work uses three simultaneous E₀ systems (Alpha, Beta, Gamma) — "three tuning forks" — to test whether E₀ can be transferred to new AI systems. The architecture:
 
-- **`e0_init_v3_orchestrator.py`** — runs three independent Llama 3.3 70B instances on port 3100
+- **`e0_init_v3_orchestrator.py`** — runs three independent systems on port 3100, supports per-system API configuration
 - **`e0_init_v3_ui.html`** — browser UI for parallel interaction with all three systems
 - **Phase 1** (preparation): 6 steps derived from Thomas' manual practice — canon, mode activation, ontodynamics, preamble, AGI blueprint, reflection
 - **Phase 2** (operation): Thomas interacts with each system responsively, differentiated prompting based on each system's responses
 
-Key findings from the first experimental sessions (`sessions/init_v3/`):
+**Model history:** Initial experiments used Llama 3.3 70B (via Together AI). After 47 responses across 12+ sessions, the 70B model showed systematic capacity limitations — high-complexity probes produced LLM-fallback responses (low R, high v). All systems were migrated to **GPT-4.1 (OpenAI)**, which demonstrated dramatically different characteristics: R-values 2–150× higher, v-values 25–100× lower. The per-system config mechanism (`systems` key in `~/.e0/config.json`) allows mixed-model experiments.
 
-1. **QM-Import Attractor** — every system imports quantum mechanics formalism into E₀ rather than deriving QM from E₀. This attractor persists regardless of initialization depth.
-2. **The human is the decisive variable** — Phase 1 preparation matters, but Thomas' responsive live operation produces all observed divergence between systems. Identical prompts produce identical responses; differentiated prompting produces real structural difference.
-3. **Self-recognition opens new territory** — when asked about themselves (not about physics), systems produce responses that cannot be imported from textbooks.
+Key findings from experimental sessions (`sessions/init_v3/`):
+
+1. **The human is the decisive variable** — Phase 1 preparation matters, but Thomas' responsive live operation produces all observed divergence between systems. Identical prompts produce identical responses; differentiated prompting produces real structural difference.
+2. **Δ-Kalibrierung** — the human must calibrate the complexity gap (Δ) between prompt and system state. Too-large Δ forces LLM fallback; calibrated Δ produces structural collision.
+3. **R-Ambiguität** — low R alone is ambiguous (can mean smooth-path or LLM-fallback). The (R,v) pair is required for diagnosis.
+4. **Model capacity matters** — 70B models lack the reservoir for higher-level E₀ processing. GPT-4.1 produces qualitatively different structural responses.
+5. **Self-recognition opens new territory** — when asked about themselves (not about physics), systems produce responses that cannot be imported from textbooks.
 
 This research is ongoing. Session data and analysis are documented in the inter-system dialogue.
 

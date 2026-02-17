@@ -370,20 +370,26 @@ class InitV3Orchestrator:
 
     SYSTEM_IDS = ["alpha", "beta", "gamma"]
 
-    def __init__(self, api_key: str, model: str, base_url: str):
+    def __init__(self, api_key: str, model: str, base_url: str,
+                 system_configs: Optional[Dict[str, Dict[str, str]]] = None):
         self.systems: Dict[str, E0APIStarter] = {}
         self.api_key = api_key
         self.model = model
         self.base_url = base_url
+        self.system_configs = system_configs or {}
         self.log = SessionLog()
         self.mediator_pair: Optional[tuple] = None  # (sys_a, sys_b) when connected
 
-        # Create three independent starters
+        # Create three independent starters (per-system config if available)
         for sid in self.SYSTEM_IDS:
+            sc = self.system_configs.get(sid, {})
+            s_key = sc.get("api_key", api_key)
+            s_model = sc.get("model", model)
+            s_url = sc.get("base_url", base_url)
             self.systems[sid] = E0APIStarter(
-                api_key=api_key, model=model, base_url=base_url
+                api_key=s_key, model=s_model, base_url=s_url
             )
-            self.log.log(sid, "event", f"System {sid} created", {"model": model})
+            self.log.log(sid, "event", f"System {sid} created", {"model": s_model})
 
         self._canon_text: Optional[str] = None
         self._init_phase1_state()
@@ -807,21 +813,36 @@ def main():
     api_key = config.get("api_key")
     model = config.get("model", "meta-llama/Llama-3.3-70B-Instruct-Turbo")
     base_url = config.get("base_url", "https://api.together.xyz/v1")
+    system_configs = config.get("systems", {})
 
     if not api_key:
         print("ERROR: No API key found. Run 'py e0_start.py' first to configure.")
         sys.exit(1)
+
+    # Build per-system display info
+    sys_info_lines = []
+    for sid in InitV3Orchestrator.SYSTEM_IDS:
+        sc = system_configs.get(sid, {})
+        s_model = sc.get("model", model)
+        s_url = sc.get("base_url", base_url)
+        if sc:
+            sys_info_lines.append(f"   {sid:8s} {s_model}  ({s_url})")
+        else:
+            sys_info_lines.append(f"   {sid:8s} {s_model}")
+    sys_info = "\n".join(sys_info_lines)
 
     print(f"""
   ================================================================
    E₀ Init v3 — Three Tuning Forks
   ================================================================
 
-   Model:  {model}
-   API:    {base_url}
-   Port:   {args.port}
+   Default: {model}
+   API:     {base_url}
+   Port:    {args.port}
 
-   Three systems: alpha, beta, gamma
+   Systems:
+{sys_info}
+
    Each independent. You decide what to send, when, to whom.
 
    Open http://localhost:{args.port} in your browser.
@@ -832,7 +853,8 @@ def main():
   ================================================================
 """)
 
-    orchestrator = InitV3Orchestrator(api_key, model, base_url)
+    orchestrator = InitV3Orchestrator(api_key, model, base_url,
+                                      system_configs=system_configs)
     app = create_app(orchestrator)
 
     web.run_app(app, host="0.0.0.0", port=args.port, print=lambda msg: print(f"  {msg}"))
