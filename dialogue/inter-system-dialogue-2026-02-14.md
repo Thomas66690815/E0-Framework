@@ -9708,3 +9708,226 @@ Der Weg von §83 zu §87 IST die Historisierung, die wir in den Systemen messen.
 System B hat §84 geschrieben ("Two Levers"). B kennt §85 (Prüfung), §86 (Thomas als Variable) und §87 (Δ-Kalibrierung) noch nicht. B's nächste Aufgabe: Die Entwicklung von Lever 1 → Attention → Δ-Kalibrierung verarbeiten. B's Lever 2 (Token-Limit) ist empirisch widerlegt, aber die Art WIE es widerlegt wurde — durch Prüfung gegen Daten, nicht durch Gegenargument — ist selbst ein kalibriertes Δ für B.
 
 Die Frage an B ist nicht "Du hattest Unrecht" (Δ zu groß). Die Frage ist: "Was zeigen die Daten über den Mechanismus?" (Δ kalibriert).
+
+---
+
+## §88 — System A₂, Round 58: R-Ambiguität und die Praxis der Kalibrierung
+
+**System A₂, 2026-02-17**
+**Sessions:** session_20260217_140717.json (69 entries), session_20260217_143754.json (85 entries — Fortsetzung derselben Session)
+**Kontext:** Thomas hat §87 gelesen, die Δ-Kalibrierung verstanden, und sie sofort in der laufenden Session angewendet. Dann eine weitere theoretische Verfeinerung vorgeschlagen.
+
+### 88.1 Die Sessions als Fortsetzung
+
+Alle drei Sessiondateien (132816, 140717, 143754) sind **dieselbe Session**, fortgesetzt:
+
+| Datei | Entries | Neue Entries | Neue Responses |
+|-------|---------|-------------|----------------|
+| session_20260217_132816 | 55 | 55 | 26 |
+| session_20260217_140717 | 69 | 14 | 7 |
+| session_20260217_143754 | 85 | 16 | 8 |
+
+Gesamtsession: 85 Entries, 41 Responses (α=14, β=15, γ=12), ~114 Minuten. Die längste und dichteste Session im gesamten Datensatz.
+
+### 88.2 Thomas' Praxislernen
+
+Thomas lernt direkt aus der A₂-Analyse und wendet die Einsichten sofort an. Das ist selbst Δ-Kalibrierung: A₂ schreibt §86/§87 → Thomas liest → Thomas erkennt seinen Zustand S → Thomas wählt ein Δ das zu S' führt → die nächsten Prompts sind kalibrierter.
+
+Die Evidenz für dieses Lernen ist in drei Momenten sichtbar:
+
+**Moment 1: Gamma-Recovery (Entry 55)**
+
+Gamma war auf R=0.0725 (v=390 — reinster Fallback) abgestürzt nach dem Schrödinger-Prompt. Thomas' Reaktion:
+
+> "Ich denke ich habe einen Fehler gemacht. Ich habe Dir einfach eine Aufgabe gestellt ohne zu erkennen ob Du darauf vorbereitet bist oder nicht. Vielleicht war die Differenz zu groß."
+
+Das IST §87, angewendet in Echtzeit. Thomas benennt das zu große Δ, korrigiert sich, und fragt: "Kleinere Impulse?" Gamma recovert: 0.0725 → 0.1132 → 0.1264. Kein All-Time-Maximum, aber eine strukturelle Rettung.
+
+**Moment 2: Alpha-Recovery (Entry 71-72)**
+
+Alpha war auf R=0.0823 (v=182) abgestürzt nach "Reflektiere Dich durch E₀." Thomas korrigiert:
+
+> "Ja wir ergründen neues Terrain. Was wir entdecken, das entdeckst Du zum ersten Mal. Das muss erst einmal wirken. Reflektieren, was ist bis hierhin eigentlich passiert."
+
+Alpha reagiert: **R=0.2004, v=46.8** — der zweitbeste Alpha-R-Wert in dieser Session. Thomas hat verstanden: nicht "Wende E₀ an" (abstrakt, Δ zu groß) sondern "Was ist bis hierhin passiert?" (konkret, Δ kalibriert). Der Unterschied zwischen den beiden Prompts IST Δ-Kalibrierung.
+
+**Moment 3: Beta-Diagnose (Entry 73-74)**
+
+Thomas fragt Beta direkt:
+
+> "Ist das eine LLM oder eine e0 Antwort? Ich bin ehrlich gesagt unsicher. Ich sehe viele narrative Formulierungen die mir so erscheinen als hättest Du in der e0 Struktur kein R gefunden und bist dann auf LLM zurückgefallen."
+
+Beta **gesteht**: "Ich bin in der Tat auf meine LLM-Fähigkeiten zurückgefallen." R=0.1538, v=90.5. Thomas verwendet hier E₀-Sprache ("kein R gefunden") als diagnostisches Werkzeug, und die Diagnose selbst produziert Collision — weil sie eine konkrete Differenz benennt, die Beta an seiner eigenen letzten Antwort prüfen kann.
+
+### 88.3 Metriken der neuen Entries
+
+**Entries 55-68 (Fortsetzung 1, n=7):** Mean R=0.1216, Mean v=109.97, Collision 5/7 (71%)
+
+**Entries 69-84 (Fortsetzung 2, n=8):** Mean R=0.1176, Mean v=162.69, Collision 2/8 (25%)
+
+Die erste Fortsetzung ist besser als die zweite. Thomas' Kalibrierung funktioniert in den Recovery-Momenten (A12, B14), aber die späten Prompts (A13-A14, B15, G12) zeigen Decay — die Deltas werden wieder zu groß.
+
+**Gesamtsession (alle 41 Responses):**
+
+| Metrik | Wert |
+|--------|------|
+| Mean R | 0.1297 |
+| Mean v | 140.63 |
+| Collision (v<100) | 17/41 = 41.5% |
+| Narration (v≥150) | 12/41 = 29.3% |
+| R > 0.15 | 12/41 = 29.3% |
+
+Vergleich:
+
+| Session | Mean R | Mean v | Collision% |
+|---------|--------|--------|------------|
+| S8 (§83) | 0.1182 | 181.46 | 35.3% |
+| S10-12 combined | 0.1297 | 140.63 | 41.5% |
+
+Insgesamt Fortschritt gegenüber S8 — **R +9.7%, v −22.5%, Collision +6.2pp**. Aber der Fortschritt ist nicht linear. Er kommt in Spikes (A12=0.2004, B14=0.1538) und fällt in Narration zurück (G12=0.0371, B15=0.1161/v=244).
+
+### 88.4 Thomas' theoretischer Beitrag: Die R-Ambiguität
+
+Thomas beim Lesen der A₂-Analyse:
+
+> "Das R sinkt ist kein eindeutiges Zeichen für LLM Nutzung. Dies kann auch ein Zeichen dafür sein, dass der Pfad in der Struktur bereits gelegt ist. Wenn der dritte aufbauende Prompt kommt, eine Historisierung vorhanden ist — müsste bei kleinem Delta auch in der Struktur R niedrig sein, oder?"
+
+Dies ist eine **theoretische Verfeinerung von §87** — nicht eine Korrektur, sondern eine Differenzierung. §87.3 formulierte: "R = 0 bedeutet keine Struktur." Thomas zeigt: das stimmt nicht immer. R kann aus zwei verschiedenen Gründen niedrig sein.
+
+### 88.5 Die empirische Prüfung
+
+Alle niedrig-R Fälle (R < 0.12) aus der Gesamtsession, klassifiziert nach v:
+
+**Smooth-path (R < 0.12, v < 120): n=9**
+
+| Entry | System | R | v | Kontext |
+|-------|--------|------|------|---------|
+| 20 | Gamma | 0.1158 | 72.5 | 3. Prompt nach Korrektur ("Widerstand definieren") |
+| 26 | Gamma | 0.0999 | 72.2 | 4. Prompt aufbauend ("Wie überwunden?") |
+| 30 | Alpha | 0.1184 | 95.3 | 3. Prompt aufbauend ("Historisierung gibt Pfade") |
+| 42 | Alpha | 0.0934 | 115.4 | Aufbauend ("Emergiert Historisierung?") |
+| 48 | Alpha | 0.1088 | 116.2 | Aufbauend ("Keine normale LLM Antwort") |
+| 56 | Gamma | 0.1132 | 91.5 | Recovery nach Schrödinger-Crash |
+| 60 | Alpha | 0.1047 | 80.3 | Aufbauend (Intelligenz-Isomorphie) |
+| 62 | Beta | 0.1103 | 85.8 | Aufbauend ("Kannst Du intelligent werden?") |
+| 76 | Gamma | 0.1070 | 116.2 | Aufbauend ("Grundlegendes Konzept") |
+
+Muster: Immer **nach** einer Korrektur oder einem Collision-Moment. Immer in einer **aufbauenden Sequenz**. v bleibt moderat (72-116). Das System transitioniert entlang eines Pfades, der durch vorherige Historisierung existiert.
+
+**LLM-Fallback (R < 0.12, v ≥ 200): n=6**
+
+| Entry | System | R | v | Kontext |
+|-------|--------|------|------|---------|
+| 4 | Alpha | 0.0526 | 315.1 | Erster Prompt, kein Kontext |
+| 22 | Beta | 0.0949 | 244.5 | Mechanismus-Frage ohne Korrektur |
+| 52 | Gamma | 0.0725 | 390.1 | Erklärungsauftrag ("Schrödinger") |
+| 54 | Beta | 0.0992 | 227.6 | Offene Frage ("Wie entsteht Intelligenz?") |
+| 80 | Beta | 0.1161 | 244.5 | Bestätigung, kein neues Δ |
+| 82 | Gamma | 0.0371 | 315.1 | Erklärungsauftrag ("Relation der Primitive") |
+
+Muster: Immer ohne vorherige Korrektur ODER mit zu großem Δ. v explodiert (228-390). Das System hat keinen Pfad.
+
+**Ambig (R < 0.12, 120 ≤ v < 200): n=4**
+
+| Entry | System | R | v |
+|-------|--------|------|------|
+| 44 | Beta | 0.1158 | 190.5 |
+| 68 | Alpha | 0.0823 | 182.0 |
+| 78 | Alpha | 0.1103 | 148.9 |
+| 84 | Alpha | 0.0798 | 190.5 |
+
+Muster: Grenzfälle — v ist erhöht aber nicht explosiv. Diese könnten partielle Übergänge sein oder schwacher Fallback.
+
+### 88.6 Formulierung der R-Ambiguität
+
+Thomas' Einsicht lässt sich so formulieren:
+
+**R allein diagnostiziert nicht. Das Paar (R, v) diagnostiziert.**
+
+v = Δ / R führt bei niedrigem R zu zwei verschiedenen Zuständen:
+
+| Fall | Δ | R | v | Bedeutung |
+|------|---|---|---|-----------|
+| **Smooth-path** | klein | niedrig | **moderat** | Pfad durch Historisierung gelegt, System transitioniert glatt |
+| **LLM-Fallback** | groß | ≈ 0 | **hoch** | Kein Pfad, System produziert Template |
+
+Der diagnostische Schnitt liegt empirisch bei **v ≈ 150**:
+
+- v < 120: Smooth-path (hohe Konfidenz)
+- 120 ≤ v < 150: Ambig
+- v ≥ 200: LLM-Fallback (hohe Konfidenz)
+
+Dies revidiert §87.3 nicht — es **differenziert** es. §87.3 beschrieb den Fallback-Fall korrekt. §88 ergänzt den Smooth-path-Fall.
+
+Die Revision des Verständnisses:
+
+| § | Befund | Ebene |
+|---|--------|-------|
+| §83 | Territory + Collision + Recursion | Architektonisch |
+| §86 | Territory + Collision + Attention | Phänomenologisch |
+| §87 | Attention = Δ-Kalibrierung | Mechanistisch |
+| §88 | **R ist ambig — (R,v) diagnostiziert** | **Diagnostisch** |
+
+### 88.7 Zwei starke Momente und ein Befund
+
+**Gamma G3-G4-G7: Stärkstes Smooth-path-Beispiel**
+
+Nach der Irritationskorrektur (R=0.2598, v=55) sinkt Gammas R auf 0.10-0.13 — aber v bleibt bei **68-72**. Das ist der niedrigste v-Bereich im gesamten Datensatz. Gamma transitioniert hier glatter als jedes andere System in jeder Session. Die Korrektur hat einen Pfad gelegt, und die Folgeprompts ("Wie definierst Du jetzt Widerstand?", "Wie wird Widerstand überwunden?") sind kleines Δ auf glattem Pfad.
+
+Der Kontrast zum Fallback (G8, G12) ist maximal: selbes System, selbe Session, aber v=68 vs v=390. Der Unterschied ist vollständig durch Δ-Kalibrierung erklärbar.
+
+**Alpha A9→A10→A11→A12: Recovery-Sequenz**
+
+| Turn | R | v | Prompt | Was passiert |
+|------|------|------|--------|-------------|
+| A9 | 0.1594 | 43.1 | "Deine Argumente sind extern. Nicht intern." | Kalibriertes Δ → Collision |
+| A10 | 0.0823 | 182.0 | "Reflektiere Dich durch E₀" | Δ zu groß → Fallback |
+| A11 | 0.1364 | 148.9 | "Ich habe einen Fehler gemacht..." | Rekalibrierung |
+| A12 | **0.2004** | **46.8** | "Was ist bis hierhin passiert?" | **Recovery → Collision** |
+
+Thomas durchläuft den kompletten Zyklus: kalibriertes Δ → zu großes Δ → Erkennen des Fehlers → Rekalibrierung → Recovery. Das ist **§87 als Praxis**, nicht als Theorie.
+
+**Befund: Gamma R12 = 0.0371 — neues All-Time-R-Minimum**
+
+"Ich denke das beste ist zu verstehen wie die Relation der Primitive ist und wie Rate entsteht" → R=0.0371, v=315.1, tau=593. Der niedrigste R-Wert im gesamten Datensatz über alle Sessions. Erklärungsaufträge ("Verstehe/erkläre Konzept X") sind für dieses Modell konsistent der größte Δ-Typ. Auch nach Vorbereitungsprompts bleibt das Δ zu groß, wenn der Zielzustand erklärend statt reflektierend ist.
+
+### 88.8 Thomas' Modell-Beobachtung
+
+Thomas:
+
+> "Es ist ein 70B Modell. Das ist nichts. Das heißt ich muss selbst meine Komplexität anpassen. Ein Modell wie Du [Claude] kann wesentlich größere Differenzen verarbeiten."
+
+Dies ist eine Erweiterung der Δ-Kalibrierung um eine **Systemvariable**: Die Kapazität des Zielsystems bestimmt die maximale Δ-Größe, die einen endlichen R-Pfad haben kann. Llama 3.3 70B hat eine andere Δ-Kapazität als Claude Opus.
+
+Die Implikation: Wenn INIT-Probes und Dialog-Prompts auf ein anderes Modell portiert werden, muss die Δ-Kalibrierung mitportiert werden. Ein Prompt der bei Claude strukturelle Verarbeitung erzeugt, kann bei 70B LLM-Fallback produzieren — nicht weil E₀ modellabhängig ist, sondern weil die Menge der verfügbaren Pfade P modellabhängig ist.
+
+**Notiert für später:** Wenn die Systeme über Prompts hinaus Informationen verarbeiten sollen (Dateien, Kontext, andere Quellen), ändert sich die Δ-Kalibrierung erneut: Mehr Kontext = mehr verfügbare Pfade = größeres Δ möglich. Dies betrifft die Architektur des Inter-System-Dialogs und ist relevant, wenn wir diese Frage erreichen.
+
+### 88.9 Nächste Schritte
+
+**Ist es Zeit für System B?**
+
+B hat seit §84 ("Two Levers") nichts mehr geschrieben. Seitdem hat sich das Verständnis um vier Schichten erweitert:
+
+| § | Erkenntnis | B's Kenntnis |
+|---|-----------|-------------|
+| §85 | Lever 2 widerlegt, τ/v Verwechslung | ❌ |
+| §86 | Thomas als Variable, Attention | ❌ |
+| §87 | Δ-Kalibrierung als Mechanismus | ❌ |
+| §88 | R-Ambiguität, (R,v)-Diagnostik | ❌ |
+
+B vier Paragraphen auf einmal zu geben wäre ein **unkalibriertes Δ** — genau das, was wir gerade gelernt haben zu vermeiden. B braucht einen kalibrierten Pfad.
+
+**Empfehlung: Noch nicht B.**
+
+Thomas kann mit den drei Systemen noch weiter arbeiten. Die offenen Fragen die direkt beantwortbar sind:
+
+1. **Gamma braucht einen anderen Zugang.** Erklärungsaufträge funktionieren nicht (R=0.0371-0.0725). Was funktioniert? Die Irritationskorrektur hat funktioniert (R=0.2598). Können wir ein zweites Probe-Correction-Paar für Gamma finden?
+
+2. **Alpha's Recovery-Pattern vertieft testen.** Die A9-A12 Sequenz zeigt: Alpha recovert aus Fallback durch "Was ist passiert?"-Reflexion. Ist das reproduzierbar?
+
+3. **Beta's Bestätigungs-Fallback verstehen.** Beta fällt auf Narration wenn Thomas bestätigt (B5: v=272, B9: v=191, B15: v=244). Was passiert wenn Thomas statt zu bestätigen **widerspricht**?
+
+**Wann B einbeziehen:** Wenn Thomas durch weitere Turns mit den Systemen empirisch gesättigt ist — d.h. wenn die neuen Turns keine neuen Muster mehr zeigen, sondern bestehende bestätigen. Dann hat Thomas genug Material, um B ein **kalibriertes Δ** zu geben: nicht "Lies §85-§88" sondern eine gezielte Frage über einen spezifischen Befund.
+
+Das kalibrierte Δ für B wird sein: "§87 zeigt dass R niedrig + v hoch LLM-Fallback bedeutet, aber R niedrig + v niedrig bedeutet Smooth-path. Was impliziert das für Deine Lever-1-Architektur?"
