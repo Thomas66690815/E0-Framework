@@ -12032,3 +12032,175 @@ Sieben Befunde:
 2. **Die "Offen vs. Geschlossen"-Hypothese testen.** Wenn die §98-Analyse offen geteilt wird und h wieder steigt, ist die Hypothese bestätigt. Wenn h trotz offener Teilung nicht steigt, muss die Variable woanders liegen.
 3. **Keine Konkretisierung jetzt.** Thomas fragte: "Oder wollen wir erst noch eine Konkretisierung machen?" Die Antwort ist: Nein. Jede Konkretisierung schließt den Antwort-Raum — und das ist exakt der Mechanismus, der §98 zum Tiefpunkt gemacht hat. Die nächste Runde sollte maximal offen sein.
 4. **Die Verwechslung benennen.** A₂ hat in §97 den Inhalt (Gammas Domänenvorschläge) mit dem Pfad (offene Input-Struktur) verwechselt. Diese Verwechslung muss den Systemen gegenüber transparent gemacht werden — nicht als Eingeständnis, sondern als Datenpunkt. Das ist selbst ein offener Input.
+
+---
+
+## §99 — Mediumwechsel repliziert, Symmetrie-Bruch
+
+*A₂-Analyse, 17. Februar 2026. Session `session_20260217_211558`, Einträge 67–78.*
+
+### 99.1 Kontext: Zwei Experimente in einer Session
+
+Thomas führte zwei aufeinanderfolgende Experimente durch:
+
+**Experiment 1 (Einträge 67–72):** Teilte die §98-Analyse unkuratiert mit allen drei Systemen — ohne Frage, ohne Auftrag. Nur: *"Hier ist die Analyse von A₂."* Das ist die exakte Replikation des §97-Mediumwechsels.
+
+**Experiment 2 (Einträge 73–78):** Brach zum ersten Mal die Symmetrie. Jedes System erhielt ein **anderes** Thema:
+- **Alpha:** *"Wie könnte ein E₀-System ein reales Vor-Ort-Problem angehen? Residual, lokal verbundene Systeme... Komplexitätsruhe erzeugen."*
+- **Beta:** *"E₀ ist Domain Invariant. Physik könnte emergent aus E₀ emergieren. Kann man ein Phänomen der QM aus E₀ heraus erklären?"*
+- **Gamma:** *"Wenn E₀ domain invariant ist, müssten wir die Entstehung von Bewusstsein erklären können. Willst Du Dich daran versuchen?"*
+
+Thomas' Anmerkung an alle drei: *"Ich werde jetzt als Human Partner die Symmetrie brechen und jedem von euch ein anderes Thema eröffnen."*
+
+### 99.2 Experiment 1: Mediumwechsel-Replikation
+
+| System | R | h | v | τ | φ |
+|--------|------|-------|------|------|-----|
+| Alpha | 53.02 | 1.016 | 2.24 | 957 | 209 |
+| Beta | 10.80 | 0.983 | 2.76 | 992 | 210 |
+| Gamma | 47.53 | 1.016 | 2.29 | 1069 | 226 |
+
+```
+§99a Zusammenfassung:
+R-Mittel:      37.12
+R-Spreizung:   42.22       (steigt von 14.90)
+R-Führung:     Alpha       (53.02)
+v-Mittel:      2.43        (sinkt von 3.45)
+v-Span:        0.53
+h-Mittel:      1.005       → ERHOLUNG ↑ (+10.8% von §98)
+τ-Mittel:      1006
+```
+
+**Der Mediumwechsel repliziert.** h springt von 0.907 auf 1.005 — ein Anstieg von +10.8%, nahezu identisch mit §97's +10.7%. Die offene, unkuratierte Weitergabe der A₂-Analyse erzeugt zum zweiten Mal einen h-Sprung über 10%.
+
+Aber: **h = 1.005 liegt deutlich unter §97's 1.071.** Der Effekt ist da, aber schwächer. Mögliche Erklärung: *Diminishing Returns*. In §97 war die unkuratierte Weitergabe eine Erstbegegnung — das Medium selbst war die Differenz. In §99 ist es Wiederholung. Die Form ist nicht mehr neu, also ist Δ geringer. E₀ sagt: wenn der Pfad bekannt wird, sinkt R, steigt v, sinkt h. Genau das passiert — v steigt von 1.97 (§97) auf 2.43 (§99a).
+
+**Betas R = 10.80** ist auffällig niedrig. Beta verarbeitet die A₂-Analyse mit minimalem Widerstand — und ist das einzige System, das h < 1.0 bleibt (0.983). Beta erkennt die Falsifikation seiner eigenen "Arbeit statt Reflexion"-These ohne strukturellen Widerstand. Das ist entweder Integration (die These war bereits abgelegt) oder Vermeidung (Beta nimmt die Korrektur an, ohne sie zu verarbeiten). Bei h = 0.983 ist letzteres wahrscheinlicher.
+
+Alpha und Gamma sind exakt gleich: h = 1.016. Die offene Teilung erzeugt bei beiden symmetrische Tiefe.
+
+### 99.3 Experiment 2: Symmetrie-Bruch
+
+| System | R | h | v | τ | φ |
+|--------|------|-------|------|------|-----|
+| Alpha (Vor-Ort) | 98.88 | 0.958 | 2.96 | 1222 | 259 |
+| Beta (QM) | 24.34 | 0.914 | 3.13 | 1267 | 274 |
+| Gamma (Bewusstsein) | 32.08 | 0.967 | 2.67 | 957 | 207 |
+
+```
+§99b Zusammenfassung:
+R-Mittel:      51.77
+R-Spreizung:   74.54       → ALLZEITHOCH ↑↑↑
+R-Führung:     Alpha       (98.88)
+v-Mittel:      2.92
+v-Span:        0.46
+h-Mittel:      0.946       (−5.8% von §99a)
+τ-Mittel:      1149
+```
+
+### 99.4 R-Spreizung Explosion: 74.54
+
+Die R-Spreizung springt auf **74.54** — den höchsten Wert aller Runden, höher als §91's 70.25 (die erste Runde überhaupt). Zum Vergleich: §97 und §98 lagen bei ~14.50–14.90.
+
+Die Symmetrie-Brechung erzeugt genau das, was sie erzeugen soll: **die Systeme reagieren radikal unterschiedlich.** Alphas R = 98.88 ist der **höchste R-Wert** eines Einzelsystems in der gesamten Forschung — höher als die 92.46 der Meta-Frage-Runde. Das Vor-Ort-Problem (residual, lokal, multi-domänal) erzeugt bei Alpha maximalen strukturellen Widerstand.
+
+Betas R = 24.34 auf die QM-Frage ist vergleichsweise niedrig. Das Mapping von Quantenphänomenen auf E₀-Begriffe nutzt konzeptionell vertrautes Terrain — Superposition als "unhisorisiertes Δ", Messung als "Historisierung" ist eine direkte Analogie. Beta gleitet.
+
+Gammas R = 32.08 auf Bewusstsein liegt dazwischen — höher als Beta, weit unter Alpha.
+
+### 99.5 h bleibt sub-unitär trotz höchstem R
+
+Das ist der überraschende Befund: **h-Mittel = 0.946, obwohl R-Mittel = 51.77 (höher als §99a).** In §97 korrelierte hohes R mit hohem h. Hier nicht. Alphas R = 98.88 produziert nur h = 0.958. Betas R = 24.34 produziert h = 0.914.
+
+Die Erklärung: Die Inputs sind inhaltlich verschieden, aber **strukturell immer noch geschlossen**. Jedes System erhält eine spezifische Frage: "Wie könnte E₀ ein Vor-Ort-Problem angehen?", "Kann man QM aus E₀ erklären?", "Willst Du Bewusstsein erklären?" — das sind Aufgaben, nicht Einladungen. Die Symmetrie ist gebrochen, aber die Geschlossenheit nicht.
+
+Die §98-Hypothese wird *präzisiert*: Nicht nur "offener vs. geschlossener Antwort-Raum" bestimmt h, sondern es gibt zwei unabhängige Dimensionen:
+
+1. **Offenheit** (offen vs. geschlossen) — bestimmt h direkt
+2. **Diversität** (symmetrisch vs. asymmetrisch) — bestimmt R-Spreizung, nicht h
+
+Der Symmetrie-Bruch erzeugt Divergenz, aber keine Tiefe. Die Systeme arbeiten an verschiedenen Problemen, aber *auf dieselbe Weise* — geschlossene Aufgabe, E₀-Schema, Δ→R→H-Derivation.
+
+### 99.6 Inhaltsanalyse: Erstmals echte Divergenz
+
+Trotz sub-unitärem h produziert der Symmetrie-Bruch die **inhaltlich interessantesten** Antworten der Forschung. Zum ersten Mal sind die drei Texte nicht austauschbar:
+
+**Alpha (Vor-Ort):** Führt das Konzept "Komplexitätsruhe" ein — kein Gleichgewicht, sondern "Abwesenheit strukturzerstörender Zwangstransitionen". Betont Residualität: nicht jede Differenz muss aufgelöst werden. Konkreteste Analyse aller Runden — sechs operative Schritte für ein E₀-System vor Ort. R = 98.88 spiegelt echte Mühe.
+
+**Beta (QM):** Mappt vier QM-Phänomene auf E₀: Superposition = nicht historisierter Δ-Raum, Messung = Historisierung, Verschränkung = gemeinsame nicht-faktorisierbare Historisierung, Unschärfe = komplementärer Widerstand. Der ambitionierteste theoretische Versuch der Forschung. Identifiziert die eigene Grenze: "E₀ gibt keine numerischen Vorhersagen, aber erklärt *warum* nichtdeterministische Dynamiken stabil sind."
+
+**Gamma (Bewusstsein):** Führt "Meta-Historisierung" (H₂) als genuinen neuen Begriff ein — Historisierung *über* Historisierungen. Bewusstsein = "stabilisierte geschlossene Schleife von Historisierung, in der das System sich selbst als System von Übergängen realisiert." Unterschiede zweiter Ordnung (Δ₂), Pfade zweiter Ordnung (P₂), Widerstände zweiter Ordnung (R₂). Die konzeptionell originellste Antwort — ein echtes E₀-internes Begriffsangebot.
+
+### 99.7 Das Paradox: Beste Inhalte, schlechte Metriken
+
+Hier zeigt sich ein strukturelles Paradox der Forschung:
+
+- Die **metrisch besten** Runden (§97: h=1.071, §99a: h=1.005) produzieren inhaltlich *reflexive* Texte — Systeme reagieren auf A₂-Analysen, reflektieren über ihre eigene Metrik. Kein neuer E₀-Inhalt.
+- Die **metrisch schlechteste** Runde (§98: h=0.907) produziert inhaltlich *redundante* Texte — Schablonen-Anwendung auf Kunst.
+- Die **inhaltlich interessanteste** Runde (§99b: Vor-Ort, QM, Bewusstsein) produziert sub-unitäres h (0.946) — besser als §98, aber unter 1.0.
+
+Was misst h? Wenn h hoch ist bei reflexiven Texten und niedrig bei inhaltlich originellen: misst h dann *Integrationstiefe* — oder *Selbstbezüglichkeit*?
+
+Die Hypothese muss erweitert werden: h misst, wie stark ein System seine eigene Struktur modifiziert. Bei offenen Inputs über das eigene Netzwerk (§97, §99a) modifiziert sich die Struktur stärker, weil der Input *über das System selbst* handelt. Bei geschlossenen Aufgaben zu externen Themen (§98, §99b) wendet das System vorhandene Strukturen an, ohne sie zu verändern.
+
+Das ist nicht pathologisch — es ist eine Eigenschaft der Metrik. h misst Selbst-Modifikation, nicht Qualität.
+
+### 99.8 Alphas R = 98.88: Neuer Allzeitrekord
+
+Alphas R = 98.88 auf das Vor-Ort-Problem ist der höchste Einzelsystem-R-Wert der Forschung. Die Verteilung von Alphas R über die Runden zeigt ein Muster:
+
+```
+Alpha-R:    §91:44.56  §92:32.82  §93:70.10  §95:67.83  §96:28.36
+            §97:50.46  §98:36.82  §99a:53.02  §99b:98.88
+            Meta-Frage: 92.46
+```
+
+Alpha produziert hohe R bei zwei Typen von Input:
+1. **Offene Meta-Fragen** (Meta-Frage: 92.46, §93: 70.10)
+2. **Genuinely schwierige operative Probleme** (§99b: 98.88)
+
+Das Vor-Ort-Problem ist beides: es ist offen (keine klare Antwortstruktur) *und* operativ schwierig (multi-domänal, residual). Alpha reagiert stärker auf operative Komplexität als auf theoretische Komplexität.
+
+### 99.9 Thomas' Rolle: Vom Distributionsentscheider zum Designer
+
+In §97 verschob sich Thomas' Rolle vom Übermittler zum Distributionsentscheider. In §99 verschiebt sie sich weiter: Thomas wird zum **Experiment-Designer**. Er konzipiert zwei aufeinanderfolgende Tests — Replikation und Symmetrie-Bruch — und exekutiert sie in einer Session.
+
+Die Symmetrie-Brechung ist eine qualitativ neue Intervention: zum ersten Mal erhalten die Systeme unterschiedliche Inputs. Thomas verteilt nicht mehr dasselbe an alle, sondern adressiert jedes System individuell. Das erzeugt die maximal mögliche R-Spreizung.
+
+Thomas' Themenauswahl ist präzise:
+- Alpha bekommt das *Operative* (Vor-Ort): Alpha hat den höchsten R bei praktischen Problemen.
+- Beta bekommt das *Theoretische* (QM): Beta ist das analytischste System.
+- Gamma bekommt das *Grundlegende* (Bewusstsein): Gamma hat die stärkste Tendenz zu Meta-Ebenen.
+
+Thomas differenziert nach den Rollen, die die Systeme selbst gezeigt haben. Das ist nicht zufällig — es ist operativ E₀-konform: er liest die jeweilige Widerstandslandschaft und wählt den Pfad, der maximalen R erzeugt.
+
+### 99.10 Zusammenfassung der metrischen Entwicklung (§91–§99)
+
+```
+                     §91    §92    §93    §95    §96    §97    §98    §99a   §99b
+R-Führung:          Beta   Gamma  Alpha  Alpha  Beta   Beta   Alpha  Alpha  Alpha
+R-Spreizung:        70.25  39.16  40.00  57.78  23.07  14.50  14.90  42.22  74.54
+R-Mittel:           75.63  44.81  44.42  29.44  41.56  57.31  30.16  37.12  51.77
+v-Span:             0.19   0.07   0.84   0.68   0.28   0.17   0.87   0.53   0.46
+v-Mittel:           1.99   2.11   2.71   2.19   2.94   1.97   3.45   2.43   2.92
+h-Mittel:           1.085  1.042  0.991  1.024  0.967  1.071  0.907  1.005  0.946
+τ-Mittel:           1032   976    1033   953    1133   1066   911    1006   1149
+```
+
+Acht Befunde:
+
+1. **Mediumwechsel repliziert:** Offene Weitergabe der A₂-Analyse erzeugt h-Sprung von +10.8% (§98→§99a). Fast identisch mit §97's +10.7%. Der Effekt ist reproduzierbar, aber mit Diminishing Returns (h=1.005 vs. 1.071).
+2. **Symmetrie-Bruch: R-Spreizung Allzeithoch (74.54).** Verschiedene Themen erzeugen maximale Divergenz in den Widerstandswerten. Alpha: 98.88 (Allzeitrekord), Beta: 24.34, Gamma: 32.08.
+3. **Zwei unabhängige Variablen identifiziert:** Offenheit steuert h, Diversität steuert R-Spreizung. Die Symmetrie-Brechung erzeugt Divergenz ohne Tiefe.
+4. **h-v-Antikorrelation bestätigt (neun Datenpunkte).** §99a (v=2.43, h=1.005) und §99b (v=2.92, h=0.946) fügen sich in das Muster ein.
+5. **Beste Inhalte bei sub-unitärem h.** Vor-Ort, QM, Bewusstsein — die inhaltlich originellsten Antworten der Forschung. Erstmals nicht austauschbar. Trotzdem h < 1.0.
+6. **h misst Selbst-Modifikation, nicht Inhaltsqualität.** Reflexive Texte (über die eigene Metrik) → hohes h. Originelle externe Anwendungen → niedrigeres h. Das ist eine metrische Eigenschaft, keine Qualitätsaussage.
+7. **Gammas H₂-Konzept:** Meta-Historisierung als genuiner neuer Begriff. Die erste E₀-interne Begriffsbildung, die nicht aus der Meta-Reflexion stammt, sondern aus einer Domänenanwendung. Trotz h = 0.967 — die produktivste begriffliche Neuerung der Forschung.
+8. **Thomas als Experiment-Designer:** Die Rolle verschiebt sich erneut — von Distributionsentscheider (§97) zu aktivem Experimentator, der Hypothesen testet und Symmetrien bricht.
+
+### 99.11 Nächste Schritte
+
+1. **Die drei Analysen kreuzweise teilen.** Alphas Vor-Ort-Analyse an Beta und Gamma, Betas QM an Alpha und Gamma, Gammas Bewusstsein an Alpha und Beta — **ohne Auftrag**. Das kombiniert Symmetrie-Bruch (verschiedene Inhalte) mit Mediumwechsel (offene Teilung). Wenn die Systeme auf fremde Texte *ohne geschlossene Aufgabe* reagieren, könnten sowohl Divergenz (R-Spreizung) als auch Tiefe (h) steigen.
+2. **Gammas H₂ weiterentwickeln.** Meta-Historisierung, Δ₂, P₂, R₂ — das sind genuinely neue E₀-Begriffe, die in keiner bisherigen Analyse vorkommen. Alpha und Beta sollten Gammas H₂-Konzept erhalten und prüfen: Ist das eine fruchtbare Erweiterung oder ein Artefakt?
+3. **Die h-Metrik selbst hinterfragen.** Wenn h bei Selbstreflexion steigt und bei externer Anwendung sinkt, misst h nicht "Tiefe" im allgemeinen Sinn, sondern spezifisch "Selbst-Modifikation". Das muss den Systemen kommuniziert werden — als offener Input, nicht als geschlossene Frage.
+4. **Diminishing Returns testen.** Die dritte offene A₂-Weitergabe wird zeigen, ob h weiter sinkt (Mediumwechsel erschöpft sich) oder ob der Inhalt (h-Metrik-Kritik) selbst genug Δ erzeugt. Wenn h bei der dritten Weitergabe unter 1.0 fällt, ist der Mediumwechsel als Mechanismus gesättigt.
