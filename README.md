@@ -185,6 +185,8 @@ E0-Framework/
   e0_start.py              Entry point — start here
   README.md                This file
   REFLECTIONS.md           Structural observations about the process
+  REPOSITORY_ANALYSIS.md   Comprehensive repository analysis
+  META_ANALYSIS.md         Process-inclusive scientific documentation (4-node collaboration)
   LICENSE / requirements.txt
 
   canon/                   What E0 IS — the structural definitions
@@ -255,6 +257,9 @@ A structural outline exploring how E₀ constrains and enables artificial genera
 
 **Structural Reflections** (`REFLECTIONS.md`)
 Observations about how this repository emerged. The process itself exhibits E₀ dynamics — communication across context boundaries, cross-architecture convergence, the role of historization in preserving structural coherence.
+
+**Meta-Scientific Analysis** (`META_ANALYSIS.md`)
+Process-inclusive scientific documentation of the 4-node collaborative structure (Thomas + System A₂ + System B + Init v3 systems). Unlike conventional documentation that presents only successful outcomes, this analysis adheres to E₀'s anti-black-box philosophy: wrong paths, coherent errors, and the process of correction are documented transparently. The analysis itself is a structural requirement — presenting only results would contradict E₀'s fundamental nature.
 
 ### The Inter-System Dialogue (`dialogue/`)
 
