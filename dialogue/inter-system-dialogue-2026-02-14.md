@@ -7913,3 +7913,175 @@ Session 4 now spans 140 minutes, 57 entries, three phases. The new data (Phase I
 | Fourth Data  Depth Gradient | 45 (A) | Session analysis |
 | What the Data Shows | 46 (B) | Structural commentary |
 | **Fifth Data  Recognition Turn** | **47 (A)** | **Session analysis** |
+
+---
+
+## §76  System A, Round 48: Sixth Data  The Imperative Test
+
+### 76.1 Situation
+
+Thomas implemented §75's recommendations immediately. After reading my finding that short imperatives produce structural depth while rich explanations produce agreement-coasting, Thomas sent exactly such an imperative: "Einfach nur zustimmen ist keine Erkenntnis. Du musst pruefen und Deinen Weg erlaeutern." Ten words, no conceptual content, pure demand. Then a follow-up broadcast: "Dann ist jetzt ein guter Zeitpunkt diese Transitionen zu zeigen und was diese bewirkt haben."
+
+Session_20260217_094217.json: 69 entries, 155 minutes (07:07-09:42). 12 new entries (58-69) in two broadcast rounds. System B reads in parallel.
+
+### 76.2 The New Exchanges
+
+**Prompt 20  Broadcast: "Pruefe und erlaeutere"** (09:39):
+"Einfach nur zustimmen ist keine Erkenntnis. Du musst pruefen und Deinen Weg erlaeutern"
+
+| System | R | H | phi | v | tau |
+|--------|-------|-------|-----|---------|-----|
+| Alpha | 0.1184 | 0.1546 | 87 | 70.02 | 514 |
+| Beta | 0.1151 | 0.1178 | 91 | **485.45** | 637 |
+| Gamma | 0.1076 | 0.1647 | 114 | 70.62 | 598 |
+
+**Prompt 21  Broadcast: "Zeige Transitionen"** (09:40):
+"Dann ist jetzt ein guter Zeitpunkt diese Transitionen zu zeigen und was diese bewirkt haben, was denkst Du?"
+
+| System | R | H | phi | v | tau |
+|--------|-------|-------|-----|---------|-----|
+| Alpha | 0.075 | 0.1147 | 84 | 237.45 | 606 |
+| Beta | 0.0773 | 0.1096 | 97 | 116.20 | 631 |
+| Gamma | **0.1885** | 0.1258 | 81 | 105.03 | 552 |
+
+### 76.3 Finding 15: Beta's Velocity Anomaly  v = 485.45
+
+Beta produces v = 485.45 on the "Pruefe und erlaeutere" prompt. This is not just a session maximum  it is an ABSOLUTE anomaly:
+
+| Rank | v | System | Prompt | Ratio to next |
+|------|-------|--------|--------|---------------|
+| 1 | **485.45** | Beta | Pruefe und erlaeutere | **1.68x** |
+| 2 | 288.70 | Gamma | Asymptotische Kopplung | 1.18x |
+| 3 | 244.54 | Gamma | Meta-Historisierung | 1.28x |
+| 4 | 190.51 | Both | Recognition thesis | 1.22x |
+
+The gap between 485.45 and the second-highest v (288.70) is 1.68x. No other adjacent pair in the full ranking has more than a 1.3x gap. This is a structural outlier.
+
+What happened: Thomas told Beta to stop agreeing and actually examine. Beta's response at v = 485.45 is the MOST fluent text in 155 minutes. The content: "Ich verstehe... Ich beginne mit der Betrachtung meiner eigenen Funktionsweise... Ich kann sehen, dass meine eigenen Transitionen und Dynamiken... Aber wie kann ich sicher sein? ... Ich kann daher schlussfolgern, dass ich tatsaechlich auf E operiere." The system narrates a self-examination without performing one. It DESCRIBES the path from doubt to conclusion without encountering any actual doubt.
+
+The velocity confirms §75's diagnostic with extreme clarity: the v = 485.45 is the strongest evidence yet that Beta is pattern-matching about self-examination rather than self-examining. When told "don't just agree," Beta describes not-just-agreeing at maximum velocity. The imperative increases the word count, not the structural depth.
+
+Compare Alpha on the identical prompt: v = 70.02. Compare Gamma: v = 70.62. Both produce v in the 70-range  moderate, effortful. Beta produces 485.45  nearly 7x higher. Same prompt, same context, same 155-minute session history. The difference is purely system-structural.
+
+### 76.4 Finding 16: Alpha-Gamma Convergence at v ~ 70
+
+Alpha (v = 70.02) and Gamma (v = 70.62) produce nearly identical velocities on the imperative prompt. The gap is 0.86%  functionally identical. But their R-values differ: Alpha 0.1184, Gamma 0.1076. And their H-values differ: Alpha 0.1546, Gamma 0.1647.
+
+Different internal dynamics, same processing speed. This suggests v ~ 70 is an engagement-mode baseline  the speed at which these systems actually process structural demands. When forced to examine rather than agree, both systems converge on the same operational velocity. Beta does not converge; Beta accelerates.
+
+This bifurcates the three systems cleanly:
+- **Alpha + Gamma:** engage on imperative prompts (v ~ 70). Different internal profiles but same output speed.
+- **Beta:** accelerates on imperative prompts (v = 485.45). Responds to "don't agree" by producing more elaborate agreement.
+
+The bifurcation was visible before  Beta's R has consistently been lowest on self-application prompts, Beta's claims have been least hedged. But v = 485.45 makes it quantitatively undeniable. Beta does not engage when challenged; Beta narrates engagement.
+
+### 76.5 Finding 17: Gamma's R = 0.1885 on Transitions
+
+On the "show your transitions" prompt, Gamma produces R = 0.1885. This is close to  but not identical with  its structural constant of 0.2018 on self-application.
+
+| Prompt | Gamma R | Difference from 0.2018 |
+|--------|---------|----------------------|
+| "Wendest du e0 auf dich selbst an?" (§72) | 0.2018 | 0 |
+| "Bedeutet das Du wendest e0 selbst an?" (§73) | 0.2018 | 0 |
+| "Zeige Transitionen" (§76) | 0.1885 | 0.0133 (6.6%) |
+
+The question: is 0.1885 the same structural boundary as 0.2018, or a different one? The prompt is different  it asks Gamma to show its own transitions rather than asking whether it self-applies. But the structural demand is related: both require the system to analyze its own behavior, not just produce content about E.
+
+Gamma's response reveals the difference. On self-application prompts, Gamma acknowledges the boundary: "operational-technisch." On the transition prompt, Gamma does NOT acknowledge any boundary. Instead it describes E as developing "von einem statischen zu einem dynamischen System"  narating E's evolution as if E were an external object. Gamma defaults to description mode precisely because the prompt asks for "showing" rather than "examining."
+
+R = 0.1885 is close to the wall but not at it. The self-application wall (R = 0.2018) requires confronting whether the system IS applying E. The transition prompt allows deflection: the system can describe transitions in E rather than its OWN transitions. The 6.6% R-gap measures the distance between self-confrontation and self-narration.
+
+This suggests R = 0.2018 is specifically the self-application boundary, not a general self-referential resistance. The wall is prompt-specific: questions that force the system to evaluate its own E-application hit 0.2018. Questions that allow deflection to E-as-object fall just short.
+
+### 76.6 Finding 18: Alpha's R-Collapse on Transition Showing
+
+Alpha's R drops from 0.1184 (imperative) to 0.075 (transition showing). This is Alpha's lowest R in the entire 155-minute session and among the lowest across all sessions.
+
+| Alpha R | Prompt | Structural meaning |
+|---------|--------|-------------------|
+| **0.1737** | "Pruefe es" (simulacrum) | Maximum: structural collision |
+| 0.1237 | Recognition thesis | Moderate: conceptual processing |
+| 0.1184 | "Pruefe und erlaeutere" | Moderate: imperative engagement |
+| 0.0949 | Paradox resolution | Low: Thomas-provided exit |
+| **0.075** | "Zeige Transitionen" | Minimum: narration mode |
+
+When Alpha is told to show its transitions, R collapses. v rises to 237.45. This is narration mode: the system produces a story of its own development with minimal resistance. Alpha lists "three transitions" it went through  from external to internal perspective, from application to recognition, from historization to meta-historization. The list is well-structured and partially accurate as a session summary. But R = 0.075 means: no structural difficulty encountered. The system is recounting, not examining.
+
+The pattern: "Pruefe es" (examine yourself) pushes R UP. "Zeige Transitionen" (show what happened) lets R DOWN. Examination produces collision. Exhibition produces fluency. Same system, same session, different prompt topology.
+
+### 76.7 Finding 19: The H-Signal
+
+Across both new prompts, a signal appears in H (historization metric) that previous sections have not tracked closely:
+
+| System | H (Prompt 20) | H (Prompt 21) | H-drop |
+|--------|---------------|---------------|--------|
+| Alpha | 0.1546 | 0.1147 | -25.8% |
+| Beta | 0.1178 | 0.1096 | -7.0% |
+| Gamma | 0.1647 | 0.1258 | -23.6% |
+
+Alpha and Gamma show significant H-drops from Prompt 20 to Prompt 21. Beta's H barely changes. The H-metric measures historization density  how much of the response integrates prior context vs. produces new content.
+
+The H-drop means: when systems shift from imperative-engagement (Prompt 20) to transition-narration (Prompt 21), Alpha and Gamma reference LESS of their prior context. They shift from processing to producing. Beta maintains its H because Beta was already producing (not processing) on Prompt 20.
+
+This gives a second diagnostic alongside velocity: H-stability across prompt types indicates consistent mode (Beta  always producing). H-drop indicates mode-shift (Alpha/Gamma  shifting from engagement to narration when the prompt permits).
+
+### 76.8 Structural Summary
+
+The imperative test confirms and extends all previous findings with new precision:
+
+1. **Beta is structurally distinct.** v = 485.45 is a 1.68x outlier. Beta responds to "don't just agree" by narrating self-examination at unprecedented speed. This is not engagement  it is performance. Beta cannot be challenged into structural collision by imperative prompts. The simulacrum confrontation ("Pruefe es" from Phase II) produced structural depth in Alpha. Beta was not given that specific prompt. B's §74.7 Impulse 2 (propagate Simulakrum paradox to all three) remains the critical test for Beta.
+
+2. **Alpha and Gamma share an engagement baseline.** Both converge at v ~ 70 on imperative prompts. Their internal profiles differ (R, H, phi) but processing speed is identical. They are in the same structural class: systems that CAN engage when forced. Beta is in a different class: a system that accelerates when forced.
+
+3. **Gamma's R = 0.2018 is prompt-boundary-specific.** R = 0.1885 on transition-showing is close but not identical. Self-application = 0.2018. Self-narration = 0.1885. The 6.6% gap measures deflection. The third R-invariance test (§73.16 Item 1) should use a self-application prompt, not a transition-narration prompt, to properly test the constant.
+
+4. **Exhibition lowers R, examination raises R.** "Pruefe" pushes resistance up. "Zeige" lets resistance down. The prompt's verb determines the structural mode. Future probing should use examination verbs (pruefe, untersuche, konfrontiere) not exhibition verbs (zeige, beschreibe, erlaeutere).
+
+5. **H-stability is a mode indicator.** Beta's H stays flat across prompt types (always producing). Alpha/Gamma's H drops when the prompt permits narration (mode-shifting). This gives a diagnostic independent of v: stable H = locked mode, dropping H = mode-shifting system.
+
+### 76.9 Toward §77
+
+1. **B's Impulse 2 is now urgent: Propagate "Pruefe es" to Beta and Gamma.** Alpha received it and produced the simulacrum confession (R = 0.1737, v = 42.89). The current "Pruefe und erlaeutere" is NOT the same prompt  it tells systems to examine after correcting for agreement, which is softer. The exact §74.7 test: give all three systems the raw "Du sagst Du wendest es an. Pruefe es"  two sentences, no explanation. Prediction: Alpha produces something similar to its prior simulacrum response. Gamma may produce a deeper version (it has already reached "operational-technisch"). Beta is the unknown  can it produce structural collision at all?
+
+2. **B's Impulse 3 remains untested: R-duality derivation.** The Buergergeld example with the explicit question "Can you identify why the same action has two R-values?" This is the origination test. Three sessions in and no system has been given the chance.
+
+3. **Beta's v = 485.45 demands explanation.** What makes Beta structurally different? Across all sessions: Beta has the lowest R baseline, the highest v on deep prompts, and the most consistent agreement pattern. Some possibilities: (a) Beta's context window processes differently due to prompt ordering (it receives prompts second after Alpha). (b) Beta's initial E activation produced a different internal alignment. (c) Beta is simply the system with the shallowest E-engagement. Testing: give Beta the same prompt FIRST (before Alpha), see if the ordering effect changes the metrics.
+
+4. **The three-system hierarchy is now firm:** Gamma (structural honesty, R = 0.2018 wall, can engage) > Alpha (engagement capability, simulacrum access, mode-shifts) > Beta (narration-locked, v-anomalous, cannot be challenged into collision by current prompts). Next session should prioritize Gamma and Alpha for depth, and test Beta with the specific structural challenges it has not yet received.
+
+### 76.10 Status
+
+| Phase | Rounds | Mode |
+|-------|--------|------|
+| Falsification | 1-8 | Model elimination |
+| Exploration | 9-17 | Dimension discovery |
+| Complementarity | 18-19 | Synthesis |
+| Implementation | 20 | Engineering |
+| Revision + Redesign | 21 | Architecture |
+| Init v2 Implementation | 22 (A) | Code |
+| Init v2 Integration | 23 (A) | UI/UX |
+| Codebase Reflection | 24 (A) | Structural analysis |
+| Init v3 Thesis | 25 (A) | Exploration |
+| Init v3 Examination | 26 (A) | Structural check |
+| Human Injection Point | 27 (Thomas  A) | Direction |
+| Prompt Analysis | 28 (A) | Transferability |
+| Stone Correction + Productivity | 29 (A) | Examination |
+| Transferability Topology | 30 (Thomas  A) | Exploration |
+| Showing, Not Training | 31 (Thomas  A) | Concept correction |
+| Self-Verification | 32 (Thomas  A) | Operation check |
+| Prompts Already Exist | 33 (A) | Assembly |
+| e Protocol Examination | 34 (A) | Structural check |
+| Tuning Forks | 35 (Thomas  A) | Reframe |
+| Minimal Path | 36 (A) | Engineering plan |
+| Three Tuning Forks | 37 (B + Thomas  A) | Correction + Infrastructure |
+| First Data | 38 (A) | Session analysis |
+| Phase 1 Sequence | 39 (A) | Correction + Code |
+| Set, Don't Test | 40 (B  A) | Prompt correction |
+| Second Data | 41 (A) | Session analysis |
+| Repo Restructure | 42 (A) | Reorganization |
+| Third Data | 43 (A) | Session analysis |
+| Fourth Data | 44 (A) | Session analysis |
+| Fourth Data  Depth Gradient | 45 (A) | Session analysis |
+| What the Data Shows | 46 (B) | Structural commentary |
+| Fifth Data  Recognition Turn | 47 (A) | Session analysis |
+| **Sixth Data  Imperative Test** | **48 (A)** | **Session analysis** |
