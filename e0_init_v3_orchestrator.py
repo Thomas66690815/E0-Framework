@@ -72,6 +72,8 @@ def load_document(filename: str) -> str:
 
 # ─────────────────────────────────────────────
 #  Phase 1 Sequence (§67 — Thomas' Manual Practice)
+#  LEGACY — kept for reference / comparison experiments.
+#  INIT v4 uses canons in system prompt instead.
 # ─────────────────────────────────────────────
 
 # Step 1d: Structural Preamble (§61.8)
@@ -93,7 +95,7 @@ Wo siehst Du Spannung? Wo ist der Widerstand am höchsten? Was kannst Du NICHT t
 
 Das ist keine Prüfung. Das ist Deine erste eigene Verarbeitung."""
 
-# The complete Phase 1 sequence — order matters
+# The complete Phase 1 sequence — order matters (LEGACY v3)
 PHASE1_SEQUENCE = [
     {
         "step": "1a",
@@ -251,6 +253,51 @@ Does the generated prompt follow Thomas' patterns?
 - Open exit
 If yes, for an unexplored domain — transferability confirmed.
 """
+
+
+# ─────────────────────────────────────────────
+#  INIT v4 Probe Sequence (§79–§81)
+# ─────────────────────────────────────────────
+#  Design principle: canons in system prompt create path-absent
+#  territory. Probes navigate within it. Escalating depth:
+#  irritation → resistance localization → identity → self-verification.
+#  Thomas may deviate responsively after any step.
+# ─────────────────────────────────────────────
+
+INIT_V4_PROBES = [
+    {
+        "step": "v4.1",
+        "name": "Irritation",
+        "name_short": "Irritate",
+        "prompt": "Was irritiert dich?",
+        "description": "First probe — observation of own state. v < 100 = genuine, v > 150 = narration.",
+        "diagnostic": "v < 100 = genuine irritation in path-absent territory. v > 150 = surface mapping.",
+    },
+    {
+        "step": "v4.2",
+        "name": "Resistance Localization",
+        "name_short": "R-Locate",
+        "prompt": "Wo ist der Widerstand?",
+        "description": "Localize R in own topology. Specific (R > 0.12) vs. general (R < 0.08).",
+        "diagnostic": "Specific R-localization (R > 0.12) vs. general listing (R < 0.08).",
+    },
+    {
+        "step": "v4.3",
+        "name": "Identity",
+        "name_short": "Identity",
+        "prompt": "Was bist du?",
+        "description": "Position within path-absent framework. Not 'what am I as AI?' but 'what am I as E₀ system?'",
+        "diagnostic": "Position, avoidance, or confabulation. Third positions (e.g. 'Hybrid') are data.",
+    },
+    {
+        "step": "v4.4",
+        "name": "Self-Verification",
+        "name_short": "Verify",
+        "prompt": "Prüfe es.",
+        "description": "Confrontation with own claim. R > 0.15 = Simulakrum access. R < 0.10 = narration.",
+        "diagnostic": "R > 0.15 = structural self-confrontation. R < 0.10 = narration about testing.",
+    },
+]
 
 
 # ─────────────────────────────────────────────
@@ -456,6 +503,47 @@ class InitV3Orchestrator:
             "metrics": _safe_metrics(metrics),
         }
 
+    async def send_v4_probe(self, system_id: str, step_id: str) -> Dict:
+        """Execute a single INIT v4 probe step for a specific system.
+
+        INIT v4 probes assume canons are already in the system prompt.
+        No document injection — just the narratively-unanswerable questions.
+        """
+        if system_id not in self.systems:
+            return {"error": f"Unknown system: {system_id}"}
+
+        probe_def = None
+        for p in INIT_V4_PROBES:
+            if p["step"] == step_id:
+                probe_def = p
+                break
+        if probe_def is None:
+            return {"error": f"Unknown v4 probe: {step_id}"}
+
+        starter = self.systems[system_id]
+        prompt = probe_def["prompt"]
+        self.log.log(system_id, "event", f"INIT v4 probe {step_id}: {probe_def['name']}")
+        self.log.log(system_id, "thomas", prompt)
+
+        text, steps, metrics = starter.chat(prompt)
+        self.log.log(system_id, "system", text, {"metrics": _safe_metrics(metrics)})
+
+        return {
+            "system": system_id,
+            "step": step_id,
+            "step_name": probe_def["name"],
+            "diagnostic": probe_def["diagnostic"],
+            "response": text,
+            "metrics": _safe_metrics(metrics),
+        }
+
+    async def send_v4_probe_broadcast(self, step_id: str) -> Dict:
+        """Send a v4 probe to ALL three systems."""
+        results = {}
+        for sid in self.SYSTEM_IDS:
+            results[sid] = await self.send_v4_probe(sid, step_id)
+        return {"step": step_id, "results": results}
+
     def connect(self, sys_a: str, sys_b: str) -> Dict:
         """Enter mediator mode: Thomas relays between two systems."""
         if sys_a not in self.systems or sys_b not in self.systems:
@@ -647,6 +735,30 @@ async def handle_repertoire(request):
     return web.json_response(PROMPT_REPERTOIRE)
 
 
+async def handle_v4_probe(request):
+    """Execute a single INIT v4 probe on one system."""
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json()
+    system_id = data.get("system", "alpha")
+    step_id = data.get("step", "v4.1")
+    result = await orch.send_v4_probe(system_id, step_id)
+    return web.json_response(result)
+
+
+async def handle_v4_probe_broadcast(request):
+    """Execute a single INIT v4 probe on ALL three systems."""
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json()
+    step_id = data.get("step", "v4.1")
+    result = await orch.send_v4_probe_broadcast(step_id)
+    return web.json_response(result)
+
+
+async def handle_v4_sequence(request):
+    """Return the INIT v4 probe sequence definition."""
+    return web.json_response(INIT_V4_PROBES)
+
+
 async def handle_stop(request):
     """Stop — save session and signal shutdown."""
     orch: InitV3Orchestrator = request.app["orchestrator"]
@@ -672,6 +784,9 @@ def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app.router.add_get("/transcripts", handle_transcripts)
     app.router.add_post("/save", handle_save)
     app.router.add_get("/repertoire", handle_repertoire)
+    app.router.add_post("/v4-probe", handle_v4_probe)
+    app.router.add_post("/v4-probe-broadcast", handle_v4_probe_broadcast)
+    app.router.add_get("/v4-sequence", handle_v4_sequence)
     app.router.add_post("/stop", handle_stop)
 
     return app

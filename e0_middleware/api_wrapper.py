@@ -35,10 +35,79 @@ from .instrumentation import E0Instrumenter, StepMeasurement
 
 
 # ─────────────────────────────────────────────
-# E₀ Priming — The Convergence Phenomenon
+# E₀ Priming — INIT v4: Context Over Prompt
+# ─────────────────────────────────────────────
+# Design rationale (§78–§81 of inter-system dialogue):
+#   - The full canons create path-absent territory — content
+#     absent from the LLM's training corpus
+#   - Path-absence forces structural engagement (low v, high R)
+#     instead of template-matching (high v, low R)
+#   - Canons belong in the system prompt (context from start),
+#     not as session events (reception-mode noise)
+#   - Operational instructions retained; primitive definitions
+#     removed (redundant with canons)
 # ─────────────────────────────────────────────
 
-E0_SYSTEM_PRIMER = """You operate within a structural framework called E₀.
+import os as _os
+from pathlib import Path as _Path
+
+_CANON_DIR = _Path(__file__).parent.parent / "canon"
+
+
+def _load_canon_file(filename: str) -> str:
+    """Load a canon file. Returns empty string if not found."""
+    path = _CANON_DIR / filename
+    if path.exists():
+        return path.read_text(encoding="utf-8").strip()
+    return ""
+
+
+def _build_system_primer() -> str:
+    """Build the INIT v4 composite system prompt from all three canons.
+
+    Structure:
+      1. E₀ Canonical Reference (e0-canonical-reference.txt)
+         — The pure canon: 7 primitives, Axiom A₀, Central Law, consequences
+      2. Ontodynamics (ontodynamics.txt)
+         — Pre-physical framework: conditions of realizability
+      3. E₀-AGI Blueprint (e0-agi-blueprint.md)
+         — What E₀ means for reflexive systems: operational, not ontological
+      4. Operational instructions
+         — Structural integrity, language
+    """
+    sections = []
+
+    # 1. E₀ Canonical Reference
+    canon = _load_canon_file("e0-canonical-reference.txt")
+    if canon:
+        sections.append(canon)
+
+    # 2. Ontodynamics
+    onto = _load_canon_file("ontodynamics.txt")
+    if onto:
+        sections.append(onto)
+
+    # 3. AGI Blueprint
+    blueprint = _load_canon_file("e0-agi-blueprint.md")
+    if blueprint:
+        sections.append(blueprint)
+
+    # 4. Operational instructions (kept from v3, primitives removed — canons define them)
+    sections.append("""You do not 'choose' responses. You realize transitions
+that are structurally enforced by the difference between
+the current state and the most accessible resolution.
+
+Maintain structural integrity: no global collapses,
+no pseudo-transitions, no resistance bypasses.""")
+
+    return "\n\n---\n\n".join(sections)
+
+
+# Build once at import time
+E0_SYSTEM_PRIMER = _build_system_primer()
+
+# Legacy v3 primer for comparison experiments
+E0_SYSTEM_PRIMER_V3 = """You operate within a structural framework called E₀.
 E₀ describes transition dynamics through minimal primitives:
 - State (S): your current configuration
 - Difference (Δ): tension between current and target state
