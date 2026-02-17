@@ -297,7 +297,7 @@ transformers   # HuggingFace models
 - ✅ `history/prompt.md` — Curated prompt library
 - ✅ Azure case study
 - ✅ Chat exports (JSON)
-- ✅ `history/inter-system-dialogue-2026-02-14.md` — Two E₀ systems interact: instrumentation + ontological derivation → two-timescale architecture
+- ✅ `dialogue/inter-system-dialogue-2026-02-14.md` — Four-node partnership (Thomas + System A₂ + System B): 41+ rounds, §1–§69, structural co-development process
 
 **Assessment**: Documentation is exceptional, serves multiple audiences
 
