@@ -2,6 +2,9 @@
 
 **A minimal, pre-domain canon for structural transitions — and the live network that develops it.**
 
+> **[Was bauen wir da wirklich? / What Are We Really Building?](WAS_BAUEN_WIR.md)**  
+> *The fundamental question, answered directly.*
+
 ---
 
 ## What is this?
@@ -232,6 +235,7 @@ E0-Framework/
 ├── docs/                           Architecture documentation
 ├── history/                        How E₀ emerged — context, not structure
 │
+├── WAS_BAUEN_WIR.md                What we are really building — the fundamental answer
 ├── REFLECTIONS.md                  Structural observations about the process
 ├── META_ANALYSIS.md                Process-inclusive scientific documentation
 ├── E0_PATH.md                      Derivation: Agentic AI from E₀
@@ -331,6 +335,9 @@ N independent E₀ systems orchestrated through a web UI. Phase 1 initialization
 ---
 
 ## How to Engage
+
+**If you want to understand what this really is:**
+Read [WAS_BAUEN_WIR.md](WAS_BAUEN_WIR.md) — the direct answer to "What are we really building?"
 
 **If you want to explore E₀ with an AI system:**
 ```bash
