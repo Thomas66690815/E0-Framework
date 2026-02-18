@@ -475,10 +475,17 @@ class SystemRegistry:
         with open(state_path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
+        # Handle both formats: {systems: {alpha: ...}} and flat {alpha: ...}
+        if "systems" in data and isinstance(data["systems"], dict):
+            systems_data = data["systems"]
+        else:
+            systems_data = {k: v for k, v in data.items()
+                           if isinstance(v, dict) and "messages" in v}
+
         key = api_key or self.api_key
         results = {}
 
-        for sid, sys_data in data.items():
+        for sid, sys_data in systems_data.items():
             if sid in self.descriptors:
                 results[sid] = "already exists — skipped"
                 continue
