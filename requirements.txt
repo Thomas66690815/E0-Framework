@@ -17,6 +17,9 @@
 # API mode (recommended)
 openai
 
+# v4 Network — dialog persistence
+duckdb
+
 # Local model mode (optional)
 torch --index-url https://download.pytorch.org/whl/cpu
 transformers

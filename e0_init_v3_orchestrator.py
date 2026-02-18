@@ -52,7 +52,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from aiohttp import web
 
 from e0_config import load_config
-from e0_start import E0APIStarter, load_canon
+from e0_system import E0APIStarter, load_canon
+from e0_registry import SystemRegistry, SystemDescriptor, SystemStatus, SystemKind
+from e0_database import E0Database
 
 
 # ─────────────────────────────────────────────
@@ -366,13 +368,14 @@ class SessionLog:
 # ─────────────────────────────────────────────
 
 class InitV3Orchestrator:
-    """Three independent E₀ systems, guided by Thomas."""
+    """N independent E₀ systems, guided by Thomas.
 
-    SYSTEM_IDS = ["alpha", "beta", "gamma"]
+    v4: Backed by SystemRegistry for dynamic system management
+    and auto-persistence. SYSTEM_IDS is now dynamic.
+    """
 
     def __init__(self, api_key: str, model: str, base_url: str,
                  system_configs: Optional[Dict[str, Dict[str, str]]] = None):
-        self.systems: Dict[str, E0APIStarter] = {}
         self.api_key = api_key
         self.model = model
         self.base_url = base_url
@@ -380,25 +383,35 @@ class InitV3Orchestrator:
         self.log = SessionLog()
         self.mediator_pair: Optional[tuple] = None  # (sys_a, sys_b) when connected
 
-        # Create three independent starters (per-system config if available)
-        for sid in self.SYSTEM_IDS:
-            sc = self.system_configs.get(sid, {})
-            s_key = sc.get("api_key", api_key)
-            s_model = sc.get("model", model)
-            s_url = sc.get("base_url", base_url)
-            self.systems[sid] = E0APIStarter(
-                api_key=s_key, model=s_model, base_url=s_url
-            )
-            self.log.log(sid, "event", f"System {sid} created", {"model": s_model})
+        # v4: Registry replaces hardcoded SYSTEM_IDS
+        self.registry = SystemRegistry(
+            api_key=api_key,
+            default_model=model,
+            default_base_url=base_url,
+        )
+
+        # v4 Phase 3: DuckDB persistence
+        self.db = E0Database()
+
+        # Expose systems dict as a view into the registry (backward compat)
+        self.systems = self.registry.systems
 
         self._canon_text: Optional[str] = None
         self._init_phase1_state()
 
+    @property
+    def SYSTEM_IDS(self) -> List[str]:
+        """Dynamic system IDs from the registry (backward compat)."""
+        return self.registry.get_active_ids()
+
     # Track which Phase 1 steps each system has completed
     def _init_phase1_state(self):
-        self._phase1_completed: Dict[str, List[str]] = {
-            sid: [] for sid in self.SYSTEM_IDS
-        }
+        self._phase1_completed: Dict[str, List[str]] = {}
+
+    def _ensure_phase1_tracking(self, system_id: str):
+        """Lazily init phase1 tracking for a system."""
+        if system_id not in self._phase1_completed:
+            self._phase1_completed[system_id] = []
 
     def get_canon(self) -> str:
         if self._canon_text is None:
@@ -438,6 +451,9 @@ class InitV3Orchestrator:
             text, steps, metrics = starter.feed_canon(canon)
             self.log.log(system_id, "thomas", f"[PHASE 1 — {step_id}: {step_name}]")
             self.log.log(system_id, "system", text, {"metrics": _safe_metrics(metrics)})
+            # v4 Phase 3: persist to DuckDB
+            self.db.record_interaction(system_id, "thomas", f"[PHASE 1 — {step_id}: {step_name}]")
+            self.db.record_interaction(system_id, "system", text, metrics=_safe_metrics(metrics))
             result = {"response": text, "metrics": _safe_metrics(metrics)}
 
         elif step_type == "prompt":
@@ -446,6 +462,9 @@ class InitV3Orchestrator:
             text, steps, metrics = starter.chat(prompt_text)
             self.log.log(system_id, "thomas", prompt_text)
             self.log.log(system_id, "system", text, {"metrics": _safe_metrics(metrics)})
+            # v4 Phase 3: persist to DuckDB
+            self.db.record_interaction(system_id, "thomas", prompt_text)
+            self.db.record_interaction(system_id, "system", text, metrics=_safe_metrics(metrics))
             result = {"response": text, "metrics": _safe_metrics(metrics)}
 
         elif step_type == "document":
@@ -456,14 +475,21 @@ class InitV3Orchestrator:
             text, steps, metrics = starter.chat(full_message)
             self.log.log(system_id, "thomas", f"[PHASE 1 — {step_id}: {step_name}]\n{preamble}")
             self.log.log(system_id, "system", text, {"metrics": _safe_metrics(metrics)})
+            # v4 Phase 3: persist to DuckDB
+            self.db.record_interaction(system_id, "thomas", f"[PHASE 1 — {step_id}: {step_name}]\n{preamble}")
+            self.db.record_interaction(system_id, "system", text, metrics=_safe_metrics(metrics))
             result = {"response": text, "metrics": _safe_metrics(metrics)}
 
         else:
             return {"error": f"Unknown step type: {step_type}"}
 
         # Track completion
+        self._ensure_phase1_tracking(system_id)
         if step_id not in self._phase1_completed[system_id]:
             self._phase1_completed[system_id].append(step_id)
+
+        # v4: auto-save after every interaction
+        self.registry.after_interaction(system_id, metrics=result.get("metrics"))
 
         return {
             "system": system_id,
@@ -501,12 +527,20 @@ class InitV3Orchestrator:
         self.log.log(system_id, "thomas", prompt)
 
         text, steps, metrics = starter.chat(prompt)
-        self.log.log(system_id, "system", text, {"metrics": _safe_metrics(metrics)})
+        safe = _safe_metrics(metrics)
+        self.log.log(system_id, "system", text, {"metrics": safe})
+
+        # v4: auto-save after every interaction
+        self.registry.after_interaction(system_id, metrics=safe)
+
+        # v4 Phase 3: persist to DuckDB
+        self.db.record_interaction(system_id, "thomas", prompt)
+        self.db.record_interaction(system_id, "system", text, metrics=safe)
 
         return {
             "system": system_id,
             "response": text,
-            "metrics": _safe_metrics(metrics),
+            "metrics": safe,
         }
 
     async def send_v4_probe(self, system_id: str, step_id: str) -> Dict:
@@ -532,7 +566,12 @@ class InitV3Orchestrator:
         self.log.log(system_id, "thomas", prompt)
 
         text, steps, metrics = starter.chat(prompt)
-        self.log.log(system_id, "system", text, {"metrics": _safe_metrics(metrics)})
+        safe = _safe_metrics(metrics)
+        self.log.log(system_id, "system", text, {"metrics": safe})
+
+        # v4 Phase 3: persist to DuckDB
+        self.db.record_interaction(system_id, "thomas", prompt)
+        self.db.record_interaction(system_id, "system", text, metrics=safe)
 
         return {
             "system": system_id,
@@ -540,7 +579,7 @@ class InitV3Orchestrator:
             "step_name": probe_def["name"],
             "diagnostic": probe_def["diagnostic"],
             "response": text,
-            "metrics": _safe_metrics(metrics),
+            "metrics": safe,
         }
 
     async def send_v4_probe_broadcast(self, step_id: str) -> Dict:
@@ -576,18 +615,21 @@ class InitV3Orchestrator:
         """Current state of all systems."""
         result = {}
         for sid in self.SYSTEM_IDS:
-            starter = self.systems[sid]
-            result[sid] = {
-                "turns": len(starter.history) // 2,
-                "history_length": len(starter.history),
-                "canon_fed": starter.init_metrics is not None,
-                "phase1_completed": self._phase1_completed.get(sid, []),
-                "phase1_done": len(self._phase1_completed.get(sid, [])) == len(PHASE1_SEQUENCE),
-            }
+            starter = self.systems.get(sid)
+            if starter:
+                result[sid] = {
+                    "turns": len(starter.history) // 2,
+                    "history_length": len(starter.history),
+                    "canon_fed": starter.init_metrics is not None,
+                    "phase1_completed": self._phase1_completed.get(sid, []),
+                    "phase1_done": len(self._phase1_completed.get(sid, [])) == len(PHASE1_SEQUENCE),
+                }
         result["mediator"] = {
             "active": self.mediator_pair is not None,
             "pair": list(self.mediator_pair) if self.mediator_pair else None,
         }
+        # v4: include registry summary
+        result["registry"] = self.registry.status()
         return result
 
     def get_transcript(self, system_id: str) -> List[Dict]:
@@ -632,8 +674,10 @@ def _safe_metrics(metrics: Dict) -> Dict:
 # ─────────────────────────────────────────────
 
 async def handle_index(request):
-    """Serve the UI."""
-    ui_path = Path(__file__).parent / "e0_init_v3_ui.html"
+    """Serve the UI — v4 UI preferred, v3 as fallback."""
+    v4_path = Path(__file__).parent / "e0_v4_ui.html"
+    v3_path = Path(__file__).parent / "e0_init_v3_ui.html"
+    ui_path = v4_path if v4_path.exists() else v3_path
     if not ui_path.exists():
         return web.Response(text="UI file not found", status=404)
     return web.FileResponse(ui_path)
@@ -773,6 +817,120 @@ async def handle_stop(request):
     return web.json_response({"stopped": True, "saved": path})
 
 
+# ─────────────────────────────────────────────
+#  v4 System Management Endpoints
+# ─────────────────────────────────────────────
+
+async def handle_add_system(request):
+    """Create a new system in the registry."""
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json()
+    try:
+        desc = orch.registry.create_system(
+            system_id=data.get("system_id"),
+            model=data.get("model"),
+            base_url=data.get("base_url"),
+            display_name=data.get("display_name"),
+        )
+        orch.log.log(desc.system_id, "event", f"System created", {"model": desc.model})
+        return web.json_response(desc.to_dict())
+    except ValueError as e:
+        return web.json_response({"error": str(e)}, status=400)
+
+
+async def handle_park_system(request):
+    """Park a system (unload from memory, keep state)."""
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json()
+    system_id = data.get("system_id")
+    try:
+        desc = orch.registry.park_system(system_id)
+        orch.log.log(system_id, "event", "System parked")
+        return web.json_response(desc.to_dict())
+    except KeyError as e:
+        return web.json_response({"error": str(e)}, status=404)
+
+
+async def handle_restore_system(request):
+    """Restore a parked system."""
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json()
+    system_id = data.get("system_id")
+    try:
+        desc = orch.registry.restore_system(system_id)
+        orch.log.log(system_id, "event", "System restored")
+        return web.json_response(desc.to_dict())
+    except KeyError as e:
+        return web.json_response({"error": str(e)}, status=404)
+
+
+async def handle_registry_status(request):
+    """Full registry status."""
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    return web.json_response(orch.registry.status())
+
+
+# ─────────────────────────────────────────────
+#  v4 Phase 3: Database endpoints
+# ─────────────────────────────────────────────
+
+async def handle_db_search(request):
+    """Search the dialog database.
+
+    GET /db-search?q=Polyzentrum&system=gamma&min_h=1.0&limit=20
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    q = request.query.get("q", "")
+    system = request.query.get("system")
+    role = request.query.get("role")
+    min_h = float(request.query["min_h"]) if "min_h" in request.query else None
+    max_h = float(request.query["max_h"]) if "max_h" in request.query else None
+    min_r = float(request.query["min_r"]) if "min_r" in request.query else None
+    max_r = float(request.query["max_r"]) if "max_r" in request.query else None
+    limit = int(request.query.get("limit", "50"))
+
+    results = orch.db.search(
+        query=q or None,
+        system_id=system or None,
+        role=role or None,
+        min_h=min_h, max_h=max_h,
+        min_r=min_r, max_r=max_r,
+        limit=limit,
+    )
+
+    # Convert timestamps to strings for JSON serialization
+    for row in results:
+        if row.get("ts"):
+            row["ts"] = str(row["ts"])
+
+    return web.json_response({"query": q, "count": len(results), "results": results})
+
+
+async def handle_db_stats(request):
+    """Database summary statistics.
+
+    GET /db-stats
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    stats = orch.db.stats()
+    return web.json_response(stats)
+
+
+async def handle_db_timeline(request):
+    """Chronological interactions for a system.
+
+    GET /db-timeline?system=gamma&limit=200
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    system = request.query.get("system")
+    limit = int(request.query.get("limit", "200"))
+    rows = orch.db.timeline(system_id=system or None, limit=limit)
+    for row in rows:
+        if row.get("ts"):
+            row["ts"] = str(row["ts"])
+    return web.json_response({"system": system, "count": len(rows), "entries": rows})
+
+
 def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app = web.Application()
     app["orchestrator"] = orchestrator
@@ -794,6 +952,15 @@ def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app.router.add_post("/v4-probe-broadcast", handle_v4_probe_broadcast)
     app.router.add_get("/v4-sequence", handle_v4_sequence)
     app.router.add_post("/stop", handle_stop)
+    # v4 system management
+    app.router.add_post("/add-system", handle_add_system)
+    app.router.add_post("/park-system", handle_park_system)
+    app.router.add_post("/restore-system", handle_restore_system)
+    app.router.add_get("/registry", handle_registry_status)
+    # v4 Phase 3: database endpoints
+    app.router.add_get("/db-search", handle_db_search)
+    app.router.add_get("/db-stats", handle_db_stats)
+    app.router.add_get("/db-timeline", handle_db_timeline)
 
     return app
 
@@ -819,21 +986,48 @@ def main():
         print("ERROR: No API key found. Run 'py e0_start.py' first to configure.")
         sys.exit(1)
 
-    # Build per-system display info
-    sys_info_lines = []
-    for sid in InitV3Orchestrator.SYSTEM_IDS:
-        sc = system_configs.get(sid, {})
-        s_model = sc.get("model", model)
-        s_url = sc.get("base_url", base_url)
-        if sc:
-            sys_info_lines.append(f"   {sid:8s} {s_model}  ({s_url})")
-        else:
-            sys_info_lines.append(f"   {sid:8s} {s_model}")
-    sys_info = "\n".join(sys_info_lines)
+    orchestrator = InitV3Orchestrator(api_key, model, base_url,
+                                      system_configs=system_configs)
+
+    # v4: Restore all persisted systems from registry
+    restore_results = orchestrator.registry.restore_all()
+
+    # v4: If registry is empty, check for system_state.json migration
+    if not orchestrator.registry.descriptors:
+        state_path = Path(__file__).parent / "sessions" / "init_v3" / "system_state.json"
+        if state_path.exists():
+            print("  Migrating from system_state.json...")
+            migration = orchestrator.registry.import_from_system_state(state_path)
+            for sid, msg in migration.items():
+                print(f"    {sid}: {msg}")
+            restore_results = {sid: msg for sid, msg in migration.items()}
+
+    # If still empty, create the three default systems
+    if not orchestrator.registry.descriptors:
+        for sid in ["alpha", "beta", "gamma"]:
+            sc = system_configs.get(sid, {})
+            s_model = sc.get("model", model)
+            s_url = sc.get("base_url", base_url)
+            orchestrator.registry.create_system(
+                system_id=sid, model=s_model, base_url=s_url
+            )
+        restore_results = {sid: "created (new)" for sid in ["alpha", "beta", "gamma"]}
+
+    # Build display
+    sys_lines = []
+    for sid in orchestrator.SYSTEM_IDS:
+        desc = orchestrator.registry.descriptors.get(sid)
+        if desc:
+            status_str = f"{desc.turn_count} turns" if desc.turn_count else "new"
+            sys_lines.append(f"   {sid:8s} {desc.model}  [{status_str}]")
+    for sid, desc in orchestrator.registry.descriptors.items():
+        if desc.status != SystemStatus.ACTIVE:
+            sys_lines.append(f"   {sid:8s} ({desc.status.value})")
+    sys_display = "\n".join(sys_lines) if sys_lines else "   (none)"
 
     print(f"""
   ================================================================
-   E₀ Init v3 — Three Tuning Forks
+   E₀ v4 Network
   ================================================================
 
    Default: {model}
@@ -841,22 +1035,13 @@ def main():
    Port:    {args.port}
 
    Systems:
-{sys_info}
-
-   Each independent. You decide what to send, when, to whom.
+{sys_display}
 
    Open http://localhost:{args.port} in your browser.
-
-   The prompts from §61.6 are your repertoire.
-   The systems are your tuning forks.
-   You strike and listen.
   ================================================================
 """)
 
-    orchestrator = InitV3Orchestrator(api_key, model, base_url,
-                                      system_configs=system_configs)
     app = create_app(orchestrator)
-
     web.run_app(app, host="0.0.0.0", port=args.port, print=lambda msg: print(f"  {msg}"))
 
 

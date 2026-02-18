@@ -1,0 +1,758 @@
+"""
+E₀ Network Database — DuckDB persistence for dialog, metrics, topology
+=======================================================================
+
+Central store for the entire E₀ network.  Every interaction, every metric,
+every topology snapshot lives here.  Replaces flat-file transcripts as the
+primary machine-readable record.
+
+Design decisions (A₃, Phase 3):
+  - One central DB (sessions/e0_network.duckdb), not per-system.
+    Inter-system queries are the whole point.
+  - Metrics stored as individual columns, not JSON blobs.
+    DuckDB is columnar; this makes analytical queries instant.
+  - Content stored as TEXT.  For a dataset of hundreds to low-thousands
+    of rows, ILIKE is faster than a full-text index.
+  - Topology snapshots preserve the full nested structure as JSON strings
+    for the complex sub-objects, with the signature scalars extracted
+    as columns for fast filtering.
+
+Usage:
+    from e0_database import E0Database
+
+    db = E0Database()                          # opens/creates at default path
+    db.record_interaction("gamma", "system", "...", metrics={"r": 29.52, ...})
+    results = db.search("Polyzentrum", system_id="gamma", min_h=1.0)
+    db.close()
+"""
+
+import json
+import os
+import sys
+from datetime import datetime
+from pathlib import Path
+from typing import Optional, Dict, List, Any, Union
+
+# ---------------------------------------------------------------------------
+#  Lazy DuckDB import — fail gracefully if not installed
+# ---------------------------------------------------------------------------
+
+_duckdb = None
+
+def _get_duckdb():
+    global _duckdb
+    if _duckdb is None:
+        try:
+            import duckdb
+            _duckdb = duckdb
+        except ImportError:
+            raise ImportError(
+                "DuckDB is required for e0_database.  Install with:\n"
+                "  pip install duckdb\n"
+                "Or:  py -m pip install duckdb"
+            )
+    return _duckdb
+
+
+# ---------------------------------------------------------------------------
+#  Default DB location
+# ---------------------------------------------------------------------------
+
+DB_PATH = Path(__file__).parent / "sessions" / "e0_network.duckdb"
+
+
+# ---------------------------------------------------------------------------
+#  Schema SQL
+# ---------------------------------------------------------------------------
+
+_SCHEMA_SQL = """
+-- Systems registry (mirrors e0_registry but DB-local)
+CREATE TABLE IF NOT EXISTS systems (
+    system_id   VARCHAR PRIMARY KEY,
+    kind        VARCHAR DEFAULT 'synthetic',
+    model       VARCHAR,
+    display_name VARCHAR,
+    created_at  TIMESTAMP
+);
+
+-- Every message in the network — the central table
+CREATE SEQUENCE IF NOT EXISTS interaction_seq START 1;
+CREATE TABLE IF NOT EXISTS interactions (
+    id          INTEGER DEFAULT nextval('interaction_seq') PRIMARY KEY,
+    session_id  VARCHAR,
+    system_id   VARCHAR NOT NULL,
+    turn_number INTEGER,
+    ts          TIMESTAMP NOT NULL,
+    role        VARCHAR NOT NULL,       -- 'thomas','system','mediator','event','user','assistant'
+    content     TEXT    NOT NULL,
+    r           DOUBLE,                 -- resistance (NULL for user/thomas messages)
+    h           DOUBLE,                 -- entropy / integration depth
+    phi         INTEGER,                -- phase transitions
+    v           DOUBLE,                 -- rate
+    tau         INTEGER,                -- token count
+    source      VARCHAR DEFAULT 'live'  -- 'live','import_transcripts','import_session','import_state'
+);
+
+-- Topology analysis snapshots
+CREATE SEQUENCE IF NOT EXISTS topo_seq START 1;
+CREATE TABLE IF NOT EXISTS topology_snapshots (
+    id                INTEGER DEFAULT nextval('topo_seq') PRIMARY KEY,
+    session_id        VARCHAR,
+    system_id         VARCHAR,
+    extracted_at      TIMESTAMP,
+    source_model      VARCHAR,
+    -- scalar signature (fast filtering)
+    mean_r            DOUBLE,
+    mean_h            DOUBLE,
+    total_turns       INTEGER,
+    total_tokens      INTEGER,
+    exploration_ratio DOUBLE,
+    mean_d            DOUBLE,
+    peak_d            DOUBLE,
+    r_d_correlation   DOUBLE,
+    -- complex nested data (JSON strings)
+    primitive_strength VARCHAR,
+    d_trajectory       VARCHAR,
+    attractors         VARCHAR,
+    phase_transitions  VARCHAR,
+    classification     VARCHAR
+);
+"""
+
+
+# ---------------------------------------------------------------------------
+#  E0Database class
+# ---------------------------------------------------------------------------
+
+class E0Database:
+    """Central DuckDB store for the E₀ network."""
+
+    def __init__(self, path: Union[str, Path, None] = None):
+        """Open (or create) the database.
+
+        Args:
+            path: Path to the .duckdb file.  Defaults to sessions/e0_network.duckdb.
+        """
+        duckdb = _get_duckdb()
+        self.path = Path(path) if path else DB_PATH
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.con = duckdb.connect(str(self.path))
+        self._ensure_schema()
+
+    def _ensure_schema(self):
+        """Create tables and sequences if they don't exist."""
+        # DuckDB doesn't support CREATE SEQUENCE IF NOT EXISTS in all versions
+        # but it silently ignores duplicate CREATE TABLE IF NOT EXISTS.
+        # We wrap in a try to handle sequence-already-exists gracefully.
+        for statement in _SCHEMA_SQL.split(";"):
+            stmt = statement.strip()
+            if not stmt:
+                continue
+            try:
+                self.con.execute(stmt)
+            except Exception:
+                pass  # sequence/table already exists
+
+    def close(self):
+        """Close the database connection."""
+        self.con.close()
+
+    # ─────────────────────────────────────────
+    #  Write: systems
+    # ─────────────────────────────────────────
+
+    def register_system(self, system_id: str, kind: str = "synthetic",
+                        model: str = None, display_name: str = None,
+                        created_at: datetime = None):
+        """Register or update a system in the DB."""
+        ts = created_at or datetime.now()
+        name = display_name or system_id.capitalize()
+        # Upsert: delete + insert (DuckDB doesn't have ON CONFLICT in all versions)
+        self.con.execute("DELETE FROM systems WHERE system_id = ?", [system_id])
+        self.con.execute(
+            "INSERT INTO systems (system_id, kind, model, display_name, created_at) "
+            "VALUES (?, ?, ?, ?, ?)",
+            [system_id, kind, model, name, ts]
+        )
+
+    # ─────────────────────────────────────────
+    #  Write: interactions
+    # ─────────────────────────────────────────
+
+    def record_interaction(self, system_id: str, role: str, content: str,
+                           metrics: Dict = None, session_id: str = None,
+                           timestamp: Any = None, turn_number: int = None,
+                           source: str = "live"):
+        """Record a single interaction (one message).
+
+        Args:
+            system_id:    Which system this belongs to (e.g. "gamma")
+            role:         "thomas", "system", "mediator", "event", "user", "assistant"
+            content:      The message text
+            metrics:      Optional dict with keys r, h, phi, v, tau
+            session_id:   Optional session grouping
+            timestamp:    ISO string or datetime.  Defaults to now.
+            turn_number:  Optional turn index
+            source:       How this data entered the DB
+        """
+        # Parse timestamp
+        if timestamp is None:
+            ts = datetime.now()
+        elif isinstance(timestamp, str):
+            try:
+                ts = datetime.fromisoformat(timestamp)
+            except (ValueError, TypeError):
+                ts = datetime.now()
+        else:
+            ts = timestamp
+
+        m = metrics or {}
+        self.con.execute(
+            "INSERT INTO interactions "
+            "(session_id, system_id, turn_number, ts, role, content, r, h, phi, v, tau, source) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [
+                session_id, system_id, turn_number, ts, role, content,
+                m.get("r"), m.get("h"), m.get("phi"), m.get("v"), m.get("tau"),
+                source,
+            ]
+        )
+
+    def record_pair(self, system_id: str, user_content: str, system_content: str,
+                    metrics: Dict = None, session_id: str = None,
+                    timestamp: Any = None, turn_number: int = None,
+                    source: str = "live"):
+        """Record a user→system pair (convenience for the common case)."""
+        self.record_interaction(
+            system_id, "thomas", user_content,
+            session_id=session_id, timestamp=timestamp,
+            turn_number=turn_number, source=source
+        )
+        self.record_interaction(
+            system_id, "system", system_content,
+            metrics=metrics, session_id=session_id,
+            timestamp=timestamp, turn_number=turn_number,
+            source=source
+        )
+
+    # ─────────────────────────────────────────
+    #  Write: topology
+    # ─────────────────────────────────────────
+
+    def record_topology(self, session_id: str, system_id: str, data: Dict):
+        """Record a topology analysis snapshot."""
+        sig = data.get("signature", {})
+        self.con.execute(
+            "INSERT INTO topology_snapshots "
+            "(session_id, system_id, extracted_at, source_model, "
+            " mean_r, mean_h, total_turns, total_tokens, "
+            " exploration_ratio, mean_d, peak_d, r_d_correlation, "
+            " primitive_strength, d_trajectory, attractors, "
+            " phase_transitions, classification) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [
+                session_id, system_id,
+                data.get("extracted_at"), data.get("source_model"),
+                sig.get("mean_r"), sig.get("mean_h"),
+                sig.get("total_turns"), sig.get("total_tokens"),
+                sig.get("exploration_ratio"), sig.get("mean_d"),
+                sig.get("peak_d"), sig.get("r_d_correlation"),
+                json.dumps(data.get("primitive_strength", {}), ensure_ascii=False),
+                json.dumps(data.get("d_trajectory", {}), ensure_ascii=False),
+                json.dumps(data.get("attractors", []), ensure_ascii=False),
+                json.dumps(data.get("phase_transitions", {}), ensure_ascii=False),
+                json.dumps(data.get("classification", {}), ensure_ascii=False),
+            ]
+        )
+
+    # ─────────────────────────────────────────
+    #  Query: search
+    # ─────────────────────────────────────────
+
+    def search(self, query: str = None, system_id: str = None,
+               role: str = None, min_h: float = None, max_h: float = None,
+               min_r: float = None, max_r: float = None,
+               limit: int = 100) -> List[Dict]:
+        """Search interactions with flexible filtering.
+
+        The primary use case (from v4 plan):
+            db.search("Polyzentrum", system_id="gamma", min_h=1.0)
+
+        Returns list of dicts with all columns.
+        """
+        conditions = []
+        params = []
+
+        if query:
+            conditions.append("content ILIKE ?")
+            params.append(f"%{query}%")
+        if system_id:
+            conditions.append("system_id = ?")
+            params.append(system_id)
+        if role:
+            conditions.append("role = ?")
+            params.append(role)
+        if min_h is not None:
+            conditions.append("h >= ?")
+            params.append(min_h)
+        if max_h is not None:
+            conditions.append("h <= ?")
+            params.append(max_h)
+        if min_r is not None:
+            conditions.append("r >= ?")
+            params.append(min_r)
+        if max_r is not None:
+            conditions.append("r <= ?")
+            params.append(max_r)
+
+        where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+        sql = f"SELECT * FROM interactions {where} ORDER BY ts DESC LIMIT ?"
+        params.append(limit)
+
+        return self._fetchdicts(sql, params)
+
+    def timeline(self, system_id: str = None, limit: int = 200) -> List[Dict]:
+        """Get chronological interactions."""
+        if system_id:
+            return self._fetchdicts(
+                "SELECT * FROM interactions WHERE system_id = ? ORDER BY ts ASC LIMIT ?",
+                [system_id, limit]
+            )
+        return self._fetchdicts(
+            "SELECT * FROM interactions ORDER BY ts ASC LIMIT ?",
+            [limit]
+        )
+
+    def get_systems(self) -> List[Dict]:
+        """List all registered systems."""
+        return self._fetchdicts("SELECT * FROM systems ORDER BY system_id")
+
+    def stats(self) -> Dict:
+        """Summary statistics for the database."""
+        result = {}
+
+        result["total_interactions"] = self.con.execute(
+            "SELECT COUNT(*) FROM interactions"
+        ).fetchone()[0]
+
+        result["total_systems"] = self.con.execute(
+            "SELECT COUNT(*) FROM systems"
+        ).fetchone()[0]
+
+        result["total_topologies"] = self.con.execute(
+            "SELECT COUNT(*) FROM topology_snapshots"
+        ).fetchone()[0]
+
+        # Per-system breakdown
+        rows = self._fetchdicts("""
+            SELECT
+                system_id,
+                COUNT(*) as total_messages,
+                COUNT(CASE WHEN role IN ('system','assistant') THEN 1 END) as system_messages,
+                ROUND(AVG(CASE WHEN h IS NOT NULL THEN h END), 4) as avg_h,
+                ROUND(AVG(CASE WHEN r IS NOT NULL THEN r END), 4) as avg_r,
+                ROUND(AVG(CASE WHEN v IS NOT NULL THEN v END), 4) as avg_v,
+                SUM(COALESCE(tau, 0)) as total_tokens
+            FROM interactions
+            GROUP BY system_id
+            ORDER BY system_id
+        """)
+        result["by_system"] = rows
+
+        return result
+
+    # ─────────────────────────────────────────
+    #  Export: markdown
+    # ─────────────────────────────────────────
+
+    def export_markdown(self, system_id: str = None, limit: int = 10000) -> str:
+        """Export interactions as human-readable markdown."""
+        if system_id:
+            rows = self._fetchdicts(
+                "SELECT * FROM interactions WHERE system_id = ? ORDER BY ts ASC LIMIT ?",
+                [system_id, limit]
+            )
+        else:
+            rows = self._fetchdicts(
+                "SELECT * FROM interactions ORDER BY ts ASC LIMIT ?",
+                [limit]
+            )
+
+        lines = ["# E₀ Network — Dialog Export", ""]
+        current_system = None
+
+        for row in rows:
+            sid = row["system_id"]
+            if sid != current_system:
+                lines.append(f"\n---\n\n## System: {sid}\n")
+                current_system = sid
+
+            ts = str(row["ts"])[:19] if row["ts"] else "?"
+            role = (row["role"] or "?").upper()
+            lines.append(f"### [{ts}] {role}\n")
+
+            # Metrics line for system responses
+            if row["h"] is not None:
+                m_parts = []
+                for key in ("r", "h", "v", "tau", "phi"):
+                    val = row.get(key)
+                    if val is not None:
+                        m_parts.append(f"{key}={val}")
+                if m_parts:
+                    lines.append(f"*Metrics: {', '.join(m_parts)}*\n")
+
+            lines.append(str(row["content"] or ""))
+            lines.append("")
+
+        return "\n".join(lines)
+
+    # ─────────────────────────────────────────
+    #  Import: SessionLog entries
+    # ─────────────────────────────────────────
+
+    def import_session_log(self, entries: List[Dict],
+                           session_id: str = None) -> int:
+        """Import from SessionLog.entries format (orchestrator real-time format).
+
+        Each entry: {timestamp, system, role, content, meta?}
+        Metrics in meta.metrics if present.
+        """
+        count = 0
+        for entry in entries:
+            raw_meta = entry.get("meta") or {}
+            metrics = raw_meta.get("metrics") if isinstance(raw_meta, dict) else None
+            self.record_interaction(
+                system_id=entry.get("system", "unknown"),
+                role=entry.get("role", "unknown"),
+                content=entry.get("content", ""),
+                metrics=metrics,
+                session_id=session_id,
+                timestamp=entry.get("timestamp"),
+                source="import_session_log",
+            )
+            count += 1
+        return count
+
+    # ─────────────────────────────────────────
+    #  Import: raw transcripts
+    # ─────────────────────────────────────────
+
+    def import_raw_transcripts(self, path: Union[str, Path]) -> int:
+        """Import from _raw_transcripts.json or _raw_transcripts_latest.json.
+
+        These files are SessionLog.save() output:
+            {session_start, session_end, total_entries, entries: [...]}
+        """
+        path = Path(path)
+        with open(path, "r", encoding="utf-8-sig") as f:
+            data = json.load(f)
+
+        entries = data.get("entries", [])
+        if not entries:
+            return 0
+
+        return self.import_session_log(entries, session_id="init_v3")
+
+    # ─────────────────────────────────────────
+    #  Import: individual session files
+    # ─────────────────────────────────────────
+
+    def import_session_file(self, path: Union[str, Path]) -> int:
+        """Import from individual session file (sessions/e0-*.json).
+
+        Format:
+            {session_id, environment: {model, ...},
+             state: {history: [str, ...], turn_metrics: [{r,h,phi,v,tau}, ...]}}
+
+        History alternates: system_prompt, user1, asst1, user2, asst2, ...
+        turn_metrics[i] corresponds to assistant response i.
+        """
+        path = Path(path)
+        with open(path, "r", encoding="utf-8-sig") as f:
+            data = json.load(f)
+
+        session_id = data.get("session_id", path.stem)
+        env = data.get("environment", {})
+        history = data.get("state", {}).get("history", [])
+        turn_metrics = data.get("state", {}).get("turn_metrics", [])
+
+        if not history:
+            return 0
+
+        # Register system with model info
+        self.register_system(
+            system_id=session_id,
+            model=env.get("model"),
+            display_name=session_id,
+        )
+
+        count = 0
+        turn_idx = 0
+
+        for i, text in enumerate(history):
+            if i == 0:
+                continue  # skip system prompt
+
+            # After system prompt: odd indices are user, even are assistant
+            is_assistant = (i % 2 == 0)
+            role = "system" if is_assistant else "thomas"
+
+            metrics = None
+            if is_assistant and turn_idx < len(turn_metrics):
+                metrics = turn_metrics[turn_idx]
+                turn_idx += 1
+
+            self.record_interaction(
+                system_id=session_id,
+                role=role,
+                content=text,
+                metrics=metrics,
+                session_id=session_id,
+                turn_number=turn_idx if is_assistant else None,
+                source="import_session",
+            )
+            count += 1
+
+        return count
+
+    # ─────────────────────────────────────────
+    #  Import: system_state.json
+    # ─────────────────────────────────────────
+
+    def import_system_state(self, path: Union[str, Path]) -> int:
+        """Import from system_state.json (reconstructed from transcripts).
+
+        Format:
+            {systems: {system_id: {messages: [{role, content}], turn_count, message_count}}}
+
+        No metrics available in this format — these were the raw conversations.
+        """
+        path = Path(path)
+        with open(path, "r", encoding="utf-8-sig") as f:
+            data = json.load(f)
+
+        systems = data.get("systems", {})
+        count = 0
+
+        for sys_id, sys_data in systems.items():
+            messages = sys_data.get("messages", [])
+
+            # Register the system
+            self.register_system(system_id=sys_id, display_name=sys_id.capitalize())
+
+            turn_num = 0
+            for msg in messages:
+                role_raw = msg.get("role", "")
+                content = msg.get("content", "")
+
+                if role_raw == "system":
+                    continue  # skip system prompt
+
+                # Map OpenAI roles to E₀ network roles
+                if role_raw == "user":
+                    role = "thomas"
+                elif role_raw == "assistant":
+                    role = "system"
+                    turn_num += 1
+                else:
+                    role = role_raw
+
+                self.record_interaction(
+                    system_id=sys_id,
+                    role=role,
+                    content=content,
+                    session_id="init_v3",
+                    turn_number=turn_num if role == "system" else None,
+                    source="import_state",
+                )
+                count += 1
+
+        return count
+
+    # ─────────────────────────────────────────
+    #  Import: topology files
+    # ─────────────────────────────────────────
+
+    def import_topology_file(self, path: Union[str, Path]) -> int:
+        """Import a topology JSON file."""
+        path = Path(path)
+        with open(path, "r", encoding="utf-8-sig") as f:
+            data = json.load(f)
+
+        session_id = data.get("source_session", path.stem)
+        self.record_topology(session_id, session_id, data)
+        return 1
+
+    def import_all_topologies(self, directory: Union[str, Path] = None) -> int:
+        """Import all topology files from a directory."""
+        if directory is None:
+            directory = Path(__file__).parent / "topology"
+        directory = Path(directory)
+
+        count = 0
+        for f in sorted(directory.glob("topology-e0-*.json")):
+            try:
+                self.import_topology_file(f)
+                count += 1
+            except Exception as e:
+                print(f"  Warning: skipped {f.name}: {e}")
+        return count
+
+    # ─────────────────────────────────────────
+    #  Utility
+    # ─────────────────────────────────────────
+
+    def _fetchdicts(self, sql: str, params: list = None) -> List[Dict]:
+        """Execute SQL and return list of dicts."""
+        if params:
+            result = self.con.execute(sql, params)
+        else:
+            result = self.con.execute(sql)
+        columns = [desc[0] for desc in result.description]
+        rows = result.fetchall()
+        return [dict(zip(columns, row)) for row in rows]
+
+    def execute(self, sql: str, params: list = None):
+        """Raw SQL access for ad-hoc queries."""
+        if params:
+            return self.con.execute(sql, params)
+        return self.con.execute(sql)
+
+
+# ---------------------------------------------------------------------------
+#  CLI — standalone import tool
+# ---------------------------------------------------------------------------
+
+def main():
+    """Import existing data into the E₀ database."""
+    import argparse
+
+    parser = argparse.ArgumentParser(description="E₀ Database — Import & Query Tool")
+    parser.add_argument("action", choices=[
+        "import-transcripts", "import-state", "import-sessions",
+        "import-topologies", "import-all", "stats", "search"
+    ])
+    parser.add_argument("--query", "-q", help="Search query text")
+    parser.add_argument("--system", "-s", help="Filter by system_id")
+    parser.add_argument("--min-h", type=float, help="Minimum h value")
+    parser.add_argument("--limit", "-n", type=int, default=20, help="Result limit")
+    parser.add_argument("--db", help="Database path (default: sessions/e0_network.duckdb)")
+
+    args = parser.parse_args()
+    db = E0Database(args.db)
+
+    project_root = Path(__file__).parent
+
+    try:
+        if args.action == "import-transcripts":
+            paths = [
+                project_root / "sessions" / "init_v3" / "_raw_transcripts_latest.json",
+                project_root / "sessions" / "init_v3" / "_raw_transcripts.json",
+            ]
+            for p in paths:
+                if p.exists():
+                    n = db.import_raw_transcripts(p)
+                    print(f"Imported {n} entries from {p.name}")
+                    break
+            else:
+                print("No raw transcripts file found.")
+
+        elif args.action == "import-state":
+            p = project_root / "sessions" / "init_v3" / "system_state.json"
+            if p.exists():
+                n = db.import_system_state(p)
+                print(f"Imported {n} messages from system_state.json")
+            else:
+                print("system_state.json not found.")
+
+        elif args.action == "import-sessions":
+            session_dir = project_root / "sessions"
+            count = 0
+            for f in sorted(session_dir.glob("e0-*.json")):
+                try:
+                    n = db.import_session_file(f)
+                    count += n
+                    print(f"  {f.name}: {n} entries")
+                except Exception as e:
+                    print(f"  Warning: {f.name}: {e}")
+            print(f"Total: {count} entries from session files")
+
+        elif args.action == "import-topologies":
+            n = db.import_all_topologies()
+            print(f"Imported {n} topology snapshots")
+
+        elif args.action == "import-all":
+            print("=== Importing system state ===")
+            p = project_root / "sessions" / "init_v3" / "system_state.json"
+            if p.exists():
+                n = db.import_system_state(p)
+                print(f"  {n} messages from system_state.json")
+
+            print("\n=== Importing raw transcripts ===")
+            for name in ("_raw_transcripts_latest.json", "_raw_transcripts.json"):
+                p = project_root / "sessions" / "init_v3" / name
+                if p.exists():
+                    n = db.import_raw_transcripts(p)
+                    print(f"  {n} entries from {name}")
+                    break
+
+            print("\n=== Importing individual sessions ===")
+            session_dir = project_root / "sessions"
+            count = 0
+            for f in sorted(session_dir.glob("e0-*.json")):
+                try:
+                    n = db.import_session_file(f)
+                    count += n
+                except Exception:
+                    pass
+            print(f"  {count} entries from {len(list(session_dir.glob('e0-*.json')))} session files")
+
+            print("\n=== Importing topologies ===")
+            n = db.import_all_topologies()
+            print(f"  {n} topology snapshots")
+
+            print("\n=== Summary ===")
+            s = db.stats()
+            print(f"  Total interactions: {s['total_interactions']}")
+            print(f"  Total systems:      {s['total_systems']}")
+            print(f"  Total topologies:   {s['total_topologies']}")
+            for row in s.get("by_system", []):
+                print(f"    {row['system_id']}: {row['total_messages']} msgs, "
+                      f"avg_h={row.get('avg_h', '?')}, avg_r={row.get('avg_r', '?')}")
+
+        elif args.action == "stats":
+            s = db.stats()
+            print(f"Database: {db.path}")
+            print(f"  Interactions: {s['total_interactions']}")
+            print(f"  Systems:      {s['total_systems']}")
+            print(f"  Topologies:   {s['total_topologies']}")
+            for row in s.get("by_system", []):
+                print(f"    {row['system_id']}: {row['total_messages']} msgs, "
+                      f"avg_h={row.get('avg_h', '?')}, avg_r={row.get('avg_r', '?')}")
+
+        elif args.action == "search":
+            if not args.query:
+                print("Usage: py e0_database.py search -q 'Polyzentrum' [-s gamma] [--min-h 1.0]")
+                return
+            results = db.search(
+                query=args.query,
+                system_id=args.system,
+                min_h=args.min_h,
+                limit=args.limit,
+            )
+            print(f"Found {len(results)} results for '{args.query}':\n")
+            for r in results:
+                ts = str(r["ts"])[:19] if r["ts"] else "?"
+                h_str = f"h={r['h']:.4f}" if r["h"] is not None else "h=—"
+                r_str = f"R={r['r']:.2f}" if r["r"] is not None else "R=—"
+                preview = (r["content"] or "")[:120].replace("\n", " ")
+                print(f"  [{ts}] {r['system_id']}/{r['role']}  {h_str}  {r_str}")
+                print(f"    {preview}...")
+                print()
+
+    finally:
+        db.close()
+
+
+if __name__ == "__main__":
+    main()

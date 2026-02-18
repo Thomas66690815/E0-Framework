@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E₀ v4 — Network</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg2: #161b22;
+    --bg3: #21262d;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --text2: #8b949e;
+    --text3: #484f58;
+    --accent-a: #58a6ff;
+    --accent-b: #7ee787;
+    --accent-c: #d2a8ff;
+    --accent-d: #f0883e;
+    --accent-e: #f778ba;
+    --accent-f: #79c0ff;
+    --accent-warn: #d29922;
+    --accent-red: #f85149;
+    --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --mono: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  }
+
+  /* System colors — assigned dynamically, first 6 have presets */
+  .sys-color-0 { --sys: var(--accent-a); }
+  .sys-color-1 { --sys: var(--accent-b); }
+  .sys-color-2 { --sys: var(--accent-c); }
+  .sys-color-3 { --sys: var(--accent-d); }
+  .sys-color-4 { --sys: var(--accent-e); }
+  .sys-color-5 { --sys: var(--accent-f); }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 6px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    height: 40px;
+  }
+
+  header h1 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  header .status {
+    font-size: 12px;
+    color: var(--text2);
+    flex: 1;
+    text-align: right;
+  }
+
+  .btn {
+    background: var(--bg3);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 4px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: var(--font);
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+
+  .btn:hover { background: var(--border); }
+  .btn:disabled { opacity: 0.4; cursor: default; }
+  .btn.danger { border-color: var(--accent-red); color: var(--accent-red); }
+  .btn.danger:hover { background: rgba(248,81,73,0.15); }
+  .btn.primary { border-color: var(--accent-a); color: var(--accent-a); }
+  .btn.primary:hover { background: rgba(88,166,255,0.15); }
+  .btn.success { border-color: var(--accent-b); color: var(--accent-b); }
+  .btn.success:hover { background: rgba(126,231,135,0.15); }
+
+  /* ── Control Bar ── */
+  .control-bar {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-shrink: 0;
+    height: 36px;
+  }
+
+  .control-bar .tabs {
+    display: flex;
+    flex: 1;
+    overflow-x: auto;
+    gap: 0;
+    height: 100%;
+    align-items: stretch;
+  }
+
+  .tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 14px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text2);
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+    white-space: nowrap;
+    position: relative;
+    user-select: none;
+  }
+
+  .tab:hover {
+    color: var(--text);
+    background: rgba(255,255,255,0.03);
+  }
+
+  .tab.active {
+    color: var(--text);
+    border-bottom-color: var(--sys, var(--accent-a));
+  }
+
+  .tab .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--sys, var(--text2));
+    flex-shrink: 0;
+  }
+
+  .tab .tab-name {
+    font-weight: 600;
+  }
+
+  .tab .tab-info {
+    font-size: 10px;
+    color: var(--text2);
+    font-weight: 400;
+  }
+
+  .tab .tab-close {
+    margin-left: 4px;
+    font-size: 14px;
+    color: var(--text3);
+    cursor: pointer;
+    padding: 0 2px;
+    line-height: 1;
+  }
+
+  .tab .tab-close:hover { color: var(--accent-red); }
+
+  .control-bar .actions {
+    display: flex;
+    gap: 6px;
+    padding-left: 8px;
+    border-left: 1px solid var(--border);
+    margin-left: 4px;
+    height: 100%;
+    align-items: center;
+  }
+
+  /* ── Main Area ── */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* ── System Panel (one per tab) ── */
+  .system-panel {
+    flex: 1;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .system-panel.active {
+    display: flex;
+  }
+
+  .system-info-bar {
+    padding: 4px 12px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 11px;
+    color: var(--text2);
+    flex-shrink: 0;
+  }
+
+  .system-info-bar .metric {
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+
+  .system-info-bar .metric .label {
+    color: var(--text3);
+  }
+
+  .system-info-bar .metric .value {
+    color: var(--text);
+  }
+
+  /* ── Transcript ── */
+  .transcript {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 16px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .transcript .entry {
+    margin-bottom: 12px;
+    padding: 8px 12px;
+    border-radius: 6px;
+  }
+
+  .transcript .entry.thomas {
+    background: rgba(88,166,255,0.06);
+    border-left: 2px solid var(--accent-a);
+  }
+
+  .transcript .entry.system {
+    background: rgba(126,231,135,0.04);
+    border-left: 2px solid var(--sys, var(--accent-b));
+  }
+
+  .transcript .entry.event {
+    background: rgba(139,148,158,0.06);
+    border-left: 2px solid var(--text3);
+    font-size: 11px;
+    color: var(--text2);
+  }
+
+  .transcript .entry .role {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 4px;
+    color: var(--text2);
+  }
+
+  .transcript .entry .content {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  .transcript .entry .time {
+    font-size: 10px;
+    color: var(--text3);
+    float: right;
+  }
+
+  .transcript .entry .metrics-line {
+    margin-top: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text2);
+    padding: 3px 0;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── Input Area ── */
+  .input-area {
+    padding: 8px 12px;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .input-area .input-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .input-area textarea {
+    flex: 1;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-family: var(--font);
+    resize: none;
+    min-height: 52px;
+    max-height: 150px;
+  }
+
+  .input-area textarea:focus {
+    outline: none;
+    border-color: var(--accent-a);
+  }
+
+  .input-area .send-btn {
+    align-self: flex-end;
+    padding: 8px 20px;
+    height: 36px;
+  }
+
+  /* ── Loading ── */
+  .loading {
+    display: none;
+    padding: 8px 16px;
+    color: var(--accent-warn);
+    font-size: 12px;
+  }
+  .loading.active { display: block; }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+  .loading.active { animation: pulse 1.5s infinite; }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-overlay.active { display: flex; }
+
+  .modal {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    min-width: 360px;
+    max-width: 480px;
+  }
+
+  .modal h2 {
+    font-size: 16px;
+    color: var(--text);
+    margin-bottom: 16px;
+  }
+
+  .modal .field {
+    margin-bottom: 12px;
+  }
+
+  .modal .field label {
+    display: block;
+    font-size: 12px;
+    color: var(--text2);
+    margin-bottom: 4px;
+  }
+
+  .modal .field input, .modal .field select {
+    width: 100%;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 13px;
+    font-family: var(--font);
+  }
+
+  .modal .field input:focus, .modal .field select:focus {
+    outline: none;
+    border-color: var(--accent-a);
+  }
+
+  .modal .actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 16px;
+  }
+
+  /* ── Empty State ── */
+  .empty-state {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text3);
+    font-size: 14px;
+  }
+
+  /* ── Search Panel ── */
+  .search-panel {
+    flex: 1;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .search-panel.active { display: flex; }
+
+  .search-bar {
+    padding: 8px 12px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .search-bar input, .search-bar select {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 12px;
+    font-family: var(--font);
+  }
+  .search-bar input:focus, .search-bar select:focus {
+    outline: none;
+    border-color: var(--accent-a);
+  }
+  .search-bar input.search-main {
+    flex: 1;
+    min-width: 200px;
+  }
+  .search-bar .filter-group {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    font-size: 11px;
+    color: var(--text2);
+  }
+  .search-bar .filter-group input {
+    width: 60px;
+  }
+
+  .search-results {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 16px;
+  }
+
+  .search-results .result-count {
+    font-size: 12px;
+    color: var(--text2);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .search-results .result-item {
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.02);
+    border-left: 2px solid var(--border);
+  }
+  .search-results .result-item.role-system {
+    border-left-color: var(--accent-b);
+  }
+  .search-results .result-item.role-thomas {
+    border-left-color: var(--accent-a);
+  }
+
+  .search-results .result-meta {
+    font-size: 10px;
+    color: var(--text2);
+    margin-bottom: 4px;
+    display: flex;
+    gap: 12px;
+    font-family: var(--mono);
+  }
+  .search-results .result-meta .sys-name {
+    font-weight: 600;
+    color: var(--text);
+    font-family: var(--font);
+    text-transform: capitalize;
+  }
+
+  .search-results .result-content {
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: 120px;
+    overflow: hidden;
+    position: relative;
+  }
+  .search-results .result-content.expanded {
+    max-height: none;
+  }
+  .search-results .result-expand {
+    font-size: 11px;
+    color: var(--accent-a);
+    cursor: pointer;
+    margin-top: 4px;
+  }
+  .search-results .result-expand:hover { text-decoration: underline; }
+
+  .search-stats {
+    padding: 10px 12px;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text2);
+    font-family: var(--mono);
+    flex-shrink: 0;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 800px) {
+    .control-bar .actions .btn-label { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>E₀ v4</h1>
+  <span class="status" id="headerStatus"></span>
+  <button class="btn" onclick="saveSession()">Save</button>
+  <button class="btn" onclick="downloadTranscripts()">Export</button>
+  <button class="btn danger" onclick="stopAll()">Stop</button>
+</header>
+
+<!-- Control Bar: Tabs + Actions -->
+<div class="control-bar">
+  <div class="tabs" id="tabBar"></div>
+  <div class="actions">
+    <button class="btn" onclick="toggleSearch()" title="Suche in der Datenbank">🔍 Suche</button>
+    <button class="btn primary" onclick="showAddSystemModal()">+ Neuer Partner</button>
+    <button class="btn" onclick="showRegistryModal()">Registry</button>
+  </div>
+</div>
+
+<!-- Main: System Panels (tab content) -->
+<div class="main" id="mainArea">
+  <div class="empty-state" id="emptyState">
+    Kein System aktiv. Erstelle einen neuen Partner oder lade einen bestehenden.
+  </div>
+
+  <!-- Search Panel (Phase 3) -->
+  <div class="search-panel" id="searchPanel">
+    <div class="search-bar">
+      <input type="text" class="search-main" id="searchQuery" placeholder="Suchbegriff (z.B. Polyzentrum, Widerstand, Historisierung...)"
+             onkeydown="if(event.key==='Enter')runSearch()">
+      <select id="searchSystem">
+        <option value="">Alle Systeme</option>
+      </select>
+      <select id="searchRole">
+        <option value="">Alle Rollen</option>
+        <option value="system">System</option>
+        <option value="thomas">Thomas</option>
+      </select>
+      <div class="filter-group">
+        <span>h≥</span>
+        <input type="number" id="searchMinH" step="0.1" placeholder="—">
+        <span>R≤</span>
+        <input type="number" id="searchMaxR" step="1" placeholder="—">
+      </div>
+      <button class="btn primary" onclick="runSearch()">Suchen</button>
+    </div>
+    <div class="search-results" id="searchResults">
+      <div style="color:var(--text3);padding:40px;text-align:center;">
+        Durchsuche den gesamten E₀-Dialog.<br>
+        <span style="font-size:12px;">125 Einträge · 3 Systeme · 33 Topologien</span>
+      </div>
+    </div>
+    <div class="search-stats" id="searchStats"></div>
+  </div>
+</div>
+
+<!-- Add System Modal -->
+<div class="modal-overlay" id="addSystemModal">
+  <div class="modal">
+    <h2>Neuer Partner</h2>
+    <div class="field">
+      <label>Name (leer = nächster griechischer Buchstabe)</label>
+      <input type="text" id="newSysName" placeholder="z.B. delta">
+    </div>
+    <div class="field">
+      <label>Modell</label>
+      <input type="text" id="newSysModel" placeholder="gpt-4.1">
+    </div>
+    <div class="field">
+      <label>Base URL (leer = Standard)</label>
+      <input type="text" id="newSysUrl" placeholder="">
+    </div>
+    <div class="actions">
+      <button class="btn" onclick="closeModal('addSystemModal')">Abbrechen</button>
+      <button class="btn primary" onclick="addSystem()">Erstellen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Registry Modal -->
+<div class="modal-overlay" id="registryModal">
+  <div class="modal" style="min-width:500px;">
+    <h2>System Registry</h2>
+    <div id="registryList" style="max-height:400px;overflow-y:auto;"></div>
+    <div class="actions">
+      <button class="btn" onclick="closeModal('registryModal')">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+//  E₀ v4 UI — Dynamic Tab System
+// ══════════════════════════════════════
+
+// State
+let systems = {};      // { id: { descriptor, transcript: [] } }
+let activeTab = null;  // current system_id
+let colorIndex = 0;
+
+// ── Colors ──
+const COLORS = ['--accent-a','--accent-b','--accent-c','--accent-d','--accent-e','--accent-f'];
+function assignColor(systemId) {
+  if (!systems[systemId]) return 0;
+  return systems[systemId].colorIdx || 0;
+}
+
+// ── Init ──
+async function init() {
+  try {
+    // Load registry status to discover systems
+    const resp = await fetch('/registry');
+    const registry = await resp.json();
+
+    // Create local state for each system
+    registry.systems.forEach((desc, i) => {
+      systems[desc.system_id] = {
+        descriptor: desc,
+        transcript: [],
+        colorIdx: i % COLORS.length,
+      };
+    });
+
+    renderTabs();
+
+    // Activate first active system
+    const firstActive = registry.systems.find(s => s.status === 'active');
+    if (firstActive) {
+      switchTab(firstActive.system_id);
+    }
+
+    // Load existing transcripts for active systems
+    for (const desc of registry.systems) {
+      if (desc.status === 'active') {
+        await loadTranscript(desc.system_id);
+      }
+    }
+  } catch (e) {
+    console.error('Init failed:', e);
+    document.getElementById('headerStatus').textContent = 'Connection failed';
+  }
+  startPolling();
+}
+
+// ── Tab Rendering ──
+function renderTabs() {
+  const bar = document.getElementById('tabBar');
+  bar.innerHTML = '';
+
+  const sortedIds = Object.keys(systems).filter(id =>
+    systems[id].descriptor.status === 'active'
+  );
+
+  if (sortedIds.length === 0) {
+    document.getElementById('emptyState').style.display = 'flex';
+    return;
+  }
+  document.getElementById('emptyState').style.display = 'none';
+
+  sortedIds.forEach(id => {
+    const sys = systems[id];
+    const desc = sys.descriptor;
+    const tab = document.createElement('div');
+    tab.className = `tab sys-color-${sys.colorIdx}` + (id === activeTab ? ' active' : '');
+    tab.dataset.system = id;
+
+    const turns = desc.turn_count || 0;
+    const lastH = desc.last_metrics ? `h=${desc.last_metrics.h}` : '';
+    const info = turns > 0 ? `${turns}t ${lastH}` : 'new';
+
+    tab.innerHTML = `
+      <span class="dot"></span>
+      <span class="tab-name">${esc(desc.display_name || capitalize(id))}</span>
+      <span class="tab-info">${info}</span>
+      <span class="tab-close" onclick="event.stopPropagation(); parkSystem('${id}')" title="Park">×</span>
+    `;
+    tab.onclick = () => switchTab(id);
+    bar.appendChild(tab);
+  });
+
+  ensurePanelsExist(sortedIds);
+}
+
+function ensurePanelsExist(ids) {
+  const main = document.getElementById('mainArea');
+
+  ids.forEach(id => {
+    if (document.getElementById('panel-' + id)) return;
+
+    const sys = systems[id];
+    const panel = document.createElement('div');
+    panel.className = 'system-panel';
+    panel.id = 'panel-' + id;
+    panel.dataset.system = id;
+    panel.innerHTML = `
+      <div class="system-info-bar sys-color-${sys.colorIdx}">
+        <span><b>${esc(sys.descriptor.display_name || capitalize(id))}</b></span>
+        <span class="metric"><span class="label">Model: </span><span class="value">${esc(sys.descriptor.model)}</span></span>
+        <span class="metric" id="metrics-${id}"></span>
+        <span style="flex:1"></span>
+        <span class="metric"><span class="label">Turns: </span><span class="value" id="turns-${id}">${sys.descriptor.turn_count || 0}</span></span>
+      </div>
+      <div class="transcript" id="transcript-${id}"></div>
+      <div class="loading" id="loading-${id}">Verarbeite...</div>
+      <div class="input-area">
+        <div class="input-row">
+          <textarea id="input-${id}" placeholder="Nachricht an ${capitalize(id)}..." onkeydown="handleKey(event, '${id}')"></textarea>
+          <button class="btn primary send-btn" onclick="sendPrompt('${id}')">Senden</button>
+        </div>
+      </div>
+    `;
+    main.appendChild(panel);
+  });
+}
+
+function switchTab(id) {
+  activeTab = id;
+  searchActive = false;
+  document.getElementById('searchPanel').classList.remove('active');
+
+  // Update tab active state
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.system === id);
+  });
+
+  // Show/hide panels
+  document.querySelectorAll('.system-panel').forEach(p => {
+    p.classList.toggle('active', p.dataset.system === id);
+  });
+
+  document.getElementById('emptyState').style.display = 'none';
+
+  // Focus the input
+  const input = document.getElementById('input-' + id);
+  if (input) setTimeout(() => input.focus(), 50);
+}
+
+// ── Load existing transcript ──
+async function loadTranscript(systemId) {
+  try {
+    const resp = await fetch('/transcript/' + systemId);
+    const data = await resp.json();
+    if (data.entries && data.entries.length > 0) {
+      data.entries.forEach(e => {
+        addEntry(systemId, e.role, e.content, false);
+      });
+    }
+  } catch (e) {
+    // No transcript yet — that's fine
+  }
+}
+
+// ── Send ──
+async function sendPrompt(systemId) {
+  const input = document.getElementById('input-' + systemId);
+  const prompt = input.value.trim();
+  if (!prompt) return;
+
+  input.value = '';
+  addEntry(systemId, 'thomas', prompt);
+  setLoading(systemId, true);
+
+  try {
+    const resp = await fetch('/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ system: systemId, prompt }),
+    });
+    const data = await resp.json();
+    if (data.error) {
+      addEntry(systemId, 'event', 'Fehler: ' + data.error);
+    } else {
+      addEntry(systemId, 'system', data.response, true, data.metrics);
+    }
+  } catch (e) {
+    addEntry(systemId, 'event', 'Netzwerkfehler: ' + e.message);
+  }
+
+  setLoading(systemId, false);
+}
+
+function handleKey(e, systemId) {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+    sendPrompt(systemId);
+    e.preventDefault();
+  }
+}
+
+// ── System Management ──
+function showAddSystemModal() {
+  document.getElementById('newSysName').value = '';
+  document.getElementById('newSysModel').value = '';
+  document.getElementById('newSysUrl').value = '';
+  document.getElementById('addSystemModal').classList.add('active');
+}
+
+async function addSystem() {
+  const name = document.getElementById('newSysName').value.trim() || undefined;
+  const model = document.getElementById('newSysModel').value.trim() || undefined;
+  const base_url = document.getElementById('newSysUrl').value.trim() || undefined;
+
+  closeModal('addSystemModal');
+
+  try {
+    const resp = await fetch('/add-system', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ system_id: name, model, base_url }),
+    });
+    const desc = await resp.json();
+    if (desc.error) {
+      alert('Fehler: ' + desc.error);
+      return;
+    }
+
+    // Add to local state
+    const idx = Object.keys(systems).length % COLORS.length;
+    systems[desc.system_id] = {
+      descriptor: desc,
+      transcript: [],
+      colorIdx: idx,
+    };
+
+    renderTabs();
+    switchTab(desc.system_id);
+  } catch (e) {
+    alert('Fehler: ' + e.message);
+  }
+}
+
+async function parkSystem(systemId) {
+  try {
+    const resp = await fetch('/park-system', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ system_id: systemId }),
+    });
+    const desc = await resp.json();
+    if (desc.error) {
+      alert('Fehler: ' + desc.error);
+      return;
+    }
+
+    // Update local state
+    systems[systemId].descriptor.status = 'parked';
+
+    // Remove panel
+    const panel = document.getElementById('panel-' + systemId);
+    if (panel) panel.remove();
+
+    // Switch to another tab if this was active
+    if (activeTab === systemId) {
+      const remaining = Object.keys(systems).filter(id =>
+        systems[id].descriptor.status === 'active'
+      );
+      activeTab = remaining.length > 0 ? remaining[0] : null;
+    }
+
+    renderTabs();
+    if (activeTab) switchTab(activeTab);
+  } catch (e) {
+    alert('Fehler: ' + e.message);
+  }
+}
+
+async function restoreSystem(systemId) {
+  try {
+    const resp = await fetch('/restore-system', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ system_id: systemId }),
+    });
+    const desc = await resp.json();
+    if (desc.error) {
+      alert('Fehler: ' + desc.error);
+      return;
+    }
+
+    systems[systemId].descriptor = desc;
+    renderTabs();
+    switchTab(systemId);
+    await loadTranscript(systemId);
+  } catch (e) {
+    alert('Fehler: ' + e.message);
+  }
+  closeModal('registryModal');
+}
+
+// ── Registry Modal ──
+async function showRegistryModal() {
+  const modal = document.getElementById('registryModal');
+  const list = document.getElementById('registryList');
+  list.innerHTML = '<div style="color:var(--text2);font-size:12px;">Lade...</div>';
+  modal.classList.add('active');
+
+  try {
+    const resp = await fetch('/registry');
+    const data = await resp.json();
+
+    if (data.systems.length === 0) {
+      list.innerHTML = '<div style="color:var(--text2);font-size:12px;">Keine Systeme registriert.</div>';
+      return;
+    }
+
+    list.innerHTML = data.systems.map(s => {
+      const isActive = s.status === 'active';
+      const isParked = s.status === 'parked';
+      const statusColor = isActive ? 'var(--accent-b)' : isParked ? 'var(--accent-warn)' : 'var(--text3)';
+      const actions = isParked
+        ? `<button class="btn success" style="font-size:11px;padding:2px 8px;" onclick="restoreSystem('${s.system_id}')">Laden</button>`
+        : isActive
+          ? `<button class="btn" style="font-size:11px;padding:2px 8px;" onclick="parkSystem('${s.system_id}'); closeModal('registryModal');">Parken</button>`
+          : '';
+
+      return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+        <span style="width:8px;height:8px;border-radius:50%;background:${statusColor};flex-shrink:0;"></span>
+        <span style="font-weight:600;min-width:80px;">${esc(s.display_name || capitalize(s.system_id))}</span>
+        <span style="font-size:11px;color:var(--text2);">${esc(s.model)}</span>
+        <span style="font-size:11px;color:var(--text2);">${s.turn_count || 0} turns</span>
+        <span style="font-size:10px;color:${statusColor};text-transform:uppercase;letter-spacing:0.5px;">${s.status}</span>
+        <span style="flex:1"></span>
+        ${actions}
+      </div>`;
+    }).join('');
+  } catch (e) {
+    list.innerHTML = `<div style="color:var(--accent-red);font-size:12px;">Fehler: ${e.message}</div>`;
+  }
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('active');
+}
+
+// ── Transcript Rendering ──
+function addEntry(systemId, role, content, scroll = true, metrics = null) {
+  const container = document.getElementById('transcript-' + systemId);
+  if (!container) return;
+
+  const entry = document.createElement('div');
+  entry.className = 'entry ' + role;
+
+  const time = new Date().toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  const roleName = role === 'thomas' ? 'Thomas'
+    : role === 'system' ? capitalize(systemId)
+    : 'Event';
+
+  let metricsHtml = '';
+  if (metrics && role === 'system') {
+    metricsHtml = `<div class="metrics-line">R=${metrics.r}  h=${metrics.h}  φ=${metrics.phi}  v=${metrics.v}  τ=${metrics.tau}</div>`;
+    // Update info bar
+    updateMetricsDisplay(systemId, metrics);
+  }
+
+  entry.innerHTML = `
+    <span class="time">${time}</span>
+    <div class="role">${roleName}</div>
+    <div class="content">${esc(content)}</div>
+    ${metricsHtml}
+  `;
+
+  container.appendChild(entry);
+  if (scroll) container.scrollTop = container.scrollHeight;
+
+  if (systems[systemId]) {
+    systems[systemId].transcript.push({ role, content, time });
+  }
+}
+
+function updateMetricsDisplay(systemId, metrics) {
+  const el = document.getElementById('metrics-' + systemId);
+  if (el && metrics) {
+    el.innerHTML = `<span class="label">R=</span><span class="value">${metrics.r}</span>` +
+      ` <span class="label">h=</span><span class="value">${metrics.h}</span>` +
+      ` <span class="label">φ=</span><span class="value">${metrics.phi}</span>`;
+  }
+  const turns = document.getElementById('turns-' + systemId);
+  if (turns && systems[systemId]) {
+    const count = systems[systemId].transcript.filter(e => e.role === 'system').length;
+    const desc = systems[systemId].descriptor;
+    turns.textContent = (desc.turn_count || 0) + count;
+  }
+}
+
+function setLoading(systemId, active) {
+  const el = document.getElementById('loading-' + systemId);
+  if (el) el.className = active ? 'loading active' : 'loading';
+}
+
+// ── Session ──
+async function saveSession() {
+  try {
+    const resp = await fetch('/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    const data = await resp.json();
+    document.getElementById('headerStatus').textContent = 'Gespeichert';
+    setTimeout(() => { document.getElementById('headerStatus').textContent = ''; }, 3000);
+  } catch (e) {
+    alert('Speichern fehlgeschlagen: ' + e.message);
+  }
+}
+
+async function downloadTranscripts() {
+  try {
+    const resp = await fetch('/transcripts');
+    const data = await resp.json();
+    const blob = new Blob([data.markdown], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `e0_v4_transcript_${new Date().toISOString().slice(0,10)}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    alert('Export fehlgeschlagen: ' + e.message);
+  }
+}
+
+async function stopAll() {
+  if (!confirm('Alle Systeme stoppen und Session speichern?')) return;
+  try {
+    const resp = await fetch('/stop', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    const data = await resp.json();
+    document.getElementById('headerStatus').textContent = 'GESTOPPT';
+  } catch (e) {
+    alert('Stop fehlgeschlagen: ' + e.message);
+  }
+}
+
+// ── Polling ──
+async function refreshRegistry() {
+  try {
+    const resp = await fetch('/registry');
+    const data = await resp.json();
+    data.systems.forEach(desc => {
+      if (systems[desc.system_id]) {
+        systems[desc.system_id].descriptor = desc;
+      }
+    });
+    // Update turn counts and metrics in info bars
+    Object.keys(systems).forEach(id => {
+      const desc = systems[id].descriptor;
+      const turns = document.getElementById('turns-' + id);
+      if (turns) turns.textContent = desc.turn_count || 0;
+      if (desc.last_metrics) updateMetricsDisplay(id, desc.last_metrics);
+    });
+  } catch (e) {}
+}
+
+function startPolling() {
+  setInterval(refreshRegistry, 5000);
+}
+
+// ── Utilities ──
+function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+function esc(text) {
+  const d = document.createElement('div');
+  d.textContent = text;
+  return d.innerHTML;
+}
+
+// ═══════════════════════════════════════
+//  Search — Phase 3 DuckDB Integration
+// ═══════════════════════════════════════
+
+let searchActive = false;
+
+function toggleSearch() {
+  searchActive = !searchActive;
+  const panel = document.getElementById('searchPanel');
+
+  if (searchActive) {
+    // Hide all system panels, show search
+    document.querySelectorAll('.system-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    panel.classList.add('active');
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('searchQuery').focus();
+    populateSearchSystems();
+    loadDbStats();
+  } else {
+    panel.classList.remove('active');
+    // Restore active tab
+    if (activeTab) switchTab(activeTab);
+    else if (Object.keys(systems).length === 0) {
+      document.getElementById('emptyState').style.display = 'flex';
+    }
+  }
+}
+
+function populateSearchSystems() {
+  const sel = document.getElementById('searchSystem');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">Alle Systeme</option>';
+  Object.keys(systems).forEach(id => {
+    const opt = document.createElement('option');
+    opt.value = id;
+    opt.textContent = capitalize(id);
+    sel.appendChild(opt);
+  });
+  sel.value = current;
+}
+
+async function loadDbStats() {
+  try {
+    const resp = await fetch('/db-stats');
+    const stats = await resp.json();
+    const bar = document.getElementById('searchStats');
+    const bySystem = (stats.by_system || []).map(s =>
+      `${s.system_id}: ${s.total_messages} msgs, avg_h=${s.avg_h || '—'}`
+    ).join('  ·  ');
+    bar.textContent = `DB: ${stats.total_interactions} Interaktionen · ${stats.total_systems} Systeme · ${stats.total_topologies} Topologien  |  ${bySystem}`;
+  } catch (e) {
+    document.getElementById('searchStats').textContent = 'DB nicht verfügbar';
+  }
+}
+
+async function runSearch() {
+  const q = document.getElementById('searchQuery').value.trim();
+  const system = document.getElementById('searchSystem').value;
+  const role = document.getElementById('searchRole').value;
+  const minH = document.getElementById('searchMinH').value;
+  const maxR = document.getElementById('searchMaxR').value;
+
+  const params = new URLSearchParams();
+  if (q) params.set('q', q);
+  if (system) params.set('system', system);
+  if (role) params.set('role', role);
+  if (minH) params.set('min_h', minH);
+  if (maxR) params.set('max_r', maxR);
+  params.set('limit', '50');
+
+  const container = document.getElementById('searchResults');
+  container.innerHTML = '<div style="color:var(--text2);padding:20px;">Suche...</div>';
+
+  try {
+    const resp = await fetch('/db-search?' + params.toString());
+    const data = await resp.json();
+    renderSearchResults(data, q);
+  } catch (e) {
+    container.innerHTML = `<div style="color:var(--accent-red);padding:20px;">Fehler: ${e.message}</div>`;
+  }
+}
+
+function renderSearchResults(data, query) {
+  const container = document.getElementById('searchResults');
+
+  if (data.count === 0) {
+    container.innerHTML = `<div class="result-count">Keine Ergebnisse für "${esc(query || '(alle)')}"</div>`;
+    return;
+  }
+
+  let html = `<div class="result-count">${data.count} Ergebnis${data.count !== 1 ? 'se' : ''} für "${esc(query || '(alle)')}"</div>`;
+
+  data.results.forEach((r, i) => {
+    const roleClass = r.role === 'system' ? 'role-system' : r.role === 'thomas' ? 'role-thomas' : '';
+    const ts = r.ts ? r.ts.substring(0, 19) : '?';
+    const hStr = r.h != null ? `h=${r.h.toFixed(4)}` : 'h=—';
+    const rStr = r.r != null ? `R=${r.r.toFixed(2)}` : 'R=—';
+    const vStr = r.v != null ? `v=${r.v.toFixed(4)}` : '';
+    const tauStr = r.tau != null ? `τ=${r.tau}` : '';
+    const content = r.content || '';
+
+    // Highlight query in content
+    let displayContent = esc(content);
+    if (query) {
+      const re = new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+      displayContent = displayContent.replace(re, '<mark style="background:rgba(210,168,255,0.3);color:var(--text);">$1</mark>');
+    }
+
+    html += `
+      <div class="result-item ${roleClass}">
+        <div class="result-meta">
+          <span class="sys-name">${esc(r.system_id)}</span>
+          <span>${esc(r.role)}</span>
+          <span>${ts}</span>
+          <span>${hStr}</span>
+          <span>${rStr}</span>
+          ${vStr ? `<span>${vStr}</span>` : ''}
+          ${tauStr ? `<span>${tauStr}</span>` : ''}
+        </div>
+        <div class="result-content" id="rc-${i}">${displayContent}</div>
+        <div class="result-expand" onclick="toggleExpand(${i})">mehr anzeigen</div>
+      </div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+function toggleExpand(i) {
+  const el = document.getElementById('rc-' + i);
+  if (el) {
+    const expanded = el.classList.toggle('expanded');
+    el.nextElementSibling.textContent = expanded ? 'weniger' : 'mehr anzeigen';
+  }
+}
+
+// ── Start ──
+init();
+</script>
+
+</body>
+</html>
