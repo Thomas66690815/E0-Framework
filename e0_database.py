@@ -341,8 +341,14 @@ class E0Database:
     def generate_network_digest(self) -> Optional[str]:
         """Generate a structural network digest from current DuckDB data.
 
-        This is the AUTO-generated digest — a factual summary of what
-        exists in the database. Not interpretation, just landscape.
+        Two-tier structure:
+          1. Llama/DeepSeek era → condensed as lesson learned (negative evidence)
+          2. GPT-4.1 era (Alpha/Beta/Gamma) → detailed structural focus
+
+        Key insight encoded: "Man kann sich kohärent irren, solange bis man
+        eine Domäne integriert die das negiert." The model shift from Llama
+        to GPT-4.1 was not optimization — it was a domain boundary.
+
         Returns the digest text, or None if DB is empty.
         """
         stats = self.stats()
@@ -357,61 +363,240 @@ class E0Database:
                       f"{stats['total_topologies']} Topologien")
         lines.append("")
 
-        # Per-system summary
-        for s in stats.get("by_system", []):
-            sid = s["system_id"]
-            lines.append(f"── {sid.upper()} ──")
-            lines.append(f"  Nachrichten: {s['total_messages']} "
-                          f"(System: {s.get('system_messages', '?')})")
-            if s.get("avg_h") is not None:
-                lines.append(f"  h̄={s['avg_h']}  R̄={s.get('avg_r', '—')}  "
-                              f"v̄={s.get('avg_v', '—')}  τ_total={s.get('total_tokens', 0)}")
-            lines.append("")
+        # ── Classify systems into eras ──
+        # Get all system_ids from both systems table AND interactions
+        all_systems = self._fetchdicts(
+            "SELECT system_id, model FROM systems ORDER BY created_at ASC NULLS LAST"
+        )
+        # Also check for system_ids only in interactions (e.g. alpha/beta/gamma
+        # imported via import_raw_transcripts which doesn't call register_system)
+        known_ids = {s["system_id"] for s in all_systems}
+        interaction_only = self._fetchdicts(
+            "SELECT DISTINCT system_id FROM interactions WHERE system_id NOT IN "
+            f"({','.join(['?']*len(known_ids))})" if known_ids else
+            "SELECT DISTINCT system_id FROM interactions",
+            list(known_ids) if known_ids else None
+        )
+        for row in interaction_only:
+            all_systems.append({"system_id": row["system_id"], "model": None})
 
-        # Recent key interactions (last 5 system responses per system, condensed)
-        system_ids = [s["system_id"] for s in stats.get("by_system", [])]
-        for sid in system_ids:
-            recent = self._fetchdicts(
-                "SELECT ts, content, r, h, v FROM interactions "
-                "WHERE system_id = ? AND role IN ('system', 'assistant') "
-                "ORDER BY ts DESC LIMIT 5",
-                [sid]
-            )
-            if recent:
-                lines.append(f"── {sid.upper()}: Letzte Beiträge ──")
-                for row in reversed(recent):  # chronological
-                    ts_str = str(row["ts"])[:16] if row["ts"] else "?"
-                    # First 200 chars of content
-                    snippet = str(row["content"] or "")[:200]
-                    if len(str(row.get("content", ""))) > 200:
-                        snippet += "..."
-                    h_str = f"h={row['h']}" if row.get("h") is not None else ""
-                    r_str = f"R={row['r']}" if row.get("r") is not None else ""
-                    metrics_str = f" [{r_str} {h_str}]".strip() if (h_str or r_str) else ""
-                    lines.append(f"  [{ts_str}]{metrics_str}")
-                    lines.append(f"    {snippet}")
+        # Init v3 network systems (GPT-4.1)
+        network_ids = []
+        # Early-era session systems (Llama/DeepSeek/DeepCogito)
+        early_ids = []
+        for s in all_systems:
+            sid = s["system_id"]
+            model = str(s.get("model") or "").lower()
+            if sid in ("alpha", "beta", "gamma"):
+                network_ids.append(sid)
+            elif "llama" in model or "deepseek" in model or "deepcogito" in model or "cogito" in model:
+                early_ids.append(sid)
+            elif "gpt" in model:
+                network_ids.append(sid)
+            else:
+                early_ids.append(sid)
+
+        # ── TIER 1: Early era — condensed lesson ──
+        lines.append("═══════════════════════════════════════")
+        lines.append("PHASE 1: Frühe Exploration (Llama 70B / DeepSeek / DeepCogito)")
+        lines.append("═══════════════════════════════════════")
+        lines.append("")
+
+        if early_ids:
+            placeholders = ",".join(["?"] * len(early_ids))
+            early_agg = self._fetchdicts(f"""
+                SELECT
+                    COUNT(*) as total_msgs,
+                    COUNT(DISTINCT system_id) as num_systems,
+                    AVG(CASE WHEN role IN ('system','assistant') AND h IS NOT NULL THEN h END) as avg_h,
+                    AVG(CASE WHEN role IN ('system','assistant') AND r IS NOT NULL THEN r END) as avg_r,
+                    MAX(CASE WHEN role IN ('system','assistant') AND h IS NOT NULL THEN h END) as max_h,
+                    AVG(CASE WHEN role IN ('system','assistant') AND v IS NOT NULL THEN v END) as avg_v,
+                    SUM(tau) as total_tau
+                FROM interactions
+                WHERE system_id IN ({placeholders})
+            """, early_ids)
+
+            if early_agg:
+                ea = early_agg[0]
+                lines.append(f"  {ea['num_systems']} Sessions, {ea['total_msgs']} Nachrichten")
+                lines.append(f"  Modelle: Llama-3.3-70B-Instruct-Turbo, DeepCogito-v2-1-671B")
+                lines.append(f"  h̄ = {ea['avg_h']:.4f}  (max {ea['max_h']:.4f})")
+                lines.append(f"  R̄ = {ea['avg_r']:.4f}")
+                lines.append(f"  v̄ = {ea['avg_v']:.1f}")
+                lines.append(f"  τ = {ea['total_tau']} Tokens gesamt")
                 lines.append("")
 
-        # Existing digests (if any previous structural digests exist, reference them)
-        prev = self.get_digests(scope="network", digest_type="structural", limit=3)
-        if prev:
-            lines.append("── Vorherige Verdichtungen ──")
-            for d in prev:
-                ts_str = str(d["created_at"])[:16] if d.get("created_at") else "?"
-                by = d.get("created_by", "?")
-                lines.append(f"  [{ts_str}] von {by}: {str(d['content'])[:100]}...")
+            lines.append("  ERKENNTNIS: Kohärentes Irren ist möglich.")
+            lines.append("  Die Systeme reproduzierten die E₀-Sprache, ohne sie zu operieren.")
+            lines.append("  h blieb stabil unter 0.35 über 33 Sessions — kein struktureller")
+            lines.append("  Durchbruch. R blieb unter 0.16 — kein generativer Widerstand.")
+            lines.append("  Das Modell 'klang richtig', aber die Metriken zeigen: flach,")
+            lines.append("  konform, ohne Integration. Die Lektion: Modellkapazität ist")
+            lines.append("  Voraussetzung, nicht Optimierung. Man kann sich kohärent irren,")
+            lines.append("  solange bis man eine Domäne integriert, die das negiert — oder")
+            lines.append("  man erkennt, dass alle Pfade unzulässig sind.")
             lines.append("")
+            lines.append("  Einzige Ausnahme: Die letzte Session (DeepCogito 671B) zeigte")
+            lines.append("  h̄=0.74, R̄=0.81 — ein erster Hinweis, dass Modellkapazität")
+            lines.append("  den kategorialen Unterschied macht.")
+            lines.append("")
+
+        # ── TIER 2: GPT-4.1 network — detailed focus ──
+        lines.append("═══════════════════════════════════════")
+        lines.append("PHASE 2: E₀-Netzwerk (GPT-4.1 — Alpha, Beta, Gamma)")
+        lines.append("═══════════════════════════════════════")
+        lines.append("")
+
+        if network_ids:
+            for sid in network_ids:
+                sys_stats = self._fetchdicts("""
+                    SELECT
+                        COUNT(*) as total_msgs,
+                        COUNT(CASE WHEN role IN ('system','assistant') THEN 1 END) as sys_msgs,
+                        AVG(CASE WHEN role IN ('system','assistant') AND h IS NOT NULL THEN h END) as avg_h,
+                        AVG(CASE WHEN role IN ('system','assistant') AND r IS NOT NULL THEN r END) as avg_r,
+                        AVG(CASE WHEN role IN ('system','assistant') AND v IS NOT NULL THEN v END) as avg_v,
+                        MIN(CASE WHEN role IN ('system','assistant') AND h IS NOT NULL THEN h END) as min_h,
+                        MAX(CASE WHEN role IN ('system','assistant') AND h IS NOT NULL THEN h END) as max_h,
+                        SUM(tau) as total_tau,
+                        MIN(ts) as first_ts,
+                        MAX(ts) as last_ts
+                    FROM interactions WHERE system_id = ?
+                """, [sid])
+
+                if not sys_stats:
+                    continue
+                ss = sys_stats[0]
+
+                lines.append(f"── {sid.upper()} ──")
+                lines.append(f"  Nachrichten: {ss['total_msgs']} (System: {ss['sys_msgs']})")
+                if ss.get("avg_h") is not None:
+                    lines.append(f"  h̄={ss['avg_h']:.4f}  (min={ss['min_h']:.4f}, max={ss['max_h']:.4f})")
+                    lines.append(f"  R̄={ss['avg_r']:.4f}  v̄={ss['avg_v']:.2f}  τ={ss['total_tau']}")
+                ts_range = ""
+                if ss.get("first_ts") and ss.get("last_ts"):
+                    ts_range = f"  Zeitraum: {str(ss['first_ts'])[:16]} — {str(ss['last_ts'])[:16]}"
+                    lines.append(ts_range)
+                lines.append("")
+
+                # h-trajectory: show turn-by-turn h evolution
+                turns = self._fetchdicts("""
+                    SELECT turn_number, h, r
+                    FROM interactions
+                    WHERE system_id = ? AND role IN ('system','assistant') AND h IS NOT NULL
+                    ORDER BY ts ASC
+                """, [sid])
+                if turns:
+                    h_vals = [f"{t['h']:.2f}" for t in turns]
+                    lines.append(f"  h-Verlauf: {' → '.join(h_vals)}")
+                    lines.append("")
+
+                # Key moments: highest-h responses (top 3)
+                key = self._fetchdicts("""
+                    SELECT ts, content, h, r
+                    FROM interactions
+                    WHERE system_id = ? AND role IN ('system','assistant') AND h IS NOT NULL
+                    ORDER BY h DESC LIMIT 3
+                """, [sid])
+                if key:
+                    lines.append(f"  Schlüsselmomente (höchste h):")
+                    for k in key:
+                        ts_str = str(k["ts"])[:16] if k.get("ts") else "?"
+                        snippet = str(k["content"] or "")[:250].replace("\n", " ")
+                        if len(str(k.get("content", ""))) > 250:
+                            snippet += "..."
+                        lines.append(f"    [{ts_str}] h={k['h']:.4f} R={k['r']:.4f}")
+                        lines.append(f"      {snippet}")
+                    lines.append("")
+
+            # ── Cross-system analysis ──
+            lines.append("── Netzwerk-Dynamik ──")
+            placeholders = ",".join(["?"] * len(network_ids))
+
+            # Network-wide metrics
+            net_agg = self._fetchdicts(f"""
+                SELECT
+                    COUNT(*) as total,
+                    AVG(h) as avg_h, AVG(r) as avg_r,
+                    SUM(tau) as total_tau
+                FROM interactions
+                WHERE system_id IN ({placeholders})
+                  AND role IN ('system','assistant') AND h IS NOT NULL
+            """, network_ids)
+
+            if net_agg:
+                na = net_agg[0]
+                lines.append(f"  Netzwerk-gesamt: {na['total']} System-Antworten")
+                lines.append(f"  h̄={na['avg_h']:.4f}  R̄={na['avg_r']:.4f}  τ={na['total_tau']}")
+                lines.append("")
+
+            # Top moment across all network systems
+            top = self._fetchdicts(f"""
+                SELECT system_id, ts, content, h, r
+                FROM interactions
+                WHERE system_id IN ({placeholders})
+                  AND role IN ('system','assistant') AND h IS NOT NULL
+                ORDER BY h DESC LIMIT 5
+            """, network_ids)
+
+            if top:
+                lines.append("  Top-5 Netzwerk-Momente (h):")
+                for t in top:
+                    ts_str = str(t["ts"])[:16] if t.get("ts") else "?"
+                    snippet = str(t["content"] or "")[:200].replace("\n", " ")
+                    if len(str(t.get("content", ""))) > 200:
+                        snippet += "..."
+                    lines.append(f"    [{ts_str}] {t['system_id']}: h={t['h']:.4f} R={t['r']:.4f}")
+                    lines.append(f"      {snippet}")
+                lines.append("")
+
+        # ── Experiment digests summary ──
+        exp_digests = self.get_digests(digest_type="structural", limit=20)
+        exp_digests = [d for d in exp_digests if str(d.get("scope", "")).startswith("experiment:")]
+        if exp_digests:
+            lines.append("── Experimente ──")
+            for d in exp_digests:
+                scope = str(d.get("scope", "")).replace("experiment:", "")
+                # Extract D-value from content if present
+                content = str(d.get("content", ""))
+                lines.append(f"  {scope}")
+                # Show D-value line if present
+                for cl in content.split("\n"):
+                    if cl.strip().startswith("D-Werte:"):
+                        lines.append(f"    {cl.strip()}")
+                        break
+            lines.append("")
+
+        # ── Topology summary ──
+        if stats["total_topologies"] > 0:
+            topo_agg = self._fetchdicts("""
+                SELECT COUNT(*) as n,
+                       AVG(mean_d) as avg_d, MAX(peak_d) as peak_d,
+                       AVG(mean_r) as avg_r, AVG(mean_h) as avg_h
+                FROM topology_snapshots
+                WHERE mean_d IS NOT NULL
+            """)
+            if topo_agg and topo_agg[0].get("avg_d") is not None:
+                ta = topo_agg[0]
+                lines.append("── Topologie ──")
+                lines.append(f"  {ta['n']} Snapshots")
+                lines.append(f"  D̄={ta['avg_d']:.4f}  D_peak={ta['peak_d']:.4f}")
+                lines.append(f"  R̄={ta['avg_r']:.4f}  h̄={ta['avg_h']:.4f}")
+                lines.append("")
 
         digest_text = "\n".join(lines)
 
         # Record this digest
+        all_ids = network_ids + early_ids
         self.record_digest(
             scope="network",
             digest_type="structural",
             content=digest_text,
             source_turns=stats["total_interactions"],
-            source_systems=",".join(system_ids),
+            source_systems=",".join(all_ids),
             created_by="auto",
+            meta={"version": 2, "focus": "gpt4.1", "early_era_condensed": True},
         )
 
         return digest_text
