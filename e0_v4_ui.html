@@ -527,10 +527,29 @@
   .inject-bar .inject-target {
     font-size: 11px;
     color: var(--text2);
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
 
   .inject-bar .inject-target b {
     color: var(--accent-d);
+  }
+
+  .inject-system-select {
+    background: var(--panel);
+    color: var(--accent-d);
+    border: 1px solid var(--accent-d);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-family: var(--mono);
+    cursor: pointer;
+    outline: none;
+  }
+  .inject-system-select:focus {
+    border-color: var(--accent-a);
+    box-shadow: 0 0 4px rgba(210,168,255,0.3);
   }
 
   .inject-preview {
@@ -824,7 +843,10 @@
         <button class="btn" style="border-color:var(--accent-c);color:var(--accent-c);" onclick="runDbQuery()">▶ SQL</button>
       </div>
       <div class="inject-bar" id="dbInjectBar">
-        <span class="inject-target" id="dbInjectTarget"></span>
+        <span class="inject-target" id="dbInjectTarget">
+          Ziel: <select id="dbInjectSystemSelect" class="inject-system-select" onchange="updateInjectBar()"></select>
+          <span id="dbInjectInfo" style="color:var(--text3);font-size:11px;"></span>
+        </span>
         <button class="btn-inject" id="dbInjectBtn" onclick="injectDbResults()" disabled>→ Ergebnis injizieren</button>
         <button class="btn-inject" onclick="injectDbResultsDirect()" id="dbInjectDirectBtn" disabled style="border-color:var(--accent-b);color:var(--accent-b);background:rgba(126,231,135,0.1);">⚡ Direkt senden</button>
       </div>
@@ -901,6 +923,7 @@ async function init() {
     });
 
     renderTabs();
+    updateInjectSystemSelect();
 
     // Activate first active system
     const firstActive = registry.systems.find(s => s.status === 'active');
@@ -1106,6 +1129,7 @@ async function addSystem() {
     };
 
     renderTabs();
+    updateInjectSystemSelect();
     switchTab(desc.system_id);
   } catch (e) {
     alert('Fehler: ' + e.message);
@@ -1141,6 +1165,7 @@ async function parkSystem(systemId) {
     }
 
     renderTabs();
+    updateInjectSystemSelect();
     if (activeTab) switchTab(activeTab);
   } catch (e) {
     alert('Fehler: ' + e.message);
@@ -1440,8 +1465,9 @@ function renderSearchResults(data, query) {
     return;
   }
 
+  const searchInjectTarget = getInjectTarget();
   let html = `<div class="result-count">${data.count} Ergebnis${data.count !== 1 ? 'se' : ''} für "${esc(query || '(alle)')}"
-    ${activeTab ? `<button class="btn-inject" onclick="injectSearchResults()" style="margin-left:12px;">→ Alle an ${capitalize(activeTab)} injizieren</button>` : ''}
+    ${searchInjectTarget ? `<button class="btn-inject" onclick="injectSearchResults()" style="margin-left:12px;">→ Alle an ${capitalize(searchInjectTarget)} injizieren</button>` : ''}
   </div>`;
 
   data.results.forEach((r, i) => {
@@ -1474,7 +1500,7 @@ function renderSearchResults(data, query) {
         <div class="result-content" id="rc-${i}">${displayContent}</div>
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <div class="result-expand" onclick="toggleExpand(${i})">mehr anzeigen</div>
-          ${activeTab ? `<button class="btn-inject" onclick="injectSingleResult(${i})" style="font-size:10px;padding:1px 6px;">→ ${capitalize(activeTab)}</button>` : ''}
+          ${searchInjectTarget ? `<button class="btn-inject" onclick="injectSingleResult(${i})" style="font-size:10px;padding:1px 6px;">→ ${capitalize(searchInjectTarget)}</button>` : ''}
         </div>
       </div>`;
   });
@@ -1509,6 +1535,7 @@ function toggleDbPanel() {
     document.getElementById('emptyState').style.display = 'none';
     loadDbOverview();
     loadTableList();
+    updateInjectBar();
   } else {
     panel.classList.remove('active');
     if (activeTab) switchTab(activeTab);
@@ -1671,28 +1698,56 @@ function renderDbTable(data, title) {
 let lastDbResults = null;
 let lastSearchResults = null;
 
+function getInjectTarget() {
+  const sel = document.getElementById('dbInjectSystemSelect');
+  return sel && sel.value ? sel.value : activeTab;
+}
+
+function updateInjectSystemSelect() {
+  const sel = document.getElementById('dbInjectSystemSelect');
+  if (!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = '';
+  const ids = Object.keys(systems);
+  if (ids.length === 0) {
+    const opt = document.createElement('option');
+    opt.value = '';
+    opt.textContent = '(kein System)';
+    sel.appendChild(opt);
+    return;
+  }
+  ids.forEach(id => {
+    const opt = document.createElement('option');
+    opt.value = id;
+    opt.textContent = capitalize(id);
+    sel.appendChild(opt);
+  });
+  // Restore previous selection or default to activeTab
+  if (prev && ids.includes(prev)) sel.value = prev;
+  else if (activeTab && ids.includes(activeTab)) sel.value = activeTab;
+  else sel.value = ids[0];
+}
+
 function updateInjectBar() {
-  const target = document.getElementById('dbInjectTarget');
   const btn = document.getElementById('dbInjectBtn');
   const btnDirect = document.getElementById('dbInjectDirectBtn');
-  if (!target || !btn) return;
+  const info = document.getElementById('dbInjectInfo');
+  if (!btn) return;
 
+  updateInjectSystemSelect();
+  const target = getInjectTarget();
   const hasData = lastDbResults && lastDbResults.rows && lastDbResults.rows.length > 0;
-  const hasTarget = !!activeTab;
+  const hasTarget = !!target;
 
-  if (hasTarget && hasData) {
-    target.innerHTML = `Ziel: <b>${capitalize(activeTab)}</b> · ${lastDbResults.rows.length} Zeilen`;
-    btn.disabled = false;
-    btnDirect.disabled = false;
-  } else if (!hasTarget) {
-    target.innerHTML = `<span style="color:var(--text3);">Kein System aktiv — erst Tab wählen</span>`;
-    btn.disabled = true;
-    btnDirect.disabled = true;
-  } else {
-    target.innerHTML = `<span style="color:var(--text3);">Erst eine Query ausführen</span>`;
-    btn.disabled = true;
-    btnDirect.disabled = true;
+  // Update info text next to dropdown
+  if (hasTarget && hasData && info) {
+    info.textContent = `· ${lastDbResults.rows.length} Zeilen`;
+  } else if (info) {
+    info.textContent = hasData ? '' : '· erst Query ausführen';
   }
+
+  btn.disabled = !(hasTarget && hasData);
+  btnDirect.disabled = !(hasTarget && hasData);
 }
 
 function formatDbResultsAsText(data, maxRows) {
@@ -1760,55 +1815,59 @@ function formatAllSearchResultsAsText(data) {
 
 // Inject into textarea (user reviews before sending)
 function injectDbResults() {
-  if (!activeTab || !lastDbResults) return;
+  const target = getInjectTarget();
+  if (!target || !lastDbResults) return;
   const text = formatDbResultsAsText(lastDbResults);
-  injectIntoInput(activeTab, text);
+  injectIntoInput(target, text);
 }
 
 // Inject and send directly
 async function injectDbResultsDirect() {
-  if (!activeTab || !lastDbResults) return;
+  const target = getInjectTarget();
+  if (!target || !lastDbResults) return;
   const text = formatDbResultsAsText(lastDbResults);
 
   // Switch to system tab and send
-  switchTab(activeTab);
-  addEntry(activeTab, 'thomas', text);
-  setLoading(activeTab, true);
+  switchTab(target);
+  addEntry(target, 'thomas', text);
+  setLoading(target, true);
 
   try {
     const resp = await fetch('/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ system: activeTab, prompt: text }),
+      body: JSON.stringify({ system: target, prompt: text }),
     });
     const data = await resp.json();
     if (data.error) {
-      addEntry(activeTab, 'event', 'Fehler: ' + data.error);
+      addEntry(target, 'event', 'Fehler: ' + data.error);
     } else {
-      addEntry(activeTab, 'system', data.response, true, data.metrics);
+      addEntry(target, 'system', data.response, true, data.metrics);
     }
   } catch (e) {
-    addEntry(activeTab, 'event', 'Netzwerkfehler: ' + e.message);
+    addEntry(target, 'event', 'Netzwerkfehler: ' + e.message);
   }
-  setLoading(activeTab, false);
+  setLoading(target, false);
 }
 
 function injectSingleResult(index) {
-  if (!activeTab || !lastSearchResults || !lastSearchResults.results) return;
+  const target = getInjectTarget();
+  if (!target || !lastSearchResults || !lastSearchResults.results) return;
   const result = lastSearchResults.results[index];
   if (!result) return;
   const text = formatSearchResultAsText(result);
-  injectIntoInput(activeTab, text);
+  injectIntoInput(target, text);
   // Flash confirmation
-  document.getElementById('headerStatus').textContent = `→ ${capitalize(activeTab)} injiziert`;
+  document.getElementById('headerStatus').textContent = `→ ${capitalize(target)} injiziert`;
   setTimeout(() => document.getElementById('headerStatus').textContent = '', 2000);
 }
 
 function injectSearchResults() {
-  if (!activeTab || !lastSearchResults) return;
+  const target = getInjectTarget();
+  if (!target || !lastSearchResults) return;
   const text = formatAllSearchResultsAsText(lastSearchResults);
-  injectIntoInput(activeTab, text);
-  document.getElementById('headerStatus').textContent = `→ ${lastSearchResults.count} Einträge an ${capitalize(activeTab)}`;
+  injectIntoInput(target, text);
+  document.getElementById('headerStatus').textContent = `→ ${lastSearchResults.count} Einträge an ${capitalize(target)}`;
   setTimeout(() => document.getElementById('headerStatus').textContent = '', 2000);
 }
 
