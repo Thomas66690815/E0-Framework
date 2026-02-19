@@ -931,6 +931,30 @@ async def handle_db_timeline(request):
     return web.json_response({"system": system, "count": len(rows), "entries": rows})
 
 
+async def handle_db_query(request):
+    """Execute read-only SQL query against DuckDB.
+
+    POST /db-query  {"sql": "SELECT ..."}
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json()
+    sql = data.get("sql", "")
+    if not sql.strip():
+        return web.json_response({"error": "No SQL query provided."})
+    result = orch.db.query(sql)
+    return web.json_response(result)
+
+
+async def handle_db_tables(request):
+    """List all tables with schema info.
+
+    GET /db-tables
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    tables = orch.db.tables()
+    return web.json_response({"tables": tables})
+
+
 def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app = web.Application()
     app["orchestrator"] = orchestrator
@@ -961,6 +985,8 @@ def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app.router.add_get("/db-search", handle_db_search)
     app.router.add_get("/db-stats", handle_db_stats)
     app.router.add_get("/db-timeline", handle_db_timeline)
+    app.router.add_post("/db-query", handle_db_query)
+    app.router.add_get("/db-tables", handle_db_tables)
 
     return app
 

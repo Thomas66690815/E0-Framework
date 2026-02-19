@@ -335,6 +335,171 @@
   @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
   .loading.active { animation: pulse 1.5s infinite; }
 
+  /* ── Tab Activity Indicator ── */
+  .tab.has-activity .dot {
+    animation: activity-pulse 1.5s infinite;
+    box-shadow: 0 0 6px var(--sys, var(--accent-warn));
+  }
+
+  @keyframes activity-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.5); }
+  }
+
+  .tab .activity-badge {
+    background: var(--accent-warn);
+    color: var(--bg);
+    font-size: 9px;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    margin-left: 2px;
+    line-height: 1;
+  }
+
+  /* ── DB Explorer Panel ── */
+  .db-panel {
+    flex: 1;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .db-panel.active { display: flex; }
+
+  .db-toolbar {
+    padding: 8px 12px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .db-toolbar .db-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-right: 8px;
+  }
+
+  .db-content {
+    flex: 1;
+    overflow: auto;
+    padding: 12px 16px;
+  }
+
+  .db-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .db-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+  }
+
+  .db-card .card-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text);
+    font-family: var(--mono);
+  }
+
+  .db-card .card-label {
+    font-size: 11px;
+    color: var(--text2);
+    margin-top: 4px;
+  }
+
+  .db-section {
+    margin-bottom: 20px;
+  }
+
+  .db-section h3 {
+    font-size: 13px;
+    color: var(--text2);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+
+  .db-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    font-family: var(--mono);
+  }
+
+  .db-table th {
+    text-align: left;
+    padding: 6px 10px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    position: sticky;
+    top: 0;
+  }
+
+  .db-table td {
+    padding: 5px 10px;
+    border: 1px solid var(--border);
+    color: var(--text);
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .db-table tr:hover td {
+    background: rgba(255,255,255,0.02);
+  }
+
+  .db-query-area {
+    padding: 8px 12px;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .db-query-area .query-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .db-query-area textarea {
+    flex: 1;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-family: var(--mono);
+    resize: none;
+    min-height: 36px;
+  }
+
+  .db-query-area textarea:focus {
+    outline: none;
+    border-color: var(--accent-c);
+  }
+
   /* ── Modal ── */
   .modal-overlay {
     display: none;
@@ -549,6 +714,7 @@
   <div class="tabs" id="tabBar"></div>
   <div class="actions">
     <button class="btn" onclick="toggleSearch()" title="Suche in der Datenbank">🔍 Suche</button>
+    <button class="btn" onclick="toggleDbPanel()" title="DuckDB Explorer" style="border-color:var(--accent-c);color:var(--accent-c);">📊 Daten</button>
     <button class="btn primary" onclick="showAddSystemModal()">+ Neuer Partner</button>
     <button class="btn" onclick="showRegistryModal()">Registry</button>
   </div>
@@ -588,6 +754,28 @@
       </div>
     </div>
     <div class="search-stats" id="searchStats"></div>
+  </div>
+
+  <!-- Database Explorer Panel -->
+  <div class="db-panel" id="dbPanel">
+    <div class="db-toolbar">
+      <span class="db-title">📊 DuckDB Explorer</span>
+      <select id="dbTableSelect" onchange="loadTableData()" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;font-family:var(--font);">
+        <option value="">Tabelle wählen...</option>
+      </select>
+      <button class="btn" onclick="loadDbOverview()">Übersicht</button>
+    </div>
+    <div class="db-content" id="dbContent">
+      <div style="color:var(--text3);padding:40px;text-align:center;">
+        DuckDB Explorer — Durchsuche und analysiere E₀-Daten
+      </div>
+    </div>
+    <div class="db-query-area">
+      <div class="query-row">
+        <textarea id="dbQueryInput" placeholder="SQL Query (z.B. SELECT * FROM interactions LIMIT 10)  —  Ctrl+Enter zum Ausführen" onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){runDbQuery();event.preventDefault();}"></textarea>
+        <button class="btn" style="border-color:var(--accent-c);color:var(--accent-c);" onclick="runDbQuery()">▶ SQL</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -655,6 +843,7 @@ async function init() {
         descriptor: desc,
         transcript: [],
         colorIdx: i % COLORS.length,
+        unseenCount: 0,
       };
     });
 
@@ -698,17 +887,20 @@ function renderTabs() {
     const sys = systems[id];
     const desc = sys.descriptor;
     const tab = document.createElement('div');
-    tab.className = `tab sys-color-${sys.colorIdx}` + (id === activeTab ? ' active' : '');
+    const unseen = sys.unseenCount || 0;
+    tab.className = `tab sys-color-${sys.colorIdx}` + (unseen > 0 ? ' has-activity' : '') + (id === activeTab ? ' active' : '');
     tab.dataset.system = id;
 
     const turns = desc.turn_count || 0;
     const lastH = desc.last_metrics ? `h=${desc.last_metrics.h}` : '';
     const info = turns > 0 ? `${turns}t ${lastH}` : 'new';
+    const badge = unseen > 0 ? `<span class="activity-badge">${unseen}</span>` : '';
 
     tab.innerHTML = `
       <span class="dot"></span>
       <span class="tab-name">${esc(desc.display_name || capitalize(id))}</span>
       <span class="tab-info">${info}</span>
+      ${badge}
       <span class="tab-close" onclick="event.stopPropagation(); parkSystem('${id}')" title="Park">×</span>
     `;
     tab.onclick = () => switchTab(id);
@@ -752,13 +944,14 @@ function ensurePanelsExist(ids) {
 
 function switchTab(id) {
   activeTab = id;
+  if (systems[id]) { systems[id].unseenCount = 0; }
   searchActive = false;
+  dbPanelActive = false;
   document.getElementById('searchPanel').classList.remove('active');
+  document.getElementById('dbPanel').classList.remove('active');
 
-  // Update tab active state
-  document.querySelectorAll('.tab').forEach(t => {
-    t.classList.toggle('active', t.dataset.system === id);
-  });
+  // Re-render tabs (clears activity badge)
+  renderTabs();
 
   // Show/hide panels
   document.querySelectorAll('.system-panel').forEach(p => {
@@ -856,6 +1049,7 @@ async function addSystem() {
       descriptor: desc,
       transcript: [],
       colorIdx: idx,
+      unseenCount: 0,
     };
 
     renderTabs();
@@ -1000,6 +1194,11 @@ function addEntry(systemId, role, content, scroll = true, metrics = null) {
 
   if (systems[systemId]) {
     systems[systemId].transcript.push({ role, content, time });
+    // Track unseen activity for non-active tabs
+    if (systemId !== activeTab && (role === 'system' || role === 'assistant')) {
+      systems[systemId].unseenCount = (systems[systemId].unseenCount || 0) + 1;
+      renderTabs();
+    }
   }
 }
 
@@ -1106,6 +1305,8 @@ function toggleSearch() {
 
   if (searchActive) {
     // Hide all system panels, show search
+    dbPanelActive = false;
+    document.getElementById('dbPanel').classList.remove('active');
     document.querySelectorAll('.system-panel').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     panel.classList.add('active');
@@ -1228,6 +1429,178 @@ function toggleExpand(i) {
     const expanded = el.classList.toggle('expanded');
     el.nextElementSibling.textContent = expanded ? 'weniger' : 'mehr anzeigen';
   }
+}
+
+// ═══════════════════════════════════════
+//  DuckDB Explorer Panel
+// ═══════════════════════════════════════
+
+let dbPanelActive = false;
+
+function toggleDbPanel() {
+  dbPanelActive = !dbPanelActive;
+  const panel = document.getElementById('dbPanel');
+
+  if (dbPanelActive) {
+    searchActive = false;
+    document.getElementById('searchPanel').classList.remove('active');
+    document.querySelectorAll('.system-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    panel.classList.add('active');
+    document.getElementById('emptyState').style.display = 'none';
+    loadDbOverview();
+    loadTableList();
+  } else {
+    panel.classList.remove('active');
+    if (activeTab) switchTab(activeTab);
+    else if (Object.keys(systems).length === 0) {
+      document.getElementById('emptyState').style.display = 'flex';
+    }
+  }
+}
+
+async function loadTableList() {
+  try {
+    const resp = await fetch('/db-tables');
+    const data = await resp.json();
+    const sel = document.getElementById('dbTableSelect');
+    sel.innerHTML = '<option value="">Tabelle wählen...</option>';
+    (data.tables || []).forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.name;
+      opt.textContent = `${t.name} (${t.row_count} Zeilen, ${t.columns.length} Spalten)`;
+      sel.appendChild(opt);
+    });
+  } catch(e) { console.error('loadTableList:', e); }
+}
+
+async function loadDbOverview() {
+  const content = document.getElementById('dbContent');
+  content.innerHTML = '<div style="color:var(--text2);padding:20px;">Lade Übersicht...</div>';
+
+  try {
+    const [statsResp, tablesResp] = await Promise.all([
+      fetch('/db-stats'),
+      fetch('/db-tables')
+    ]);
+    const stats = await statsResp.json();
+    const tables = await tablesResp.json();
+
+    let html = '<div class="db-cards">';
+    html += `<div class="db-card"><div class="card-value">${stats.total_interactions}</div><div class="card-label">Interaktionen</div></div>`;
+    html += `<div class="db-card"><div class="card-value">${stats.total_systems}</div><div class="card-label">Systeme</div></div>`;
+    html += `<div class="db-card"><div class="card-value">${stats.total_topologies}</div><div class="card-label">Topologien</div></div>`;
+
+    if (stats.by_system && stats.by_system.length > 0) {
+      stats.by_system.forEach(s => {
+        html += `<div class="db-card">
+          <div class="card-value" style="font-size:16px;">${s.total_messages}</div>
+          <div class="card-label">${capitalize(s.system_id)} · h̄=${s.avg_h || '—'} · R̄=${s.avg_r || '—'}</div>
+        </div>`;
+      });
+    }
+    html += '</div>';
+
+    // Table structure
+    html += '<div class="db-section"><h3>Tabellen</h3>';
+    (tables.tables || []).forEach(t => {
+      html += `<div style="margin-bottom:12px;">`;
+      html += `<div style="font-weight:600;font-size:13px;color:var(--text);margin-bottom:4px;cursor:pointer;" onclick="loadTableData('${t.name}')">${t.name} <span style="color:var(--text2);font-weight:400;">(${t.row_count} Zeilen)</span></div>`;
+      html += `<div style="display:flex;flex-wrap:wrap;gap:4px;">`;
+      t.columns.forEach(c => {
+        html += `<span style="font-size:10px;font-family:var(--mono);background:var(--bg);padding:2px 6px;border-radius:4px;border:1px solid var(--border);color:var(--text2);">${c.name} <span style="color:var(--text3);">${c.type}</span></span>`;
+      });
+      html += `</div></div>`;
+    });
+    html += '</div>';
+
+    content.innerHTML = html;
+  } catch(e) {
+    content.innerHTML = `<div style="color:var(--accent-red);padding:20px;">Fehler: ${e.message}</div>`;
+  }
+}
+
+async function loadTableData(tableName) {
+  if (!tableName) {
+    tableName = document.getElementById('dbTableSelect').value;
+  }
+  if (!tableName) return;
+
+  document.getElementById('dbTableSelect').value = tableName;
+  const content = document.getElementById('dbContent');
+  content.innerHTML = '<div style="color:var(--text2);padding:20px;">Lade...</div>';
+
+  try {
+    const resp = await fetch('/db-query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sql: `SELECT * FROM ${tableName} ORDER BY 1 DESC LIMIT 100` })
+    });
+    const data = await resp.json();
+    if (data.error) {
+      content.innerHTML = `<div style="color:var(--accent-red);padding:20px;">Fehler: ${esc(data.error)}</div>`;
+      return;
+    }
+    renderDbTable(data, `${tableName} (letzte 100 Zeilen)`);
+  } catch(e) {
+    content.innerHTML = `<div style="color:var(--accent-red);padding:20px;">Fehler: ${e.message}</div>`;
+  }
+}
+
+async function runDbQuery() {
+  const input = document.getElementById('dbQueryInput');
+  const sql = input.value.trim();
+  if (!sql) return;
+
+  const content = document.getElementById('dbContent');
+  content.innerHTML = '<div style="color:var(--text2);padding:20px;">Ausführen...</div>';
+
+  try {
+    const resp = await fetch('/db-query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sql })
+    });
+    const data = await resp.json();
+    if (data.error) {
+      content.innerHTML = `<div style="color:var(--accent-red);padding:20px;">SQL Fehler: ${esc(data.error)}</div>`;
+      return;
+    }
+    renderDbTable(data, sql.substring(0, 80) + (sql.length > 80 ? '...' : ''));
+  } catch(e) {
+    content.innerHTML = `<div style="color:var(--accent-red);padding:20px;">Fehler: ${e.message}</div>`;
+  }
+}
+
+function renderDbTable(data, title) {
+  const content = document.getElementById('dbContent');
+
+  if (!data.columns || !data.rows) {
+    content.innerHTML = '<div style="color:var(--text2);padding:20px;">Keine Daten.</div>';
+    return;
+  }
+
+  let html = `<div style="font-size:12px;color:var(--text2);margin-bottom:8px;">
+    ${esc(title)} — ${data.rows.length} Ergebnis${data.rows.length !== 1 ? 'se' : ''}
+    ${data.truncated ? ' (gekürzt)' : ''}
+  </div>`;
+
+  html += '<div style="overflow-x:auto;"><table class="db-table"><thead><tr>';
+  data.columns.forEach(c => { html += `<th>${esc(c)}</th>`; });
+  html += '</tr></thead><tbody>';
+
+  data.rows.forEach(row => {
+    html += '<tr>';
+    row.forEach(val => {
+      const sv = val === null ? '∅' : String(val);
+      const display = sv.length > 120 ? sv.substring(0, 117) + '...' : sv;
+      html += `<td title="${esc(sv)}">${esc(display)}</td>`;
+    });
+    html += '</tr>';
+  });
+
+  html += '</tbody></table></div>';
+  content.innerHTML = html;
 }
 
 // ── Start ──

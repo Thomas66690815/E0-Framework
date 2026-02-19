@@ -362,6 +362,58 @@ class E0Database:
         return result
 
     # ─────────────────────────────────────────
+    #  Query: raw SQL (read-only)
+    # ─────────────────────────────────────────
+
+    def query(self, sql: str, limit: int = 200) -> Dict:
+        """Execute a read-only SQL query and return columns + rows."""
+        stripped = sql.strip().upper()
+        allowed = ('SELECT', 'WITH', 'EXPLAIN', 'DESCRIBE', 'SHOW')
+        if not any(stripped.startswith(kw) for kw in allowed):
+            return {"error": "Nur SELECT/WITH/EXPLAIN/DESCRIBE/SHOW erlaubt."}
+
+        try:
+            result = self.con.execute(sql)
+            columns = [desc[0] for desc in result.description]
+            rows = result.fetchmany(limit)
+            clean_rows = []
+            for row in rows:
+                clean_row = []
+                for val in row:
+                    if isinstance(val, datetime):
+                        clean_row.append(val.isoformat())
+                    elif isinstance(val, (int, float, str, bool)) or val is None:
+                        clean_row.append(val)
+                    else:
+                        clean_row.append(str(val))
+                clean_rows.append(clean_row)
+            truncated = len(rows) >= limit
+            return {"columns": columns, "rows": clean_rows, "truncated": truncated}
+        except Exception as e:
+            return {"error": str(e)}
+
+    # ─────────────────────────────────────────
+    #  Query: table metadata
+    # ─────────────────────────────────────────
+
+    def tables(self) -> List[Dict]:
+        """List all tables with columns and row counts."""
+        result = []
+        table_rows = self.con.execute("SHOW TABLES").fetchall()
+        for (table_name,) in table_rows:
+            cols = self.con.execute(f"DESCRIBE {table_name}").fetchall()
+            columns = [{"name": c[0], "type": c[1]} for c in cols]
+            count = self.con.execute(
+                f"SELECT COUNT(*) FROM {table_name}"
+            ).fetchone()[0]
+            result.append({
+                "name": table_name,
+                "columns": columns,
+                "row_count": count,
+            })
+        return result
+
+    # ─────────────────────────────────────────
     #  Export: markdown
     # ─────────────────────────────────────────
 
