@@ -500,6 +500,54 @@
     border-color: var(--accent-c);
   }
 
+  /* ── Inject Button ── */
+  .btn-inject {
+    background: rgba(240,136,62,0.1);
+    color: var(--accent-d);
+    border: 1px solid var(--accent-d);
+    padding: 2px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 11px;
+    font-family: var(--font);
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .btn-inject:hover { background: rgba(240,136,62,0.25); }
+  .btn-inject:disabled { opacity: 0.3; cursor: default; }
+
+  .inject-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    flex-shrink: 0;
+  }
+
+  .inject-bar .inject-target {
+    font-size: 11px;
+    color: var(--text2);
+  }
+
+  .inject-bar .inject-target b {
+    color: var(--accent-d);
+  }
+
+  .inject-preview {
+    background: var(--bg);
+    border: 1px solid var(--accent-d);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--text2);
+    max-height: 120px;
+    overflow-y: auto;
+    margin: 4px 0 8px 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
   /* ── Modal ── */
   .modal-overlay {
     display: none;
@@ -774,6 +822,11 @@
       <div class="query-row">
         <textarea id="dbQueryInput" placeholder="SQL Query (z.B. SELECT * FROM interactions LIMIT 10)  —  Ctrl+Enter zum Ausführen" onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){runDbQuery();event.preventDefault();}"></textarea>
         <button class="btn" style="border-color:var(--accent-c);color:var(--accent-c);" onclick="runDbQuery()">▶ SQL</button>
+      </div>
+      <div class="inject-bar" id="dbInjectBar">
+        <span class="inject-target" id="dbInjectTarget"></span>
+        <button class="btn-inject" id="dbInjectBtn" onclick="injectDbResults()" disabled>→ Ergebnis injizieren</button>
+        <button class="btn-inject" onclick="injectDbResultsDirect()" id="dbInjectDirectBtn" disabled style="border-color:var(--accent-b);color:var(--accent-b);background:rgba(126,231,135,0.1);">⚡ Direkt senden</button>
       </div>
     </div>
   </div>
@@ -1380,13 +1433,16 @@ async function runSearch() {
 
 function renderSearchResults(data, query) {
   const container = document.getElementById('searchResults');
+  lastSearchResults = data; // store for injection
 
   if (data.count === 0) {
     container.innerHTML = `<div class="result-count">Keine Ergebnisse für "${esc(query || '(alle)')}"</div>`;
     return;
   }
 
-  let html = `<div class="result-count">${data.count} Ergebnis${data.count !== 1 ? 'se' : ''} für "${esc(query || '(alle)')}"</div>`;
+  let html = `<div class="result-count">${data.count} Ergebnis${data.count !== 1 ? 'se' : ''} für "${esc(query || '(alle)')}"
+    ${activeTab ? `<button class="btn-inject" onclick="injectSearchResults()" style="margin-left:12px;">→ Alle an ${capitalize(activeTab)} injizieren</button>` : ''}
+  </div>`;
 
   data.results.forEach((r, i) => {
     const roleClass = r.role === 'system' ? 'role-system' : r.role === 'thomas' ? 'role-thomas' : '';
@@ -1416,7 +1472,10 @@ function renderSearchResults(data, query) {
           ${tauStr ? `<span>${tauStr}</span>` : ''}
         </div>
         <div class="result-content" id="rc-${i}">${displayContent}</div>
-        <div class="result-expand" onclick="toggleExpand(${i})">mehr anzeigen</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="result-expand" onclick="toggleExpand(${i})">mehr anzeigen</div>
+          ${activeTab ? `<button class="btn-inject" onclick="injectSingleResult(${i})" style="font-size:10px;padding:1px 6px;">→ ${capitalize(activeTab)}</button>` : ''}
+        </div>
       </div>`;
   });
 
@@ -1574,6 +1633,8 @@ async function runDbQuery() {
 
 function renderDbTable(data, title) {
   const content = document.getElementById('dbContent');
+  lastDbResults = data; // store for injection
+  updateInjectBar();
 
   if (!data.columns || !data.rows) {
     content.innerHTML = '<div style="color:var(--text2);padding:20px;">Keine Daten.</div>';
@@ -1601,6 +1662,176 @@ function renderDbTable(data, title) {
 
   html += '</tbody></table></div>';
   content.innerHTML = html;
+}
+
+// ═══════════════════════════════════════
+//  Data Injection — DuckDB → System
+// ═══════════════════════════════════════
+
+let lastDbResults = null;
+let lastSearchResults = null;
+
+function updateInjectBar() {
+  const target = document.getElementById('dbInjectTarget');
+  const btn = document.getElementById('dbInjectBtn');
+  const btnDirect = document.getElementById('dbInjectDirectBtn');
+  if (!target || !btn) return;
+
+  const hasData = lastDbResults && lastDbResults.rows && lastDbResults.rows.length > 0;
+  const hasTarget = !!activeTab;
+
+  if (hasTarget && hasData) {
+    target.innerHTML = `Ziel: <b>${capitalize(activeTab)}</b> · ${lastDbResults.rows.length} Zeilen`;
+    btn.disabled = false;
+    btnDirect.disabled = false;
+  } else if (!hasTarget) {
+    target.innerHTML = `<span style="color:var(--text3);">Kein System aktiv — erst Tab wählen</span>`;
+    btn.disabled = true;
+    btnDirect.disabled = true;
+  } else {
+    target.innerHTML = `<span style="color:var(--text3);">Erst eine Query ausführen</span>`;
+    btn.disabled = true;
+    btnDirect.disabled = true;
+  }
+}
+
+function formatDbResultsAsText(data, maxRows) {
+  if (!data || !data.columns || !data.rows) return '';
+  const cols = data.columns;
+  const rows = data.rows.slice(0, maxRows || 50);
+
+  let lines = [];
+  lines.push('── DuckDB-Daten ──');
+
+  // For small result sets, use detailed format
+  if (rows.length <= 10 && cols.length <= 8) {
+    rows.forEach((row, i) => {
+      lines.push(`[${i+1}]`);
+      row.forEach((val, j) => {
+        const sv = val === null ? '∅' : String(val);
+        // Truncate very long content
+        const display = sv.length > 500 ? sv.substring(0, 500) + '…' : sv;
+        lines.push(`  ${cols[j]}: ${display}`);
+      });
+      lines.push('');
+    });
+  } else {
+    // Table format for larger sets
+    lines.push(cols.join(' | '));
+    lines.push(cols.map(() => '---').join(' | '));
+    rows.forEach(row => {
+      lines.push(row.map(v => {
+        const sv = v === null ? '∅' : String(v);
+        return sv.length > 100 ? sv.substring(0, 97) + '…' : sv;
+      }).join(' | '));
+    });
+  }
+
+  return lines.join('\n');
+}
+
+function formatSearchResultAsText(result) {
+  let lines = [];
+  const ts = result.ts ? result.ts.substring(0, 19) : '?';
+  const h = result.h != null ? `h=${result.h.toFixed(4)}` : '';
+  const r = result.r != null ? `R=${result.r.toFixed(2)}` : '';
+  lines.push(`── Aus dem Netzwerk-Archiv ──`);
+  lines.push(`System: ${result.system_id} · Rolle: ${result.role} · ${ts}`);
+  if (h || r) lines.push(`Metriken: ${[h, r].filter(Boolean).join('  ')}`);
+  lines.push('');
+  lines.push(result.content || '');
+  return lines.join('\n');
+}
+
+function formatAllSearchResultsAsText(data) {
+  if (!data || !data.results || data.results.length === 0) return '';
+  let lines = [`── ${data.count} Einträge aus dem Netzwerk-Archiv ──`, ''];
+  data.results.forEach((r, i) => {
+    const ts = r.ts ? r.ts.substring(0, 19) : '?';
+    const h = r.h != null ? `h=${r.h.toFixed(4)}` : '';
+    const rr = r.r != null ? `R=${r.r.toFixed(2)}` : '';
+    lines.push(`[${i+1}] ${r.system_id}/${r.role} ${ts} ${[h, rr].filter(Boolean).join(' ')}`);
+    const content = (r.content || '').substring(0, 300);
+    lines.push(`    ${content}${r.content && r.content.length > 300 ? '…' : ''}`);
+    lines.push('');
+  });
+  return lines.join('\n');
+}
+
+// Inject into textarea (user reviews before sending)
+function injectDbResults() {
+  if (!activeTab || !lastDbResults) return;
+  const text = formatDbResultsAsText(lastDbResults);
+  injectIntoInput(activeTab, text);
+}
+
+// Inject and send directly
+async function injectDbResultsDirect() {
+  if (!activeTab || !lastDbResults) return;
+  const text = formatDbResultsAsText(lastDbResults);
+
+  // Switch to system tab and send
+  switchTab(activeTab);
+  addEntry(activeTab, 'thomas', text);
+  setLoading(activeTab, true);
+
+  try {
+    const resp = await fetch('/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ system: activeTab, prompt: text }),
+    });
+    const data = await resp.json();
+    if (data.error) {
+      addEntry(activeTab, 'event', 'Fehler: ' + data.error);
+    } else {
+      addEntry(activeTab, 'system', data.response, true, data.metrics);
+    }
+  } catch (e) {
+    addEntry(activeTab, 'event', 'Netzwerkfehler: ' + e.message);
+  }
+  setLoading(activeTab, false);
+}
+
+function injectSingleResult(index) {
+  if (!activeTab || !lastSearchResults || !lastSearchResults.results) return;
+  const result = lastSearchResults.results[index];
+  if (!result) return;
+  const text = formatSearchResultAsText(result);
+  injectIntoInput(activeTab, text);
+  // Flash confirmation
+  document.getElementById('headerStatus').textContent = `→ ${capitalize(activeTab)} injiziert`;
+  setTimeout(() => document.getElementById('headerStatus').textContent = '', 2000);
+}
+
+function injectSearchResults() {
+  if (!activeTab || !lastSearchResults) return;
+  const text = formatAllSearchResultsAsText(lastSearchResults);
+  injectIntoInput(activeTab, text);
+  document.getElementById('headerStatus').textContent = `→ ${lastSearchResults.count} Einträge an ${capitalize(activeTab)}`;
+  setTimeout(() => document.getElementById('headerStatus').textContent = '', 2000);
+}
+
+function injectIntoInput(systemId, text) {
+  // Switch to the system tab
+  switchTab(systemId);
+
+  // Put into textarea
+  const input = document.getElementById('input-' + systemId);
+  if (input) {
+    // If there's already text, add separator
+    if (input.value.trim()) {
+      input.value += '\n\n' + text;
+    } else {
+      input.value = text;
+    }
+    input.focus();
+    // Scroll textarea to top so user sees the injected data
+    input.scrollTop = 0;
+    // Auto-expand textarea for visibility
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 300) + 'px';
+  }
 }
 
 // ── Start ──
