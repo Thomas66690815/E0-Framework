@@ -1156,6 +1156,7 @@ async function sendPrompt(systemId) {
   }
 
   setLoading(systemId, false);
+  autoSave();
 }
 
 function handleKey(e, systemId) {
@@ -1377,6 +1378,27 @@ function setLoading(systemId, active) {
 }
 
 // ── Session ──
+let autoSaveTimer = null;
+let autoSaveCounter = 0;
+
+function autoSave() {
+  // Debounce: wait 3 seconds after last interaction, then save
+  if (autoSaveTimer) clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(async () => {
+    try {
+      await fetch('/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      autoSaveCounter++;
+      document.getElementById('headerStatus').textContent = `Auto-Save #${autoSaveCounter}`;
+      setTimeout(() => {
+        if (document.getElementById('headerStatus').textContent.startsWith('Auto-Save'))
+          document.getElementById('headerStatus').textContent = '';
+      }, 2000);
+    } catch (e) {
+      console.warn('Auto-save failed:', e);
+    }
+  }, 3000);
+}
+
 async function saveSession() {
   try {
     const resp = await fetch('/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
@@ -1830,30 +1852,35 @@ function formatDbResultsAsText(data, maxRows) {
   if (!data || !data.columns || !data.rows) return '';
   const cols = data.columns;
   const rows = data.rows.slice(0, maxRows || 50);
+  // Content column limit: unlimited for ≤5 rows, generous for more
+  const hasContentCol = cols.some(c => c.toLowerCase() === 'content');
 
   let lines = [];
   lines.push('── DuckDB-Daten ──');
 
-  // For small result sets, use detailed format
+  // For small result sets, use detailed format (full content)
   if (rows.length <= 10 && cols.length <= 8) {
     rows.forEach((row, i) => {
       lines.push(`[${i+1}]`);
       row.forEach((val, j) => {
         const sv = val === null ? '∅' : String(val);
-        // Truncate very long content
-        const display = sv.length > 500 ? sv.substring(0, 500) + '…' : sv;
+        // Full content for ≤5 rows, 2000 chars for 6-10 rows
+        const limit = rows.length <= 5 ? 0 : 2000;
+        const display = (limit > 0 && sv.length > limit) ? sv.substring(0, limit) + '…' : sv;
         lines.push(`  ${cols[j]}: ${display}`);
       });
       lines.push('');
     });
   } else {
-    // Table format for larger sets
+    // Table format for larger sets — content gets 500 chars, others 100
     lines.push(cols.join(' | '));
     lines.push(cols.map(() => '---').join(' | '));
     rows.forEach(row => {
-      lines.push(row.map(v => {
+      lines.push(row.map((v, j) => {
         const sv = v === null ? '∅' : String(v);
-        return sv.length > 100 ? sv.substring(0, 97) + '…' : sv;
+        const isContent = cols[j].toLowerCase() === 'content';
+        const limit = isContent ? 500 : 100;
+        return sv.length > limit ? sv.substring(0, limit - 3) + '…' : sv;
       }).join(' | '));
     });
   }
@@ -1882,8 +1909,12 @@ function formatAllSearchResultsAsText(data) {
     const h = r.h != null ? `h=${r.h.toFixed(4)}` : '';
     const rr = r.r != null ? `R=${r.r.toFixed(2)}` : '';
     lines.push(`[${i+1}] ${r.system_id}/${r.role} ${ts} ${[h, rr].filter(Boolean).join(' ')}`);
-    const content = (r.content || '').substring(0, 300);
-    lines.push(`    ${content}${r.content && r.content.length > 300 ? '…' : ''}`);
+    // Full content for ≤5 results, 1000 chars for more
+    const limit = data.results.length <= 5 ? 0 : 1000;
+    const content = (limit > 0 && r.content && r.content.length > limit)
+      ? r.content.substring(0, limit) + '…'
+      : (r.content || '');
+    lines.push(`    ${content}`);
     lines.push('');
   });
   return lines.join('\n');
@@ -2135,6 +2166,7 @@ async function sendQueryResultToSystem(systemId, text) {
   queryProcessingActive = false;
   showInterrupt(false);
   activeQueryAbort = null;
+  autoSave();
 }
 
 function copyQueryToTextarea(systemId, sql) {
