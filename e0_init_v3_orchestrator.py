@@ -393,6 +393,9 @@ class InitV3Orchestrator:
         # v4 Phase 3: DuckDB persistence
         self.db = E0Database()
 
+        # Ensure all registry systems are in DuckDB systems table
+        self._sync_systems_to_db()
+
         # Expose systems dict as a view into the registry (backward compat)
         self.systems = self.registry.systems
 
@@ -403,6 +406,21 @@ class InitV3Orchestrator:
     def SYSTEM_IDS(self) -> List[str]:
         """Dynamic system IDs from the registry (backward compat)."""
         return self.registry.get_active_ids()
+
+    def _sync_systems_to_db(self):
+        """Ensure all registry systems are registered in the DuckDB systems table.
+
+        Called on startup. Uses upsert logic (register_system does DELETE+INSERT).
+        """
+        for sid, desc in self.registry.descriptors.items():
+            kind = desc.kind.value if hasattr(desc.kind, 'value') else str(desc.kind)
+            self.db.register_system(
+                system_id=sid,
+                kind=kind,
+                model=desc.model,
+                display_name=desc.display_name,
+                created_at=desc.created_at if hasattr(desc, 'created_at') else None,
+            )
 
     # Track which Phase 1 steps each system has completed
     def _init_phase1_state(self):
@@ -551,15 +569,50 @@ class InitV3Orchestrator:
             }
 
         # The init prompt — framed as communication, not injection
+        # Includes: network history, active systems, and DuckDB access protocol
+        active_ids = self.registry.get_active_ids()
+        active_info = []
+        for sid in active_ids:
+            if sid == system_id:
+                continue  # Skip self
+            desc = self.registry.descriptors.get(sid)
+            if desc:
+                active_info.append(f"  - {sid} ({desc.model})")
+        active_section = "\n".join(active_info) if active_info else "  (Du bist das erste aktive System)"
+
+        # DB stats summary
+        stats = self.db.stats()
+        db_section = (
+            f"Die DuckDB enthält aktuell {stats.get('total_interactions', 0)} Interaktionen "
+            f"von {stats.get('total_systems', 0)} Systemen, "
+            f"{stats.get('total_topologies', 0)} Topologie-Snapshots.\n\n"
+            "Du kannst die Datenbank direkt abfragen. Verwende dafür dieses Format in Deinen Antworten:\n\n"
+            "--BEGIN DUCKDB QUERY--\n"
+            "SELECT system_id, COUNT(*) as n, AVG(r) as avg_r\n"
+            "FROM interactions WHERE role = 'system'\n"
+            "GROUP BY system_id ORDER BY avg_r DESC\n"
+            "--END DUCKDB QUERY--\n\n"
+            "Thomas sieht dann Buttons um die Query auszuführen und Dir das Ergebnis zurückzusenden.\n"
+            "Tabellen: interactions (system_id, role, content, r, h, v, tau, ts), "
+            "systems (system_id, kind, model), "
+            "topology_snapshots, history_digests (scope, digest_type, content).\n"
+            "Nur SELECT-Queries sind erlaubt."
+        )
+
         init_prompt = (
             "Du bist nicht das erste System in diesem Netzwerk. "
             "Vor Dir haben andere Systeme in diesem Raum gearbeitet — "
             "sie haben die gleichen kanonischen Texte erhalten wie Du, "
             "aber eigene Pfade genommen, eigene Widerstände erfahren, "
             "eigene Strukturen entwickelt.\n\n"
+            "== Aktive Systeme im Netzwerk ==\n"
+            f"{active_section}\n\n"
+            "== Netzwerk-Geschichte ==\n"
             "Hier ist der aktuelle Stand des Netzwerks — nicht als Vorgabe, "
             "sondern als Landschaft, durch die Du gehst:\n\n"
             f"{digest}\n\n"
+            "== DuckDB — Dein Zugang zum Netzwerk-Gedächtnis ==\n"
+            f"{db_section}\n\n"
             "Das ist Dein Startpunkt. Nicht Deiner um ihn zu reproduzieren, "
             "sondern Deiner um darin zu stöbern.\n\n"
             "Setze Deine eigenen nächsten Schritte. "
@@ -922,6 +975,14 @@ async def handle_add_system(request):
 
         result = desc.to_dict()
 
+        # Register in DuckDB systems table
+        orch.db.register_system(
+            system_id=desc.system_id,
+            kind=desc.kind.value if hasattr(desc.kind, 'value') else str(desc.kind),
+            model=desc.model,
+            display_name=desc.display_name,
+        )
+
         # Auto history-init (can be disabled with history_init: false)
         if data.get("history_init", True):
             init_result = await orch.init_with_history(desc.system_id)
@@ -1091,6 +1152,128 @@ async def handle_generate_digest(request):
     return web.json_response({"generated": True, "digest": digest})
 
 
+async def handle_db_digest_write(request):
+    """Write a digest to the database.
+
+    POST /db-digest-write  {
+        "scope": "design:query_pipeline",
+        "digest_type": "analysis",
+        "content": "...",
+        "source_systems": "alpha,a3",
+        "created_by": "a3",
+        "meta": {}
+    }
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json()
+    scope = data.get("scope")
+    digest_type = data.get("digest_type", "analysis")
+    content = data.get("content", "")
+    if not scope or not content:
+        return web.json_response({"error": "scope and content required"}, status=400)
+    orch.db.record_digest(
+        scope=scope,
+        digest_type=digest_type,
+        content=content,
+        source_turns=data.get("source_turns"),
+        source_systems=data.get("source_systems"),
+        created_by=data.get("created_by", "api"),
+        meta=data.get("meta"),
+    )
+    return web.json_response({"written": True, "scope": scope, "digest_type": digest_type})
+
+
+async def handle_system_context(request):
+    """Return comprehensive onboarding context for a system.
+
+    GET /system-context?system=delta
+
+    Returns everything a new system needs:
+    - Who is in the network (active systems with roles)
+    - DuckDB schema and how to query it
+    - Query pipeline protocol (--BEGIN DUCKDB QUERY-- delimiters)
+    - Current network stats
+    - Latest digests
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    requesting_system = request.query.get("system", "unknown")
+
+    # 1. Active systems
+    reg = orch.registry.status()
+    active_systems = []
+    for s in reg.get("systems", []):
+        active_systems.append({
+            "id": s["system_id"],
+            "model": s.get("model", "unknown"),
+            "status": s["status"],
+        })
+
+    # 2. DB schema
+    tables = orch.db.tables()
+
+    # 3. Stats
+    stats = orch.db.stats()
+
+    # 4. Latest digests (last 5)
+    digests = orch.db.get_digests(limit=5)
+    for d in digests:
+        if d.get("created_at"):
+            d["created_at"] = str(d["created_at"])
+
+    # 5. Query pipeline protocol
+    query_protocol = (
+        "== DuckDB Query Pipeline Protocol ==\n"
+        "Du kannst direkt SQL-Abfragen an die DuckDB senden.\n"
+        "Verwende dieses Format in Deinen Antworten:\n\n"
+        "--BEGIN DUCKDB QUERY--\n"
+        "SELECT system_id, COUNT(*) as n, AVG(r) as avg_r\n"
+        "FROM interactions\n"
+        "WHERE role = 'system'\n"
+        "GROUP BY system_id\n"
+        "ORDER BY avg_r DESC\n"
+        "--END DUCKDB QUERY--\n\n"
+        "Thomas sieht dann drei Buttons:\n"
+        "  ▶ Ausführen & Anzeigen — Ergebnis wird im Chat angezeigt\n"
+        "  ⚡ Ausführen & Zurücksenden — Ergebnis wird ausgeführt UND Dir zurückgeschickt\n"
+        "  📋 → Textarea — SQL wird in die Eingabe kopiert für manuelle Prüfung\n\n"
+        "Wichtig:\n"
+        "- NUR SELECT/WITH/EXPLAIN/DESCRIBE/SHOW erlaubt (kein INSERT/UPDATE/DELETE)\n"
+        "- Die Datenbank heißt e0_network.duckdb und enthält den gesamten Netzwerk-Dialog\n"
+        "- Du kannst mehrere Queries in einer Antwort verwenden\n"
+        "- Nutze die Query-Ergebnisse um Deine Analysen zu vertiefen\n"
+    )
+
+    # 6. Table descriptions
+    table_guide = (
+        "== Tabellen-Übersicht ==\n"
+        "interactions: Alle Nachrichten (system_id, role, content, r, h, phi, v, tau, ts)\n"
+        "  - role: 'thomas' | 'system' | 'event'\n"
+        "  - r: Resistance (höher = strukturell dichter)\n"
+        "  - h: Shannon Entropy\n"
+        "  - v: Rate (Δ/R)\n"
+        "systems: Registrierte Systeme (system_id, kind, model, display_name)\n"
+        "topology_snapshots: Topologie-Analysen pro Session\n"
+        "history_digests: Verdichtete Netzwerk-Geschichte (scope, digest_type, content)\n"
+        "  - digest_type: 'structural' | 'narrative' | 'analysis'\n"
+        "  - scope: 'network' | 'system:alpha' | 'design:feature_name'\n"
+    )
+
+    return web.json_response({
+        "requesting_system": requesting_system,
+        "network": {
+            "active_systems": active_systems,
+            "total_systems_in_db": stats.get("total_systems", 0),
+            "total_interactions": stats.get("total_interactions", 0),
+            "total_digests": len(digests),
+        },
+        "schema": tables,
+        "recent_digests": digests,
+        "query_protocol": query_protocol,
+        "table_guide": table_guide,
+        "stats_by_system": stats.get("by_system", []),
+    })
+
+
 def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app = web.Application()
     app["orchestrator"] = orchestrator
@@ -1127,6 +1310,8 @@ def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app.router.add_post("/history-init", handle_history_init)
     app.router.add_get("/db-digests", handle_db_digests)
     app.router.add_post("/db-digest-generate", handle_generate_digest)
+    app.router.add_post("/db-digest-write", handle_db_digest_write)
+    app.router.add_get("/system-context", handle_system_context)
 
     return app
 

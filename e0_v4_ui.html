@@ -1990,6 +1990,7 @@ const QUERY_END = '--END DUCKDB QUERY--';
 let queryBlockCounter = 0;
 let activeQueryAbort = null; // AbortController for interrupt
 let queryProcessingActive = false;
+const queryBlockStore = {}; // blockId → { sql, systemId }
 
 function renderWithQueryBlocks(systemId, content) {
   // Split content around query blocks
@@ -2031,22 +2032,37 @@ function renderWithQueryBlocks(systemId, content) {
   }
   if (remaining) parts.push({ type: 'text', value: remaining });
 
-  // Build HTML
+  // Build HTML — store SQL in JS object, reference by blockId (avoids HTML attribute escaping issues)
   return parts.map(p => {
     if (p.type === 'text') return esc(p.value);
+    queryBlockStore[p.blockId] = { sql: p.sql, systemId: p.systemId };
     return `
       <div class="query-block" id="${p.blockId}">
         <div class="query-block-label">📊 DuckDB Query</div>
         <div class="query-block-sql">${esc(p.sql)}</div>
         ${p.purpose ? `<div class="query-block-purpose">Purpose: ${esc(p.purpose)}</div>` : ''}
         <div class="query-block-actions">
-          <button class="btn-inject" onclick="executeQueryBlock('${p.blockId}', '${p.systemId}', ${JSON.stringify(JSON.stringify(p.sql))}, false)">▶ Ausführen & Anzeigen</button>
-          <button class="btn-inject" onclick="executeQueryBlock('${p.blockId}', '${p.systemId}', ${JSON.stringify(JSON.stringify(p.sql))}, true)" style="border-color:var(--accent-b);color:var(--accent-b);background:rgba(126,231,135,0.1);">⚡ Ausführen & Zurücksenden</button>
-          <button class="btn-inject" onclick="copyQueryToTextarea('${p.systemId}', ${JSON.stringify(JSON.stringify(p.sql))})" style="border-color:var(--accent-a);color:var(--accent-a);">📋 → Textarea</button>
+          <button class="btn-inject" onclick="runQueryBlock('${p.blockId}', false)">▶ Ausführen & Anzeigen</button>
+          <button class="btn-inject" onclick="runQueryBlock('${p.blockId}', true)" style="border-color:var(--accent-b);color:var(--accent-b);background:rgba(126,231,135,0.1);">⚡ Ausführen & Zurücksenden</button>
+          <button class="btn-inject" onclick="copyQueryFromBlock('${p.blockId}')" style="border-color:var(--accent-a);color:var(--accent-a);">📋 → Textarea</button>
         </div>
         <div id="${p.blockId}-result"></div>
       </div>`;
   }).join('');
+}
+
+// Wrapper: lookup SQL from store, call executeQueryBlock
+function runQueryBlock(blockId, sendBack) {
+  const entry = queryBlockStore[blockId];
+  if (!entry) { console.error('Unknown query block:', blockId); return; }
+  executeQueryBlock(blockId, entry.systemId, entry.sql, sendBack);
+}
+
+// Wrapper: lookup SQL from store, copy to textarea
+function copyQueryFromBlock(blockId) {
+  const entry = queryBlockStore[blockId];
+  if (!entry) { console.error('Unknown query block:', blockId); return; }
+  copyQueryToTextarea(entry.systemId, entry.sql);
 }
 
 async function executeQueryBlock(blockId, systemId, sql, sendBack) {
