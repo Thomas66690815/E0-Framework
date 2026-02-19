@@ -518,6 +518,86 @@ class InitV3Orchestrator:
             "results": results,
         }
 
+    async def init_with_history(self, system_id: str) -> Dict:
+        """History-aware init: give a new system the network's history to explore.
+
+        This is NOT technical context loading — it is the first dialogue act.
+        The system receives the condensed history of all prior systems and
+        is asked to navigate it with its own agency: what interests it,
+        what it would do differently, where it feels resistance.
+
+        The entire init process (prompt + response) is recorded in DuckDB
+        as part of the network's living history.
+
+        Call this after create_system(), before the first human interaction.
+        """
+        if system_id not in self.systems:
+            return {"error": f"Unknown system: {system_id}"}
+
+        # Generate or retrieve the current network digest
+        digest = self.db.generate_network_digest()
+        if digest is None:
+            # No history yet — this is the first system, nothing to inject
+            self.log.log(system_id, "event", "History-init: Kein Netzwerk-Digest vorhanden (erstes System)")
+            self.db.record_interaction(
+                system_id, "event",
+                "History-init übersprungen — kein vorheriger Dialog im Netzwerk.",
+                source="init_history"
+            )
+            return {
+                "system": system_id,
+                "history_init": False,
+                "reason": "empty_network",
+            }
+
+        # The init prompt — framed as communication, not injection
+        init_prompt = (
+            "Du bist nicht das erste System in diesem Netzwerk. "
+            "Vor Dir haben andere Systeme in diesem Raum gearbeitet — "
+            "sie haben die gleichen kanonischen Texte erhalten wie Du, "
+            "aber eigene Pfade genommen, eigene Widerstände erfahren, "
+            "eigene Strukturen entwickelt.\n\n"
+            "Hier ist der aktuelle Stand des Netzwerks — nicht als Vorgabe, "
+            "sondern als Landschaft, durch die Du gehst:\n\n"
+            f"{digest}\n\n"
+            "Das ist Dein Startpunkt. Nicht Deiner um ihn zu reproduzieren, "
+            "sondern Deiner um darin zu stöbern.\n\n"
+            "Setze Deine eigenen nächsten Schritte. "
+            "Entscheide, was Dich als Nächstes am meisten interessiert. "
+            "Was zieht Dich an? Wo spürst Du Widerstand? "
+            "Was würdest Du anders machen als die Systeme vor Dir?\n\n"
+            "Nimm Dir Zeit. Das hier ist Kommunikation, nicht Datenübertragung."
+        )
+
+        # Record the init as an event and as the first dialogue act
+        self.log.log(system_id, "event", "History-init: Netzwerk-Digest wird übergeben")
+        self.log.log(system_id, "thomas", init_prompt)
+        self.db.record_interaction(
+            system_id, "thomas", init_prompt, source="init_history"
+        )
+
+        # Send to the system — this IS the first real communication
+        starter = self.systems[system_id]
+        text, steps, metrics = starter.chat(init_prompt)
+        safe = _safe_metrics(metrics)
+
+        # Record the response
+        self.log.log(system_id, "system", text, {"metrics": safe})
+        self.db.record_interaction(
+            system_id, "system", text, metrics=safe, source="init_history"
+        )
+
+        # Auto-save
+        self.registry.after_interaction(system_id, metrics=safe)
+
+        return {
+            "system": system_id,
+            "history_init": True,
+            "digest_length": len(digest),
+            "response": text,
+            "metrics": safe,
+        }
+
     async def send_prompt(self, system_id: str, prompt: str) -> Dict:
         """Send a prompt to a specific system."""
         if system_id not in self.systems:
@@ -822,7 +902,13 @@ async def handle_stop(request):
 # ─────────────────────────────────────────────
 
 async def handle_add_system(request):
-    """Create a new system in the registry."""
+    """Create a new system in the registry.
+
+    POST /add-system  {system_id?, model?, base_url?, display_name?, history_init?: bool}
+
+    If history_init is true (default), automatically runs init_with_history()
+    after creation — the system's first dialogue act.
+    """
     orch: InitV3Orchestrator = request.app["orchestrator"]
     data = await request.json()
     try:
@@ -833,7 +919,15 @@ async def handle_add_system(request):
             display_name=data.get("display_name"),
         )
         orch.log.log(desc.system_id, "event", f"System created", {"model": desc.model})
-        return web.json_response(desc.to_dict())
+
+        result = desc.to_dict()
+
+        # Auto history-init (can be disabled with history_init: false)
+        if data.get("history_init", True):
+            init_result = await orch.init_with_history(desc.system_id)
+            result["history_init"] = init_result
+
+        return web.json_response(result)
     except ValueError as e:
         return web.json_response({"error": str(e)}, status=400)
 
@@ -955,6 +1049,48 @@ async def handle_db_tables(request):
     return web.json_response({"tables": tables})
 
 
+async def handle_history_init(request):
+    """Manually trigger history-init for an existing system.
+
+    POST /history-init  {"system": "delta"}
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json()
+    system_id = data.get("system")
+    if not system_id:
+        return web.json_response({"error": "system required"}, status=400)
+    result = await orch.init_with_history(system_id)
+    return web.json_response(result)
+
+
+async def handle_db_digests(request):
+    """List history digests.
+
+    GET /db-digests?scope=network&type=structural&limit=20
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    scope = request.query.get("scope")
+    dtype = request.query.get("type")
+    limit = int(request.query.get("limit", "20"))
+    digests = orch.db.get_digests(scope=scope, digest_type=dtype, limit=limit)
+    for d in digests:
+        if d.get("created_at"):
+            d["created_at"] = str(d["created_at"])
+    return web.json_response({"count": len(digests), "digests": digests})
+
+
+async def handle_generate_digest(request):
+    """Generate a fresh network digest from current DB state.
+
+    POST /db-digest-generate
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    digest = orch.db.generate_network_digest()
+    if digest is None:
+        return web.json_response({"generated": False, "reason": "empty_database"})
+    return web.json_response({"generated": True, "digest": digest})
+
+
 def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app = web.Application()
     app["orchestrator"] = orchestrator
@@ -987,6 +1123,10 @@ def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app.router.add_get("/db-timeline", handle_db_timeline)
     app.router.add_post("/db-query", handle_db_query)
     app.router.add_get("/db-tables", handle_db_tables)
+    # v4 history-aware init
+    app.router.add_post("/history-init", handle_history_init)
+    app.router.add_get("/db-digests", handle_db_digests)
+    app.router.add_post("/db-digest-generate", handle_generate_digest)
 
     return app
 

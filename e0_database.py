@@ -117,6 +117,20 @@ CREATE TABLE IF NOT EXISTS topology_snapshots (
     phase_transitions  VARCHAR,
     classification     VARCHAR
 );
+
+-- History digests — condensed network history for new system init
+CREATE SEQUENCE IF NOT EXISTS digest_seq START 1;
+CREATE TABLE IF NOT EXISTS history_digests (
+    id              INTEGER DEFAULT nextval('digest_seq') PRIMARY KEY,
+    created_at      TIMESTAMP NOT NULL,
+    scope           VARCHAR NOT NULL,     -- 'network' | 'system:alpha' | 'epoch:2026-02'
+    digest_type     VARCHAR NOT NULL,     -- 'structural' | 'narrative' | 'topological'
+    content         TEXT NOT NULL,
+    source_turns    INTEGER,              -- how many turns were condensed
+    source_systems  VARCHAR,              -- which systems contributed (CSV)
+    created_by      VARCHAR,              -- 'auto' | 'thomas' | system_id that generated it
+    meta            VARCHAR               -- JSON: additional metadata
+);
 """
 
 
@@ -264,6 +278,143 @@ class E0Database:
                 json.dumps(data.get("classification", {}), ensure_ascii=False),
             ]
         )
+
+    # ─────────────────────────────────────────
+    #  Write: history digests
+    # ─────────────────────────────────────────
+
+    def record_digest(self, scope: str, digest_type: str, content: str,
+                      source_turns: int = None, source_systems: str = None,
+                      created_by: str = "auto", meta: Dict = None):
+        """Record a history digest.
+
+        Args:
+            scope:          'network' | 'system:alpha' | 'epoch:2026-02'
+            digest_type:    'structural' | 'narrative' | 'topological'
+            content:        The digest text itself
+            source_turns:   How many turns were condensed
+            source_systems: Which systems contributed (comma-separated)
+            created_by:     'auto' | 'thomas' | system_id
+            meta:           Additional JSON metadata
+        """
+        self.con.execute(
+            "INSERT INTO history_digests "
+            "(created_at, scope, digest_type, content, source_turns, "
+            " source_systems, created_by, meta) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            [
+                datetime.now(), scope, digest_type, content,
+                source_turns, source_systems, created_by,
+                json.dumps(meta, ensure_ascii=False) if meta else None,
+            ]
+        )
+
+    def get_digests(self, scope: str = None, digest_type: str = None,
+                    limit: int = 50) -> List[Dict]:
+        """Retrieve history digests, newest first."""
+        conditions = []
+        params = []
+        if scope:
+            conditions.append("scope = ?")
+            params.append(scope)
+        if digest_type:
+            conditions.append("digest_type = ?")
+            params.append(digest_type)
+        where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+        params.append(limit)
+        return self._fetchdicts(
+            f"SELECT * FROM history_digests {where} ORDER BY created_at DESC LIMIT ?",
+            params
+        )
+
+    def get_latest_digest(self, scope: str = "network",
+                          digest_type: str = "structural") -> Optional[Dict]:
+        """Get the most recent digest of a given scope and type."""
+        rows = self._fetchdicts(
+            "SELECT * FROM history_digests "
+            "WHERE scope = ? AND digest_type = ? "
+            "ORDER BY created_at DESC LIMIT 1",
+            [scope, digest_type]
+        )
+        return rows[0] if rows else None
+
+    def generate_network_digest(self) -> Optional[str]:
+        """Generate a structural network digest from current DuckDB data.
+
+        This is the AUTO-generated digest — a factual summary of what
+        exists in the database. Not interpretation, just landscape.
+        Returns the digest text, or None if DB is empty.
+        """
+        stats = self.stats()
+        if stats["total_interactions"] == 0:
+            return None
+
+        lines = []
+        lines.append("=== E₀-Netzwerk: Struktureller Digest ===")
+        lines.append(f"Stand: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+        lines.append(f"Gesamt: {stats['total_interactions']} Interaktionen, "
+                      f"{stats['total_systems']} Systeme, "
+                      f"{stats['total_topologies']} Topologien")
+        lines.append("")
+
+        # Per-system summary
+        for s in stats.get("by_system", []):
+            sid = s["system_id"]
+            lines.append(f"── {sid.upper()} ──")
+            lines.append(f"  Nachrichten: {s['total_messages']} "
+                          f"(System: {s.get('system_messages', '?')})")
+            if s.get("avg_h") is not None:
+                lines.append(f"  h̄={s['avg_h']}  R̄={s.get('avg_r', '—')}  "
+                              f"v̄={s.get('avg_v', '—')}  τ_total={s.get('total_tokens', 0)}")
+            lines.append("")
+
+        # Recent key interactions (last 5 system responses per system, condensed)
+        system_ids = [s["system_id"] for s in stats.get("by_system", [])]
+        for sid in system_ids:
+            recent = self._fetchdicts(
+                "SELECT ts, content, r, h, v FROM interactions "
+                "WHERE system_id = ? AND role IN ('system', 'assistant') "
+                "ORDER BY ts DESC LIMIT 5",
+                [sid]
+            )
+            if recent:
+                lines.append(f"── {sid.upper()}: Letzte Beiträge ──")
+                for row in reversed(recent):  # chronological
+                    ts_str = str(row["ts"])[:16] if row["ts"] else "?"
+                    # First 200 chars of content
+                    snippet = str(row["content"] or "")[:200]
+                    if len(str(row.get("content", ""))) > 200:
+                        snippet += "..."
+                    h_str = f"h={row['h']}" if row.get("h") is not None else ""
+                    r_str = f"R={row['r']}" if row.get("r") is not None else ""
+                    metrics_str = f" [{r_str} {h_str}]".strip() if (h_str or r_str) else ""
+                    lines.append(f"  [{ts_str}]{metrics_str}")
+                    lines.append(f"    {snippet}")
+                lines.append("")
+
+        # Existing digests (if any previous structural digests exist, reference them)
+        prev = self.get_digests(scope="network", digest_type="structural", limit=3)
+        if prev:
+            lines.append("── Vorherige Verdichtungen ──")
+            for d in prev:
+                ts_str = str(d["created_at"])[:16] if d.get("created_at") else "?"
+                by = d.get("created_by", "?")
+                lines.append(f"  [{ts_str}] von {by}: {str(d['content'])[:100]}...")
+            lines.append("")
+
+        digest_text = "\n".join(lines)
+
+        # Record this digest
+        self.record_digest(
+            scope="network",
+            digest_type="structural",
+            content=digest_text,
+            source_turns=stats["total_interactions"],
+            source_systems=",".join(system_ids),
+            created_by="auto",
+        )
+
+        return digest_text
 
     # ─────────────────────────────────────────
     #  Query: search
