@@ -411,6 +411,7 @@ class InitV3Orchestrator:
         """Ensure all registry systems are registered in the DuckDB systems table.
 
         Called on startup. Uses upsert logic (register_system does DELETE+INSERT).
+        Also registers A₃ (infrastructure agent) if not already present.
         """
         for sid, desc in self.registry.descriptors.items():
             kind = desc.kind.value if hasattr(desc.kind, 'value') else str(desc.kind)
@@ -421,6 +422,21 @@ class InitV3Orchestrator:
                 display_name=desc.display_name,
                 created_at=desc.created_at if hasattr(desc, 'created_at') else None,
             )
+        # Register A₃ — the infrastructure agent building this system
+        try:
+            existing = self.db.con.execute(
+                "SELECT system_id FROM systems WHERE system_id = 'a3'"
+            ).fetchall()
+            if not existing:
+                self.db.register_system(
+                    system_id="a3",
+                    kind="infrastructure",
+                    model="claude-opus-4-6",
+                    display_name="A₃ (Claude Opus 4.6)",
+                    created_at=datetime(2026, 2, 18, 14, 0, 0),
+                )
+        except Exception:
+            pass  # Already registered or table issue
 
     # Track which Phase 1 steps each system has completed
     def _init_phase1_state(self):
@@ -1183,6 +1199,69 @@ async def handle_db_digest_write(request):
     return web.json_response({"written": True, "scope": scope, "digest_type": digest_type})
 
 
+async def handle_db_record(request):
+    """Write an interaction to the database.
+
+    POST /db-record  {
+        "system_id": "a3",
+        "role": "system",
+        "content": "...",
+        "session_id": "a3-infrastructure",
+        "source": "git-history",
+        "timestamp": "2026-02-18 14:42:00"
+    }
+
+    Also accepts batch writes:
+    POST /db-record  {
+        "batch": [
+            {"system_id": "a3", "role": "system", "content": "...", ...},
+            ...
+        ]
+    }
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json()
+
+    # Batch mode
+    if "batch" in data:
+        entries = data["batch"]
+        count = 0
+        for entry in entries:
+            sid = entry.get("system_id")
+            role = entry.get("role")
+            content = entry.get("content")
+            if not sid or not role or not content:
+                continue
+            orch.db.record_interaction(
+                system_id=sid,
+                role=role,
+                content=content,
+                session_id=entry.get("session_id"),
+                timestamp=entry.get("timestamp"),
+                turn_number=entry.get("turn_number"),
+                source=entry.get("source", "api"),
+            )
+            count += 1
+        return web.json_response({"written": count})
+
+    # Single mode
+    sid = data.get("system_id")
+    role = data.get("role")
+    content = data.get("content")
+    if not sid or not role or not content:
+        return web.json_response({"error": "system_id, role, content required"}, status=400)
+    orch.db.record_interaction(
+        system_id=sid,
+        role=role,
+        content=content,
+        session_id=data.get("session_id"),
+        timestamp=data.get("timestamp"),
+        turn_number=data.get("turn_number"),
+        source=data.get("source", "api"),
+    )
+    return web.json_response({"written": 1, "system_id": sid})
+
+
 async def handle_system_context(request):
     """Return comprehensive onboarding context for a system.
 
@@ -1311,6 +1390,7 @@ def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app.router.add_get("/db-digests", handle_db_digests)
     app.router.add_post("/db-digest-generate", handle_generate_digest)
     app.router.add_post("/db-digest-write", handle_db_digest_write)
+    app.router.add_post("/db-record", handle_db_record)
     app.router.add_get("/system-context", handle_system_context)
 
     return app
