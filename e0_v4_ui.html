@@ -567,6 +567,78 @@
     word-break: break-word;
   }
 
+  /* ── Query Block (detected in system responses) ── */
+  .query-block {
+    background: rgba(126,231,135,0.08);
+    border: 1px solid var(--accent-b);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin: 8px 0;
+    position: relative;
+  }
+  .query-block-label {
+    font-size: 10px;
+    color: var(--accent-b);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  .query-block-sql {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin-bottom: 6px;
+  }
+  .query-block-purpose {
+    font-size: 11px;
+    color: var(--text3);
+    font-style: italic;
+    margin-bottom: 6px;
+  }
+  .query-block-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .query-block-result {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 10px;
+    margin-top: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text2);
+    max-height: 200px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .query-block-result.error { border-color: var(--accent-red); color: var(--accent-red); }
+  .query-block-result.success { border-color: var(--accent-b); }
+
+  /* ── Interrupt Button ── */
+  .btn-interrupt {
+    background: rgba(255,85,85,0.15);
+    color: var(--accent-red);
+    border: 1px solid var(--accent-red);
+    padding: 3px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: var(--font);
+    display: none;
+    animation: pulse-interrupt 1.2s ease-in-out infinite;
+  }
+  .btn-interrupt.visible { display: inline-block; }
+  .btn-interrupt:hover { background: rgba(255,85,85,0.35); }
+  @keyframes pulse-interrupt {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
   /* ── Modal ── */
   .modal-overlay {
     display: none;
@@ -771,6 +843,7 @@
 <header>
   <h1>E₀ v4</h1>
   <span class="status" id="headerStatus"></span>
+  <button class="btn-interrupt" id="interruptBtn" onclick="interruptProcessing()">⛔ Interrupt</button>
   <button class="btn" onclick="saveSession()">Save</button>
   <button class="btn" onclick="downloadTranscripts()">Export</button>
   <button class="btn danger" onclick="stopAll()">Stop</button>
@@ -1260,10 +1333,13 @@ function addEntry(systemId, role, content, scroll = true, metrics = null) {
     updateMetricsDisplay(systemId, metrics);
   }
 
+  // Parse query blocks from system response
+  const contentHtml = (role === 'system') ? renderWithQueryBlocks(systemId, content) : esc(content);
+
   entry.innerHTML = `
     <span class="time">${time}</span>
     <div class="role">${roleName}</div>
-    <div class="content">${esc(content)}</div>
+    <div class="content">${contentHtml}</div>
     ${metricsHtml}
   `;
 
@@ -1829,6 +1905,10 @@ async function injectDbResultsDirect() {
 
   // Switch to system tab and send
   switchTab(target);
+  activeQueryAbort = new AbortController();
+  queryProcessingActive = true;
+  showInterrupt(true);
+
   addEntry(target, 'thomas', text);
   setLoading(target, true);
 
@@ -1837,6 +1917,7 @@ async function injectDbResultsDirect() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ system: target, prompt: text }),
+      signal: activeQueryAbort.signal,
     });
     const data = await resp.json();
     if (data.error) {
@@ -1845,9 +1926,16 @@ async function injectDbResultsDirect() {
       addEntry(target, 'system', data.response, true, data.metrics);
     }
   } catch (e) {
-    addEntry(target, 'event', 'Netzwerkfehler: ' + e.message);
+    if (e.name === 'AbortError') {
+      addEntry(target, 'event', '⛔ Verarbeitung unterbrochen (Interrupt)');
+    } else {
+      addEntry(target, 'event', 'Netzwerkfehler: ' + e.message);
+    }
   }
   setLoading(target, false);
+  queryProcessingActive = false;
+  showInterrupt(false);
+  activeQueryAbort = null;
 }
 
 function injectSingleResult(index) {
@@ -1891,6 +1979,173 @@ function injectIntoInput(systemId, text) {
     input.style.height = 'auto';
     input.style.height = Math.min(input.scrollHeight, 300) + 'px';
   }
+}
+
+// ═══════════════════════════════════════
+//  Query Block Detection & Execution
+// ═══════════════════════════════════════
+
+const QUERY_BEGIN = '--BEGIN DUCKDB QUERY--';
+const QUERY_END = '--END DUCKDB QUERY--';
+let queryBlockCounter = 0;
+let activeQueryAbort = null; // AbortController for interrupt
+let queryProcessingActive = false;
+
+function renderWithQueryBlocks(systemId, content) {
+  // Split content around query blocks
+  const parts = [];
+  let remaining = content;
+  let idx;
+
+  while ((idx = remaining.indexOf(QUERY_BEGIN)) !== -1) {
+    // Text before the block
+    if (idx > 0) parts.push({ type: 'text', value: remaining.substring(0, idx) });
+
+    const endIdx = remaining.indexOf(QUERY_END, idx);
+    if (endIdx === -1) {
+      // No closing delimiter — treat rest as text
+      parts.push({ type: 'text', value: remaining.substring(idx) });
+      remaining = '';
+      break;
+    }
+
+    // Extract SQL between delimiters
+    const sqlRaw = remaining.substring(idx + QUERY_BEGIN.length, endIdx).trim();
+    const blockId = 'qb-' + (queryBlockCounter++);
+
+    // Look for PURPOSE comment after the closing delimiter
+    const afterEnd = remaining.substring(endIdx + QUERY_END.length);
+    let purpose = '';
+    const purposeMatch = afterEnd.match(/^[\s\n]*(?:```)?[\s\n]*#\s*PURPOSE:\s*(.+?)(?:\n|$)/i);
+    if (purposeMatch) {
+      purpose = purposeMatch[1].trim();
+    }
+
+    parts.push({ type: 'query', sql: sqlRaw, blockId, systemId, purpose });
+
+    remaining = remaining.substring(endIdx + QUERY_END.length);
+    // Skip the purpose line if we captured it
+    if (purposeMatch) {
+      remaining = remaining.substring(remaining.indexOf(purposeMatch[0]) + purposeMatch[0].length);
+    }
+  }
+  if (remaining) parts.push({ type: 'text', value: remaining });
+
+  // Build HTML
+  return parts.map(p => {
+    if (p.type === 'text') return esc(p.value);
+    return `
+      <div class="query-block" id="${p.blockId}">
+        <div class="query-block-label">📊 DuckDB Query</div>
+        <div class="query-block-sql">${esc(p.sql)}</div>
+        ${p.purpose ? `<div class="query-block-purpose">Purpose: ${esc(p.purpose)}</div>` : ''}
+        <div class="query-block-actions">
+          <button class="btn-inject" onclick="executeQueryBlock('${p.blockId}', '${p.systemId}', ${JSON.stringify(JSON.stringify(p.sql))}, false)">▶ Ausführen & Anzeigen</button>
+          <button class="btn-inject" onclick="executeQueryBlock('${p.blockId}', '${p.systemId}', ${JSON.stringify(JSON.stringify(p.sql))}, true)" style="border-color:var(--accent-b);color:var(--accent-b);background:rgba(126,231,135,0.1);">⚡ Ausführen & Zurücksenden</button>
+          <button class="btn-inject" onclick="copyQueryToTextarea('${p.systemId}', ${JSON.stringify(JSON.stringify(p.sql))})" style="border-color:var(--accent-a);color:var(--accent-a);">📋 → Textarea</button>
+        </div>
+        <div id="${p.blockId}-result"></div>
+      </div>`;
+  }).join('');
+}
+
+async function executeQueryBlock(blockId, systemId, sql, sendBack) {
+  const resultDiv = document.getElementById(blockId + '-result');
+  if (!resultDiv) return;
+
+  resultDiv.className = 'query-block-result';
+  resultDiv.textContent = 'Lade...';
+
+  try {
+    const resp = await fetch('/db-query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sql }),
+    });
+    const data = await resp.json();
+
+    if (data.error) {
+      resultDiv.className = 'query-block-result error';
+      resultDiv.textContent = 'Fehler: ' + data.error;
+      return;
+    }
+
+    // Format result
+    const formatted = formatDbResultsAsText(data);
+    resultDiv.className = 'query-block-result success';
+    resultDiv.textContent = `${data.rows.length} Zeilen, ${data.columns.length} Spalten\n\n${formatted}`;
+
+    if (sendBack) {
+      // Inject result back into the system conversation
+      const injectionText = `── DuckDB-Ergebnis (${data.rows.length} Zeilen) ──\n${formatted}`;
+      await sendQueryResultToSystem(systemId, injectionText);
+    }
+  } catch (e) {
+    resultDiv.className = 'query-block-result error';
+    resultDiv.textContent = 'Netzwerkfehler: ' + e.message;
+  }
+}
+
+async function sendQueryResultToSystem(systemId, text) {
+  queryProcessingActive = true;
+  showInterrupt(true);
+  activeQueryAbort = new AbortController();
+
+  addEntry(systemId, 'thomas', text);
+  setLoading(systemId, true);
+
+  try {
+    const resp = await fetch('/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ system: systemId, prompt: text }),
+      signal: activeQueryAbort.signal,
+    });
+    const data = await resp.json();
+    if (data.error) {
+      addEntry(systemId, 'event', 'Fehler: ' + data.error);
+    } else {
+      addEntry(systemId, 'system', data.response, true, data.metrics);
+    }
+  } catch (e) {
+    if (e.name === 'AbortError') {
+      addEntry(systemId, 'event', '⛔ Query-Verarbeitung unterbrochen (Interrupt)');
+    } else {
+      addEntry(systemId, 'event', 'Netzwerkfehler: ' + e.message);
+    }
+  }
+
+  setLoading(systemId, false);
+  queryProcessingActive = false;
+  showInterrupt(false);
+  activeQueryAbort = null;
+}
+
+function copyQueryToTextarea(systemId, sql) {
+  // Switch to system tab if needed
+  if (activeTab !== systemId) switchTab(systemId);
+  const input = document.getElementById('input-' + systemId);
+  if (input) {
+    input.value = sql;
+    input.focus();
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 200) + 'px';
+  }
+  document.getElementById('headerStatus').textContent = `SQL → ${capitalize(systemId)} Textarea`;
+  setTimeout(() => document.getElementById('headerStatus').textContent = '', 2000);
+}
+
+function interruptProcessing() {
+  if (activeQueryAbort) {
+    activeQueryAbort.abort();
+    document.getElementById('headerStatus').textContent = '⛔ Unterbrochen';
+    setTimeout(() => document.getElementById('headerStatus').textContent = '', 3000);
+  }
+}
+
+function showInterrupt(visible) {
+  const btn = document.getElementById('interruptBtn');
+  if (btn) btn.className = visible ? 'btn-interrupt visible' : 'btn-interrupt';
 }
 
 // ── Start ──
