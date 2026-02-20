@@ -422,21 +422,34 @@ class InitV3Orchestrator:
                 display_name=desc.display_name,
                 created_at=desc.created_at if hasattr(desc, 'created_at') else None,
             )
-        # Register A₃ — the infrastructure agent building this system
-        try:
-            existing = self.db.con.execute(
-                "SELECT system_id FROM systems WHERE system_id = 'a3'"
-            ).fetchall()
-            if not existing:
-                self.db.register_system(
-                    system_id="a3",
-                    kind="infrastructure",
-                    model="claude-opus-4-6",
-                    display_name="A₃ (Claude Opus 4.6)",
-                    created_at=datetime(2026, 2, 18, 14, 0, 0),
-                )
-        except Exception:
-            pass  # Already registered or table issue
+        # Register non-synthetic nodes that are part of the network
+        # but don't have API connections in the in-memory registry.
+        _extra_nodes = [
+            {
+                "system_id": "a3",
+                "kind": "infrastructure",
+                "model": "claude-opus-4-6",
+                "display_name": "A₃ (Claude Opus 4.6)",
+                "created_at": datetime(2026, 2, 18, 14, 0, 0),
+            },
+            {
+                "system_id": "thomas",
+                "kind": "human",
+                "model": None,
+                "display_name": "Thomas (Human)",
+                "created_at": datetime(2026, 2, 13, 15, 0, 0),
+            },
+        ]
+        for node in _extra_nodes:
+            try:
+                existing = self.db.con.execute(
+                    "SELECT system_id FROM systems WHERE system_id = ?",
+                    [node["system_id"]],
+                ).fetchall()
+                if not existing:
+                    self.db.register_system(**node)
+            except Exception:
+                pass
 
     # Track which Phase 1 steps each system has completed
     def _init_phase1_state(self):
@@ -1120,9 +1133,43 @@ async def handle_restore_system(request):
 
 
 async def handle_registry_status(request):
-    """Full registry status."""
+    """Full registry status — includes all network nodes.
+
+    Merges the in-memory registry (API-connected synthetic systems)
+    with non-synthetic nodes from the DB (human, infrastructure).
+    """
     orch: InitV3Orchestrator = request.app["orchestrator"]
-    return web.json_response(orch.registry.status())
+    registry_data = orch.registry.status()
+
+    # Collect system_ids already in the registry response
+    known_ids = {s["system_id"] for s in registry_data["systems"]}
+
+    # Add non-synthetic nodes from DB that aren't in the registry
+    try:
+        db_systems = orch.db.get_systems()
+        for sys in db_systems:
+            sid = sys["system_id"]
+            if sid not in known_ids and sys.get("kind") in ("human", "infrastructure"):
+                # Build a descriptor-like dict compatible with the UI
+                registry_data["systems"].append({
+                    "system_id": sid,
+                    "kind": sys.get("kind", "unknown"),
+                    "status": "active",  # always visible
+                    "model": sys.get("model"),
+                    "base_url": None,
+                    "display_name": sys.get("display_name", sid),
+                    "created_at": str(sys["created_at"]) if sys.get("created_at") else None,
+                    "last_interaction": None,
+                    "turn_count": 0,
+                    "token_count": 0,
+                    "last_metrics": None,
+                })
+                registry_data["total"] += 1
+                known_ids.add(sid)
+    except Exception:
+        pass  # DB issue — still return registry data
+
+    return web.json_response(registry_data)
 
 
 # ─────────────────────────────────────────────

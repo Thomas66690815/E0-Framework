@@ -188,6 +188,9 @@ class E0Database:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.con = duckdb.connect(str(self.path))
         self._ensure_schema()
+        # Track writes for periodic checkpointing
+        self._write_count = 0
+        self._checkpoint_interval = 5  # checkpoint every N writes
 
     def _ensure_schema(self):
         """Create tables and sequences if they don't exist."""
@@ -225,7 +228,22 @@ class E0Database:
 
     def close(self):
         """Close the database connection."""
+        self.checkpoint()
         self.con.close()
+
+    def checkpoint(self):
+        """Force a WAL checkpoint — flush pending writes to the main DB file."""
+        try:
+            self.con.execute("CHECKPOINT")
+        except Exception:
+            pass
+
+    def _maybe_checkpoint(self):
+        """Checkpoint periodically to prevent data loss from WAL corruption."""
+        self._write_count += 1
+        if self._write_count >= self._checkpoint_interval:
+            self.checkpoint()
+            self._write_count = 0
 
     # ─────────────────────────────────────────
     #  Write: systems
@@ -244,6 +262,7 @@ class E0Database:
             "VALUES (?, ?, ?, ?, ?)",
             [system_id, kind, model, name, ts]
         )
+        self._maybe_checkpoint()
 
     # ─────────────────────────────────────────
     #  Write: interactions
@@ -294,6 +313,7 @@ class E0Database:
         row = self.con.execute(
             "SELECT MAX(id) FROM interactions WHERE system_id = ?", [system_id]
         ).fetchone()
+        self._maybe_checkpoint()
         return row[0] if row else -1
 
     def record_pair(self, system_id: str, user_content: str, system_content: str,
@@ -694,6 +714,7 @@ class E0Database:
         row = self.con.execute(
             "SELECT MAX(id) FROM differentials WHERE author = ?", [author]
         ).fetchone()
+        self._maybe_checkpoint()
         return row[0] if row else -1
 
     def get_open_differentials(self, for_system: str = None,
@@ -726,6 +747,7 @@ class E0Database:
             "claimed_at = ? WHERE id = ? AND status = 'open'",
             [claimed_by, datetime.now(), diff_id]
         )
+        self._maybe_checkpoint()
         return result.rowcount > 0 if hasattr(result, 'rowcount') else True
 
     def resolve_differential(self, diff_id: int, resolution_id: int = None) -> bool:
@@ -735,6 +757,7 @@ class E0Database:
             "resolution_id = ? WHERE id = ?",
             [datetime.now(), resolution_id, diff_id]
         )
+        self._maybe_checkpoint()
         return True
 
     def mark_differential_result(self, diff_id: int) -> bool:
@@ -746,6 +769,7 @@ class E0Database:
             "UPDATE differentials SET status = 'result', resolved_at = ? WHERE id = ?",
             [datetime.now(), diff_id]
         )
+        self._maybe_checkpoint()
         return True
 
     def get_diff_children(self, diff_id: int) -> List[Dict]:
@@ -823,6 +847,7 @@ class E0Database:
             "SELECT MAX(id) FROM differential_responses WHERE diff_id = ?",
             [diff_id]
         ).fetchone()
+        self._maybe_checkpoint()
         return row[0] if row else -1
 
     def get_differential_responses(self, diff_id: int) -> List[Dict]:
