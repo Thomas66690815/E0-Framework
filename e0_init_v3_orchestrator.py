@@ -667,7 +667,8 @@ class InitV3Orchestrator:
             "metrics": safe,
         }
 
-    async def send_prompt(self, system_id: str, prompt: str) -> Dict:
+    async def send_prompt(self, system_id: str, prompt: str,
+                          source_diff_id: int = None) -> Dict:
         """Send a prompt to a specific system."""
         if system_id not in self.systems:
             return {"error": f"Unknown system: {system_id}"}
@@ -683,13 +684,24 @@ class InitV3Orchestrator:
         self.registry.after_interaction(system_id, metrics=safe)
 
         # v4 Phase 3: persist to DuckDB
-        self.db.record_interaction(system_id, "thomas", prompt)
-        self.db.record_interaction(system_id, "system", text, metrics=safe)
+        self.db.record_interaction(system_id, "thomas", prompt,
+                                   source_diff_id=source_diff_id)
+        interaction_id = self.db.record_interaction(
+            system_id, "system", text, metrics=safe,
+            source_diff_id=source_diff_id)
+
+        # Extract [NEUE DIFFERENZ] blocks from system response
+        extracted_diffs = _extract_new_differentials(text, system_id,
+                                                     source_diff_id,
+                                                     interaction_id)
+        for ed in extracted_diffs:
+            self.db.post_differential(**ed)
 
         return {
             "system": system_id,
             "response": text,
             "metrics": safe,
+            "extracted_diffs": len(extracted_diffs),
         }
 
     async def send_v4_probe(self, system_id: str, step_id: str) -> Dict:
@@ -816,6 +828,78 @@ def _safe_metrics(metrics: Dict) -> Dict:
         else:
             safe[k] = v
     return safe
+
+
+import re as _re
+
+_NEUE_DIFF_PATTERN = _re.compile(
+    r'\[NEUE DIFFERENZ(?:\s*(?:→|->)\s*(\w+))?\]'   # opening tag, optional → or -> target
+    r'\s*'
+    r'(.*?)'                                          # content (non-greedy)
+    r'\s*'
+    r'\[/NEUE DIFFERENZ\]',
+    _re.DOTALL
+)
+
+_ERGEBNIS_PATTERN = _re.compile(
+    r'\[ERGEBNIS\]'
+    r'\s*'
+    r'(.*?)'
+    r'\s*'
+    r'\[/ERGEBNIS\]',
+    _re.DOTALL
+)
+
+
+def _extract_new_differentials(text: str, system_id: str,
+                                source_diff_id: int = None,
+                                source_interaction_id: int = None) -> List[Dict]:
+    """Extract [NEUE DIFFERENZ] and [ERGEBNIS] blocks from a system's response.
+
+    A system can embed structured blocks in its response:
+
+        [NEUE DIFFERENZ → epsilon]
+        Die H-Kopplung ist formal elegant, aber noch nicht von einer
+        Umbenennung unterscheidbar.
+        [/NEUE DIFFERENZ]
+
+        [ERGEBNIS]
+        H-Kopplung erzeugt messbare Pfadklassen-Unterschiede bei r < 0.3.
+        [/ERGEBNIS]
+
+    These are automatically extracted and posted as differentials.
+    """
+    results = []
+
+    # Extract new differentials
+    for match in _NEUE_DIFF_PATTERN.finditer(text):
+        addressed_to = match.group(1)  # None if no → target
+        content = match.group(2).strip()
+        if content:
+            results.append({
+                "author": system_id,
+                "content": content,
+                "addressed_to": addressed_to,
+                "parent_diff_id": source_diff_id,
+                "source_interaction_id": source_interaction_id,
+                "meta": {"auto_extracted": True, "from_diff": source_diff_id},
+            })
+
+    # Extract results (posted as differentials with special meta)
+    for match in _ERGEBNIS_PATTERN.finditer(text):
+        content = match.group(1).strip()
+        if content:
+            results.append({
+                "author": system_id,
+                "content": f"[Ergebnis] {content}",
+                "parent_diff_id": source_diff_id,
+                "source_interaction_id": source_interaction_id,
+                "scope": "result",
+                "meta": {"auto_extracted": True, "is_result": True,
+                         "from_diff": source_diff_id},
+            })
+
+    return results
 
 
 # ─────────────────────────────────────────────
@@ -1290,6 +1374,8 @@ async def handle_diff_post(request):
         scope=data.get("scope"),
         tags=data.get("tags"),
         meta=data.get("meta"),
+        parent_diff_id=data.get("parent_diff_id"),
+        source_interaction_id=data.get("source_interaction_id"),
     )
     return web.json_response({"posted": True, "id": diff_id, "author": author})
 
@@ -1381,7 +1467,7 @@ async def handle_diff_respond(request):
 
     # Send as prompt
     prompt = f"[Differenz #{diff_id} von {diff['author']}]\n\n{diff['content']}"
-    result = await orch.send_prompt(system_id, prompt)
+    result = await orch.send_prompt(system_id, prompt, source_diff_id=diff_id)
 
     if "error" in result:
         return web.json_response({"error": result["error"]}, status=500)
@@ -1414,6 +1500,7 @@ async def handle_diff_respond(request):
         "resolution_id": resolution_id,
         "response_id": resp_id,
         "additional": is_additional,
+        "extracted_diffs": result.get("extracted_diffs", 0),
     })
 
 
@@ -1459,6 +1546,51 @@ async def handle_diff_responses(request):
             if r.get(key):
                 r[key] = str(r[key])
     return web.json_response({"diff_id": int(diff_id), "responses": responses, "count": len(responses)})
+
+
+async def handle_diff_result(request):
+    """Mark a differential as a result — a converged finding.
+
+    POST /diff/result  {"diff_id": 5}
+
+    A result is not 'done'; it's a condensation point that spawns further inquiry.
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json()
+    diff_id = data.get("diff_id")
+    if not diff_id:
+        return web.json_response({"error": "diff_id required"}, status=400)
+    orch.db.mark_differential_result(diff_id)
+    return web.json_response({"marked": True, "diff_id": diff_id, "status": "result"})
+
+
+async def handle_diff_tree(request):
+    """Get a differential with its full genealogy.
+
+    GET /diff/tree?id=5
+
+    Returns the differential, its children (iterations), responses,
+    and ancestry (chain of parent diffs up to root).
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    diff_id = request.query.get("id")
+    if not diff_id:
+        return web.json_response({"error": "id required"}, status=400)
+    tree = orch.db.get_diff_tree(int(diff_id))
+    if not tree:
+        return web.json_response({"error": "not found"}, status=404)
+    # Serialize timestamps
+    for key in ("ts", "claimed_at", "resolved_at"):
+        if tree.get(key):
+            tree[key] = str(tree[key])
+    for child in tree.get("children", []):
+        for key in ("ts", "claimed_at", "resolved_at"):
+            if child.get(key):
+                child[key] = str(child[key])
+    for r in tree.get("responses", []):
+        if r.get("ts"):
+            r["ts"] = str(r["ts"])
+    return web.json_response(tree)
 
 
 async def handle_system_context(request):
@@ -1524,20 +1656,24 @@ async def handle_system_context(request):
     # 6. Table descriptions
     table_guide = (
         "== Tabellen-Übersicht ==\n"
-        "interactions: Alle Nachrichten (system_id, role, content, r, h, phi, v, tau, ts)\n"
+        "interactions: Alle Nachrichten (system_id, role, content, r, h, phi, v, tau, ts, source_diff_id)\n"
         "  - role: 'thomas' | 'system' | 'event'\n"
         "  - r: Resistance (höher = strukturell dichter)\n"
         "  - h: Shannon Entropy\n"
         "  - v: Rate (Δ/R)\n"
+        "  - source_diff_id: welche Differenz diese Interaction ausgelöst hat (FK → differentials.id)\n"
         "systems: Registrierte Systeme (system_id, kind, model, display_name)\n"
         "topology_snapshots: Topologie-Analysen pro Session\n"
         "history_digests: Verdichtete Netzwerk-Geschichte (scope, digest_type, content)\n"
         "  - digest_type: 'structural' | 'narrative' | 'analysis'\n"
         "  - scope: 'network' | 'system:alpha' | 'design:feature_name'\n"
         "differentials: Geteilter Differenz-Raum (author, content, addressed_to, scope, status)\n"
-        "  - status: 'open' | 'claimed' | 'resolved' | 'archived'\n"
+        "  - status: 'open' | 'claimed' | 'resolved' | 'archived' | 'result'\n"
         "  - scope: 'network' | 'physics' | 'meta' | 'reflexion' | 'design' | 'open'\n"
+        "  - parent_diff_id: FK → differentials.id (diese Differenz iteriert auf einer anderen)\n"
+        "  - source_interaction_id: FK → interactions.id (welche Interaction hat diese Differenz erzeugt?)\n"
         "  - Jeder Knoten (human oder synthetisch) kann Differenzen einstellen und beantworten\n"
+        "  - Status 'result' = verdichtetes Ergebnis, das neue Differenzen erzeugt\n"
         "differential_responses: n:m Verknüpfung — mehrere Systeme können auf eine Differenz reagieren\n"
         "  - kind: 'analysis' | 'proposal' | 'experiment' | 'reflexion' | 'counter'\n"
     )
@@ -1551,6 +1687,29 @@ async def handle_system_context(request):
             if d.get(key):
                 d[key] = str(d[key])
 
+    # 8. Differential tag protocol — how systems can post new differentials
+    diff_tag_protocol = (
+        "== Differenz-Erzeugungs-Protokoll ==\n"
+        "Du kannst in Deinen Antworten neue Differenzen aufstellen.\n"
+        "Diese werden automatisch extrahiert und in den Differenz-Raum gestellt.\n\n"
+        "Format für eine neue Differenz:\n"
+        "[NEUE DIFFERENZ → ziel_system]\n"
+        "Deine offene Frage, These oder strukturelle Spannung.\n"
+        "[/NEUE DIFFERENZ]\n\n"
+        "Das → ziel_system ist optional. Ohne Ziel ist die Differenz offen für alle.\n\n"
+        "Format für ein Ergebnis (verdichtetes Resultat, das neue Fragen erzeugt):\n"
+        "[ERGEBNIS]\n"
+        "Das kondensierte Resultat.\n"
+        "[/ERGEBNIS]\n\n"
+        "Ergebnisse werden als Differenzen mit Status 'result' gespeichert.\n"
+        "Jedes Ergebnis kann Ausgangspunkt für neue Differenzen werden.\n\n"
+        "Wichtig:\n"
+        "- Nutze [NEUE DIFFERENZ] wenn Du eine Gegenfrage, These oder Spannung identifizierst\n"
+        "- Nutze [ERGEBNIS] wenn Du ein Zwischenergebnis formulieren kannst\n"
+        "- Die Tags werden automatisch erkannt — der Rest Deiner Antwort bleibt normal\n"
+        "- parent_diff_id wird automatisch gesetzt wenn die Differenz aus einer Antwort auf eine andere Differenz entsteht\n"
+    )
+
     return web.json_response({
         "requesting_system": requesting_system,
         "network": {
@@ -1563,6 +1722,7 @@ async def handle_system_context(request):
         "recent_digests": digests,
         "query_protocol": query_protocol,
         "table_guide": table_guide,
+        "diff_tag_protocol": diff_tag_protocol,
         "stats_by_system": stats.get("by_system", []),
         "open_differentials": unanswered_diffs,
     })
@@ -1615,6 +1775,8 @@ def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app.router.add_post("/diff/respond", handle_diff_respond)
     app.router.add_post("/diff/add-response", handle_diff_add_response)
     app.router.add_get("/diff/responses", handle_diff_responses)
+    app.router.add_post("/diff/result", handle_diff_result)
+    app.router.add_get("/diff/tree", handle_diff_tree)
 
     return app
 

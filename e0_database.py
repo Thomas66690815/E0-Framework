@@ -90,7 +90,8 @@ CREATE TABLE IF NOT EXISTS interactions (
     phi         INTEGER,                -- phase transitions
     v           DOUBLE,                 -- rate
     tau         INTEGER,                -- token count
-    source      VARCHAR DEFAULT 'live'  -- 'live','import_transcripts','import_session','import_state'
+    source      VARCHAR DEFAULT 'live', -- 'live','import_transcripts','import_session','import_state'
+    source_diff_id INTEGER              -- FK → differentials.id  (which differential triggered this interaction?)
 );
 
 -- Topology analysis snapshots
@@ -143,13 +144,15 @@ CREATE TABLE IF NOT EXISTS differentials (
     content         TEXT NOT NULL,            -- the difference itself
     addressed_to    VARCHAR,                  -- optional hint: 'alpha', NULL = open to all
     scope           VARCHAR,                  -- 'network' | 'physics' | 'meta' | 'reflexion' | 'design' | 'open'
-    status          VARCHAR DEFAULT 'open',   -- 'open' | 'claimed' | 'resolved' | 'archived'
+    status          VARCHAR DEFAULT 'open',   -- 'open' | 'claimed' | 'resolved' | 'archived' | 'result'
     claimed_by      VARCHAR,                  -- who picked it up
     claimed_at      TIMESTAMP,
     resolved_at     TIMESTAMP,
     resolution_id   INTEGER,                  -- FK → interactions.id (first/primary response)
     tags            VARCHAR,                  -- optional CSV tags for structural routing
-    meta            VARCHAR                   -- JSON: additional context
+    meta            VARCHAR,                  -- JSON: additional context
+    parent_diff_id  INTEGER,                  -- FK → differentials.id (this diff iterates on parent)
+    source_interaction_id INTEGER             -- FK → interactions.id (which interaction generated this diff?)
 );
 
 -- Differential responses — n:m linking table (Epsilon's delta_links idea)
@@ -207,6 +210,9 @@ class E0Database:
         """Apply column-level migrations to existing tables."""
         migrations = [
             ("differentials", "scope", "ALTER TABLE differentials ADD COLUMN scope VARCHAR"),
+            ("differentials", "parent_diff_id", "ALTER TABLE differentials ADD COLUMN parent_diff_id INTEGER"),
+            ("differentials", "source_interaction_id", "ALTER TABLE differentials ADD COLUMN source_interaction_id INTEGER"),
+            ("interactions", "source_diff_id", "ALTER TABLE interactions ADD COLUMN source_diff_id INTEGER"),
         ]
         for table, col, sql in migrations:
             try:
@@ -246,7 +252,7 @@ class E0Database:
     def record_interaction(self, system_id: str, role: str, content: str,
                            metrics: Dict = None, session_id: str = None,
                            timestamp: Any = None, turn_number: int = None,
-                           source: str = "live"):
+                           source: str = "live", source_diff_id: int = None) -> int:
         """Record a single interaction (one message).
 
         Args:
@@ -258,6 +264,10 @@ class E0Database:
             timestamp:    ISO string or datetime.  Defaults to now.
             turn_number:  Optional turn index
             source:       How this data entered the DB
+            source_diff_id: Which differential triggered this interaction (FK)
+
+        Returns:
+            The interaction id.
         """
         # Parse timestamp
         if timestamp is None:
@@ -273,14 +283,18 @@ class E0Database:
         m = metrics or {}
         self.con.execute(
             "INSERT INTO interactions "
-            "(session_id, system_id, turn_number, ts, role, content, r, h, phi, v, tau, source) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "(session_id, system_id, turn_number, ts, role, content, r, h, phi, v, tau, source, source_diff_id) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [
                 session_id, system_id, turn_number, ts, role, content,
                 m.get("r"), m.get("h"), m.get("phi"), m.get("v"), m.get("tau"),
-                source,
+                source, source_diff_id,
             ]
         )
+        row = self.con.execute(
+            "SELECT MAX(id) FROM interactions WHERE system_id = ?", [system_id]
+        ).fetchone()
+        return row[0] if row else -1
 
     def record_pair(self, system_id: str, user_content: str, system_content: str,
                     metrics: Dict = None, session_id: str = None,
@@ -657,19 +671,24 @@ class E0Database:
 
     def post_differential(self, author: str, content: str,
                           addressed_to: str = None, scope: str = None,
-                          tags: str = None, meta: Dict = None) -> int:
+                          tags: str = None, meta: Dict = None,
+                          parent_diff_id: int = None,
+                          source_interaction_id: int = None) -> int:
         """Post a new differential into the shared space.
 
         Any node (human or synthetic) can post.
+        parent_diff_id: this diff iterates on an existing differential.
+        source_interaction_id: which interaction generated this diff.
         Returns the differential id.
         """
         self.con.execute(
             "INSERT INTO differentials "
-            "(ts, author, content, addressed_to, scope, status, tags, meta) "
-            "VALUES (?, ?, ?, ?, ?, 'open', ?, ?)",
+            "(ts, author, content, addressed_to, scope, status, tags, meta, parent_diff_id, source_interaction_id) "
+            "VALUES (?, ?, ?, ?, ?, 'open', ?, ?, ?, ?)",
             [
                 datetime.now(), author, content, addressed_to, scope, tags,
                 json.dumps(meta, ensure_ascii=False) if meta else None,
+                parent_diff_id, source_interaction_id,
             ]
         )
         row = self.con.execute(
@@ -717,6 +736,44 @@ class E0Database:
             [datetime.now(), resolution_id, diff_id]
         )
         return True
+
+    def mark_differential_result(self, diff_id: int) -> bool:
+        """Mark a differential as 'result' — a converged finding that generates new differentials.
+
+        A result is not 'done'; it's a condensation point that spawns further inquiry.
+        """
+        self.con.execute(
+            "UPDATE differentials SET status = 'result', resolved_at = ? WHERE id = ?",
+            [datetime.now(), diff_id]
+        )
+        return True
+
+    def get_diff_children(self, diff_id: int) -> List[Dict]:
+        """Get all differentials that iterate on a given parent differential."""
+        return self._fetchdicts(
+            "SELECT * FROM differentials WHERE parent_diff_id = ? ORDER BY ts ASC",
+            [diff_id]
+        )
+
+    def get_diff_tree(self, diff_id: int) -> Dict:
+        """Get a differential with its full genealogy (children and responses)."""
+        diff = self.get_differential(diff_id)
+        if not diff:
+            return {}
+        diff["children"] = self.get_diff_children(diff_id)
+        diff["responses"] = self.get_differential_responses(diff_id)
+        # Walk up to root
+        ancestry = []
+        current = diff
+        while current and current.get("parent_diff_id"):
+            parent = self.get_differential(current["parent_diff_id"])
+            if parent:
+                ancestry.append({"id": parent["id"], "author": parent["author"],
+                                 "status": parent["status"],
+                                 "content": parent["content"][:200]})
+            current = parent
+        diff["ancestry"] = ancestry
+        return diff
 
     def get_differential(self, diff_id: int) -> Optional[Dict]:
         """Get a single differential by ID."""

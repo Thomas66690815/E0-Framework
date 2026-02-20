@@ -817,6 +817,7 @@
   .diff-status.open { background: rgba(240,136,62,0.2); color: var(--accent-d); }
   .diff-status.claimed { background: rgba(88,166,255,0.2); color: var(--accent-a); }
   .diff-status.resolved { background: rgba(126,231,135,0.2); color: var(--accent-b); }
+  .diff-status.result { background: rgba(240,173,78,0.25); color: #f0ad4e; }
 
   .diff-card-content {
     font-size: 13px;
@@ -1074,6 +1075,7 @@
         <option value="">Alle</option>
         <option value="claimed">In Bearbeitung</option>
         <option value="resolved">Gelöst</option>
+        <option value="result">Ergebnisse</option>
       </select>
       <button class="btn" onclick="loadDifferentials()" style="font-size:11px;">🔄 Aktualisieren</button>
     </div>
@@ -1097,6 +1099,8 @@
           <option value="open">open</option>
         </select>
         <button class="btn primary" onclick="postDifferential()" style="font-size:12px;">Δ Einstellen</button>
+        <input type="hidden" id="diffParentId" value="">
+        <span id="diffParentInfo" style="font-size:11px;color:var(--accent-b);display:none;cursor:pointer;" onclick="clearDiffParent()"></span>
       </div>
     </div>
     <div class="diff-feed" id="diffFeed">
@@ -2473,18 +2477,21 @@ async function postDifferential() {
   const author = document.getElementById('diffAuthor').value;
   const addressed_to = document.getElementById('diffTarget').value || null;
   const scope = document.getElementById('diffScope').value || null;
+  const parent_diff_id = document.getElementById('diffParentId').value || null;
 
   try {
     const resp = await fetch('/diff', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ author, content, addressed_to, scope }),
+      body: JSON.stringify({ author, content, addressed_to, scope,
+                             parent_diff_id: parent_diff_id ? parseInt(parent_diff_id) : null }),
     });
     const data = await resp.json();
     if (data.error) {
       document.getElementById('headerStatus').textContent = 'Fehler: ' + data.error;
     } else {
       input.value = '';
+      clearDiffParent();
       document.getElementById('headerStatus').textContent = `Δ #${data.id} eingestellt`;
       setTimeout(() => document.getElementById('headerStatus').textContent = '', 2000);
       loadDifferentials();
@@ -2518,6 +2525,7 @@ async function loadDifferentials() {
       const addressed = d.addressed_to ? ` → ${capitalize(d.addressed_to)}` : '';
       const scopeTag = d.scope ? ` [${d.scope}]` : '';
       const claimed = d.claimed_by ? ` · bearbeitet von ${capitalize(d.claimed_by)}` : '';
+      const parentTag = d.parent_diff_id ? ` ← Δ #${d.parent_diff_id}` : '';
 
       let actions = '';
       // Show respond buttons for all differentials (not just open — n:m responses)
@@ -2527,6 +2535,14 @@ async function loadDifferentials() {
           `<button class="btn-inject" onclick="respondToDiff(${d.id}, '${sid}')">`
           + `→ ${capitalize(sid)}</button>`
         ).join('');
+        // Iterate button — create child differential
+        actions += `<button class="btn-inject" onclick="iterateDiff(${d.id})" `
+          + `style="border-color:var(--accent-b);color:var(--accent-b);">Δ Iterieren</button>`;
+        // Mark as result button (only for open/claimed/resolved)
+        if (d.status !== 'result') {
+          actions += `<button class="btn-inject" onclick="markDiffResult(${d.id})" `
+            + `style="border-color:#f0ad4e;color:#f0ad4e;">★ Ergebnis</button>`;
+        }
         if (d.status === 'open') {
           actions += `<button class="btn-inject" onclick="archiveDiff(${d.id})" `
             + `style="border-color:var(--text3);color:var(--text3);">Archivieren</button>`;
@@ -2544,7 +2560,7 @@ async function loadDifferentials() {
 
       return `<div class="diff-card ${statusClass}">`
         + `<div class="diff-card-header">`
-        + `<span><span class="diff-id">Δ #${d.id}</span> · ${capitalize(d.author)}${addressed}${scopeTag} · ${ts}${claimed}</span>`
+        + `<span><span class="diff-id">Δ #${d.id}</span>${parentTag} · ${capitalize(d.author)}${addressed}${scopeTag} · ${ts}${claimed}</span>`
         + `<span class="diff-status ${statusClass}">${statusClass}</span>`
         + `</div>`
         + `<div class="diff-card-content">${esc(d.content)}</div>`
@@ -2574,8 +2590,11 @@ async function respondToDiff(diffId, systemId) {
       document.getElementById('headerStatus').textContent = 'Fehler: ' + data.error;
       setTimeout(() => document.getElementById('headerStatus').textContent = '', 3000);
     } else {
-      document.getElementById('headerStatus').textContent =
-        `Δ #${diffId} gelöst von ${capitalize(systemId)}`;
+      let statusMsg = `Δ #${diffId} gelöst von ${capitalize(systemId)}`;
+      if (data.extracted_diffs > 0) {
+        statusMsg += ` · ${data.extracted_diffs} neue Differenz(en) extrahiert`;
+      }
+      document.getElementById('headerStatus').textContent = statusMsg;
       setTimeout(() => document.getElementById('headerStatus').textContent = '', 3000);
 
       // Also add the response to the system's chat panel if it exists
@@ -2640,6 +2659,44 @@ async function loadDiffResponses(diffId) {
   } catch (e) {
     container.innerHTML = '<div style="color:var(--accent-red);padding:8px;font-size:12px;">Fehler: ' + e.message + '</div>';
     container.style.display = 'block';
+  }
+}
+
+function iterateDiff(diffId) {
+  // Set parent_diff_id and focus the compose area
+  document.getElementById('diffParentId').value = diffId;
+  const info = document.getElementById('diffParentInfo');
+  info.textContent = `↳ iteriert auf Δ #${diffId} (×)`;
+  info.style.display = 'inline';
+  const input = document.getElementById('diffInput');
+  input.placeholder = `Iterierende Differenz zu Δ #${diffId}...`;
+  input.focus();
+}
+
+function clearDiffParent() {
+  document.getElementById('diffParentId').value = '';
+  document.getElementById('diffParentInfo').style.display = 'none';
+  document.getElementById('diffInput').placeholder =
+    'Differenz formulieren... (Was ist die offene Frage, der ungelöste Unterschied, die strukturelle Spannung?)';
+}
+
+async function markDiffResult(diffId) {
+  try {
+    const resp = await fetch('/diff/result', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ diff_id: diffId }),
+    });
+    const data = await resp.json();
+    if (data.error) {
+      document.getElementById('headerStatus').textContent = 'Fehler: ' + data.error;
+    } else {
+      document.getElementById('headerStatus').textContent = `Δ #${diffId} → Ergebnis`;
+      setTimeout(() => document.getElementById('headerStatus').textContent = '', 2000);
+      loadDifferentials();
+    }
+  } catch (e) {
+    document.getElementById('headerStatus').textContent = 'Netzwerkfehler';
   }
 }
 
