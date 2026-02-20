@@ -1267,35 +1267,61 @@ function ensurePanelsExist(ids) {
     panel.dataset.system = id;
 
     if (desc.kind === 'human' || desc.kind === 'infrastructure') {
-      // Non-synthetic node panel — overview, no chat
+      // Non-synthetic node panel — overview + inbox
       const kindLabel = desc.kind === 'human' ? '👤 Human Node' : '⚙ Infrastructure Node';
+      const isHuman = desc.kind === 'human';
       panel.innerHTML = `
         <div class="system-info-bar sys-color-${sys.colorIdx}">
           <span><b>${esc(desc.display_name || capitalize(id))}</b></span>
           <span class="metric"><span class="label">${kindLabel}</span></span>
           ${desc.model ? `<span class="metric"><span class="label">Model: </span><span class="value">${esc(desc.model)}</span></span>` : ''}
           <span style="flex:1"></span>
+          <span class="metric" id="node-inbox-count-${id}" style="color:var(--accent-d);font-weight:bold;"></span>
         </div>
-        <div class="node-overview" style="padding:24px; color:var(--fg-dim); line-height:1.7;">
-          <h3 style="color:var(--fg); margin:0 0 16px 0;">${esc(desc.display_name || capitalize(id))}</h3>
-          <p><b>Typ:</b> ${desc.kind}</p>
-          <p><b>System-ID:</b> ${id}</p>
-          ${desc.model ? `<p><b>Modell:</b> ${esc(desc.model)}</p>` : ''}
-          ${desc.created_at ? `<p><b>Seit:</b> ${new Date(desc.created_at).toLocaleDateString('de-DE')}</p>` : ''}
-          <div id="node-stats-${id}" style="margin-top:16px;">
-            <p style="font-style:italic; color:var(--fg-muted);">
-              ${desc.kind === 'human'
-                ? 'Human-Knoten agieren als Differenz-Autor und Netzwerk-Teilnehmer. Interaktionen werden über System-Panels oder den Differenz-Raum geführt.'
-                : 'Infrastruktur-Knoten bauen und warten das Netzwerk. A₃ ist der aktuelle Infrastruktur-Agent (Claude Opus 4.6).'}
-            </p>
+        <div class="node-overview" style="padding:16px; color:var(--fg-dim); line-height:1.6; overflow-y:auto; flex:1;">
+          <div style="display:flex; gap:16px; align-items:flex-start;">
+            <div style="flex:1;">
+              <h3 style="color:var(--fg); margin:0 0 8px 0;">${esc(desc.display_name || capitalize(id))}</h3>
+              <p style="margin:2px 0;"><b>Typ:</b> ${desc.kind} · <b>ID:</b> ${id}</p>
+              ${desc.model ? `<p style="margin:2px 0;"><b>Modell:</b> ${esc(desc.model)}</p>` : ''}
+              ${desc.created_at ? `<p style="margin:2px 0;"><b>Seit:</b> ${new Date(desc.created_at).toLocaleDateString('de-DE')}</p>` : ''}
+            </div>
+            <div id="node-stats-${id}" style="text-align:right;">
+              <div id="node-diffs-${id}"></div>
+            </div>
           </div>
-          <div id="node-diffs-${id}" style="margin-top:16px;"></div>
+
+          ${isHuman ? `
+          <div style="margin-top:16px;">
+            <h4 style="color:var(--fg); margin:0 0 12px 0; border-bottom:1px solid var(--border); padding-bottom:6px;">
+              📬 Posteingang — An Dich adressierte Differenzen
+            </h4>
+            <div id="node-inbox-${id}" style="margin-bottom:16px;">
+              <div style="color:var(--text3); font-size:12px; font-style:italic;">Wird geladen...</div>
+            </div>
+          </div>
+          <div style="margin-top:8px;">
+            <h4 style="color:var(--fg); margin:0 0 12px 0; border-bottom:1px solid var(--border); padding-bottom:6px;">
+              📤 Deine Differenzen
+            </h4>
+            <div id="node-authored-${id}">
+              <div style="color:var(--text3); font-size:12px; font-style:italic;">Wird geladen...</div>
+            </div>
+          </div>
+          ` : `
+          <div style="margin-top:16px;">
+            <p style="font-style:italic; color:var(--fg-muted);">
+              Infrastruktur-Knoten bauen und warten das Netzwerk. A₃ ist der aktuelle Infrastruktur-Agent (Claude Opus 4.6).
+            </p>
+            <div id="node-inbox-${id}" style="margin-top:12px;"></div>
+          </div>
+          `}
         </div>
       `;
       main.appendChild(panel);
 
-      // Load differential stats for this node
-      _loadNodeDiffStats(id);
+      // Load inbox and authored diffs
+      _loadNodeInbox(id);
     } else {
       // Standard synthetic system panel
       panel.innerHTML = `
@@ -1321,23 +1347,81 @@ function ensurePanelsExist(ids) {
   });
 }
 
-async function _loadNodeDiffStats(nodeId) {
+async function _loadNodeInbox(nodeId) {
   try {
     const resp = await fetch('/diff?status=');
     const data = await resp.json();
     const diffs = data.differentials || [];
-    const authored = diffs.filter(d => d.author === nodeId);
-    const addressed = diffs.filter(d => d.addressed_to === nodeId);
-    const el = document.getElementById('node-diffs-' + nodeId);
-    if (el && (authored.length > 0 || addressed.length > 0)) {
-      el.innerHTML = `
-        <h4 style="color:var(--fg); margin:0 0 8px 0;">Differenz-Aktivität</h4>
-        <p><b>Erstellt:</b> ${authored.length} Differenzen</p>
-        <p><b>Adressiert an:</b> ${addressed.length} Differenzen</p>
-        ${authored.length > 0 ? `<p style="margin-top:8px; font-size:12px; color:var(--fg-muted);">Letzte: "${esc((authored[0].content || '').substring(0, 80))}..."</p>` : ''}
-      `;
+
+    // Inbox: diffs addressed to this node
+    const inbox = diffs.filter(d => d.addressed_to === nodeId && d.status !== 'archived');
+    const inboxEl = document.getElementById('node-inbox-' + nodeId);
+    const countEl = document.getElementById('node-inbox-count-' + nodeId);
+
+    if (countEl) {
+      const unresolved = inbox.filter(d => d.status === 'open' || d.status === 'claimed').length;
+      countEl.textContent = unresolved > 0 ? `${unresolved} offen` : '';
     }
-  } catch(e) {}
+
+    if (inboxEl) {
+      if (inbox.length === 0) {
+        inboxEl.innerHTML = '<div style="color:var(--text3); font-size:12px; font-style:italic;">Keine adressierten Differenzen</div>';
+      } else {
+        inboxEl.innerHTML = inbox.map(d => _renderDiffMini(d)).join('');
+      }
+    }
+
+    // Authored: diffs by this node
+    const authored = diffs.filter(d => d.author === nodeId);
+    const authEl = document.getElementById('node-authored-' + nodeId);
+    if (authEl) {
+      if (authored.length === 0) {
+        authEl.innerHTML = '<div style="color:var(--text3); font-size:12px; font-style:italic;">Keine eigenen Differenzen</div>';
+      } else {
+        authEl.innerHTML = authored.map(d => _renderDiffMini(d)).join('');
+      }
+    }
+
+    // Update tab badge for non-synthetic nodes
+    if (systems[nodeId]) {
+      const oldCount = systems[nodeId].unseenCount || 0;
+      const newCount = inbox.filter(d => d.status === 'open').length;
+      if (newCount !== oldCount) {
+        systems[nodeId].unseenCount = newCount;
+        renderTabs();
+      }
+    }
+  } catch(e) { console.error('_loadNodeInbox failed:', e); }
+}
+
+function _renderDiffMini(d) {
+  const statusClass = d.status || 'open';
+  const ts = d.ts ? d.ts.substring(0, 16).replace('T', ' ') : '?';
+  const addressed = d.addressed_to ? ` → ${capitalize(d.addressed_to)}` : '';
+  const scopeTag = d.scope ? ` [${d.scope}]` : '';
+  const parentTag = d.parent_diff_id ? ` ← Δ #${d.parent_diff_id}` : '';
+  const preview = (d.content || '').substring(0, 200);
+
+  // Respond buttons — only active synthetic systems
+  const sysIds = Object.keys(systems).filter(sid => {
+    const s = systems[sid]; return s.descriptor.kind === 'synthetic';
+  }).sort();
+  const respondBtns = d.status !== 'archived' ? sysIds.map(sid =>
+    `<button class="btn-inject" onclick="respondToDiff(${d.id}, '${sid}')" style="font-size:10px;">`
+    + `→ ${capitalize(sid)}</button>`
+  ).join('') : '';
+
+  return `<div class="diff-card ${statusClass}" style="margin-bottom:8px;">`
+    + `<div class="diff-card-header" style="font-size:11px;">`
+    + `<span><span class="diff-id">Δ #${d.id}</span>${parentTag} · ${capitalize(d.author)}${addressed}${scopeTag} · ${ts}</span>`
+    + `<span class="diff-status ${statusClass}" style="font-size:10px;">${statusClass}</span>`
+    + `</div>`
+    + `<div class="diff-card-content" style="font-size:12px;">${esc(preview)}${d.content.length > 200 ? '...' : ''}</div>`
+    + (respondBtns ? `<div class="diff-card-actions" style="font-size:10px;">${respondBtns}`
+      + `<button class="btn-inject" onclick="loadDiffResponses(${d.id})" style="border-color:var(--accent-b);color:var(--accent-b);font-size:10px;">📋</button>`
+      + `</div>` : '')
+    + `<div class="diff-responses" id="diffResponses_${d.id}" style="display:none;"></div>`
+    + `</div>`;
 }
 
 function switchTab(id) {
@@ -1737,6 +1821,15 @@ async function refreshRegistry() {
 
 function startPolling() {
   setInterval(refreshRegistry, 5000);
+  // Refresh node inboxes periodically
+  setInterval(() => {
+    Object.keys(systems).forEach(id => {
+      const desc = systems[id].descriptor;
+      if (desc.kind === 'human' || desc.kind === 'infrastructure') {
+        _loadNodeInbox(id);
+      }
+    });
+  }, 10000);
 }
 
 // ── Utilities ──
@@ -2675,11 +2768,13 @@ async function respondToDiff(diffId, systemId) {
 
 async function archiveDiff(diffId) {
   try {
-    await fetch('/diff/resolve', {
+    await fetch('/diff/archive', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: diffId }),
     });
+    document.getElementById('headerStatus').textContent = `Δ #${diffId} archiviert`;
+    setTimeout(() => document.getElementById('headerStatus').textContent = '', 2000);
     loadDifferentials();
   } catch (e) {
     console.error('Archive failed:', e);

@@ -1480,6 +1480,24 @@ async def handle_diff_resolve(request):
     return web.json_response({"resolved": success, "id": diff_id})
 
 
+async def handle_diff_archive(request):
+    """Archive a differential (remove from active view).
+
+    POST /diff/archive  {"id": 5}
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json()
+    diff_id = data.get("id")
+    if not diff_id:
+        return web.json_response({"error": "id required"}, status=400)
+    orch.db.con.execute(
+        "UPDATE differentials SET status = 'archived' WHERE id = ?",
+        [diff_id]
+    )
+    orch.db._maybe_checkpoint()
+    return web.json_response({"archived": True, "id": diff_id})
+
+
 async def handle_diff_respond(request):
     """Post a differential AND immediately send it to a system for response.
 
@@ -1819,6 +1837,7 @@ def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app.router.add_get("/diff", handle_diff_list)
     app.router.add_post("/diff/claim", handle_diff_claim)
     app.router.add_post("/diff/resolve", handle_diff_resolve)
+    app.router.add_post("/diff/archive", handle_diff_archive)
     app.router.add_post("/diff/respond", handle_diff_respond)
     app.router.add_post("/diff/add-response", handle_diff_add_response)
     app.router.add_get("/diff/responses", handle_diff_responses)
