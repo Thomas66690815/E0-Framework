@@ -832,6 +832,13 @@
     flex-wrap: wrap;
   }
 
+  .diff-responses {
+    background: rgba(0,0,0,0.15);
+    border-top: 1px solid var(--border);
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
   .diff-stats {
     padding: 8px 12px;
     background: var(--bg2);
@@ -1079,6 +1086,15 @@
         </select>
         <select id="diffTarget" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:11px;">
           <option value="">An: alle (offen)</option>
+        </select>
+        <select id="diffScope" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:11px;">
+          <option value="">Scope: frei</option>
+          <option value="network">network</option>
+          <option value="physics">physics</option>
+          <option value="meta">meta</option>
+          <option value="reflexion">reflexion</option>
+          <option value="design">design</option>
+          <option value="open">open</option>
         </select>
         <button class="btn primary" onclick="postDifferential()" style="font-size:12px;">Δ Einstellen</button>
       </div>
@@ -2456,12 +2472,13 @@ async function postDifferential() {
 
   const author = document.getElementById('diffAuthor').value;
   const addressed_to = document.getElementById('diffTarget').value || null;
+  const scope = document.getElementById('diffScope').value || null;
 
   try {
     const resp = await fetch('/diff', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ author, content, addressed_to }),
+      body: JSON.stringify({ author, content, addressed_to, scope }),
     });
     const data = await resp.json();
     if (data.error) {
@@ -2499,30 +2516,40 @@ async function loadDifferentials() {
       const statusClass = d.status || 'open';
       const ts = d.ts ? d.ts.substring(0, 16).replace('T', ' ') : '?';
       const addressed = d.addressed_to ? ` → ${capitalize(d.addressed_to)}` : '';
+      const scopeTag = d.scope ? ` [${d.scope}]` : '';
       const claimed = d.claimed_by ? ` · bearbeitet von ${capitalize(d.claimed_by)}` : '';
 
       let actions = '';
-      if (d.status === 'open') {
-        // Show respond buttons for each active system
+      // Show respond buttons for all differentials (not just open — n:m responses)
+      if (d.status !== 'archived') {
         const sysIds = Object.keys(systems).sort();
         actions = sysIds.map(sid =>
           `<button class="btn-inject" onclick="respondToDiff(${d.id}, '${sid}')">`
           + `→ ${capitalize(sid)}</button>`
         ).join('');
-        actions += `<button class="btn-inject" onclick="archiveDiff(${d.id})" `
-          + `style="border-color:var(--text3);color:var(--text3);">Archivieren</button>`;
-      } else if (d.status === 'resolved' && d.resolution_id) {
-        actions = `<button class="btn-inject" onclick="showResolution(${d.resolution_id})">`
-          + `📖 Antwort #${d.resolution_id}</button>`;
+        if (d.status === 'open') {
+          actions += `<button class="btn-inject" onclick="archiveDiff(${d.id})" `
+            + `style="border-color:var(--text3);color:var(--text3);">Archivieren</button>`;
+        }
       }
+
+      // Show response count and resolution links
+      let responseInfo = '';
+      if (d.resolution_id) {
+        responseInfo += `<button class="btn-inject" onclick="showResolution(${d.resolution_id})">`
+          + `📖 #${d.resolution_id}</button>`;
+      }
+      responseInfo += `<button class="btn-inject" onclick="loadDiffResponses(${d.id})" `
+        + `style="border-color:var(--accent-b);color:var(--accent-b);">📋 Antworten</button>`;
 
       return `<div class="diff-card ${statusClass}">`
         + `<div class="diff-card-header">`
-        + `<span><span class="diff-id">Δ #${d.id}</span> · ${capitalize(d.author)}${addressed} · ${ts}${claimed}</span>`
+        + `<span><span class="diff-id">Δ #${d.id}</span> · ${capitalize(d.author)}${addressed}${scopeTag} · ${ts}${claimed}</span>`
         + `<span class="diff-status ${statusClass}">${statusClass}</span>`
         + `</div>`
         + `<div class="diff-card-content">${esc(d.content)}</div>`
-        + (actions ? `<div class="diff-card-actions">${actions}</div>` : '')
+        + `<div class="diff-card-actions">${responseInfo}${actions}</div>`
+        + `<div class="diff-responses" id="diffResponses_${d.id}" style="display:none;"></div>`
         + `</div>`;
     }).join('');
 
@@ -2575,6 +2602,44 @@ async function archiveDiff(diffId) {
     loadDifferentials();
   } catch (e) {
     console.error('Archive failed:', e);
+  }
+}
+
+async function loadDiffResponses(diffId) {
+  const container = document.getElementById('diffResponses_' + diffId);
+  if (!container) return;
+
+  // Toggle visibility
+  if (container.style.display !== 'none') {
+    container.style.display = 'none';
+    return;
+  }
+
+  try {
+    const resp = await fetch(`/diff/responses?id=${diffId}`);
+    const data = await resp.json();
+    const responses = data.responses || [];
+
+    if (responses.length === 0) {
+      container.innerHTML = '<div style="color:var(--text3);padding:8px;font-size:12px;">Noch keine Antworten</div>';
+    } else {
+      container.innerHTML = responses.map(r => {
+        const ts = r.ts ? r.ts.substring(0, 16).replace('T', ' ') : '?';
+        const preview = r.response_preview ? esc(r.response_preview.substring(0, 200)) + '...' : 'n/a';
+        const iLink = r.interaction_id
+          ? `<button class="btn-inject" onclick="showResolution(${r.interaction_id})" style="font-size:10px;">📖 #${r.interaction_id}</button>`
+          : '';
+        return `<div style="padding:6px 8px;border-top:1px solid var(--border);font-size:12px;">`
+          + `<span style="color:var(--accent-a);font-weight:bold;">${capitalize(r.system_id)}</span>`
+          + ` · <span style="color:var(--text3);">${r.kind || 'analysis'}</span> · ${ts} ${iLink}`
+          + `<div style="color:var(--text2);margin-top:4px;">${preview}</div>`
+          + `</div>`;
+      }).join('');
+    }
+    container.style.display = 'block';
+  } catch (e) {
+    container.innerHTML = '<div style="color:var(--accent-red);padding:8px;font-size:12px;">Fehler: ' + e.message + '</div>';
+    container.style.display = 'block';
   }
 }
 

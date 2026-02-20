@@ -1273,6 +1273,7 @@ async def handle_diff_post(request):
         "author": "thomas",
         "content": "Wie verhält sich R unter Mediumwechsel?",
         "addressed_to": "alpha",   (optional — hint, not constraint)
+        "scope": "physics",          (optional — semantic routing)
         "tags": "resistance,medium"  (optional)
     }
     """
@@ -1286,6 +1287,7 @@ async def handle_diff_post(request):
         author=author,
         content=content,
         addressed_to=data.get("addressed_to"),
+        scope=data.get("scope"),
         tags=data.get("tags"),
         meta=data.get("meta"),
     )
@@ -1368,11 +1370,14 @@ async def handle_diff_respond(request):
     diff = orch.db.get_differential(diff_id)
     if not diff:
         return web.json_response({"error": f"Differential {diff_id} not found"}, status=404)
-    if diff["status"] != "open":
-        return web.json_response({"error": f"Differential {diff_id} is {diff['status']}"}, status=409)
 
-    # Claim
-    orch.db.claim_differential(diff_id, system_id)
+    is_additional = diff["status"] in ("claimed", "resolved")
+    if diff["status"] == "archived":
+        return web.json_response({"error": f"Differential {diff_id} is archived"}, status=409)
+
+    # Claim only if still open
+    if diff["status"] == "open":
+        orch.db.claim_differential(diff_id, system_id)
 
     # Send as prompt
     prompt = f"[Differenz #{diff_id} von {diff['author']}]\n\n{diff['content']}"
@@ -1388,8 +1393,17 @@ async def handle_diff_respond(request):
     ).fetchone()
     resolution_id = last[0] if last else None
 
-    # Resolve
-    orch.db.resolve_differential(diff_id, resolution_id)
+    # Link response (n:m)
+    resp_id = orch.db.add_differential_response(
+        diff_id=diff_id,
+        system_id=system_id,
+        interaction_id=resolution_id,
+        kind=data.get("kind", "analysis"),
+    )
+
+    # Resolve only if not already resolved (first response sets primary resolution)
+    if not is_additional:
+        orch.db.resolve_differential(diff_id, resolution_id)
 
     return web.json_response({
         "resolved": True,
@@ -1398,7 +1412,53 @@ async def handle_diff_respond(request):
         "response": result.get("response"),
         "metrics": result.get("metrics"),
         "resolution_id": resolution_id,
+        "response_id": resp_id,
+        "additional": is_additional,
     })
+
+
+async def handle_diff_add_response(request):
+    """Add a response link to a differential without changing its status.
+
+    POST /diff/add-response  {
+        "diff_id": 5,
+        "system": "alpha",
+        "interaction_id": 955,
+        "kind": "analysis",
+        "note": "Partial analysis of the QM question"
+    }
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json()
+    diff_id = data.get("diff_id")
+    system_id = data.get("system")
+    if not diff_id or not system_id:
+        return web.json_response({"error": "diff_id and system required"}, status=400)
+    resp_id = orch.db.add_differential_response(
+        diff_id=diff_id,
+        system_id=system_id,
+        interaction_id=data.get("interaction_id"),
+        kind=data.get("kind", "analysis"),
+        note=data.get("note"),
+    )
+    return web.json_response({"added": True, "response_id": resp_id})
+
+
+async def handle_diff_responses(request):
+    """Get all responses linked to a differential.
+
+    GET /diff/responses?id=5
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    diff_id = request.query.get("id")
+    if not diff_id:
+        return web.json_response({"error": "id required"}, status=400)
+    responses = orch.db.get_differential_responses(int(diff_id))
+    for r in responses:
+        for key in ("ts",):
+            if r.get(key):
+                r[key] = str(r[key])
+    return web.json_response({"diff_id": int(diff_id), "responses": responses, "count": len(responses)})
 
 
 async def handle_system_context(request):
@@ -1474,16 +1534,19 @@ async def handle_system_context(request):
         "history_digests: Verdichtete Netzwerk-Geschichte (scope, digest_type, content)\n"
         "  - digest_type: 'structural' | 'narrative' | 'analysis'\n"
         "  - scope: 'network' | 'system:alpha' | 'design:feature_name'\n"
-        "differentials: Geteilter Differenz-Raum (author, content, addressed_to, status)\n"
+        "differentials: Geteilter Differenz-Raum (author, content, addressed_to, scope, status)\n"
         "  - status: 'open' | 'claimed' | 'resolved' | 'archived'\n"
+        "  - scope: 'network' | 'physics' | 'meta' | 'reflexion' | 'design' | 'open'\n"
         "  - Jeder Knoten (human oder synthetisch) kann Differenzen einstellen und beantworten\n"
+        "differential_responses: n:m Verknüpfung — mehrere Systeme können auf eine Differenz reagieren\n"
+        "  - kind: 'analysis' | 'proposal' | 'experiment' | 'reflexion' | 'counter'\n"
     )
 
-    # 7. Open differentials for this system
-    open_diffs = orch.db.get_open_differentials(
-        for_system=requesting_system, limit=10
+    # 7. Unanswered differentials for this system (only those it hasn't responded to yet)
+    unanswered_diffs = orch.db.get_unanswered_differentials(
+        system_id=requesting_system, limit=10
     )
-    for d in open_diffs:
+    for d in unanswered_diffs:
         for key in ("ts", "claimed_at", "resolved_at"):
             if d.get(key):
                 d[key] = str(d[key])
@@ -1501,7 +1564,7 @@ async def handle_system_context(request):
         "query_protocol": query_protocol,
         "table_guide": table_guide,
         "stats_by_system": stats.get("by_system", []),
-        "open_differentials": open_diffs,
+        "open_differentials": unanswered_diffs,
     })
 
 
@@ -1550,6 +1613,8 @@ def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app.router.add_post("/diff/claim", handle_diff_claim)
     app.router.add_post("/diff/resolve", handle_diff_resolve)
     app.router.add_post("/diff/respond", handle_diff_respond)
+    app.router.add_post("/diff/add-response", handle_diff_add_response)
+    app.router.add_get("/diff/responses", handle_diff_responses)
 
     return app
 

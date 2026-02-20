@@ -142,13 +142,27 @@ CREATE TABLE IF NOT EXISTS differentials (
     author          VARCHAR NOT NULL,         -- who posted: 'thomas', 'alpha', 'a3', ...
     content         TEXT NOT NULL,            -- the difference itself
     addressed_to    VARCHAR,                  -- optional hint: 'alpha', NULL = open to all
+    scope           VARCHAR,                  -- 'network' | 'physics' | 'meta' | 'reflexion' | 'design' | 'open'
     status          VARCHAR DEFAULT 'open',   -- 'open' | 'claimed' | 'resolved' | 'archived'
     claimed_by      VARCHAR,                  -- who picked it up
     claimed_at      TIMESTAMP,
     resolved_at     TIMESTAMP,
-    resolution_id   INTEGER,                  -- FK → interactions.id (the response)
+    resolution_id   INTEGER,                  -- FK → interactions.id (first/primary response)
     tags            VARCHAR,                  -- optional CSV tags for structural routing
     meta            VARCHAR                   -- JSON: additional context
+);
+
+-- Differential responses — n:m linking table (Epsilon's delta_links idea)
+-- Multiple systems can respond to the same differential with different reaction types.
+CREATE SEQUENCE IF NOT EXISTS diff_resp_seq START 1;
+CREATE TABLE IF NOT EXISTS differential_responses (
+    id              INTEGER DEFAULT nextval('diff_resp_seq') PRIMARY KEY,
+    diff_id         INTEGER NOT NULL,         -- FK → differentials.id
+    interaction_id  INTEGER,                  -- FK → interactions.id (the actual response)
+    system_id       VARCHAR NOT NULL,         -- who responded
+    kind            VARCHAR DEFAULT 'analysis', -- 'analysis' | 'proposal' | 'experiment' | 'reflexion' | 'counter'
+    note            VARCHAR,                  -- optional short note about the response
+    ts              TIMESTAMP NOT NULL
 );
 """
 
@@ -185,6 +199,23 @@ class E0Database:
                 self.con.execute(stmt)
             except Exception:
                 pass  # sequence/table already exists
+
+        # Migrations: add columns to existing tables
+        self._migrate()
+
+    def _migrate(self):
+        """Apply column-level migrations to existing tables."""
+        migrations = [
+            ("differentials", "scope", "ALTER TABLE differentials ADD COLUMN scope VARCHAR"),
+        ]
+        for table, col, sql in migrations:
+            try:
+                # Check if column exists
+                cols = [c[0] for c in self.con.execute(f"DESCRIBE {table}").fetchall()]
+                if col not in cols:
+                    self.con.execute(sql)
+            except Exception:
+                pass
 
     def close(self):
         """Close the database connection."""
@@ -625,8 +656,8 @@ class E0Database:
     # ─────────────────────────────────────────
 
     def post_differential(self, author: str, content: str,
-                          addressed_to: str = None, tags: str = None,
-                          meta: Dict = None) -> int:
+                          addressed_to: str = None, scope: str = None,
+                          tags: str = None, meta: Dict = None) -> int:
         """Post a new differential into the shared space.
 
         Any node (human or synthetic) can post.
@@ -634,10 +665,10 @@ class E0Database:
         """
         self.con.execute(
             "INSERT INTO differentials "
-            "(ts, author, content, addressed_to, status, tags, meta) "
-            "VALUES (?, ?, ?, ?, 'open', ?, ?)",
+            "(ts, author, content, addressed_to, scope, status, tags, meta) "
+            "VALUES (?, ?, ?, ?, ?, 'open', ?, ?)",
             [
-                datetime.now(), author, content, addressed_to, tags,
+                datetime.now(), author, content, addressed_to, scope, tags,
                 json.dumps(meta, ensure_ascii=False) if meta else None,
             ]
         )
@@ -710,6 +741,62 @@ class E0Database:
         return self._fetchdicts(
             f"SELECT * FROM differentials {where} ORDER BY ts DESC LIMIT ?",
             params
+        )
+
+    # ─────────────────────────────────────────
+    #  Differential responses (n:m reactions)
+    # ─────────────────────────────────────────
+
+    def add_differential_response(self, diff_id: int, system_id: str,
+                                   interaction_id: int = None,
+                                   kind: str = "analysis",
+                                   note: str = None) -> int:
+        """Record a system's response to a differential.
+
+        Multiple systems can respond to the same differential.
+        Returns the response id.
+        """
+        self.con.execute(
+            "INSERT INTO differential_responses "
+            "(diff_id, interaction_id, system_id, kind, note, ts) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            [diff_id, interaction_id, system_id, kind, note, datetime.now()]
+        )
+        row = self.con.execute(
+            "SELECT MAX(id) FROM differential_responses WHERE diff_id = ?",
+            [diff_id]
+        ).fetchone()
+        return row[0] if row else -1
+
+    def get_differential_responses(self, diff_id: int) -> List[Dict]:
+        """Get all responses linked to a differential."""
+        return self._fetchdicts(
+            "SELECT dr.*, LEFT(i.content, 500) as response_preview "
+            "FROM differential_responses dr "
+            "LEFT JOIN interactions i ON dr.interaction_id = i.id "
+            "WHERE dr.diff_id = ? ORDER BY dr.ts ASC",
+            [diff_id]
+        )
+
+    def get_unanswered_differentials(self, system_id: str,
+                                      limit: int = 20) -> List[Dict]:
+        """Get open differentials that this system has NOT yet responded to.
+
+        This is the key query for system-context polling:
+        shows each system what's waiting for them.
+        """
+        return self._fetchdicts(
+            "SELECT d.* FROM differentials d "
+            "LEFT JOIN differential_responses dr "
+            "  ON d.id = dr.diff_id AND dr.system_id = ? "
+            "WHERE d.status IN ('open', 'claimed') "
+            "  AND dr.id IS NULL "
+            "  AND d.author != ? "
+            "ORDER BY "
+            "  CASE WHEN d.addressed_to = ? THEN 0 ELSE 1 END, "
+            "  d.ts ASC "
+            "LIMIT ?",
+            [system_id, system_id, system_id, limit]
         )
 
     # ─────────────────────────────────────────
