@@ -131,6 +131,25 @@ CREATE TABLE IF NOT EXISTS history_digests (
     created_by      VARCHAR,              -- 'auto' | 'thomas' | system_id that generated it
     meta            VARCHAR               -- JSON: additional metadata
 );
+
+-- Differentials — the shared difference space
+-- Any node (human or synthetic) can post a differential.
+-- Any node can claim and resolve it.  This is the structural inbox.
+CREATE SEQUENCE IF NOT EXISTS diff_seq START 1;
+CREATE TABLE IF NOT EXISTS differentials (
+    id              INTEGER DEFAULT nextval('diff_seq') PRIMARY KEY,
+    ts              TIMESTAMP NOT NULL,
+    author          VARCHAR NOT NULL,         -- who posted: 'thomas', 'alpha', 'a3', ...
+    content         TEXT NOT NULL,            -- the difference itself
+    addressed_to    VARCHAR,                  -- optional hint: 'alpha', NULL = open to all
+    status          VARCHAR DEFAULT 'open',   -- 'open' | 'claimed' | 'resolved' | 'archived'
+    claimed_by      VARCHAR,                  -- who picked it up
+    claimed_at      TIMESTAMP,
+    resolved_at     TIMESTAMP,
+    resolution_id   INTEGER,                  -- FK → interactions.id (the response)
+    tags            VARCHAR,                  -- optional CSV tags for structural routing
+    meta            VARCHAR                   -- JSON: additional context
+);
 """
 
 
@@ -600,6 +619,98 @@ class E0Database:
         )
 
         return digest_text
+
+    # ─────────────────────────────────────────
+    #  Write / Read: differentials
+    # ─────────────────────────────────────────
+
+    def post_differential(self, author: str, content: str,
+                          addressed_to: str = None, tags: str = None,
+                          meta: Dict = None) -> int:
+        """Post a new differential into the shared space.
+
+        Any node (human or synthetic) can post.
+        Returns the differential id.
+        """
+        self.con.execute(
+            "INSERT INTO differentials "
+            "(ts, author, content, addressed_to, status, tags, meta) "
+            "VALUES (?, ?, ?, ?, 'open', ?, ?)",
+            [
+                datetime.now(), author, content, addressed_to, tags,
+                json.dumps(meta, ensure_ascii=False) if meta else None,
+            ]
+        )
+        row = self.con.execute(
+            "SELECT MAX(id) FROM differentials WHERE author = ?", [author]
+        ).fetchone()
+        return row[0] if row else -1
+
+    def get_open_differentials(self, for_system: str = None,
+                                limit: int = 20) -> List[Dict]:
+        """Get open differentials, optionally filtered for a specific system.
+
+        If for_system is given, returns differentials that are either:
+          - addressed to that system, or
+          - not addressed to anyone (open to all)
+        """
+        if for_system:
+            return self._fetchdicts(
+                "SELECT * FROM differentials "
+                "WHERE status = 'open' "
+                "AND (addressed_to IS NULL OR addressed_to = ?) "
+                "ORDER BY ts ASC LIMIT ?",
+                [for_system, limit]
+            )
+        return self._fetchdicts(
+            "SELECT * FROM differentials "
+            "WHERE status = 'open' "
+            "ORDER BY ts ASC LIMIT ?",
+            [limit]
+        )
+
+    def claim_differential(self, diff_id: int, claimed_by: str) -> bool:
+        """Claim an open differential. Returns True if successful."""
+        result = self.con.execute(
+            "UPDATE differentials SET status = 'claimed', claimed_by = ?, "
+            "claimed_at = ? WHERE id = ? AND status = 'open'",
+            [claimed_by, datetime.now(), diff_id]
+        )
+        return result.rowcount > 0 if hasattr(result, 'rowcount') else True
+
+    def resolve_differential(self, diff_id: int, resolution_id: int = None) -> bool:
+        """Mark a differential as resolved, optionally linking to the response interaction."""
+        self.con.execute(
+            "UPDATE differentials SET status = 'resolved', resolved_at = ?, "
+            "resolution_id = ? WHERE id = ?",
+            [datetime.now(), resolution_id, diff_id]
+        )
+        return True
+
+    def get_differential(self, diff_id: int) -> Optional[Dict]:
+        """Get a single differential by ID."""
+        rows = self._fetchdicts(
+            "SELECT * FROM differentials WHERE id = ?", [diff_id]
+        )
+        return rows[0] if rows else None
+
+    def get_differentials(self, status: str = None, author: str = None,
+                          limit: int = 50) -> List[Dict]:
+        """List differentials with optional filtering."""
+        conditions = []
+        params = []
+        if status:
+            conditions.append("status = ?")
+            params.append(status)
+        if author:
+            conditions.append("author = ?")
+            params.append(author)
+        where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+        params.append(limit)
+        return self._fetchdicts(
+            f"SELECT * FROM differentials {where} ORDER BY ts DESC LIMIT ?",
+            params
+        )
 
     # ─────────────────────────────────────────
     #  Query: search

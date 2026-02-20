@@ -711,6 +711,137 @@
     font-size: 14px;
   }
 
+  /* ── Differenz Panel ── */
+  .diff-panel {
+    flex: 1;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .diff-panel.active { display: flex; }
+
+  .diff-toolbar {
+    padding: 8px 12px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .diff-toolbar .diff-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent-d);
+    margin-right: 8px;
+  }
+
+  .diff-compose {
+    padding: 10px 12px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    flex-shrink: 0;
+  }
+
+  .diff-compose textarea {
+    flex: 1;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-family: var(--font);
+    font-size: 13px;
+    resize: vertical;
+    min-height: 60px;
+    max-height: 200px;
+  }
+
+  .diff-compose textarea:focus {
+    outline: none;
+    border-color: var(--accent-d);
+  }
+
+  .diff-compose .diff-options {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .diff-feed {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 16px;
+  }
+
+  .diff-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 10px;
+    transition: border-color 0.2s;
+  }
+
+  .diff-card.open { border-left: 3px solid var(--accent-d); }
+  .diff-card.claimed { border-left: 3px solid var(--accent-a); opacity: 0.8; }
+  .diff-card.resolved { border-left: 3px solid var(--accent-b); opacity: 0.6; }
+
+  .diff-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    font-size: 11px;
+    color: var(--text2);
+  }
+
+  .diff-card-header .diff-id {
+    font-family: var(--mono);
+    color: var(--accent-d);
+    font-weight: 600;
+  }
+
+  .diff-card-header .diff-status {
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .diff-status.open { background: rgba(240,136,62,0.2); color: var(--accent-d); }
+  .diff-status.claimed { background: rgba(88,166,255,0.2); color: var(--accent-a); }
+  .diff-status.resolved { background: rgba(126,231,135,0.2); color: var(--accent-b); }
+
+  .diff-card-content {
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    margin-bottom: 8px;
+  }
+
+  .diff-card-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .diff-stats {
+    padding: 8px 12px;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text2);
+    font-family: var(--mono);
+    flex-shrink: 0;
+  }
+
   /* ── Search Panel ── */
   .search-panel {
     flex: 1;
@@ -855,6 +986,7 @@
   <div class="actions">
     <button class="btn" onclick="toggleSearch()" title="Suche in der Datenbank">🔍 Suche</button>
     <button class="btn" onclick="toggleDbPanel()" title="DuckDB Explorer" style="border-color:var(--accent-c);color:var(--accent-c);">📊 Daten</button>
+    <button class="btn" onclick="toggleDiffPanel()" title="Differenz-Raum" style="border-color:var(--accent-d);color:var(--accent-d);">Δ Differenz</button>
     <button class="btn primary" onclick="showAddSystemModal()">+ Neuer Partner</button>
     <button class="btn" onclick="showRegistryModal()">Registry</button>
   </div>
@@ -924,6 +1056,40 @@
         <button class="btn-inject" onclick="injectDbResultsDirect()" id="dbInjectDirectBtn" disabled style="border-color:var(--accent-b);color:var(--accent-b);background:rgba(126,231,135,0.1);">⚡ Direkt senden</button>
       </div>
     </div>
+  </div>
+
+  <!-- Differenz Panel — shared difference space -->
+  <div class="diff-panel" id="diffPanel">
+    <div class="diff-toolbar">
+      <span class="diff-title">Δ Differenz-Raum</span>
+      <select id="diffFilter" onchange="loadDifferentials()" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;">
+        <option value="open">Offene</option>
+        <option value="">Alle</option>
+        <option value="claimed">In Bearbeitung</option>
+        <option value="resolved">Gelöst</option>
+      </select>
+      <button class="btn" onclick="loadDifferentials()" style="font-size:11px;">🔄 Aktualisieren</button>
+    </div>
+    <div class="diff-compose">
+      <textarea id="diffInput" placeholder="Differenz formulieren... (Was ist die offene Frage, der ungelöste Unterschied, die strukturelle Spannung?)"
+                onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){postDifferential();event.preventDefault();}"></textarea>
+      <div class="diff-options">
+        <select id="diffAuthor" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:11px;">
+          <option value="thomas">Thomas</option>
+        </select>
+        <select id="diffTarget" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:11px;">
+          <option value="">An: alle (offen)</option>
+        </select>
+        <button class="btn primary" onclick="postDifferential()" style="font-size:12px;">Δ Einstellen</button>
+      </div>
+    </div>
+    <div class="diff-feed" id="diffFeed">
+      <div style="color:var(--text3);padding:40px;text-align:center;">
+        Der Differenz-Raum ist der gemeinsame Ort für offene Fragen.<br>
+        <span style="font-size:12px;">Jeder Knoten — human oder synthetisch — stellt Differenzen ein. Die Struktur entscheidet, wer antwortet.</span>
+      </div>
+    </div>
+    <div class="diff-stats" id="diffStats"></div>
   </div>
 </div>
 
@@ -1082,8 +1248,9 @@ function ensurePanelsExist(ids) {
       <div class="loading" id="loading-${id}">Verarbeite...</div>
       <div class="input-area">
         <div class="input-row">
-          <textarea id="input-${id}" placeholder="Nachricht an ${capitalize(id)}..." onkeydown="handleKey(event, '${id}')"></textarea>
+          <textarea id="input-${id}" placeholder="Nachricht an ${capitalize(id)}... (Ctrl+Enter = Senden)" onkeydown="handleKey(event, '${id}')"></textarea>
           <button class="btn primary send-btn" onclick="sendPrompt('${id}')">Senden</button>
+          <button class="btn send-btn" onclick="sendAsDifferential('${id}')" style="border-color:var(--accent-d);color:var(--accent-d);font-size:12px;" title="Als Differenz in den offenen Raum stellen (Hint an dieses System)">Δ</button>
         </div>
       </div>
     `;
@@ -1163,6 +1330,35 @@ function handleKey(e, systemId) {
   if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
     sendPrompt(systemId);
     e.preventDefault();
+  }
+}
+
+async function sendAsDifferential(hintSystem) {
+  const input = document.getElementById('input-' + hintSystem);
+  const content = input.value.trim();
+  if (!content) return;
+
+  input.value = '';
+  try {
+    const resp = await fetch('/diff', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        author: 'thomas',
+        content: content,
+        addressed_to: hintSystem,
+      }),
+    });
+    const data = await resp.json();
+    if (data.error) {
+      addEntry(hintSystem, 'event', 'Fehler: ' + data.error);
+    } else {
+      addEntry(hintSystem, 'event', `Δ #${data.id} eingestellt (Hint → ${capitalize(hintSystem)})`);
+      document.getElementById('headerStatus').textContent = `Δ #${data.id} → offener Raum`;
+      setTimeout(() => document.getElementById('headerStatus').textContent = '', 2000);
+    }
+  } catch (e) {
+    addEntry(hintSystem, 'event', 'Netzwerkfehler: ' + e.message);
   }
 }
 
@@ -1482,7 +1678,9 @@ function toggleSearch() {
   if (searchActive) {
     // Hide all system panels, show search
     dbPanelActive = false;
+    diffPanelActive = false;
     document.getElementById('dbPanel').classList.remove('active');
+    document.getElementById('diffPanel').classList.remove('active');
     document.querySelectorAll('.system-panel').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     panel.classList.add('active');
@@ -1626,7 +1824,9 @@ function toggleDbPanel() {
 
   if (dbPanelActive) {
     searchActive = false;
+    diffPanelActive = false;
     document.getElementById('searchPanel').classList.remove('active');
+    document.getElementById('diffPanel').classList.remove('active');
     document.querySelectorAll('.system-panel').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     panel.classList.add('active');
@@ -2194,6 +2394,196 @@ function interruptProcessing() {
 function showInterrupt(visible) {
   const btn = document.getElementById('interruptBtn');
   if (btn) btn.className = visible ? 'btn-interrupt visible' : 'btn-interrupt';
+}
+
+// ═══════════════════════════════════════
+// ── DIFFERENZ-RAUM ──
+// ═══════════════════════════════════════
+
+let diffPanelActive = false;
+
+function toggleDiffPanel() {
+  diffPanelActive = !diffPanelActive;
+  const panel = document.getElementById('diffPanel');
+
+  if (diffPanelActive) {
+    searchActive = false;
+    dbPanelActive = false;
+    document.getElementById('searchPanel').classList.remove('active');
+    document.getElementById('dbPanel').classList.remove('active');
+    document.querySelectorAll('.system-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    panel.classList.add('active');
+    document.getElementById('emptyState').style.display = 'none';
+    populateDiffSelectors();
+    loadDifferentials();
+  } else {
+    panel.classList.remove('active');
+    if (activeTab) switchTab(activeTab);
+    else if (Object.keys(systems).length === 0) {
+      document.getElementById('emptyState').style.display = 'flex';
+    }
+  }
+}
+
+function populateDiffSelectors() {
+  // Author selector: thomas + all active systems + a3
+  const authorSel = document.getElementById('diffAuthor');
+  const targetSel = document.getElementById('diffTarget');
+  const currentAuthor = authorSel.value;
+  const currentTarget = targetSel.value;
+
+  authorSel.innerHTML = '<option value="thomas">Thomas</option>';
+  targetSel.innerHTML = '<option value="">An: alle (offen)</option>';
+
+  const sysIds = Object.keys(systems).sort();
+  sysIds.forEach(sid => {
+    authorSel.innerHTML += `<option value="${sid}">${capitalize(sid)}</option>`;
+    targetSel.innerHTML += `<option value="${sid}">${capitalize(sid)}</option>`;
+  });
+  // A₃ as option 
+  authorSel.innerHTML += '<option value="a3">A₃</option>';
+  targetSel.innerHTML += '<option value="a3">A₃</option>';
+
+  if (currentAuthor) authorSel.value = currentAuthor;
+  if (currentTarget) targetSel.value = currentTarget;
+}
+
+async function postDifferential() {
+  const input = document.getElementById('diffInput');
+  const content = input.value.trim();
+  if (!content) return;
+
+  const author = document.getElementById('diffAuthor').value;
+  const addressed_to = document.getElementById('diffTarget').value || null;
+
+  try {
+    const resp = await fetch('/diff', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ author, content, addressed_to }),
+    });
+    const data = await resp.json();
+    if (data.error) {
+      document.getElementById('headerStatus').textContent = 'Fehler: ' + data.error;
+    } else {
+      input.value = '';
+      document.getElementById('headerStatus').textContent = `Δ #${data.id} eingestellt`;
+      setTimeout(() => document.getElementById('headerStatus').textContent = '', 2000);
+      loadDifferentials();
+    }
+  } catch (e) {
+    document.getElementById('headerStatus').textContent = 'Netzwerkfehler';
+  }
+}
+
+async function loadDifferentials() {
+  const filter = document.getElementById('diffFilter').value;
+  const feed = document.getElementById('diffFeed');
+  const stats = document.getElementById('diffStats');
+
+  try {
+    const url = filter ? `/diff?status=${filter}` : '/diff';
+    const resp = await fetch(url);
+    const data = await resp.json();
+    const diffs = data.differentials || [];
+
+    if (diffs.length === 0) {
+      feed.innerHTML = '<div style="color:var(--text3);padding:40px;text-align:center;">'
+        + 'Keine Differenzen ' + (filter ? `(${filter})` : '') + '</div>';
+      stats.textContent = '0 Differenzen';
+      return;
+    }
+
+    feed.innerHTML = diffs.map(d => {
+      const statusClass = d.status || 'open';
+      const ts = d.ts ? d.ts.substring(0, 16).replace('T', ' ') : '?';
+      const addressed = d.addressed_to ? ` → ${capitalize(d.addressed_to)}` : '';
+      const claimed = d.claimed_by ? ` · bearbeitet von ${capitalize(d.claimed_by)}` : '';
+
+      let actions = '';
+      if (d.status === 'open') {
+        // Show respond buttons for each active system
+        const sysIds = Object.keys(systems).sort();
+        actions = sysIds.map(sid =>
+          `<button class="btn-inject" onclick="respondToDiff(${d.id}, '${sid}')">`
+          + `→ ${capitalize(sid)}</button>`
+        ).join('');
+        actions += `<button class="btn-inject" onclick="archiveDiff(${d.id})" `
+          + `style="border-color:var(--text3);color:var(--text3);">Archivieren</button>`;
+      } else if (d.status === 'resolved' && d.resolution_id) {
+        actions = `<button class="btn-inject" onclick="showResolution(${d.resolution_id})">`
+          + `📖 Antwort #${d.resolution_id}</button>`;
+      }
+
+      return `<div class="diff-card ${statusClass}">`
+        + `<div class="diff-card-header">`
+        + `<span><span class="diff-id">Δ #${d.id}</span> · ${capitalize(d.author)}${addressed} · ${ts}${claimed}</span>`
+        + `<span class="diff-status ${statusClass}">${statusClass}</span>`
+        + `</div>`
+        + `<div class="diff-card-content">${esc(d.content)}</div>`
+        + (actions ? `<div class="diff-card-actions">${actions}</div>` : '')
+        + `</div>`;
+    }).join('');
+
+    const openCount = diffs.filter(d => d.status === 'open').length;
+    stats.textContent = `${diffs.length} Differenzen · ${openCount} offen`;
+  } catch (e) {
+    feed.innerHTML = '<div style="color:var(--accent-red);padding:20px;">Fehler beim Laden: ' + e.message + '</div>';
+  }
+}
+
+async function respondToDiff(diffId, systemId) {
+  document.getElementById('headerStatus').textContent = `Δ #${diffId} → ${capitalize(systemId)}...`;
+
+  try {
+    const resp = await fetch('/diff/respond', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ diff_id: diffId, system: systemId }),
+    });
+    const data = await resp.json();
+    if (data.error) {
+      document.getElementById('headerStatus').textContent = 'Fehler: ' + data.error;
+      setTimeout(() => document.getElementById('headerStatus').textContent = '', 3000);
+    } else {
+      document.getElementById('headerStatus').textContent =
+        `Δ #${diffId} gelöst von ${capitalize(systemId)}`;
+      setTimeout(() => document.getElementById('headerStatus').textContent = '', 3000);
+
+      // Also add the response to the system's chat panel if it exists
+      if (systems[systemId]) {
+        addEntry(systemId, 'event', `[Differenz Δ #${diffId} beantwortet]`);
+        addEntry(systemId, 'system', data.response, true, data.metrics);
+      }
+
+      loadDifferentials();
+      autoSave();
+    }
+  } catch (e) {
+    document.getElementById('headerStatus').textContent = 'Netzwerkfehler: ' + e.message;
+  }
+}
+
+async function archiveDiff(diffId) {
+  try {
+    await fetch('/diff/resolve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: diffId }),
+    });
+    loadDifferentials();
+  } catch (e) {
+    console.error('Archive failed:', e);
+  }
+}
+
+async function showResolution(interactionId) {
+  // Switch to DB panel and show the resolution
+  if (!dbPanelActive) toggleDbPanel();
+  document.getElementById('dbQueryInput').value =
+    `SELECT id, system_id, role, ts, content FROM interactions WHERE id = ${interactionId}`;
+  runDbQuery();
 }
 
 // ── Start ──

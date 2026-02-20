@@ -1262,6 +1262,145 @@ async def handle_db_record(request):
     return web.json_response({"written": 1, "system_id": sid})
 
 
+# ─────────────────────────────────────────────
+#  Differentials — shared difference space
+# ─────────────────────────────────────────────
+
+async def handle_diff_post(request):
+    """Post a new differential into the shared space.
+
+    POST /diff  {
+        "author": "thomas",
+        "content": "Wie verhält sich R unter Mediumwechsel?",
+        "addressed_to": "alpha",   (optional — hint, not constraint)
+        "tags": "resistance,medium"  (optional)
+    }
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json()
+    author = data.get("author")
+    content = data.get("content")
+    if not author or not content:
+        return web.json_response({"error": "author and content required"}, status=400)
+    diff_id = orch.db.post_differential(
+        author=author,
+        content=content,
+        addressed_to=data.get("addressed_to"),
+        tags=data.get("tags"),
+        meta=data.get("meta"),
+    )
+    return web.json_response({"posted": True, "id": diff_id, "author": author})
+
+
+async def handle_diff_list(request):
+    """List differentials.
+
+    GET /diff?status=open&author=thomas&for=alpha&limit=20
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    status = request.query.get("status")
+    author = request.query.get("author")
+    for_system = request.query.get("for")
+    limit = int(request.query.get("limit", "20"))
+
+    if for_system:
+        diffs = orch.db.get_open_differentials(for_system=for_system, limit=limit)
+    else:
+        diffs = orch.db.get_differentials(status=status, author=author, limit=limit)
+
+    # Serialize timestamps
+    for d in diffs:
+        for key in ("ts", "claimed_at", "resolved_at"):
+            if d.get(key):
+                d[key] = str(d[key])
+    return web.json_response({"differentials": diffs, "count": len(diffs)})
+
+
+async def handle_diff_claim(request):
+    """Claim an open differential.
+
+    POST /diff/claim  {"id": 5, "claimed_by": "alpha"}
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json()
+    diff_id = data.get("id")
+    claimed_by = data.get("claimed_by")
+    if not diff_id or not claimed_by:
+        return web.json_response({"error": "id and claimed_by required"}, status=400)
+    success = orch.db.claim_differential(diff_id, claimed_by)
+    return web.json_response({"claimed": success, "id": diff_id, "by": claimed_by})
+
+
+async def handle_diff_resolve(request):
+    """Resolve a differential.
+
+    POST /diff/resolve  {"id": 5, "resolution_id": 892}
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json()
+    diff_id = data.get("id")
+    if not diff_id:
+        return web.json_response({"error": "id required"}, status=400)
+    success = orch.db.resolve_differential(diff_id, data.get("resolution_id"))
+    return web.json_response({"resolved": success, "id": diff_id})
+
+
+async def handle_diff_respond(request):
+    """Post a differential AND immediately send it to a system for response.
+
+    POST /diff/respond  {
+        "diff_id": 5,
+        "system": "alpha"
+    }
+
+    Claims the differential, sends the content as a prompt to the system,
+    records the interaction, resolves the differential with the interaction id.
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json()
+    diff_id = data.get("diff_id")
+    system_id = data.get("system")
+
+    if not diff_id or not system_id:
+        return web.json_response({"error": "diff_id and system required"}, status=400)
+
+    # Get the differential
+    diff = orch.db.get_differential(diff_id)
+    if not diff:
+        return web.json_response({"error": f"Differential {diff_id} not found"}, status=404)
+    if diff["status"] != "open":
+        return web.json_response({"error": f"Differential {diff_id} is {diff['status']}"}, status=409)
+
+    # Claim
+    orch.db.claim_differential(diff_id, system_id)
+
+    # Send as prompt
+    prompt = f"[Differenz #{diff_id} von {diff['author']}]\n\n{diff['content']}"
+    result = await orch.send_prompt(system_id, prompt)
+
+    if "error" in result:
+        return web.json_response({"error": result["error"]}, status=500)
+
+    # Get the interaction id of the response
+    last = orch.db.con.execute(
+        "SELECT MAX(id) FROM interactions WHERE system_id = ? AND role = 'system'",
+        [system_id]
+    ).fetchone()
+    resolution_id = last[0] if last else None
+
+    # Resolve
+    orch.db.resolve_differential(diff_id, resolution_id)
+
+    return web.json_response({
+        "resolved": True,
+        "diff_id": diff_id,
+        "system": system_id,
+        "response": result.get("response"),
+        "metrics": result.get("metrics"),
+        "resolution_id": resolution_id,
+    })
+
+
 async def handle_system_context(request):
     """Return comprehensive onboarding context for a system.
 
@@ -1335,7 +1474,19 @@ async def handle_system_context(request):
         "history_digests: Verdichtete Netzwerk-Geschichte (scope, digest_type, content)\n"
         "  - digest_type: 'structural' | 'narrative' | 'analysis'\n"
         "  - scope: 'network' | 'system:alpha' | 'design:feature_name'\n"
+        "differentials: Geteilter Differenz-Raum (author, content, addressed_to, status)\n"
+        "  - status: 'open' | 'claimed' | 'resolved' | 'archived'\n"
+        "  - Jeder Knoten (human oder synthetisch) kann Differenzen einstellen und beantworten\n"
     )
+
+    # 7. Open differentials for this system
+    open_diffs = orch.db.get_open_differentials(
+        for_system=requesting_system, limit=10
+    )
+    for d in open_diffs:
+        for key in ("ts", "claimed_at", "resolved_at"):
+            if d.get(key):
+                d[key] = str(d[key])
 
     return web.json_response({
         "requesting_system": requesting_system,
@@ -1350,6 +1501,7 @@ async def handle_system_context(request):
         "query_protocol": query_protocol,
         "table_guide": table_guide,
         "stats_by_system": stats.get("by_system", []),
+        "open_differentials": open_diffs,
     })
 
 
@@ -1392,6 +1544,12 @@ def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app.router.add_post("/db-digest-write", handle_db_digest_write)
     app.router.add_post("/db-record", handle_db_record)
     app.router.add_get("/system-context", handle_system_context)
+    # Differentials — shared difference space
+    app.router.add_post("/diff", handle_diff_post)
+    app.router.add_get("/diff", handle_diff_list)
+    app.router.add_post("/diff/claim", handle_diff_claim)
+    app.router.add_post("/diff/resolve", handle_diff_resolve)
+    app.router.add_post("/diff/respond", handle_diff_respond)
 
     return app
 
