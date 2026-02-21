@@ -1479,6 +1479,29 @@ async function _loadNodeInbox(nodeId) {
       countEl.textContent = unresolved > 0 ? `${unresolved} offen` : '';
     }
 
+    // Build a fingerprint to detect changes — only re-render if data actually changed
+    const inboxFingerprint = inbox.map(d => `${d.id}:${d.status}`).join(',');
+    const authoredFingerprint = (diffs.filter(d => d.author === nodeId)).map(d => `${d.id}:${d.status}`).join(',');
+
+    const fpKey = `_inboxFP_${nodeId}`;
+    const oldFP = window[fpKey] || '';
+    const newFP = inboxFingerprint + '|' + authoredFingerprint;
+
+    if (oldFP === newFP) {
+      // Data unchanged — don't re-render (preserves open detail views)
+      return;
+    }
+    window[fpKey] = newFP;
+
+    // Data changed — save open detail states before re-rendering
+    const openDetails = new Set();
+    document.querySelectorAll('[id^="diffDetail_"]').forEach(el => {
+      if (el.style.display !== 'none' && el.innerHTML.trim()) {
+        const dId = el.id.replace('diffDetail_', '');
+        openDetails.add(parseInt(dId));
+      }
+    });
+
     if (inboxEl) {
       if (inbox.length === 0) {
         inboxEl.innerHTML = '<div style="color:var(--text3); font-size:12px; font-style:italic;">Keine adressierten Differenzen</div>';
@@ -1497,6 +1520,12 @@ async function _loadNodeInbox(nodeId) {
         authEl.innerHTML = authored.map(d => _renderDiffMini(d)).join('');
       }
     }
+
+    // Restore open detail views
+    openDetails.forEach(dId => {
+      const container = document.getElementById('diffDetail_' + dId);
+      if (container) loadDiffDetail(dId);
+    });
 
     // Update tab badge for non-synthetic nodes
     if (systems[nodeId]) {
