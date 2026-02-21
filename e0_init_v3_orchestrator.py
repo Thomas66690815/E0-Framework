@@ -2028,6 +2028,181 @@ async def handle_diff_human_respond(request):
     })
 
 
+# ─────────────────────────────────────────────
+#  Broadcast — Systeme entdecken selbst
+# ─────────────────────────────────────────────
+
+import re as _re
+
+_BROADCAST_CLAIM_PATTERN = _re.compile(
+    r'#(\d+)\s*:\s*(CLAIM|INTEREST|SKIP)\b\s*[—–\-]?\s*(.*)',
+    _re.IGNORECASE
+)
+
+
+async def handle_diff_broadcast(request):
+    """Broadcast open diffs to all online synthetic systems.
+
+    POST /diff/broadcast  {}
+    POST /diff/broadcast  {"systems": ["alpha","delta"]}  — optional subset
+    POST /diff/broadcast  {"auto_route": true}             — auto-route claims
+
+    Each online system receives a compact list of open diffs and decides:
+    - CLAIM: I take this (fits me, important AND urgent)
+    - INTEREST: I have something to contribute (not primary)
+    - SKIP: Not my area / not urgent
+
+    Returns per-system assessment. If auto_route=true, claimed diffs are
+    automatically routed to the claiming system.
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json() if request.content_length else {}
+
+    auto_route = data.get("auto_route", False)
+
+    # Determine target systems (active synthetic only)
+    active_ids = orch.registry.get_active_ids()
+    requested = data.get("systems")
+    if requested:
+        target_systems = [s for s in requested if s in active_ids]
+    else:
+        target_systems = active_ids
+
+    if not target_systems:
+        return web.json_response({"error": "No online systems"}, status=400)
+
+    # Gather open diffs
+    open_diffs = orch.db.get_differentials(status="open")
+    if not open_diffs:
+        return web.json_response({
+            "broadcast": True,
+            "open_diffs": 0,
+            "message": "Keine offenen Differenzen",
+            "assessments": {},
+        })
+
+    # Build broadcast prompt
+    diff_lines = []
+    for d in open_diffs:
+        parent = f" (←#{d['parent_diff_id']})" if d.get('parent_diff_id') else ""
+        addr = f" → {d['addressed_to']}" if d.get('addressed_to') else ""
+        scope = f" [{d['scope']}]" if d.get('scope') else ""
+        diff_lines.append(
+            f"#{d['id']}: {d['content'][:200]}"
+            f"  — von {d['author']}{parent}{addr}{scope}"
+        )
+
+    broadcast_prompt = (
+        f"[BROADCAST: {len(open_diffs)} offene Differenzen im Differenz-Raum]\n\n"
+        + "\n\n".join(diff_lines)
+        + "\n\n---\n\n"
+        "Du bist ein Knoten im E₀-Netzwerk. Bewerte JEDE Differenz:\n"
+        "- CLAIM: Ich übernehme diese (passt zu mir, wichtig UND dringend)\n"
+        "- INTEREST: Ich habe etwas beizutragen (nicht primär, aber relevant)\n"
+        "- SKIP: Nicht mein Bereich / nicht dringend\n\n"
+        "Format (GENAU so, eine Zeile pro Diff):\n"
+        "#ID: CLAIM|INTEREST|SKIP — kurze Begründung\n\n"
+        "Danach: Wenn du CLAIMs hast, beginne sofort mit der wichtigsten. "
+        "Verwende [NEUE DIFFERENZ] Tags für Folge-Fragen."
+    )
+
+    # Send to each system in parallel
+    import asyncio
+    assessments = {}
+    claims = {}  # diff_id → [system_ids]
+
+    async def _broadcast_to(system_id):
+        try:
+            result = await orch.send_prompt(system_id, broadcast_prompt)
+            if "error" in result:
+                return system_id, {"error": result["error"]}
+
+            response_text = result.get("response", "")
+
+            # Parse CLAIM/INTEREST/SKIP
+            parsed = {}
+            for match in _BROADCAST_CLAIM_PATTERN.finditer(response_text):
+                diff_id = int(match.group(1))
+                verdict = match.group(2).upper()
+                reason = match.group(3).strip()
+                parsed[diff_id] = {"verdict": verdict, "reason": reason}
+
+                if verdict == "CLAIM":
+                    if diff_id not in claims:
+                        claims[diff_id] = []
+                    claims[diff_id].append(system_id)
+
+            # Record as interaction linked to broadcast
+            return system_id, {
+                "response": response_text,
+                "metrics": result.get("metrics"),
+                "parsed": parsed,
+                "extracted_diffs": result.get("extracted_diffs", 0),
+            }
+        except Exception as exc:
+            return system_id, {"error": str(exc)}
+
+    tasks = [_broadcast_to(sid) for sid in target_systems]
+    results = await asyncio.gather(*tasks)
+
+    for system_id, assessment in results:
+        assessments[system_id] = assessment
+
+    # Auto-route claims if requested
+    auto_routed = []
+    if auto_route:
+        for diff_id, claimers in claims.items():
+            if len(claimers) == 1:
+                # Single claimer → auto-route
+                system_id = claimers[0]
+                try:
+                    diff = orch.db.get_differential(diff_id)
+                    if diff and diff["status"] == "open":
+                        orch.db.claim_differential(diff_id, system_id)
+
+                        prompt = f"[Differenz #{diff_id}]\n\n{diff['content']}"
+                        result = await orch.send_prompt(
+                            system_id, prompt, source_diff_id=diff_id)
+
+                        if "error" not in result:
+                            last = orch.db.con.execute(
+                                "SELECT MAX(id) FROM interactions WHERE system_id = ? AND role = 'system'",
+                                [system_id]
+                            ).fetchone()
+                            resolution_id = last[0] if last else None
+
+                            orch.db.add_differential_response(
+                                diff_id=diff_id, system_id=system_id,
+                                interaction_id=resolution_id, kind="analysis")
+                            orch.db.resolve_differential(diff_id, resolution_id)
+
+                            auto_routed.append({
+                                "diff_id": diff_id,
+                                "system": system_id,
+                                "resolution_id": resolution_id,
+                                "extracted_diffs": result.get("extracted_diffs", 0),
+                            })
+                except Exception:
+                    pass  # Skip failed auto-routes silently
+
+    # Build conflict summary
+    conflicts = {
+        diff_id: claimers
+        for diff_id, claimers in claims.items()
+        if len(claimers) > 1
+    }
+
+    return web.json_response({
+        "broadcast": True,
+        "open_diffs": len(open_diffs),
+        "systems_reached": len(target_systems),
+        "assessments": assessments,
+        "claims": {str(k): v for k, v in claims.items()},
+        "conflicts": {str(k): v for k, v in conflicts.items()},
+        "auto_routed": auto_routed,
+    })
+
+
 def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app = web.Application()
     app["orchestrator"] = orchestrator
@@ -2082,6 +2257,7 @@ def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app.router.add_post("/diff/route", handle_diff_route)
     app.router.add_post("/diff/route-all", handle_diff_route_all)
     app.router.add_post("/diff/human-respond", handle_diff_human_respond)
+    app.router.add_post("/diff/broadcast", handle_diff_broadcast)
 
     return app
 

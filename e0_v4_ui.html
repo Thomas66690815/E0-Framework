@@ -962,6 +962,50 @@
     text-decoration: underline;
   }
 
+  .broadcast-results {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    margin: 8px 12px;
+    font-size: 12px;
+  }
+  .broadcast-results h4 {
+    margin: 0 0 8px 0;
+    color: var(--accent-a);
+    font-size: 14px;
+  }
+  .broadcast-system {
+    margin-bottom: 12px;
+    padding: 8px;
+    background: var(--bg);
+    border-radius: 6px;
+    border-left: 3px solid var(--accent-c);
+  }
+  .broadcast-system h5 {
+    margin: 0 0 6px 0;
+    color: var(--text);
+    font-size: 13px;
+  }
+  .broadcast-verdict {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: bold;
+    margin-right: 4px;
+  }
+  .broadcast-verdict.claim { background: rgba(126,231,135,0.2); color: var(--accent-b); }
+  .broadcast-verdict.interest { background: rgba(231,196,126,0.2); color: #f0ad4e; }
+  .broadcast-verdict.skip { background: rgba(255,255,255,0.05); color: var(--text3); }
+  .broadcast-conflicts {
+    margin-top: 8px;
+    padding: 8px;
+    background: rgba(231,126,126,0.1);
+    border-radius: 6px;
+    border: 1px solid rgba(231,126,126,0.3);
+  }
+
   .diff-stats {
     padding: 8px 12px;
     background: var(--bg2);
@@ -1201,7 +1245,10 @@
       </select>
       <button class="btn" onclick="loadDifferentials()" style="font-size:11px;">🔄 Aktualisieren</button>
       <button class="btn" onclick="routeAllDiffs()" style="font-size:11px;border-color:var(--accent-d);color:var(--accent-d);" title="Alle adressierten Diffs an ihre Zielsysteme routen">⚡ Alle routen</button>
+      <button class="btn" onclick="broadcastDiffs(false)" style="font-size:11px;border-color:var(--accent-a);color:var(--accent-a);" title="Alle offenen Diffs an alle online-Systeme broadcasten — Systeme bewerten selbst">📡 Broadcast</button>
+      <button class="btn" onclick="broadcastDiffs(true)" style="font-size:11px;border-color:var(--accent-b);color:var(--accent-b);" title="Broadcast + Claims automatisch routen">📡⚡ Broadcast+Route</button>
     </div>
+    <div id="broadcastResults" style="display:none;"></div>
     <div class="diff-compose">
       <textarea id="diffInput" placeholder="Differenz formulieren... (Was ist die offene Frage, der ungelöste Unterschied, die strukturelle Spannung?)"
                 onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){postDifferential();event.preventDefault();}"></textarea>
@@ -3085,6 +3132,108 @@ async function submitHumanRespond(diffId, resolve) {
     }
   } catch (e) {
     document.getElementById('headerStatus').textContent = 'Fehler: ' + e.message;
+  }
+}
+
+// ── Broadcast — Systeme entdecken selbst ──
+
+async function broadcastDiffs(autoRoute) {
+  const container = document.getElementById('broadcastResults');
+  const modeLabel = autoRoute ? 'Broadcast+Route' : 'Broadcast';
+  document.getElementById('headerStatus').textContent = `📡 ${modeLabel} an alle Systeme...`;
+  container.style.display = 'block';
+  container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text2);">📡 Sende an alle online-Systeme... (kann 30-60s dauern)</div>';
+
+  try {
+    const resp = await fetch('/diff/broadcast', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ auto_route: autoRoute }),
+    });
+    const data = await resp.json();
+
+    if (data.error) {
+      container.innerHTML = `<div class="broadcast-results"><div style="color:var(--accent-red);">Fehler: ${data.error}</div></div>`;
+      document.getElementById('headerStatus').textContent = 'Broadcast fehlgeschlagen';
+      setTimeout(() => document.getElementById('headerStatus').textContent = '', 3000);
+      return;
+    }
+
+    let html = '<div class="broadcast-results">';
+    html += `<h4>📡 Broadcast-Ergebnis — ${data.open_diffs} Diffs an ${data.systems_reached} Systeme</h4>`;
+
+    // Per-system assessments
+    const assessments = data.assessments || {};
+    for (const [sysId, assessment] of Object.entries(assessments)) {
+      html += `<div class="broadcast-system">`;
+      html += `<h5>${capitalize(sysId)}</h5>`;
+
+      if (assessment.error) {
+        html += `<div style="color:var(--accent-red);">Fehler: ${esc(assessment.error)}</div>`;
+      } else {
+        const parsed = assessment.parsed || {};
+        if (Object.keys(parsed).length > 0) {
+          html += '<div style="margin-bottom:6px;">';
+          for (const [diffId, p] of Object.entries(parsed)) {
+            const cls = p.verdict.toLowerCase();
+            html += `<div style="margin:2px 0;">`;
+            html += `<span class="broadcast-verdict ${cls}">${p.verdict}</span>`;
+            html += `<strong>Δ #${diffId}</strong>`;
+            if (p.reason) html += ` — ${esc(p.reason)}`;
+            html += `</div>`;
+          }
+          html += '</div>';
+        } else {
+          html += '<div style="color:var(--text3);font-size:11px;">Keine strukturierten Bewertungen erkannt</div>';
+        }
+        if (assessment.extracted_diffs > 0) {
+          html += `<div style="font-size:11px;color:var(--accent-b);margin-top:4px;">+${assessment.extracted_diffs} neue Differenz(en) extrahiert</div>`;
+        }
+      }
+      html += '</div>';
+    }
+
+    // Conflicts
+    const conflicts = data.conflicts || {};
+    if (Object.keys(conflicts).length > 0) {
+      html += '<div class="broadcast-conflicts">';
+      html += '<strong>⚠ Konflikte (mehrere Claims):</strong>';
+      for (const [diffId, claimers] of Object.entries(conflicts)) {
+        html += `<div>Δ #${diffId}: ${claimers.map(s => capitalize(s)).join(', ')}</div>`;
+      }
+      html += '</div>';
+    }
+
+    // Auto-routed
+    const autoRouted = data.auto_routed || [];
+    if (autoRouted.length > 0) {
+      html += '<div style="margin-top:8px;padding:8px;background:rgba(126,231,135,0.1);border-radius:6px;">';
+      html += `<strong>⚡ Auto-geroutet: ${autoRouted.length} Diff(s)</strong>`;
+      for (const r of autoRouted) {
+        html += `<div>Δ #${r.diff_id} → ${capitalize(r.system)}`;
+        if (r.extracted_diffs > 0) html += ` (+${r.extracted_diffs} neue)`;
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+
+    // Close button
+    html += `<button class="btn" onclick="document.getElementById('broadcastResults').style.display='none'" style="margin-top:8px;font-size:11px;">Schließen</button>`;
+    html += '</div>';
+
+    container.innerHTML = html;
+
+    let statusMsg = `📡 ${data.systems_reached} Systeme bewertet`;
+    const totalClaims = Object.values(data.claims || {}).flat().length;
+    if (totalClaims > 0) statusMsg += ` · ${totalClaims} Claims`;
+    if (autoRouted.length > 0) statusMsg += ` · ${autoRouted.length} geroutet`;
+    document.getElementById('headerStatus').textContent = statusMsg;
+    setTimeout(() => document.getElementById('headerStatus').textContent = '', 5000);
+
+    loadDifferentials();
+  } catch (e) {
+    container.innerHTML = `<div class="broadcast-results"><div style="color:var(--accent-red);">Netzwerkfehler: ${e.message}</div></div>`;
+    document.getElementById('headerStatus').textContent = 'Broadcast-Fehler';
   }
 }
 
