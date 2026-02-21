@@ -1823,6 +1823,211 @@ async def handle_system_context(request):
     })
 
 
+# ─────────────────────────────────────────────
+#  Diff Routing — System-zu-System Kommunikation
+# ─────────────────────────────────────────────
+
+async def handle_diff_route(request):
+    """Route a single diff to its addressed system (or a specified system).
+
+    POST /diff/route  {"diff_id": 5}                — uses addressed_to
+    POST /diff/route  {"diff_id": 5, "system": "alpha"}  — explicit target
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json()
+    diff_id = data.get("diff_id")
+
+    if not diff_id:
+        return web.json_response({"error": "diff_id required"}, status=400)
+
+    diff = orch.db.get_differential(diff_id)
+    if not diff:
+        return web.json_response({"error": f"Differential {diff_id} not found"}, status=404)
+
+    if diff["status"] == "archived":
+        return web.json_response({"error": f"Differential {diff_id} is archived"}, status=409)
+
+    # Determine target system
+    system_id = data.get("system") or diff.get("addressed_to")
+    if not system_id:
+        return web.json_response({
+            "error": "No target: diff has no addressed_to and no system specified"
+        }, status=400)
+
+    if system_id not in orch.systems:
+        return web.json_response({
+            "error": f"System '{system_id}' is not a synthetic system (cannot route)"
+        }, status=400)
+
+    # Delegate to the existing respond logic
+    is_additional = diff["status"] in ("claimed", "resolved")
+
+    if diff["status"] == "open":
+        orch.db.claim_differential(diff_id, system_id)
+
+    prompt = f"[Differenz #{diff_id} von {diff['author']}]\n\n{diff['content']}"
+    result = await orch.send_prompt(system_id, prompt, source_diff_id=diff_id)
+
+    if "error" in result:
+        return web.json_response({"error": result["error"]}, status=500)
+
+    last = orch.db.con.execute(
+        "SELECT MAX(id) FROM interactions WHERE system_id = ? AND role = 'system'",
+        [system_id]
+    ).fetchone()
+    resolution_id = last[0] if last else None
+
+    resp_id = orch.db.add_differential_response(
+        diff_id=diff_id,
+        system_id=system_id,
+        interaction_id=resolution_id,
+        kind=data.get("kind", "analysis"),
+    )
+
+    if not is_additional:
+        orch.db.resolve_differential(diff_id, resolution_id)
+
+    return web.json_response({
+        "routed": True,
+        "diff_id": diff_id,
+        "system": system_id,
+        "response": result.get("response"),
+        "metrics": result.get("metrics"),
+        "resolution_id": resolution_id,
+        "response_id": resp_id,
+        "additional": is_additional,
+        "extracted_diffs": result.get("extracted_diffs", 0),
+    })
+
+
+async def handle_diff_route_all(request):
+    """Route ALL open diffs that have addressed_to pointing to a synthetic system.
+
+    POST /diff/route-all
+    Returns summary of each routed diff.
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    synthetic_ids = set(orch.systems.keys())
+
+    # Get all non-archived diffs
+    all_diffs = orch.db.get_differentials(status="")
+    pending = [
+        d for d in all_diffs
+        if d["status"] == "open"
+        and d.get("addressed_to")
+        and d["addressed_to"] in synthetic_ids
+    ]
+
+    results = []
+    for diff in pending:
+        diff_id = diff["id"]
+        system_id = diff["addressed_to"]
+
+        try:
+            orch.db.claim_differential(diff_id, system_id)
+            prompt = f"[Differenz #{diff_id} von {diff['author']}]\n\n{diff['content']}"
+            result = await orch.send_prompt(system_id, prompt, source_diff_id=diff_id)
+
+            if "error" in result:
+                results.append({"diff_id": diff_id, "system": system_id,
+                                "success": False, "error": result["error"]})
+                continue
+
+            last = orch.db.con.execute(
+                "SELECT MAX(id) FROM interactions WHERE system_id = ? AND role = 'system'",
+                [system_id]
+            ).fetchone()
+            resolution_id = last[0] if last else None
+
+            orch.db.add_differential_response(
+                diff_id=diff_id, system_id=system_id,
+                interaction_id=resolution_id, kind="analysis")
+            orch.db.resolve_differential(diff_id, resolution_id)
+
+            results.append({
+                "diff_id": diff_id, "system": system_id, "success": True,
+                "resolution_id": resolution_id,
+                "extracted_diffs": result.get("extracted_diffs", 0),
+            })
+        except Exception as exc:
+            results.append({"diff_id": diff_id, "system": system_id,
+                            "success": False, "error": str(exc)})
+
+    return web.json_response({
+        "routed": len([r for r in results if r.get("success")]),
+        "failed": len([r for r in results if not r.get("success")]),
+        "total": len(pending),
+        "details": results,
+    })
+
+
+async def handle_diff_human_respond(request):
+    """Let a human or infrastructure node respond with text to a diff.
+
+    POST /diff/human-respond  {
+        "diff_id": 5,
+        "author": "thomas",
+        "content": "Meine Antwort..."
+    }
+
+    Records the response as an interaction, links it as differential_response,
+    and optionally resolves the diff.
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json()
+    diff_id = data.get("diff_id")
+    author = data.get("author", "thomas")
+    content = data.get("content", "").strip()
+    resolve = data.get("resolve", False)
+
+    if not diff_id or not content:
+        return web.json_response({"error": "diff_id and content required"}, status=400)
+
+    diff = orch.db.get_differential(diff_id)
+    if not diff:
+        return web.json_response({"error": f"Differential {diff_id} not found"}, status=404)
+
+    if diff["status"] == "archived":
+        return web.json_response({"error": f"Differential {diff_id} is archived"}, status=409)
+
+    is_additional = diff["status"] in ("claimed", "resolved")
+
+    # Record the human response as an interaction
+    interaction_id = orch.db.record_interaction(
+        system_id=author,
+        role=author,
+        content=content,
+        source="diff-response",
+        source_diff_id=diff_id,
+    )
+
+    # Link as differential response (n:m)
+    resp_id = orch.db.add_differential_response(
+        diff_id=diff_id,
+        system_id=author,
+        interaction_id=interaction_id,
+        kind=data.get("kind", "analysis"),
+    )
+
+    # Claim if open
+    if diff["status"] == "open":
+        orch.db.claim_differential(diff_id, author)
+
+    # Resolve if requested or first response
+    if resolve and not is_additional:
+        orch.db.resolve_differential(diff_id, interaction_id)
+
+    return web.json_response({
+        "responded": True,
+        "diff_id": diff_id,
+        "author": author,
+        "interaction_id": interaction_id,
+        "response_id": resp_id,
+        "additional": is_additional,
+        "resolved": resolve and not is_additional,
+    })
+
+
 def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app = web.Application()
     app["orchestrator"] = orchestrator
@@ -1874,6 +2079,9 @@ def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app.router.add_post("/diff/result", handle_diff_result)
     app.router.add_get("/diff/tree", handle_diff_tree)
     app.router.add_get("/diff/detail", handle_diff_detail)
+    app.router.add_post("/diff/route", handle_diff_route)
+    app.router.add_post("/diff/route-all", handle_diff_route_all)
+    app.router.add_post("/diff/human-respond", handle_diff_human_respond)
 
     return app
 

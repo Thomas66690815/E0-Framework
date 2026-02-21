@@ -1200,6 +1200,7 @@
         <option value="result">Ergebnisse</option>
       </select>
       <button class="btn" onclick="loadDifferentials()" style="font-size:11px;">🔄 Aktualisieren</button>
+      <button class="btn" onclick="routeAllDiffs()" style="font-size:11px;border-color:var(--accent-d);color:var(--accent-d);" title="Alle adressierten Diffs an ihre Zielsysteme routen">⚡ Alle routen</button>
     </div>
     <div class="diff-compose">
       <textarea id="diffInput" placeholder="Differenz formulieren... (Was ist die offene Frage, der ungelöste Unterschied, die strukturelle Spannung?)"
@@ -2834,21 +2835,32 @@ async function loadDifferentials() {
     feed.innerHTML = diffs.map(d => {
       const statusClass = d.status || 'open';
       const ts = d.ts ? d.ts.substring(0, 16).replace('T', ' ') : '?';
-      const addressed = d.addressed_to ? ` → ${capitalize(d.addressed_to)}` : '';
+      const addressed = d.addressed_to ? ` → <strong>${capitalize(d.addressed_to)}</strong>` : '';
       const scopeTag = d.scope ? ` [${d.scope}]` : '';
       const claimed = d.claimed_by ? ` · bearbeitet von ${capitalize(d.claimed_by)}` : '';
       const parentTag = d.parent_diff_id ? ` ← Δ #${d.parent_diff_id}` : '';
 
       let actions = '';
       if (d.status !== 'archived') {
-        // Only show respond buttons for synthetic systems
+        // Route button — if addressed to a synthetic system and still open/claimed
+        if (d.addressed_to && d.status === 'open') {
+          actions += `<button class="btn-inject" onclick="routeDiff(${d.id})" `
+            + `style="border-color:var(--accent-d);color:var(--accent-d);">⚡ Route → ${capitalize(d.addressed_to)}</button>`;
+        }
+
+        // Respond buttons for synthetic systems
         const sysIds = Object.keys(systems).filter(sid => {
           const s = systems[sid]; return s.descriptor && s.descriptor.kind === 'synthetic';
         }).sort();
-        actions = sysIds.map(sid =>
+        actions += sysIds.map(sid =>
           `<button class="btn-inject" onclick="respondToDiff(${d.id}, '${sid}')">`
           + `→ ${capitalize(sid)}</button>`
         ).join('');
+
+        // Human respond button — opens inline text input
+        actions += `<button class="btn-inject" onclick="toggleHumanRespond(${d.id})" `
+          + `style="border-color:var(--accent-c);color:var(--accent-c);">💬 Antworten</button>`;
+
         actions += `<button class="btn-inject" onclick="iterateDiff(${d.id})" `
           + `style="border-color:var(--accent-b);color:var(--accent-b);">Δ Iterieren</button>`;
         if (d.status !== 'result') {
@@ -2881,21 +2893,43 @@ async function loadDifferentials() {
         }
       }
 
+      // Routing indicator for addressed open diffs
+      let routeIndicator = '';
+      if (d.addressed_to && d.status === 'open') {
+        routeIndicator = `<div style="font-size:11px;color:var(--accent-d);margin-top:4px;">`
+          + `📬 Adressiert an ${capitalize(d.addressed_to)} — wartet auf Routing</div>`;
+      }
+
+      // Human respond inline form (hidden by default)
+      const humanRespondForm = `<div class="human-respond-form" id="humanRespond_${d.id}" style="display:none;">`
+        + `<textarea id="humanRespondInput_${d.id}" placeholder="Deine Antwort auf Δ #${d.id}..." `
+        + `style="width:100%;min-height:60px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:8px;font-size:12px;resize:vertical;margin-top:8px;"></textarea>`
+        + `<div style="display:flex;gap:6px;margin-top:4px;">`
+        + `<button class="btn-inject" onclick="submitHumanRespond(${d.id}, false)" style="border-color:var(--accent-c);color:var(--accent-c);">💬 Antworten</button>`
+        + `<button class="btn-inject" onclick="submitHumanRespond(${d.id}, true)" style="border-color:var(--accent-b);color:var(--accent-b);">✓ Antworten + Lösen</button>`
+        + `<button class="btn-inject" onclick="toggleHumanRespond(${d.id})" style="border-color:var(--text3);color:var(--text3);">Abbrechen</button>`
+        + `</div></div>`;
+
       return `<div class="diff-card ${statusClass}">`
         + `<div class="diff-card-header">`
         + `<span><span class="diff-id">Δ #${d.id}</span>${parentTag} · ${capitalize(d.author)}${addressed}${scopeTag} · ${ts}${claimed}</span>`
         + `<span class="diff-status ${statusClass}">${statusClass}</span>`
         + `</div>`
         + pathSummary
+        + routeIndicator
         + `<div class="diff-card-content">${esc(d.content)}</div>`
         + `<div class="diff-card-actions">${detailBtn}${actions}</div>`
+        + humanRespondForm
         + `<div class="diff-detail-container" id="diffDetail_${d.id}" style="display:none;"></div>`
         + `</div>`;
     }).join('');
 
     const openCount = diffs.filter(d => d.status === 'open').length;
     const resolvedCount = diffs.filter(d => d.status === 'resolved').length;
-    stats.textContent = `${diffs.length} Differenzen · ${openCount} offen · ${resolvedCount} gelöst`;
+    const addressedCount = diffs.filter(d => d.status === 'open' && d.addressed_to).length;
+    let statsText = `${diffs.length} Differenzen · ${openCount} offen · ${resolvedCount} gelöst`;
+    if (addressedCount > 0) statsText += ` · ${addressedCount} adressiert`;
+    stats.textContent = statsText;
   } catch (e) {
     feed.innerHTML = '<div style="color:var(--accent-red);padding:20px;">Fehler beim Laden: ' + e.message + '</div>';
   }
@@ -2948,6 +2982,109 @@ async function archiveDiff(diffId) {
     loadDifferentials();
   } catch (e) {
     console.error('Archive failed:', e);
+  }
+}
+
+// ── Diff Routing — System-zu-System Kommunikation ──
+
+async function routeDiff(diffId) {
+  document.getElementById('headerStatus').textContent = `⚡ Route Δ #${diffId}...`;
+  try {
+    const resp = await fetch('/diff/route', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ diff_id: diffId }),
+    });
+    const data = await resp.json();
+    if (data.error) {
+      document.getElementById('headerStatus').textContent = 'Fehler: ' + data.error;
+      setTimeout(() => document.getElementById('headerStatus').textContent = '', 3000);
+    } else {
+      let msg = `⚡ Δ #${diffId} → ${capitalize(data.system)} geroutet`;
+      if (data.extracted_diffs > 0) msg += ` · ${data.extracted_diffs} neue Differenz(en)`;
+      document.getElementById('headerStatus').textContent = msg;
+      setTimeout(() => document.getElementById('headerStatus').textContent = '', 4000);
+      if (systems[data.system]) {
+        addEntry(data.system, 'event', `[Differenz Δ #${diffId} geroutet]`);
+        addEntry(data.system, 'system', data.response, true, data.metrics);
+      }
+      loadDifferentials();
+    }
+  } catch (e) {
+    document.getElementById('headerStatus').textContent = 'Routing-Fehler: ' + e.message;
+  }
+}
+
+async function routeAllDiffs() {
+  document.getElementById('headerStatus').textContent = '⚡ Route alle adressierten Differenzen...';
+  try {
+    const resp = await fetch('/diff/route-all', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    const data = await resp.json();
+    if (data.total === 0) {
+      document.getElementById('headerStatus').textContent = 'Keine adressierten Differenzen zum Routen';
+      setTimeout(() => document.getElementById('headerStatus').textContent = '', 3000);
+      return;
+    }
+    let msg = `⚡ ${data.routed} von ${data.total} geroutet`;
+    if (data.failed > 0) msg += ` · ${data.failed} fehlgeschlagen`;
+    // Count total extracted
+    const totalExtracted = (data.details || []).reduce((sum, r) => sum + (r.extracted_diffs || 0), 0);
+    if (totalExtracted > 0) msg += ` · ${totalExtracted} neue Differenz(en)`;
+    document.getElementById('headerStatus').textContent = msg;
+    setTimeout(() => document.getElementById('headerStatus').textContent = '', 5000);
+    loadDifferentials();
+  } catch (e) {
+    document.getElementById('headerStatus').textContent = 'Route-All Fehler: ' + e.message;
+  }
+}
+
+function toggleHumanRespond(diffId) {
+  const form = document.getElementById('humanRespond_' + diffId);
+  if (!form) return;
+  const visible = form.style.display !== 'none';
+  form.style.display = visible ? 'none' : 'block';
+  if (!visible) {
+    const input = document.getElementById('humanRespondInput_' + diffId);
+    if (input) input.focus();
+  }
+}
+
+async function submitHumanRespond(diffId, resolve) {
+  const input = document.getElementById('humanRespondInput_' + diffId);
+  const content = input ? input.value.trim() : '';
+  if (!content) return;
+
+  document.getElementById('headerStatus').textContent = `💬 Antwort auf Δ #${diffId}...`;
+  try {
+    const resp = await fetch('/diff/human-respond', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        diff_id: diffId,
+        author: 'thomas',
+        content: content,
+        resolve: resolve,
+      }),
+    });
+    const data = await resp.json();
+    if (data.error) {
+      document.getElementById('headerStatus').textContent = 'Fehler: ' + data.error;
+      setTimeout(() => document.getElementById('headerStatus').textContent = '', 3000);
+    } else {
+      let msg = `💬 Antwort auf Δ #${diffId} gespeichert`;
+      if (data.resolved) msg += ' · gelöst';
+      document.getElementById('headerStatus').textContent = msg;
+      setTimeout(() => document.getElementById('headerStatus').textContent = '', 3000);
+      input.value = '';
+      toggleHumanRespond(diffId);
+      loadDifferentials();
+    }
+  } catch (e) {
+    document.getElementById('headerStatus').textContent = 'Fehler: ' + e.message;
   }
 }
 
