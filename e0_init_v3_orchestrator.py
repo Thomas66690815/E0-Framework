@@ -2132,7 +2132,28 @@ async def handle_diff_broadcast(request):
                         claims[diff_id] = []
                     claims[diff_id].append(system_id)
 
-            # Record as interaction linked to broadcast
+            # Get interaction_id of this broadcast response
+            last_row = orch.db.con.execute(
+                "SELECT MAX(id) FROM interactions WHERE system_id = ? AND role = 'system'",
+                [system_id]
+            ).fetchone()
+            broadcast_interaction_id = last_row[0] if last_row else None
+
+            # Link each verdict as differential_response so it shows in diff detail
+            for diff_id, info in parsed.items():
+                try:
+                    kind = f"broadcast_{info['verdict'].lower()}"
+                    note = f"[{info['verdict']}] {info['reason']}"
+                    orch.db.add_differential_response(
+                        diff_id=diff_id,
+                        system_id=system_id,
+                        interaction_id=broadcast_interaction_id,
+                        kind=kind,
+                        note=note,
+                    )
+                except Exception:
+                    pass  # Skip if diff_id doesn't exist
+
             return system_id, {
                 "response": response_text,
                 "metrics": result.get("metrics"),

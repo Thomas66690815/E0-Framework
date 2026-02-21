@@ -3335,7 +3335,18 @@ async function loadDiffDetail(diffId) {
       html += `<h5>💬 Antworten (${responses.length})</h5>`;
       responses.forEach(r => {
         const ts = r.ts ? r.ts.substring(0, 16).replace('T', ' ') : '?';
-        const text = r.response_text || r.response_preview || '(kein Text)';
+        const isBroadcast = (r.kind || '').startsWith('broadcast_');
+        const text = isBroadcast && r.note
+          ? r.note
+          : (r.response_text || r.response_preview || r.note || '(kein Text)');
+
+        // Verdict badge for broadcast responses
+        let verdictBadge = '';
+        if (isBroadcast) {
+          const verdict = (r.kind || '').replace('broadcast_', '').toUpperCase();
+          const vColor = verdict === 'CLAIM' ? '#00cc66' : verdict === 'INTEREST' ? '#ffaa00' : '#888';
+          verdictBadge = `<span style="background:${vColor};color:#000;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:bold;margin-left:4px;">${verdict}</span>`;
+        }
 
         // Metrics badges
         let metrics = '';
@@ -3351,7 +3362,7 @@ async function loadDiffDetail(diffId) {
 
         html += '<div class="diff-response-full">';
         html += '<div class="resp-header">';
-        html += `<span><span class="resp-system">${capitalize(r.system_id)}</span> · <span style="color:var(--text3);font-size:11px;">${r.kind || 'analysis'}</span> · <span style="font-size:11px;color:var(--text3);">${ts}</span></span>`;
+        html += `<span><span class="resp-system">${capitalize(r.system_id)}</span>${verdictBadge} · <span style="color:var(--text3);font-size:11px;">${isBroadcast ? 'broadcast' : (r.kind || 'analysis')}</span> · <span style="font-size:11px;color:var(--text3);">${ts}</span></span>`;
         html += metrics;
         html += '</div>';
         html += `<div class="resp-text">${esc(text)}</div>`;
