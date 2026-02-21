@@ -799,6 +799,31 @@ class E0Database:
         diff["ancestry"] = ancestry
         return diff
 
+    def get_diff_detail(self, diff_id: int) -> Dict:
+        """Get a differential with FULL detail: complete response texts, metrics,
+        children, ancestry. This is the 'open the folder' view.
+
+        Unlike get_diff_tree (which uses 500-char previews), this returns
+        the complete interaction text and all metrics for each response.
+        """
+        diff = self.get_differential(diff_id)
+        if not diff:
+            return {}
+        diff["children"] = self.get_diff_children(diff_id)
+        diff["responses"] = self.get_differential_responses(diff_id, full=True)
+        # Walk up to root
+        ancestry = []
+        current = diff
+        while current and current.get("parent_diff_id"):
+            parent = self.get_differential(current["parent_diff_id"])
+            if parent:
+                ancestry.append({"id": parent["id"], "author": parent["author"],
+                                 "status": parent["status"],
+                                 "content": parent["content"][:200]})
+            current = parent
+        diff["ancestry"] = ancestry
+        return diff
+
     def get_differential(self, diff_id: int) -> Optional[Dict]:
         """Get a single differential by ID."""
         rows = self._fetchdicts(
@@ -850,8 +875,25 @@ class E0Database:
         self._maybe_checkpoint()
         return row[0] if row else -1
 
-    def get_differential_responses(self, diff_id: int) -> List[Dict]:
-        """Get all responses linked to a differential."""
+    def get_differential_responses(self, diff_id: int,
+                                    full: bool = False) -> List[Dict]:
+        """Get all responses linked to a differential.
+
+        Args:
+            diff_id: The differential ID.
+            full:    If True, return full interaction content + metrics.
+                     If False (default), return 500-char preview only.
+        """
+        if full:
+            return self._fetchdicts(
+                "SELECT dr.*, i.content as response_text, "
+                "i.r, i.h, i.phi, i.v, i.tau, "
+                "LEFT(i.content, 500) as response_preview "
+                "FROM differential_responses dr "
+                "LEFT JOIN interactions i ON dr.interaction_id = i.id "
+                "WHERE dr.diff_id = ? ORDER BY dr.ts ASC",
+                [diff_id]
+            )
         return self._fetchdicts(
             "SELECT dr.*, LEFT(i.content, 500) as response_preview "
             "FROM differential_responses dr "

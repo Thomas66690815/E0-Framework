@@ -1658,6 +1658,36 @@ async def handle_diff_tree(request):
     return web.json_response(tree)
 
 
+async def handle_diff_detail(request):
+    """Get a differential with FULL detail — complete response texts + metrics.
+
+    GET /diff/detail?id=3
+
+    This is the 'open the folder' view for Thomas and other network members.
+    Returns: the diff, full response texts (not truncated), metrics per response,
+    child differentials, ancestry chain.
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    diff_id = request.query.get("id")
+    if not diff_id:
+        return web.json_response({"error": "id required"}, status=400)
+    detail = orch.db.get_diff_detail(int(diff_id))
+    if not detail:
+        return web.json_response({"error": "not found"}, status=404)
+    # Serialize timestamps
+    for key in ("ts", "claimed_at", "resolved_at"):
+        if detail.get(key):
+            detail[key] = str(detail[key])
+    for child in detail.get("children", []):
+        for key in ("ts", "claimed_at", "resolved_at"):
+            if child.get(key):
+                child[key] = str(child[key])
+    for r in detail.get("responses", []):
+        if r.get("ts"):
+            r["ts"] = str(r["ts"])
+    return web.json_response(detail)
+
+
 async def handle_system_context(request):
     """Return comprehensive onboarding context for a system.
 
@@ -1843,6 +1873,7 @@ def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app.router.add_get("/diff/responses", handle_diff_responses)
     app.router.add_post("/diff/result", handle_diff_result)
     app.router.add_get("/diff/tree", handle_diff_tree)
+    app.router.add_get("/diff/detail", handle_diff_detail)
 
     return app
 
