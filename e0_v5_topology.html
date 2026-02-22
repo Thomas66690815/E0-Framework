@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E₀ Topologie — Human Partner View</title>
+<style>
+:root {
+  --bg: #0d1117; --bg2: #161b22; --bg3: #21262d;
+  --border: #30363d; --text: #c9d1d9; --text2: #8b949e; --text3: #484f58;
+  --accent-a: #58a6ff; --accent-b: #7ee787; --accent-c: #d2a8ff;
+  --accent-d: #f0883e; --accent-e: #f778ba; --accent-f: #79c0ff;
+  --accent-warn: #d29922; --accent-red: #f85149;
+  --font: 'Segoe UI', system-ui, sans-serif;
+  --mono: 'Cascadia Code', 'Fira Code', monospace;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
+a { color: var(--accent-a); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Header ── */
+.header {
+  background: var(--bg2); border-bottom: 1px solid var(--border);
+  padding: 12px 24px; display: flex; align-items: center; gap: 16px;
+  position: sticky; top: 0; z-index: 100;
+}
+.header h1 { font-size: 16px; font-weight: 600; color: var(--accent-a); }
+.header .nav-link { font-size: 12px; color: var(--text2); }
+.header .status { margin-left: auto; font-size: 11px; color: var(--text3); }
+
+/* ── Tabs ── */
+.tabs {
+  display: flex; gap: 0; border-bottom: 1px solid var(--border);
+  background: var(--bg2); padding: 0 24px;
+}
+.tab {
+  padding: 10px 20px; font-size: 13px; cursor: pointer;
+  color: var(--text2); border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent-a); border-bottom-color: var(--accent-a); }
+
+/* ── Content ── */
+.content { padding: 20px 24px; max-width: 1400px; }
+.module { display: none; }
+.module.active { display: block; }
+
+/* ── Cards ── */
+.card {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 6px;
+  padding: 16px; margin-bottom: 12px;
+}
+.card-header {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+}
+.card-header h3 { font-size: 14px; font-weight: 600; }
+
+/* ── Tables ── */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 8px 12px; color: var(--text2); font-weight: 500;
+     border-bottom: 1px solid var(--border); font-size: 11px; text-transform: uppercase; }
+td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+tr:hover td { background: rgba(88,166,255,0.04); }
+
+/* ── Badges ── */
+.badge {
+  display: inline-block; padding: 2px 8px; border-radius: 12px;
+  font-size: 11px; font-weight: 500;
+}
+.badge-open { background: rgba(126,231,135,0.15); color: var(--accent-b); }
+.badge-claimed { background: rgba(210,169,34,0.15); color: var(--accent-warn); }
+.badge-resolved { background: rgba(88,166,255,0.15); color: var(--accent-a); }
+.badge-archived { background: rgba(72,79,88,0.2); color: var(--text3); }
+.badge-human { background: rgba(247,120,186,0.15); color: var(--accent-e); }
+.badge-synthetic { background: rgba(210,168,255,0.15); color: var(--accent-c); }
+.badge-infra { background: rgba(240,136,62,0.15); color: var(--accent-d); }
+
+/* ── System Colors ── */
+.sys-delta { color: var(--accent-a); }
+.sys-epsilon { color: var(--accent-b); }
+.sys-zeta { color: var(--accent-c); }
+.sys-thomas { color: var(--accent-e); }
+.sys-a3 { color: var(--accent-d); }
+
+/* ── Spur (Trace) ── */
+.trace-container { position: relative; padding-left: 28px; }
+.trace-line {
+  position: absolute; left: 12px; top: 0; bottom: 0; width: 2px;
+  background: var(--border);
+}
+.trace-node {
+  position: relative; margin-bottom: 8px; padding: 10px 14px;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 6px;
+}
+.trace-node::before {
+  content: ''; position: absolute; left: -22px; top: 14px;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--accent-a); border: 2px solid var(--bg);
+}
+.trace-node.sys-delta::before { background: var(--accent-a); }
+.trace-node.sys-epsilon::before { background: var(--accent-b); }
+.trace-node.sys-zeta::before { background: var(--accent-c); }
+.trace-node.sys-thomas::before { background: var(--accent-e); }
+.trace-node.sys-a3::before { background: var(--accent-d); }
+.trace-meta {
+  font-size: 11px; color: var(--text2); margin-bottom: 4px;
+  display: flex; gap: 12px; align-items: center;
+}
+.trace-content {
+  font-size: 13px; line-height: 1.5; max-height: 120px; overflow: hidden;
+  position: relative; cursor: pointer;
+}
+.trace-content.expanded { max-height: none; }
+.trace-content::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 30px;
+  background: linear-gradient(transparent, var(--bg2));
+  pointer-events: none;
+}
+.trace-content.expanded::after { display: none; }
+.trace-metrics {
+  font-size: 11px; color: var(--text3); margin-top: 6px; font-family: var(--mono);
+}
+.trace-tools {
+  font-size: 11px; color: var(--accent-d); margin-top: 4px;
+}
+
+/* ── Filters ── */
+.filters {
+  display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center;
+}
+.filters select, .filters input {
+  background: var(--bg3); border: 1px solid var(--border); color: var(--text);
+  padding: 6px 10px; border-radius: 4px; font-size: 12px; font-family: var(--font);
+}
+.filters label { font-size: 11px; color: var(--text2); }
+.filters button {
+  background: var(--accent-a); color: #fff; border: none; padding: 6px 14px;
+  border-radius: 4px; font-size: 12px; cursor: pointer;
+}
+.filters button:hover { opacity: 0.9; }
+
+/* ── Partner Cards ── */
+.partner-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+.partner-card {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 6px;
+  padding: 16px;
+}
+.partner-card h3 { font-size: 15px; margin-bottom: 8px; }
+.partner-stat { display: flex; justify-content: space-between; font-size: 12px; padding: 3px 0; }
+.partner-stat .label { color: var(--text2); }
+.partner-stat .value { color: var(--text); font-family: var(--mono); }
+
+/* ── Diff-Compose (safe) ── */
+.compose-area {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 6px;
+  padding: 16px; margin-bottom: 16px;
+}
+.compose-area textarea {
+  width: 100%; background: var(--bg); border: 1px solid var(--border);
+  color: var(--text); padding: 10px; border-radius: 4px; font-family: var(--font);
+  font-size: 13px; resize: vertical; min-height: 80px;
+}
+.compose-row { display: flex; gap: 10px; margin-top: 10px; align-items: center; }
+
+/* ── Confirm Dialog ── */
+.confirm-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7); display: flex; align-items: center;
+  justify-content: center; z-index: 1000; display: none;
+}
+.confirm-overlay.show { display: flex; }
+.confirm-box {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+  padding: 24px; max-width: 420px; text-align: center;
+}
+.confirm-box p { margin-bottom: 16px; font-size: 14px; }
+.confirm-box .btn-row { display: flex; gap: 12px; justify-content: center; }
+.confirm-box button {
+  padding: 8px 20px; border-radius: 4px; border: 1px solid var(--border);
+  cursor: pointer; font-size: 13px;
+}
+.confirm-box .btn-yes { background: var(--accent-a); color: #fff; border-color: var(--accent-a); }
+.confirm-box .btn-no { background: var(--bg3); color: var(--text); }
+
+/* ── Loading ── */
+.loading { text-align: center; padding: 40px; color: var(--text2); font-size: 13px; }
+.spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--border);
+  border-top-color: var(--accent-a); border-radius: 50%; animation: spin 0.6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .content { padding: 12px; }
+  .tabs { padding: 0 12px; }
+  .tab { padding: 8px 12px; font-size: 12px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<div class="header">
+  <h1>E₀ Topologie</h1>
+  <a href="/" class="nav-link">← Netzwerk-UI</a>
+  <span class="status" id="headerStatus"></span>
+</div>
+
+<!-- ── Tab Navigation ── -->
+<div class="tabs">
+  <div class="tab active" data-module="spur" onclick="switchTab('spur')">M1 · Spur</div>
+  <div class="tab" data-module="reflexion" onclick="switchTab('reflexion')">M2 · Reflexion</div>
+  <div class="tab" data-module="diffs" onclick="switchTab('diffs')">M3 · Differenzen</div>
+  <div class="tab" data-module="partner" onclick="switchTab('partner')">M4 · Partner</div>
+</div>
+
+<!-- ══════ M1: SPUR (Trace / Iteration View) ══════ -->
+<div class="content">
+<div class="module active" id="mod-spur">
+  <div class="filters">
+    <label>Differenz:</label>
+    <select id="spurDiffSelect" onchange="loadTrace()">
+      <option value="">— Alle Spuren —</option>
+    </select>
+    <label>System:</label>
+    <select id="spurSystemFilter" onchange="loadTrace()">
+      <option value="">Alle</option>
+    </select>
+    <label>Zeitraum:</label>
+    <select id="spurTimeFilter" onchange="loadTrace()">
+      <option value="today">Heute</option>
+      <option value="24h" selected>Letzte 24h</option>
+      <option value="week">Diese Woche</option>
+      <option value="all">Alles</option>
+    </select>
+    <button onclick="loadTrace()">Aktualisieren</button>
+  </div>
+  <div id="spurContainer" class="trace-container">
+    <div class="trace-line"></div>
+    <div class="loading"><span class="spinner"></span> Lade Spur...</div>
+  </div>
+</div>
+
+<!-- ══════ M2: REFLEXION (Reflection Markers) ══════ -->
+<div class="module" id="mod-reflexion">
+  <div class="filters">
+    <label>System:</label>
+    <select id="reflexionSystemFilter" onchange="loadReflections()">
+      <option value="">Alle</option>
+    </select>
+    <button onclick="loadReflections()">Aktualisieren</button>
+  </div>
+  <div id="reflexionContainer">
+    <div class="loading"><span class="spinner"></span> Lade Reflexionspunkte...</div>
+  </div>
+</div>
+
+<!-- ══════ M3: DIFFERENZEN (Diff Topology) ══════ -->
+<div class="module" id="mod-diffs">
+  <div class="filters">
+    <label>Status:</label>
+    <select id="diffStatusFilter" onchange="loadDiffTopology()">
+      <option value="">Alle</option>
+      <option value="open" selected>Offen</option>
+      <option value="claimed">In Arbeit</option>
+      <option value="resolved">Gelöst</option>
+    </select>
+    <label>Human-Aktion:</label>
+    <select id="diffHumanFilter" onchange="loadDiffTopology()">
+      <option value="">Alle</option>
+      <option value="requested">Erbeten</option>
+    </select>
+    <button onclick="loadDiffTopology()">Aktualisieren</button>
+  </div>
+
+  <!-- Safe compose area -->
+  <div class="compose-area">
+    <h4 style="font-size:13px; color:var(--text2); margin-bottom:8px;">Neue Differenz einstellen</h4>
+    <textarea id="newDiffContent" placeholder="Deine Differenz / Frage / Beobachtung..."></textarea>
+    <div class="compose-row">
+      <select id="newDiffTarget">
+        <option value="">Nicht adressiert</option>
+        <option value="__all__">An alle Systeme (Ko-Kognition)</option>
+      </select>
+      <input id="newDiffScope" placeholder="Scope (optional)" style="width:140px;">
+      <button onclick="safePostDiff()">Δ Einstellen</button>
+    </div>
+  </div>
+
+  <div id="diffContainer">
+    <div class="loading"><span class="spinner"></span> Lade Differenzen...</div>
+  </div>
+</div>
+
+<!-- ══════ M4: PARTNER (Partner Overview) ══════ -->
+<div class="module" id="mod-partner">
+  <div class="filters">
+    <button onclick="loadPartners()">Aktualisieren</button>
+  </div>
+  <div id="partnerContainer" class="partner-grid">
+    <div class="loading"><span class="spinner"></span> Lade Partner...</div>
+  </div>
+</div>
+</div><!-- /content -->
+
+<!-- ── Confirm Dialog ── -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <p id="confirmText"></p>
+    <div class="btn-row">
+      <button class="btn-no" onclick="confirmResolve(false)">Abbrechen</button>
+      <button class="btn-yes" onclick="confirmResolve(true)">Ja, ausführen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Globals ───
+let allSystems = {};
+let confirmCallback = null;
+
+// ─── Utility ───
+function esc(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+function timeAgo(ts) {
+  const d = new Date(ts + (ts.includes('Z') || ts.includes('+') ? '' : 'Z'));
+  const diff = (Date.now() - d.getTime()) / 1000;
+  if (diff < 60) return 'gerade eben';
+  if (diff < 3600) return Math.floor(diff/60) + ' Min.';
+  if (diff < 86400) return Math.floor(diff/3600) + ' Std.';
+  return Math.floor(diff/86400) + ' Tage';
+}
+function shortContent(text, maxLen = 200) {
+  if (!text) return '';
+  return text.length > maxLen ? text.substring(0, maxLen) + '…' : text;
+}
+function sysClass(id) { return 'sys-' + (id || '').toLowerCase(); }
+function statusBadge(status) {
+  const cls = 'badge-' + (status || 'open');
+  const labels = { open: 'Offen', claimed: 'In Arbeit', resolved: 'Gelöst', archived: 'Archiviert' };
+  return `<span class="badge ${cls}">${labels[status] || status}</span>`;
+}
+
+// ─── Confirm Dialog ───
+function confirmAction(text) {
+  return new Promise(resolve => {
+    confirmCallback = resolve;
+    document.getElementById('confirmText').textContent = text;
+    document.getElementById('confirmOverlay').classList.add('show');
+  });
+}
+function confirmResolve(yes) {
+  document.getElementById('confirmOverlay').classList.remove('show');
+  if (confirmCallback) { confirmCallback(yes); confirmCallback = null; }
+}
+
+// ─── API helpers ───
+async function dbQuery(sql) {
+  const resp = await fetch('/db-query', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sql }),
+  });
+  return await resp.json();
+}
+async function apiGet(url) {
+  const resp = await fetch(url);
+  return await resp.json();
+}
+async function apiPost(url, data) {
+  const resp = await fetch(url, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  return await resp.json();
+}
+
+// ─── Tab Switching ───
+function switchTab(mod) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.module === mod));
+  document.querySelectorAll('.module').forEach(m => m.classList.toggle('active', m.id === 'mod-' + mod));
+  // Lazy load
+  if (mod === 'spur') loadTrace();
+  if (mod === 'reflexion') loadReflections();
+  if (mod === 'diffs') loadDiffTopology();
+  if (mod === 'partner') loadPartners();
+}
+
+// ════════════════════════════════════════════
+//  M1: SPUR (Trace / Iteration View)
+// ════════════════════════════════════════════
+async function loadTrace() {
+  const container = document.getElementById('spurContainer');
+  const diffId = document.getElementById('spurDiffSelect').value;
+  const systemFilter = document.getElementById('spurSystemFilter').value;
+  const timeFilter = document.getElementById('spurTimeFilter').value;
+
+  container.innerHTML = '<div class="trace-line"></div><div class="loading"><span class="spinner"></span> Lade Spur...</div>';
+
+  // Build time clause
+  let timeClause = '';
+  if (timeFilter === 'today') timeClause = "AND DATE(i.ts) = CURRENT_DATE";
+  else if (timeFilter === '24h') timeClause = "AND i.ts >= NOW() - INTERVAL '24 HOURS'";
+  else if (timeFilter === 'week') timeClause = "AND i.ts >= NOW() - INTERVAL '7 DAYS'";
+
+  // Build query — get interactions with diff context
+  let sql;
+  if (diffId) {
+    sql = `
+      SELECT i.id, i.system_id, i.role, i.content, i.ts, i.r, i.h, i.phi, i.v, i.tau,
+             i.source_diff_id,
+             d.author as diff_author, d.status as diff_status,
+             d.content as diff_content
+      FROM interactions i
+      LEFT JOIN differentials d ON i.source_diff_id = d.id
+      WHERE i.source_diff_id = ${parseInt(diffId)}
+      ${systemFilter ? `AND i.system_id = '${systemFilter}'` : ''}
+      ORDER BY i.id ASC
+      LIMIT 200
+    `;
+  } else {
+    sql = `
+      SELECT i.id, i.system_id, i.role, i.content, i.ts, i.r, i.h, i.phi, i.v, i.tau,
+             i.source_diff_id,
+             d.author as diff_author, d.status as diff_status,
+             NULL as diff_content
+      FROM interactions i
+      LEFT JOIN differentials d ON i.source_diff_id = d.id
+      WHERE i.role = 'system'
+      ${systemFilter ? `AND i.system_id = '${systemFilter}'` : ''}
+      ${timeClause}
+      ORDER BY i.id DESC
+      LIMIT 100
+    `;
+  }
+
+  try {
+    const data = await dbQuery(sql);
+    const rows = (data.rows || []).map(r => ({
+      id: r[0], system_id: r[1], role: r[2], content: r[3], ts: r[4],
+      r: r[5], h: r[6], phi: r[7], v: r[8], tau: r[9],
+      source_diff_id: r[10], diff_author: r[11], diff_status: r[12],
+      diff_content: r[13],
+    }));
+
+    // If showing specific diff, sort ascending; otherwise descending is fine
+    if (diffId) rows.sort((a, b) => a.id - b.id);
+
+    let html = '<div class="trace-line"></div>';
+
+    if (rows.length === 0) {
+      html += '<div style="padding:20px;color:var(--text2);">Keine Interaktionen für diesen Filter.</div>';
+    }
+
+    // Also load tool calls for this diff if specific
+    let toolCalls = {};
+    if (diffId) {
+      try {
+        const tcData = await dbQuery(`
+          SELECT dr.system_id, dr.kind, dr.note, dr.ts
+          FROM differential_responses dr
+          WHERE dr.diff_id = ${parseInt(diffId)}
+          ORDER BY dr.ts ASC
+        `);
+        (tcData.rows || []).forEach(r => {
+          const key = r[0];
+          if (!toolCalls[key]) toolCalls[key] = [];
+          toolCalls[key].push({ kind: r[1], note: r[2], ts: r[3] });
+        });
+      } catch(e) {}
+    }
+
+    // Also get status views for this diff
+    let statusViews = {};
+    if (diffId) {
+      try {
+        const svData = await dbQuery(`
+          SELECT system_id, status_view, reason, ts
+          FROM differential_status_views
+          WHERE diff_id = ${parseInt(diffId)}
+          ORDER BY ts ASC
+        `);
+        (svData.rows || []).forEach(r => {
+          const key = r[0];
+          if (!statusViews[key]) statusViews[key] = [];
+          statusViews[key].push({ status_view: r[1], reason: r[2], ts: r[3] });
+        });
+      } catch(e) {}
+    }
+
+    for (const row of rows) {
+      if (row.role === 'thomas' && !diffId) continue; // Skip prompts in overview
+
+      const sysColor = sysClass(row.system_id);
+      const isPrompt = row.role === 'thomas' || row.role === 'user';
+      const roleLabel = isPrompt ? '→ Prompt' : '← Antwort';
+      const diffRef = row.source_diff_id ? `Δ #${row.source_diff_id}` : '';
+
+      html += `<div class="trace-node ${sysColor}" onclick="toggleExpand(this)">`;
+      html += `<div class="trace-meta">`;
+      html += `<strong class="${sysColor}">${capitalize(row.system_id)}</strong>`;
+      html += `<span>${roleLabel}</span>`;
+      if (diffRef) html += `<span style="color:var(--accent-d)">${diffRef}</span>`;
+      html += `<span style="margin-left:auto">#${row.id} · ${timeAgo(String(row.ts))}</span>`;
+      html += `</div>`;
+      html += `<div class="trace-content">${esc(row.content || '')}</div>`;
+
+      // Metrics
+      if (row.r != null && !isPrompt) {
+        html += `<div class="trace-metrics">r=${row.r?.toFixed(4)} h=${row.h?.toFixed(4)} φ=${row.phi} v=${row.v?.toFixed(2)} τ=${row.tau}</div>`;
+      }
+
+      // Tool calls / responses for this system on this diff
+      if (toolCalls[row.system_id] && !isPrompt) {
+        html += `<div class="trace-tools">`;
+        for (const tc of toolCalls[row.system_id]) {
+          html += `🔧 ${tc.kind}${tc.note ? ': ' + shortContent(tc.note, 100) : ''}<br>`;
+        }
+        html += `</div>`;
+        delete toolCalls[row.system_id]; // Show only once
+      }
+
+      // Status views
+      if (statusViews[row.system_id] && !isPrompt) {
+        html += `<div style="font-size:11px;color:var(--accent-c);margin-top:4px;">`;
+        for (const sv of statusViews[row.system_id]) {
+          html += `📊 Status: ${sv.status_view}${sv.reason ? ' — ' + shortContent(sv.reason, 80) : ''}<br>`;
+        }
+        html += `</div>`;
+        delete statusViews[row.system_id];
+      }
+
+      html += `</div>`;
+    }
+
+    container.innerHTML = html;
+  } catch (e) {
+    container.innerHTML = `<div style="color:var(--accent-red);padding:20px;">Fehler: ${esc(e.message)}</div>`;
+  }
+}
+
+function toggleExpand(node) {
+  const content = node.querySelector('.trace-content');
+  if (content) content.classList.toggle('expanded');
+}
+
+// ════════════════════════════════════════════
+//  M2: REFLEXION (Reflection Markers)
+// ════════════════════════════════════════════
+async function loadReflections() {
+  const container = document.getElementById('reflexionContainer');
+  const systemFilter = document.getElementById('reflexionSystemFilter').value;
+
+  container.innerHTML = '<div class="loading"><span class="spinner"></span> Lade Reflexionspunkte...</div>';
+
+  try {
+    // Find reflection markers: status view changes, kind=reflexion responses, and metric jumps
+    const systemClause = systemFilter ? `AND system_id = '${systemFilter}'` : '';
+
+    // 1. Status view changes (important Ko-Kognition markers)
+    const svData = await dbQuery(`
+      SELECT sv.id, sv.diff_id, sv.system_id, sv.status_view, sv.reason, sv.ts,
+             d.content as diff_content, d.author as diff_author
+      FROM differential_status_views sv
+      JOIN differentials d ON sv.diff_id = d.id
+      ${systemFilter ? `WHERE sv.system_id = '${systemFilter}'` : ''}
+      ORDER BY sv.ts DESC
+      LIMIT 100
+    `);
+
+    // 2. Responses marked as reflexion
+    const refData = await dbQuery(`
+      SELECT dr.id, dr.diff_id, dr.system_id, dr.kind, dr.note, dr.ts,
+             d.content as diff_content, d.author as diff_author
+      FROM differential_responses dr
+      JOIN differentials d ON dr.diff_id = d.id
+      WHERE dr.kind LIKE '%refle%' OR dr.kind LIKE '%meta%' OR dr.kind LIKE '%analyse%'
+      ${systemClause}
+      ORDER BY dr.ts DESC
+      LIMIT 50
+    `);
+
+    // 3. Metric jumps (big h or r changes between consecutive turns)
+    const metricData = await dbQuery(`
+      SELECT a.id, a.system_id, a.h, a.r, a.ts, a.source_diff_id,
+             b.h as prev_h, b.r as prev_r,
+             ABS(COALESCE(a.h,0) - COALESCE(b.h,0)) as h_delta,
+             ABS(COALESCE(a.r,0) - COALESCE(b.r,0)) as r_delta
+      FROM interactions a
+      JOIN interactions b ON b.id = (
+        SELECT MAX(c.id) FROM interactions c
+        WHERE c.system_id = a.system_id AND c.role = 'system' AND c.id < a.id
+      )
+      WHERE a.role = 'system'
+      AND (ABS(COALESCE(a.h,0) - COALESCE(b.h,0)) > 0.3 OR ABS(COALESCE(a.r,0) - COALESCE(b.r,0)) > 0.5)
+      ${systemClause.replace('system_id', 'a.system_id')}
+      ORDER BY a.ts DESC
+      LIMIT 30
+    `);
+
+    let html = '';
+
+    // Status Views section
+    const svRows = svData.rows || [];
+    if (svRows.length > 0) {
+      html += '<div class="card"><div class="card-header"><h3>📊 Status-Views (Bewertungsänderungen)</h3></div>';
+      html += '<table><tr><th>Diff</th><th>System</th><th>Status</th><th>Grund</th><th>Zeit</th></tr>';
+      for (const r of svRows) {
+        html += `<tr>`;
+        html += `<td><a href="#" onclick="viewDiffTrace(${r[1]});return false;">Δ #${r[1]}</a></td>`;
+        html += `<td class="${sysClass(r[2])}">${capitalize(r[2])}</td>`;
+        html += `<td><span class="badge badge-open">${esc(r[3])}</span></td>`;
+        html += `<td style="max-width:400px">${esc(shortContent(r[4], 200))}</td>`;
+        html += `<td style="white-space:nowrap">${timeAgo(String(r[5]))}</td>`;
+        html += `</tr>`;
+      }
+      html += '</table></div>';
+    }
+
+    // Metric jumps
+    const metricRows = metricData.rows || [];
+    if (metricRows.length > 0) {
+      html += '<div class="card"><div class="card-header"><h3>📈 Metrik-Sprünge (h/r Veränderungen)</h3></div>';
+      html += '<table><tr><th>#</th><th>System</th><th>h Vorher→Nachher</th><th>r Vorher→Nachher</th><th>Diff</th><th>Zeit</th></tr>';
+      for (const r of metricRows) {
+        const hPrev = (r[6] ?? 0).toFixed(3), hNow = (r[2] ?? 0).toFixed(3);
+        const rPrev = (r[7] ?? 0).toFixed(4), rNow = (r[3] ?? 0).toFixed(4);
+        const hDelta = r[8]?.toFixed(3), rDelta = r[9]?.toFixed(4);
+        html += `<tr>`;
+        html += `<td>${r[0]}</td>`;
+        html += `<td class="${sysClass(r[1])}">${capitalize(r[1])}</td>`;
+        html += `<td>${hPrev} → <strong>${hNow}</strong> <span style="color:var(--accent-warn)">(Δ${hDelta})</span></td>`;
+        html += `<td>${rPrev} → <strong>${rNow}</strong> <span style="color:var(--accent-warn)">(Δ${rDelta})</span></td>`;
+        html += `<td>${r[5] ? `<a href="#" onclick="viewDiffTrace(${r[5]});return false;">Δ #${r[5]}</a>` : '—'}</td>`;
+        html += `<td>${timeAgo(String(r[4]))}</td>`;
+        html += `</tr>`;
+      }
+      html += '</table></div>';
+    }
+
+    // Reflexion responses
+    const refRows = refData.rows || [];
+    if (refRows.length > 0) {
+      html += '<div class="card"><div class="card-header"><h3>🔍 Explizite Reflexionen</h3></div>';
+      html += '<table><tr><th>Diff</th><th>System</th><th>Art</th><th>Inhalt</th><th>Zeit</th></tr>';
+      for (const r of refRows) {
+        html += `<tr>`;
+        html += `<td><a href="#" onclick="viewDiffTrace(${r[1]});return false;">Δ #${r[1]}</a></td>`;
+        html += `<td class="${sysClass(r[2])}">${capitalize(r[2])}</td>`;
+        html += `<td>${esc(r[3])}</td>`;
+        html += `<td style="max-width:400px">${esc(shortContent(r[4], 200))}</td>`;
+        html += `<td style="white-space:nowrap">${timeAgo(String(r[5]))}</td>`;
+        html += `</tr>`;
+      }
+      html += '</table></div>';
+    }
+
+    if (!html) {
+      html = '<div style="padding:20px;color:var(--text2);">Keine Reflexionspunkte gefunden.</div>';
+    }
+
+    container.innerHTML = html;
+  } catch (e) {
+    container.innerHTML = `<div style="color:var(--accent-red);padding:20px;">Fehler: ${esc(e.message)}</div>`;
+  }
+}
+
+// ════════════════════════════════════════════
+//  M3: DIFFERENZEN (Diff Topology View)
+// ════════════════════════════════════════════
+async function loadDiffTopology() {
+  const container = document.getElementById('diffContainer');
+  const statusFilter = document.getElementById('diffStatusFilter').value;
+  const humanFilter = document.getElementById('diffHumanFilter').value;
+
+  container.innerHTML = '<div class="loading"><span class="spinner"></span> Lade Differenzen...</div>';
+
+  try {
+    let statusClause = statusFilter ? `WHERE d.status = '${statusFilter}'` : `WHERE d.status != 'archived'`;
+
+    const data = await dbQuery(`
+      SELECT d.id, d.ts, d.author, d.content, d.addressed_to, d.scope,
+             d.status, d.claimed_by, d.tags, d.parent_diff_id,
+             (SELECT COUNT(*) FROM differential_responses dr WHERE dr.diff_id = d.id) as response_count,
+             (SELECT GROUP_CONCAT(DISTINCT dr2.system_id) FROM differential_responses dr2 WHERE dr2.diff_id = d.id) as responders,
+             (SELECT GROUP_CONCAT(sv.system_id || ':' || sv.status_view)
+              FROM differential_status_views sv WHERE sv.diff_id = d.id) as status_views
+      FROM differentials d
+      ${statusClause}
+      ORDER BY d.id DESC
+      LIMIT 100
+    `);
+
+    const rows = (data.rows || []).map(r => ({
+      id: r[0], ts: r[1], author: r[2], content: r[3], addressed_to: r[4],
+      scope: r[5], status: r[6], claimed_by: r[7], tags: r[8],
+      parent_diff_id: r[9], response_count: r[10], responders: r[11],
+      status_views: r[12],
+    }));
+
+    // Apply human filter
+    let filtered = rows;
+    if (humanFilter === 'requested') {
+      filtered = rows.filter(d =>
+        d.addressed_to?.includes('thomas') ||
+        d.scope?.includes('human') ||
+        d.content?.toLowerCase().includes('thomas') ||
+        d.content?.toLowerCase().includes('human partner')
+      );
+    }
+
+    let html = '';
+    if (filtered.length === 0) {
+      html = '<div style="padding:20px;color:var(--text2);">Keine Differenzen für diesen Filter.</div>';
+    }
+
+    for (const d of filtered) {
+      // Detect if human action is requested
+      const humanRequested = d.addressed_to?.includes('thomas') ||
+        d.content?.toLowerCase().includes('human partner') ||
+        d.scope?.includes('human');
+
+      html += `<div class="card" style="border-left: 3px solid ${humanRequested ? 'var(--accent-e)' : 'var(--border)'}">`;
+
+      // Header row
+      html += `<div class="card-header">`;
+      html += `<span style="font-family:var(--mono);color:var(--accent-d)">Δ #${d.id}</span>`;
+      html += statusBadge(d.status);
+      html += `<span class="${sysClass(d.author)}" style="font-weight:500">${capitalize(d.author)}</span>`;
+      if (humanRequested) html += `<span class="badge badge-human">👤 Human erbeten</span>`;
+      if (d.parent_diff_id) html += `<span style="font-size:11px;color:var(--text3)">↩ Iteriert auf #${d.parent_diff_id}</span>`;
+      html += `<span style="margin-left:auto;font-size:11px;color:var(--text3)">${timeAgo(String(d.ts))}</span>`;
+      html += `</div>`;
+
+      // Content preview
+      html += `<div style="font-size:13px;color:var(--text);margin-bottom:8px;line-height:1.5;">${esc(shortContent(d.content, 300))}</div>`;
+
+      // Meta row
+      html += `<div style="display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--text2);">`;
+      if (d.scope) html += `<span>📂 ${esc(d.scope)}</span>`;
+      if (d.tags) html += `<span>🏷️ ${esc(d.tags)}</span>`;
+      if (d.addressed_to) html += `<span>📬 An: ${esc(d.addressed_to)}</span>`;
+      if (d.claimed_by) html += `<span>🤝 Geclaimt: <strong>${capitalize(d.claimed_by)}</strong></span>`;
+      html += `<span>💬 ${d.response_count} Antwort(en)</span>`;
+      if (d.responders) html += `<span>👥 ${d.responders}</span>`;
+      html += `</div>`;
+
+      // Status views from all systems
+      if (d.status_views) {
+        html += `<div style="margin-top:6px;font-size:11px;">`;
+        const views = d.status_views.split(',');
+        for (const v of views) {
+          const [sys, sv] = v.split(':');
+          html += `<span class="${sysClass(sys)}" style="margin-right:10px;">📊 ${capitalize(sys)}: ${sv}</span>`;
+        }
+        html += `</div>`;
+      }
+
+      // Actions
+      html += `<div style="margin-top:8px;display:flex;gap:8px;">`;
+      html += `<a href="#" onclick="viewDiffTrace(${d.id});return false;" style="font-size:12px;">🔍 Spur ansehen</a>`;
+      if (d.status === 'open') {
+        html += `<a href="#" onclick="safeRouteAll(${d.id});return false;" style="font-size:12px;color:var(--accent-b);">⚡ Ko-Kognition starten</a>`;
+      }
+      html += `</div>`;
+
+      html += `</div>`;
+    }
+
+    container.innerHTML = html;
+  } catch (e) {
+    container.innerHTML = `<div style="color:var(--accent-red);padding:20px;">Fehler: ${esc(e.message)}</div>`;
+  }
+}
+
+// ════════════════════════════════════════════
+//  M4: PARTNER (Partner Overview)
+// ════════════════════════════════════════════
+async function loadPartners() {
+  const container = document.getElementById('partnerContainer');
+  container.innerHTML = '<div class="loading"><span class="spinner"></span> Lade Partner...</div>';
+
+  try {
+    // Get system status
+    const status = await apiGet('/status');
+    const systems = status.systems || {};
+
+    // Get activity stats from DB
+    const actData = await dbQuery(`
+      SELECT system_id,
+             COUNT(*) as total_interactions,
+             COUNT(CASE WHEN role='system' THEN 1 END) as responses,
+             MAX(ts) as last_active,
+             AVG(CASE WHEN role='system' AND h IS NOT NULL THEN h END) as avg_h,
+             AVG(CASE WHEN role='system' AND r IS NOT NULL THEN r END) as avg_r,
+             AVG(CASE WHEN role='system' AND v IS NOT NULL THEN v END) as avg_v
+      FROM interactions
+      WHERE system_id != ''
+      GROUP BY system_id
+      ORDER BY last_active DESC
+    `);
+
+    // Get claim counts
+    const claimData = await dbQuery(`
+      SELECT claimed_by, COUNT(*) as claim_count
+      FROM differentials
+      WHERE claimed_by IS NOT NULL
+      GROUP BY claimed_by
+    `);
+    const claimMap = {};
+    (claimData.rows || []).forEach(r => { claimMap[r[0]] = r[1]; });
+
+    // Get response counts
+    const respData = await dbQuery(`
+      SELECT system_id, COUNT(*) as resp_count
+      FROM differential_responses
+      GROUP BY system_id
+    `);
+    const respMap = {};
+    (respData.rows || []).forEach(r => { respMap[r[0]] = r[1]; });
+
+    // Get diff authorship
+    const authData = await dbQuery(`
+      SELECT author, COUNT(*) as diff_count
+      FROM differentials
+      GROUP BY author
+    `);
+    const authMap = {};
+    (authData.rows || []).forEach(r => { authMap[r[0]] = r[1]; });
+
+    let html = '';
+
+    // Determine roles
+    const roles = {
+      thomas: { label: 'Human Partner', kind: 'human', icon: '👤' },
+      a3: { label: 'Infrastruktur (Claude Opus 4.6)', kind: 'infra', icon: '🔧' },
+      delta: { label: 'Topologie & Struktur', kind: 'synthetic', icon: '🔺' },
+      epsilon: { label: 'Mechanik & Architektur', kind: 'synthetic', icon: '🔷' },
+      zeta: { label: 'Kritik & Qualität', kind: 'synthetic', icon: '🔶' },
+    };
+
+    for (const r of (actData.rows || [])) {
+      const sysId = r[0];
+      const role = roles[sysId] || { label: 'System', kind: 'synthetic', icon: '⬡' };
+      const kindBadge = `badge-${role.kind}`;
+      const isOnline = systems[sysId]?.status === 'active';
+
+      html += `<div class="partner-card" style="border-top: 3px solid ${
+        sysId === 'thomas' ? 'var(--accent-e)' :
+        sysId === 'a3' ? 'var(--accent-d)' :
+        sysId === 'delta' ? 'var(--accent-a)' :
+        sysId === 'epsilon' ? 'var(--accent-b)' :
+        sysId === 'zeta' ? 'var(--accent-c)' : 'var(--border)'
+      }">`;
+
+      html += `<h3 class="${sysClass(sysId)}">${role.icon} ${capitalize(sysId)} ${isOnline ? '<span style="color:var(--accent-b);font-size:11px;">● online</span>' : '<span style="color:var(--text3);font-size:11px;">○ offline</span>'}</h3>`;
+      html += `<div style="font-size:12px;color:var(--text2);margin-bottom:10px;">${role.label} <span class="badge ${kindBadge}">${role.kind}</span></div>`;
+
+      if (systems[sysId]?.model) {
+        html += `<div class="partner-stat"><span class="label">Modell</span><span class="value">${esc(systems[sysId].model)}</span></div>`;
+      }
+      html += `<div class="partner-stat"><span class="label">Interaktionen</span><span class="value">${r[1]}</span></div>`;
+      html += `<div class="partner-stat"><span class="label">Antworten</span><span class="value">${r[2]}</span></div>`;
+      html += `<div class="partner-stat"><span class="label">Letzte Aktivität</span><span class="value">${timeAgo(String(r[3]))}</span></div>`;
+      html += `<div class="partner-stat"><span class="label">Claims</span><span class="value">${claimMap[sysId] || 0}</span></div>`;
+      html += `<div class="partner-stat"><span class="label">Diff-Responses</span><span class="value">${respMap[sysId] || 0}</span></div>`;
+      html += `<div class="partner-stat"><span class="label">Diffs erstellt</span><span class="value">${authMap[sysId] || 0}</span></div>`;
+
+      // Metrics
+      if (r[4] != null) {
+        html += `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">`;
+        html += `<div style="font-size:11px;color:var(--text2);margin-bottom:4px;">Durchschnittliche Metriken:</div>`;
+        html += `<div class="partner-stat"><span class="label">avg(h)</span><span class="value">${r[4]?.toFixed(4)}</span></div>`;
+        html += `<div class="partner-stat"><span class="label">avg(r)</span><span class="value">${r[5]?.toFixed(4)}</span></div>`;
+        html += `<div class="partner-stat"><span class="label">avg(v)</span><span class="value">${r[6]?.toFixed(2)}</span></div>`;
+        html += `</div>`;
+      }
+
+      html += `</div>`;
+    }
+
+    container.innerHTML = html || '<div style="padding:20px;color:var(--text2);">Keine Partner-Daten.</div>';
+  } catch (e) {
+    container.innerHTML = `<div style="color:var(--accent-red);padding:20px;">Fehler: ${esc(e.message)}</div>`;
+  }
+}
+
+// ════════════════════════════════════════════
+//  Safe Actions (with confirmation)
+// ════════════════════════════════════════════
+async function safePostDiff() {
+  const content = document.getElementById('newDiffContent').value.trim();
+  if (!content) return;
+
+  const target = document.getElementById('newDiffTarget').value;
+  const scope = document.getElementById('newDiffScope').value.trim();
+
+  const targetLabel = target === '__all__' ? 'alle Systeme (Ko-Kognition)' :
+                      target ? target : 'niemanden (ungerichtet)';
+  const ok = await confirmAction(`Neue Differenz einstellen an ${targetLabel}?`);
+  if (!ok) return;
+
+  document.getElementById('headerStatus').textContent = '⏳ Stelle Differenz ein...';
+
+  // Build addressed_to
+  let addressed_to = null;
+  if (target === '__all__') {
+    // Get active system IDs
+    try {
+      const status = await apiGet('/status');
+      const syntheticIds = Object.keys(status.systems || {}).filter(s =>
+        status.systems[s].kind === 'synthetic' && status.systems[s].status === 'active'
+      );
+      addressed_to = syntheticIds.join(',');
+    } catch(e) { addressed_to = 'delta,epsilon,zeta'; }
+  } else if (target) {
+    addressed_to = target;
+  }
+
+  try {
+    const data = await apiPost('/diff', {
+      author: 'thomas',
+      content,
+      addressed_to,
+      scope: scope || undefined,
+    });
+
+    if (data.posted) {
+      let msg = `✓ Differenz #${data.id} eingestellt`;
+      if (data.auto_dispatched?.length) {
+        msg += ` · ${data.auto_dispatched.length} Auto-Dispatch(es)`;
+      }
+      document.getElementById('headerStatus').textContent = msg;
+      document.getElementById('newDiffContent').value = '';
+      setTimeout(() => document.getElementById('headerStatus').textContent = '', 5000);
+      loadDiffTopology();
+    } else {
+      document.getElementById('headerStatus').textContent = 'Fehler: ' + (data.error || 'Unbekannt');
+    }
+  } catch (e) {
+    document.getElementById('headerStatus').textContent = 'Fehler: ' + e.message;
+  }
+}
+
+async function safeRouteAll(diffId) {
+  const ok = await confirmAction(`Ko-Kognition starten für Δ #${diffId}? Alle aktiven Systeme werden um ihre Perspektive gebeten.`);
+  if (!ok) return;
+
+  document.getElementById('headerStatus').textContent = `⚡ Ko-Kognition für Δ #${diffId}...`;
+
+  try {
+    // Route to each system individually
+    const status = await apiGet('/status');
+    const targets = Object.keys(status.systems || {}).filter(s =>
+      status.systems[s].kind === 'synthetic' && status.systems[s].status === 'active'
+    );
+
+    let successes = 0;
+    for (const sys of targets) {
+      try {
+        const r = await apiPost('/diff/route', { diff_id: diffId, system: sys });
+        if (r.routed) successes++;
+      } catch(e) {}
+    }
+
+    document.getElementById('headerStatus').textContent = `⚡ Ko-Kognition: ${successes}/${targets.length} Systeme haben geantwortet`;
+    setTimeout(() => document.getElementById('headerStatus').textContent = '', 6000);
+    loadDiffTopology();
+  } catch (e) {
+    document.getElementById('headerStatus').textContent = 'Fehler: ' + e.message;
+  }
+}
+
+function viewDiffTrace(diffId) {
+  document.getElementById('spurDiffSelect').value = String(diffId);
+  switchTab('spur');
+  loadTrace();
+}
+
+// ════════════════════════════════════════════
+//  Initialization
+// ════════════════════════════════════════════
+async function init() {
+  try {
+    // Load systems for filters
+    const status = await apiGet('/status');
+    allSystems = status.systems || {};
+
+    // Populate system filters
+    const systemSelects = ['spurSystemFilter', 'reflexionSystemFilter'];
+    for (const selId of systemSelects) {
+      const sel = document.getElementById(selId);
+      // Add thomas and a3
+      sel.innerHTML += '<option value="thomas">Thomas</option>';
+      sel.innerHTML += '<option value="a3">A₃</option>';
+      for (const [id, sys] of Object.entries(allSystems)) {
+        sel.innerHTML += `<option value="${id}">${capitalize(id)}</option>`;
+      }
+    }
+
+    // Populate diff target dropdown
+    const diffTarget = document.getElementById('newDiffTarget');
+    for (const [id, sys] of Object.entries(allSystems)) {
+      if (sys.kind === 'synthetic') {
+        diffTarget.innerHTML += `<option value="${id}">${capitalize(id)}</option>`;
+      }
+    }
+
+    // Populate diff select for trace
+    const diffs = await dbQuery(`
+      SELECT id, author, LEFT(content, 60) as preview, status
+      FROM differentials ORDER BY id DESC LIMIT 50
+    `);
+    const diffSelect = document.getElementById('spurDiffSelect');
+    for (const r of (diffs.rows || [])) {
+      diffSelect.innerHTML += `<option value="${r[0]}">Δ #${r[0]} (${r[1]}) — ${r[2]?.substring(0, 50) || ''}...</option>`;
+    }
+
+    // Load initial view
+    loadTrace();
+  } catch (e) {
+    document.getElementById('headerStatus').textContent = 'Init-Fehler: ' + e.message;
+  }
+}
+
+// Start
+init();
+</script>
+</body>
+</html>

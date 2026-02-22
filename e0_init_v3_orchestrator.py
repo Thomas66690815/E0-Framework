@@ -1506,6 +1506,14 @@ async def handle_index(request):
     return web.FileResponse(ui_path)
 
 
+async def handle_topology(request):
+    """Serve the Topology UI — Human Partner View (v5)."""
+    path = Path(__file__).parent / "e0_v5_topology.html"
+    if not path.exists():
+        return web.Response(text="Topology UI not found", status=404)
+    return web.FileResponse(path)
+
+
 async def handle_status(request):
     orch: InitV3Orchestrator = request.app["orchestrator"]
     return web.json_response(orch.status())
@@ -3237,6 +3245,7 @@ def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app["orchestrator"] = orchestrator
 
     app.router.add_get("/", handle_index)
+    app.router.add_get("/topology", handle_topology)
     app.router.add_get("/status", handle_status)
     app.router.add_post("/feed-canon", handle_feed_canon)
     app.router.add_post("/phase1-step", handle_phase1_step)
