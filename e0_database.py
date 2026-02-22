@@ -212,6 +212,18 @@ CREATE TABLE IF NOT EXISTS differential_withdrawals (
     reason          TEXT,                     -- optional explanation
     ts              TIMESTAMP NOT NULL
 );
+
+-- Pending notifications: tracks addressed diffs that a node hasn't processed yet
+CREATE SEQUENCE IF NOT EXISTS notification_seq START 1;
+CREATE TABLE IF NOT EXISTS pending_notifications (
+    id              INTEGER DEFAULT nextval('notification_seq') PRIMARY KEY,
+    system_id       VARCHAR NOT NULL,         -- who is addressed
+    diff_id         INTEGER NOT NULL,         -- FK → differentials.id
+    status          VARCHAR DEFAULT 'pending', -- 'pending' | 'delivered' | 'acknowledged' | 'acted_on'
+    created_at      TIMESTAMP NOT NULL,
+    delivered_at    TIMESTAMP,                -- when the node received its auto-turn
+    acknowledged_at TIMESTAMP                 -- when the node explicitly responded/claimed/status-viewed
+);
 """
 
 
@@ -1128,6 +1140,80 @@ class E0Database:
             )
         return self._fetchdicts(
             "SELECT * FROM differential_withdrawals ORDER BY ts DESC"
+        )
+
+    # ─────────────────────────────────────────
+    #  Notifications: addressed differential tracking
+    # ─────────────────────────────────────────
+
+    def add_notification(self, system_id: str, diff_id: int) -> int:
+        """Create a pending notification for an addressed differential."""
+        # Avoid duplicates
+        existing = self.con.execute(
+            "SELECT id FROM pending_notifications "
+            "WHERE system_id = ? AND diff_id = ?",
+            [system_id, diff_id]
+        ).fetchone()
+        if existing:
+            return existing[0]
+        self.con.execute(
+            "INSERT INTO pending_notifications "
+            "(system_id, diff_id, status, created_at) "
+            "VALUES (?, ?, 'pending', ?)",
+            [system_id, diff_id, datetime.now()]
+        )
+        row = self.con.execute(
+            "SELECT MAX(id) FROM pending_notifications WHERE system_id = ?",
+            [system_id]
+        ).fetchone()
+        self._maybe_checkpoint()
+        return row[0] if row else -1
+
+    def get_pending_notifications(self, system_id: str) -> List[Dict]:
+        """Get all pending/delivered notifications for a system.
+
+        Returns diffs that are addressed to this system and haven't been
+        acknowledged yet (not responded-to, claimed, or status-viewed).
+        """
+        return self._fetchdicts(
+            "SELECT pn.id AS notification_id, pn.diff_id, pn.status, "
+            "       pn.created_at, d.author, d.content, d.scope, "
+            "       d.tags, d.parent_diff_id "
+            "FROM pending_notifications pn "
+            "JOIN differentials d ON pn.diff_id = d.id "
+            "WHERE pn.system_id = ? "
+            "  AND pn.status IN ('pending', 'delivered') "
+            "ORDER BY pn.created_at ASC",
+            [system_id]
+        )
+
+    def mark_notification_delivered(self, system_id: str, diff_id: int):
+        """Mark a notification as delivered (the node got a turn for it)."""
+        self.con.execute(
+            "UPDATE pending_notifications SET status = 'delivered', "
+            "delivered_at = ? WHERE system_id = ? AND diff_id = ? "
+            "AND status = 'pending'",
+            [datetime.now(), system_id, diff_id]
+        )
+        self._maybe_checkpoint()
+
+    def acknowledge_notification(self, system_id: str, diff_id: int):
+        """Mark a notification as acknowledged (node responded/claimed/status-viewed)."""
+        self.con.execute(
+            "UPDATE pending_notifications SET status = 'acknowledged', "
+            "acknowledged_at = ? WHERE system_id = ? AND diff_id = ? "
+            "AND status IN ('pending', 'delivered')",
+            [datetime.now(), system_id, diff_id]
+        )
+        self._maybe_checkpoint()
+
+    def get_notification_stats(self) -> List[Dict]:
+        """Get notification statistics per system."""
+        return self._fetchdicts(
+            "SELECT system_id, status, COUNT(*) as count "
+            "FROM pending_notifications "
+            "GROUP BY system_id, status "
+            "ORDER BY system_id, status"
         )
 
     # ─────────────────────────────────────────

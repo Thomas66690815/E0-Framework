@@ -599,6 +599,23 @@ D0_TOOLS = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "check_pending_diffs",
+            "description": (
+                "Check what differentials are currently addressed to you and awaiting your response. "
+                "Returns all pending/delivered notifications — diffs that another node has specifically "
+                "directed at you and that you haven't yet responded to, claimed, or set a status-view on. "
+                "Use this to discover what's waiting for your autonomous action."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+            },
+        },
+    },
 ]
 
 
@@ -627,6 +644,12 @@ class InitV3Orchestrator:
 
         # v4 Phase 3: DuckDB persistence
         self.db = E0Database()
+
+        # D₀ auto-dispatch: queued dispatches for addressed diffs
+        # Format: [(system_id, diff_id), ...]
+        self._pending_dispatches: List[tuple] = []
+        self._dispatch_depth = 0  # prevent infinite auto-dispatch chains
+        self.MAX_DISPATCH_DEPTH = 3  # max auto-dispatch chain depth
 
         # Ensure all registry systems are in DuckDB systems table
         self._sync_systems_to_db()
@@ -1051,7 +1074,81 @@ class InitV3Orchestrator:
             result["tool_calls"] = tool_calls_log
             result["tool_rounds"] = len(set(tc["round"] for tc in tool_calls_log))
 
+        # D₀ auto-dispatch: process queued notifications
+        # Only at the top level (not during recursive auto-dispatch)
+        if self._pending_dispatches and self._dispatch_depth == 0:
+            dispatches = list(self._pending_dispatches)
+            self._pending_dispatches.clear()
+            auto_dispatch_results = []
+            for target_id, diff_id in dispatches:
+                adr = await self._auto_dispatch(target_id, diff_id)
+                if adr:
+                    auto_dispatch_results.append(adr)
+            if auto_dispatch_results:
+                result["auto_dispatches"] = auto_dispatch_results
+
         return result
+
+    async def _auto_dispatch(self, system_id: str, diff_id: int) -> Optional[Dict]:
+        """Auto-dispatch: give an addressed node a turn to react to a diff.
+
+        Called automatically when a diff with addressed_to is posted.
+        Uses chain depth tracking to prevent infinite loops (A→B→C→A).
+        """
+        if self._dispatch_depth >= self.MAX_DISPATCH_DEPTH:
+            print(f"  [D₀ dispatch] Skipping {system_id} for diff #{diff_id} "
+                  f"(max chain depth {self.MAX_DISPATCH_DEPTH} reached)")
+            return None
+
+        if system_id not in self.systems:
+            return None
+
+        diff = self.db.get_differential(diff_id)
+        if not diff:
+            return None
+
+        # Mark notification as delivered
+        self.db.mark_notification_delivered(system_id, diff_id)
+
+        # Build the auto-dispatch prompt
+        author = diff.get("author", "unknown")
+        content = diff.get("content", "")
+        scope = diff.get("scope", "")
+        parent = diff.get("parent_diff_id")
+
+        prompt_parts = [
+            f"[Adressierte Differenz #{diff_id} von {author}]",
+        ]
+        if scope:
+            prompt_parts.append(f"Scope: {scope}")
+        if parent:
+            prompt_parts.append(f"Iteriert auf Differenz #{parent}")
+        prompt_parts.append("")
+        prompt_parts.append(content)
+        prompt_parts.append("")
+        prompt_parts.append(
+            "Diese Differenz ist direkt an dich adressiert. "
+            "Du kannst mit den D₀-Tools reagieren: "
+            "respond_differential, claim_differential, update_differential_status, "
+            "withdraw_claim — oder check_pending_diffs für weitere offene Adressierungen."
+        )
+        prompt = "\n".join(prompt_parts)
+
+        print(f"  [D₀ auto-dispatch] → {system_id} for diff #{diff_id} "
+              f"from {author} (depth {self._dispatch_depth + 1})")
+
+        # Increase depth, send prompt, decrease depth
+        self._dispatch_depth += 1
+        try:
+            result = await self.send_prompt(system_id, prompt, source_diff_id=diff_id)
+            result["auto_dispatched"] = True
+            result["trigger_diff_id"] = diff_id
+            return result
+        except Exception as e:
+            print(f"  [D₀ auto-dispatch] Error for {system_id}: {e}")
+            return {"system": system_id, "error": str(e), "trigger_diff_id": diff_id}
+        finally:
+            self._dispatch_depth -= 1
 
     def enable_d0_tools(self, system_id: str) -> Dict:
         """Enable D₀ tools (function calling) for a synthetic node.
@@ -1093,6 +1190,17 @@ class InitV3Orchestrator:
                     tags=args.get("tags"),
                     parent_diff_id=args.get("parent_diff_id"),
                 )
+                # Auto-notify: if addressed to a specific node, create notification
+                # and queue auto-dispatch
+                addressed_to = args.get("addressed_to")
+                if addressed_to and diff_id > 0:
+                    # Handle single ID or comma-separated list
+                    targets = [t.strip() for t in addressed_to.split(",")]
+                    for target in targets:
+                        if target in self.systems and target != system_id:
+                            self.db.add_notification(target, diff_id)
+                            self._pending_dispatches.append((target, diff_id))
+                            print(f"  [D₀ notify] {system_id} → {target} (diff #{diff_id})")
                 return {"success": True, "diff_id": diff_id}
 
             elif fn_name == "post_partner_request":
@@ -1111,6 +1219,8 @@ class InitV3Orchestrator:
                 success = self.db.claim_differential(
                     args["diff_id"], system_id
                 )
+                # Auto-acknowledge notification if this node was addressed
+                self.db.acknowledge_notification(system_id, args["diff_id"])
                 return {"success": success, "diff_id": args["diff_id"]}
 
             elif fn_name == "respond_differential":
@@ -1128,6 +1238,8 @@ class InitV3Orchestrator:
                     kind=args.get("kind", "analysis"),
                     note=note,
                 )
+                # Auto-acknowledge notification if this node was addressed
+                self.db.acknowledge_notification(system_id, args["diff_id"])
                 return {"success": True, "response_id": resp_id, "diff_id": args["diff_id"]}
 
             elif fn_name == "update_differential_status":
@@ -1137,6 +1249,8 @@ class InitV3Orchestrator:
                     status_view=args["status_view"],
                     reason=args.get("reason"),
                 )
+                # Auto-acknowledge notification if this node was addressed
+                self.db.acknowledge_notification(system_id, args["diff_id"])
                 return {"success": True, "view_id": view_id, "diff_id": args["diff_id"]}
 
             elif fn_name == "withdraw_claim":
@@ -1161,6 +1275,18 @@ class InitV3Orchestrator:
                     if r.get("content") and len(r["content"]) > 500:
                         r["content"] = r["content"][:500] + "..."
                 return {"success": True, "count": len(results), "interactions": results}
+
+            elif fn_name == "check_pending_diffs":
+                pending = self.db.get_pending_notifications(system_id)
+                # Truncate content for tool response
+                for p in pending:
+                    if p.get("content") and len(p["content"]) > 500:
+                        p["content"] = p["content"][:500] + "..."
+                return {
+                    "success": True,
+                    "count": len(pending),
+                    "pending_diffs": pending,
+                }
 
             else:
                 return {"error": f"Unknown tool: {fn_name}"}
@@ -1875,7 +2001,28 @@ async def handle_diff_post(request):
         parent_diff_id=data.get("parent_diff_id"),
         source_interaction_id=data.get("source_interaction_id"),
     )
-    return web.json_response({"posted": True, "id": diff_id, "author": author})
+    # Auto-notify addressed nodes
+    addressed_to = data.get("addressed_to")
+    notified = []
+    if addressed_to and diff_id > 0:
+        targets = [t.strip() for t in addressed_to.split(",")]
+        for target in targets:
+            if target in orch.systems and target != author:
+                orch.db.add_notification(target, diff_id)
+                notified.append(target)
+    response = {"posted": True, "id": diff_id, "author": author}
+    if notified:
+        response["notified"] = notified
+    # Queue auto-dispatch if requested
+    auto_dispatch = data.get("auto_dispatch", False)
+    if auto_dispatch and notified:
+        dispatch_results = []
+        for target in notified:
+            dr = await orch._auto_dispatch(target, diff_id)
+            if dr:
+                dispatch_results.append(dr)
+        response["auto_dispatched"] = dispatch_results
+    return web.json_response(response)
 
 
 async def handle_diff_list(request):
@@ -2955,6 +3102,74 @@ async def handle_diff_conflicts(request):
     })
 
 
+# ─────────────────────────────────────────────
+#  D₀ Notifications — addressed differential auto-dispatch
+# ─────────────────────────────────────────────
+
+async def handle_notifications_pending(request):
+    """Get pending notifications for a system.
+
+    GET /notifications/pending?system_id=epsilon
+    Returns diffs addressed to this system that haven't been acknowledged.
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    system_id = request.query.get("system_id")
+    if not system_id:
+        return web.json_response({"error": "system_id required"}, status=400)
+    pending = orch.db.get_pending_notifications(system_id)
+    return web.json_response({
+        "system_id": system_id,
+        "pending_count": len(pending),
+        "pending": pending,
+    }, dumps=lambda obj: json.dumps(obj, default=str))
+
+
+async def handle_notifications_stats(request):
+    """Get notification statistics across all systems.
+
+    GET /notifications/stats
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    stats = orch.db.get_notification_stats()
+    return web.json_response({"stats": stats},
+                              dumps=lambda obj: json.dumps(obj, default=str))
+
+
+async def handle_dispatch_pending(request):
+    """Manually trigger auto-dispatch for all pending notifications.
+
+    POST /notifications/dispatch-pending
+    POST /notifications/dispatch-pending  {"system_id": "epsilon"}
+
+    For each pending notification, gives the addressed node a turn
+    with the diff as context.
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = {}
+    if request.content_length:
+        data = await request.json()
+    target_system = data.get("system_id")
+
+    # Gather pending notifications
+    synthetic_ids = list(orch.systems.keys())
+    if target_system:
+        synthetic_ids = [target_system] if target_system in orch.systems else []
+
+    results = []
+    for sid in synthetic_ids:
+        pending = orch.db.get_pending_notifications(sid)
+        for p in pending:
+            if p.get("status") == "pending":  # only undelivered ones
+                dr = await orch._auto_dispatch(sid, p["diff_id"])
+                if dr:
+                    results.append(dr)
+
+    return web.json_response({
+        "dispatched": len(results),
+        "results": results,
+    }, dumps=lambda obj: json.dumps(obj, default=str))
+
+
 def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app = web.Application()
     app["orchestrator"] = orchestrator
@@ -3024,6 +3239,10 @@ def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app.router.add_post("/d0-tools/enable", handle_enable_d0_tools)
     app.router.add_post("/d0-tools/disable", handle_disable_d0_tools)
     app.router.add_get("/d0-tools/status", handle_d0_tools_status)
+    # D₀ Notifications — addressed differential auto-dispatch
+    app.router.add_get("/notifications/pending", handle_notifications_pending)
+    app.router.add_get("/notifications/stats", handle_notifications_stats)
+    app.router.add_post("/notifications/dispatch-pending", handle_dispatch_pending)
 
     return app
 
