@@ -3092,7 +3092,7 @@ async function routeDiff(diffId) {
 }
 
 async function routeAllDiffs() {
-  document.getElementById('headerStatus').textContent = '⚡ Route alle adressierten Differenzen...';
+  document.getElementById('headerStatus').textContent = '⚡ Route alle Differenzen (Ko-Kognition)...';
   try {
     const resp = await fetch('/diff/route-all', {
       method: 'POST',
@@ -3100,18 +3100,27 @@ async function routeAllDiffs() {
       body: JSON.stringify({}),
     });
     const data = await resp.json();
-    if (data.total === 0) {
-      document.getElementById('headerStatus').textContent = 'Keine adressierten Differenzen zum Routen';
+    if (data.diffs_processed === 0) {
+      document.getElementById('headerStatus').textContent = 'Keine offenen Differenzen zum Routen';
       setTimeout(() => document.getElementById('headerStatus').textContent = '', 3000);
       return;
     }
-    let msg = `⚡ ${data.routed} von ${data.total} geroutet`;
+    let msg = `⚡ Ko-Kognition: ${data.routed} Antworten von ${data.diffs_processed} Diff(s)`;
     if (data.failed > 0) msg += ` · ${data.failed} fehlgeschlagen`;
-    // Count total extracted
-    const totalExtracted = (data.details || []).reduce((sum, r) => sum + (r.extracted_diffs || 0), 0);
-    if (totalExtracted > 0) msg += ` · ${totalExtracted} neue Differenz(en)`;
     document.getElementById('headerStatus').textContent = msg;
-    setTimeout(() => document.getElementById('headerStatus').textContent = '', 5000);
+    setTimeout(() => document.getElementById('headerStatus').textContent = '', 6000);
+
+    // Show each system's response in its chat panel
+    for (const diffResult of (data.details || [])) {
+      for (const r of (diffResult.responses || [])) {
+        if (r.success && systems[r.system]) {
+          addEntry(r.system, 'event', `[Ko-Kognition Δ #${diffResult.diff_id} geroutet]`);
+          if (r.response) {
+            addEntry(r.system, 'system', r.response, true);
+          }
+        }
+      }
+    }
     loadDifferentials();
   } catch (e) {
     document.getElementById('headerStatus').textContent = 'Route-All Fehler: ' + e.message;

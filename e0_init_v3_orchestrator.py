@@ -2448,7 +2448,16 @@ async def handle_diff_route(request):
         return web.json_response({"error": f"Differential {diff_id} is archived"}, status=409)
 
     # Determine target system
-    system_id = data.get("system") or diff.get("addressed_to")
+    system_id = data.get("system")
+    if not system_id:
+        addressed = diff.get("addressed_to", "")
+        if addressed:
+            # Handle comma-separated targets: use first valid one
+            candidates = [t.strip() for t in addressed.split(",")
+                          if t.strip() in orch.systems]
+            system_id = candidates[0] if candidates else addressed
+        else:
+            system_id = None
     if not system_id:
         return web.json_response({
             "error": "No target: diff has no addressed_to and no system specified"
@@ -2507,68 +2516,109 @@ async def handle_diff_route(request):
 
 
 async def handle_diff_route_all(request):
-    """Route ALL open diffs that have addressed_to pointing to a synthetic system.
+    """Route ALL open diffs to their addressed systems — Ko-Kognition mode.
 
     POST /diff/route-all
-    Returns summary of each routed diff.
+    - Diffs with addressed_to: routed to each addressed system (comma-separated OK)
+    - Diffs without addressed_to: routed to ALL active synthetic systems
+    - Ko-Kognition: diff is NOT resolved after first response; stays open until
+      all target systems have responded, then marked resolved.
+    Returns summary of each routed diff with per-system results.
     """
     orch: InitV3Orchestrator = request.app["orchestrator"]
     synthetic_ids = set(orch.systems.keys())
 
-    # Get all non-archived diffs
+    # Get all open diffs
     all_diffs = orch.db.get_differentials(status="")
-    pending = [
-        d for d in all_diffs
-        if d["status"] == "open"
-        and d.get("addressed_to")
-        and d["addressed_to"] in synthetic_ids
-    ]
+    open_diffs = [d for d in all_diffs if d["status"] == "open"]
 
     results = []
-    for diff in pending:
+    for diff in open_diffs:
         diff_id = diff["id"]
-        system_id = diff["addressed_to"]
+        addressed = diff.get("addressed_to", "")
 
-        try:
-            # Create notification for tracked routing
-            orch.db.add_notification(system_id, diff_id)
-            orch.db.claim_differential(diff_id, system_id)
-            prompt = f"[Differenz #{diff_id} von {diff['author']}]\n\n{diff['content']}"
-            result = await orch.send_prompt(system_id, prompt, source_diff_id=diff_id)
+        # Determine target systems
+        if addressed:
+            # Parse comma-separated targets, keep only valid synthetic IDs
+            targets = [t.strip() for t in addressed.split(",")
+                       if t.strip() in synthetic_ids]
+        else:
+            # No specific target → Ko-Kognition: route to ALL active systems
+            targets = [sid for sid in synthetic_ids
+                       if sid != diff.get("author")]
 
-            if "error" in result:
-                results.append({"diff_id": diff_id, "system": system_id,
-                                "success": False, "error": result["error"]})
-                continue
+        if not targets:
+            continue
 
-            last = orch.db.con.execute(
-                "SELECT MAX(id) FROM interactions WHERE system_id = ? AND role = 'system'",
-                [system_id]
-            ).fetchone()
-            resolution_id = last[0] if last else None
+        # Claim once (by first target)
+        orch.db.claim_differential(diff_id, targets[0])
 
-            orch.db.add_differential_response(
-                diff_id=diff_id, system_id=system_id,
-                interaction_id=resolution_id, kind="analysis")
-            orch.db.resolve_differential(diff_id, resolution_id)
-            # Mark notification as acknowledged
-            orch.db.acknowledge_notification(system_id, diff_id)
+        diff_results = []
+        last_resolution_id = None
 
-            results.append({
-                "diff_id": diff_id, "system": system_id, "success": True,
-                "resolution_id": resolution_id,
-                "extracted_diffs": result.get("extracted_diffs", 0),
-            })
-        except Exception as exc:
-            results.append({"diff_id": diff_id, "system": system_id,
-                            "success": False, "error": str(exc)})
+        for system_id in targets:
+            try:
+                # Create notification for tracked routing
+                orch.db.add_notification(system_id, diff_id)
+
+                prompt = f"[Differenz #{diff_id} von {diff['author']}]\n\n{diff['content']}"
+                result = await orch.send_prompt(system_id, prompt, source_diff_id=diff_id)
+
+                if "error" in result:
+                    diff_results.append({
+                        "system": system_id, "success": False,
+                        "error": result["error"],
+                    })
+                    continue
+
+                last = orch.db.con.execute(
+                    "SELECT MAX(id) FROM interactions WHERE system_id = ? AND role = 'system'",
+                    [system_id]
+                ).fetchone()
+                resolution_id = last[0] if last else None
+                last_resolution_id = resolution_id
+
+                orch.db.add_differential_response(
+                    diff_id=diff_id, system_id=system_id,
+                    interaction_id=resolution_id, kind="analysis")
+                # Mark notification as acknowledged
+                orch.db.acknowledge_notification(system_id, diff_id)
+
+                diff_results.append({
+                    "system": system_id, "success": True,
+                    "resolution_id": resolution_id,
+                    "response": result.get("response", "")[:200],
+                    "extracted_diffs": result.get("extracted_diffs", 0),
+                })
+            except Exception as exc:
+                diff_results.append({
+                    "system": system_id, "success": False,
+                    "error": str(exc),
+                })
+
+        # Ko-Kognition: resolve AFTER all systems have responded
+        successful = [r for r in diff_results if r.get("success")]
+        if successful and last_resolution_id:
+            orch.db.resolve_differential(diff_id, last_resolution_id)
+
+        results.append({
+            "diff_id": diff_id,
+            "targets": targets,
+            "responses": diff_results,
+            "all_responded": len(successful) == len(targets),
+            "success_count": len(successful),
+            "target_count": len(targets),
+        })
+
+    total_routed = sum(r["success_count"] for r in results)
+    total_failed = sum(r["target_count"] - r["success_count"] for r in results)
 
     return web.json_response({
-        "routed": len([r for r in results if r.get("success")]),
-        "failed": len([r for r in results if not r.get("success")]),
-        "total": len(pending),
+        "routed": total_routed,
+        "failed": total_failed,
+        "diffs_processed": len(results),
         "details": results,
-    })
+    }, dumps=lambda obj: json.dumps(obj, default=str))
 
 
 async def handle_diff_human_respond(request):
