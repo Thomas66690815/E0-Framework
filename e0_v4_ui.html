@@ -2815,6 +2815,7 @@ function populateDiffSelectors() {
 
   authorSel.innerHTML = '<option value="thomas">Thomas</option>';
   targetSel.innerHTML = '<option value="">An: alle (offen)</option>';
+  targetSel.innerHTML += '<option value="__all_systems__">An: alle Systeme (auto-dispatch)</option>';
 
   const sysIds = Object.keys(systems).sort();
   sysIds.forEach(sid => {
@@ -2835,11 +2836,22 @@ async function postDifferential() {
   if (!content) return;
 
   const author = document.getElementById('diffAuthor').value;
-  const addressed_to = document.getElementById('diffTarget').value || null;
+  let addressed_to = document.getElementById('diffTarget').value || null;
   const scope = document.getElementById('diffScope').value || null;
   const parent_diff_id = document.getElementById('diffParentId').value || null;
 
+  // Handle 'all systems' special value
+  if (addressed_to === '__all_systems__') {
+    const sysIds = Object.keys(systems).filter(sid => {
+      const s = systems[sid]; return s.descriptor && s.descriptor.kind === 'synthetic';
+    }).sort();
+    addressed_to = sysIds.join(',');
+  }
+
   try {
+    document.getElementById('headerStatus').textContent = addressed_to
+      ? `Δ einstellen + auto-dispatch an ${addressed_to}...`
+      : 'Δ einstellen...';
     const resp = await fetch('/diff', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2852,12 +2864,29 @@ async function postDifferential() {
     } else {
       input.value = '';
       clearDiffParent();
-      document.getElementById('headerStatus').textContent = `Δ #${data.id} eingestellt`;
-      setTimeout(() => document.getElementById('headerStatus').textContent = '', 2000);
+      let msg = `Δ #${data.id} eingestellt`;
+      if (data.notified && data.notified.length > 0) {
+        msg += ` · notified: ${data.notified.join(', ')}`;
+      }
+      if (data.auto_dispatched && data.auto_dispatched.length > 0) {
+        const dispatched = data.auto_dispatched.map(d => d.system).join(', ');
+        msg += ` · auto-dispatched: ${dispatched}`;
+        // Add responses to chat panels
+        for (const ad of data.auto_dispatched) {
+          if (ad.system && systems[ad.system]) {
+            addEntry(ad.system, 'event', `[Auto-Dispatch Δ #${data.id}]`);
+            if (ad.response) {
+              addEntry(ad.system, 'system', ad.response, true, ad.metrics);
+            }
+          }
+        }
+      }
+      document.getElementById('headerStatus').textContent = msg;
+      setTimeout(() => document.getElementById('headerStatus').textContent = '', 5000);
       loadDifferentials();
     }
   } catch (e) {
-    document.getElementById('headerStatus').textContent = 'Netzwerkfehler';
+    document.getElementById('headerStatus').textContent = 'Netzwerkfehler: ' + e.message;
   }
 }
 

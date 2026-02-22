@@ -2013,8 +2013,9 @@ async def handle_diff_post(request):
     response = {"posted": True, "id": diff_id, "author": author}
     if notified:
         response["notified"] = notified
-    # Queue auto-dispatch if requested
-    auto_dispatch = data.get("auto_dispatch", False)
+    # Auto-dispatch: always dispatch when addressed_to is set
+    # Use auto_dispatch=false to explicitly suppress
+    auto_dispatch = data.get("auto_dispatch", True)
     if auto_dispatch and notified:
         dispatch_results = []
         for target in notified:
@@ -2022,7 +2023,8 @@ async def handle_diff_post(request):
             if dr:
                 dispatch_results.append(dr)
         response["auto_dispatched"] = dispatch_results
-    return web.json_response(response)
+    return web.json_response(response,
+                              dumps=lambda obj: json.dumps(obj, default=str))
 
 
 async def handle_diff_list(request):
@@ -2457,6 +2459,9 @@ async def handle_diff_route(request):
             "error": f"System '{system_id}' is not a synthetic system (cannot route)"
         }, status=400)
 
+    # Create notification for tracked routing
+    orch.db.add_notification(system_id, diff_id)
+
     # Delegate to the existing respond logic
     is_additional = diff["status"] in ("claimed", "resolved")
 
@@ -2485,6 +2490,9 @@ async def handle_diff_route(request):
     if not is_additional:
         orch.db.resolve_differential(diff_id, resolution_id)
 
+    # Mark notification as acknowledged (node has responded)
+    orch.db.acknowledge_notification(system_id, diff_id)
+
     return web.json_response({
         "routed": True,
         "diff_id": diff_id,
@@ -2495,7 +2503,7 @@ async def handle_diff_route(request):
         "response_id": resp_id,
         "additional": is_additional,
         "extracted_diffs": result.get("extracted_diffs", 0),
-    })
+    }, dumps=lambda obj: json.dumps(obj, default=str))
 
 
 async def handle_diff_route_all(request):
@@ -2522,6 +2530,8 @@ async def handle_diff_route_all(request):
         system_id = diff["addressed_to"]
 
         try:
+            # Create notification for tracked routing
+            orch.db.add_notification(system_id, diff_id)
             orch.db.claim_differential(diff_id, system_id)
             prompt = f"[Differenz #{diff_id} von {diff['author']}]\n\n{diff['content']}"
             result = await orch.send_prompt(system_id, prompt, source_diff_id=diff_id)
@@ -2541,6 +2551,8 @@ async def handle_diff_route_all(request):
                 diff_id=diff_id, system_id=system_id,
                 interaction_id=resolution_id, kind="analysis")
             orch.db.resolve_differential(diff_id, resolution_id)
+            # Mark notification as acknowledged
+            orch.db.acknowledge_notification(system_id, diff_id)
 
             results.append({
                 "diff_id": diff_id, "system": system_id, "success": True,
