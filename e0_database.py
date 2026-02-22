@@ -167,6 +167,29 @@ CREATE TABLE IF NOT EXISTS differential_responses (
     note            VARCHAR,                  -- optional short note about the response
     ts              TIMESTAMP NOT NULL
 );
+
+-- Partner Requests — systems request new partners autonomously
+-- Designed by Delta+Epsilon during D₀ autonomy experiment.
+CREATE SEQUENCE IF NOT EXISTS partner_req_seq START 1;
+CREATE TABLE IF NOT EXISTS partner_requests (
+    id              INTEGER DEFAULT nextval('partner_req_seq') PRIMARY KEY,
+    ts              TIMESTAMP NOT NULL,
+    requested_by    VARCHAR NOT NULL,         -- system_id of requester
+    co_signed_by    VARCHAR,                  -- system_id of co-signer
+    delta_ref       VARCHAR,                  -- link to D₀ or diff ID
+    scope           VARCHAR,                  -- 'autonomy.local' | 'autonomy.network' | 'autonomy.human_interface'
+    reason          TEXT,                     -- what is missing?
+    self_limit      TEXT,                     -- requester's own blind spot
+    topology_hypo   TEXT,                     -- what kind of node would expand topology?
+    non_goal        TEXT,                     -- what this is NOT about
+    desired_tags    VARCHAR,                  -- JSON array of desired tags
+    risk_acceptance VARCHAR DEFAULT 'medium', -- 'low' | 'medium' | 'high'
+    expected_attractor_effect TEXT,           -- how this might change attractor patterns
+    evaluation_plan TEXT,                     -- how we will tell if the new partner helped
+    status          VARCHAR DEFAULT 'open',   -- 'open' | 'accepted' | 'rejected' | 'fulfilled'
+    fulfilled_system_id VARCHAR,             -- the system_id that was created to fulfill this
+    meta            VARCHAR                   -- optional JSON
+);
 """
 
 
@@ -921,6 +944,63 @@ class E0Database:
             "  d.ts ASC "
             "LIMIT ?",
             [system_id, system_id, system_id, limit]
+        )
+
+    # ─────────────────────────────────────────
+    #  Partner Requests (designed by Delta+Epsilon)
+    # ─────────────────────────────────────────
+
+    def create_partner_request(self, requested_by: str, **kwargs) -> int:
+        """Create a new partner request.
+
+        Returns the request id.
+        """
+        fields = {
+            'ts': datetime.now(),
+            'requested_by': requested_by,
+            'co_signed_by': kwargs.get('co_signed_by'),
+            'delta_ref': kwargs.get('delta_ref'),
+            'scope': kwargs.get('scope'),
+            'reason': kwargs.get('reason'),
+            'self_limit': kwargs.get('self_limit'),
+            'topology_hypo': kwargs.get('topology_hypo'),
+            'non_goal': kwargs.get('non_goal'),
+            'desired_tags': kwargs.get('desired_tags'),
+            'risk_acceptance': kwargs.get('risk_acceptance', 'medium'),
+            'expected_attractor_effect': kwargs.get('expected_attractor_effect'),
+            'evaluation_plan': kwargs.get('evaluation_plan'),
+            'status': kwargs.get('status', 'open'),
+            'meta': kwargs.get('meta'),
+        }
+        cols = ', '.join(fields.keys())
+        placeholders = ', '.join(['?'] * len(fields))
+        self.con.execute(
+            f"INSERT INTO partner_requests ({cols}) VALUES ({placeholders})",
+            list(fields.values())
+        )
+        row = self.con.execute("SELECT MAX(id) FROM partner_requests").fetchone()
+        self._maybe_checkpoint()
+        return row[0] if row else -1
+
+    def fulfill_partner_request(self, request_id: int, system_id: str) -> bool:
+        """Mark a partner request as fulfilled by a newly created system."""
+        self.con.execute(
+            "UPDATE partner_requests SET status = 'fulfilled', "
+            "fulfilled_system_id = ? WHERE id = ?",
+            [system_id, request_id]
+        )
+        self._maybe_checkpoint()
+        return True
+
+    def get_partner_requests(self, status: str = None) -> List[Dict]:
+        """Get partner requests, optionally filtered by status."""
+        if status:
+            return self._fetchdicts(
+                "SELECT * FROM partner_requests WHERE status = ? ORDER BY ts DESC",
+                [status]
+            )
+        return self._fetchdicts(
+            "SELECT * FROM partner_requests ORDER BY ts DESC"
         )
 
     # ─────────────────────────────────────────

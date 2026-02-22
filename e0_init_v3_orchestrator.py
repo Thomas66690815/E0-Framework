@@ -2224,6 +2224,163 @@ async def handle_diff_broadcast(request):
     })
 
 
+# ─────────────────────────────────────────────
+#  Partner Requests — designed by Delta+Epsilon
+# ─────────────────────────────────────────────
+
+async def handle_partner_request(request):
+    """Create a partner request from a synthetic system.
+
+    POST /partner-request  {
+        "requested_by": "epsilon",
+        "co_signed_by": "delta",
+        "delta_ref": "D0",
+        "scope": "autonomy.network",
+        "reason": "...",
+        "self_limit": "...",
+        "topology_hypo": "...",
+        "non_goal": "...",
+        "desired_tags": '["autonomy","critique"]',
+        "risk_acceptance": "high",
+        "expected_attractor_effect": "...",
+        "evaluation_plan": "...",
+        "auto_create": true   -- optional: immediately create the system
+    }
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json()
+
+    requested_by = data.get("requested_by")
+    if not requested_by:
+        return web.json_response({"error": "requested_by required"}, status=400)
+
+    req_id = orch.db.create_partner_request(
+        requested_by=requested_by,
+        co_signed_by=data.get("co_signed_by"),
+        delta_ref=data.get("delta_ref"),
+        scope=data.get("scope"),
+        reason=data.get("reason"),
+        self_limit=data.get("self_limit"),
+        topology_hypo=data.get("topology_hypo"),
+        non_goal=data.get("non_goal"),
+        desired_tags=data.get("desired_tags"),
+        risk_acceptance=data.get("risk_acceptance", "medium"),
+        expected_attractor_effect=data.get("expected_attractor_effect"),
+        evaluation_plan=data.get("evaluation_plan"),
+        meta=data.get("meta"),
+    )
+
+    result = {
+        "created": True,
+        "request_id": req_id,
+        "requested_by": requested_by,
+    }
+
+    # Auto-create the system if requested
+    if data.get("auto_create"):
+        system_id = data.get("system_id")  # optional custom ID
+        model = data.get("model", "gpt-4.1")
+        display_name = data.get("display_name")
+        base_url = data.get("base_url")
+
+        if system_id and system_id in orch.registry.descriptors:
+            result["auto_create"] = {"error": f"System {system_id} already exists"}
+        else:
+            try:
+                desc = orch.registry.create_system(
+                    system_id=system_id,
+                    model=model,
+                    base_url=base_url,
+                    display_name=display_name,
+                )
+                orch.db.register_system(
+                    system_id=desc.system_id,
+                    kind=desc.kind.value if hasattr(desc.kind, 'value') else str(desc.kind),
+                    model=desc.model,
+                    display_name=desc.display_name,
+                )
+                orch.db.fulfill_partner_request(req_id, desc.system_id)
+                result["auto_create"] = {
+                    "system_id": desc.system_id,
+                    "model": desc.model,
+                    "display_name": desc.display_name,
+                    "fulfilled": True,
+                }
+            except Exception as e:
+                result["auto_create"] = {"error": str(e)}
+
+    return web.json_response(result)
+
+
+async def handle_partner_request_list(request):
+    """List partner requests.
+
+    GET /partner-request
+    GET /partner-request?status=open
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    status = request.rel_url.query.get("status")
+    requests = orch.db.get_partner_requests(status=status)
+    return web.json_response({"requests": requests},
+                             dumps=lambda obj: json.dumps(obj, default=str))
+
+
+async def handle_partner_request_fulfill(request):
+    """Fulfill a partner request.
+
+    POST /partner-request/fulfill  {"request_id": 1, "system_id": "zeta"}
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json()
+    request_id = data.get("request_id")
+    system_id = data.get("system_id")
+    if not request_id or not system_id:
+        return web.json_response(
+            {"error": "request_id and system_id required"}, status=400)
+    orch.db.fulfill_partner_request(request_id, system_id)
+    return web.json_response({
+        "ok": True,
+        "request_id": request_id,
+        "fulfilled_system_id": system_id,
+    })
+
+
+async def handle_diff_conflicts(request):
+    """Show diffs with multiple CLAIMs from different systems.
+
+    GET /diff/conflicts
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+
+    # Find all broadcast_claim responses grouped by diff_id
+    rows = orch.db.con.execute(
+        "SELECT diff_id, system_id, note "
+        "FROM differential_responses "
+        "WHERE kind = 'broadcast_claim' "
+        "ORDER BY diff_id, system_id"
+    ).fetchall()
+
+    conflicts = {}
+    for diff_id, system_id, note in rows:
+        if diff_id not in conflicts:
+            conflicts[diff_id] = []
+        conflicts[diff_id].append({
+            "system_id": system_id,
+            "note": note,
+        })
+
+    # Filter to only multi-claim diffs
+    multi_claims = {
+        str(k): v for k, v in conflicts.items()
+        if len(set(c["system_id"] for c in v)) > 1
+    }
+
+    return web.json_response({
+        "conflicts": multi_claims,
+        "total_multi_claims": len(multi_claims),
+    })
+
+
 def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app = web.Application()
     app["orchestrator"] = orchestrator
@@ -2279,6 +2436,12 @@ def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app.router.add_post("/diff/route-all", handle_diff_route_all)
     app.router.add_post("/diff/human-respond", handle_diff_human_respond)
     app.router.add_post("/diff/broadcast", handle_diff_broadcast)
+    # Partner Requests — designed by Delta+Epsilon
+    app.router.add_post("/partner-request", handle_partner_request)
+    app.router.add_get("/partner-request", handle_partner_request_list)
+    app.router.add_post("/partner-request/fulfill", handle_partner_request_fulfill)
+    # Diff conflicts — multi-claim detection
+    app.router.add_get("/diff/conflicts", handle_diff_conflicts)
 
     return app
 
