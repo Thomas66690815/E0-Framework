@@ -634,9 +634,6 @@ class InitV3Orchestrator:
         # Expose systems dict as a view into the registry (backward compat)
         self.systems = self.registry.systems
 
-        # Auto-enable D₀ tools for all active synthetic nodes
-        self._auto_enable_d0_tools()
-
         self._canon_text: Optional[str] = None
         self._init_phase1_state()
 
@@ -3057,6 +3054,9 @@ def main():
 
     # v4: Restore all persisted systems from registry
     restore_results = orchestrator.registry.restore_all()
+
+    # Auto-enable D₀ tools for all active synthetic nodes (must be after restore_all)
+    orchestrator._auto_enable_d0_tools()
 
     # v4: If registry is empty, check for system_state.json migration
     if not orchestrator.registry.descriptors:
