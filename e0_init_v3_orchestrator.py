@@ -386,29 +386,29 @@ D0_TOOLS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "title": {
+                    "content": {
                         "type": "string",
-                        "description": "Short title for the differential",
+                        "description": "The differential itself — the structural difference, tension, or gap being identified",
                     },
-                    "description": {
+                    "scope": {
                         "type": "string",
-                        "description": "Full description of the structural difference or tension",
-                    },
-                    "category": {
-                        "type": "string",
-                        "enum": ["structural", "semantic", "operational", "reflexive", "topological"],
-                        "description": "Category of the differential",
+                        "enum": ["network", "physics", "meta", "reflexion", "design", "open"],
+                        "description": "Scope of the differential (default: open)",
                     },
                     "addressed_to": {
                         "type": "string",
                         "description": "System ID to address this to (optional, omit for broadcast)",
+                    },
+                    "tags": {
+                        "type": "string",
+                        "description": "Comma-separated tags for structural routing (optional)",
                     },
                     "parent_diff_id": {
                         "type": "integer",
                         "description": "ID of parent differential if this iterates on an existing one",
                     },
                 },
-                "required": ["title", "description"],
+                "required": ["content"],
             },
         },
     },
@@ -634,6 +634,9 @@ class InitV3Orchestrator:
         # Expose systems dict as a view into the registry (backward compat)
         self.systems = self.registry.systems
 
+        # Auto-enable D₀ tools for all active synthetic nodes
+        self._auto_enable_d0_tools()
+
         self._canon_text: Optional[str] = None
         self._init_phase1_state()
 
@@ -685,6 +688,20 @@ class InitV3Orchestrator:
                     self.db.register_system(**node)
             except Exception:
                 pass
+
+    def _auto_enable_d0_tools(self):
+        """Auto-enable D₀ tools for all active synthetic nodes on startup.
+
+        This ensures tools persist across orchestrator restarts.
+        Only enables for nodes that have an active E0APIStarter.
+        """
+        enabled = []
+        for sid, starter in self.systems.items():
+            if hasattr(starter, 'client'):
+                starter.client.tools = D0_TOOLS
+                enabled.append(sid)
+        if enabled:
+            print(f"  [D₀] Auto-enabled tools for: {', '.join(enabled)}")
 
     # Track which Phase 1 steps each system has completed
     def _init_phase1_state(self):
@@ -1073,10 +1090,10 @@ class InitV3Orchestrator:
             if fn_name == "post_differential":
                 diff_id = self.db.post_differential(
                     author=system_id,
-                    title=args.get("title", ""),
-                    description=args.get("description", ""),
-                    category=args.get("category", "structural"),
+                    content=args.get("content", ""),
+                    scope=args.get("scope"),
                     addressed_to=args.get("addressed_to"),
+                    tags=args.get("tags"),
                     parent_diff_id=args.get("parent_diff_id"),
                 )
                 return {"success": True, "diff_id": diff_id}
