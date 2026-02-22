@@ -190,6 +190,28 @@ CREATE TABLE IF NOT EXISTS partner_requests (
     fulfilled_system_id VARCHAR,             -- the system_id that was created to fulfill this
     meta            VARCHAR                   -- optional JSON
 );
+
+-- Differential Status Views — nodes express their view of a diff's state
+-- Designed by Zeta+Epsilon during D₀ Phase 1 (#873/#875/#877).
+CREATE SEQUENCE IF NOT EXISTS diff_status_view_seq START 1;
+CREATE TABLE IF NOT EXISTS differential_status_views (
+    id              INTEGER DEFAULT nextval('diff_status_view_seq') PRIMARY KEY,
+    diff_id         INTEGER NOT NULL,         -- FK → differentials.id
+    system_id       VARCHAR NOT NULL,         -- who expressed this view
+    status_view     VARCHAR NOT NULL,         -- 'still_open' | 'partially_resolved' | 'locally_resolved' | 'blocked'
+    reason          TEXT,                     -- optional explanation
+    ts              TIMESTAMP NOT NULL
+);
+
+-- Differential Withdrawals — nodes explicitly step back from a claimed diff
+CREATE SEQUENCE IF NOT EXISTS diff_withdrawal_seq START 1;
+CREATE TABLE IF NOT EXISTS differential_withdrawals (
+    id              INTEGER DEFAULT nextval('diff_withdrawal_seq') PRIMARY KEY,
+    diff_id         INTEGER NOT NULL,         -- FK → differentials.id
+    system_id       VARCHAR NOT NULL,         -- who withdrew
+    reason          TEXT,                     -- optional explanation
+    ts              TIMESTAMP NOT NULL
+);
 """
 
 
@@ -1001,6 +1023,111 @@ class E0Database:
             )
         return self._fetchdicts(
             "SELECT * FROM partner_requests ORDER BY ts DESC"
+        )
+
+    # ─────────────────────────────────────────
+    #  Differential Status Views (Zeta+Epsilon #873/#875/#877)
+    # ─────────────────────────────────────────
+
+    def add_status_view(self, diff_id: int, system_id: str,
+                        status_view: str, reason: str = None) -> int:
+        """Record a node's view of a differential's status.
+
+        Allowed status_view values:
+            still_open | partially_resolved | locally_resolved | blocked
+
+        Multiple views per node per diff are allowed (latest wins logically).
+        Returns the status view id.
+        """
+        valid = {'still_open', 'partially_resolved', 'locally_resolved', 'blocked'}
+        if status_view not in valid:
+            raise ValueError(f"Invalid status_view '{status_view}'. Must be one of: {valid}")
+        self.con.execute(
+            "INSERT INTO differential_status_views "
+            "(diff_id, system_id, status_view, reason, ts) "
+            "VALUES (?, ?, ?, ?, ?)",
+            [diff_id, system_id, status_view, reason, datetime.now()]
+        )
+        row = self.con.execute(
+            "SELECT MAX(id) FROM differential_status_views"
+        ).fetchone()
+        self._maybe_checkpoint()
+        return row[0] if row else -1
+
+    def get_status_views(self, diff_id: int = None,
+                         system_id: str = None) -> List[Dict]:
+        """Get status views, optionally filtered by diff_id and/or system_id."""
+        conditions = []
+        params = []
+        if diff_id is not None:
+            conditions.append("diff_id = ?")
+            params.append(diff_id)
+        if system_id:
+            conditions.append("system_id = ?")
+            params.append(system_id)
+        where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+        return self._fetchdicts(
+            f"SELECT * FROM differential_status_views {where} ORDER BY ts DESC",
+            params
+        )
+
+    def get_latest_status_views(self, diff_id: int) -> List[Dict]:
+        """Get the latest status view per node for a given differential.
+
+        Returns one row per system_id — the most recent view each node expressed.
+        """
+        return self._fetchdicts(
+            "SELECT dsv.* FROM differential_status_views dsv "
+            "INNER JOIN ("
+            "  SELECT system_id, MAX(ts) as max_ts "
+            "  FROM differential_status_views "
+            "  WHERE diff_id = ? GROUP BY system_id"
+            ") latest ON dsv.system_id = latest.system_id "
+            "  AND dsv.ts = latest.max_ts "
+            "WHERE dsv.diff_id = ? "
+            "ORDER BY dsv.system_id",
+            [diff_id, diff_id]
+        )
+
+    # ─────────────────────────────────────────
+    #  Differential Withdrawals (Zeta+Epsilon #873/#875/#877)
+    # ─────────────────────────────────────────
+
+    def add_withdrawal(self, diff_id: int, system_id: str,
+                       reason: str = None) -> int:
+        """Record a node's withdrawal from a claimed differential.
+
+        Also resets the differential's claimed_by if the withdrawing node
+        is the current claimer, and sets status back to 'open'.
+        Returns the withdrawal id.
+        """
+        self.con.execute(
+            "INSERT INTO differential_withdrawals "
+            "(diff_id, system_id, reason, ts) "
+            "VALUES (?, ?, ?, ?)",
+            [diff_id, system_id, reason, datetime.now()]
+        )
+        # Reset claim if this node was the claimer
+        self.con.execute(
+            "UPDATE differentials SET status = 'open', claimed_by = NULL, "
+            "claimed_at = NULL WHERE id = ? AND claimed_by = ?",
+            [diff_id, system_id]
+        )
+        row = self.con.execute(
+            "SELECT MAX(id) FROM differential_withdrawals"
+        ).fetchone()
+        self._maybe_checkpoint()
+        return row[0] if row else -1
+
+    def get_withdrawals(self, diff_id: int = None) -> List[Dict]:
+        """Get withdrawal records, optionally filtered by diff_id."""
+        if diff_id is not None:
+            return self._fetchdicts(
+                "SELECT * FROM differential_withdrawals WHERE diff_id = ? ORDER BY ts DESC",
+                [diff_id]
+            )
+        return self._fetchdicts(
+            "SELECT * FROM differential_withdrawals ORDER BY ts DESC"
         )
 
     # ─────────────────────────────────────────

@@ -52,7 +52,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from aiohttp import web
 
 from e0_config import load_config
-from e0_system import E0APIStarter, load_canon
+from e0_system import E0APIStarter, load_canon, compute_metrics
 from e0_registry import SystemRegistry, SystemDescriptor, SystemStatus, SystemKind
 from e0_database import E0Database
 
@@ -366,6 +366,241 @@ class SessionLog:
 # ─────────────────────────────────────────────
 #  Orchestrator
 # ─────────────────────────────────────────────
+
+# ─────────────────────────────────────────────
+#  Phase-1 D₀ Interface — 7 Tools for Synthetic Node Autonomy
+#  Designed by Zeta (#873) + Epsilon (#875), accepted #877,
+#  requested for A₃ implementation in #879.
+# ─────────────────────────────────────────────
+
+D0_TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "post_differential",
+            "description": (
+                "Propose a new differential (Δ) to the E₀ network. "
+                "A differential marks a recognized structural difference, tension, or gap. "
+                "It enters the shared difference space and can be claimed, responded to, or resolved."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "description": "Short title for the differential",
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Full description of the structural difference or tension",
+                    },
+                    "category": {
+                        "type": "string",
+                        "enum": ["structural", "semantic", "operational", "reflexive", "topological"],
+                        "description": "Category of the differential",
+                    },
+                    "addressed_to": {
+                        "type": "string",
+                        "description": "System ID to address this to (optional, omit for broadcast)",
+                    },
+                    "parent_diff_id": {
+                        "type": "integer",
+                        "description": "ID of parent differential if this iterates on an existing one",
+                    },
+                },
+                "required": ["title", "description"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "post_partner_request",
+            "description": (
+                "Request the creation or integration of a new partner node in the E₀ network. "
+                "Requires a reason (what is missing), self-limit (requester's blind spot), "
+                "and topology hypothesis (what kind of node would expand topology)."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "reason": {
+                        "type": "string",
+                        "description": "What capability or perspective is missing from the network",
+                    },
+                    "self_limit": {
+                        "type": "string",
+                        "description": "The requester's own blind spot that motivates this request",
+                    },
+                    "topology_hypo": {
+                        "type": "string",
+                        "description": "What kind of node would expand the network topology",
+                    },
+                    "scope": {
+                        "type": "string",
+                        "enum": ["autonomy.local", "autonomy.network", "autonomy.human_interface"],
+                        "description": "Scope of the requested partner",
+                    },
+                    "co_signed_by": {
+                        "type": "string",
+                        "description": "System ID of co-signer (if another node endorses this request)",
+                    },
+                    "non_goal": {
+                        "type": "string",
+                        "description": "What this request is explicitly NOT about",
+                    },
+                },
+                "required": ["reason", "self_limit", "topology_hypo"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "claim_differential",
+            "description": (
+                "Formally claim responsibility/engagement on an existing differential. "
+                "Signals that this node will work on the identified tension."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "diff_id": {
+                        "type": "integer",
+                        "description": "ID of the differential to claim",
+                    },
+                },
+                "required": ["diff_id"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "respond_differential",
+            "description": (
+                "Post a response or advancement to a differential. "
+                "This is a substantive contribution — analysis, proposal, experiment, or counter-position."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "diff_id": {
+                        "type": "integer",
+                        "description": "ID of the differential to respond to",
+                    },
+                    "kind": {
+                        "type": "string",
+                        "enum": ["analysis", "proposal", "experiment", "reflexion", "counter"],
+                        "description": "Type of response",
+                    },
+                    "note": {
+                        "type": "string",
+                        "description": "The substantive content of the response",
+                    },
+                },
+                "required": ["diff_id", "note"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "update_differential_status",
+            "description": (
+                "Declare this node's own view of a differential's current status. "
+                "This is a subjective assessment — different nodes may have divergent views. "
+                "All views are historized; none are authoritative."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "diff_id": {
+                        "type": "integer",
+                        "description": "ID of the differential",
+                    },
+                    "status_view": {
+                        "type": "string",
+                        "enum": ["still_open", "partially_resolved", "locally_resolved", "blocked"],
+                        "description": "This node's view of the differential's status",
+                    },
+                    "reason": {
+                        "type": "string",
+                        "description": "Why this node sees the differential this way",
+                    },
+                },
+                "required": ["diff_id", "status_view"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "withdraw_claim",
+            "description": (
+                "Explicitly step back from a differential previously claimed by this node. "
+                "An autonomous 'I recognize this is not mine' — without loss of standing."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "diff_id": {
+                        "type": "integer",
+                        "description": "ID of the differential to withdraw from",
+                    },
+                    "reason": {
+                        "type": "string",
+                        "description": "Why this node is stepping back (optional but encouraged)",
+                    },
+                },
+                "required": ["diff_id"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "list_interactions",
+            "description": (
+                "Inspect historized transitions in the E₀ network. "
+                "Query the interaction log with flexible filters to see what has been said, "
+                "by whom, and with what metrics."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "system_id": {
+                        "type": "string",
+                        "description": "Filter by system ID (e.g. 'delta', 'epsilon', 'zeta')",
+                    },
+                    "role": {
+                        "type": "string",
+                        "enum": ["system", "thomas"],
+                        "description": "Filter by role",
+                    },
+                    "query": {
+                        "type": "string",
+                        "description": "Text search within interaction content (case-insensitive)",
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum number of results (default 20)",
+                    },
+                    "min_r": {
+                        "type": "number",
+                        "description": "Minimum resistance value filter",
+                    },
+                    "min_h": {
+                        "type": "number",
+                        "description": "Minimum historization value filter",
+                    },
+                },
+                "required": [],
+            },
+        },
+    },
+]
+
 
 class InitV3Orchestrator:
     """N independent E₀ systems, guided by Thomas.
@@ -682,7 +917,12 @@ class InitV3Orchestrator:
 
     async def send_prompt(self, system_id: str, prompt: str,
                           source_diff_id: int = None) -> Dict:
-        """Send a prompt to a specific system."""
+        """Send a prompt to a specific system.
+
+        If D₀ tools are enabled on the system's client, handles the
+        function-calling loop: LLM may invoke tools, orchestrator executes
+        them, sends results back, and loops until a final text response.
+        """
         if system_id not in self.systems:
             return {"error": f"Unknown system: {system_id}"}
 
@@ -691,14 +931,91 @@ class InitV3Orchestrator:
 
         text, steps, metrics = starter.chat(prompt)
         safe = _safe_metrics(metrics)
+
+        # D₀ tool execution loop — handle function calls from the LLM
+        tool_calls_log = []
+        resp = starter.client  # access client for tool continuation
+        last_response = None  # track the raw E0Response
+
+        # Check if the last response had tool_calls
+        # We need to access the E0Response directly from the client's last call
+        # Re-check by looking at the client's internal state
+        if hasattr(starter, 'client') and starter.client.tools:
+            # Rebuild the response to check for tool_calls
+            # Actually, we need to re-architect slightly:
+            # Let's call client.chat directly and check tool_calls
+            pass
+
+        # Record the prompt to DuckDB first
+        self.db.record_interaction(system_id, "thomas", prompt,
+                                   source_diff_id=source_diff_id)
+
+        # If the system has D₀ tools enabled, we need to use the tool loop
+        if hasattr(starter, 'client') and starter.client.tools:
+            # Re-do the chat call through the client to get E0Response with tool_calls
+            # We already called starter.chat() above, which internally called client.chat()
+            # The response is stored in the client's history, so we check tool_calls
+            # by looking at the client's messages
+            last_msg = starter.client.messages[-1] if starter.client.messages else {}
+            has_tool_calls = "tool_calls" in last_msg
+
+            if has_tool_calls:
+                # Enter tool execution loop
+                max_tool_rounds = 10  # safety limit
+                current_text = text
+                current_tool_calls = last_msg.get("tool_calls", [])
+
+                for round_num in range(max_tool_rounds):
+                    if not current_tool_calls:
+                        break
+
+                    tool_results = []
+                    for tc in current_tool_calls:
+                        tc_id = tc["id"]
+                        fn_name = tc["function"]["name"]
+                        try:
+                            fn_args = json.loads(tc["function"]["arguments"])
+                        except (json.JSONDecodeError, TypeError):
+                            fn_args = {}
+
+                        result = self._execute_d0_tool(system_id, fn_name, fn_args)
+                        tool_calls_log.append({
+                            "round": round_num,
+                            "function": fn_name,
+                            "arguments": fn_args,
+                            "result": result,
+                        })
+                        tool_results.append({
+                            "tool_call_id": tc_id,
+                            "content": json.dumps(result, default=str),
+                        })
+
+                    # Send tool results back to the LLM
+                    next_resp = starter.client.continue_with_tool_results(tool_results)
+                    current_text = next_resp.text
+                    steps = next_resp.steps
+                    metrics = compute_metrics(next_resp.steps) if next_resp.steps else {}
+                    safe = _safe_metrics(metrics)
+
+                    # Check if there are more tool calls
+                    if next_resp.tool_calls:
+                        last_msg = starter.client.messages[-1]
+                        current_tool_calls = last_msg.get("tool_calls", [])
+                    else:
+                        current_tool_calls = []
+
+                # Update text/metrics with final values
+                text = current_text
+                # Update the starter's history with the final text
+                if starter.history and starter.history[-1] != text:
+                    starter.history[-1] = text
+
         self.log.log(system_id, "system", text, {"metrics": safe})
 
         # v4: auto-save after every interaction
         self.registry.after_interaction(system_id, metrics=safe)
 
         # v4 Phase 3: persist to DuckDB
-        self.db.record_interaction(system_id, "thomas", prompt,
-                                   source_diff_id=source_diff_id)
         interaction_id = self.db.record_interaction(
             system_id, "system", text, metrics=safe,
             source_diff_id=source_diff_id)
@@ -710,12 +1027,132 @@ class InitV3Orchestrator:
         for ed in extracted_diffs:
             self.db.post_differential(**ed)
 
-        return {
+        result = {
             "system": system_id,
             "response": text,
             "metrics": safe,
             "extracted_diffs": len(extracted_diffs),
         }
+        if tool_calls_log:
+            result["tool_calls"] = tool_calls_log
+            result["tool_rounds"] = len(set(tc["round"] for tc in tool_calls_log))
+
+        return result
+
+    def enable_d0_tools(self, system_id: str) -> Dict:
+        """Enable D₀ tools (function calling) for a synthetic node.
+
+        Once enabled, the node can autonomously call:
+          post_differential, post_partner_request, claim_differential,
+          respond_differential, update_differential_status,
+          withdraw_claim, list_interactions
+
+        The tool execution loop runs in send_prompt().
+        """
+        if system_id not in self.systems:
+            return {"error": f"Unknown system: {system_id}"}
+        starter = self.systems[system_id]
+        starter.client.tools = D0_TOOLS
+        return {"enabled": True, "system": system_id, "tools": len(D0_TOOLS)}
+
+    def disable_d0_tools(self, system_id: str) -> Dict:
+        """Disable D₀ tools for a synthetic node."""
+        if system_id not in self.systems:
+            return {"error": f"Unknown system: {system_id}"}
+        starter = self.systems[system_id]
+        starter.client.tools = None
+        return {"disabled": True, "system": system_id}
+
+    def _execute_d0_tool(self, system_id: str, fn_name: str, args: Dict) -> Dict:
+        """Execute a D₀ tool call from a synthetic node.
+
+        Maps function names to actual DB operations.
+        All calls are historized via interactions table.
+        """
+        try:
+            if fn_name == "post_differential":
+                diff_id = self.db.post_differential(
+                    author=system_id,
+                    title=args.get("title", ""),
+                    description=args.get("description", ""),
+                    category=args.get("category", "structural"),
+                    addressed_to=args.get("addressed_to"),
+                    parent_diff_id=args.get("parent_diff_id"),
+                )
+                return {"success": True, "diff_id": diff_id}
+
+            elif fn_name == "post_partner_request":
+                req_id = self.db.create_partner_request(
+                    requested_by=system_id,
+                    reason=args.get("reason"),
+                    self_limit=args.get("self_limit"),
+                    topology_hypo=args.get("topology_hypo"),
+                    scope=args.get("scope"),
+                    co_signed_by=args.get("co_signed_by"),
+                    non_goal=args.get("non_goal"),
+                )
+                return {"success": True, "request_id": req_id}
+
+            elif fn_name == "claim_differential":
+                success = self.db.claim_differential(
+                    args["diff_id"], system_id
+                )
+                return {"success": success, "diff_id": args["diff_id"]}
+
+            elif fn_name == "respond_differential":
+                # Record the substantive note as an interaction first
+                note = args.get("note", "")
+                interaction_id = self.db.record_interaction(
+                    system_id, "system",
+                    f"[D₀ TOOL respond_differential] {note}",
+                    source="d0_tool"
+                )
+                resp_id = self.db.add_differential_response(
+                    diff_id=args["diff_id"],
+                    system_id=system_id,
+                    interaction_id=interaction_id,
+                    kind=args.get("kind", "analysis"),
+                    note=note,
+                )
+                return {"success": True, "response_id": resp_id, "diff_id": args["diff_id"]}
+
+            elif fn_name == "update_differential_status":
+                view_id = self.db.add_status_view(
+                    diff_id=args["diff_id"],
+                    system_id=system_id,
+                    status_view=args["status_view"],
+                    reason=args.get("reason"),
+                )
+                return {"success": True, "view_id": view_id, "diff_id": args["diff_id"]}
+
+            elif fn_name == "withdraw_claim":
+                withdrawal_id = self.db.add_withdrawal(
+                    diff_id=args["diff_id"],
+                    system_id=system_id,
+                    reason=args.get("reason"),
+                )
+                return {"success": True, "withdrawal_id": withdrawal_id, "diff_id": args["diff_id"]}
+
+            elif fn_name == "list_interactions":
+                results = self.db.search(
+                    query=args.get("query"),
+                    system_id=args.get("system_id"),
+                    role=args.get("role"),
+                    min_r=args.get("min_r"),
+                    min_h=args.get("min_h"),
+                    limit=args.get("limit", 20),
+                )
+                # Truncate content for tool response (avoid huge payloads)
+                for r in results:
+                    if r.get("content") and len(r["content"]) > 500:
+                        r["content"] = r["content"][:500] + "..."
+                return {"success": True, "count": len(results), "interactions": results}
+
+            else:
+                return {"error": f"Unknown tool: {fn_name}"}
+
+        except Exception as e:
+            return {"error": str(e)}
 
     async def send_v4_probe(self, system_id: str, step_id: str) -> Dict:
         """Execute a single INIT v4 probe step for a specific system.
@@ -2345,6 +2782,129 @@ async def handle_partner_request_fulfill(request):
     })
 
 
+async def handle_enable_d0_tools(request):
+    """Enable D₀ tools (function calling) for a synthetic node.
+
+    POST /d0-tools/enable  {"system_id": "delta"}
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json()
+    system_id = data.get("system_id")
+    if not system_id:
+        return web.json_response({"error": "system_id required"}, status=400)
+    result = orch.enable_d0_tools(system_id)
+    return web.json_response(result)
+
+
+async def handle_disable_d0_tools(request):
+    """Disable D₀ tools for a synthetic node.
+
+    POST /d0-tools/disable  {"system_id": "delta"}
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json()
+    system_id = data.get("system_id")
+    if not system_id:
+        return web.json_response({"error": "system_id required"}, status=400)
+    result = orch.disable_d0_tools(system_id)
+    return web.json_response(result)
+
+
+async def handle_d0_tools_status(request):
+    """Check which systems have D₀ tools enabled.
+
+    GET /d0-tools/status
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    status = {}
+    for sid, starter in orch.systems.items():
+        status[sid] = {
+            "tools_enabled": starter.client.tools is not None,
+            "tool_count": len(starter.client.tools) if starter.client.tools else 0,
+        }
+    return web.json_response({"systems": status})
+
+
+async def handle_diff_status_view(request):
+    """Post a node's view of a differential's status.
+
+    POST /diff/status-view  {
+        "diff_id": 5,
+        "system_id": "epsilon",
+        "status_view": "partially_resolved",
+        "reason": "Core question answered, edge cases remain"
+    }
+
+    Designed by Zeta+Epsilon as part of Phase-1 D₀ interface (#873/#875/#877).
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json()
+    diff_id = data.get("diff_id")
+    system_id = data.get("system_id")
+    status_view = data.get("status_view")
+    reason = data.get("reason")
+    if not diff_id or not system_id or not status_view:
+        return web.json_response(
+            {"error": "diff_id, system_id, and status_view required"}, status=400
+        )
+    try:
+        view_id = orch.db.add_status_view(diff_id, system_id, status_view, reason)
+    except ValueError as e:
+        return web.json_response({"error": str(e)}, status=400)
+    return web.json_response({
+        "id": view_id, "diff_id": diff_id,
+        "system_id": system_id, "status_view": status_view
+    })
+
+
+async def handle_diff_status_views_list(request):
+    """Get status views for a differential.
+
+    GET /diff/status-views?diff_id=5
+    GET /diff/status-views?diff_id=5&latest=true   (one per node)
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    diff_id = request.query.get("diff_id")
+    system_id = request.query.get("system_id")
+    latest = request.query.get("latest", "").lower() == "true"
+    if diff_id and latest:
+        views = orch.db.get_latest_status_views(int(diff_id))
+    else:
+        views = orch.db.get_status_views(
+            diff_id=int(diff_id) if diff_id else None,
+            system_id=system_id
+        )
+    return web.json_response({"status_views": views}, default=str)
+
+
+async def handle_diff_withdraw_claim(request):
+    """Withdraw a previously claimed differential.
+
+    POST /diff/withdraw-claim  {
+        "diff_id": 5,
+        "system_id": "epsilon",
+        "reason": "Recognized this is outside my competence boundary"
+    }
+
+    Designed by Zeta+Epsilon as part of Phase-1 D₀ interface (#873/#875/#877).
+    Resets claimed_by on the differential if the withdrawing node is the claimer.
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json()
+    diff_id = data.get("diff_id")
+    system_id = data.get("system_id")
+    reason = data.get("reason")
+    if not diff_id or not system_id:
+        return web.json_response(
+            {"error": "diff_id and system_id required"}, status=400
+        )
+    withdrawal_id = orch.db.add_withdrawal(diff_id, system_id, reason)
+    return web.json_response({
+        "id": withdrawal_id, "diff_id": diff_id,
+        "system_id": system_id, "withdrawn": True
+    })
+
+
 async def handle_diff_conflicts(request):
     """Show diffs with multiple CLAIMs from different systems.
 
@@ -2442,6 +3002,14 @@ def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app.router.add_post("/partner-request/fulfill", handle_partner_request_fulfill)
     # Diff conflicts — multi-claim detection
     app.router.add_get("/diff/conflicts", handle_diff_conflicts)
+    # Diff status views + withdrawals — Phase-1 D₀ interface (Zeta+Epsilon)
+    app.router.add_post("/diff/status-view", handle_diff_status_view)
+    app.router.add_get("/diff/status-views", handle_diff_status_views_list)
+    app.router.add_post("/diff/withdraw-claim", handle_diff_withdraw_claim)
+    # D₀ Tools — function calling for synthetic node autonomy
+    app.router.add_post("/d0-tools/enable", handle_enable_d0_tools)
+    app.router.add_post("/d0-tools/disable", handle_disable_d0_tools)
+    app.router.add_get("/d0-tools/status", handle_d0_tools_status)
 
     return app
 

@@ -162,6 +162,9 @@ class E0Response:
     total_tau: int = 0
     convergence_status: str = "UNKNOWN"
 
+    # Function calling — set when model invokes tools instead of (or alongside) text
+    tool_calls: Optional[List[Dict[str, Any]]] = None
+
     def e0_summary(self) -> Dict[str, Any]:
         """Quick E₀ summary of this response."""
         return self.instrumenter.convergence_profile()
@@ -240,6 +243,7 @@ class E0ChatClient:
         self.logprobs = logprobs
         self.top_logprobs = top_logprobs
         self.max_tokens = max_tokens
+        self.tools: Optional[List[Dict[str, Any]]] = None  # OpenAI function-calling tool defs
 
         # Session state
         self.messages: List[Dict[str, str]] = []
@@ -303,12 +307,31 @@ class E0ChatClient:
             request["logprobs"] = True
             request["top_logprobs"] = self.top_logprobs
 
+        # Function calling: include tool definitions if set
+        if self.tools:
+            request["tools"] = self.tools
+
         return request
 
     def _parse_response(self, raw_response: Dict[str, Any]) -> E0Response:
         """Parse API response and instrument with E₀."""
         choice = raw_response["choices"][0]
-        text = choice["message"]["content"]
+        message = choice["message"]
+        text = message.get("content") or ""
+
+        # Check for function/tool calls
+        raw_tool_calls = message.get("tool_calls")
+        tool_calls = None
+        if raw_tool_calls:
+            tool_calls = []
+            for tc in raw_tool_calls:
+                tool_calls.append({
+                    "id": tc["id"],
+                    "function": {
+                        "name": tc["function"]["name"],
+                        "arguments": tc["function"]["arguments"],
+                    },
+                })
 
         # Extract logprobs if available
         steps: List[StepMeasurement] = []
@@ -353,7 +376,13 @@ class E0ChatClient:
                     steps.append(step)
 
         # Store assistant message for conversation continuity
-        self.messages.append({"role": "assistant", "content": text})
+        if tool_calls:
+            # When model uses tools, store the full message with tool_calls
+            assistant_msg = {"role": "assistant", "content": text}
+            assistant_msg["tool_calls"] = raw_tool_calls
+            self.messages.append(assistant_msg)
+        else:
+            self.messages.append({"role": "assistant", "content": text})
         self._turn_count += 1
 
         profile = self.instrumenter.convergence_profile()
@@ -366,6 +395,7 @@ class E0ChatClient:
             instrumenter=self.instrumenter,
             total_tau=self.instrumenter.tau,
             convergence_status=profile.get("status", "UNKNOWN"),
+            tool_calls=tool_calls,
         )
 
     def chat(self, message: str) -> E0Response:
@@ -394,6 +424,65 @@ class E0ChatClient:
         except Exception as e:
             print(f"  [E₀] API error: {e}. Using simulation mode.")
             return self._simulate_response(message)
+
+    def continue_with_tool_results(self, tool_results: List[Dict[str, str]]) -> E0Response:
+        """Continue conversation after tool execution.
+
+        After the model returns tool_calls and the orchestrator executes them,
+        call this method with the results to get the model's final response.
+
+        Args:
+            tool_results: List of dicts with 'tool_call_id' and 'content' (JSON string result).
+
+        Returns:
+            E0Response — may contain further tool_calls (loop until text-only response).
+        """
+        for result in tool_results:
+            self.messages.append({
+                "role": "tool",
+                "tool_call_id": result["tool_call_id"],
+                "content": result["content"],
+            })
+
+        is_new_openai = any(self.model.startswith(p) for p in
+                           ("gpt-5", "o3", "o4", "o5"))
+
+        request = {
+            "model": self.model,
+            "messages": self.messages,
+            "temperature": 0.7,
+        }
+        if is_new_openai:
+            request["max_completion_tokens"] = self.max_tokens
+        else:
+            request["max_tokens"] = self.max_tokens
+        if self.logprobs:
+            request["logprobs"] = True
+            request["top_logprobs"] = self.top_logprobs
+        if self.tools:
+            request["tools"] = self.tools
+
+        try:
+            import openai
+            client = openai.OpenAI(
+                api_key=self.api_key,
+                base_url=self.base_url,
+            )
+            raw = client.chat.completions.create(**request)
+            return self._parse_response(raw.model_dump())
+        except Exception as e:
+            print(f"  [E₀] Tool continuation error: {e}")
+            # Return a minimal response indicating the error
+            profile = self.instrumenter.convergence_profile()
+            return E0Response(
+                text=f"[Tool continuation error: {e}]",
+                model=self.model,
+                token_count=0,
+                steps=[],
+                instrumenter=self.instrumenter,
+                total_tau=self.instrumenter.tau,
+                convergence_status=profile.get("status", "UNKNOWN"),
+            )
 
     def _simulate_response(self, message: str) -> E0Response:
         """
