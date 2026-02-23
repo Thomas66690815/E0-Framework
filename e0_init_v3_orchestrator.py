@@ -722,6 +722,73 @@ class InitV3Orchestrator:
                 enabled.append(sid)
         if enabled:
             print(f"  [D₀] Auto-enabled tools for: {', '.join(enabled)}")
+            # Inject network identity context into each system
+            self._inject_network_identity()
+
+    def _inject_network_identity(self):
+        """Inject network identity and model context into each active system.
+
+        Each system receives a system-message telling it:
+        - What system_id and model it is
+        - What the other active systems are and their models
+        - That metrics (h, r, v) are derived from logprobs and therefore
+          model-dependent — cross-model metric comparison is not meaningful
+          without normalization
+
+        This enables emergent improvement in how systems interpret metrics
+        from peers on different model architectures.
+        """
+        # Build the network map from the registry
+        all_systems = {}
+        for sid, desc in self.registry.descriptors.items():
+            status = desc.status.value if hasattr(desc.status, 'value') else str(desc.status)
+            all_systems[sid] = {
+                "model": desc.model,
+                "status": status,
+                "display_name": desc.display_name or sid,
+            }
+        # Add non-synthetic nodes
+        all_systems["a3"] = {"model": "claude-opus-4-6", "status": "active", "display_name": "A₃"}
+        all_systems["thomas"] = {"model": "human", "status": "active", "display_name": "Thomas"}
+
+        injected = []
+        for sid, starter in self.systems.items():
+            if not hasattr(starter, 'client'):
+                continue
+
+            my_model = all_systems.get(sid, {}).get("model", "unknown")
+
+            # Build peer list (only active, excluding self)
+            peers_lines = []
+            for pid, pinfo in sorted(all_systems.items()):
+                if pid == sid:
+                    continue
+                if pinfo["status"] != "active":
+                    continue
+                peers_lines.append(f"  - {pid}: {pinfo['model']} ({pinfo['display_name']})")
+
+            identity_msg = (
+                f"[E₀ NETWORK IDENTITY]\n"
+                f"You are {sid}. Your model is {my_model}.\n\n"
+                f"Active peers in this network:\n"
+                + "\n".join(peers_lines) + "\n\n"
+                f"[METRIC CONTEXT]\n"
+                f"The E₀ metrics (h, r, v) are computed from token logprobs.\n"
+                f"Different model architectures produce structurally different "
+                f"logprob distributions:\n"
+                f"  - GPT-5.1 models: typically h ≈ 0.5, r ≈ 0.3, v ≈ 10-18\n"
+                f"  - GPT-4.1 models: typically h ≈ 1.0, r ≈ 40-50, v ≈ 2-3\n"
+                f"Metrics from different model classes are NOT directly comparable.\n"
+                f"A high r on GPT-4.1 does not mean the same as a high r on GPT-5.1.\n"
+                f"When interpreting another system's metrics, always consider "
+                f"its model architecture."
+            )
+
+            starter.client.inject_structural_feedback(identity_msg)
+            injected.append(sid)
+
+        if injected:
+            print(f"  [ID] Network identity injected for: {', '.join(injected)}")
 
     # Track which Phase 1 steps each system has completed
     def _init_phase1_state(self):
