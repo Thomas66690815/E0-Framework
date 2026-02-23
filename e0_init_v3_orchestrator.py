@@ -1216,8 +1216,23 @@ class InitV3Orchestrator:
             # the response must be linked to the diff so it appears in the
             # Ko-Kognition chain.  Check if respond_differential was already
             # called (via tool_calls log) — if not, create the link now.
+            # Also check the DB to avoid duplicates (e.g. Zeta uses D₀ tool
+            # AND would get auto-linked).
             tool_names = [tc.get("name") for tc in result.get("tool_calls", [])]
             already_linked = "respond_differential" in tool_names
+            if not already_linked and "error" not in result:
+                try:
+                    # Check if this system already has a response for this diff
+                    existing = self.db.con.execute(
+                        "SELECT COUNT(*) FROM differential_responses "
+                        "WHERE diff_id = ? AND system_id = ?",
+                        [diff_id, system_id]
+                    ).fetchone()
+                    if existing and existing[0] > 0:
+                        already_linked = True
+                except Exception:
+                    pass  # If check fails, proceed with linking
+
             if not already_linked and "error" not in result:
                 try:
                     last = self.db.con.execute(
