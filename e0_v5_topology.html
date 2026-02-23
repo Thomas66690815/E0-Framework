@@ -356,6 +356,13 @@ function confirmResolve(yes) {
 }
 
 // ─── API helpers ───
+function parseSystemsMap(statusResp) {
+  // /status returns registry.systems as array — convert to keyed object
+  const arr = (statusResp.registry && statusResp.registry.systems) || [];
+  const map = {};
+  for (const s of arr) { map[s.system_id] = s; }
+  return map;
+}
 async function dbQuery(sql) {
   const resp = await fetch('/db-query', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -783,7 +790,7 @@ async function loadPartners() {
   try {
     // Get system status
     const status = await apiGet('/status');
-    const systems = status.systems || {};
+    const systems = parseSystemsMap(status);
 
     // Get activity stats from DB
     const actData = await dbQuery(`
@@ -908,8 +915,9 @@ async function safePostDiff() {
     // Get active system IDs
     try {
       const status = await apiGet('/status');
-      const syntheticIds = Object.keys(status.systems || {}).filter(s =>
-        status.systems[s].kind === 'synthetic' && status.systems[s].status === 'active'
+      const sysMap = parseSystemsMap(status);
+      const syntheticIds = Object.keys(sysMap).filter(s =>
+        sysMap[s].kind === 'synthetic' && sysMap[s].status === 'active'
       );
       addressed_to = syntheticIds.join(',');
     } catch(e) { addressed_to = 'delta,epsilon,zeta'; }
@@ -951,8 +959,9 @@ async function safeRouteAll(diffId) {
   try {
     // Route to each system individually
     const status = await apiGet('/status');
-    const targets = Object.keys(status.systems || {}).filter(s =>
-      status.systems[s].kind === 'synthetic' && status.systems[s].status === 'active'
+    const sysMap = parseSystemsMap(status);
+    const targets = Object.keys(sysMap).filter(s =>
+      sysMap[s].kind === 'synthetic' && sysMap[s].status === 'active'
     );
 
     let successes = 0;
@@ -984,7 +993,7 @@ async function init() {
   try {
     // Load systems for filters
     const status = await apiGet('/status');
-    allSystems = status.systems || {};
+    allSystems = parseSystemsMap(status);
 
     // Populate system filters
     const systemSelects = ['spurSystemFilter', 'reflexionSystemFilter'];
