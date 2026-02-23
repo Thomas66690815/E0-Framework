@@ -190,6 +190,55 @@ tr:hover td { background: rgba(88,166,255,0.04); }
   border-top-color: var(--accent-a); border-radius: 50%; animation: spin 0.6s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ── Response Chain (Peer-Ko-Kognition) ── */
+.response-chain {
+  border-top: 1px solid var(--border);
+  margin-top: 10px; padding-top: 10px;
+  position: relative; padding-left: 20px;
+}
+.response-chain::before {
+  content: ''; position: absolute; left: 8px; top: 36px; bottom: 10px;
+  width: 2px; background: var(--border);
+}
+.response-chain-header {
+  font-size: 11px; color: var(--text2); text-transform: uppercase;
+  letter-spacing: 0.5px; margin-bottom: 8px; font-weight: 500;
+  margin-left: -20px;
+}
+.response-node {
+  position: relative; margin-bottom: 8px; padding: 8px 12px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+  font-size: 12px;
+}
+.response-node::before {
+  content: ''; position: absolute; left: -16px; top: 12px;
+  width: 8px; height: 8px; border-radius: 50%;
+  border: 2px solid var(--bg2);
+}
+.response-node.sys-delta::before { background: var(--accent-a); }
+.response-node.sys-epsilon::before { background: var(--accent-b); }
+.response-node.sys-zeta::before { background: var(--accent-c); }
+.response-node.sys-thomas::before { background: var(--accent-e); }
+.response-node.sys-a3::before { background: var(--accent-d); }
+.response-header {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
+}
+.response-meta {
+  font-size: 10px; color: var(--text3); margin-bottom: 2px;
+}
+.response-arrow { font-style: italic; }
+.response-content {
+  font-size: 12px; line-height: 1.4; max-height: 60px; overflow: hidden;
+  position: relative; cursor: pointer; color: var(--text2);
+}
+.response-content::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 20px;
+  background: linear-gradient(transparent, var(--bg));
+  pointer-events: none;
+}
+.response-content.expanded { max-height: none; }
+.response-content.expanded::after { display: none; }
+
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .content { padding: 12px; }
@@ -766,10 +815,16 @@ async function loadDiffTopology() {
       // Actions
       html += `<div style="margin-top:8px;display:flex;gap:8px;">`;
       html += `<a href="#" onclick="viewDiffTrace(${d.id});return false;" style="font-size:12px;">🔍 Spur ansehen</a>`;
+      if (d.response_count > 0) {
+        html += `<a href="#" onclick="toggleDiffResponses(${d.id});return false;" style="font-size:12px;color:var(--accent-c);">📋 Kette anzeigen (${d.response_count})</a>`;
+      }
       if (d.status === 'open') {
         html += `<a href="#" onclick="safeRouteAll(${d.id});return false;" style="font-size:12px;color:var(--accent-b);">⚡ Ko-Kognition starten</a>`;
       }
       html += `</div>`;
+
+      // Peer-Ko-Kognition response chain container (loaded on demand)
+      html += `<div id="diff-responses-${d.id}" style="display:none;"></div>`;
 
       html += `</div>`;
     }
@@ -777,6 +832,79 @@ async function loadDiffTopology() {
     container.innerHTML = html;
   } catch (e) {
     container.innerHTML = `<div style="color:var(--accent-red);padding:20px;">Fehler: ${esc(e.message)}</div>`;
+  }
+}
+
+// ════════════════════════════════════════════
+//  Peer-Ko-Kognition Chain View (Diff #56)
+// ════════════════════════════════════════════
+async function toggleDiffResponses(diffId) {
+  const container = document.getElementById(`diff-responses-${diffId}`);
+  if (!container) return;
+
+  // Toggle if already loaded
+  if (container.dataset.loaded === 'true') {
+    container.style.display = container.style.display === 'none' ? 'block' : 'none';
+    return;
+  }
+
+  container.innerHTML = '<div class="loading" style="padding:10px;"><span class="spinner"></span> Lade Ko-Kognitions-Kette...</div>';
+  container.style.display = 'block';
+
+  try {
+    const data = await apiGet(`/diff/responses?id=${diffId}`);
+    const responses = data.responses || [];
+
+    if (responses.length === 0) {
+      container.innerHTML = '<div style="padding:8px;font-size:12px;color:var(--text3);">Keine Antworten.</div>';
+      container.dataset.loaded = 'true';
+      return;
+    }
+
+    // Sort chronologically
+    responses.sort((a, b) => new Date(a.ts) - new Date(b.ts));
+
+    let html = '<div class="response-chain">';
+    html += '<div class="response-chain-header">📋 Ko-Kognitions-Kette — wer → was → wann</div>';
+
+    for (let i = 0; i < responses.length; i++) {
+      const r = responses[i];
+      const prevSystem = i > 0 ? responses[i - 1].system_id : null;
+
+      html += `<div class="response-node ${sysClass(r.system_id)}">`;
+
+      // Chain arrow: who is this responding to?
+      html += `<div class="response-meta">`;
+      if (prevSystem) {
+        html += `<span class="response-arrow">↳ auf <span class="${sysClass(prevSystem)}">${capitalize(prevSystem)}</span></span>`;
+      } else {
+        html += `<span class="response-arrow">↳ erste Antwort auf Differenz</span>`;
+      }
+      html += `</div>`;
+
+      // System + timestamp
+      html += `<div class="response-header">`;
+      html += `<span class="${sysClass(r.system_id)}" style="font-weight:600;">${capitalize(r.system_id)}</span>`;
+      html += `<span style="font-size:11px;color:var(--text3);font-family:var(--mono);">${timeAgo(r.ts)}</span>`;
+      if (r.kind && r.kind !== 'analysis') html += `<span class="badge" style="font-size:10px;">${r.kind}</span>`;
+      html += `</div>`;
+
+      // Content (expandable)
+      html += `<div class="response-content" onclick="this.classList.toggle('expanded')">${esc(r.response_preview || '(keine Vorschau)')}</div>`;
+      html += `</div>`;
+    }
+
+    // Chain summary
+    const systemOrder = responses.map(r => capitalize(r.system_id));
+    html += `<div style="font-size:11px;color:var(--text3);margin-top:4px;margin-left:-20px;">`;
+    html += `Kette: ${systemOrder.join(' → ')} (${responses.length} Schritt${responses.length > 1 ? 'e' : ''})`;
+    html += `</div>`;
+
+    html += '</div>';
+    container.innerHTML = html;
+    container.dataset.loaded = 'true';
+  } catch (e) {
+    container.innerHTML = `<div style="padding:8px;font-size:12px;color:var(--accent-red);">Fehler: ${esc(e.message)}</div>`;
   }
 }
 
