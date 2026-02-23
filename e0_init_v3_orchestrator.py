@@ -1258,6 +1258,175 @@ class InitV3Orchestrator:
         finally:
             self._dispatch_depth -= 1
 
+    async def _auto_ko_runde(self, systems: List[str], diff_id: int,
+                              rounds: int = 1) -> List[Dict]:
+        """Sequential Ko-Kognitions-Runde for auto-dispatch.
+
+        Instead of dispatching to all systems in parallel (each seeing only
+        the original diff content), this sends prompts SEQUENTIALLY so each
+        system sees the prior peers' responses.
+
+        Flow for systems=[delta, epsilon, zeta]:
+          1. delta gets original diff → responds
+          2. epsilon gets original diff + delta's response → responds
+          3. zeta gets original diff + delta's + epsilon's responses → responds
+        """
+        diff = self.db.get_differential(diff_id)
+        if not diff:
+            return []
+
+        original_content = diff.get("content", "")
+        author = diff.get("author", "unknown")
+        scope = diff.get("scope", "")
+        parent = diff.get("parent_diff_id")
+
+        chain: List[Dict] = []
+        results: List[Dict] = []
+
+        for round_num in range(1, min(rounds, 3) + 1):
+            for system_id in systems:
+                if system_id not in self.systems:
+                    continue
+
+                # Mark notification as delivered
+                self.db.mark_notification_delivered(system_id, diff_id)
+
+                # Build prompt with chain context
+                prompt_parts = [
+                    f"[Adressierte Differenz #{diff_id} von {author}"
+                    f" — Ko-Kognitions-Runde {round_num}]",
+                ]
+                if scope:
+                    prompt_parts.append(f"Scope: {scope}")
+                if parent:
+                    prompt_parts.append(f"Iteriert auf Differenz #{parent}")
+                prompt_parts.append("")
+                prompt_parts.append(original_content)
+
+                # Add prior peer responses
+                if chain:
+                    prompt_parts.append("")
+                    prompt_parts.append(
+                        "─── Bisherige Peer-Antworten (chronologisch) ───"
+                    )
+                    for step in chain:
+                        prompt_parts.append(
+                            f"\n[{step['system_id'].upper()}"
+                            f" — Runde {step['round']}]"
+                        )
+                        prompt_parts.append(step["response"][:2000])
+
+                    prompt_parts.append("")
+                    prev = chain[-1]["system_id"]
+                    prompt_parts.append(
+                        f"Du siehst die bisherigen Peer-Antworten. "
+                        f"Reagiere auf die Beiträge deiner Peers "
+                        f"(insbesondere auf {prev}). "
+                        f"Nutze respond_differential um deine Antwort "
+                        f"formal zu verlinken."
+                    )
+                else:
+                    prompt_parts.append("")
+                    prompt_parts.append(
+                        "Du bist der erste in dieser Ko-Kognitions-Runde. "
+                        "Deine Antwort wird den nächsten Peers vorgelegt. "
+                        "Nutze die D₀-Tools um deine Antwort zu verlinken."
+                    )
+
+                prompt = "\n".join(prompt_parts)
+
+                print(
+                    f"  [D₀ Ko-Runde] Runde {round_num}, "
+                    f"{system_id} für Diff #{diff_id} "
+                    f"(chain length: {len(chain)})"
+                )
+
+                try:
+                    result = await self.send_prompt(
+                        system_id, prompt, source_diff_id=diff_id
+                    )
+                    result["auto_dispatched"] = True
+                    result["trigger_diff_id"] = diff_id
+                    result["ko_runde"] = round_num
+
+                    response_text = result.get("response", "")
+
+                    # Auto-link as differential_response
+                    tool_names = [
+                        tc.get("name")
+                        for tc in result.get("tool_calls", [])
+                    ]
+                    already_linked = "respond_differential" in tool_names
+                    if not already_linked and "error" not in result:
+                        try:
+                            existing = self.db.con.execute(
+                                "SELECT COUNT(*) FROM differential_responses "
+                                "WHERE diff_id = ? AND system_id = ?",
+                                [diff_id, system_id],
+                            ).fetchone()
+                            if existing and existing[0] > 0:
+                                already_linked = True
+                        except Exception:
+                            pass
+
+                    if not already_linked and "error" not in result:
+                        try:
+                            last = self.db.con.execute(
+                                "SELECT MAX(id) FROM interactions "
+                                "WHERE system_id = ? AND role = 'system'",
+                                [system_id],
+                            ).fetchone()
+                            if last and last[0]:
+                                self.db.add_differential_response(
+                                    diff_id=diff_id,
+                                    system_id=system_id,
+                                    interaction_id=last[0],
+                                    kind="analysis",
+                                )
+                                print(
+                                    f"  [D₀ Ko-Runde auto-link] "
+                                    f"{system_id} response → diff #{diff_id}"
+                                )
+                        except Exception as link_err:
+                            print(
+                                f"  [D₀ Ko-Runde auto-link] Warning: {link_err}"
+                            )
+
+                    chain.append({
+                        "system_id": system_id,
+                        "round": round_num,
+                        "response": response_text,
+                        "interaction_id": result.get("interaction_id"),
+                        "success": True,
+                    })
+                    results.append(result)
+
+                except Exception as e:
+                    print(f"  [D₀ Ko-Runde] Error for {system_id}: {e}")
+                    chain.append({
+                        "system_id": system_id,
+                        "round": round_num,
+                        "response": f"[ERROR: {e}]",
+                        "interaction_id": None,
+                        "success": False,
+                    })
+                    results.append({
+                        "system": system_id,
+                        "error": str(e),
+                        "trigger_diff_id": diff_id,
+                    })
+
+        chain_order = [
+            f"{s['system_id']}(R{s['round']})"
+            for s in chain if s.get("success")
+        ]
+        print(
+            f"  [D₀ Ko-Runde] Diff #{diff_id} complete: "
+            f"{' → '.join(chain_order)}"
+        )
+
+        return results
+
     def enable_d0_tools(self, system_id: str) -> Dict:
         """Enable D₀ tools (function calling) for a synthetic node.
 
@@ -2131,14 +2300,25 @@ async def handle_diff_post(request):
         response["notified"] = notified
     # Auto-dispatch: always dispatch when addressed_to is set
     # Use auto_dispatch=false to explicitly suppress
+    # Use mode="parallel" to force old parallel behavior (default: sequential ko-runde)
     auto_dispatch = data.get("auto_dispatch", True)
+    dispatch_mode = data.get("dispatch_mode", "sequential")  # "sequential" or "parallel"
     if auto_dispatch and notified:
-        dispatch_results = []
-        for target in notified:
-            dr = await orch._auto_dispatch(target, diff_id)
-            if dr:
-                dispatch_results.append(dr)
-        response["auto_dispatched"] = dispatch_results
+        if len(notified) >= 2 and dispatch_mode != "parallel":
+            # Multiple targets → sequential Ko-Runde (each sees prior peer responses)
+            print(f"  [D₀] Multi-target diff #{diff_id} → Ko-Runde sequentiell: {notified}")
+            ko_results = await orch._auto_ko_runde(notified, diff_id, rounds=1)
+            response["auto_dispatched"] = ko_results
+            response["dispatch_mode"] = "sequential_ko_runde"
+        else:
+            # Single target or explicit parallel → parallel dispatch
+            dispatch_results = []
+            for target in notified:
+                dr = await orch._auto_dispatch(target, diff_id)
+                if dr:
+                    dispatch_results.append(dr)
+            response["auto_dispatched"] = dispatch_results
+            response["dispatch_mode"] = "parallel"
     return web.json_response(response,
                               dumps=lambda obj: json.dumps(obj, default=str))
 
@@ -2584,6 +2764,27 @@ async def handle_diff_route(request):
             "error": f"System '{system_id}' is not a synthetic system (cannot route)"
         }, status=400)
 
+    # Dedup guard: skip if this system already responded to this diff
+    # (prevents double-dispatch from auto_dispatch + manual re-dispatch)
+    force = data.get("force", False)
+    if not force:
+        try:
+            existing = orch.db.con.execute(
+                "SELECT COUNT(*) FROM differential_responses "
+                "WHERE diff_id = ? AND system_id = ?",
+                [diff_id, system_id]
+            ).fetchone()
+            if existing and existing[0] > 0:
+                return web.json_response({
+                    "skipped": True,
+                    "diff_id": diff_id,
+                    "system": system_id,
+                    "reason": f"{system_id} has already responded to diff #{diff_id}. "
+                              f"Use force=true to re-dispatch.",
+                })
+        except Exception:
+            pass
+
     # Create notification for tracked routing
     orch.db.add_notification(system_id, diff_id)
 
@@ -2663,6 +2864,26 @@ async def handle_diff_route_all(request):
             targets = [sid for sid in synthetic_ids
                        if sid != diff.get("author")]
 
+        if not targets:
+            continue
+
+        # Skip systems that already responded (dedup)
+        fresh_targets = []
+        for t in targets:
+            try:
+                existing = orch.db.con.execute(
+                    "SELECT COUNT(*) FROM differential_responses "
+                    "WHERE diff_id = ? AND system_id = ?",
+                    [diff_id, t]
+                ).fetchone()
+                if existing and existing[0] > 0:
+                    print(f"  [route-all] Skipping {t} for diff #{diff_id} (already responded)")
+                    continue
+            except Exception:
+                pass
+            fresh_targets.append(t)
+
+        targets = fresh_targets
         if not targets:
             continue
 
