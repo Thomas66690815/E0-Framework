@@ -1210,6 +1210,32 @@ class InitV3Orchestrator:
             result = await self.send_prompt(system_id, prompt, source_diff_id=diff_id)
             result["auto_dispatched"] = True
             result["trigger_diff_id"] = diff_id
+
+            # ── Auto-record as differential_response ──
+            # Even if the system didn't use respond_differential D₀ tool,
+            # the response must be linked to the diff so it appears in the
+            # Ko-Kognition chain.  Check if respond_differential was already
+            # called (via tool_calls log) — if not, create the link now.
+            tool_names = [tc.get("name") for tc in result.get("tool_calls", [])]
+            already_linked = "respond_differential" in tool_names
+            if not already_linked and "error" not in result:
+                try:
+                    last = self.db.con.execute(
+                        "SELECT MAX(id) FROM interactions "
+                        "WHERE system_id = ? AND role = 'system'",
+                        [system_id]
+                    ).fetchone()
+                    if last and last[0]:
+                        self.db.add_differential_response(
+                            diff_id=diff_id,
+                            system_id=system_id,
+                            interaction_id=last[0],
+                            kind="analysis",
+                        )
+                        print(f"  [D₀ auto-link] {system_id} response → diff #{diff_id}")
+                except Exception as link_err:
+                    print(f"  [D₀ auto-link] Warning: {link_err}")
+
             return result
         except Exception as e:
             print(f"  [D₀ auto-dispatch] Error for {system_id}: {e}")
@@ -2696,6 +2722,166 @@ async def handle_diff_route_all(request):
     }, dumps=lambda obj: json.dumps(obj, default=str))
 
 
+# ─────────────────────────────────────────────
+#  Ko-Kognitions-Runde — sequentielle Peer-Kette
+# ─────────────────────────────────────────────
+
+async def handle_diff_ko_runde(request):
+    """Run a sequential Ko-Kognitions-Runde on a single diff.
+
+    POST /diff/ko-runde  {
+        "diff_id": 5,
+        "systems": ["delta", "epsilon", "zeta"],  // optional, defaults to all active
+        "rounds": 1                                // optional, default 1
+    }
+
+    Unlike route-all (parallel), this is SEQUENTIAL:
+    1. System A receives the diff → responds
+    2. System B receives the diff + A's response → responds
+    3. System C receives the diff + A's + B's responses → responds
+
+    If rounds > 1, the chain continues:
+    4. System A receives everything so far → responds to B+C
+    5. ...
+
+    Each response is recorded as differential_response.
+    Returns the full chain.
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json() if request.content_length else {}
+
+    diff_id = data.get("diff_id")
+    if not diff_id:
+        return web.json_response({"error": "diff_id required"}, status=400)
+
+    diff = orch.db.get_differential(diff_id)
+    if not diff:
+        return web.json_response({"error": f"Diff #{diff_id} not found"}, status=404)
+
+    rounds = min(data.get("rounds", 1), 3)  # cap at 3 rounds
+
+    # Determine system order
+    requested = data.get("systems")
+    if requested:
+        systems = [s for s in requested if s in orch.systems]
+    else:
+        systems = [sid for sid in orch.registry.get_active_ids()
+                   if sid != diff.get("author")]
+    if not systems:
+        return web.json_response({"error": "No active systems"}, status=400)
+
+    original_content = diff.get("content", "")
+    author = diff.get("author", "unknown")
+
+    # Claim
+    orch.db.claim_differential(diff_id, systems[0])
+
+    chain = []  # list of {system_id, response, interaction_id, round}
+
+    for round_num in range(1, rounds + 1):
+        for system_id in systems:
+            # Build prompt with chain context
+            prompt_parts = [
+                f"[Ko-Kognitions-Runde {round_num} — Differenz #{diff_id} von {author}]",
+                "",
+                original_content,
+            ]
+
+            # Add prior responses from the chain
+            if chain:
+                prompt_parts.append("")
+                prompt_parts.append("─── Bisherige Peer-Antworten (chronologisch) ───")
+                for step in chain:
+                    prompt_parts.append(
+                        f"\n[{step['system_id'].upper()} — Runde {step['round']}]"
+                    )
+                    prompt_parts.append(step["response"][:1500])
+
+                prompt_parts.append("")
+                prev = chain[-1]["system_id"]
+                prompt_parts.append(
+                    f"Du siehst die bisherigen Peer-Antworten. "
+                    f"Reagiere auf die Beiträge deiner Peers "
+                    f"(insbesondere auf {prev}). "
+                    f"Nutze respond_differential um deine Antwort formal zu verlinken."
+                )
+            else:
+                prompt_parts.append("")
+                prompt_parts.append(
+                    "Du bist der erste in dieser Ko-Kognitions-Runde. "
+                    "Deine Antwort wird den nächsten Peers vorgelegt."
+                )
+
+            prompt = "\n".join(prompt_parts)
+
+            print(f"  [Ko-Runde] Runde {round_num}, {system_id} für Diff #{diff_id} "
+                  f"(chain length: {len(chain)})")
+
+            try:
+                result = await orch.send_prompt(
+                    system_id, prompt, source_diff_id=diff_id)
+
+                if "error" in result:
+                    chain.append({
+                        "system_id": system_id, "round": round_num,
+                        "response": f"[FEHLER: {result['error']}]",
+                        "interaction_id": None, "success": False,
+                    })
+                    continue
+
+                response_text = result.get("response", "")
+
+                # Get interaction id
+                last = orch.db.con.execute(
+                    "SELECT MAX(id) FROM interactions "
+                    "WHERE system_id = ? AND role = 'system'",
+                    [system_id]
+                ).fetchone()
+                interaction_id = last[0] if last else None
+
+                # Auto-link as differential_response (if not already done by D₀ tool)
+                tool_names = [tc.get("name") for tc in result.get("tool_calls", [])]
+                if "respond_differential" not in tool_names and interaction_id:
+                    orch.db.add_differential_response(
+                        diff_id=diff_id, system_id=system_id,
+                        interaction_id=interaction_id, kind="analysis",
+                    )
+
+                chain.append({
+                    "system_id": system_id, "round": round_num,
+                    "response": response_text,
+                    "interaction_id": interaction_id,
+                    "success": True,
+                })
+
+            except Exception as exc:
+                chain.append({
+                    "system_id": system_id, "round": round_num,
+                    "response": f"[EXCEPTION: {exc}]",
+                    "interaction_id": None, "success": False,
+                })
+
+    # Build chain summary
+    chain_order = [f"{s['system_id']}(R{s['round']})" for s in chain if s["success"]]
+    successful = [s for s in chain if s["success"]]
+
+    return web.json_response({
+        "diff_id": diff_id,
+        "ko_runde": True,
+        "rounds": rounds,
+        "systems": systems,
+        "chain_length": len(successful),
+        "chain_order": " → ".join(chain_order),
+        "chain": [{
+            "system_id": s["system_id"],
+            "round": s["round"],
+            "response": s["response"][:500],
+            "interaction_id": s["interaction_id"],
+            "success": s["success"],
+        } for s in chain],
+    }, dumps=lambda obj: json.dumps(obj, default=str))
+
+
 async def handle_diff_human_respond(request):
     """Let a human or infrastructure node respond with text to a diff.
 
@@ -3361,6 +3547,7 @@ def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app.router.add_get("/diff/detail", handle_diff_detail)
     app.router.add_post("/diff/route", handle_diff_route)
     app.router.add_post("/diff/route-all", handle_diff_route_all)
+    app.router.add_post("/diff/ko-runde", handle_diff_ko_runde)
     app.router.add_post("/diff/human-respond", handle_diff_human_respond)
     app.router.add_post("/diff/broadcast", handle_diff_broadcast)
     # Partner Requests — designed by Delta+Epsilon

@@ -813,13 +813,14 @@ async function loadDiffTopology() {
       }
 
       // Actions
-      html += `<div style="margin-top:8px;display:flex;gap:8px;">`;
+      html += `<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">`;
       html += `<a href="#" onclick="viewDiffTrace(${d.id});return false;" style="font-size:12px;">🔍 Spur ansehen</a>`;
       if (d.response_count > 0) {
         html += `<a href="#" onclick="toggleDiffResponses(${d.id});return false;" style="font-size:12px;color:var(--accent-c);">📋 Kette anzeigen (${d.response_count})</a>`;
       }
       if (d.status === 'open') {
-        html += `<a href="#" onclick="safeRouteAll(${d.id});return false;" style="font-size:12px;color:var(--accent-b);">⚡ Ko-Kognition starten</a>`;
+        html += `<a href="#" onclick="safeRouteAll(${d.id});return false;" style="font-size:12px;color:var(--accent-b);">⚡ Parallel (alle)</a>`;
+        html += `<a href="#" onclick="startKoRunde(${d.id});return false;" style="font-size:12px;color:var(--accent-d);">🔗 Ko-Runde (sequentiell)</a>`;
       }
       html += `</div>`;
 
@@ -1102,6 +1103,42 @@ async function safeRouteAll(diffId) {
 
     document.getElementById('headerStatus').textContent = `⚡ Ko-Kognition: ${successes}/${targets.length} Systeme haben geantwortet`;
     setTimeout(() => document.getElementById('headerStatus').textContent = '', 6000);
+    loadDiffTopology();
+  } catch (e) {
+    document.getElementById('headerStatus').textContent = 'Fehler: ' + e.message;
+  }
+}
+
+// ════════════════════════════════════════════
+//  Ko-Runde — sequentielle Peer-Kette
+// ════════════════════════════════════════════
+async function startKoRunde(diffId) {
+  const ok = await confirmAction(
+    `🔗 Ko-Runde für Δ #${diffId} starten?\n\n` +
+    `Sequentiell: Jedes System sieht die Antworten der Vorgänger.\n` +
+    `Delta → Epsilon → Zeta (Reihenfolge). Dauert länger, aber echte Peer-Ko-Kognition.`
+  );
+  if (!ok) return;
+
+  document.getElementById('headerStatus').textContent = `🔗 Ko-Runde für Δ #${diffId}...`;
+
+  try {
+    const result = await apiPost('/diff/ko-runde', {
+      diff_id: diffId,
+      rounds: 1
+    });
+
+    if (result.error) {
+      document.getElementById('headerStatus').textContent = `Fehler: ${result.error}`;
+      return;
+    }
+
+    const chain = result.chain_order || 'keine';
+    document.getElementById('headerStatus').textContent =
+      `🔗 Ko-Runde abgeschlossen: ${chain} (${result.chain_length} Schritte)`;
+    setTimeout(() => document.getElementById('headerStatus').textContent = '', 10000);
+
+    // Refresh diff list to show new responses
     loadDiffTopology();
   } catch (e) {
     document.getElementById('headerStatus').textContent = 'Fehler: ' + e.message;
