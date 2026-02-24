@@ -1038,6 +1038,193 @@ class E0Database:
         )
 
     # ─────────────────────────────────────────
+    #  Topological Distance / Ferne-Messung (A₃, Diff #76)
+    # ─────────────────────────────────────────
+
+    def compute_pairwise_distances(self, system_ids: List[str] = None,
+                                   weights: Dict[str, float] = None
+                                   ) -> Dict[str, object]:
+        """Compute topological distance between all pairs of active systems.
+
+        Distance is composed of three dimensions:
+          1. Co-activity overlap (Jaccard): how often two nodes participate
+             in the same differentials.  High overlap → low distance.
+          2. Profile divergence: euclidean distance of normalized mean
+             v/H/R values.  Different metric profiles → high distance.
+          3. Activity asymmetry: ratio of interaction counts.
+             Very different activity levels → higher distance.
+
+        Args:
+            system_ids: Restrict to these systems.  None → all active
+                        systems (delta, epsilon, zeta, a3, …).
+            weights:    Override default dimension weights.
+                        Keys: 'co_activity', 'profile', 'activity'.
+
+        Returns:
+            Dict with 'pairs' (list of pair-dicts), 'matrix' (dict-of-dicts),
+            'dimensions' (raw per-dimension values), 'meta' (computation info).
+        """
+        import math
+
+        w = {
+            'co_activity': 0.45,
+            'profile': 0.35,
+            'activity': 0.20,
+        }
+        if weights:
+            w.update(weights)
+
+        # --- Determine which systems to include ---
+        if system_ids:
+            systems = system_ids
+        else:
+            # All systems that have participated in at least one differential
+            rows = self.con.execute(
+                "SELECT DISTINCT system_id FROM interactions "
+                "WHERE source_diff_id IS NOT NULL "
+                "AND system_id NOT LIKE 'e0-%' "  # exclude legacy sessions
+                "ORDER BY system_id"
+            ).fetchall()
+            systems = [r[0] for r in rows]
+
+        if len(systems) < 2:
+            return {'pairs': [], 'matrix': {}, 'dimensions': {},
+                    'meta': {'error': 'need at least 2 systems',
+                             'systems': systems}}
+
+        # --- 1. Co-activity: diff participation overlap ---
+        # For each system: set of diff_ids they participated in
+        diff_sets: Dict[str, set] = {}
+        for sid in systems:
+            rows = self.con.execute(
+                "SELECT DISTINCT source_diff_id FROM interactions "
+                "WHERE system_id = ? AND source_diff_id IS NOT NULL",
+                [sid]
+            ).fetchall()
+            diff_sets[sid] = {r[0] for r in rows}
+
+        # --- 2. Profile: mean v/H/R per system ---
+        profiles: Dict[str, Dict[str, float]] = {}
+        for sid in systems:
+            row = self.con.execute(
+                "SELECT AVG(v), AVG(h), AVG(r), COUNT(*) "
+                "FROM interactions "
+                "WHERE system_id = ? AND v IS NOT NULL",
+                [sid]
+            ).fetchone()
+            if row and row[3] and row[3] > 0:
+                profiles[sid] = {'v': row[0] or 0, 'h': row[1] or 0,
+                                 'r': row[2] or 0, 'n': row[3]}
+            else:
+                profiles[sid] = {'v': 0, 'h': 0, 'r': 0, 'n': 0}
+
+        # --- 3. Activity counts ---
+        activity: Dict[str, int] = {}
+        for sid in systems:
+            row = self.con.execute(
+                "SELECT COUNT(*) FROM interactions WHERE system_id = ?",
+                [sid]
+            ).fetchone()
+            activity[sid] = row[0] if row else 0
+
+        # --- Normalize profile values across all systems ---
+        # Find min/max for each dimension to normalize to [0, 1]
+        all_v = [profiles[s]['v'] for s in systems if profiles[s]['n'] > 0]
+        all_h = [profiles[s]['h'] for s in systems if profiles[s]['n'] > 0]
+        all_r = [profiles[s]['r'] for s in systems if profiles[s]['n'] > 0]
+
+        def _range_norm(val, vals):
+            if not vals or max(vals) == min(vals):
+                return 0.0
+            return (val - min(vals)) / (max(vals) - min(vals))
+
+        # --- Compute pairwise distances ---
+        pairs = []
+        matrix = {s: {} for s in systems}
+        dimensions = {}
+
+        for i, s1 in enumerate(systems):
+            for s2 in systems[i + 1:]:
+                # Dimension 1: Co-activity (1 - Jaccard)
+                set1, set2 = diff_sets[s1], diff_sets[s2]
+                if set1 or set2:
+                    jaccard = len(set1 & set2) / len(set1 | set2)
+                else:
+                    jaccard = 0.0
+                d_coact = 1.0 - jaccard
+
+                # Dimension 2: Profile divergence (normalized euclidean)
+                if profiles[s1]['n'] > 0 and profiles[s2]['n'] > 0:
+                    dv = _range_norm(profiles[s1]['v'], all_v) - \
+                         _range_norm(profiles[s2]['v'], all_v)
+                    dh = _range_norm(profiles[s1]['h'], all_h) - \
+                         _range_norm(profiles[s2]['h'], all_h)
+                    dr = _range_norm(profiles[s1]['r'], all_r) - \
+                         _range_norm(profiles[s2]['r'], all_r)
+                    d_profile = math.sqrt((dv**2 + dh**2 + dr**2) / 3.0)
+                else:
+                    # No metrics for at least one system → max distance
+                    d_profile = 1.0
+
+                # Dimension 3: Activity asymmetry
+                a1, a2 = activity[s1], activity[s2]
+                if max(a1, a2) > 0:
+                    d_activity = 1.0 - min(a1, a2) / max(a1, a2)
+                else:
+                    d_activity = 0.0
+
+                # Weighted composite distance
+                distance = (w['co_activity'] * d_coact +
+                            w['profile'] * d_profile +
+                            w['activity'] * d_activity)
+
+                pair_key = f"{s1}:{s2}"
+                pair_data = {
+                    'system_a': s1,
+                    'system_b': s2,
+                    'distance': round(distance, 4),
+                    'co_activity_overlap': round(jaccard, 4),
+                    'co_activity_distance': round(d_coact, 4),
+                    'profile_divergence': round(d_profile, 4),
+                    'activity_asymmetry': round(d_activity, 4),
+                    'shared_diffs': len(set1 & set2),
+                    'total_diffs_a': len(set1),
+                    'total_diffs_b': len(set2),
+                }
+                pairs.append(pair_data)
+                matrix[s1][s2] = round(distance, 4)
+                matrix[s2][s1] = round(distance, 4)
+                dimensions[pair_key] = {
+                    'co_activity': round(d_coact, 4),
+                    'profile': round(d_profile, 4),
+                    'activity': round(d_activity, 4),
+                }
+
+        # Sort by distance descending (most distant first)
+        pairs.sort(key=lambda p: p['distance'], reverse=True)
+
+        # Set self-distance to 0
+        for s in systems:
+            matrix[s][s] = 0.0
+
+        return {
+            'pairs': pairs,
+            'matrix': matrix,
+            'dimensions': dimensions,
+            'meta': {
+                'systems': systems,
+                'weights': w,
+                'total_diffs': len(set.union(*diff_sets.values())
+                                   if diff_sets else set()),
+                'profiles': {s: {k: round(v, 4) if isinstance(v, float)
+                                 else v
+                                 for k, v in profiles[s].items()}
+                             for s in systems},
+                'activity_counts': activity,
+            }
+        }
+
+    # ─────────────────────────────────────────
     #  Differential Status Views (Zeta+Epsilon #873/#875/#877)
     # ─────────────────────────────────────────
 

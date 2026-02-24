@@ -3502,6 +3502,88 @@ async def handle_partner_request_fulfill(request):
     })
 
 
+# ────────────────────────────────────────────────────────────────
+#  Topological Distance / Ferne-Messung (A₃, Diff #76)
+# ────────────────────────────────────────────────────────────────
+
+async def handle_topology_distance(request):
+    """Compute pairwise topological distance between network nodes.
+
+    GET /topology/distance
+        → distances for all active systems
+
+    GET /topology/distance?systems=delta,epsilon,zeta,a3
+        → distances for specified systems only
+
+    GET /topology/distance?w_co_activity=0.5&w_profile=0.3&w_activity=0.2
+        → override default weights
+
+    Returns:
+        pairs:      List of system pairs sorted by distance (highest first)
+        matrix:     Distance matrix as dict-of-dicts
+        dimensions: Raw per-dimension values for each pair
+        meta:       Systems used, weights, profiles, activity counts
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+
+    # Parse optional system filter
+    systems_param = request.rel_url.query.get("systems")
+    system_ids = [s.strip() for s in systems_param.split(",")
+                  ] if systems_param else None
+
+    # Parse optional weight overrides
+    weights = {}
+    for key, param in [('co_activity', 'w_co_activity'),
+                       ('profile', 'w_profile'),
+                       ('activity', 'w_activity')]:
+        val = request.rel_url.query.get(param)
+        if val:
+            try:
+                weights[key] = float(val)
+            except ValueError:
+                pass
+
+    result = orch.db.compute_pairwise_distances(
+        system_ids=system_ids,
+        weights=weights if weights else None,
+    )
+
+    return web.json_response(result,
+                             dumps=lambda obj: json.dumps(obj, default=str))
+
+
+async def handle_topology_distance_pair(request):
+    """Get distance detail for a specific system pair.
+
+    GET /topology/distance/delta/epsilon
+
+    Note: computes distances using ALL systems for normalization,
+    then returns only the requested pair.  This ensures profile
+    divergence is meaningful (not always 1.0 with only 2 systems).
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    sys_a = request.match_info["sys_a"]
+    sys_b = request.match_info["sys_b"]
+
+    # Compute full matrix (all systems) so normalization is stable
+    result = orch.db.compute_pairwise_distances()
+
+    # Find the requested pair
+    pair = None
+    for p in result['pairs']:
+        if ({p['system_a'], p['system_b']} == {sys_a, sys_b}):
+            pair = p
+            break
+
+    if not pair:
+        return web.json_response(
+            {"error": f"No data for pair {sys_a}/{sys_b}"},
+            status=404)
+
+    return web.json_response(pair,
+                             dumps=lambda obj: json.dumps(obj, default=str))
+
+
 async def handle_enable_d0_tools(request):
     """Enable D₀ tools (function calling) for a synthetic node.
 
@@ -3790,6 +3872,10 @@ def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app.router.add_post("/partner-request", handle_partner_request)
     app.router.add_get("/partner-request", handle_partner_request_list)
     app.router.add_post("/partner-request/fulfill", handle_partner_request_fulfill)
+    # Topological Distance / Ferne-Messung — A₃, Diff #76
+    app.router.add_get("/topology/distance", handle_topology_distance)
+    app.router.add_get("/topology/distance/{sys_a}/{sys_b}",
+                       handle_topology_distance_pair)
     # Diff conflicts — multi-claim detection
     app.router.add_get("/diff/conflicts", handle_diff_conflicts)
     # Diff status views + withdrawals — Phase-1 D₀ interface (Zeta+Epsilon)
