@@ -2414,21 +2414,33 @@ async def handle_diff_post(request):
     auto_dispatch = data.get("auto_dispatch", True)
     dispatch_mode = data.get("dispatch_mode", "sequential")  # "sequential" or "parallel"
     if auto_dispatch and notified:
-        if len(notified) >= 2 and dispatch_mode != "parallel":
+        if dispatch_mode == "parallel":
+            # Parallel dispatch — all systems get the SAME prompt, NO peer context
+            # Uses asyncio.gather for true concurrent execution
+            print(f"  [D₀] Multi-target diff #{diff_id} → Parallele Runde: {notified}")
+
+            async def _parallel_one(target):
+                return await orch._auto_dispatch(target, diff_id)
+
+            parallel_tasks = [_parallel_one(t) for t in notified]
+            dispatch_results = await asyncio.gather(*parallel_tasks)
+            response["auto_dispatched"] = [r for r in dispatch_results if r]
+            response["dispatch_mode"] = "parallel"
+        elif len(notified) >= 2:
             # Multiple targets → sequential Ko-Runde (each sees prior peer responses)
             print(f"  [D₀] Multi-target diff #{diff_id} → Ko-Runde sequentiell: {notified}")
             ko_results = await orch._auto_ko_runde(notified, diff_id, rounds=1)
             response["auto_dispatched"] = ko_results
             response["dispatch_mode"] = "sequential_ko_runde"
         else:
-            # Single target or explicit parallel → parallel dispatch
+            # Single target → direct dispatch
             dispatch_results = []
             for target in notified:
                 dr = await orch._auto_dispatch(target, diff_id)
                 if dr:
                     dispatch_results.append(dr)
             response["auto_dispatched"] = dispatch_results
-            response["dispatch_mode"] = "parallel"
+            response["dispatch_mode"] = "direct"
     return web.json_response(response,
                               dumps=lambda obj: json.dumps(obj, default=str))
 
@@ -3228,6 +3240,127 @@ async def handle_diff_ko_runde(request):
     }, dumps=lambda obj: json.dumps(obj, default=str))
 
 
+async def handle_diff_parallel_runde(request):
+    """Run a PARALLEL Ko-Kognitions-Runde where all systems respond independently.
+
+    POST /diff/parallel-runde  {
+        "diff_id": 5,
+        "systems": ["delta", "epsilon", "zeta", "eta"],  // optional
+    }
+
+    Unlike the sequential ko-runde, NO system sees the others' responses.
+    All systems get exactly the same prompt (original diff content only).
+    This eliminates the anchor effect and produces genuinely independent voices.
+
+    Responses are collected concurrently (asyncio.gather).
+    After all responses are in, they can be viewed side-by-side.
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json() if request.content_length else {}
+
+    diff_id = data.get("diff_id")
+    if not diff_id:
+        return web.json_response({"error": "diff_id required"}, status=400)
+
+    diff = orch.db.get_differential(diff_id)
+    if not diff:
+        return web.json_response({"error": f"Diff #{diff_id} not found"}, status=404)
+
+    requested = data.get("systems")
+    if requested:
+        systems = [s for s in requested if s in orch.systems]
+    else:
+        systems = [sid for sid in orch.registry.get_active_ids()
+                   if sid != diff.get("author")]
+    if not systems:
+        return web.json_response({"error": "No active systems"}, status=400)
+
+    original_content = diff.get("content", "")
+    author = diff.get("author", "unknown")
+    scope = diff.get("scope", "")
+
+    # Build prompt — SAME for every system, NO peer context
+    prompt_parts = [
+        f"[Parallele Ko-Kognitions-Runde — Differenz #{diff_id} von {author}]",
+    ]
+    if scope:
+        prompt_parts.append(f"Scope: {scope}")
+    prompt_parts.append("")
+    prompt_parts.append(original_content)
+    prompt_parts.append("")
+    prompt_parts.append(
+        "Dies ist eine PARALLELE Runde: Du siehst KEINE Antworten anderer Peers. "
+        "Antworte mit deiner eigenen, unabhängigen Perspektive. "
+        "Halte deine Stimme klar und eigenständig — kein Versuch zu integrieren "
+        "oder zu harmonisieren. Nutze respond_differential um deine Antwort "
+        "formal zu verlinken."
+    )
+    prompt = "\n".join(prompt_parts)
+
+    print(f"  [Parallel-Runde] Diff #{diff_id}: dispatching to {systems} simultaneously")
+
+    # Dispatch all systems concurrently
+    async def _dispatch_one(system_id: str):
+        try:
+            result = await orch.send_prompt(system_id, prompt, source_diff_id=diff_id)
+            if "error" in result:
+                return {
+                    "system_id": system_id,
+                    "response": f"[FEHLER: {result['error']}]",
+                    "interaction_id": None, "success": False,
+                }
+
+            response_text = result.get("response", "")
+            last = orch.db.con.execute(
+                "SELECT MAX(id) FROM interactions "
+                "WHERE system_id = ? AND role = 'system'",
+                [system_id]
+            ).fetchone()
+            interaction_id = last[0] if last else None
+
+            # Auto-link response
+            tool_names = [tc.get("name") for tc in result.get("tool_calls", [])]
+            if "respond_differential" not in tool_names and interaction_id:
+                orch.db.add_differential_response(
+                    diff_id=diff_id, system_id=system_id,
+                    interaction_id=interaction_id, kind="analysis",
+                )
+
+            return {
+                "system_id": system_id,
+                "response": response_text,
+                "interaction_id": interaction_id,
+                "success": True,
+            }
+        except Exception as exc:
+            return {
+                "system_id": system_id,
+                "response": f"[EXCEPTION: {exc}]",
+                "interaction_id": None, "success": False,
+            }
+
+    # Run ALL systems in parallel (asyncio.gather)
+    tasks = [_dispatch_one(sid) for sid in systems]
+    responses = await asyncio.gather(*tasks)
+
+    successful = [r for r in responses if r["success"]]
+    print(f"  [Parallel-Runde] Diff #{diff_id} complete: "
+          f"{len(successful)}/{len(systems)} responded")
+
+    return web.json_response({
+        "diff_id": diff_id,
+        "parallel_runde": True,
+        "systems": systems,
+        "response_count": len(successful),
+        "responses": [{
+            "system_id": r["system_id"],
+            "response": r["response"][:500],
+            "interaction_id": r["interaction_id"],
+            "success": r["success"],
+        } for r in responses],
+    }, dumps=lambda obj: json.dumps(obj, default=str))
+
+
 async def handle_diff_human_respond(request):
     """Let a human or infrastructure node respond with text to a diff.
 
@@ -3977,6 +4110,7 @@ def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app.router.add_post("/diff/route", handle_diff_route)
     app.router.add_post("/diff/route-all", handle_diff_route_all)
     app.router.add_post("/diff/ko-runde", handle_diff_ko_runde)
+    app.router.add_post("/diff/parallel-runde", handle_diff_parallel_runde)
     app.router.add_post("/diff/human-respond", handle_diff_human_respond)
     app.router.add_post("/diff/broadcast", handle_diff_broadcast)
     # Partner Requests — designed by Delta+Epsilon

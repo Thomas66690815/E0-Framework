@@ -234,6 +234,7 @@ class E0ChatClient:
         logprobs: bool = True,
         top_logprobs: int = 5,
         max_tokens: int = 8192,
+        max_context_turns: int = 10,
     ):
         self.api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
         self.model = model
@@ -244,6 +245,7 @@ class E0ChatClient:
         self.top_logprobs = top_logprobs
         self.max_tokens = max_tokens
         self.tools: Optional[List[Dict[str, Any]]] = None  # OpenAI function-calling tool defs
+        self.max_context_turns = max_context_turns  # max user/assistant turn-pairs to keep
 
         # Session state
         self.messages: List[Dict[str, str]] = []
@@ -271,6 +273,51 @@ class E0ChatClient:
             "content": feedback_text,
         })
 
+    def _build_context_window(self) -> List[Dict[str, str]]:
+        """Build a trimmed message list for the API call.
+
+        Keeps:
+          - ALL system-role messages (preamble: primer, identity, topology, feedback)
+          - The last `max_context_turns` user/assistant/tool exchanges
+
+        This prevents unbounded token growth: a system with 200+ turns
+        no longer sends the entire history on every request.
+        """
+        if self.max_context_turns <= 0:
+            return list(self.messages)  # 0 = no trimming
+
+        preamble = []   # system messages at the start
+        conversation = []  # user/assistant/tool messages
+
+        for msg in self.messages:
+            if msg.get("role") == "system":
+                # System messages that appear before any conversation
+                # are part of the preamble; later ones are structural feedback
+                if not conversation:
+                    preamble.append(msg)
+                else:
+                    conversation.append(msg)
+            else:
+                conversation.append(msg)
+
+        # Count user messages to determine turn count
+        user_indices = [i for i, m in enumerate(conversation)
+                        if m.get("role") == "user"]
+
+        if len(user_indices) <= self.max_context_turns:
+            return list(self.messages)  # within budget, send all
+
+        # Keep only the last max_context_turns user messages and everything after
+        cut_from = user_indices[-self.max_context_turns]
+        trimmed_conv = conversation[cut_from:]
+
+        trimmed_count = len(conversation) - len(trimmed_conv)
+        if trimmed_count > 0:
+            print(f"  [E₀ CTX] Trimmed {trimmed_count} old messages "
+                  f"({len(preamble)} preamble + {len(trimmed_conv)} conversation)")
+
+        return preamble + trimmed_conv
+
     def _build_request(self, user_message: str) -> Dict[str, Any]:
         """Build the API request payload."""
         # Optionally prepend structural context
@@ -295,9 +342,12 @@ class E0ChatClient:
         # Gemini via OpenAI compatibility layer has some parameter differences
         is_gemini = self.model.startswith("gemini")
 
+        # Use trimmed context window instead of full history
+        context_messages = self._build_context_window()
+
         request = {
             "model": self.model,
-            "messages": self.messages,
+            "messages": context_messages,
             "temperature": 0.7,
         }
 
@@ -456,9 +506,12 @@ class E0ChatClient:
                            ("gpt-5", "o3", "o4", "o5"))
         is_gemini = self.model.startswith("gemini")
 
+        # Use trimmed context window for tool continuations too
+        context_messages = self._build_context_window()
+
         request = {
             "model": self.model,
-            "messages": self.messages,
+            "messages": context_messages,
             "temperature": 0.7,
         }
         if is_new_openai:
