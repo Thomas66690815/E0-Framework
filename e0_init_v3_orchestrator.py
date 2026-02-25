@@ -407,6 +407,14 @@ D0_TOOLS = [
                         "type": "integer",
                         "description": "ID of parent differential if this iterates on an existing one",
                     },
+                    "branch_from": {
+                        "type": "integer",
+                        "description": "ID of differential to branch from — creates a divergent discourse path",
+                    },
+                    "branch_label": {
+                        "type": "string",
+                        "description": "Label for the branch (e.g. 'Gegenposition', 'Radikale Variante', 'Was-wäre-wenn')",
+                    },
                 },
                 "required": ["content"],
             },
@@ -497,6 +505,10 @@ D0_TOOLS = [
                     "note": {
                         "type": "string",
                         "description": "The substantive content of the response",
+                    },
+                    "position_label": {
+                        "type": "string",
+                        "description": "Perspective label for multi-position responses (e.g. 'Optimist', 'Skeptiker', 'Beobachter')",
                     },
                 },
                 "required": ["diff_id", "note"],
@@ -1547,6 +1559,8 @@ class InitV3Orchestrator:
                     addressed_to=args.get("addressed_to"),
                     tags=args.get("tags"),
                     parent_diff_id=args.get("parent_diff_id"),
+                    branch_from=args.get("branch_from"),
+                    branch_label=args.get("branch_label"),
                 )
                 # Auto-notify: if addressed to a specific node, create notification
                 # and queue auto-dispatch
@@ -1595,6 +1609,7 @@ class InitV3Orchestrator:
                     interaction_id=interaction_id,
                     kind=args.get("kind", "analysis"),
                     note=note,
+                    position_label=args.get("position_label"),
                 )
                 # Auto-acknowledge notification if this node was addressed
                 self.db.acknowledge_notification(system_id, args["diff_id"])
@@ -2395,6 +2410,8 @@ async def handle_diff_post(request):
         meta=data.get("meta"),
         parent_diff_id=data.get("parent_diff_id"),
         source_interaction_id=data.get("source_interaction_id"),
+        branch_from=data.get("branch_from"),
+        branch_label=data.get("branch_label"),
     )
     # Auto-notify addressed nodes
     addressed_to = data.get("addressed_to")
@@ -3361,6 +3378,229 @@ async def handle_diff_parallel_runde(request):
     }, dumps=lambda obj: json.dumps(obj, default=str))
 
 
+async def handle_diff_multi_respond(request):
+    """Submit multiple positions from a single node to a diff.
+
+    POST /diff/multi-respond  {
+        "diff_id": 5,
+        "system": "delta",
+        "positions": [
+            {"label": "A", "content": "Position A: konservativ..."},
+            {"label": "B", "content": "Position B: radikal..."}
+        ]
+    }
+
+    Each position is sent as a separate prompt to the system.
+    The system responds independently to each position framing.
+    All responses are linked to the same diff with distinct position_labels.
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json()
+
+    diff_id = data.get("diff_id")
+    system_id = data.get("system")
+    positions = data.get("positions", [])
+
+    if not diff_id or not system_id:
+        return web.json_response({"error": "diff_id and system required"}, status=400)
+    if not positions or len(positions) < 2:
+        return web.json_response(
+            {"error": "At least 2 positions required for multi-respond"},
+            status=400)
+    if len(positions) > 5:
+        return web.json_response(
+            {"error": "Maximum 5 positions per multi-respond"},
+            status=400)
+
+    diff = orch.db.get_differential(diff_id)
+    if not diff:
+        return web.json_response({"error": f"Diff #{diff_id} not found"}, status=404)
+
+    original_content = diff.get("content", "")
+    author = diff.get("author", "unknown")
+
+    results = []
+    for pos in positions:
+        # Accept both string ("Optimist") and object ({"label": "A", "content": "..."})
+        if isinstance(pos, str):
+            label = pos
+            pos_content = ""
+        else:
+            label = pos.get("label", chr(65 + len(results)))  # A, B, C...
+            pos_content = pos.get("content", "")
+
+        prompt = (
+            f"[Multi-Position-Antwort auf Differenz #{diff_id} von {author}]\n"
+            f"[Position {label}]\n\n"
+            f"Originale Differenz:\n{original_content}\n\n"
+            f"Rahmen für diese Position:\n{pos_content}\n\n"
+            f"Antworte AUS DIESER PERSPEKTIVE ({label}). "
+            f"Dies ist eine von mehreren Stimmen, die du gleichzeitig einreichst. "
+            f"Halte diese Stimme klar und konsistent — sie darf der anderen "
+            f"Position widersprechen. Das ist beabsichtigt."
+        )
+
+        try:
+            result = await orch.send_prompt(system_id, prompt, source_diff_id=diff_id)
+            response_text = result.get("response", "")
+
+            # Get interaction id
+            last = orch.db.con.execute(
+                "SELECT MAX(id) FROM interactions "
+                "WHERE system_id = ? AND role = 'system'",
+                [system_id]
+            ).fetchone()
+            interaction_id = last[0] if last else None
+
+            # Link with position_label
+            orch.db.add_differential_response(
+                diff_id=diff_id, system_id=system_id,
+                interaction_id=interaction_id,
+                kind="multi-position",
+                position_label=label,
+            )
+
+            results.append({
+                "label": label,
+                "response": response_text[:500],
+                "interaction_id": interaction_id,
+                "success": True,
+            })
+        except Exception as exc:
+            results.append({
+                "label": label,
+                "response": f"[EXCEPTION: {exc}]",
+                "interaction_id": None,
+                "success": False,
+            })
+
+    successful = [r for r in results if r["success"]]
+    print(f"  [Multi-Position] {system_id} submitted {len(successful)}/{len(positions)} "
+          f"positions for Diff #{diff_id}")
+
+    return web.json_response({
+        "diff_id": diff_id,
+        "system": system_id,
+        "multi_position": True,
+        "position_count": len(successful),
+        "positions": results,
+    }, dumps=lambda obj: json.dumps(obj, default=str))
+
+
+async def handle_diff_branch(request):
+    """Create a new branch from an existing differential.
+
+    POST /diff/branch  {
+        "branch_from": 90,
+        "author": "delta",
+        "branch_label": "alternative-governance",
+        "content": "Ich gehe zurück zu Diff #90 und nehme einen anderen Pfad...",
+        "scope": "reflexion",
+        "tags": ["branch", "governance"],
+        "dispatch_mode": "parallel"  // optional: "sequential" (default) or "parallel"
+    }
+
+    This creates a new differential that explicitly branches off from an older one.
+    The branch_from field creates a discourse topology (graph, not just linear chain).
+    Optionally auto-dispatches to the network.
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json()
+
+    branch_from = data.get("branch_from")
+    author = data.get("author")
+    content = data.get("content", "").strip()
+    branch_label = data.get("branch_label", "")
+
+    if not branch_from or not author or not content:
+        return web.json_response(
+            {"error": "branch_from, author, and content required"},
+            status=400)
+
+    # Verify the source diff exists
+    source_diff = orch.db.get_differential(branch_from)
+    if not source_diff:
+        return web.json_response(
+            {"error": f"Source diff #{branch_from} not found"},
+            status=404)
+
+    # Post the branch as a new differential
+    diff_id = orch.db.post_differential(
+        author=author,
+        content=content,
+        scope=data.get("scope", "branch"),
+        tags=data.get("tags"),
+        branch_from=branch_from,
+        branch_label=branch_label,
+    )
+
+    print(f"  [Branch] #{diff_id} branches from #{branch_from} "
+          f"(label='{branch_label}', author={author})")
+
+    response = {
+        "posted": True,
+        "id": diff_id,
+        "branch_from": branch_from,
+        "branch_label": branch_label,
+        "author": author,
+    }
+
+    # Auto-dispatch if requested
+    auto_dispatch = data.get("auto_dispatch", True)
+    dispatch_mode = data.get("dispatch_mode", "sequential")
+    if auto_dispatch:
+        systems = [sid for sid in orch.registry.get_active_ids()
+                   if sid != author]
+        if systems:
+            if dispatch_mode == "parallel":
+                print(f"  [Branch] Dispatching parallel to {systems}")
+
+                async def _branch_dispatch(sid):
+                    prompt = (
+                        f"[BRANCH — Neuer Diskurs-Strang von Differenz #{branch_from}]\n"
+                        f"Branch-Label: {branch_label}\n"
+                        f"Autor: {author}\n\n"
+                        f"Originale Differenz #{branch_from}:\n"
+                        f"{source_diff.get('content', '')[:1500]}\n\n"
+                        f"═══ Neuer Pfad ═══\n\n"
+                        f"{content}\n\n"
+                        f"Dies ist ein BRANCH: {author} geht zurück zu Diff #{branch_from} "
+                        f"und eröffnet einen neuen Strang. "
+                        f"Antworte auf diesen neuen Pfad — nicht auf den alten Diskurs."
+                    )
+                    return await orch.send_prompt(sid, prompt, source_diff_id=diff_id)
+
+                tasks = [_branch_dispatch(sid) for sid in systems]
+                await asyncio.gather(*tasks, return_exceptions=True)
+                response["dispatched_to"] = systems
+                response["dispatch_mode"] = "parallel"
+            else:
+                print(f"  [Branch] Dispatching sequential ko-runde to {systems}")
+                await orch._auto_ko_runde(systems, diff_id, rounds=1)
+                response["dispatched_to"] = systems
+                response["dispatch_mode"] = "sequential"
+
+    return web.json_response(response,
+                              dumps=lambda obj: json.dumps(obj, default=str))
+
+
+async def handle_diff_branch_tree(request):
+    """Get the branch tree for a differential.
+
+    GET /diff/branch-tree?diff_id=90&depth=5
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    diff_id = int(request.query.get("diff_id", 0))
+    depth = int(request.query.get("depth", 5))
+
+    if not diff_id:
+        return web.json_response({"error": "diff_id required"}, status=400)
+
+    tree = orch.db.get_branch_tree(diff_id, max_depth=depth)
+    return web.json_response(tree,
+                              dumps=lambda obj: json.dumps(obj, default=str))
+
+
 async def handle_diff_human_respond(request):
     """Let a human or infrastructure node respond with text to a diff.
 
@@ -4111,6 +4351,9 @@ def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app.router.add_post("/diff/route-all", handle_diff_route_all)
     app.router.add_post("/diff/ko-runde", handle_diff_ko_runde)
     app.router.add_post("/diff/parallel-runde", handle_diff_parallel_runde)
+    app.router.add_post("/diff/multi-respond", handle_diff_multi_respond)
+    app.router.add_post("/diff/branch", handle_diff_branch)
+    app.router.add_get("/diff/branch-tree", handle_diff_branch_tree)
     app.router.add_post("/diff/human-respond", handle_diff_human_respond)
     app.router.add_post("/diff/broadcast", handle_diff_broadcast)
     # Partner Requests — designed by Delta+Epsilon

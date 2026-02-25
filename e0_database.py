@@ -152,11 +152,15 @@ CREATE TABLE IF NOT EXISTS differentials (
     tags            VARCHAR,                  -- optional CSV tags for structural routing
     meta            VARCHAR,                  -- JSON: additional context
     parent_diff_id  INTEGER,                  -- FK → differentials.id (this diff iterates on parent)
-    source_interaction_id INTEGER             -- FK → interactions.id (which interaction generated this diff?)
+    source_interaction_id INTEGER,            -- FK → interactions.id (which interaction generated this diff?)
+    branch_from     INTEGER,                  -- FK → differentials.id (Branching: this diff branches off from an older diff)
+    branch_label    VARCHAR                   -- optional label for the branch (e.g. 'alternative-governance', 'radikaler-pfad')
 );
 
 -- Differential responses — n:m linking table (Epsilon's delta_links idea)
 -- Multiple systems can respond to the same differential with different reaction types.
+-- position_label: enables Multi-Position-Format — a node can submit multiple
+-- distinct voices/positions to the same diff (e.g. "Stimme A", "Stimme B").
 CREATE SEQUENCE IF NOT EXISTS diff_resp_seq START 1;
 CREATE TABLE IF NOT EXISTS differential_responses (
     id              INTEGER DEFAULT nextval('diff_resp_seq') PRIMARY KEY,
@@ -165,6 +169,7 @@ CREATE TABLE IF NOT EXISTS differential_responses (
     system_id       VARCHAR NOT NULL,         -- who responded
     kind            VARCHAR DEFAULT 'analysis', -- 'analysis' | 'proposal' | 'experiment' | 'reflexion' | 'counter'
     note            VARCHAR,                  -- optional short note about the response
+    position_label  VARCHAR,                  -- Multi-Position: 'A' | 'B' | ... (NULL = single position)
     ts              TIMESTAMP NOT NULL
 );
 
@@ -273,6 +278,9 @@ class E0Database:
             ("differentials", "parent_diff_id", "ALTER TABLE differentials ADD COLUMN parent_diff_id INTEGER"),
             ("differentials", "source_interaction_id", "ALTER TABLE differentials ADD COLUMN source_interaction_id INTEGER"),
             ("interactions", "source_diff_id", "ALTER TABLE interactions ADD COLUMN source_diff_id INTEGER"),
+            ("differential_responses", "position_label", "ALTER TABLE differential_responses ADD COLUMN position_label VARCHAR"),
+            ("differentials", "branch_from", "ALTER TABLE differentials ADD COLUMN branch_from INTEGER"),
+            ("differentials", "branch_label", "ALTER TABLE differentials ADD COLUMN branch_label VARCHAR"),
         ]
         for table, col, sql in migrations:
             try:
@@ -750,22 +758,28 @@ class E0Database:
                           addressed_to: str = None, scope: str = None,
                           tags: str = None, meta: Dict = None,
                           parent_diff_id: int = None,
-                          source_interaction_id: int = None) -> int:
+                          source_interaction_id: int = None,
+                          branch_from: int = None,
+                          branch_label: str = None) -> int:
         """Post a new differential into the shared space.
 
         Any node (human or synthetic) can post.
         parent_diff_id: this diff iterates on an existing differential.
         source_interaction_id: which interaction generated this diff.
+        branch_from: this diff branches off from an older diff (Branching).
+        branch_label: optional label for the branch (e.g. 'alternative-governance').
         Returns the differential id.
         """
         self.con.execute(
             "INSERT INTO differentials "
-            "(ts, author, content, addressed_to, scope, status, tags, meta, parent_diff_id, source_interaction_id) "
-            "VALUES (?, ?, ?, ?, ?, 'open', ?, ?, ?, ?)",
+            "(ts, author, content, addressed_to, scope, status, tags, meta, "
+            "parent_diff_id, source_interaction_id, branch_from, branch_label) "
+            "VALUES (?, ?, ?, ?, ?, 'open', ?, ?, ?, ?, ?, ?)",
             [
                 datetime.now(), author, content, addressed_to, scope, tags,
                 json.dumps(meta, ensure_ascii=False) if meta else None,
                 parent_diff_id, source_interaction_id,
+                branch_from, branch_label,
             ]
         )
         row = self.con.execute(
@@ -913,17 +927,21 @@ class E0Database:
     def add_differential_response(self, diff_id: int, system_id: str,
                                    interaction_id: int = None,
                                    kind: str = "analysis",
-                                   note: str = None) -> int:
+                                   note: str = None,
+                                   position_label: str = None) -> int:
         """Record a system's response to a differential.
 
         Multiple systems can respond to the same differential.
+        If position_label is set, this is a Multi-Position response
+        (e.g. "A", "B" — same system, different voices).
         Returns the response id.
         """
         self.con.execute(
             "INSERT INTO differential_responses "
-            "(diff_id, interaction_id, system_id, kind, note, ts) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            [diff_id, interaction_id, system_id, kind, note, datetime.now()]
+            "(diff_id, interaction_id, system_id, kind, note, position_label, ts) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            [diff_id, interaction_id, system_id, kind, note,
+             position_label, datetime.now()]
         )
         row = self.con.execute(
             "SELECT MAX(id) FROM differential_responses WHERE diff_id = ?",
@@ -958,6 +976,53 @@ class E0Database:
             "WHERE dr.diff_id = ? ORDER BY dr.ts ASC",
             [diff_id]
         )
+
+    def get_branches(self, diff_id: int) -> List[Dict]:
+        """Get all branches that stem from a given differential."""
+        return self._fetchdicts(
+            "SELECT id, ts, author, LEFT(content, 300) as preview, "
+            "scope, branch_label, status "
+            "FROM differentials WHERE branch_from = ? ORDER BY ts ASC",
+            [diff_id]
+        )
+
+    def get_branch_tree(self, root_diff_id: int, max_depth: int = 5) -> Dict:
+        """Build a branch tree starting from a root differential.
+
+        Returns a nested structure showing the discourse topology.
+        """
+        diff = self.get_differential(root_diff_id)
+        if not diff:
+            return {}
+
+        node = {
+            "id": diff["id"],
+            "author": diff["author"],
+            "preview": diff.get("content", "")[:200],
+            "branch_label": diff.get("branch_label"),
+            "status": diff.get("status"),
+            "branches": [],
+            "response_count": 0,
+        }
+
+        # Count responses
+        try:
+            row = self.con.execute(
+                "SELECT COUNT(*) FROM differential_responses WHERE diff_id = ?",
+                [root_diff_id]
+            ).fetchone()
+            node["response_count"] = row[0] if row else 0
+        except Exception:
+            pass
+
+        if max_depth > 0:
+            branches = self.get_branches(root_diff_id)
+            for b in branches:
+                child = self.get_branch_tree(b["id"], max_depth - 1)
+                if child:
+                    node["branches"].append(child)
+
+        return node
 
     def get_unanswered_differentials(self, system_id: str,
                                       limit: int = 20) -> List[Dict]:
