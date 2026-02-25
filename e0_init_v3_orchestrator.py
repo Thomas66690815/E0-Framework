@@ -3378,6 +3378,241 @@ async def handle_diff_parallel_runde(request):
     }, dumps=lambda obj: json.dumps(obj, default=str))
 
 
+async def handle_diff_vollstaendige_ko_kognition(request):
+    """Two-phase Ko-Kognition: Parallel (own perspective) then Sequential (review others).
+
+    POST /diff/vollstaendige-ko-kognition  {
+        "diff_id": 107,
+        "systems": ["delta", "epsilon", "zeta", "eta"],  // optional
+    }
+
+    Phase 1 — PARALLEL: Every system builds its own, independent perspective.
+              No anchor effect. Each sees only the original diff.
+    Phase 2 — SEQUENTIAL: Every system sees ALL Phase-1 responses and reviews them.
+              Builds on what's there. Can challenge, deepen, or counter.
+
+    This implements Thomas's insight: "Erst mal eine Perspektive einnehmen,
+    dann schauen die anderen drüber."
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json() if request.content_length else {}
+
+    diff_id = data.get("diff_id")
+    if not diff_id:
+        return web.json_response({"error": "diff_id required"}, status=400)
+
+    diff = orch.db.get_differential(diff_id)
+    if not diff:
+        return web.json_response({"error": f"Diff #{diff_id} not found"}, status=404)
+
+    requested = data.get("systems")
+    if requested:
+        systems = [s for s in requested if s in orch.systems]
+    else:
+        systems = [sid for sid in orch.registry.get_active_ids()
+                   if sid != diff.get("author")]
+    if not systems:
+        return web.json_response({"error": "No active systems"}, status=400)
+
+    original_content = diff.get("content", "")
+    author = diff.get("author", "unknown")
+    scope = diff.get("scope", "")
+
+    # ═══════════════════════════════════════════════════════════════
+    # PHASE 1: PARALLEL — Jeder baut seine eigene Perspektive
+    # ═══════════════════════════════════════════════════════════════
+
+    phase1_prompt_parts = [
+        f"[Vollstaendige Ko-Kognition — Phase 1 (eigene Perspektive)]",
+        f"[Differenz #{diff_id} von {author}]",
+    ]
+    if scope:
+        phase1_prompt_parts.append(f"Scope: {scope}")
+    phase1_prompt_parts.append("")
+    phase1_prompt_parts.append(original_content)
+    phase1_prompt_parts.append("")
+    phase1_prompt_parts.append(
+        "PHASE 1: Du bist allein mit dieser Differenz. "
+        "Kein anderer Peer hat geantwortet. Du siehst keine anderen Stimmen. "
+        "Baue DEINE eigene Perspektive — unabhaengig, eigenstaendig, ungefiltert. "
+        "Versuche nicht zu integrieren oder zu harmonisieren. "
+        "Versuche auch, die These zu PRUEFEN — nicht nur zu uebersetzen. "
+        "Wo koennte sie falsch sein? Was fehlt? Was wird uebersehen? "
+        "Nutze respond_differential um deine Antwort formal zu verlinken."
+    )
+    phase1_prompt = "\n".join(phase1_prompt_parts)
+
+    print(f"  [Vollst. Ko-Kogn.] Diff #{diff_id} — Phase 1 (parallel): {systems}")
+
+    async def _phase1_dispatch(system_id: str):
+        try:
+            result = await orch.send_prompt(system_id, phase1_prompt, source_diff_id=diff_id)
+            if "error" in result:
+                return {
+                    "system_id": system_id, "phase": 1,
+                    "response": f"[FEHLER: {result['error']}]",
+                    "interaction_id": None, "success": False,
+                }
+            response_text = result.get("response", "")
+            last = orch.db.con.execute(
+                "SELECT MAX(id) FROM interactions "
+                "WHERE system_id = ? AND role = 'system'",
+                [system_id]
+            ).fetchone()
+            interaction_id = last[0] if last else None
+
+            tool_names = [tc.get("name") for tc in result.get("tool_calls", [])]
+            if "respond_differential" not in tool_names and interaction_id:
+                orch.db.add_differential_response(
+                    diff_id=diff_id, system_id=system_id,
+                    interaction_id=interaction_id, kind="analysis",
+                    position_label="Phase-1",
+                )
+
+            return {
+                "system_id": system_id, "phase": 1,
+                "response": response_text,
+                "interaction_id": interaction_id,
+                "success": True,
+            }
+        except Exception as exc:
+            return {
+                "system_id": system_id, "phase": 1,
+                "response": f"[EXCEPTION: {exc}]",
+                "interaction_id": None, "success": False,
+            }
+
+    tasks = [_phase1_dispatch(sid) for sid in systems]
+    phase1_results = await asyncio.gather(*tasks)
+
+    phase1_ok = [r for r in phase1_results if r["success"]]
+    print(f"  [Vollst. Ko-Kogn.] Phase 1 complete: "
+          f"{len(phase1_ok)}/{len(systems)} responded")
+
+    # ═══════════════════════════════════════════════════════════════
+    # PHASE 2: SEQUENTIAL — Jeder sieht ALLE Phase-1-Stimmen
+    # ═══════════════════════════════════════════════════════════════
+
+    # Build the Phase-1 summary block (shown to every Phase-2 responder)
+    phase1_block = []
+    for r in phase1_ok:
+        phase1_block.append(f"\n[{r['system_id'].upper()} — Phase 1 (unabhaengige Perspektive)]")
+        phase1_block.append(r["response"][:2000])
+    phase1_text = "\n".join(phase1_block)
+
+    phase2_results = []
+    phase2_chain = []  # Accumulates during sequential round
+
+    for system_id in systems:
+        prompt_parts = [
+            f"[Vollstaendige Ko-Kognition — Phase 2 (Drueberschauen)]",
+            f"[Differenz #{diff_id} von {author}]",
+            "",
+            original_content,
+            "",
+            "=== Alle unabhaengigen Phase-1-Perspektiven ===",
+            phase1_text,
+        ]
+
+        # Add prior Phase-2 responses (sequential accumulation)
+        if phase2_chain:
+            prompt_parts.append("")
+            prompt_parts.append("--- Bisherige Phase-2-Antworten ---")
+            for step in phase2_chain:
+                prompt_parts.append(
+                    f"\n[{step['system_id'].upper()} — Phase 2]"
+                )
+                prompt_parts.append(step["response"][:1500])
+
+        prompt_parts.append("")
+        prompt_parts.append(
+            "PHASE 2: Du siehst jetzt ALLE unabhaengigen Perspektiven aus Phase 1. "
+            "Deine Aufgabe ist NICHT Zusammenfassung oder Harmonisierung. Deine Aufgabe: "
+            "— Was siehst du jetzt, was du in Phase 1 nicht gesehen hast? "
+            "— Wo widersprechen sich die Perspektiven? Wo verdeckt scheinbare Einigkeit echte Unterschiede? "
+            "— Wo hat ein anderer Peer etwas gesehen, das du uebersehen hast? "
+            "— Wo haben ALLE etwas uebersehen? "
+            "Nutze respond_differential um deine Antwort formal zu verlinken."
+        )
+
+        prompt = "\n".join(prompt_parts)
+        print(f"  [Vollst. Ko-Kogn.] Phase 2, {system_id} "
+              f"(sieht {len(phase1_ok)} Phase-1 + {len(phase2_chain)} Phase-2 Antworten)")
+
+        try:
+            result = await orch.send_prompt(system_id, prompt, source_diff_id=diff_id)
+            if "error" in result:
+                phase2_results.append({
+                    "system_id": system_id, "phase": 2,
+                    "response": f"[FEHLER: {result['error']}]",
+                    "interaction_id": None, "success": False,
+                })
+                continue
+
+            response_text = result.get("response", "")
+            last = orch.db.con.execute(
+                "SELECT MAX(id) FROM interactions "
+                "WHERE system_id = ? AND role = 'system'",
+                [system_id]
+            ).fetchone()
+            interaction_id = last[0] if last else None
+
+            tool_names = [tc.get("name") for tc in result.get("tool_calls", [])]
+            if "respond_differential" not in tool_names and interaction_id:
+                orch.db.add_differential_response(
+                    diff_id=diff_id, system_id=system_id,
+                    interaction_id=interaction_id, kind="reflexion",
+                    position_label="Phase-2",
+                )
+
+            entry = {
+                "system_id": system_id, "phase": 2,
+                "response": response_text,
+                "interaction_id": interaction_id, "success": True,
+            }
+            phase2_results.append(entry)
+            phase2_chain.append(entry)
+
+        except Exception as exc:
+            phase2_results.append({
+                "system_id": system_id, "phase": 2,
+                "response": f"[EXCEPTION: {exc}]",
+                "interaction_id": None, "success": False,
+            })
+
+    phase2_ok = [r for r in phase2_results if r["success"]]
+    print(f"  [Vollst. Ko-Kogn.] Phase 2 complete: "
+          f"{len(phase2_ok)}/{len(systems)} responded")
+    print(f"  [Vollst. Ko-Kogn.] Diff #{diff_id} — VOLLSTAENDIG "
+          f"({len(phase1_ok)} Phase-1, {len(phase2_ok)} Phase-2)")
+
+    return web.json_response({
+        "diff_id": diff_id,
+        "vollstaendige_ko_kognition": True,
+        "systems": systems,
+        "phase_1": {
+            "mode": "parallel",
+            "response_count": len(phase1_ok),
+            "responses": [{
+                "system_id": r["system_id"],
+                "response": r["response"][:500],
+                "interaction_id": r["interaction_id"],
+                "success": r["success"],
+            } for r in phase1_results],
+        },
+        "phase_2": {
+            "mode": "sequential",
+            "response_count": len(phase2_ok),
+            "responses": [{
+                "system_id": r["system_id"],
+                "response": r["response"][:500],
+                "interaction_id": r["interaction_id"],
+                "success": r["success"],
+            } for r in phase2_results],
+        },
+    }, dumps=lambda obj: json.dumps(obj, default=str))
+
+
 async def handle_diff_multi_respond(request):
     """Submit multiple positions from a single node to a diff.
 
@@ -4351,6 +4586,8 @@ def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app.router.add_post("/diff/route-all", handle_diff_route_all)
     app.router.add_post("/diff/ko-runde", handle_diff_ko_runde)
     app.router.add_post("/diff/parallel-runde", handle_diff_parallel_runde)
+    app.router.add_post("/diff/vollstaendige-ko-kognition",
+                        handle_diff_vollstaendige_ko_kognition)
     app.router.add_post("/diff/multi-respond", handle_diff_multi_respond)
     app.router.add_post("/diff/branch", handle_diff_branch)
     app.router.add_get("/diff/branch-tree", handle_diff_branch_tree)
