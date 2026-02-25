@@ -454,6 +454,7 @@ class E0ChatClient:
 
         is_new_openai = any(self.model.startswith(p) for p in
                            ("gpt-5", "o3", "o4", "o5"))
+        is_gemini = self.model.startswith("gemini")
 
         request = {
             "model": self.model,
@@ -462,9 +463,11 @@ class E0ChatClient:
         }
         if is_new_openai:
             request["max_completion_tokens"] = self.max_tokens
+        elif is_gemini:
+            request["max_completion_tokens"] = self.max_tokens
         else:
             request["max_tokens"] = self.max_tokens
-        if self.logprobs:
+        if self.logprobs and not is_gemini:
             request["logprobs"] = True
             request["top_logprobs"] = self.top_logprobs
         if self.tools:
