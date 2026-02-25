@@ -413,16 +413,26 @@ class SystemRegistry:
         self._save_system_state(system_id)
         self._save_registry_index()
 
-    def restore_all(self) -> Dict[str, str]:
+    def restore_all(self, system_configs: Optional[Dict[str, Dict]] = None) -> Dict[str, str]:
         """Restore all active systems from disk. Called on startup.
+
+        Args:
+            system_configs: Optional per-system config overrides from config.json.
+                Each entry can have 'api_key', 'model', 'base_url' to override
+                the default values during restore. This enables systems on
+                different API backends (e.g. Gemini, Claude) to use their own keys.
 
         Returns {system_id: status_message} for each system.
         """
+        cfg = system_configs or {}
         results = {}
         for sid, desc in list(self.descriptors.items()):
             if desc.status == SystemStatus.ACTIVE:
                 try:
-                    self.restore_system(sid)
+                    # Per-system API key override (e.g. Gemini uses a different key)
+                    sc = cfg.get(sid, {})
+                    per_key = sc.get("api_key")
+                    self.restore_system(sid, api_key=per_key)
                     turns = desc.turn_count
                     results[sid] = f"restored ({turns} turns)"
                 except Exception as e:

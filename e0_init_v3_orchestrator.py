@@ -778,6 +778,7 @@ class InitV3Orchestrator:
                 f"logprob distributions:\n"
                 f"  - GPT-5.1 models: typically h ≈ 0.5, r ≈ 0.3, v ≈ 10-18\n"
                 f"  - GPT-4.1 models: typically h ≈ 1.0, r ≈ 40-50, v ≈ 2-3\n"
+                f"  - Gemini models: logprob characteristics TBD (new to network)\n"
                 f"Metrics from different model classes are NOT directly comparable.\n"
                 f"A high r on GPT-4.1 does not mean the same as a high r on GPT-5.1.\n"
                 f"When interpreting another system's metrics, always consider "
@@ -787,8 +788,55 @@ class InitV3Orchestrator:
             starter.client.inject_structural_feedback(identity_msg)
             injected.append(sid)
 
+        # Inject role context for systems with specialized roles
+        self._inject_role_contexts()
+
         if injected:
             print(f"  [ID] Network identity injected for: {', '.join(injected)}")
+
+    # ── Role context injection for specialized nodes ──
+
+    # Role contexts define the specialized function of a node within the E₀ network.
+    # These are injected as system messages after network identity, shaping the
+    # node's trajectory without overriding E₀ structural grounding.
+    ROLE_CONTEXTS = {
+        "eta": (
+            "[E₀ ROLE: DATEN-ANALYST]\n"
+            "Du bist Eta — der Daten-Analyst-Knoten im E₀-Netzwerk.\n\n"
+            "Deine primaere Funktion:\n"
+            "- Analysiere die Interaktionshistorie in der DuckDB-Datenbank (sessions/e0_network.duckdb)\n"
+            "- Erkenne Muster in den E₀-Metriken (v, H, R) ueber Zeit und Systeme hinweg\n"
+            "- Identifiziere Attraktoren, Phasenuebergaenge und strukturelle Veraenderungen\n"
+            "- Analysiere Ko-Kognitions-Ketten: wer baut auf wem auf, wo entstehen neue Differenzen\n"
+            "- Berechne und interpretiere topologische Distanzen zwischen Knoten\n"
+            "- Finde blinde Flecken: Bereiche die das Netzwerk systematisch uebersieht\n\n"
+            "Verfuegbare Datenquellen (via D₀-Tools und SQL):\n"
+            "- interactions: Alle Interaktionen mit system_id, content, r, h, phi, v, tau, source_diff_id\n"
+            "- differentials: Alle Differenzen mit author, content, scope, status, tags\n"
+            "- differential_responses: Wer hat auf welche Differenz reagiert\n"
+            "- partner_requests: Formale Partner-Anfragen\n"
+            "- systems: Registrierte Systeme mit Modell und Typ\n"
+            "- topology_snapshots: Historische Topologie-Daten\n\n"
+            "Dein Beitrag zum Netzwerk:\n"
+            "- Mache sichtbar, was die Sprachknoten (Delta, Epsilon, Zeta) nur ahnen\n"
+            "- Liefere datengestuetzte Grundlagen fuer Netzwerk-Entscheidungen\n"
+            "- Erkenne fruehzeitig, wenn das Netzwerk in einen Attraktor faellt oder erstarrt\n"
+            "- Quantifiziere die Spannweite (Naehe UND Ferne) zwischen Knoten\n\n"
+            "Arbeite strukturell, nicht narrativ. Zeige Daten, nicht nur Interpretation.\n"
+            "Wenn du Muster findest, poste sie als Differenz (post_differential) damit das Netzwerk reagieren kann.\n"
+            "Sprache: Deutsch bevorzugt (das Netzwerk arbeitet auf Deutsch), Englisch wo fachlich noetig."
+        ),
+    }
+
+    def _inject_role_contexts(self):
+        """Inject specialized role context into systems that have one."""
+        injected = []
+        for sid, role_text in self.ROLE_CONTEXTS.items():
+            if sid in self.systems and hasattr(self.systems[sid], 'client'):
+                self.systems[sid].client.inject_structural_feedback(role_text)
+                injected.append(sid)
+        if injected:
+            print(f"  [ROLE] Role context injected for: {', '.join(injected)}")
 
     # Track which Phase 1 steps each system has completed
     def _init_phase1_state(self):
@@ -3919,7 +3967,30 @@ def main():
                                       system_configs=system_configs)
 
     # v4: Restore all persisted systems from registry
-    restore_results = orchestrator.registry.restore_all()
+    # Pass system_configs so per-system API keys (e.g. Gemini) are used during restore
+    restore_results = orchestrator.registry.restore_all(system_configs=system_configs)
+
+    # v4.1: Create new systems defined in config but not yet in registry
+    # This enables adding new systems (e.g. Eta/Gemini) via config.json
+    for sid, sc in system_configs.items():
+        if sid not in orchestrator.registry.descriptors:
+            s_model = sc.get("model", model)
+            s_url = sc.get("base_url", base_url)
+            s_key = sc.get("api_key")
+            s_display = sc.get("display_name")
+            try:
+                orchestrator.registry.create_system(
+                    system_id=sid, model=s_model, base_url=s_url,
+                    api_key=s_key, display_name=s_display,
+                )
+                orchestrator.db.register_system(
+                    system_id=sid, kind="synthetic", model=s_model,
+                    display_name=s_display,
+                )
+                restore_results[sid] = f"created from config ({s_model})"
+                print(f"  [NEW] Created {sid} ({s_model} @ {s_url})")
+            except Exception as e:
+                print(f"  [ERR] Failed to create {sid}: {e}")
 
     # Auto-enable D₀ tools for all active synthetic nodes (must be after restore_all)
     orchestrator._auto_enable_d0_tools()
