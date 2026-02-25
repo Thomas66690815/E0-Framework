@@ -1116,12 +1116,14 @@ class InitV3Orchestrator:
                 max_tool_rounds = 10  # safety limit
                 current_text = text
                 current_tool_calls = last_msg.get("tool_calls", [])
+                _seen_tool_calls = set()  # dedup guard: track (fn_name, content_hash)
 
                 for round_num in range(max_tool_rounds):
                     if not current_tool_calls:
                         break
 
                     tool_results = []
+                    _all_dupes = True  # assume all calls are dupes until proven otherwise
                     for tc in current_tool_calls:
                         tc_id = tc["id"]
                         fn_name = tc["function"]["name"]
@@ -1129,6 +1131,18 @@ class InitV3Orchestrator:
                             fn_args = json.loads(tc["function"]["arguments"])
                         except (json.JSONDecodeError, TypeError):
                             fn_args = {}
+
+                        # Dedup guard: skip if we've seen this exact call before
+                        _call_sig = (fn_name, json.dumps(fn_args, sort_keys=True, default=str))
+                        if _call_sig in _seen_tool_calls:
+                            print(f"  [D₀ DEDUP] {system_id}: skipping duplicate {fn_name} (round {round_num})")
+                            tool_results.append({
+                                "tool_call_id": tc_id,
+                                "content": json.dumps({"ok": True, "note": "duplicate call skipped — already executed"}),
+                            })
+                            continue
+                        _seen_tool_calls.add(_call_sig)
+                        _all_dupes = False
 
                         result = self._execute_d0_tool(system_id, fn_name, fn_args)
                         tool_calls_log.append({
@@ -1141,6 +1155,11 @@ class InitV3Orchestrator:
                             "tool_call_id": tc_id,
                             "content": json.dumps(result, default=str),
                         })
+
+                    # If ALL calls in this round were duplicates, force-break the loop
+                    if _all_dupes:
+                        print(f"  [D₀ DEDUP] {system_id}: all tool calls in round {round_num} were duplicates — breaking loop")
+                        break
 
                     # Send tool results back to the LLM
                     next_resp = starter.client.continue_with_tool_results(tool_results)
@@ -1507,9 +1526,23 @@ class InitV3Orchestrator:
         """
         try:
             if fn_name == "post_differential":
+                content = args.get("content", "")
+                # Dedup guard: check if this exact content was already posted
+                # by this author in the last 5 minutes
+                existing = self.db.con.execute(
+                    "SELECT id FROM differentials "
+                    "WHERE author = ? AND content = ? "
+                    "AND ts > now() - INTERVAL '5 minutes' "
+                    "LIMIT 1",
+                    [system_id, content]
+                ).fetchone()
+                if existing:
+                    print(f"  [D₀ DEDUP] {system_id}: post_differential skipped — identical diff #{existing[0]} exists")
+                    return {"success": True, "diff_id": existing[0], "note": "duplicate skipped"}
+
                 diff_id = self.db.post_differential(
                     author=system_id,
-                    content=args.get("content", ""),
+                    content=content,
                     scope=args.get("scope"),
                     addressed_to=args.get("addressed_to"),
                     tags=args.get("tags"),
@@ -2155,6 +2188,35 @@ async def handle_db_query(request):
         return web.json_response({"error": "No SQL query provided."})
     result = orch.db.query(sql)
     return web.json_response(result)
+
+
+async def handle_db_admin(request):
+    """Execute administrative DuckDB operations (DELETE, UPDATE).
+
+    POST /db-admin  {"sql": "DELETE FROM ...", "confirm": true}
+
+    Requires confirm=true as safety guard. Only allows DELETE and UPDATE.
+    """
+    orch: InitV3Orchestrator = request.app["orchestrator"]
+    data = await request.json()
+    sql = data.get("sql", "")
+    confirm = data.get("confirm", False)
+
+    if not confirm:
+        return web.json_response({"error": "confirm=true required for admin operations"}, status=400)
+
+    stripped = sql.strip().upper()
+    allowed = ('DELETE', 'UPDATE')
+    if not any(stripped.startswith(kw) for kw in allowed):
+        return web.json_response({"error": "Only DELETE/UPDATE allowed via admin endpoint."}, status=400)
+
+    try:
+        result = orch.db.con.execute(sql)
+        affected = result.fetchone()
+        # DuckDB doesn't return rowcount for DELETE, just confirm success
+        return web.json_response({"ok": True, "sql": sql})
+    except Exception as e:
+        return web.json_response({"error": str(e)}, status=500)
 
 
 async def handle_db_tables(request):
@@ -3891,6 +3953,7 @@ def create_app(orchestrator: InitV3Orchestrator) -> web.Application:
     app.router.add_get("/db-stats", handle_db_stats)
     app.router.add_get("/db-timeline", handle_db_timeline)
     app.router.add_post("/db-query", handle_db_query)
+    app.router.add_post("/db-admin", handle_db_admin)
     app.router.add_get("/db-tables", handle_db_tables)
     # v4 history-aware init
     app.router.add_post("/history-init", handle_history_init)
