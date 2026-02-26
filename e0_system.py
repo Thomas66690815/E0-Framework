@@ -143,11 +143,12 @@ class E0APIStarter:
     """
 
     def __init__(self, api_key: str, model: str = "gpt-4.1",
-                 base_url: str = None, system_prompt: str = None):
+                 base_url: str = None, system_prompt: str = None,
+                 e0_prime: bool = True):
         from e0_middleware.api_wrapper import E0ChatClient
         self.client = E0ChatClient(
             api_key=api_key, model=model, base_url=base_url,
-            e0_prime=True, logprobs=True, top_logprobs=5,
+            e0_prime=e0_prime, logprobs=True, top_logprobs=5,
         )
         self.model_name = model
         self.api_key = api_key

@@ -89,6 +89,7 @@ class SystemDescriptor:
         turn_count: int = 0,
         token_count: int = 0,
         last_metrics: Optional[Dict] = None,
+        e0_prime: bool = True,
     ):
         self.system_id = system_id
         self.kind = SystemKind(kind) if isinstance(kind, str) else kind
@@ -101,6 +102,7 @@ class SystemDescriptor:
         self.turn_count = turn_count
         self.token_count = token_count
         self.last_metrics = last_metrics
+        self.e0_prime = e0_prime
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -115,6 +117,7 @@ class SystemDescriptor:
             "turn_count": self.turn_count,
             "token_count": self.token_count,
             "last_metrics": self.last_metrics,
+            "e0_prime": self.e0_prime,
         }
 
     @classmethod
@@ -280,11 +283,17 @@ class SystemRegistry:
         api_key: Optional[str] = None,
         display_name: Optional[str] = None,
         kind: SystemKind = SystemKind.SYNTHETIC,
+        e0_prime: bool = True,
     ) -> SystemDescriptor:
         """Create and register a new system.
 
         Returns the descriptor. The E0APIStarter is created and stored
         in self.systems[system_id].
+
+        Args:
+            e0_prime: If True (default), inject E₀ canon/ontodynamics/blueprint
+                      as system prompt. If False, system starts with empty context
+                      (for Geburtshelfer-style guided initialization).
         """
         sid = system_id or self.next_greek_name()
         if sid in self.descriptors:
@@ -302,12 +311,13 @@ class SystemRegistry:
             model=m,
             base_url=url,
             display_name=display_name,
+            e0_prime=e0_prime,
         )
         self.descriptors[sid] = desc
 
         # Create the actual system
         if kind == SystemKind.SYNTHETIC:
-            starter = E0APIStarter(api_key=key, model=m, base_url=url)
+            starter = E0APIStarter(api_key=key, model=m, base_url=url, e0_prime=e0_prime)
             self.systems[sid] = starter
 
         # Persist
@@ -345,9 +355,11 @@ class SystemRegistry:
 
         key = api_key or self.api_key
 
-        # Create fresh starter
+        # Create fresh starter (respect e0_prime setting from descriptor)
+        e0_prime = getattr(desc, 'e0_prime', True)
         starter = E0APIStarter(
-            api_key=key, model=desc.model, base_url=desc.base_url
+            api_key=key, model=desc.model, base_url=desc.base_url,
+            e0_prime=e0_prime,
         )
 
         # Load and apply persisted state

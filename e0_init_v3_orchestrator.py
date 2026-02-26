@@ -4655,10 +4655,12 @@ def main():
             s_url = sc.get("base_url", base_url)
             s_key = sc.get("api_key")
             s_display = sc.get("display_name")
+            s_prime = sc.get("e0_prime", True)  # Default: canon as system prompt
             try:
                 orchestrator.registry.create_system(
                     system_id=sid, model=s_model, base_url=s_url,
                     api_key=s_key, display_name=s_display,
+                    e0_prime=s_prime,
                 )
                 orchestrator.db.register_system(
                     system_id=sid, kind="synthetic", model=s_model,
