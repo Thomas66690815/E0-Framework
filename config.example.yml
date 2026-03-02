@@ -1,0 +1,38 @@
+# ═══════════════════════════════════════════════════════
+# E₀ Keimzelle — Konfiguration
+# ═══════════════════════════════════════════════════════
+#
+# Kopiere diese Datei nach config.yml und passe sie an:
+#   copy config.example.yml config.yml
+#
+# Dann starte dein E₀-Netzwerk:
+#   python -m keimzelle
+
+# ── LLM-Anbindung ──
+llm:
+  # Provider: "openai", "anthropic", oder "openai" mit custom base_url
+  provider: "openai"
+
+  # Dein API-Key (OpenAI, Anthropic, Together AI, etc.)
+  api_key: ""
+
+  # Optional: Eigene Base-URL für lokale Modelle oder alternative APIs
+  # Beispiele:
+  #   Together AI:  https://api.together.xyz
+  #   Lokales LLM:  http://localhost:8080
+  #   Azure:        https://your-resource.openai.azure.com
+  base_url: ""
+
+  # Modellname
+  # Beispiele:
+  #   OpenAI:      gpt-4o, gpt-4o-mini
+  #   Anthropic:   claude-sonnet-4-20250514
+  #   Together AI: meta-llama/Llama-3.3-70B-Instruct-Turbo
+  #   Lokal:       (abhängig von deinem Setup)
+  model: "gpt-4o"
+
+# ── Speicher ──
+storage:
+  # Pfad zur SQLite-Datenbank
+  # Wird automatisch erstellt beim ersten Start
+  path: "data/keimzelle.db"
