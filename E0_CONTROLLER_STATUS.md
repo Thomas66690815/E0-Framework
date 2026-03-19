@@ -1,6 +1,6 @@
 # E₀ Controller — Status, Lücken, Lösungswege
 
-**Stand:** 2026-03-19 (v0.6 — Phase 1b abgeschlossen)
+**Stand:** 2026-03-19 (v0.7 — Phase 2a abgeschlossen)
 **Kontext:** Neuansatz nach 3 Wochen Pause. Multi-Agent-Orchestrierung (Keimzelle) verworfen.
 **Neuer Ansatz:** Einzelner deterministischer E₀ Controller als Reasoning-Engine.
 
@@ -11,8 +11,10 @@
 | **Phase 0** — Dieses Dokument | ✅ Abgeschlossen | `fa278ee` |
 | **Phase 1a** — Minimaler Controller + Mini-Domäne | ✅ Abgeschlossen (13/13 Tests) | `8523a9b` |
 | **Phase 1a-fix** — K1+K6 Fix, K13 Metriken | ✅ Abgeschlossen | `8eb0e9a` |
-| **Phase 1b** — Invoice-Domain (Rechnungsprüfung) | ✅ Abgeschlossen (33/33 Tests) | — |
-| **Phase 2** — Connection & Phase (§9–16) | ⬜ Nicht begonnen | — |
+| **Phase 1b** — Invoice-Domain (Rechnungsprüfung) | ✅ Abgeschlossen (33/33 Tests) | `cca35bf` |
+| **Phase 2-prep** — K3 Fix (difference-Semantik) | ✅ Abgeschlossen | `edcced6` |
+| **Phase 2a** — Potential/Connection/WavePath | ✅ Abgeschlossen (56/56 Tests) | — |
+| **Phase 2b** — Offene K-Items vor Phase 3 | ⬜ Nicht begonnen | — |
 | **Phase 3** — LLM-Integration | ⬜ Nicht begonnen | — |
 | **Phase 4** — Spin-1/2 offene Punkte | ⬜ Nicht begonnen (parallel) | — |
 
@@ -66,14 +68,14 @@ Die folgende Tabelle zeigt exakt, wo der bestehende Code die Spec abdeckt und wo
 | **§6 C(p) = exp(−S(p))** | Kohärenz | — | ❌ Fehlt |
 | **§7 L_t = (X_t, E_t, v_t, S_t, H_t)** | Landschaft als Gesamtzustand | — | ❌ Fehlt |
 | **§8 Non-Integrable Structure** | Integrable vs. nicht-integrable Komponenten | `OntodynamicAdmissibility.check_integrability` | ⚠️ Prüft, aber dekomponiert nicht |
-| **§9 Φ(x) = Σ Δ·R** | Lokales Potential | — | ❌ Fehlt |
-| **§10 v_grad = Φ(x)−Φ(y)** | Gradient-Komponente | — | ❌ Fehlt |
-| **§11 v_rot = v − v_grad** | Rotations-Komponente | — | ❌ Fehlt |
-| **§12 ω(x→y) = ½(v_rot,x(y)−v_rot,y(x))** | Connection | `ontodynamics.Connection` — aber andere Semantik (Overlap) | ⚠️ Mismatch |
-| **§13 Θ(p) = Σ ω(e)** | Pfad-Phase | — | ❌ Fehlt |
-| **§14 Holonomie Θ(γ)** | Geschlossene Schleifen | — | ❌ Fehlt |
-| **§15 Ψ(p) = exp(−S)·exp(iΘ)** | Komplexe Pfad-Darstellung | — | ❌ Fehlt |
-| **§16 Ψ(z) = Σ Ψ(p)** | Pfad-Summation (Interferenz) | — | ❌ Fehlt |
+| **§9 Φ(x) = Σ Δ·R** | Lokales Potential | `potential.phi()` | ✅ Phase 2a |
+| **§10 v_grad = Φ(x)−Φ(y)** | Gradient-Komponente | `potential.v_grad()` | ✅ Phase 2a |
+| **§11 v_rot = v − v_grad** | Rotations-Komponente | `potential.v_rot()` | ✅ Phase 2a |
+| **§12 ω(x→y) = ½(v_rot,x(y)−v_rot,y(x))** | Connection | `connection.omega()` | ✅ Phase 2a |
+| **§13 Θ(p) = Σ ω(e)** | Pfad-Phase | `connection.theta()` | ✅ Phase 2a |
+| **§14 Holonomie Θ(γ)** | Geschlossene Schleifen | `connection.holonomy()` | ✅ Phase 2a |
+| **§15 Ψ(p) = exp(−S)·exp(iΘ)** | Komplexe Pfad-Darstellung | `wavepath.psi()` | ✅ Phase 2a |
+| **§16 Ψ(z) = Σ Ψ(p)** | Pfad-Summation (Interferenz) | `wavepath.sum_paths()` | ✅ Phase 2a |
 | **§17.1 U_t / F_t Traces** | Success/Failure-Trennung | — | ❌ Fehlt |
 | **§17.2 δ_H = λ_f·F − λ_s·U** | Historization-Korrektur | — | ❌ Fehlt |
 | **§17.3 Clipping** | Bounded Dynamics | — | ❌ Fehlt |
@@ -466,7 +468,7 @@ Der Code nennt alles "escalated=True", aber es ist nur ein Recovery Jump.
 |---|---|---|---|---|
 | K1 | Escalation mutiert Landscape | Eigen | ✅ Gefixt (`8eb0e9a`) | ~30 Zeilen |
 | K2 | Decay nicht global | Eigen | 🟡 Vor Phase 2 | ~20 Zeilen |
-| K3 | difference()=0 statt None | Eigen + Extern | 🟡 Vor Phase 2 | ~15 Zeilen |
+| K3 | difference()=0 statt None | Eigen + Extern | ✅ Gefixt (`edcced6`) | ~15 Zeilen |
 | K4 | PARTIAL hardcoded | Eigen + Extern | ⚪ Irgendwann | ~5 Zeilen |
 | K5 | Escalation-Ziel ad-hoc | Eigen | 🟡 Vor Phase 2 | ~15 Zeilen |
 | K6 | candidates timing | Eigen | ✅ Gefixt (`8eb0e9a`) | ~3 Zeilen |
@@ -479,8 +481,8 @@ Der Code nennt alles "escalated=True", aber es ist nur ein Recovery Jump.
 | K13 | Keine operativen Metriken | Extern | ✅ Gefixt (Phase 1b) | ~20 Zeilen |
 
 **Aktualisierter Handlungsplan:**
-- **✅ Erledigt:** K1 (Escalation-Buffer), K6 (candidates-timing), K13 (Metriken), K8 (Invoice-Domain)
-- **🟡 Vor Phase 2:** K2 (lazy Decay), K3 (difference-Semantik), K5 (Escalation-Ziel), K7 (Penalty), K11 (Admissibility-Filter), K12 (Escalation-Typen)
+- **✅ Erledigt:** K1 (Escalation-Buffer), K3 (difference-Semantik), K6 (candidates-timing), K8 (Invoice-Domain), K13 (Metriken)
+- **🟡 Phase 2b (Pflicht vor Phase 3):** K2 (lazy Decay), K5 (Escalation-Ziel), K7 (Penalty), K11 (Admissibility-Filter), K12 (Escalation-Typen)
 - **⚪ Bei Bedarf:** K4, K9, K10
 
 ---
@@ -563,20 +565,87 @@ AMOUNT_OK → CONTRACT_MATCH → POLICY_OK → APPROVED
 
 ---
 
-### Phase 2: Connection & Phase (§9–16) ⬜ ⬜
+### Phase 2-prep: K3 Fix ✅
 
-**Status:** Nicht begonnen. Voraussetzung: Phase 1a ✅ (erfüllt), Phase 1b empfohlen.
+**Status:** Abgeschlossen. Commit `edcced6`.
 
-**Ziel:** Gradient/Rotation-Zerlegung, ω, Θ, Ψ(p), Pfad-Summation.
+`difference()` liefert jetzt `None` für fehlende Kanten (vorher `0.0`).
+Semantik korrekt getrennt: `None` = keine Transition, `0.0` = identische States.
+Pflicht vor Phase 2, weil Φ(x) auf korrekter Δ-Semantik basiert.
+
+---
+
+### Phase 2a: Potential / Connection / Wave Path ✅
+
+**Status:** Abgeschlossen am 2026-03-19. **56/56 Tests bestanden.** Gesamt: **102/102.**
+
+**Ziel:** Diskrete Phase-/Connection-Schicht als prüfbare Erweiterung der Landscape. Kein Controller-Umbau, kein LLM, keine neue Domäne.
+
+**Implementiert:**
 
 ```
 e0_controller/
-├── potential.py       # Φ(x), v_grad, v_rot
-├── connection.py      # ω(x→y), Θ(p), Holonomie
-├── wavepath.py        # Ψ(p) = exp(-S)·exp(iΘ), Ψ(z) = Σ Ψ(p), I(z)
+├── potential.py              # §9-11: Φ(x), v_grad, v_rot
+├── connection.py             # §12-14: ω(x,y), θ(path), holonomy(cycle)
+├── wavepath.py               # §15-16: Ψ(p), sum_paths, intensity
+├── test_phase2_minidomain.py # 38 Tests (primäre Validierung)
+├── test_phase2_invoice.py    # 18 Tests (Sekundärvalidierung)
+└── __init__.py               # v0.2.0, neue Exports
 ```
 
-**Geschätzt:** 200–300 Zeilen. Brücke zur Spin-1/2-Derivation.
+**Mathematische Konventionen (explizit dokumentiert):**
+
+1. **Φ(x) = Σ Δ·R_eff** — Spec §9 Definition (lokale Summation, nicht Graph-Laplacian).
+   - Dead-ends: Φ = 0 (keine Ausgangskanten).
+   - Heuristische Potenzialnäherung. Echte Helmholtz-Zerlegung als spätere Option dokumentiert.
+
+2. **v = v_grad + v_rot** — v_grad(x,y) = Φ(x) − Φ(y), v_rot = v − v_grad.
+   - v_grad ist antisymmetrisch: v_grad(x,y) = −v_grad(y,x).
+   - v_rot ist nur für existierende Kanten definiert (None für fehlende).
+
+3. **ω auf gerichteten Kanten** — Fehlende Rückkante → v_rot(y,x) = 0.
+   - ω(x,y) = ½·(v_rot(x,y) − v_rot(y,x)), Konvention: v_rot = 0 für Nicht-Kante.
+   - Antisymmetrie: ω(x,y) = −ω(y,x) gilt konstruktionsbedingt für alle Paare.
+   - 2-Kanten-Zyklen (hin und zurück) haben Holonomie = 0 (aus Antisymmetrie).
+   - 3+-Kanten-Zyklen können nichttriviale Holonomie tragen.
+
+4. **Ψ(p) = exp(−S + iΘ)** — Bounded explicit path sets, keine automatische Enumeration.
+   - |Ψ| = exp(−S) = Kohärenz des Pfads.
+   - arg(Ψ) = Θ = akkumulierte Connection-Phase.
+   - Inadmissible paths: Ψ = 0.
+
+**Test-Ergebnisse:**
+
+| Test-Datei | Tests | Prüft |
+|---|---|---|
+| test_phase2_minidomain.py | 38 | Φ, Zerlegung, ω-Antisymmetrie, Holonomie, Ψ, Interferenz, Historisierungs-Effekte |
+| test_phase2_invoice.py | 18 | Konsistenz auf Invoice-Domain, schwache Holonomie, Pfad-Vergleich |
+
+**Erfolgskriterien (alle erfüllt):**
+
+| Kriterium | Status |
+|---|---|
+| Φ(x) ist für alle States berechenbar | ✅ |
+| v_grad und v_rot sind konsistent getrennt | ✅ |
+| ω(x,y) = −ω(y,x) gilt | ✅ |
+| Geschlossene Zyklen können nichttriviale Holonomie tragen | ✅ |
+| Ψ(path) ist berechenbar | ✅ |
+| Intensitäten ändern sich sinnvoll bei Pfadphasen | ✅ |
+
+**Erwartetes Ergebnis bestätigt:** Invoice-Domain zeigt schwache Holonomie (fast DAG), Mini-Domain zeigt interessantere Phase-Struktur.
+
+---
+
+### Phase 2b: Offene K-Items vor Phase 3 ⬜
+
+**Status:** Nicht begonnen. Pflicht vor Phase 3.
+
+Offene Items:
+- K2: Global/lazy Decay
+- K5: Escalation-Ziel nicht nur ad-hoc
+- K7: Revisit-Penalty-Skalierung
+- K11: Echte Admissibility-Schicht
+- K12: Escalation-Typen trennen
 
 ---
 
