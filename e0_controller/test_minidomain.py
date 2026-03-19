@@ -401,6 +401,52 @@ def test_full_run_to_goal():
     print(f"   ✓ Historization: τ={h.tau}, {h.summary()}")
 
 
+def test_landscape_invariance():
+    """
+    Test 7 (K1 regression): Escalation must NOT mutate the Landscape.
+
+    The Landscape should have the same edges before and after a run
+    that triggers escalation. Escalation edges live in the controller.
+    """
+    print("── test_landscape_invariance ──")
+
+    L = build_mini_landscape()
+    edges_before = set(L.edges)
+    edge_count_before = L.edge_count()
+
+    # Run from dead-end D — this MUST trigger escalation
+    ctrl = E0Controller(L, all_success, alpha=2.0, recent_k=3,
+                        max_escalation_R=5.0)
+    trace = ctrl.run("D", max_cycles=15, goal="GOAL")
+
+    # Verify escalation happened
+    assert any(s.escalated for s in trace.steps), "Should have escalated"
+
+    # K1 invariant: Landscape edges unchanged
+    edges_after = set(L.edges)
+    edge_count_after = L.edge_count()
+
+    assert edges_before == edges_after, (
+        f"Landscape mutated! Before: {edge_count_before} edges, "
+        f"After: {edge_count_after} edges. "
+        f"New edges: {edges_after - edges_before}"
+    )
+    print(f"   ✓ Landscape unchanged: {edge_count_before} edges before and after")
+    print(f"   ✓ Escalation edge stored in controller buffer, not landscape")
+    print(f"   ✓ Controller has {len(ctrl._escalation_edges)} escalation edge(s)")
+
+    print(f"   {trace.summary()}")
+
+    assert "GOAL" in trace.path, f"Should reach GOAL"
+    print(f"   ✓ Full run reached GOAL")
+    print(f"   ✓ Outcomes: {trace.outcomes}")
+    print(f"   ✓ Total tension: {trace.total_tension:.4f}")
+
+    # Print historization summary
+    h = L.historization
+    print(f"   ✓ Historization: τ={h.tau}, {h.summary()}")
+
+
 def test_landscape_info():
     """Test that landscape inspection methods work correctly."""
     print("── test_landscape_info ──")
@@ -488,6 +534,7 @@ def run_all_tests():
         test_success_decreases_resistance,
         test_failure_avoidance,
         test_full_run_to_goal,
+        test_landscape_invariance,
     ]
 
     passed = 0

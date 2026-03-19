@@ -22,6 +22,7 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 from .primitives import Edge, Outcome
 from .landscape import Landscape
+from .tension import tension
 
 
 @dataclass
@@ -111,6 +112,50 @@ class E0Controller:
         self.max_escalation_R = max_escalation_R
         self._recent: List[str] = []   # sliding window of recent states
 
+        # K1 fix: Escalation edges live here, NOT in the Landscape.
+        # Maps Edge → (delta, R₀). The Landscape stays immutable.
+        self._escalation_edges: Dict[Edge, Tuple[float, float]] = {}
+
+    # --- Edge resolution (landscape + escalation overlay) ---
+
+    def _get_delta(self, x: str, y: str) -> float:
+        """Δ from escalation overlay or landscape."""
+        edge = Edge(x, y)
+        if edge in self._escalation_edges:
+            return self._escalation_edges[edge][0]
+        return self.landscape.difference(x, y)
+
+    def _get_base_resistance(self, x: str, y: str) -> float:
+        """R₀ from escalation overlay or landscape."""
+        edge = Edge(x, y)
+        if edge in self._escalation_edges:
+            return self._escalation_edges[edge][1]
+        return self.landscape.base_resistance(x, y)
+
+    def _effective_resistance(self, x: str, y: str) -> float:
+        """R_eff = R₀ + δ_H, checking escalation overlay first."""
+        r0 = self._get_base_resistance(x, y)
+        if math.isinf(r0):
+            return math.inf
+        dh = self.landscape.historization.delta_H(Edge(x, y))
+        return max(r0 + dh, 1e-10)
+
+    def _effective_tension(self, x: str, y: str) -> float:
+        """S_eff = Δ · R_eff, checking escalation overlay first."""
+        delta = self._get_delta(x, y)
+        r_eff = self._effective_resistance(x, y)
+        return tension(delta, r_eff)
+
+    def _admissible_neighbors(self, x: str) -> List[str]:
+        """Admissible from landscape + escalation edges."""
+        neighbors = self.landscape.admissible_neighbors(x)
+        # Add escalation targets not already in neighbors
+        for edge, (_delta, _r0) in self._escalation_edges.items():
+            if edge.source == x and edge.target not in neighbors:
+                if not math.isinf(self._effective_tension(x, edge.target)):
+                    neighbors.append(edge.target)
+        return neighbors
+
     def _update_recent(self, state: str) -> None:
         """Maintain sliding window of recently visited states."""
         self._recent.append(state)
@@ -124,7 +169,7 @@ class E0Controller:
         Adds penalty for revisiting recently-seen states.
         This breaks oscillation cycles like A↔B.
         """
-        s_eff = self.landscape.effective_tension(x, y)
+        s_eff = self._effective_tension(x, y)
         if math.isinf(s_eff):
             return math.inf
         if y in self._recent:
@@ -138,28 +183,26 @@ class E0Controller:
         §18: p* = argmin S_eff(p)
 
         Strategy: Greedy + Revisit-Penalty + Escalation.
-        1. Get admissible neighbors.
+        1. Get admissible neighbors (landscape + escalation overlay).
         2. Pick argmin of penalized tension.
-        3. If empty → escalation: pick overall nearest state.
+        3. If empty → escalation: bounded structural jump (K1: stored in
+           controller buffer, NOT mutating the Landscape).
         """
-        neighbors = self.landscape.admissible_neighbors(current)
+        neighbors = self._admissible_neighbors(current)
 
         if neighbors:
             # Greedy with revisit-penalty
             best = min(neighbors, key=lambda y: self._penalized_tension(current, y))
             return best, False
 
-        # --- Escalation ---
+        # --- Escalation (Recovery Jump) ---
         # No admissible neighbors. This is a dead-end.
-        # Strategy: find the most reachable state from the full landscape
-        # and create an escalation edge.
+        # Strategy: find viable state and create escalation edge in buffer.
         all_states = self.landscape.states - {current}
         if not all_states:
             return None, True  # nowhere to go at all
 
-        # Pick the state with lowest existing tension from any other state
-        # that has outgoing edges (i.e., it's not also a dead-end).
-        # Simple escalation: jump to a state that has outgoing edges.
+        # Find states that have outgoing edges (not also dead-ends)
         viable = []
         for s in all_states:
             out = self.landscape.admissible_neighbors(s)
@@ -173,11 +216,9 @@ class E0Controller:
         # (most potential for progress)
         best_esc = max(viable, key=lambda s: len(self.landscape.admissible_neighbors(s)))
 
-        # Create an escalation edge: high Δ, bounded R
-        esc_delta = 1.0  # escalation always has Δ = 1.0 (maximal difference)
-        self.landscape.add_edge(current, best_esc,
-                                delta=esc_delta,
-                                resistance=self.max_escalation_R)
+        # Store escalation edge in controller buffer — Landscape stays clean
+        edge = Edge(current, best_esc)
+        self._escalation_edges[edge] = (1.0, self.max_escalation_R)
         return best_esc, True
 
     def cycle(self, current: str) -> Optional[StepResult]:
@@ -193,9 +234,10 @@ class E0Controller:
 
         edge = Edge(current, target)
 
-        # Capture R_eff before
-        r_eff_before = self.landscape.effective_resistance(current, target)
-        s_eff = self.landscape.effective_tension(current, target)
+        # Capture state BEFORE execution (K6 fix: candidates at decision time)
+        candidates = self._admissible_neighbors(current)
+        r_eff_before = self._effective_resistance(current, target)
+        s_eff = self._effective_tension(current, target)
 
         # Execute
         outcome = self.execute_fn(current, target)
@@ -204,16 +246,14 @@ class E0Controller:
         self.landscape.historization.update(edge, outcome)
         self.landscape.historization.record(
             edge, outcome, r_eff_before,
-            self.landscape.effective_resistance(current, target)
+            self._effective_resistance(current, target)
         )
 
         # Capture R_eff after
-        r_eff_after = self.landscape.effective_resistance(current, target)
+        r_eff_after = self._effective_resistance(current, target)
 
         # Update recent window
         self._update_recent(current)
-
-        candidates = self.landscape.admissible_neighbors(current)
 
         return StepResult(
             tau=self.landscape.historization.tau,
