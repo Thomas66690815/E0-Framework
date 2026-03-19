@@ -17,6 +17,9 @@
 # API mode (recommended)
 openai
 
+# Keimzelle — config parsing
+pyyaml
+
 # v4 Network — dialog persistence
 duckdb
 

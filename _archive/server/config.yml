@@ -1,5 +1,5 @@
 llm:
-  api_key: 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
+  api_key: 
   base_url: ''
   model: gpt-4.1
   provider: openai
