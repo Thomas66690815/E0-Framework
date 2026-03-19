@@ -1,6 +1,6 @@
 # E₀ Controller — Status, Lücken, Lösungswege
 
-**Stand:** 2026-03-19 (v0.3 — Phase 1a abgeschlossen)
+**Stand:** 2026-03-19 (v0.5 — nach externer Kritik integriert)
 **Kontext:** Neuansatz nach 3 Wochen Pause. Multi-Agent-Orchestrierung (Keimzelle) verworfen.
 **Neuer Ansatz:** Einzelner deterministischer E₀ Controller als Reasoning-Engine.
 
@@ -394,6 +394,94 @@ Die folgenden Punkte sind **bekannte Schwächen** der aktuellen Implementierung.
 | K10 | Kein Callback | ⚪ Phase 1b | ~5 Zeilen |
 
 **Handlungsplan:** K1 wird vor Phase 1b gefixt (Architektur-Fehler). K2, K3, K5, K7 werden als Batch vor Phase 2 adressiert. K4, K6, K8–K10 laufen mit und werden bei Bedarf erledigt.
+
+---
+
+### Phase 1a — Externe Kritik (ChatGPT-Review, 2026-03-19)
+
+**Gesamturteil (extern):** *"Das ist ein ernstzunehmender erster E₀-Controller, weil er Historisierung, Spannung, Landscape und deterministische Pfadwahl bereits in eine kleine, testbare operative Form gebracht hat."*
+
+**Bestätigt (kein Neubau nötig):**
+- Modulstruktur primitives/historization/landscape/tension/controller ist richtig
+- Historisierung ist **echt** (U/F-Traces mit Decay, nicht Fake-Memory)
+- Landscape als explizites Objekt ist zentral — Controller "schwebt nicht mehr frei"
+- Revisit-Penalty ist sinnvolle v0.1-Erweiterung
+- Mini-Domain ist strategisch die richtige Entscheidung
+- $R_{eff} = R_0 + \delta_H$ → $S_{eff} = \Delta \cdot R_{eff}$ stimmt mit der Theorie überein
+- Audit Trail (TraceRecord, StepResult, RunTrace) ist wertvoll
+
+**Überlappung mit eigener Kritik (K1–K10):**
+
+| Externer Punkt | Unser Match | Deckung |
+|---|---|---|
+| `difference()` = 0.0 problematisch | K3 | ✅ Identisch |
+| Escalation erzeugt neue Kanten | K1 | ✅ Identisch (wir gehen weiter: Architektur-Fix) |
+| PARTIAL ist ad hoc | K4 | ✅ Identisch |
+| Revisit auf Zielzuständen, nicht Pfadmustern | K7 | ✅ Verwandt |
+
+**Neue Punkte aus externer Kritik:**
+
+#### K11 — `admissible_neighbors()` ist zu flach 🟡
+
+**Problem:** Admissibility = "Edge existiert und S_eff < ∞". Das ist fast identisch mit "edge exists". E₀-Theorie kennt reichere Admissibility: Policy blocks, hard constraints, context conditions, Ziel-Kompatibilität.
+
+**Für v0.1 tolerierbar.** Aber für Phase 1b braucht eine echte Domäne echte Admissibility-Filter.
+
+**Lösung:** `AdmissibilityFilter` als Callable/Protocol in Landscape. Default = `S_eff < ∞`. Erweiterbar pro Domäne.
+
+#### K12 — Escalation-Typen nicht getrennt 🟡
+
+**Problem:** "Escalation" vermischt drei verschiedene Konzepte:
+1. **Terminal Escalation** — Mensch/externes System übernimmt
+2. **Recovery Jump** — interner Struktur-Sprung (was wir jetzt tun)
+3. **External Review** — Prüfung, ob der Pfad noch sinnvoll ist
+
+Der Code nennt alles "escalated=True", aber es ist nur ein Recovery Jump.
+
+**Lösung:** Enum `EscalationType(RECOVERY_JUMP, TERMINAL, EXTERNAL_REVIEW)` statt `bool`. Für v0.1: klar dokumentieren, dass die aktuelle Escalation ein "bounded structural jump by inserting a high-tension emergency edge" ist — nicht mehr.
+
+#### K13 — Keine operativen Metriken 🟡
+
+**Problem:** Es gibt Tests (pass/fail), aber keine zusammenfassenden Metriken. Für Phase 1b brauchen wir:
+- `deterministic_rate` — Anteil nicht-eskalierter Entscheidungen
+- `escalation_count` — wie oft wurde eskaliert
+- `revisit_penalties_triggered` — wie oft griff die Penalty
+- `average_delta_H` — mittlere Historisierungs-Korrektur
+- `average_R_eff_shift` — wie stark verändert sich R_eff
+
+**Lösung:** `RunTrace.metrics()` Methode, die diese Werte aus den bestehenden `StepResult`-Daten aggregiert. ~20 Zeilen.
+
+#### Doku-Punkt: `transition_field()` mit $M_H = 1$ expliziter benennen
+
+**Problem:** Nicht falsch, aber im Code steht "(M_H = 1 for v0.1)" als Kommentar. Das sollte auch im STATUS.md unter "Vereinfachungen" erscheinen.
+
+**Status:** Die aktuelle Implementierung berechnet $v_x(y) = \Delta(x,y) \cdot \exp(-S_{eff})$. Die volle Spec §2.4 definiert $v_x(y) = \Delta \cdot M_H \cdot \exp(-S)$ mit Modulationsfaktor $M_H$. $M_H = 1$ ist die bewusste v0.1-Vereinfachung.
+
+---
+
+#### Aktualisierte Zusammenfassung (K1–K13)
+
+| # | Problem | Quelle | Dringlichkeit | Fix-Aufwand |
+|---|---|---|---|---|
+| K1 | Escalation mutiert Landscape | Eigen | 🔴 Vor Phase 1b | ~30 Zeilen |
+| K2 | Decay nicht global | Eigen | 🟡 Vor Phase 2 | ~20 Zeilen |
+| K3 | difference()=0 statt None | Eigen + Extern | 🟡 Vor Phase 2 | ~15 Zeilen |
+| K4 | PARTIAL hardcoded | Eigen + Extern | ⚪ Irgendwann | ~5 Zeilen |
+| K5 | Escalation-Ziel ad-hoc | Eigen | 🟡 Vor Phase 2 | ~15 Zeilen |
+| K6 | candidates timing | Eigen | ⚪ Irgendwann | ~3 Zeilen |
+| K7 | Penalty skaliert nicht | Eigen + Extern | 🟡 Vor Phase 2 | ~5 Zeilen |
+| K8 | Tests zu gutartig | Eigen | ⚪ Phase 1b | eigenes File |
+| K9 | Keine Konvergenz | Eigen | ⚪ Phase 2 | ~10 Zeilen |
+| K10 | Kein Callback | Eigen | ⚪ Phase 1b | ~5 Zeilen |
+| **K11** | **Admissibility zu flach** | **Extern** | **🟡 Phase 1b** | **~20 Zeilen** |
+| **K12** | **Escalation-Typen vermischt** | **Extern** | **🟡 Phase 1b** | **~15 Zeilen** |
+| **K13** | **Keine operativen Metriken** | **Extern** | **🟡 Phase 1b** | **~20 Zeilen** |
+
+**Aktualisierter Handlungsplan:**
+- **🔴 Sofort (vor Phase 1b):** K1 — Escalation aus Landscape herauslösen
+- **🟡 In Phase 1b:** K11 (Admissibility-Filter), K12 (Escalation-Typen), K13 (Metriken)
+- **🟡 Vor Phase 2:** K2 (lazy Decay), K3 (difference-Semantik), K5 (Escalation-Ziel), K7 (Penalty)
+- **⚪ Bei Bedarf:** K4, K6, K8–K10
 
 ---
 
