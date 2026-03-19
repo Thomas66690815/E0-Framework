@@ -1,8 +1,19 @@
 # E₀ Controller — Status, Lücken, Lösungswege
 
-**Stand:** 2026-03-19 (v0.2 — nach Review durch ChatGPT-Mathematik-Thread)
+**Stand:** 2026-03-19 (v0.3 — Phase 1a abgeschlossen)
 **Kontext:** Neuansatz nach 3 Wochen Pause. Multi-Agent-Orchestrierung (Keimzelle) verworfen.
 **Neuer Ansatz:** Einzelner deterministischer E₀ Controller als Reasoning-Engine.
+
+### Aktueller Fortschritt
+
+| Phase | Status | Commit |
+|---|---|---|
+| **Phase 0** — Dieses Dokument | ✅ Abgeschlossen | `fa278ee` |
+| **Phase 1a** — Minimaler Controller + Mini-Domäne | ✅ Abgeschlossen (12/12 Tests) | `8523a9b` |
+| **Phase 1b** — Strukturierte Praxis-Domäne | ⬜ Nicht begonnen | — |
+| **Phase 2** — Connection & Phase (§9–16) | ⬜ Nicht begonnen | — |
+| **Phase 3** — LLM-Integration | ⬜ Nicht begonnen | — |
+| **Phase 4** — Spin-1/2 offene Punkte | ⬜ Nicht begonnen (parallel) | — |
 
 ---
 
@@ -198,48 +209,89 @@ Exploration mit begrenzter Breite. Skalierbar, guter Kompromiss.
 
 ## 6. Vorgeschlagener Implementierungs-Plan
 
-### Phase 0: Dieses Dokument (jetzt)
+### Phase 0: Dieses Dokument ✅
 Bestandsaufnahme, Lücken, Entscheidungen.
 
-### Phase 1a: Minimaler Controller + kontrollierte Mini-Domäne
+---
+
+### Phase 1a: Minimaler Controller + kontrollierte Mini-Domäne ✅
+
+**Status:** Abgeschlossen am 2026-03-19. Commits `8523a9b`, `96c93f5`.
 
 **Ziel:** §2–6, §17–18 der Spec als lauffähiger Python-Code.
 
 > **Scope-Begrenzung:** Sections §8–16 (Potential Φ, Connection ω, Phase Θ, komplexe Pfaddarstellung Ψ) are not required for a first operational controller and remain theory-level for v0.1 runtime.
 
+**Implementiert:**
+
 ```
 e0_controller/
-├── __init__.py
-├── primitives.py      # State, Δ-Matrix, R-Matrix
-├── landscape.py       # L_t = (X, E, v, S, H)
-├── historization.py   # U/F-Traces, δ_H, Clipping
-├── tension.py         # S(e), S(p), C(p)
-├── controller.py      # Core Loop: candidates → argmin → escalate → execute → historize
-└── test_minidomain.py # Kontrollierte Validierung (s.u.)
+├── __init__.py        # Package-Exports, Version 0.1.0
+├── primitives.py      # Edge (NamedTuple), Outcome (Enum)
+├── landscape.py       # L_t = (X, E, v, S, H) — 5 Core Functions
+├── historization.py   # U/F-Traces, δ_H, Clipping (§17)
+├── tension.py         # S(e), S(p), C(p) (§3, §5, §6)
+├── controller.py      # E0Controller: Greedy + Revisit-Penalty + Escalation (§18)
+└── test_minidomain.py # 8 States, 10 Edges, 12 Validierungstests
 ```
 
-**Kern-Funktionen (7 Stück — das ist der wirkliche Scope):**
+**7 Kern-Funktionen (verbindlicher Scope) — alle implementiert und getestet:**
 
-1. `difference(x, y)` — Δ zwischen States
-2. `base_resistance(x, y)` — R₀ aus Landscape
-3. `effective_resistance(x, y, H)` — R₀ + δ_H(U,F)
-4. `effective_tension(x, y, H)` — S_eff = Δ · R_eff
-5. `admissible_neighbors(x, L, H)` — alle y mit S_eff < ∞
-6. `select_next(x, L, H)` — Greedy + Revisit-Penalty + Escalation
-7. `update_historization(edge, outcome)` — U/F-Trace Update
+| # | Funktion | Modul | Status |
+|---|---|---|---|
+| 1 | `difference(x, y)` — Δ zwischen States | `landscape.py` | ✅ |
+| 2 | `base_resistance(x, y)` — R₀ aus Landscape | `landscape.py` | ✅ |
+| 3 | `effective_resistance(x, y)` — R₀ + δ_H(U,F) | `landscape.py` | ✅ |
+| 4 | `effective_tension(x, y)` — S_eff = Δ · R_eff | `landscape.py` | ✅ |
+| 5 | `admissible_neighbors(x)` — alle y mit S_eff < ∞ | `landscape.py` | ✅ |
+| 6 | `select_next(x)` — Greedy + Revisit-Penalty + Escalation | `controller.py` | ✅ |
+| 7 | `update_historization(edge, outcome)` — U/F-Trace Update | `historization.py` | ✅ |
 
-**Test-Domäne (`test_minidomain.py`):**
-Künstliche Domäne, 8–15 Zustände, explizite Kanten, vorgegebenes Δ und R₀. Enthält:
-- mindestens einen Dead-end (S = ∞)
-- mindestens einen Fehlpfad (Failure-Outcome → R steigt)
-- mindestens eine Oszillation, die durch Historisierung + Revisit-Penalty gebrochen wird
-- einen Success-Pfad, dessen R durch wiederholten Erfolg sinkt
+**Test-Ergebnisse (12/12 bestanden):**
+
+| Test | Prüft | Ergebnis |
+|---|---|---|
+| `test_primitives` | Edge, Outcome Typen | ✅ |
+| `test_tension_math` | S=Δ·R, C=exp(-S), Pfadsummation | ✅ |
+| `test_historization` | U/F-Traces, δ_H, Clipping | ✅ |
+| `test_landscape_core_functions` | Alle 5 Landscape-Funktionen | ✅ |
+| `test_landscape_info` | 8 States, 10 Edges, Inspektion | ✅ |
+| `test_seven_core_functions` | Alle 7 Funktionen aufrufbar + korrekt | ✅ |
+| `test_oscillation_breaking` | A↔C pendelt nicht (Revisit-Penalty) | ✅ |
+| `test_dead_end_escalation` | D (Dead-end) → Escalation → weiter | ✅ |
+| `test_failure_increases_resistance` | E→F: R steigt nach Failures | ✅ |
+| `test_success_decreases_resistance` | E→G: R sinkt nach Successes | ✅ |
+| `test_failure_avoidance` | Controller meidet failure-prone E→F | ✅ |
+| `test_full_run_to_goal` | Kompletter Lauf A → GOAL | ✅ |
+
+**Mini-Domäne Topologie:**
+```
+A ──(Δ=0.5/R₀=1.0)──→ B ──(0.3/0.8)──→ E ──(0.2/0.5)──→ G ──(0.1/0.3)──→ GOAL
+│                       │                │
+├──(0.4/0.8)──→ C       │                └──(0.4/1.2)──→ F ──(0.3/1.0)──→ G
+│               │        │
+│    (0.4/0.8)←─┘        └──(0.6/1.5)──→ D (Dead-end)
+│
+└──(0.7/3.0)←─ C→D
+```
+
+**Design-Entscheidungen (implementiert):**
+- States sind String-IDs (graphen-basiert, nicht vektor-basiert) → domain-invariant
+- Δ und R₀ pro Edge gespeichert (nicht pro State-Paar berechnet)
+- Historization: ρ=0.9, λ_s=0.15, λ_f=0.20, δ_max=3.0
+- Revisit-Penalty: α=2.0, recent_k=3
+- Escalation: Δ=1.0, R=max_escalation_R=5.0, Ziel = State mit meisten ausgehenden Kanten
+- R_eff hat strukturellen Floor (≥ 1e-10, nie negativ)
+
+**Umfang:** 580 Zeilen Implementierung + 390 Zeilen Tests = ~970 Zeilen gesamt.
 
 **Warum kein Iran-Szenario hier:** Eine offene geopolitische Domäne zieht Δ-Extraktion, State-Modellierung, unscharfe Ziele und LLM-Unsicherheit gleichzeitig hinein. Man testet dann nicht den Controller, sondern alles auf einmal — und weiß bei Scheitern nicht, woran es lag.
 
-**Geschätzt:** 300–400 Zeilen Python. Keine LLM-Anbindung nötig.
+---
 
-### Phase 1b: Strukturierte Praxis-Domäne
+### Phase 1b: Strukturierte Praxis-Domäne ⬜
+
+**Status:** Nicht begonnen. Voraussetzung: Phase 1a ✅
 
 **Ziel:** Zweite Domäne mit realer Struktur (z.B. Dokumenten-Routing, Rechnungsprüfung, Workflow-Steuerung).
 
@@ -247,7 +299,16 @@ Künstliche Domäne, 8–15 Zustände, explizite Kanten, vorgegebenes Δ und R�
 - Messbar: deterministische Lösungsrate, Eskalationsrate, Wirkung von δ_H
 - Zeigt, dass der Controller über die Test-Domäne hinaus generalisiert
 
-### Phase 2: Connection & Phase (§9–16)
+**Offene Frage:** Welche Domäne? Kandidaten:
+1. Dokumenten-Routing (States = Bearbeitungsstufen, Edges = Weiterleitungen)
+2. Rechnungsprüfung (States = Prüfstatus, Edges = Prüfschritte)
+3. Einfacher Workflow-Automat (States = Aufgabenphasen)
+
+---
+
+### Phase 2: Connection & Phase (§9–16) ⬜ ⬜
+
+**Status:** Nicht begonnen. Voraussetzung: Phase 1a ✅ (erfüllt), Phase 1b empfohlen.
 
 **Ziel:** Gradient/Rotation-Zerlegung, ω, Θ, Ψ(p), Pfad-Summation.
 
@@ -259,9 +320,12 @@ e0_controller/
 ```
 
 **Geschätzt:** 200–300 Zeilen. Brücke zur Spin-1/2-Derivation.
-**Voraussetzung:** Phase 1a abgeschlossen und validiert.
 
-### Phase 3: LLM-Integration (semi-strukturierte Textwelt)
+---
+
+### Phase 3: LLM-Integration (semi-strukturierte Textwelt) ⬜ ⬜
+
+**Status:** Nicht begonnen. Voraussetzung: Phase 1b + Phase 2.
 
 **Ziel:** E₀ Controller als Reasoning-Engine für LLMs.
 
@@ -272,13 +336,15 @@ e0_controller/
 
 **Wichtig:** Erst hier kommen offene Domänen (Iran-Analyse, Business Cases) ins Spiel. Vorher wird nicht der Controller, sondern Controller + Parsing + Weltmodellierung + LLM-Unsicherheit gleichzeitig getestet.
 
-### Phase 4: Spin-1/2 — Offene Punkte schließen (parallel, nicht blockierend)
+---
+
+### Phase 4: Spin-1/2 — Offene Punkte schließen (parallel, nicht blockierend) ⬜ ⬜
+
+**Status:** Nicht begonnen. Parallele theoretische Linie. Nicht in der kritischen Kette.
 
 - ω-Wert aus E₀ herleiten
 - Minimalitätsbeweis für 2 Base-States
 - Diskret → Kontinuum Grenzwert
-
-**Status:** Parallele theoretische Linie. Nicht in der kritischen Kette für Controller v0.1.
 
 ---
 
