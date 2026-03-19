@@ -1,6 +1,6 @@
 # E₀ Controller — Status, Lücken, Lösungswege
 
-**Stand:** 2026-03-19 (v0.5 — nach externer Kritik integriert)
+**Stand:** 2026-03-19 (v0.6 — Phase 1b abgeschlossen)
 **Kontext:** Neuansatz nach 3 Wochen Pause. Multi-Agent-Orchestrierung (Keimzelle) verworfen.
 **Neuer Ansatz:** Einzelner deterministischer E₀ Controller als Reasoning-Engine.
 
@@ -9,8 +9,9 @@
 | Phase | Status | Commit |
 |---|---|---|
 | **Phase 0** — Dieses Dokument | ✅ Abgeschlossen | `fa278ee` |
-| **Phase 1a** — Minimaler Controller + Mini-Domäne | ✅ Abgeschlossen (12/12 Tests) | `8523a9b` |
-| **Phase 1b** — Strukturierte Praxis-Domäne | ⬜ Nicht begonnen | — |
+| **Phase 1a** — Minimaler Controller + Mini-Domäne | ✅ Abgeschlossen (13/13 Tests) | `8523a9b` |
+| **Phase 1a-fix** — K1+K6 Fix, K13 Metriken | ✅ Abgeschlossen | `8eb0e9a` |
+| **Phase 1b** — Invoice-Domain (Rechnungsprüfung) | ✅ Abgeschlossen (33/33 Tests) | — |
 | **Phase 2** — Connection & Phase (§9–16) | ⬜ Nicht begonnen | — |
 | **Phase 3** — LLM-Integration | ⬜ Nicht begonnen | — |
 | **Phase 4** — Spin-1/2 offene Punkte | ⬜ Nicht begonnen (parallel) | — |
@@ -463,42 +464,102 @@ Der Code nennt alles "escalated=True", aber es ist nur ein Recovery Jump.
 
 | # | Problem | Quelle | Dringlichkeit | Fix-Aufwand |
 |---|---|---|---|---|
-| K1 | Escalation mutiert Landscape | Eigen | 🔴 Vor Phase 1b | ~30 Zeilen |
+| K1 | Escalation mutiert Landscape | Eigen | ✅ Gefixt (`8eb0e9a`) | ~30 Zeilen |
 | K2 | Decay nicht global | Eigen | 🟡 Vor Phase 2 | ~20 Zeilen |
 | K3 | difference()=0 statt None | Eigen + Extern | 🟡 Vor Phase 2 | ~15 Zeilen |
 | K4 | PARTIAL hardcoded | Eigen + Extern | ⚪ Irgendwann | ~5 Zeilen |
 | K5 | Escalation-Ziel ad-hoc | Eigen | 🟡 Vor Phase 2 | ~15 Zeilen |
-| K6 | candidates timing | Eigen | ⚪ Irgendwann | ~3 Zeilen |
+| K6 | candidates timing | Eigen | ✅ Gefixt (`8eb0e9a`) | ~3 Zeilen |
 | K7 | Penalty skaliert nicht | Eigen + Extern | 🟡 Vor Phase 2 | ~5 Zeilen |
-| K8 | Tests zu gutartig | Eigen | ⚪ Phase 1b | eigenes File |
+| K8 | Tests zu gutartig | Eigen | ✅ Adressiert (Phase 1b) | eigenes File |
 | K9 | Keine Konvergenz | Eigen | ⚪ Phase 2 | ~10 Zeilen |
 | K10 | Kein Callback | Eigen | ⚪ Phase 1b | ~5 Zeilen |
-| **K11** | **Admissibility zu flach** | **Extern** | **🟡 Phase 1b** | **~20 Zeilen** |
-| **K12** | **Escalation-Typen vermischt** | **Extern** | **🟡 Phase 1b** | **~15 Zeilen** |
-| **K13** | **Keine operativen Metriken** | **Extern** | **🟡 Phase 1b** | **~20 Zeilen** |
+| K11 | Admissibility zu flach | Extern | 🟡 Phase 2 | ~20 Zeilen |
+| K12 | Escalation-Typen vermischt | Extern | 🟡 Phase 2 | ~15 Zeilen |
+| K13 | Keine operativen Metriken | Extern | ✅ Gefixt (Phase 1b) | ~20 Zeilen |
 
 **Aktualisierter Handlungsplan:**
-- **🔴 Sofort (vor Phase 1b):** K1 — Escalation aus Landscape herauslösen
-- **🟡 In Phase 1b:** K11 (Admissibility-Filter), K12 (Escalation-Typen), K13 (Metriken)
-- **🟡 Vor Phase 2:** K2 (lazy Decay), K3 (difference-Semantik), K5 (Escalation-Ziel), K7 (Penalty)
-- **⚪ Bei Bedarf:** K4, K6, K8–K10
+- **✅ Erledigt:** K1 (Escalation-Buffer), K6 (candidates-timing), K13 (Metriken), K8 (Invoice-Domain)
+- **🟡 Vor Phase 2:** K2 (lazy Decay), K3 (difference-Semantik), K5 (Escalation-Ziel), K7 (Penalty), K11 (Admissibility-Filter), K12 (Escalation-Typen)
+- **⚪ Bei Bedarf:** K4, K9, K10
 
 ---
 
-### Phase 1b: Strukturierte Praxis-Domäne ⬜
+### Phase 1b: Invoice-Domain (Rechnungsprüfung) ✅
 
-**Status:** Nicht begonnen. Voraussetzung: Phase 1a ✅
+**Status:** Abgeschlossen am 2026-03-19. **33/33 Tests bestanden.** Gesamt mit 1a: **46/46.**
 
-**Ziel:** Zweite Domäne mit realer Struktur (z.B. Dokumenten-Routing, Rechnungsprüfung, Workflow-Steuerung).
+**Ziel:** Zweite, realistische Domäne — zeigt, dass der Controller über die Mini-Domäne hinaus generalisiert.
 
-- Deterministische Tools, klare Admissibility, klare Outcomes
-- Messbar: deterministische Lösungsrate, Eskalationsrate, Wirkung von δ_H
-- Zeigt, dass der Controller über die Test-Domäne hinaus generalisiert
+**Domäne:** Rechnungsprüfung / Dokumentenrouting (Empfehlung ChatGPT-Review: prüfbar, operativ, kein Theory-Creep).
 
-**Offene Frage:** Welche Domäne? Kandidaten:
-1. Dokumenten-Routing (States = Bearbeitungsstufen, Edges = Weiterleitungen)
-2. Rechnungsprüfung (States = Prüfstatus, Edges = Prüfschritte)
-3. Einfacher Workflow-Automat (States = Aufgabenphasen)
+**Implementiert:**
+
+```
+e0_controller/
+├── domain_invoice.py  # 10 States, 16 Edges, 5 Outcome-Szenarien
+├── test_invoice.py    # 33 Tests in 11 Test-Klassen
+└── controller.py      # + RunTrace.metrics() (K13)
+```
+
+**Topologie (10 States, 16 Edges):**
+```
+RECEIVED → PDF_LOADED → DATA_EXTRACTED → CUSTOMER_FOUND → AMOUNT_OK
+               │              │                │               │
+               ↓              ↓                ↓               ↓
+           REJECTED      HUMAN_REVIEW    HUMAN_REVIEW       REJECTED
+                              │
+                         CUSTOMER_FOUND / DATA_EXTRACTED / REJECTED
+
+AMOUNT_OK → CONTRACT_MATCH → POLICY_OK → APPROVED
+                  │              │
+             HUMAN_REVIEW    REJECTED
+```
+
+**Kanten-Eigenschaften:**
+- Happy Path: 7 Kanten, niedrige Tension (S₀ = 0.02–0.60)
+- Fehler-Pfade: 6 Kanten zu REJECTED/HUMAN_REVIEW (höhere Tension)
+- Recovery: 3 Kanten aus HUMAN_REVIEW (hohe R₀, aber erreichbar)
+- Dead-Ends: REJECTED, APPROVED (keine Ausgangskanten)
+
+**Outcome-Szenarien:**
+- `happy_path` — Alles SUCCESS (Baseline)
+- `realistic_outcomes` — DATA_EXTRACTED→CUSTOMER_FOUND scheitert immer
+- `harsh_outcomes` — Mehrere Failure-Kanten
+- `learning_scenario` — Erste N Versuche scheitern, dann SUCCESS (Lernfähigkeit)
+
+**Test-Ergebnisse (33/33 bestanden):**
+
+| Klasse | Tests | Prüft |
+|---|---|---|
+| TestInvoiceLandscape | 6 | Struktur: 10 States, 16 Edges, Dead-ends, Recovery |
+| TestHappyPath | 4 | Happy Path: APPROVED, ≤8 Steps, keine Escalation, 100% SUCCESS |
+| TestRealisticOutcomes | 3 | Failures, Historisierung lernt (R_eff steigt) |
+| TestHarshOutcomes | 2 | Controller navigiert trotz vieler Fehler |
+| TestLearningScenario | 2 | R_eff steigt bei Failures, Lernen funktioniert |
+| TestEscalation | 2 | Dead-end → sofortige Escalation, Ziel hat Ausgangskanten |
+| TestLandscapeInvariance | 2 | K1-Beweis: Δ und R₀ bleiben nach Run unverändert |
+| TestMetrics | 6 | K13: 9 Metriken korrekt, alle Schlüssel, Edge Cases |
+| TestMultipleRuns | 1 | Shared Historization: Run 2 profitiert von Run 1 |
+| TestHumanReviewRecovery | 2 | Start bei HUMAN_REVIEW → APPROVED erreichbar |
+| TestEdgeCases | 3 | Start=Goal, max_cycles, frische Landscape |
+
+**K13 Metriken (implementiert in RunTrace.metrics()):**
+- `steps` — Anzahl Schritte
+- `deterministic_rate` — Anteil nicht-eskalierter Entscheidungen
+- `escalation_count` — Escalation-Häufigkeit
+- `success_rate` / `failure_rate` — Outcome-Verteilung
+- `avg_tension` — Mittlere Tension (nur endliche)
+- `avg_r_eff_shift` — Mittlere R_eff-Veränderung pro Step
+- `revisit_count` — Wiederholte State-Besuche
+- `unique_states` — Verschiedene besuchte States
+
+**Fixes in Phase 1b:**
+- ✅ K1 (bereits in `8eb0e9a`): Escalation mutiert Landscape nicht mehr
+- ✅ K6 (bereits in `8eb0e9a`): candidates vor Execute erfasst
+- ✅ K13: `RunTrace.metrics()` mit 9 operativen Metriken
+
+**Umfang:** domain_invoice.py ~180 Zeilen + test_invoice.py ~310 Zeilen = ~490 Zeilen neu.
 
 ---
 

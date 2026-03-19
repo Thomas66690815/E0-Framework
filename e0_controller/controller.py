@@ -75,6 +75,52 @@ class RunTrace:
             lines.append(f"  Escalations: {escalations}")
         return "\n".join(lines)
 
+    def metrics(self) -> Dict[str, float]:
+        """
+        K13: Operative Metriken für den Lauf.
+
+        Returns dict with:
+            steps              — Anzahl Schritte
+            deterministic_rate — Anteil nicht-eskalierter Entscheidungen
+            escalation_count   — wie oft wurde eskaliert
+            success_rate       — Anteil SUCCESS-Outcomes
+            failure_rate       — Anteil FAILURE-Outcomes
+            avg_tension        — mittlere Tension (nur endliche)
+            avg_r_eff_shift    — mittlere Veränderung R_eff pro Step
+            revisit_count      — wie oft ein State mehrfach besucht wurde
+            unique_states      — Anzahl verschiedener besuchter States
+        """
+        n = len(self.steps)
+        if n == 0:
+            return {k: 0.0 for k in [
+                "steps", "deterministic_rate", "escalation_count",
+                "success_rate", "failure_rate", "avg_tension",
+                "avg_r_eff_shift", "revisit_count", "unique_states",
+            ]}
+
+        esc = sum(1 for s in self.steps if s.escalated)
+        oc = self.outcomes
+        finite_tensions = [s.s_eff for s in self.steps
+                           if not math.isinf(s.s_eff)]
+        r_shifts = [abs(s.r_eff_after - s.r_eff_before) for s in self.steps]
+
+        path = self.path
+        unique = set(path)
+        revisits = len(path) - len(unique)
+
+        return {
+            "steps": float(n),
+            "deterministic_rate": (n - esc) / n,
+            "escalation_count": float(esc),
+            "success_rate": oc["SUCCESS"] / n,
+            "failure_rate": oc["FAILURE"] / n,
+            "avg_tension": (sum(finite_tensions) / len(finite_tensions)
+                           if finite_tensions else 0.0),
+            "avg_r_eff_shift": sum(r_shifts) / n,
+            "revisit_count": float(revisits),
+            "unique_states": float(len(unique)),
+        }
+
 
 # Type for the execution callback
 ExecuteFn = Callable[[str, str], Outcome]
