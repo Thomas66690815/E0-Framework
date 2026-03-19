@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E₀ Keimzelle</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --bg-card: #161b22;
+      --bg-input: #0d1117;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --accent: #58a6ff;
+      --phase-open: #58a6ff;
+      --phase-friction: #f0883e;
+      --phase-condense: #3fb950;
+      --phase-derive: #bc8cff;
+      --human: #f0883e;
+      --theta: #58a6ff;
+      --kappa: #bc8cff;
+      --a3: #3fb950;
+      --system: #8b949e;
+      --radius: 8px;
+      --shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-card);
+    }
+    header h1 {
+      font-size: 18px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    header h1 .e0 { color: var(--accent); }
+    header .network-name { color: var(--text-muted); font-weight: 400; }
+    header nav { display: flex; gap: 8px; }
+    header nav button {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 14px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 13px;
+    }
+    header nav button:hover { border-color: var(--accent); color: var(--accent); }
+    header nav button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    /* ── Views ── */
+    .view { display: none; padding: 24px; max-width: 1200px; margin: 0 auto; }
+    .view.active { display: block; }
+
+    /* ── Setup View ── */
+    #setup-view {
+      flex-direction: column; align-items: center;
+      justify-content: center; min-height: 80vh; text-align: center;
+    }
+    #setup-view.active {
+      display: flex;
+    }
+    #setup-view h2 { font-size: 28px; margin-bottom: 8px; }
+    #setup-view p { color: var(--text-muted); margin-bottom: 32px; max-width: 500px; }
+    .setup-form { width: 100%; max-width: 400px; }
+    .setup-form label { display: block; text-align: left; margin-bottom: 4px; color: var(--text-muted); font-size: 13px; }
+    .setup-form input {
+      width: 100%; padding: 10px 14px; margin-bottom: 16px;
+      background: var(--bg-input); border: 1px solid var(--border);
+      color: var(--text); border-radius: var(--radius); font-size: 14px;
+    }
+    .setup-form input:focus { outline: none; border-color: var(--accent); }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: var(--radius);
+      border: 1px solid var(--border); background: var(--bg-card);
+      color: var(--text); cursor: pointer; font-size: 13px;
+      transition: all 0.15s;
+    }
+    .btn:hover { border-color: var(--accent); color: var(--accent); }
+    .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .btn.primary:hover { opacity: 0.85; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Dashboard ── */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .session-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .session-card:hover {
+      border-color: var(--accent);
+      box-shadow: var(--shadow);
+    }
+    .session-card h3 { font-size: 16px; margin-bottom: 4px; }
+    .session-card .topic { color: var(--text-muted); font-size: 13px; margin-bottom: 12px; }
+    .session-card .meta {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 12px;
+    }
+    .phase-badge {
+      display: inline-block; padding: 2px 8px; border-radius: 12px;
+      font-size: 11px; font-weight: 600; color: #fff;
+    }
+    .phase-open { background: var(--phase-open); }
+    .phase-friction { background: var(--phase-friction); }
+    .phase-condense { background: var(--phase-condense); }
+    .phase-derive { background: var(--phase-derive); }
+
+    .new-session-card {
+      background: transparent;
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      cursor: pointer;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      min-height: 120px;
+      transition: border-color 0.15s;
+    }
+    .new-session-card:hover { border-color: var(--accent); }
+    .new-session-card span { color: var(--text-muted); font-size: 14px; }
+    .new-session-card .plus { font-size: 32px; color: var(--text-muted); margin-bottom: 4px; }
+
+    /* ── Session Detail ── */
+    .session-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 24px;
+    }
+    .session-header h2 { font-size: 22px; }
+    .session-header .topic { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
+
+    /* ── Spur (Trail) ── */
+    .spur { margin: 16px 0; }
+    .delta-block {
+      position: relative;
+      padding-left: 28px;
+      margin-bottom: 24px;
+    }
+    .delta-block::before {
+      content: '';
+      position: absolute; left: 8px; top: 28px; bottom: 0;
+      width: 2px; background: var(--border);
+    }
+    .delta-block:last-child::before { display: none; }
+    .delta-marker {
+      position: absolute; left: 0; top: 4px;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--accent); border: 2px solid var(--bg);
+    }
+    .delta-content {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+    .delta-text { font-size: 15px; font-weight: 500; margin-bottom: 12px; }
+    .delta-text .label { color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* ── Runden-Anzeige ── */
+    .rounds-list { margin-top: 12px; }
+    .round-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 0; font-size: 13px; cursor: pointer;
+      color: var(--text-muted);
+      transition: color 0.1s;
+    }
+    .round-row:hover { color: var(--text); }
+    .round-row.active { color: var(--text); font-weight: 500; }
+    .round-row .phase-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+    }
+    .round-row .participants {
+      display: flex; gap: 4px; margin-left: auto;
+    }
+    .participant-dot {
+      width: 16px; height: 16px; border-radius: 50%;
+      font-size: 9px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff;
+    }
+    .participant-dot.human { background: var(--human); }
+    .participant-dot.theta { background: var(--theta); }
+    .participant-dot.kappa { background: var(--kappa); }
+    .participant-dot.system { background: var(--system); }
+
+    /* ── Detail-Panel ── */
+    .detail-panel {
+      margin-top: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .detail-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .detail-header h3 { font-size: 14px; }
+
+    .notes-container { padding: 16px; }
+
+    .note {
+      margin-bottom: 16px;
+      padding: 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      position: relative;
+    }
+    .note.human { border-left: 3px solid var(--human); }
+    .note.llm.theta { border-left: 3px solid var(--theta); }
+    .note.llm.kappa { border-left: 3px solid var(--kappa); }
+    .note.llm.a3 { border-left: 3px solid var(--a3); }
+    .note.system { border-left: 3px solid var(--system); }
+
+    /* Koordinations-Notes: visuell abgehoben */
+    .note.coordination-note {
+      border-left: 3px solid var(--a3);
+      background: #1a2332;
+      position: relative;
+    }
+    .note.coordination-note::before {
+      content: '⟐';
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      color: var(--a3);
+      font-size: 14px;
+      opacity: 0.6;
+    }
+
+    .note-header {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 8px; font-size: 12px;
+    }
+    .note-author {
+      font-weight: 600; font-size: 13px;
+    }
+    .note-author.human { color: var(--human); }
+    .note-author.theta { color: var(--theta); }
+    .note-author.kappa { color: var(--kappa); }
+    .note-author.a3 { color: var(--a3); }
+
+    .note-meta { color: var(--text-muted); }
+    .note-content {
+      font-size: 14px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+    }
+
+    /* ── Input Area ── */
+    .input-area {
+      border-top: 1px solid var(--border);
+      padding: 16px;
+      background: var(--bg);
+    }
+    .input-area label {
+      display: block;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .input-area textarea {
+      width: 100%;
+      min-height: 80px;
+      padding: 10px 14px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-family: inherit;
+      line-height: 1.6;
+      resize: vertical;
+    }
+    .input-area textarea:focus { outline: none; border-color: var(--accent); }
+    .input-actions {
+      display: flex; gap: 8px; margin-top: 10px; justify-content: flex-end;
+    }
+
+    /* ── New Session Modal ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 1000;
+      display: none;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      width: 90%; max-width: 460px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+    .modal h3 { margin-bottom: 16px; }
+    .modal label {
+      display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 4px;
+    }
+    .modal input, .modal textarea {
+      width: 100%; padding: 10px 14px; margin-bottom: 14px;
+      background: var(--bg-input); border: 1px solid var(--border);
+      color: var(--text); border-radius: var(--radius); font-size: 14px;
+      font-family: inherit;
+    }
+    .modal input:focus, .modal textarea:focus { outline: none; border-color: var(--accent); }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+    /* ── Loading ── */
+    .loading {
+      display: inline-flex; align-items: center; gap: 8px;
+      color: var(--text-muted); font-size: 13px;
+    }
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Session Layout ── */
+    .session-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 768px) {
+      .session-layout { grid-template-columns: 1fr; }
+    }
+
+    .sidebar { position: sticky; top: 24px; max-height: calc(100vh - 100px); overflow-y: auto; }
+
+    /* ── Phase Progress ── */
+    .phase-progress {
+      display: flex; gap: 4px; margin: 12px 0;
+    }
+    .phase-step {
+      flex: 1; height: 4px; border-radius: 2px;
+      background: var(--border);
+    }
+    .phase-step.done { background: var(--phase-condense); }
+    .phase-step.current { background: var(--accent); }
+
+    /* ── Graph View ── */
+    .graph-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-top: 16px;
+      min-height: 300px;
+      position: relative;
+    }
+    .graph-container canvas {
+      width: 100%; height: 300px;
+    }
+
+    /* ── Discourse Mode ── */
+    #session-view.active {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 53px);
+      padding-bottom: 0;
+    }
+    .discourse-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+    .discourse-header > div { flex: 1; }
+    .discourse-header h2 { font-size: 20px; }
+    .discourse-header .topic { color: var(--text-muted); font-size: 13px; margin-top: 2px; }
+
+    .delta-tabs {
+      display: flex;
+      gap: 4px;
+      margin: 12px 0;
+      overflow-x: auto;
+      flex-shrink: 0;
+    }
+    .delta-tab {
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .delta-tab:hover { border-color: var(--accent); color: var(--text); }
+    .delta-tab.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(88, 166, 255, 0.1);
+    }
+
+    .discourse-feed {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 0;
+      min-height: 0;
+    }
+    .discourse-msg {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding: 0 4px;
+    }
+    .msg-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .msg-body { flex: 1; min-width: 0; }
+    .msg-name {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .msg-text {
+      font-size: 14px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .discourse-msg.synthesis .msg-text {
+      border-left: 2px solid var(--a3);
+      padding-left: 12px;
+    }
+    .discourse-msg.synthesis .msg-name::after {
+      content: ' · Synthese';
+      color: var(--text-muted);
+      font-weight: 400;
+      font-size: 11px;
+    }
+    .discourse-thinking {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 4px;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+    .discourse-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 200px;
+      color: var(--text-muted);
+      font-size: 14px;
+      text-align: center;
+    }
+    .discourse-empty .delta-preview {
+      margin-top: 12px;
+      font-size: 16px;
+      color: var(--text);
+      font-weight: 500;
+      max-width: 600px;
+    }
+
+    .discourse-input-area {
+      flex-shrink: 0;
+      border-top: 1px solid var(--border);
+      padding: 12px 0 0;
+    }
+    .discourse-input-area textarea {
+      width: 100%;
+      min-height: 60px;
+      max-height: 160px;
+      padding: 10px 14px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-family: inherit;
+      line-height: 1.6;
+      resize: vertical;
+    }
+    .discourse-input-area textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .discourse-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      padding-bottom: 8px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .target-btns { display: flex; gap: 4px; }
+    .target-btn {
+      padding: 5px 12px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .target-btn:hover { border-color: var(--accent); color: var(--text); }
+    .target-btn.active {
+      background: var(--accent); color: #fff; border-color: var(--accent);
+    }
+    .action-btns { display: flex; gap: 6px; align-items: center; }
+    .tool-btn {
+      font-size: 12px !important;
+      padding: 5px 10px !important;
+      opacity: 0.6;
+    }
+    .tool-btn:hover { opacity: 1; }
+  </style>
+</head>
+<body>
+
+  <!-- ═══ Header ═══ -->
+  <header>
+    <h1>
+      <span class="e0">E₀</span> Keimzelle
+      <span class="network-name" id="network-name"></span>
+    </h1>
+    <nav id="main-nav">
+      <button data-view="dashboard" class="active">Dashboard</button>
+      <button data-view="session" style="display:none">Session</button>
+    </nav>
+  </header>
+
+  <!-- ═══ Setup View ═══ -->
+  <div class="view" id="setup-view">
+    <h2>Willkommen bei <span style="color:var(--accent)">E₀</span></h2>
+    <p>
+      E₀ ist ein System für Ko-Kognition: Menschen und KI-Systeme denken
+      gemeinsam über Probleme nach, die keiner allein lösen kann.
+    </p>
+    <div class="setup-form">
+      <label for="setup-name">Wie willst du dein Netzwerk nennen?</label>
+      <input type="text" id="setup-name" placeholder="z.B. E₀-Bochum" />
+      <button class="btn primary" onclick="doSetup()" style="width:100%">Netzwerk starten</button>
+    </div>
+  </div>
+
+  <!-- ═══ Dashboard View ═══ -->
+  <div class="view" id="dashboard-view">
+    <h2>Sessions</h2>
+    <div class="dashboard-grid" id="sessions-grid">
+      <!-- Dynamisch befüllt -->
+    </div>
+  </div>
+
+  <!-- ═══ Session View (Discourse) ═══ -->
+  <div class="view" id="session-view">
+    <div class="discourse-header">
+      <button class="btn" onclick="showDashboard()" style="flex-shrink:0">← Zurück</button>
+      <div>
+        <h2 id="session-title"></h2>
+        <div class="topic" id="session-topic"></div>
+      </div>
+      <button class="btn" onclick="showNewDeltaModal()" style="flex-shrink:0">+ Neues Delta</button>
+    </div>
+
+    <div class="delta-tabs" id="delta-tabs" style="display:none"></div>
+
+    <div class="discourse-feed" id="discourse-feed">
+      <div class="discourse-empty">
+        <div>Starte den Diskurs.</div>
+      </div>
+    </div>
+
+    <div class="discourse-input-area" id="discourse-input-area" style="display:none">
+      <textarea id="discourse-input" placeholder="Dein Beitrag zum Diskurs..."></textarea>
+      <div class="discourse-controls">
+        <div class="target-btns" id="target-btns">
+          <button class="target-btn active" data-target="all" onclick="setTarget('all')">Alle</button>
+          <button class="target-btn" data-target="a3-light" onclick="setTarget('a3-light')">A₃</button>
+          <button class="target-btn" data-target="theta-light" onclick="setTarget('theta-light')">Θ</button>
+          <button class="target-btn" data-target="kappa-light" onclick="setTarget('kappa-light')">K</button>
+        </div>
+        <div class="action-btns">
+          <button class="btn tool-btn" onclick="sendDiscourse('synthesize')" title="Zusammenfassen">⟐ Synthese</button>
+          <button class="btn tool-btn" onclick="sendDiscourse('challenge')" title="Kritisch prüfen">⚡ Prüfen</button>
+          <button class="btn tool-btn" onclick="sendDiscourse('derive')" title="Ableiten">→ Ableiten</button>
+          <button class="btn primary" onclick="sendDiscourse()" id="send-btn">Senden</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ New Session Modal ═══ -->
+  <div class="modal-overlay" id="new-session-modal">
+    <div class="modal">
+      <h3>Neue Session</h3>
+      <label for="modal-session-name">Name der Session</label>
+      <input type="text" id="modal-session-name" placeholder="z.B. Verkehr in Bochum" />
+      <label for="modal-session-topic">Thema / Frage / Spannung</label>
+      <textarea id="modal-session-topic" rows="3" placeholder="Was beschäftigt dich? Je konkreter, desto besser."></textarea>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeModal('new-session-modal')">Abbrechen</button>
+        <button class="btn primary" onclick="createSession()">Session starten</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ New Delta Modal ═══ -->
+  <div class="modal-overlay" id="new-delta-modal">
+    <div class="modal">
+      <h3>Neues Delta setzen</h3>
+      <label for="modal-delta-content">Neue Frage, Spannung oder Differenz</label>
+      <textarea id="modal-delta-content" rows="3" placeholder="Was ist die nächste Frage?"></textarea>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeModal('new-delta-modal')">Abbrechen</button>
+        <button class="btn primary" onclick="createDelta()">Delta setzen</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════
+    //  State
+    // ═══════════════════════════════════════════
+    let currentSession = null;
+    let currentDelta = null;
+    let sessionData = null;
+    let currentTarget = 'all';
+    let isSending = false;
+
+    // ═══════════════════════════════════════════
+    //  Node Display Helpers
+    // ═══════════════════════════════════════════
+    function getNodeColor(note) {
+      if (note.author_name === 'A₃') return 'var(--a3)';
+      if (note.author_name === 'Theta') return 'var(--theta)';
+      if (note.author_name === 'Kappa') return 'var(--kappa)';
+      if (note.author_type === 'human') return 'var(--human)';
+      return 'var(--system)';
+    }
+    function getNodeInitial(note) {
+      if (note.author_name === 'A₃') return 'A₃';
+      if (note.author_name === 'Theta') return 'Θ';
+      if (note.author_name === 'Kappa') return 'K';
+      if (note.author_type === 'human') return 'Du';
+      return '?';
+    }
+    function getNodeCls(note) {
+      if (note.author_name === 'Theta') return 'theta';
+      if (note.author_name === 'Kappa') return 'kappa';
+      if (note.author_name === 'A₃') return 'a3';
+      if (note.author_type === 'human') return 'human';
+      return 'system';
+    }
+
+    // ═══════════════════════════════════════════
+    //  API
+    // ═══════════════════════════════════════════
+    async function api(method, path, body = null) {
+      const url = '/api' + path;
+      const opts = { method, headers: { 'Content-Type': 'application/json' } };
+      if (body) opts.body = JSON.stringify(body);
+      try {
+        const resp = await fetch(url, opts);
+        if (!resp.ok) {
+          const text = await resp.text();
+          console.error('API error:', resp.status, text);
+          throw new Error('API ' + resp.status + ': ' + text);
+        }
+        return await resp.json();
+      } catch (e) {
+        console.error('API call failed:', method, path, e);
+        throw e;
+      }
+    }
+
+    // ═══════════════════════════════════════════
+    //  Init
+    // ═══════════════════════════════════════════
+    async function init() {
+      try {
+        const status = await api('GET', '/status');
+        if (!status.initialized) {
+          showView('setup');
+        } else {
+          document.getElementById('network-name').textContent = '— ' + status.network_name;
+          showView('dashboard');
+          loadSessions();
+        }
+      } catch (e) {
+        console.error('Init failed:', e);
+        showView('setup');
+      }
+    }
+
+    // ═══════════════════════════════════════════
+    //  Setup
+    // ═══════════════════════════════════════════
+    async function doSetup() {
+      try {
+        const name = document.getElementById('setup-name').value.trim() || 'E₀-Lokal';
+        const result = await api('POST', '/setup', { network_name: name });
+        document.getElementById('network-name').textContent = '— ' + name;
+        showView('dashboard');
+        await loadSessions();
+      } catch (e) {
+        alert('Setup fehlgeschlagen: ' + e.message);
+      }
+    }
+
+    // ═══════════════════════════════════════════
+    //  Dashboard
+    // ═══════════════════════════════════════════
+    async function loadSessions() {
+      const sessions = await api('GET', '/sessions');
+      const grid = document.getElementById('sessions-grid');
+      let html = '';
+      for (const s of sessions) {
+        html += `
+          <div class="session-card" onclick="openSession('${s.id}')">
+            <h3>${esc(s.name)}</h3>
+            <div class="topic">${esc(s.topic)}</div>
+            <div class="meta">
+              <span style="color:var(--text-muted)">
+                ${s.delta_count} Delta${s.delta_count !== 1 ? 's' : ''}
+              </span>
+            </div>
+          </div>
+        `;
+      }
+      html += `
+        <div class="new-session-card" onclick="showModal('new-session-modal')">
+          <div class="plus">+</div>
+          <span>Neue Session</span>
+        </div>
+      `;
+      grid.innerHTML = html;
+    }
+
+    // ═══════════════════════════════════════════
+    //  Session (Discourse Mode)
+    // ═══════════════════════════════════════════
+    async function openSession(id) {
+      sessionData = await api('GET', '/session?id=' + id);
+      currentSession = sessionData.session;
+
+      document.getElementById('session-title').textContent = currentSession.name;
+      document.getElementById('session-topic').textContent = currentSession.topic;
+
+      renderDeltaTabs();
+
+      // Neuestes Delta auswählen
+      if (sessionData.deltas.length > 0) {
+        selectDelta(sessionData.deltas[sessionData.deltas.length - 1]);
+      }
+
+      showView('session');
+      document.querySelector('[data-view="session"]').style.display = '';
+    }
+
+    function renderDeltaTabs() {
+      const container = document.getElementById('delta-tabs');
+      if (sessionData.deltas.length <= 1) {
+        container.style.display = 'none';
+        return;
+      }
+      container.style.display = 'flex';
+      container.innerHTML = sessionData.deltas.map((d, i) => {
+        const isActive = currentDelta && currentDelta.id === d.id;
+        const label = d.content.length > 40
+          ? d.content.substring(0, 40) + '…'
+          : d.content;
+        return `<button class="delta-tab ${isActive ? 'active' : ''}"
+                        onclick="selectDeltaById('${d.id}')"
+                        title="${esc(d.content)}">
+                  Δ${i + 1}: ${esc(label)}
+                </button>`;
+      }).join('');
+    }
+
+    function selectDeltaById(id) {
+      const delta = sessionData.deltas.find(d => d.id === id);
+      if (delta) selectDelta(delta);
+    }
+
+    function selectDelta(delta) {
+      currentDelta = delta;
+      renderDeltaTabs();
+      renderDiscourse();
+      document.getElementById('discourse-input-area').style.display = '';
+    }
+
+    // ═══════════════════════════════════════════
+    //  Discourse Rendering
+    // ═══════════════════════════════════════════
+    function renderDiscourse() {
+      const feed = document.getElementById('discourse-feed');
+      const notes = currentDelta.notes || [];
+
+      if (notes.length === 0) {
+        feed.innerHTML = `
+          <div class="discourse-empty">
+            <div>Das Delta ist gesetzt. Starte den Diskurs.</div>
+            <div class="delta-preview">Δ: ${esc(currentDelta.content)}</div>
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+
+      // Delta als erste Nachricht
+      html += `
+        <div class="discourse-msg" style="opacity:0.6;margin-bottom:24px">
+          <div class="msg-avatar" style="background:var(--accent)">Δ</div>
+          <div class="msg-body">
+            <div class="msg-name" style="color:var(--accent)">Delta</div>
+            <div class="msg-text">${esc(currentDelta.content)}</div>
+          </div>
+        </div>
+      `;
+
+      for (const n of notes) {
+        const color = getNodeColor(n);
+        const initial = getNodeInitial(n);
+        const isSynthesis = n.note_type === 'coordination';
+        const synthClass = isSynthesis ? ' synthesis' : '';
+
+        html += `
+          <div class="discourse-msg${synthClass}">
+            <div class="msg-avatar" style="background:${color}">${initial}</div>
+            <div class="msg-body">
+              <div class="msg-name" style="color:${color}">${esc(n.author_name)}</div>
+              <div class="msg-text">${esc(n.content)}</div>
+            </div>
+          </div>
+        `;
+      }
+
+      feed.innerHTML = html;
+      requestAnimationFrame(() => { feed.scrollTop = feed.scrollHeight; });
+    }
+
+    // ═══════════════════════════════════════════
+    //  Discourse Actions
+    // ═══════════════════════════════════════════
+    function setTarget(target) {
+      currentTarget = target;
+      document.querySelectorAll('.target-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.target === target);
+      });
+    }
+
+    async function sendDiscourse(tool = null) {
+      if (!currentSession || !currentDelta) return;
+      if (isSending) return;
+
+      const input = document.getElementById('discourse-input');
+      const humanInput = input.value.trim();
+
+      // Entweder Text oder Tool muss gegeben sein
+      if (!humanInput && !tool) return;
+
+      isSending = true;
+      const btn = document.getElementById('send-btn');
+      btn.disabled = true;
+      document.querySelectorAll('.tool-btn').forEach(b => b.disabled = true);
+
+      const feed = document.getElementById('discourse-feed');
+
+      try {
+        if (currentTarget === 'all') {
+          // Sequenziell: Jeder Knoten einzeln, zeigt Fortschritt
+          const llmNodeIds = ['a3-light', 'theta-light', 'kappa-light'];
+          const nodeNames = { 'a3-light': 'A₃', 'theta-light': 'Theta', 'kappa-light': 'Kappa' };
+
+          for (let i = 0; i < llmNodeIds.length; i++) {
+            const nodeId = llmNodeIds[i];
+
+            // Thinking-Indikator
+            const thinking = document.createElement('div');
+            thinking.className = 'discourse-thinking';
+            thinking.innerHTML = `<div class="spinner"></div> ${nodeNames[nodeId]} denkt nach…`;
+            feed.appendChild(thinking);
+            feed.scrollTop = feed.scrollHeight;
+
+            await api('POST', '/discourse', {
+              session_id: currentSession.id,
+              delta_id: currentDelta.id,
+              human_input: i === 0 ? humanInput : '',
+              target: nodeId,
+              tool: tool,
+            });
+
+            thinking.remove();
+
+            // Refresh + Render nach jeder Antwort
+            sessionData = await api('GET', '/session?id=' + currentSession.id);
+            currentDelta = sessionData.deltas.find(d => d.id === currentDelta.id) || currentDelta;
+            renderDiscourse();
+          }
+        } else {
+          // Einzelner Knoten
+          const nodeNames = { 'a3-light': 'A₃', 'theta-light': 'Theta', 'kappa-light': 'Kappa' };
+          const thinking = document.createElement('div');
+          thinking.className = 'discourse-thinking';
+          thinking.innerHTML = `<div class="spinner"></div> ${nodeNames[currentTarget] || currentTarget} denkt nach…`;
+          feed.appendChild(thinking);
+          feed.scrollTop = feed.scrollHeight;
+
+          await api('POST', '/discourse', {
+            session_id: currentSession.id,
+            delta_id: currentDelta.id,
+            human_input: humanInput,
+            target: currentTarget,
+            tool: tool,
+          });
+
+          thinking.remove();
+
+          sessionData = await api('GET', '/session?id=' + currentSession.id);
+          currentDelta = sessionData.deltas.find(d => d.id === currentDelta.id) || currentDelta;
+          renderDiscourse();
+        }
+
+        input.value = '';
+      } catch (e) {
+        console.error('Discourse error:', e);
+        alert('Fehler: ' + e.message);
+        // Thinking-Elemente aufräumen
+        feed.querySelectorAll('.discourse-thinking').forEach(el => el.remove());
+      } finally {
+        isSending = false;
+        btn.disabled = false;
+        document.querySelectorAll('.tool-btn').forEach(b => b.disabled = false);
+      }
+    }
+
+    // ═══════════════════════════════════════════
+    //  Session & Delta Creation
+    // ═══════════════════════════════════════════
+    async function createSession() {
+      const name = document.getElementById('modal-session-name').value.trim() || 'Neue Session';
+      const topic = document.getElementById('modal-session-topic').value.trim();
+      if (!topic) { alert('Bitte ein Thema eingeben.'); return; }
+
+      await api('POST', '/session/create', { name, topic });
+      closeModal('new-session-modal');
+      document.getElementById('modal-session-name').value = '';
+      document.getElementById('modal-session-topic').value = '';
+      loadSessions();
+    }
+
+    async function createDelta() {
+      const content = document.getElementById('modal-delta-content').value.trim();
+      if (!content) { alert('Bitte ein Delta eingeben.'); return; }
+
+      await api('POST', '/delta/create', {
+        session_id: currentSession.id,
+        content,
+        parent_delta_id: currentDelta ? currentDelta.id : null,
+      });
+
+      closeModal('new-delta-modal');
+      document.getElementById('modal-delta-content').value = '';
+      sessionData = await api('GET', '/session?id=' + currentSession.id);
+      renderDeltaTabs();
+      selectDelta(sessionData.deltas[sessionData.deltas.length - 1]);
+    }
+
+    // ═══════════════════════════════════════════
+    //  Navigation
+    // ═══════════════════════════════════════════
+    function showView(name) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      const view = document.getElementById(name + '-view');
+      if (view) view.classList.add('active');
+      document.querySelectorAll('[data-view]').forEach(b => {
+        b.classList.toggle('active', b.dataset.view === name);
+      });
+    }
+
+    function showDashboard() {
+      document.querySelector('[data-view="session"]').style.display = 'none';
+      showView('dashboard');
+      loadSessions();
+    }
+
+    document.querySelectorAll('[data-view]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.dataset.view === 'dashboard') showDashboard();
+        else if (btn.dataset.view === 'session' && currentSession) openSession(currentSession.id);
+      });
+    });
+
+    // ═══════════════════════════════════════════
+    //  Helpers
+    // ═══════════════════════════════════════════
+    function esc(s) {
+      if (!s) return '';
+      const d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    function showModal(id) { document.getElementById(id).classList.add('active'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+    function showNewDeltaModal() { showModal('new-delta-modal'); }
+
+    // Escape → Modal schließen
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+      }
+    });
+
+    // Ctrl+Enter → Senden
+    document.addEventListener('keydown', e => {
+      if (e.ctrlKey && e.key === 'Enter') {
+        const input = document.getElementById('discourse-input');
+        if (document.activeElement === input && input.value.trim()) {
+          sendDiscourse();
+        }
+      }
+    });
+
+    // ═══════════════════════════════════════════
+    //  Start
+    // ═══════════════════════════════════════════
+    window.onerror = function(msg, url, line, col, error) {
+      document.body.innerHTML += '<pre style="color:red;padding:20px;background:#1a1a1a;position:fixed;bottom:0;left:0;right:0;z-index:9999;max-height:40vh;overflow:auto">JS ERROR: ' + msg + '\nLine: ' + line + '\n' + (error ? error.stack : '') + '</pre>';
+    };
+    window.addEventListener('unhandledrejection', function(e) {
+      document.body.innerHTML += '<pre style="color:red;padding:20px;background:#1a1a1a;position:fixed;bottom:0;left:0;right:0;z-index:9999;max-height:40vh;overflow:auto">PROMISE ERROR: ' + e.reason + '</pre>';
+    });
+    init();
+  </script>
+</body>
+</html>
