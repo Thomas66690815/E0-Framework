@@ -289,6 +289,114 @@ A ──(Δ=0.5/R₀=1.0)──→ B ──(0.3/0.8)──→ E ──(0.2/0.5)�
 
 ---
 
+### Phase 1a — Selbstkritik (v0.3, 2026-03-19)
+
+Die folgenden Punkte sind **bekannte Schwächen** der aktuellen Implementierung. Jeder Punkt ist bewertet nach Dringlichkeit (🔴 muss vor Phase 1b, 🟡 sollte vor Phase 2, ⚪ kann warten) und enthält einen konkreten Lösungsvorschlag.
+
+#### K1 — Escalation mutiert die Landscape 🔴
+
+**Problem:** `controller.py:select_next()` ruft `landscape.add_edge()` auf, wenn kein admissible neighbor existiert. Die Entscheidungslogik verändert permanent die Datenstruktur. Escalation-Edges akkumulieren sich und werden nie aufgeräumt. Das vermischt Controller-Logik mit Landscape-Mutation.
+
+**Warum schlimm:** Nach N Escalations ist die Landscape nicht mehr die ursprüngliche Domäne. Analyse, Reproduzierbarkeit und Snapshot/Restore werden unmöglich.
+
+**Lösung:** Escalation-Edges in separater Struktur (`_escalation_edges: Dict[Edge, float]`) im Controller halten. Die Landscape bleibt unveränderlich. Bei `effective_tension()` prüft der Controller beide — reale Edges + Escalation-Edges. Escalation-Edges können ablaufen (TTL) oder bei erfolgreicher Transition bestätigt werden.
+
+#### K2 — Decay ist nur lokal, nicht global (Spec-Abweichung) 🟡
+
+**Problem:** `historization.py:update()` decayed nur die betroffene Edge. Spec §17.1: $U_t(e) = \rho \cdot U_{t-1}(e) + \mathbb{1}_{success}$ — das ρ gilt für **alle** Edges bei **jedem** Zeitschritt. Eine Edge, die 100 Steps nicht benutzt wurde, behält ewig ihre alten U/F-Werte.
+
+**Warum schlimm:** Uralte Traces verzerren R_eff. Eine vor 50 Steps gescheiterte Edge wird nie vergessen, selbst wenn die Spec genau das durch Decay vorsieht.
+
+**Lösung A (exakt):** `decay_all()` Methode, die bei jedem τ alle bekannten Edges decayed. O(|E|) pro Step.
+**Lösung B (lazy, effizient):** Beim Lesen eines Trace den Decay nachträglich berechnen: $U_{eff}(e) = U_{stored}(e) \cdot \rho^{(\tau - \tau_{last}(e))}$. O(1) pro Abfrage, kein globaler Sweep.
+
+**Empfehlung:** Lösung B — lazy Decay. Speichere pro Edge den letzten Update-Zeitpunkt `_tau_last[edge]`, berechne Decay bei Abfrage.
+
+#### K3 — `difference()` = 0.0 für nicht-existierende Edges 🟡
+
+**Problem:** `landscape.py:difference()` gibt 0.0 zurück wenn keine Edge existiert. Das bedeutet semantisch "kein Unterschied zwischen den States", nicht "keine Transition definiert". Die korrekte Semantik wäre: keine Edge → kein Δ → Transition ist nicht definiert.
+
+**Warum schlimm:** Δ=0 und R=∞ ergibt S = 0·∞ — mathematisch undefiniert. Unsere `tension()` rettet das durch `if isinf(R): return inf`, aber das ist ein Workaround, nicht korrekte Semantik.
+
+**Lösung:** `difference()` sollte `None` oder `math.nan` zurückgeben für nicht-existierende Edges. Alternativ: gar nicht abfragbar — `KeyError` werfen. Entscheidung hängt davon ab, ob Clients gegen beliebige (x,y)-Paare fragen können sollen.
+
+**Empfehlung:** Optional[float] Return-Type mit `None` für nicht-existierende Edges. `effective_tension()` prüft auf `None` und gibt `inf` zurück.
+
+#### K4 — PARTIAL-Gewichte sind willkürlich und hardcoded ⚪
+
+**Problem:** `historization.py:update()` setzt PARTIAL → U+=0.5, F+=0.3. Diese Werte kommen nicht aus der Spec (§17 definiert nur SUCCESS/FAILURE).
+
+**Warum akzeptabel für v0.1:** PARTIAL war eine bewusste Erweiterung über die Spec hinaus. Die Werte sind arbiträr, aber PARTIAL wird nur in `mixed_outcomes()` im Test verwendet. Kein Real-System nutzt es noch.
+
+**Lösung:** Parameter `partial_u: float = 0.5` und `partial_f: float = 0.3` in `Historization.__init__()`.
+
+#### K5 — Escalation-Ziel ist Heuristik, nicht E₀-Prinzip 🟡
+
+**Problem:** `controller.py:select_next()` wählt bei Escalation den State mit den meisten ausgehenden Kanten. Das ist eine Konnektivitäts-Heuristik — nicht abgeleitet aus Δ, R, S oder C.
+
+**Warum schlimm:** Es widerspricht dem Anspruch, dass der Controller **ausschließlich** nach E₀-Prinzipien operiert. Die Escalation ist der einzige Punkt, wo das Prinzip gebrochen wird.
+
+**Lösung:** Escalation-Ziel über Coherence wählen: $y^* = \arg\max_y \sum_{z} C(y \to z)$ — der State mit dem höchsten Gesamtkohärenz-Ausstoß. Das ist E₀-nativ.
+
+#### K6 — `candidates` im StepResult wird NACH dem Step berechnet ⚪
+
+**Problem:** `controller.py:cycle()` berechnet `admissible_neighbors(current)` **nach** dem Historization-Update. Das zeigt den Zustand nach der Entscheidung, nicht bei der Entscheidung.
+
+**Lösung:** `candidates` vor dem Execute-Schritt erfassen.
+
+#### K7 — Revisit-Penalty ist additiv, skaliert nicht 🟡
+
+**Problem:** $S_{revisit} = S_{eff} + \alpha$. Bei Edges mit hohem S_eff (z.B. 5.0) ist α=2.0 kaum relevant (5.0 → 7.0). Bei Edges mit niedrigem S_eff (z.B. 0.1) dominiert es komplett (0.1 → 2.1).
+
+**Lösung A:** Multiplikativ: $S_{revisit} = S_{eff} \cdot (1 + \alpha)$
+**Lösung B:** Hybrid: $S_{revisit} = S_{eff} + \alpha \cdot S_{eff} = S_{eff} \cdot (1 + \alpha)$ — gleich wie A.
+**Lösung C:** Skaliert additiv: $S_{revisit} = S_{eff} + \alpha \cdot \bar{S}$ mit $\bar{S}$ = mittlere Tension der Nachbarn.
+
+**Empfehlung:** Lösung A (multiplikativ) — einfach, proportional, keine neuen Parameter.
+
+#### K8 — Test-Domain ist zu gutartig ⚪
+
+**Problem:** Die Mini-Domain wurde für Erfolg konstruiert. Es gibt keinen Test für:
+- Adversarial: alle Pfade scheitern
+- Parameter-Sensitivität: was passiert bei α=0 oder α=100?
+- Konvergenz: stabilisiert sich R_eff?
+- Scale: >100 States
+
+**Lösung:** Eigene `test_adversarial.py` in Phase 1b. Kein Blocker für jetzt.
+
+#### K9 — Kein Konvergenz-Kriterium ⚪
+
+**Problem:** Nur `goal`, `max_cycles` oder total dead-end als Stopp. Kein Signal für "System hat sich stabilisiert — weitere Cycles ändern nichts mehr".
+
+**Lösung:** Konvergenz-Check: $|\Delta R_{eff}| < \epsilon$ über letzte k Steps. Einfach, O(1) pro Step.
+
+#### K10 — Kein Callback/Hook-Mechanismus ⚪
+
+**Problem:** `run()` läuft blind durch. Kein Weg für Step-Logging, externe Steuerung, oder Visualisierung.
+
+**Lösung:** `on_step: Optional[Callable[[StepResult], None]]` Parameter in `run()`.
+
+---
+
+#### Zusammenfassung Kritik
+
+| # | Problem | Dringlichkeit | Fix-Aufwand |
+|---|---|---|---|
+| K1 | Escalation mutiert Landscape | 🔴 Vor Phase 1b | ~30 Zeilen |
+| K2 | Decay nicht global | 🟡 Vor Phase 2 | ~20 Zeilen |
+| K3 | difference()=0 statt None | 🟡 Vor Phase 2 | ~15 Zeilen |
+| K4 | PARTIAL hardcoded | ⚪ Irgendwann | ~5 Zeilen |
+| K5 | Escalation-Ziel ad-hoc | 🟡 Vor Phase 2 | ~15 Zeilen |
+| K6 | candidates timing | ⚪ Irgendwann | ~3 Zeilen |
+| K7 | Penalty skaliert nicht | 🟡 Vor Phase 2 | ~5 Zeilen |
+| K8 | Tests zu gutartig | ⚪ Phase 1b | eigenes File |
+| K9 | Keine Konvergenz | ⚪ Phase 2 | ~10 Zeilen |
+| K10 | Kein Callback | ⚪ Phase 1b | ~5 Zeilen |
+
+**Handlungsplan:** K1 wird vor Phase 1b gefixt (Architektur-Fehler). K2, K3, K5, K7 werden als Batch vor Phase 2 adressiert. K4, K6, K8–K10 laufen mit und werden bei Bedarf erledigt.
+
+---
+
 ### Phase 1b: Strukturierte Praxis-Domäne ⬜
 
 **Status:** Nicht begonnen. Voraussetzung: Phase 1a ✅
