@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Set, Tuple
 
 from .primitives import Edge, Outcome
 from .landscape import Landscape
@@ -164,8 +164,8 @@ class E0Controller:
 
     # --- Edge resolution (landscape + escalation overlay) ---
 
-    def _get_delta(self, x: str, y: str) -> float:
-        """Δ from escalation overlay or landscape."""
+    def _get_delta(self, x: str, y: str) -> Optional[float]:
+        """Δ from escalation overlay or landscape. None = no edge (K3)."""
         edge = Edge(x, y)
         if edge in self._escalation_edges:
             return self._escalation_edges[edge][0]
@@ -187,8 +187,10 @@ class E0Controller:
         return max(r0 + dh, 1e-10)
 
     def _effective_tension(self, x: str, y: str) -> float:
-        """S_eff = Δ · R_eff, checking escalation overlay first."""
+        """S_eff = Δ · R_eff, checking escalation overlay first. ∞ if no edge (K3)."""
         delta = self._get_delta(x, y)
+        if delta is None:
+            return math.inf
         r_eff = self._effective_resistance(x, y)
         return tension(delta, r_eff)
 

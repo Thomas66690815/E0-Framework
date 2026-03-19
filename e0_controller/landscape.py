@@ -74,14 +74,23 @@ class Landscape:
 
     # --- Core Functions (§2–6) ---
 
-    def difference(self, x: str, y: str) -> float:
+    def difference(self, x: str, y: str) -> Optional[float]:
         """
         Function 1: Δ(x, y)
 
         Returns the difference measure for edge x→y.
-        If no edge exists, returns 0.0 (no difference = no impulse).
+        If no edge exists, returns None — meaning "no defined transition",
+        NOT "zero difference" (K3 fix).
+
+        Semantics:
+            None  → edge does not exist (inadmissible)
+            0.0   → edge exists but states are identical
+            > 0   → edge exists with structural difference
         """
-        return self._delta.get(Edge(x, y), 0.0)
+        edge = Edge(x, y)
+        if edge in self._delta:
+            return self._delta[edge]
+        return None
 
     def base_resistance(self, x: str, y: str) -> float:
         """
@@ -115,8 +124,11 @@ class Landscape:
         Function 4: S_eff(x→y) = Δ(x,y) · R_eff(x→y)
 
         Effective integration effort for a transition.
+        Returns ∞ if edge does not exist (Δ is None) — K3.
         """
         delta = self.difference(x, y)
+        if delta is None:
+            return math.inf
         r_eff = self.effective_resistance(x, y)
         return tension(delta, r_eff)
 
@@ -139,8 +151,11 @@ class Landscape:
 
         Simplified transition field (M_H = 1 for v0.1).
         Higher v = more structurally open transition.
+        Returns 0.0 if edge does not exist (no transition capacity).
         """
         delta = self.difference(x, y)
+        if delta is None:
+            return 0.0
         s_eff = self.effective_tension(x, y)
         return delta * coherence(s_eff)
 
@@ -165,7 +180,7 @@ class Landscape:
         s_eff = self.effective_tension(x, y)
         return {
             "edge": str(edge),
-            "delta": self.difference(x, y),
+            "delta": self.difference(x, y),  # None if edge missing
             "R0": r0,
             "R_eff": r_eff,
             "delta_H": self.historization.delta_H(edge),

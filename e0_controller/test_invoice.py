@@ -268,7 +268,7 @@ class TestLandscapeInvariance(unittest.TestCase):
         for src in L.states:
             for tgt in L.states:
                 d = L.difference(src, tgt)
-                if d > 0:
+                if d is not None and d > 0:
                     deltas_before[(src, tgt)] = d
 
         ctrl = E0Controller(L, realistic_outcomes)

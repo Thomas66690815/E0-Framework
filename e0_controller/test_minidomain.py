@@ -200,7 +200,7 @@ def test_landscape_core_functions():
     # Function 1: difference
     assert L.difference("A", "B") == 0.5
     assert L.difference("A", "C") == 0.4
-    assert L.difference("X", "Y") == 0.0  # non-existent edge
+    assert L.difference("X", "Y") is None  # non-existent edge → None (K3)
 
     # Function 2: base_resistance
     assert L.base_resistance("A", "B") == 1.0
