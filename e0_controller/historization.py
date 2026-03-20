@@ -119,6 +119,37 @@ class Historization:
     def failure_trace(self, edge: Edge) -> float:
         return self._F.get(edge, 0.0)
 
+    # --- Snapshot export/import (for MemOS) ---
+
+    def to_snapshot_dict(self) -> dict:
+        """Export internal state as plain dict for serialization."""
+        return {
+            "tau": self._tau,
+            "rho": self.rho,
+            "lambda_s": self.lambda_s,
+            "lambda_f": self.lambda_f,
+            "delta_max": self.delta_max,
+            "U": {e: v for e, v in self._U.items()},
+            "F": {e: v for e, v in self._F.items()},
+        }
+
+    @classmethod
+    def from_snapshot_dict(cls, d: dict, edge_parser) -> Historization:
+        """Reconstruct from a snapshot dict.
+
+        edge_parser: callable that converts a dict key back to an Edge.
+        """
+        H = cls(
+            rho=d["rho"],
+            lambda_s=d["lambda_s"],
+            lambda_f=d["lambda_f"],
+            delta_max=d["delta_max"],
+        )
+        H._tau = d["tau"]
+        H._U = {edge_parser(k): v for k, v in d["U"].items()}
+        H._F = {edge_parser(k): v for k, v in d["F"].items()}
+        return H
+
     def summary(self) -> Dict[str, float]:
         """Quick overview of historization state."""
         all_edges = set(self._U.keys()) | set(self._F.keys())

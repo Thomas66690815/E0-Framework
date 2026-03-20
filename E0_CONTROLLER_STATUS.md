@@ -1,6 +1,6 @@
 # E₀ Controller — Status, Lücken, Lösungswege
 
-**Stand:** 2026-03-20 (v0.9 — Phase 2c: E₀ MemOS v0.1)
+**Stand:** 2026-03-20 (v0.9.1 — Doku-Konsolidierung + API-Glättung)
 **Kontext:** Neuansatz nach 3 Wochen Pause. Multi-Agent-Orchestrierung (Keimzelle) verworfen.
 **Neuer Ansatz:** Einzelner deterministischer E₀ Controller als Reasoning-Engine.
 
@@ -42,10 +42,10 @@
 | `guards.py` | `StructuralGuard`, `AdmissibilityVerdict` | Collapse/Integrability/Trace Guards |
 | `reflexivity.py` | `MetaState`, `ReflexiveEngine` | Selbstmodellierung (Meta-Ebene) |
 
-### 1.3 E₀ Controller Specification v0.1 (neu, aus ChatGPT-Session)
+### 1.3 E₀ Controller Specification v0.1 (aus ChatGPT-Session)
 
 20 formal-mathematische Sektionen — der operative Kern der neuen Architektur.
-Vollständig dokumentiert im Perplexity-Thread. **Großteils implementiert in `e0_controller/` (§2–18).**
+Vollständig dokumentiert im Perplexity-Thread. **Vollständig implementiert in `e0_controller/` (§2–18).** Siehe Mapping in Sektion 2.
 
 ### 1.4 Spin-1/2 Derivation (neu, aus Claude-Session)
 
@@ -87,55 +87,57 @@ Die folgende Tabelle zeigt exakt, wo der bestehende Code die Spec abdeckt und wo
 
 ---
 
-## 3. Identifizierte Lücken
+## 3. Identifizierte Lücken (historisch)
 
-### Lücke 1: Kein Landschaft-Objekt
+> **Hinweis:** Diese Lücken wurden bei der initialen Analyse (Phase 0) identifiziert. Die meisten sind inzwischen durch `e0_controller/` geschlossen. Die Beschreibungen beziehen sich auf den damaligen Stand von `e0_core/`.
 
-Die Spec definiert $L_t = (X_t, E_t, v_t, S_t, H_t)$ als zentralen Zustand. Der bestehende Code hat `Topology` (Knoten + Connections) und `Historization` (Sequenz), aber kein einheitliches Landscape-Objekt, das alle Komponenten zusammenführt.
+### Lücke 1: Kein Landschaft-Objekt ✅ Gelöst (Phase 1a)
 
-**Auswirkung:** Ohne Landscape hat der Controller keinen kohärenten Zustand zum Operieren.
+Die Spec definiert $L_t = (X_t, E_t, v_t, S_t, H_t)$ als zentralen Zustand. `e0_core/` hatte `Topology` und `Historization`, aber kein einheitliches Landscape-Objekt.
 
-### Lücke 2: Kein Transitionsfeld v_x(y)
+**Lösung:** `e0_controller/landscape.py` — `Landscape` Klasse mit 5 Core-Funktionen.
 
-Die lokale Transition-Kapazität $v_x(y) = \Delta(x,y) \cdot M_H(x,y) \cdot \exp(-S(x \to y))$ ist das zentrale Evaluierungsinstrument. Existiert nicht im Code.
+### Lücke 2: Kein Transitionsfeld v_x(y) ✅ Gelöst (Phase 1a)
 
-**Auswirkung:** Der Controller kann nicht berechnen, welche Transitionen strukturell offen sind.
+Die lokale Transition-Kapazität $v_x(y) = \Delta(x,y) \cdot M_H(x,y) \cdot \exp(-S(x \to y))$.
 
-### Lücke 3: Keine Gradient/Rotation-Zerlegung
+**Lösung:** `landscape.transition_field()` (M_H = 1 für v0.1).
 
-Die Zerlegung $v = v_{grad} + v_{rot}$ und die daraus abgeleitete Connection $\omega$ fehlen komplett. Das bestehende `Connection`-Objekt in `ontodynamics.py` modelliert *Overlap* (gradueller Verknüpfungsgrad), nicht die antisymmetrische Connection der Spec.
+### Lücke 3: Keine Gradient/Rotation-Zerlegung ✅ Gelöst (Phase 2a)
 
-**Auswirkung:** Ohne $\omega$ keine Phase Θ, keine Holonomie, kein $\Psi$.
+$v = v_{grad} + v_{rot}$ und Connection $\omega$.
 
-### Lücke 4: Keine komplexe Pfad-Struktur
+**Lösung:** `e0_controller/potential.py` (Φ, v_grad, v_rot) + `e0_controller/connection.py` (ω, Θ, Holonomie).
 
-$\Psi(p) = \exp(-S) \cdot \exp(i\Theta)$ und die Pfad-Summation $\Psi(z) = \sum \Psi(p)$ fehlen.
+### Lücke 4: Keine komplexe Pfad-Struktur ✅ Gelöst (Phase 2a)
 
-**Auswirkung:** Die gesamte Interferenz-Logik und die Brücke zur Spin-1/2-Derivation fehlen.
+$\Psi(p) = \exp(-S) \cdot \exp(i\Theta)$ und Pfad-Summation.
 
-### Lücke 5: Historization ohne U/F-Split
+**Lösung:** `e0_controller/wavepath.py` (Ψ, sum_paths, intensity, interference_analysis).
 
-Die bestehende `Historization`-Klasse hat `decay_factor` und senkt R pauschal. Die Spec unterscheidet explizit Success-Traces $U_t$ und Failure-Traces $F_t$ mit getrennten Lernraten $\lambda_s, \lambda_f$.
+### Lücke 5: Historization ohne U/F-Split ✅ Gelöst (Phase 1a)
 
-**Auswirkung:** Kein differenziertes Lernen aus Erfolg vs. Scheitern.
+Getrennte Success/Failure-Traces mit separaten Lernraten.
 
-### Lücke 6: Controller-Loop fehlt als eigenes Modul
+**Lösung:** `e0_controller/historization.py` — U/F-Traces, δ_H, Clipping (§17).
 
-`engine.py` hat `TransitionEngine.step()` und `.run()`, aber der Controller-Loop der Spec (candidates → argmin → escalate → execute → historize) ist nicht als eigene, saubere Abstraktion implementiert.
+### Lücke 6: Controller-Loop fehlt als eigenes Modul ✅ Gelöst (Phase 1a)
 
-**Auswirkung:** Keine klare Schnittstelle für externe Systeme (LLM, Simulation, Analyse).
+Sauberer candidates → argmin → escalate → execute → historize Loop.
 
-### Lücke 7: Pfad-Suche skaliert nicht
+**Lösung:** `e0_controller/controller.py` — `E0Controller` mit `select_next()`, `cycle()`, `run()`.
 
-Die Spec sagt $p^* = \arg\min_{p} S_{eff}(p)$ — das ist über alle möglichen Pfade in einem großen State-Raum NP-hart. Keine Approximationsstrategie definiert.
+### Lücke 7: Pfad-Suche skaliert nicht ⚠️ Adressiert (C4-Strategie)
 
-**Auswirkung:** Funktioniert für 5-10 States, bricht bei großen Räumen zusammen.
+$\arg\min_p S_{eff}(p)$ über alle Pfade ist NP-hart.
 
-### Lücke 8: Δ-Bestimmung aus realen Daten
+**Status:** Greedy + Revisit-Penalty + Escalation (C4-Strategie) für v0.1. Beam Search (C2) als Option für v0.2 dokumentiert.
 
-Die Spec nimmt Δ(x,y) als gegeben an. In der Praxis (Iran-Analyse, LLM-Reasoning) muss Δ aus unstrukturierten Daten *extrahiert* werden. Kein Mechanismus dafür definiert.
+### Lücke 8: Δ-Bestimmung aus realen Daten ⬜ Offen (Phase 3)
 
-**Auswirkung:** Ohne Δ-Extraktion kein realer Einsatz.
+Δ aus unstrukturierten Daten extrahieren — zentraler Baustein der LLM-Integration.
+
+**Status:** Wird in Phase 3a durch den LLM-Adapter adressiert (`extract_delta()`).
 
 ---
 
@@ -162,52 +164,19 @@ Die Spec nimmt Δ(x,y) als gegeben an. In der Praxis (Iran-Analyse, LLM-Reasonin
 
 ---
 
-## 5. Architektur-Entscheidungen (offen)
+## 5. Architektur-Entscheidungen (entschieden)
 
-### Entscheidung A: Soll der Controller das LLM steuern oder das LLM den Controller ausführen?
+### Entscheidung A: Hybrid (A3) ✅
 
-**Option A1 — Controller steuert LLM:**
-Der Controller evaluiert $S_{eff}$ über Pfade und beauftragt das LLM, den gewählten Pfad auszuführen (Text generieren, Code schreiben, etc.). LLM = Executor.
+Python-Controller berechnet $S_{eff}$ und Pfadwahl deterministisch; LLM wird für Δ-Extraktion, State-Discovery und Pfad-Ausführung eingesetzt.
 
-**Option A2 — LLM führt Controller aus:**
-Das LLM bekommt die Controller-Logik als Prompt/Context und evaluiert $\Delta$, $R$, $S_{eff}$ selbst als Teil seines Reasoning. LLM = Runtime.
+### Entscheidung B: Neues Paket + Altes als Archiv (B3) ✅
 
-**Option A3 — Hybrid:**
-Python-Controller berechnet $S_{eff}$ und Pfadwahl deterministisch; LLM wird nur für Δ-Extraktion und Pfad-Beschreibung eingesetzt.
+`e0_controller/` ist das primäre Paket. `e0_core/` bleibt als Read-Only-Referenz.
 
-**Empfehlung:** A3 — Hybrid. Deterministische Mathematik in Python, LLM für das, was LLMs können (Sprache, Kontext, Einschätzung).
+### Entscheidung C: Greedy + Escalation (C4) ✅
 
-### Entscheidung B: Bestehendes `e0_core` refactoren oder Neuimplementierung?
-
-**Option B1 — Refactoring:**
-`primitives.py`, `engine.py` erweitern. Vorteil: bestehende Struktur nutzen. Risiko: Mismatch bei `Connection` (Overlap ≠ ω).
-
-**Option B2 — Neuimplementierung `e0_controller/`:**
-Neues Paket, das die Spec v0.1 sauber umsetzt. `e0_core/` bleibt als Referenz. Vorteil: kein Legacy-Ballast. Risiko: Dopplung.
-
-**Option B3 — Schrittweiser Ersatz:**
-Neues `e0_controller/` als primäres Paket; `e0_core/` als Read-Only-Archiv.
-
-**Empfehlung:** B3 — Neu bauen, Altes behalten.
-
-### Entscheidung C: Pfad-Suche Approximation
-
-$\arg\min_p S_{eff}(p)$ über alle Pfade ist NP-hart. Mögliche Strategien:
-
-**C1 — Nur direkte Transitionen (1-Schritt):**
-$p^* = \arg\min_{y \in N(x)} S_{eff}(x \to y)$. Einfach, skaliert, aber kurzsichtig.
-
-**C2 — Beam Search (k beste Pfade, Tiefe d):**
-Exploration mit begrenzter Breite. Skalierbar, guter Kompromiss.
-
-**C3 — Dynamische Programmierung** bei DAG-Struktur.
-
-**C4 — Greedy + Escalation:**
-1-Schritt-Greedy, bei Deadlock ($S = \infty$) breitere Suche.
-
-**Empfehlung:** C4 für v0.1, C2 für v0.2.
-
-**Ergänzung (v0.1):** Revisit-Penalty für Short-Cycle-Suppression. Ohne das dreht Greedy Schleifen zwischen zwei States. Einfachste Form: $R_{revisit}(x \to y) = R_{eff}(x \to y) + \alpha \cdot \mathbb{1}[y \in \text{recent}(k)]$ mit kleinem $\alpha > 0$ und Fenster $k$.
+1-Schritt-Greedy mit Revisit-Penalty, bei Deadlock typspezifische Escalation (K12). Beam Search (C2) als v0.2-Option dokumentiert.
 
 ---
 
@@ -689,7 +658,7 @@ e0_controller/
 
 ### Phase 3a: LLM-Adapter (OpenAI API) ⬜
 
-**Status:** Nicht begonnen. Voraussetzung: Phase 1b + Phase 2.
+**Status:** Nicht begonnen. Voraussetzung (Phase 1b + Phase 2 + MemOS) erfüllt.
 
 **Ziel:** E₀ Controller als Reasoning-Engine für LLMs.
 

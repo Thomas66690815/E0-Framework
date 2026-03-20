@@ -405,7 +405,7 @@ class TestRetrieval(unittest.TestCase):
         self.memos.save_run("test-eh", trace, goal="APPROVED")
 
         result = self.memos.retrieve_edge_history(
-            "test-eh", "RECEIVED", "PDF_LOADED")
+            "test-eh", "RECEIVED→PDF_LOADED")
         self.assertIsNotNone(result["current"])
         self.assertGreater(len(result["runs"]), 0)
 

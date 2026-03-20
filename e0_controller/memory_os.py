@@ -111,30 +111,31 @@ class HistorizationSnapshot:
 
     @staticmethod
     def from_historization(H: Historization) -> HistorizationSnapshot:
-        u_traces = {edge_to_key(e): v for e, v in H._U.items()}
-        f_traces = {edge_to_key(e): v for e, v in H._F.items()}
+        snap = H.to_snapshot_dict()
+        u_traces = {edge_to_key(e): v for e, v in snap["U"].items()}
+        f_traces = {edge_to_key(e): v for e, v in snap["F"].items()}
         return HistorizationSnapshot(
-            tau=H.tau,
-            rho=H.rho,
-            lambda_s=H.lambda_s,
-            lambda_f=H.lambda_f,
-            delta_max=H.delta_max,
+            tau=snap["tau"],
+            rho=snap["rho"],
+            lambda_s=snap["lambda_s"],
+            lambda_f=snap["lambda_f"],
+            delta_max=snap["delta_max"],
             success_traces=u_traces,
             failure_traces=f_traces,
         )
 
     def to_historization(self) -> Historization:
         """Reconstruct a Historization from this snapshot."""
-        H = Historization(
-            rho=self.rho,
-            lambda_s=self.lambda_s,
-            lambda_f=self.lambda_f,
-            delta_max=self.delta_max,
-        )
-        H._tau = self.tau
-        H._U = {key_to_edge(k): v for k, v in self.success_traces.items()}
-        H._F = {key_to_edge(k): v for k, v in self.failure_traces.items()}
-        return H
+        d = {
+            "tau": self.tau,
+            "rho": self.rho,
+            "lambda_s": self.lambda_s,
+            "lambda_f": self.lambda_f,
+            "delta_max": self.delta_max,
+            "U": {k: v for k, v in self.success_traces.items()},
+            "F": {k: v for k, v in self.failure_traces.items()},
+        }
+        return Historization.from_snapshot_dict(d, key_to_edge)
 
 
 @dataclass
@@ -173,7 +174,7 @@ class RuntimeSnapshot:
             metrics=metrics,
             controller_params={
                 "alpha": ctrl.alpha,
-                "recent_k": float(ctrl.recent_k),
+                "recent_k": ctrl.recent_k,
                 "max_escalation_R": ctrl.max_escalation_R,
                 "s_max": ctrl.s_max if not math.isinf(ctrl.s_max) else -1.0,
                 "c_min": ctrl.c_min,
@@ -446,24 +447,28 @@ class E0MemoryOS:
     def retrieve_edge_history(
         self,
         session_id: str,
-        source: str,
-        target: str,
+        edge_key: str,
     ) -> Dict[str, Any]:
         """
         Return historization data for a specific edge across runs.
+
+        Args:
+            session_id: Session to query.
+            edge_key: Edge in canonical form "source→target".
 
         Retrieval priority (§9 of MemOS spec):
             1. Current session historization
             2. Appearances in recent runs
         """
-        ek = edge_to_key(Edge(source, target))
-        result: Dict[str, Any] = {"edge": ek, "runs": []}
+        edge = key_to_edge(edge_key)
+        source, target = edge.source, edge.target
+        result: Dict[str, Any] = {"edge": edge_key, "runs": []}
 
         # Current session data
         try:
             ctx = self.load_context(session_id)
-            u = ctx.historization["success_traces"].get(ek, 0.0)
-            f = ctx.historization["failure_traces"].get(ek, 0.0)
+            u = ctx.historization["success_traces"].get(edge_key, 0.0)
+            f = ctx.historization["failure_traces"].get(edge_key, 0.0)
             result["current"] = {"U": u, "F": f, "tau": ctx.historization["tau"]}
         except FileNotFoundError:
             result["current"] = None
