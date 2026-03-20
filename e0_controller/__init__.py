@@ -14,6 +14,10 @@ Phase 2 (§9–16):
   - Connection: ω(x,y), Θ(path), Holonomy
   - Wave Path: Ψ(p) = exp(−S+iΘ), Pfad-Summation, Interferenz
 
+Phase 2c (MemOS):
+  - Persist / Restore / Summarize / Retrieve
+  - Session-persistent E₀ state management
+
 See E0_CONTROLLER_STATUS.md for full project context.
 """
 
@@ -27,3 +31,4 @@ from .controller import E0Controller, StepResult, RunTrace, EscalationType
 from .potential import phi, phi_map, v_raw, v_grad, v_rot, decomposition
 from .connection import omega, theta, holonomy, omega_map
 from .wavepath import psi, path_intensity, sum_paths, intensity, interference_analysis
+from .memory_os import E0MemoryOS, CanonRef, MemOSContext

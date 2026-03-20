@@ -1,6 +1,6 @@
 # E₀ Controller — Status, Lücken, Lösungswege
 
-**Stand:** 2026-03-20 (v0.8 — K11+K12 Fixes vor Phase 3)
+**Stand:** 2026-03-20 (v0.9 — Phase 2c: E₀ MemOS v0.1)
 **Kontext:** Neuansatz nach 3 Wochen Pause. Multi-Agent-Orchestrierung (Keimzelle) verworfen.
 **Neuer Ansatz:** Einzelner deterministischer E₀ Controller als Reasoning-Engine.
 
@@ -14,8 +14,9 @@
 | **Phase 1b** — Invoice-Domain (Rechnungsprüfung) | ✅ Abgeschlossen (33/33 Tests) | `cca35bf` |
 | **Phase 2-prep** — K3 Fix (difference-Semantik) | ✅ Abgeschlossen | `edcced6` |
 | **Phase 2a** — Potential/Connection/WavePath | ✅ Abgeschlossen (56/56 Tests) | `71ba766` |
-| **Phase 2b-fix** — K11+K12 Fixes (Admissibility+Escalation) | ✅ Abgeschlossen (108/108 Tests) | — |
-| **Phase 3** — LLM-Integration | ⬜ Nicht begonnen | — |
+| **Phase 2b-fix** — K11+K12 Fixes (Admissibility+Escalation) | ✅ Abgeschlossen (109/109 Tests) | `0178e67` |
+| **Phase 2c** — E₀ MemOS v0.1 (Persistenz-Substrat) | ✅ Abgeschlossen (126/126 Tests) | — |
+| **Phase 3a** — LLM-Adapter (OpenAI API) | ⬜ Nicht begonnen | — |
 | **Phase 4** — Spin-1/2 offene Punkte | ⬜ Nicht begonnen (parallel) | — |
 
 ---
@@ -635,20 +636,58 @@ e0_controller/
 
 ---
 
-### Phase 2b: Offene K-Items vor Phase 3 ⬜
+### Phase 2b-fix: K11+K12 Fixes ✅
 
-**Status:** Nicht begonnen. Pflicht vor Phase 3.
+**Status:** Abgeschlossen am 2026-03-20. **109/109 Tests.** Commit `b793287`, `0178e67`.
 
-Offene Items:
-- K2: Global/lazy Decay
-- K5: Escalation-Ziel nicht nur ad-hoc
-- K7: Revisit-Penalty-Skalierung
-- K11: Echte Admissibility-Schicht
-- K12: Escalation-Typen trennen
+K11: `E0Controller` hat `s_max` (Tension-Ceiling) und `c_min` (Coherence-Floor) Parameter.
+K12: `EscalationType` Enum (NONE, DEAD_END, FILTERED, EXHAUSTED) mit typspezifischen Recovery-Strategien.
+Code-Review: F1–F5 (Export-Fix, EXHAUSTED-Bug, Stale-Docs).
 
 ---
 
-### Phase 3: LLM-Integration (semi-strukturierte Textwelt) ⬜ ⬜
+### Phase 2c: E₀ MemOS v0.1 ✅
+
+**Status:** Abgeschlossen am 2026-03-20. **126/126 Tests (17 MemOS + 109 bestehende).**
+
+**Ziel:** Persistentes Runtime-Substrat zwischen Controller-Stack und LLM. Basierend auf Architektur-Papier `E0_MEMOS_v0.1.md`.
+
+**Implementiert:**
+
+```
+e0_controller/
+├── memory_os.py        # E0MemoryOS: Persist, Restore, Summarize, Retrieve
+└── test_memory_os.py   # 17 Tests: §12 Akzeptanzkriterien + K-MemOS-Korrekturen
+```
+
+**Kernfunktionen:**
+
+| Funktion | Beschreibung |
+|---|---|
+| `snapshot_from_runtime()` | Live Controller/Landscape/Historization → serialisierbarer Snapshot |
+| `save_context()` / `load_context()` | JSON-Persistenz auf Disk |
+| `restore_landscape()` | Snapshot → Landscape + Historization rekonstruieren |
+| `restore_controller()` | Snapshot → E0Controller mit Runtime-State rekonstruieren |
+| `summarize_for_llm()` | Boundiertes JSON-Paket für LLM (Nachbarschaft, Edge-History, Runtime) |
+| `save_run()` / `retrieve_recent_runs()` | Run-Traces als Records speichern und abrufen |
+| `retrieve_edge_history()` | Edge-Historisierung über Sessions + Runs |
+
+**Akzeptanzkriterien (§12) alle bestanden:**
+1. ✅ Controller-State nach Run speichern
+2. ✅ In frischem Prozess wiederherstellen
+3. ✅ Boundierte Summary für LLM erzeugen
+4. ✅ Historisierung überlebt Sessions
+5. ✅ Controller-Verhalten ändert sich durch persistiertes Gedächtnis
+
+**K-MemOS-Korrekturen eingearbeitet:**
+- K-MemOS-1: Edge-Keys als `"source→target"` Strings
+- K-MemOS-2: `EscalationType` im RuntimeSnapshot + Run-Breakdown
+- K-MemOS-3: Retrieval-Priorität 4 (Ähnlichkeit) bewusst weggelassen für v0.1
+- K-MemOS-4: `summarize_for_llm()` mit statischer Priorität (Nachbarschaft > Edge-History > Runtime > Canon)
+
+---
+
+### Phase 3a: LLM-Adapter (OpenAI API) ⬜
 
 **Status:** Nicht begonnen. Voraussetzung: Phase 1b + Phase 2.
 
