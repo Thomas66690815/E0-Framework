@@ -1,5 +1,5 @@
 """
-E₀ Controller v0.2
+E₀ Controller v0.3
 ===================
 Deterministic Transition Order for Historically Stabilized Intelligence.
 
@@ -18,10 +18,14 @@ Phase 2c (MemOS):
   - Persist / Restore / Summarize / Retrieve
   - Session-persistent E₀ state management
 
+Phase 3a (LLM Adapter):
+  - extract_delta / propose_states / execute_transition
+  - Structured LLM ↔ Controller interface (A3 Hybrid)
+
 See E0_CONTROLLER_STATUS.md for full project context.
 """
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 from .primitives import Edge, Outcome
 from .historization import Historization, TraceRecord
@@ -32,3 +36,4 @@ from .potential import phi, phi_map, v_raw, v_grad, v_rot, decomposition
 from .connection import omega, theta, holonomy, omega_map
 from .wavepath import psi, path_intensity, sum_paths, intensity, interference_analysis
 from .memory_os import E0MemoryOS, CanonRef, MemOSContext
+from .llm_adapter import E0LLMAdapter, LLMConfig, DeltaEstimate, ProposedState, TransitionResult

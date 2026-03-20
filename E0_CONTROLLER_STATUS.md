@@ -1,6 +1,6 @@
 # E₀ Controller — Status, Lücken, Lösungswege
 
-**Stand:** 2026-03-20 (v0.9.1 — Doku-Konsolidierung + API-Glättung)
+**Stand:** 2026-03-20 (v1.0 — Phase 3a: LLM-Adapter)
 **Kontext:** Neuansatz nach 3 Wochen Pause. Multi-Agent-Orchestrierung (Keimzelle) verworfen.
 **Neuer Ansatz:** Einzelner deterministischer E₀ Controller als Reasoning-Engine.
 
@@ -15,8 +15,8 @@
 | **Phase 2-prep** — K3 Fix (difference-Semantik) | ✅ Abgeschlossen | `edcced6` |
 | **Phase 2a** — Potential/Connection/WavePath | ✅ Abgeschlossen (56/56 Tests) | `71ba766` |
 | **Phase 2b-fix** — K11+K12 Fixes (Admissibility+Escalation) | ✅ Abgeschlossen (109/109 Tests) | `0178e67` |
-| **Phase 2c** — E₀ MemOS v0.1 (Persistenz-Substrat) | ✅ Abgeschlossen (126/126 Tests) | — |
-| **Phase 3a** — LLM-Adapter (OpenAI API) | ⬜ Nicht begonnen | — |
+| **Phase 2c** — E₀ MemOS v0.1 (Persistenz-Substrat) | ✅ Abgeschlossen (126/126 Tests) | `6803466` |
+| **Phase 3a** — LLM-Adapter (OpenAI API) | ✅ Abgeschlossen (148/148 Tests) | — |
 | **Phase 4** — Spin-1/2 offene Punkte | ⬜ Nicht begonnen (parallel) | — |
 
 ---
@@ -656,18 +656,61 @@ e0_controller/
 
 ---
 
-### Phase 3a: LLM-Adapter (OpenAI API) ⬜
+### Phase 3a: LLM-Adapter (OpenAI API) ✅
 
-**Status:** Nicht begonnen. Voraussetzung (Phase 1b + Phase 2 + MemOS) erfüllt.
+**Status:** Abgeschlossen am 2026-03-20. **148/148 Tests (22 LLM-Adapter + 126 bestehende).**
 
-**Ziel:** E₀ Controller als Reasoning-Engine für LLMs.
+**Ziel:** Strukturierte LLM-Schnittstelle für A3-Hybrid-Architektur. LLM als semantischer Co-Prozessor, Controller bleibt deterministisch.
 
-- Δ-Extraktion: LLM identifiziert States und Differences aus Text
+**Implementiert:**
+
+```
+e0_controller/
+├── llm_adapter.py         # E0LLMAdapter: extract_delta, propose_states, execute_transition
+├── test_llm_adapter.py    # 22 Tests (mock-basiert, kein API-Key nötig)
+├── demo_invoice_llm.py    # Vollständige Demo: Controller + MemOS + LLM (mock oder live)
+└── .env.example           # API-Key Template
+```
+
+**Kernfunktionen:**
+
+| Funktion | Beschreibung |
+|---|---|
+| `extract_delta()` | LLM schätzt Δ(x,y) aus natürlicher Sprache |
+| `propose_states()` | LLM schlägt erreichbare Zustände vor |
+| `execute_transition()` | LLM führt Transition aus und reportet Outcome |
+| `as_execute_fn()` | Controller-kompatible Callback-Factory |
+
+**Architektur-Entscheidungen:**
+
+- **Pluggable Backend:** `LLMCallFn` erlaubt beliebige LLM-Provider (OpenAI, Mock, lokale Modelle)
+- **MemOS-Integration:** Jeder LLM-Call bekommt `summarize_for_llm()` als Kontext
+- **JSON-Structured Output:** Alle Responses als parseable JSON, tolerant gegenüber Markdown-Fences
+- **Clamping:** Δ auf [0,1], Confidence auf [0,1], unbekannte Outcomes → FAILURE
+
+**Demo:**
+```bash
+# Mock (kein API-Key):
+python -m e0_controller.demo_invoice_llm --mock
+
+# Live (braucht OPENAI_API_KEY in .env):
+python -m e0_controller.demo_invoice_llm
+```
+
+---
+
+### Phase 3b: Live-Validierung + offene Domänen ⬜
+
+**Status:** Nicht begonnen. Voraussetzung: Phase 3a ✅.
+
+**Ziel:** Live-Test mit echtem LLM (OpenAI API) auf der Invoice-Domain, dann Erweiterung auf offene Domänen.
+
+- Live-Durchlauf Invoice-Domain mit `gpt-4o-mini`
 - R-Schätzung: LLM bewertet Resistance qualitativ → Controller normiert
-- Controller evaluiert $S_{eff}$, wählt Pfad
-- LLM führt den gewählten Pfad aus (generiert Antwort/Analyse)
+- Erste offene Domäne (z.B. Textanalyse, Business Case)
+- Validierung: Vergleich Mock vs. Live-Ergebnisse
 
-**Wichtig:** Erst hier kommen offene Domänen (Iran-Analyse, Business Cases) ins Spiel. Vorher wird nicht der Controller, sondern Controller + Parsing + Weltmodellierung + LLM-Unsicherheit gleichzeitig getestet.
+**Wichtig:** Erst hier kommen offene Domänen (Iran-Analyse, Business Cases) ins Spiel.
 
 ---
 

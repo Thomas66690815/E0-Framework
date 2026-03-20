@@ -1,0 +1,313 @@
+"""
+E₀ LLM Adapter — Unit Tests (Mock-based)
+==========================================
+Tests use a mock LLM call function — no API key required.
+"""
+
+from __future__ import annotations
+
+import json
+import unittest
+
+from e0_controller.primitives import Edge, Outcome
+from e0_controller.landscape import Landscape
+from e0_controller.controller import E0Controller
+from e0_controller.memory_os import E0MemoryOS
+from e0_controller.llm_adapter import (
+    E0LLMAdapter,
+    LLMConfig,
+    DeltaEstimate,
+    ProposedState,
+    TransitionResult,
+    _parse_json_response,
+)
+from e0_controller.domain_invoice import build_invoice_landscape
+
+
+# ──────────────────────────────────────────────
+# Mock LLM Functions
+# ──────────────────────────────────────────────
+
+def mock_delta_call(system: str, user: str, config: LLMConfig) -> str:
+    """Returns a fixed delta estimate."""
+    return json.dumps({
+        "delta": 0.45,
+        "reasoning": "Moderate structural change required."
+    })
+
+
+def mock_propose_call(system: str, user: str, config: LLMConfig) -> str:
+    """Returns fixed state proposals."""
+    return json.dumps({
+        "states": [
+            {"name": "DATA_VERIFIED", "description": "Data has been verified", "estimated_delta": 0.3},
+            {"name": "AMOUNT_MATCHED", "description": "Amount matches PO", "estimated_delta": 0.2},
+        ]
+    })
+
+
+def mock_execute_success(system: str, user: str, config: LLMConfig) -> str:
+    """Always returns SUCCESS."""
+    return json.dumps({
+        "outcome": "SUCCESS",
+        "result": "Transition completed successfully.",
+        "confidence": 0.95,
+    })
+
+
+def mock_execute_failure(system: str, user: str, config: LLMConfig) -> str:
+    """Always returns FAILURE."""
+    return json.dumps({
+        "outcome": "FAILURE",
+        "result": "Could not find matching customer.",
+        "confidence": 0.3,
+    })
+
+
+def mock_execute_partial(system: str, user: str, config: LLMConfig) -> str:
+    """Always returns PARTIAL."""
+    return json.dumps({
+        "outcome": "PARTIAL",
+        "result": "Some data extracted but ambiguous.",
+        "confidence": 0.6,
+    })
+
+
+def mock_execute_with_fences(system: str, user: str, config: LLMConfig) -> str:
+    """Returns JSON wrapped in markdown fences."""
+    return '```json\n{"outcome": "SUCCESS", "result": "Done.", "confidence": 0.9}\n```'
+
+
+# ──────────────────────────────────────────────
+# Tests
+# ──────────────────────────────────────────────
+
+class TestParseJson(unittest.TestCase):
+    """JSON parsing handles various LLM output formats."""
+
+    def test_plain_json(self):
+        data = _parse_json_response('{"delta": 0.5}')
+        self.assertEqual(data["delta"], 0.5)
+
+    def test_markdown_fenced(self):
+        data = _parse_json_response('```json\n{"delta": 0.5}\n```')
+        self.assertEqual(data["delta"], 0.5)
+
+    def test_fenced_no_lang(self):
+        data = _parse_json_response('```\n{"delta": 0.5}\n```')
+        self.assertEqual(data["delta"], 0.5)
+
+    def test_whitespace_tolerance(self):
+        data = _parse_json_response('  \n  {"delta": 0.5}  \n  ')
+        self.assertEqual(data["delta"], 0.5)
+
+
+class TestExtractDelta(unittest.TestCase):
+    """extract_delta returns structured DeltaEstimate."""
+
+    def setUp(self):
+        self.adapter = E0LLMAdapter(call_fn=mock_delta_call)
+
+    def test_basic_delta(self):
+        result = self.adapter.extract_delta(
+            "DATA_EXTRACTED", "CUSTOMER_FOUND",
+            "Look up customer in database")
+        self.assertIsInstance(result, DeltaEstimate)
+        self.assertAlmostEqual(result.delta, 0.45)
+        self.assertIn("structural", result.reasoning.lower())
+
+    def test_delta_clamped_high(self):
+        """Delta > 1.0 is clamped to 1.0."""
+        def over_one(s, u, c):
+            return '{"delta": 1.5, "reasoning": "extreme"}'
+        adapter = E0LLMAdapter(call_fn=over_one)
+        result = adapter.extract_delta("A", "B", "test")
+        self.assertLessEqual(result.delta, 1.0)
+
+    def test_delta_clamped_low(self):
+        """Delta < 0.0 is clamped to 0.0."""
+        def neg(s, u, c):
+            return '{"delta": -0.3, "reasoning": "negative"}'
+        adapter = E0LLMAdapter(call_fn=neg)
+        result = adapter.extract_delta("A", "B", "test")
+        self.assertGreaterEqual(result.delta, 0.0)
+
+    def test_with_memos_summary(self):
+        """MemOS summary is forwarded to the prompt."""
+        captured = {}
+        def capture(system, user, config):
+            captured["user"] = user
+            return '{"delta": 0.3, "reasoning": "ok"}'
+        adapter = E0LLMAdapter(call_fn=capture)
+        summary = {"current_state": "X", "admissible_neighbors": {}}
+        adapter.extract_delta("X", "Y", "test", memos_summary=summary)
+        self.assertIn("X", captured["user"])
+
+
+class TestProposeStates(unittest.TestCase):
+    """propose_states returns structured ProposedState list."""
+
+    def setUp(self):
+        self.adapter = E0LLMAdapter(call_fn=mock_propose_call)
+
+    def test_basic_proposal(self):
+        result = self.adapter.propose_states(
+            "DATA_EXTRACTED",
+            "Verify the extracted invoice data")
+        self.assertEqual(len(result), 2)
+        self.assertIsInstance(result[0], ProposedState)
+        self.assertEqual(result[0].name, "DATA_VERIFIED")
+
+    def test_empty_proposal(self):
+        """Empty states list is handled gracefully."""
+        def empty(s, u, c):
+            return '{"states": []}'
+        adapter = E0LLMAdapter(call_fn=empty)
+        result = adapter.propose_states("X", "test")
+        self.assertEqual(result, [])
+
+
+class TestExecuteTransition(unittest.TestCase):
+    """execute_transition returns structured TransitionResult."""
+
+    def test_success(self):
+        adapter = E0LLMAdapter(call_fn=mock_execute_success)
+        result = adapter.execute_transition(
+            "PDF_LOADED", "DATA_EXTRACTED",
+            "Extract invoice data from PDF")
+        self.assertIsInstance(result, TransitionResult)
+        self.assertEqual(result.outcome, Outcome.SUCCESS)
+        self.assertGreater(result.confidence, 0.9)
+
+    def test_failure(self):
+        adapter = E0LLMAdapter(call_fn=mock_execute_failure)
+        result = adapter.execute_transition(
+            "DATA_EXTRACTED", "CUSTOMER_FOUND",
+            "Find customer in database")
+        self.assertEqual(result.outcome, Outcome.FAILURE)
+        self.assertIn("customer", result.result.lower())
+
+    def test_partial(self):
+        adapter = E0LLMAdapter(call_fn=mock_execute_partial)
+        result = adapter.execute_transition("A", "B", "test")
+        self.assertEqual(result.outcome, Outcome.PARTIAL)
+
+    def test_markdown_fences(self):
+        """JSON inside markdown fences is parsed correctly."""
+        adapter = E0LLMAdapter(call_fn=mock_execute_with_fences)
+        result = adapter.execute_transition("A", "B", "test")
+        self.assertEqual(result.outcome, Outcome.SUCCESS)
+
+    def test_confidence_clamped(self):
+        """Confidence > 1.0 is clamped."""
+        def over(s, u, c):
+            return '{"outcome": "SUCCESS", "result": "ok", "confidence": 2.5}'
+        adapter = E0LLMAdapter(call_fn=over)
+        result = adapter.execute_transition("A", "B", "test")
+        self.assertLessEqual(result.confidence, 1.0)
+
+    def test_unknown_outcome_defaults_to_failure(self):
+        """Unknown outcome string defaults to FAILURE."""
+        def bad(s, u, c):
+            return '{"outcome": "MAYBE", "result": "unclear", "confidence": 0.5}'
+        adapter = E0LLMAdapter(call_fn=bad)
+        result = adapter.execute_transition("A", "B", "test")
+        self.assertEqual(result.outcome, Outcome.FAILURE)
+
+
+class TestAsExecuteFn(unittest.TestCase):
+    """as_execute_fn returns a controller-compatible callback."""
+
+    def test_basic_callback(self):
+        adapter = E0LLMAdapter(call_fn=mock_execute_success)
+        task_map = {"PDF_LOADED→DATA_EXTRACTED": "Extract data from PDF"}
+        fn = adapter.as_execute_fn(task_map)
+        outcome = fn("PDF_LOADED", "DATA_EXTRACTED")
+        self.assertEqual(outcome, Outcome.SUCCESS)
+
+    def test_missing_task_uses_default(self):
+        """Edge not in task_map gets a default description."""
+        captured = {}
+        def capture(system, user, config):
+            captured["user"] = user
+            return '{"outcome": "SUCCESS", "result": "ok", "confidence": 0.9}'
+        adapter = E0LLMAdapter(call_fn=capture)
+        fn = adapter.as_execute_fn({})
+        fn("A", "B")
+        self.assertIn("Transition from A to B", captured["user"])
+
+
+class TestControllerIntegration(unittest.TestCase):
+    """LLM adapter integrates with Controller + MemOS (all mocked)."""
+
+    def test_full_loop_with_mock(self):
+        """Complete: build landscape → controller → mock LLM execute → run."""
+        L = build_invoice_landscape()
+        adapter = E0LLMAdapter(call_fn=mock_execute_success)
+
+        task_map = {
+            "RECEIVED→PDF_LOADED": "Load the PDF file",
+            "PDF_LOADED→DATA_EXTRACTED": "Extract invoice data via OCR",
+            "DATA_EXTRACTED→CUSTOMER_FOUND": "Look up customer in system",
+            "CUSTOMER_FOUND→AMOUNT_OK": "Validate invoice amount",
+            "AMOUNT_OK→CONTRACT_MATCH": "Match to contract",
+            "CONTRACT_MATCH→POLICY_OK": "Check compliance policies",
+            "POLICY_OK→APPROVED": "Approve invoice",
+        }
+        execute = adapter.as_execute_fn(task_map)
+
+        ctrl = E0Controller(L, execute)
+        trace = ctrl.run(start="RECEIVED", goal="APPROVED", max_cycles=15)
+
+        self.assertEqual(trace.path[-1], "APPROVED")
+        self.assertGreater(trace.metrics()["success_rate"], 0.9)
+
+    def test_memos_summary_in_loop(self):
+        """MemOS summary is generated and usable in the adapter context."""
+        import tempfile, shutil
+        tmp = tempfile.mkdtemp()
+        try:
+            L = build_invoice_landscape()
+            ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS)
+            trace = ctrl.run(start="RECEIVED", goal="APPROVED", max_cycles=10)
+
+            memos = E0MemoryOS(base_dir=tmp)
+            ctx = memos.snapshot_from_runtime("test-llm", L, ctrl, trace)
+            memos.save_context(ctx)
+
+            # Generate summary
+            summary = memos.summarize_for_llm(ctx, "RECEIVED", landscape=L)
+            self.assertIn("current_state", summary)
+            self.assertIn("admissible_neighbors", summary)
+
+            # Summary is valid context for adapter
+            adapter = E0LLMAdapter(call_fn=mock_execute_success)
+            result = adapter.execute_transition(
+                "RECEIVED", "PDF_LOADED",
+                "Load PDF", memos_summary=summary)
+            self.assertEqual(result.outcome, Outcome.SUCCESS)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+
+class TestLLMConfig(unittest.TestCase):
+    """LLMConfig handles API key resolution."""
+
+    def test_explicit_key(self):
+        c = LLMConfig(api_key="sk-test-123")
+        self.assertEqual(c.resolve_api_key(), "sk-test-123")
+
+    def test_missing_key_raises(self):
+        import os
+        old = os.environ.pop("OPENAI_API_KEY", None)
+        try:
+            c = LLMConfig()
+            with self.assertRaises(RuntimeError):
+                c.resolve_api_key()
+        finally:
+            if old is not None:
+                os.environ["OPENAI_API_KEY"] = old
+
+
+if __name__ == "__main__":
+    unittest.main()
