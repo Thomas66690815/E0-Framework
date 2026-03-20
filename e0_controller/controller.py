@@ -295,21 +295,21 @@ class E0Controller:
         neighbors = self._admissible_neighbors(current)
 
         if neighbors:
-            best = min(neighbors, key=lambda y: self._penalized_tension(current, y))
-            return best, False, EscalationType.NONE
-
-        # --- K12: Typed Escalation ---
-        raw = self._raw_neighbors(current)
-
-        if not raw:
-            # No outgoing edges at all → true dead-end
-            esc_type = EscalationType.DEAD_END
-        elif len(raw) > len(neighbors):
-            # Edges exist but K11 filter removed them
-            esc_type = EscalationType.FILTERED
-        else:
-            # All admissible are too heavily penalized
+            # Check EXHAUSTED: all admissible neighbors recently visited
+            all_recent = all(y in self._recent for y in neighbors)
+            if not all_recent:
+                best = min(neighbors, key=lambda y: self._penalized_tension(current, y))
+                return best, False, EscalationType.NONE
+            # All neighbors recently visited → EXHAUSTED escalation
             esc_type = EscalationType.EXHAUSTED
+        else:
+            # --- K12: No admissible neighbors ---
+            raw = self._raw_neighbors(current)
+
+            if not raw:
+                esc_type = EscalationType.DEAD_END
+            else:
+                esc_type = EscalationType.FILTERED
 
         # Recovery strategy depends on type
         target = self._escalation_target(current, esc_type)

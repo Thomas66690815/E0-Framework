@@ -605,6 +605,25 @@ def test_k12_filtered_type():
     print("   ✓ K11-blocked edges correctly classified as FILTERED")
 
 
+def test_k12_exhausted_type():
+    """K12: All admissible neighbors recently visited → EXHAUSTED."""
+    print("── test_k12_exhausted_type ──")
+    L = build_mini_landscape()
+
+    # From A: neighbors B and C exist. recent_k=3.
+    # If both B and C are in _recent → EXHAUSTED.
+    ctrl = E0Controller(L, all_success, alpha=2.0, recent_k=3)
+    ctrl._recent = ["B", "C"]  # simulate having visited both recently
+
+    target, escalated, esc_type = ctrl.select_next("A")
+
+    assert escalated, "Should escalate when all neighbors are recent"
+    assert esc_type == EscalationType.EXHAUSTED, f"Expected EXHAUSTED, got {esc_type}"
+    assert target is not None, "Should find an escalation target"
+    print(f"   A (all neighbors recent) → {target} (type={esc_type.value})")
+    print("   ✓ All-recent neighbours correctly classified as EXHAUSTED")
+
+
 def test_k12_escalation_in_trace():
     """K12: escalation_type is recorded in StepResult during a run."""
     print("── test_k12_escalation_in_trace ──")
@@ -656,6 +675,7 @@ def run_all_tests():
         test_k11_cmin_filter,
         test_k12_dead_end_type,
         test_k12_filtered_type,
+        test_k12_exhausted_type,
         test_k12_escalation_in_trace,
     ]
 

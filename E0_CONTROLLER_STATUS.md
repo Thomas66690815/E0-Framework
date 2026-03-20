@@ -44,7 +44,7 @@
 ### 1.3 E₀ Controller Specification v0.1 (neu, aus ChatGPT-Session)
 
 20 formal-mathematische Sektionen — der operative Kern der neuen Architektur.
-Vollständig dokumentiert im Perplexity-Thread. **Noch nicht implementiert.**
+Vollständig dokumentiert im Perplexity-Thread. **Großteils implementiert in `e0_controller/` (§2–18).**
 
 ### 1.4 Spin-1/2 Derivation (neu, aus Claude-Session)
 
@@ -59,15 +59,15 @@ Die folgende Tabelle zeigt exakt, wo der bestehende Code die Spec abdeckt und wo
 
 | Spec-Sektion | Formalisierung | Bestehender Code | Status |
 |---|---|---|---|
-| **§2.1 Δ(x,y)** | Difference-Maß | `primitives.difference()` — Euklidisch | ✅ Vorhanden, aber nur Euklidisch |
-| **§2.2 R(x→y \| H,L)** | Resistance abhängig von H und L | `Path.resistance` — statischer Wert | ⚠️ Keine H/L-Abhängigkeit |
-| **§2.3 H_t = (e₁...e_t)** | Historization als Sequenz | `Historization` — hat `decay_factor` | ⚠️ Kein U/F-Trace-Split |
-| **§2.4 v_x(y) = Δ·M_H·exp(−S)** | Lokales Transitionsfeld | — | ❌ Fehlt komplett |
-| **§3 S(x→y) = Δ·R** | Tension | Implizit in `engine.py` | ⚠️ Nicht als eigenes Konzept |
-| **§4–5 Pfade, Pfad-Tension S(p)** | Pfad-Summation | `Path` — hat `resistance`, keine Summation | ⚠️ Nur Einzel-Edges |
-| **§6 C(p) = exp(−S(p))** | Kohärenz | — | ❌ Fehlt |
-| **§7 L_t = (X_t, E_t, v_t, S_t, H_t)** | Landschaft als Gesamtzustand | — | ❌ Fehlt |
-| **§8 Non-Integrable Structure** | Integrable vs. nicht-integrable Komponenten | `OntodynamicAdmissibility.check_integrability` | ⚠️ Prüft, aber dekomponiert nicht |
+| **§2.1 Δ(x,y)** | Difference-Maß | `landscape.difference()` | ✅ `e0_controller` |
+| **§2.2 R(x→y \| H,L)** | Resistance abhängig von H und L | `landscape.effective_resistance()` | ✅ `e0_controller` |
+| **§2.3 H_t = (e₁...e_t)** | Historization als Sequenz | `historization.py` (U/F-Traces) | ✅ `e0_controller` |
+| **§2.4 v_x(y) = Δ·M_H·exp(−S)** | Lokales Transitionsfeld | `landscape.transition_field()` (M_H=1) | ✅ vereinfacht |
+| **§3 S(x→y) = Δ·R** | Tension | `tension.tension()` | ✅ `e0_controller` |
+| **§4–5 Pfade, Pfad-Tension S(p)** | Pfad-Summation | `tension.path_tension()` | ✅ `e0_controller` |
+| **§6 C(p) = exp(−S(p))** | Kohärenz | `tension.coherence()` | ✅ `e0_controller` |
+| **§7 L_t = (X_t, E_t, v_t, S_t, H_t)** | Landschaft als Gesamtzustand | `landscape.Landscape` | ✅ `e0_controller` |
+| **§8 Non-Integrable Structure** | Integrable vs. nicht-integrable Komponenten | `potential.decomposition()` | ✅ Phase 2a |
 | **§9 Φ(x) = Σ Δ·R** | Lokales Potential | `potential.phi()` | ✅ Phase 2a |
 | **§10 v_grad = Φ(x)−Φ(y)** | Gradient-Komponente | `potential.v_grad()` | ✅ Phase 2a |
 | **§11 v_rot = v − v_grad** | Rotations-Komponente | `potential.v_rot()` | ✅ Phase 2a |
@@ -76,13 +76,13 @@ Die folgende Tabelle zeigt exakt, wo der bestehende Code die Spec abdeckt und wo
 | **§14 Holonomie Θ(γ)** | Geschlossene Schleifen | `connection.holonomy()` | ✅ Phase 2a |
 | **§15 Ψ(p) = exp(−S)·exp(iΘ)** | Komplexe Pfad-Darstellung | `wavepath.psi()` | ✅ Phase 2a |
 | **§16 Ψ(z) = Σ Ψ(p)** | Pfad-Summation (Interferenz) | `wavepath.sum_paths()` | ✅ Phase 2a |
-| **§17.1 U_t / F_t Traces** | Success/Failure-Trennung | — | ❌ Fehlt |
-| **§17.2 δ_H = λ_f·F − λ_s·U** | Historization-Korrektur | — | ❌ Fehlt |
-| **§17.3 Clipping** | Bounded Dynamics | — | ❌ Fehlt |
-| **§18 p\* = argmin S_eff** | Controller-Kernregel | `engine.find_best_path` — ähnlich, aber ohne S_eff | ⚠️ Konzeptionell nah |
-| **§19 Stability Z_t** | Diskretes dynamisches System | — | ❌ Fehlt |
+| **§17.1 U_t / F_t Traces** | Success/Failure-Trennung | `historization.py` | ✅ `e0_controller` |
+| **§17.2 δ_H = λ_f·F − λ_s·U** | Historization-Korrektur | `historization.delta_H()` | ✅ `e0_controller` |
+| **§17.3 Clipping** | Bounded Dynamics | `historization.py` (δ_max) | ✅ `e0_controller` |
+| **§18 p\* = argmin S_eff** | Controller-Kernregel | `controller.select_next()` | ✅ `e0_controller` |
+| **§19 Stability Z_t** | Diskretes dynamisches System | — | ⚪ Konzeptionell, kein Code nötig |
 
-**Zusammenfassung:** Die Prozente (~25/15/60) sind weniger wichtig als die **kritischen Abhängigkeiten**. Wenn vier Dinge stehen — Landscape, Historization(U/F), Controller-Loop, v_x(y) — ist v0.1 operativ. §9–16 (Φ, ω, Θ, Ψ) können warten.
+**Zusammenfassung:** §2–18 sind vollständig in `e0_controller/` implementiert. §19 (Stability Z_t) ist ein konzeptionelles Kriterium ohne eigenen Code-Bedarf — R_eff-Konvergenz wird über Historization-Clipping (§17.3) sichergestellt.
 
 ---
 
