@@ -10,7 +10,7 @@ Phase 1 (§2–6, §17–18):
   - Controller: candidates → argmin S_eff → escalate → execute → historize
 
 Phase 2 (§9–16):
-  - Potential: Φ(x), v_grad, v_rot (Helmholtz-Zerlegung)
+  - Potential: Φ(x), v_grad, v_rot (discrete spec-aligned decomposition)
   - Connection: ω(x,y), Θ(path), Holonomy
   - Wave Path: Ψ(p) = exp(−S+iΘ), Pfad-Summation, Interferenz
 

@@ -36,7 +36,7 @@ from e0_controller.primitives import Edge, Outcome
 from e0_controller.historization import Historization
 from e0_controller.tension import tension, coherence, path_tension
 from e0_controller.landscape import Landscape
-from e0_controller.controller import E0Controller, RunTrace
+from e0_controller.controller import E0Controller, RunTrace, EscalationType
 
 
 # ──────────────────────────────────────────────
@@ -501,10 +501,10 @@ def test_seven_core_functions():
 
     # 6. select_next(x)
     ctrl = E0Controller(L, all_success, alpha=2.0, recent_k=3)
-    nxt, esc = ctrl.select_next("A")
+    nxt, esc, esc_type = ctrl.select_next("A")
     assert nxt in {"B", "C"}
     assert not esc
-    print(f"   6. select_next(A) = {nxt} (escalated={esc})")
+    print(f"   6. select_next(A) = {nxt} (escalated={esc}, type={esc_type})")
 
     # 7. update_historization(edge, outcome)
     L.historization.update(edge, Outcome.SUCCESS)
@@ -513,6 +513,122 @@ def test_seven_core_functions():
     print(f"   7. update_historization(A→B, SUCCESS) → τ={L.historization.tau}")
 
     print("   ✓ All 7 core functions verified")
+
+
+# ──────────────────────────────────────────────
+# K11 Tests — Admissibility Thresholds
+# ──────────────────────────────────────────────
+
+def test_k11_default_no_filter():
+    """K11: Default params (s_max=∞, c_min=0) behave identically to pre-K11."""
+    print("── test_k11_default_no_filter ──")
+    L = build_mini_landscape()
+
+    ctrl_default = E0Controller(L, all_success, alpha=2.0, recent_k=3)
+    ctrl_explicit = E0Controller(L, all_success, alpha=2.0, recent_k=3,
+                                  s_max=math.inf, c_min=0.0)
+
+    for state in ["A", "B", "E"]:
+        nbrs_def = sorted(ctrl_default._admissible_neighbors(state))
+        nbrs_exp = sorted(ctrl_explicit._admissible_neighbors(state))
+        assert nbrs_def == nbrs_exp, f"{state}: {nbrs_def} != {nbrs_exp}"
+
+    print("   ✓ Default params == explicit (∞, 0) — no filter")
+
+
+def test_k11_smax_filter():
+    """K11: s_max shrinks admissible neighbors."""
+    print("── test_k11_smax_filter ──")
+    L = build_mini_landscape()
+
+    # From A: S_eff(A→B) = 0.50, S_eff(A→C) = 0.32
+    # With s_max=0.40 → only C passes
+    ctrl = E0Controller(L, all_success, alpha=0.0, recent_k=0,
+                         s_max=0.40)
+
+    nbrs = ctrl._admissible_neighbors("A")
+    assert set(nbrs) == {"C"}, f"Expected {{C}}, got {set(nbrs)}"
+    print(f"   s_max=0.40: A neighbors = {nbrs}")
+    print("   ✓ s_max filters out high-tension edges")
+
+
+def test_k11_cmin_filter():
+    """K11: c_min shrinks admissible neighbors."""
+    print("── test_k11_cmin_filter ──")
+    L = build_mini_landscape()
+
+    # coherence(s) = 1/(1+s).  C(0.32) ≈ 0.76,  C(0.50) ≈ 0.67
+    # With c_min=0.70 → only C passes (C(0.32) ≈ 0.76 ≥ 0.70)
+    ctrl = E0Controller(L, all_success, alpha=0.0, recent_k=0,
+                         c_min=0.70)
+
+    nbrs = ctrl._admissible_neighbors("A")
+    assert set(nbrs) == {"C"}, f"Expected {{C}}, got {set(nbrs)}"
+    print(f"   c_min=0.70: A neighbors = {nbrs}")
+    print("   ✓ c_min filters out low-coherence edges")
+
+
+# ──────────────────────────────────────────────
+# K12 Tests — Escalation Types
+# ──────────────────────────────────────────────
+
+def test_k12_dead_end_type():
+    """K12: Dead-end state (D) produces DEAD_END escalation."""
+    print("── test_k12_dead_end_type ──")
+    L = build_mini_landscape()
+
+    ctrl = E0Controller(L, all_success, alpha=2.0, recent_k=3)
+    target, escalated, esc_type = ctrl.select_next("D")
+
+    assert escalated, "Should escalate from dead-end"
+    assert esc_type == EscalationType.DEAD_END, f"Expected DEAD_END, got {esc_type}"
+    assert target is not None, "Should find an escalation target"
+    print(f"   D → {target} (escalated={escalated}, type={esc_type.value})")
+    print("   ✓ Dead-end correctly classified as DEAD_END")
+
+
+def test_k12_filtered_type():
+    """K12: Tight s_max causes FILTERED escalation (edges exist but fail K11)."""
+    print("── test_k12_filtered_type ──")
+    L = build_mini_landscape()
+
+    # From A: S_eff(A→B) = 0.50, S_eff(A→C) = 0.32
+    # s_max=0.10 → both fail → FILTERED
+    ctrl = E0Controller(L, all_success, alpha=0.0, recent_k=0,
+                         s_max=0.10)
+
+    target, escalated, esc_type = ctrl.select_next("A")
+
+    assert escalated, "Should escalate when K11 filters all"
+    assert esc_type == EscalationType.FILTERED, f"Expected FILTERED, got {esc_type}"
+    print(f"   A (s_max=0.10) → {target} (type={esc_type.value})")
+    print("   ✓ K11-blocked edges correctly classified as FILTERED")
+
+
+def test_k12_escalation_in_trace():
+    """K12: escalation_type is recorded in StepResult during a run."""
+    print("── test_k12_escalation_in_trace ──")
+    L = build_mini_landscape()
+
+    ctrl = E0Controller(L, all_success, alpha=2.0, recent_k=3)
+    trace = ctrl.run(start="D", max_cycles=3)
+
+    # D is dead-end → first step must be escalated with DEAD_END type
+    assert len(trace.steps) >= 1, "Should have at least 1 step"
+    first = trace.steps[0]
+    assert first.escalated, "First step from D should be escalated"
+    assert first.escalation_type == EscalationType.DEAD_END, \
+        f"Expected DEAD_END, got {first.escalation_type}"
+
+    # Non-escalated steps should have NONE type
+    non_esc = [s for s in trace.steps if not s.escalated]
+    for s in non_esc:
+        assert s.escalation_type == EscalationType.NONE, \
+            f"Non-escalated step has type {s.escalation_type}"
+
+    print(f"   Run from D: {len(trace.steps)} steps, "
+          f"first escalation_type={first.escalation_type.value}")
+    print("   ✓ escalation_type correctly recorded in StepResult/RunTrace")
 
 
 # ──────────────────────────────────────────────
@@ -535,6 +651,12 @@ def run_all_tests():
         test_failure_avoidance,
         test_full_run_to_goal,
         test_landscape_invariance,
+        test_k11_default_no_filter,
+        test_k11_smax_filter,
+        test_k11_cmin_filter,
+        test_k12_dead_end_type,
+        test_k12_filtered_type,
+        test_k12_escalation_in_trace,
     ]
 
     passed = 0

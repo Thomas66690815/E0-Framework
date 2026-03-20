@@ -1,6 +1,6 @@
 # E₀ Controller — Status, Lücken, Lösungswege
 
-**Stand:** 2026-03-19 (v0.7 — Phase 2a abgeschlossen)
+**Stand:** 2026-03-20 (v0.8 — K11+K12 Fixes vor Phase 3)
 **Kontext:** Neuansatz nach 3 Wochen Pause. Multi-Agent-Orchestrierung (Keimzelle) verworfen.
 **Neuer Ansatz:** Einzelner deterministischer E₀ Controller als Reasoning-Engine.
 
@@ -13,8 +13,8 @@
 | **Phase 1a-fix** — K1+K6 Fix, K13 Metriken | ✅ Abgeschlossen | `8eb0e9a` |
 | **Phase 1b** — Invoice-Domain (Rechnungsprüfung) | ✅ Abgeschlossen (33/33 Tests) | `cca35bf` |
 | **Phase 2-prep** — K3 Fix (difference-Semantik) | ✅ Abgeschlossen | `edcced6` |
-| **Phase 2a** — Potential/Connection/WavePath | ✅ Abgeschlossen (56/56 Tests) | — |
-| **Phase 2b** — Offene K-Items vor Phase 3 | ⬜ Nicht begonnen | — |
+| **Phase 2a** — Potential/Connection/WavePath | ✅ Abgeschlossen (56/56 Tests) | `71ba766` |
+| **Phase 2b-fix** — K11+K12 Fixes (Admissibility+Escalation) | ✅ Abgeschlossen (108/108 Tests) | — |
 | **Phase 3** — LLM-Integration | ⬜ Nicht begonnen | — |
 | **Phase 4** — Spin-1/2 offene Punkte | ⬜ Nicht begonnen (parallel) | — |
 
@@ -424,24 +424,22 @@ Die folgenden Punkte sind **bekannte Schwächen** der aktuellen Implementierung.
 
 **Neue Punkte aus externer Kritik:**
 
-#### K11 — `admissible_neighbors()` ist zu flach 🟡
+#### K11 — `admissible_neighbors()` ist zu flach ✅
 
-**Problem:** Admissibility = "Edge existiert und S_eff < ∞". Das ist fast identisch mit "edge exists". E₀-Theorie kennt reichere Admissibility: Policy blocks, hard constraints, context conditions, Ziel-Kompatibilität.
+**Problem:** Admissibility = "Edge existiert und S_eff < ∞". Das ist fast identisch mit "edge exists".
 
-**Für v0.1 tolerierbar.** Aber für Phase 1b braucht eine echte Domäne echte Admissibility-Filter.
+**Gelöst:** `E0Controller` hat jetzt `s_max` (Tension-Ceiling) und `c_min` (Coherence-Floor) Parameter. `_admissible_neighbors()` filtert über `_passes_admissibility(s_eff)`. Defaults (s_max=∞, c_min=0) verhalten sich rückwärtskompatibel. 6 Tests (3 K11 + 3 K12).
 
-**Lösung:** `AdmissibilityFilter` als Callable/Protocol in Landscape. Default = `S_eff < ∞`. Erweiterbar pro Domäne.
+#### K12 — Escalation-Typen nicht getrennt ✅
 
-#### K12 — Escalation-Typen nicht getrennt 🟡
+**Problem:** "Escalation" vermischt verschiedene Konzepte — der Code nannte alles "escalated=True".
 
-**Problem:** "Escalation" vermischt drei verschiedene Konzepte:
-1. **Terminal Escalation** — Mensch/externes System übernimmt
-2. **Recovery Jump** — interner Struktur-Sprung (was wir jetzt tun)
-3. **External Review** — Prüfung, ob der Pfad noch sinnvoll ist
+**Gelöst:** `EscalationType` Enum (NONE, DEAD_END, FILTERED, EXHAUSTED) klassifiziert den Grund der Escalation. `select_next()` gibt jetzt 3-Tuple `(target, escalated, esc_type)` zurück. `_escalation_target()` wählt je nach Typ verschiedene Recovery-Strategien:
+- DEAD_END → Jump zum State mit meisten Ausgangskanten
+- FILTERED → Cheapest raw neighbor (K11-Filter umgehen)
+- EXHAUSTED → Least recently visited
 
-Der Code nennt alles "escalated=True", aber es ist nur ein Recovery Jump.
-
-**Lösung:** Enum `EscalationType(RECOVERY_JUMP, TERMINAL, EXTERNAL_REVIEW)` statt `bool`. Für v0.1: klar dokumentieren, dass die aktuelle Escalation ein "bounded structural jump by inserting a high-tension emergency edge" ist — nicht mehr.
+`StepResult.escalation_type` wird in RunTrace gespeichert.
 
 #### K13 — Keine operativen Metriken 🟡
 
@@ -476,13 +474,14 @@ Der Code nennt alles "escalated=True", aber es ist nur ein Recovery Jump.
 | K8 | Tests zu gutartig | Eigen | ✅ Adressiert (Phase 1b) | eigenes File |
 | K9 | Keine Konvergenz | Eigen | ⚪ Phase 2 | ~10 Zeilen |
 | K10 | Kein Callback | Eigen | ⚪ Phase 1b | ~5 Zeilen |
-| K11 | Admissibility zu flach | Extern | 🟡 Phase 2 | ~20 Zeilen |
-| K12 | Escalation-Typen vermischt | Extern | 🟡 Phase 2 | ~15 Zeilen |
+| K11 | Admissibility zu flach | Extern | ✅ Gefixt (Phase 2b-fix) | ~40 Zeilen |
+| K12 | Escalation-Typen vermischt | Extern | ✅ Gefixt (Phase 2b-fix) | ~60 Zeilen |
 | K13 | Keine operativen Metriken | Extern | ✅ Gefixt (Phase 1b) | ~20 Zeilen |
 
 **Aktualisierter Handlungsplan:**
-- **✅ Erledigt:** K1 (Escalation-Buffer), K3 (difference-Semantik), K6 (candidates-timing), K8 (Invoice-Domain), K13 (Metriken)
-- **🟡 Phase 2b (Pflicht vor Phase 3):** K2 (lazy Decay), K5 (Escalation-Ziel), K7 (Penalty), K11 (Admissibility-Filter), K12 (Escalation-Typen)
+- **✅ Erledigt:** K1 (Escalation-Buffer), K3 (difference-Semantik), K6 (candidates-timing), K8 (Invoice-Domain), K11 (Admissibility s_max/c_min), K12 (EscalationType), K13 (Metriken)
+- **✅ Phase 2b-fix:** K11 (Admissibility s_max/c_min), K12 (EscalationType Enum + typed strategies)
+- **🟡 Wünschenswert:** K2 (lazy Decay), K5 (teilweise durch K12 adressiert), K7 (Penalty-Skalierung)
 - **⚪ Bei Bedarf:** K4, K9, K10
 
 ---

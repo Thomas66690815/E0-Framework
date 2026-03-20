@@ -18,11 +18,20 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Callable, Dict, List, Optional, Set, Tuple
 
 from .primitives import Edge, Outcome
 from .landscape import Landscape
-from .tension import tension
+from .tension import tension, coherence
+
+
+class EscalationType(Enum):
+    """K12: Distinct escalation reasons."""
+    NONE = "none"             # no escalation (normal transition)
+    DEAD_END = "dead_end"     # no outgoing edges at all
+    FILTERED = "filtered"     # edges exist but none pass admissibility
+    EXHAUSTED = "exhausted"   # all admissible heavily penalized (revisit-dominant)
 
 
 @dataclass
@@ -37,6 +46,7 @@ class StepResult:
     r_eff_after: float           # R_eff after historization update
     candidates: List[str]        # who was admissible
     escalated: bool = False      # was this an escalation?
+    escalation_type: EscalationType = EscalationType.NONE  # K12: why
 
 
 @dataclass
@@ -128,11 +138,12 @@ ExecuteFn = Callable[[str, str], Outcome]
 
 class E0Controller:
     """
-    Deterministic E₀ Controller v0.1
+    Deterministic E₀ Controller v0.2
 
     Implements greedy transition selection with:
+    - Admissibility filter: S_max and C_min thresholds (K11)
     - Revisit-penalty: penalize recently visited states
-    - Escalation: when no admissible neighbor exists
+    - Typed escalation: DEAD_END / FILTERED / EXHAUSTED (K12)
     - Historization: learn from each transition outcome
 
     Parameters:
@@ -141,6 +152,8 @@ class E0Controller:
         alpha: Revisit-penalty weight (default 2.0)
         recent_k: Number of recent states to penalize (default 3)
         max_escalation_R: Maximum R₀ to assign during escalation (default 5.0)
+        s_max: Maximum admissible tension (K11, default ∞ = no filter)
+        c_min: Minimum coherence to be admissible (K11, default 0.0 = no filter)
     """
 
     def __init__(
@@ -150,16 +163,19 @@ class E0Controller:
         alpha: float = 2.0,
         recent_k: int = 3,
         max_escalation_R: float = 5.0,
+        s_max: float = math.inf,
+        c_min: float = 0.0,
     ):
         self.landscape = landscape
         self.execute_fn = execute_fn
         self.alpha = alpha
         self.recent_k = recent_k
         self.max_escalation_R = max_escalation_R
+        self.s_max = s_max      # K11: tension ceiling
+        self.c_min = c_min      # K11: coherence floor
         self._recent: List[str] = []   # sliding window of recent states
 
         # K1 fix: Escalation edges live here, NOT in the Landscape.
-        # Maps Edge → (delta, R₀). The Landscape stays immutable.
         self._escalation_edges: Dict[Edge, Tuple[float, float]] = {}
 
     # --- Edge resolution (landscape + escalation overlay) ---
@@ -195,14 +211,55 @@ class E0Controller:
         return tension(delta, r_eff)
 
     def _admissible_neighbors(self, x: str) -> List[str]:
-        """Admissible from landscape + escalation edges."""
-        neighbors = self.landscape.admissible_neighbors(x)
-        # Add escalation targets not already in neighbors
+        """
+        K11: Admissibility with configurable thresholds.
+
+        A neighbor y is admissible from x if:
+        1. S_eff(x→y) < ∞  (edge exists)
+        2. S_eff(x→y) ≤ s_max  (tension ceiling)
+        3. C(x→y) ≥ c_min  (coherence floor)
+
+        With defaults (s_max=∞, c_min=0.0), this behaves like before.
+        """
+        neighbors = []
+        # Check landscape edges
+        for edge in self.landscape._R0:
+            if edge.source == x:
+                s = self._effective_tension(x, edge.target)
+                if self._passes_admissibility(s):
+                    neighbors.append(edge.target)
+        # Check escalation overlay
         for edge, (_delta, _r0) in self._escalation_edges.items():
+            if edge.source == x and edge.target not in neighbors:
+                s = self._effective_tension(x, edge.target)
+                if self._passes_admissibility(s):
+                    neighbors.append(edge.target)
+        return neighbors
+
+    def _raw_neighbors(self, x: str) -> List[str]:
+        """All neighbors with finite tension (ignoring K11 filter)."""
+        neighbors = []
+        for edge in self.landscape._R0:
+            if edge.source == x:
+                if not math.isinf(self._effective_tension(x, edge.target)):
+                    neighbors.append(edge.target)
+        for edge in self._escalation_edges:
             if edge.source == x and edge.target not in neighbors:
                 if not math.isinf(self._effective_tension(x, edge.target)):
                     neighbors.append(edge.target)
         return neighbors
+
+    def _passes_admissibility(self, s_eff: float) -> bool:
+        """K11: Check if a tension value passes the admissibility filter."""
+        if math.isinf(s_eff):
+            return False
+        if s_eff > self.s_max:
+            return False
+        if self.c_min > 0.0:
+            c = coherence(s_eff)
+            if c < self.c_min:
+                return False
+        return True
 
     def _update_recent(self, state: str) -> None:
         """Maintain sliding window of recently visited states."""
@@ -224,50 +281,84 @@ class E0Controller:
             s_eff += self.alpha
         return s_eff
 
-    def select_next(self, current: str) -> Tuple[Optional[str], bool]:
+    def select_next(self, current: str) -> Tuple[Optional[str], bool, EscalationType]:
         """
-        Function 6: select_next(x) → (next_state, escalated?)
+        Function 6: select_next(x) → (next_state, escalated?, escalation_type)
 
         §18: p* = argmin S_eff(p)
 
-        Strategy: Greedy + Revisit-Penalty + Escalation.
-        1. Get admissible neighbors (landscape + escalation overlay).
+        Strategy: Greedy + Revisit-Penalty + Typed Escalation.
+        1. Get admissible neighbors (K11 filtered).
         2. Pick argmin of penalized tension.
-        3. If empty → escalation: bounded structural jump (K1: stored in
-           controller buffer, NOT mutating the Landscape).
+        3. If empty → classify WHY and escalate accordingly (K12).
         """
         neighbors = self._admissible_neighbors(current)
 
         if neighbors:
-            # Greedy with revisit-penalty
             best = min(neighbors, key=lambda y: self._penalized_tension(current, y))
-            return best, False
+            return best, False, EscalationType.NONE
 
-        # --- Escalation (Recovery Jump) ---
-        # No admissible neighbors. This is a dead-end.
-        # Strategy: find viable state and create escalation edge in buffer.
+        # --- K12: Typed Escalation ---
+        raw = self._raw_neighbors(current)
+
+        if not raw:
+            # No outgoing edges at all → true dead-end
+            esc_type = EscalationType.DEAD_END
+        elif len(raw) > len(neighbors):
+            # Edges exist but K11 filter removed them
+            esc_type = EscalationType.FILTERED
+        else:
+            # All admissible are too heavily penalized
+            esc_type = EscalationType.EXHAUSTED
+
+        # Recovery strategy depends on type
+        target = self._escalation_target(current, esc_type)
+        if target is None:
+            return None, True, esc_type
+
+        # Store escalation edge in controller buffer
+        edge = Edge(current, target)
+        self._escalation_edges[edge] = (1.0, self.max_escalation_R)
+        return target, True, esc_type
+
+    def _escalation_target(self, current: str, esc_type: EscalationType) -> Optional[str]:
+        """
+        K12: Different escalation strategies per type.
+
+        DEAD_END:   Jump to state with most outgoing edges (max connectivity).
+        FILTERED:   Lower bar — pick from raw neighbors (bypass K11 threshold).
+        EXHAUSTED:  Pick least-recently-visited viable state.
+        """
+        if esc_type == EscalationType.FILTERED:
+            # FILTERED: raw neighbors exist but fail K11 → pick cheapest raw
+            raw = self._raw_neighbors(current)
+            if raw:
+                best = min(raw, key=lambda y: self._effective_tension(current, y))
+                return best
+
+        if esc_type == EscalationType.EXHAUSTED:
+            # EXHAUSTED: all neighbors recently visited → pick least recent
+            neighbors = self._admissible_neighbors(current)
+            # Fallback to raw if admissible is truly empty
+            if not neighbors:
+                neighbors = self._raw_neighbors(current)
+            if neighbors:
+                # Prefer states NOT in recent window
+                not_recent = [y for y in neighbors if y not in self._recent]
+                if not_recent:
+                    return min(not_recent, key=lambda y: self._effective_tension(current, y))
+                return min(neighbors, key=lambda y: self._effective_tension(current, y))
+
+        # DEAD_END (or fallback): global jump to most-connected state
         all_states = self.landscape.states - {current}
         if not all_states:
-            return None, True  # nowhere to go at all
+            return None
 
-        # Find states that have outgoing edges (not also dead-ends)
-        viable = []
-        for s in all_states:
-            out = self.landscape.admissible_neighbors(s)
-            if out:
-                viable.append(s)
-
+        viable = [s for s in all_states if self.landscape.admissible_neighbors(s)]
         if not viable:
-            return None, True  # entire landscape is dead
+            return None
 
-        # Among viable, pick the one with most outgoing edges
-        # (most potential for progress)
-        best_esc = max(viable, key=lambda s: len(self.landscape.admissible_neighbors(s)))
-
-        # Store escalation edge in controller buffer — Landscape stays clean
-        edge = Edge(current, best_esc)
-        self._escalation_edges[edge] = (1.0, self.max_escalation_R)
-        return best_esc, True
+        return max(viable, key=lambda s: len(self.landscape.admissible_neighbors(s)))
 
     def cycle(self, current: str) -> Optional[StepResult]:
         """
@@ -276,7 +367,7 @@ class E0Controller:
 
         Returns None if no transition is possible.
         """
-        target, escalated = self.select_next(current)
+        target, escalated, esc_type = self.select_next(current)
         if target is None:
             return None
 
@@ -313,6 +404,7 @@ class E0Controller:
             r_eff_after=r_eff_after,
             candidates=candidates,
             escalated=escalated,
+            escalation_type=esc_type,
         )
 
     def run(
