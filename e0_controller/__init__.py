@@ -27,10 +27,14 @@ Phase 3b (Live + Open Domain):
   - LLM-bootstrapped Landscapes for arbitrary domains
   - compare_runs for Mock vs. Live validation
 
+Phase 3c (Graph Validation):
+  - goal_reachable / find_happy_path / detect_traps / detect_trivial_loops
+  - graph_quality — composite pre-run structural assessment
+
 See E0_CONTROLLER_STATUS.md for full project context.
 """
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
 from .primitives import Edge, Outcome
 from .historization import Historization, TraceRecord
@@ -46,4 +50,8 @@ from .llm_adapter import (
     DeltaEstimate, ProposedState, TransitionResult,
     ResistanceEstimate, LandscapeProposal,
     materialize_landscape, task_map_from_proposal,
+)
+from .graph_validation import (
+    goal_reachable, find_happy_path, find_recovery_edges,
+    detect_traps, detect_trivial_loops, graph_quality, GraphQuality,
 )

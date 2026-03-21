@@ -35,6 +35,7 @@ from e0_controller.llm_adapter import (
     materialize_landscape,
     task_map_from_proposal,
 )
+from e0_controller.graph_validation import graph_quality
 
 
 # ──────────────────────────────────────────────
@@ -165,6 +166,14 @@ def run_demo(
     L = materialize_landscape(proposal)
     task_map = task_map_from_proposal(proposal)
     print(f"\n   Landscape: {len(L.states)} states, {len(L.edges)} edges")
+
+    # 3b. Graph quality validation (Phase 3c)
+    print("\n── Step 1b: Graph quality check ──")
+    gq = graph_quality(L, start, goal)
+    print(gq.summary())
+    if not gq.ok():
+        print("\n*** ABORTED: graph failed critical quality checks ***")
+        return None, proposal
 
     # 4. Setup MemOS
     memos_dir = os.path.join(os.getcwd(), "memos")

@@ -1,25 +1,27 @@
 """
-E₀ Demo — Incident / Outage Postmortem Briefing (Phase 3b)
-==============================================================
-Second open-domain test: the LLM bootstraps a state graph for
-analysing a raw incident report and producing a structured postmortem.
+E₀ Demo — Scientific Paper → Research Brief (Phase 3c)
+========================================================
+Third open-domain test: the LLM bootstraps a state graph for
+analysing a scientific paper abstract and producing a structured
+research brief.
 
-This domain was chosen because it is:
-  - semantically open enough for the LLM-bootstrap to be meaningful,
-  - structurally rigid enough to be empirically verifiable
-    (timeline, trigger, root cause, impact, mitigations, follow-ups),
-  - rich in natural error/recovery paths (incomplete logs, ambiguous
-    cause, human review needed).
+This domain was chosen because it:
+  - requires semantic verdichtung (compression) — the LLM must
+    decompose research logic into meaningful states,
+  - is prüfbar (verifiable) — problem, method, results, limitations
+    can be checked against the source text,
+  - is structurally different from the previous process-centric
+    domains (Invoice, Incident), testing whether 3b/3c generalise.
 
 Usage:
     # With real API:
-    python -m e0_controller.demo_incident_postmortem
+    python -m e0_controller.demo_research_brief
 
     # With mock (no API key needed):
-    python -m e0_controller.demo_incident_postmortem --mock
+    python -m e0_controller.demo_research_brief --mock
 
-    # Custom incident description:
-    python -m e0_controller.demo_incident_postmortem --task "Database cluster failed over due to disk saturation"
+    # Custom paper abstract:
+    python -m e0_controller.demo_research_brief --task "We present a novel ..."
 
 Requires OPENAI_API_KEY in .env or environment (unless --mock).
 """
@@ -47,18 +49,24 @@ from e0_controller.graph_validation import graph_quality
 # ──────────────────────────────────────────────
 
 DEFAULT_TASK = (
-    "A production payment-processing service experienced a 47-minute outage "
-    "during peak hours. The monitoring dashboard showed elevated error rates "
-    "starting at 14:02 UTC, followed by full service unavailability at 14:11 UTC. "
-    "The service was restored at 14:58 UTC via a rollback of the most recent "
-    "deployment. Preliminary indicators point to a database connection pool "
-    "exhaustion caused by a missing index on a newly deployed query path. "
-    "Produce a structured postmortem briefing that covers: incident timeline, "
-    "trigger identification, root cause analysis, impact assessment, "
-    "mitigations applied, and follow-up actions."
+    "Analyze the following paper abstract and produce a structured research "
+    "brief for a technical audience.\n\n"
+    "ABSTRACT: We present a transformer-based architecture for low-resource "
+    "machine translation that combines pre-trained multilingual embeddings "
+    "with a novel cross-lingual attention mechanism. On four language pairs "
+    "with fewer than 100k parallel sentences, our method improves BLEU scores "
+    "by 3.2–5.8 points over strong baselines, including back-translation and "
+    "transfer learning from related high-resource pairs. Ablation studies "
+    "show that the cross-lingual attention layer contributes 60% of the gain, "
+    "while the remaining improvement comes from curriculum-based fine-tuning. "
+    "Limitations include degraded performance on morphologically rich targets "
+    "and reliance on a multilingual pre-training corpus that may not cover "
+    "all low-resource languages equally. We release code and models.\n\n"
+    "The brief should cover: research problem, method, key results, "
+    "limitations, implications, and open questions."
 )
-DEFAULT_START = "RAW_INCIDENT_REPORT"
-DEFAULT_GOAL = "POSTMORTEM_DELIVERED"
+DEFAULT_START = "RAW_PAPER_TEXT"
+DEFAULT_GOAL = "RESEARCH_BRIEF_DELIVERED"
 
 
 # ──────────────────────────────────────────────
@@ -66,10 +74,9 @@ DEFAULT_GOAL = "POSTMORTEM_DELIVERED"
 # ──────────────────────────────────────────────
 
 def mock_llm_call(system: str, user: str, config: LLMConfig) -> str:
-    """Deterministic mock for incident-postmortem demo.
+    """Deterministic mock for research-brief demo.
 
-    The mock landscape models 12 states (8 happy-path + 4 recovery)
-    and 15 edges including natural error/retry loops.
+    Models 11 states (8 happy-path + 3 recovery) and 13 edges.
     """
     import json as _json
 
@@ -77,70 +84,62 @@ def mock_llm_call(system: str, user: str, config: LLMConfig) -> str:
         return _json.dumps({
             "states": [
                 # Happy path
-                "RAW_INCIDENT_REPORT",
-                "TIMELINE_PARSED",
-                "IMPACT_IDENTIFIED",
-                "TRIGGER_HYPOTHESIZED",
-                "ROOT_CAUSE_ANALYZED",
-                "MITIGATIONS_IDENTIFIED",
-                "FOLLOWUPS_DRAFTED",
-                "POSTMORTEM_ASSEMBLED",
-                "POSTMORTEM_DELIVERED",
+                "RAW_PAPER_TEXT",
+                "ABSTRACT_PARSED",
+                "PROBLEM_IDENTIFIED",
+                "METHOD_EXTRACTED",
+                "RESULTS_EXTRACTED",
+                "LIMITATIONS_IDENTIFIED",
+                "IMPLICATIONS_DRAFTED",
+                "BRIEF_ASSEMBLED",
+                "RESEARCH_BRIEF_DELIVERED",
                 # Recovery / error states
-                "TIMELINE_INCOMPLETE",
-                "LOGS_INSUFFICIENT",
-                "CAUSE_AMBIGUOUS",
+                "METHOD_AMBIGUOUS",
+                "RESULTS_INCOMPLETE",
                 "HUMAN_REVIEW",
             ],
             "edges": [
                 # ── Happy path ──
-                {"source": "RAW_INCIDENT_REPORT", "target": "TIMELINE_PARSED",
+                {"source": "RAW_PAPER_TEXT", "target": "ABSTRACT_PARSED",
+                 "delta": 0.2, "resistance": 0.3,
+                 "description": "Parse abstract into structured sections (objective, method, results)."},
+                {"source": "ABSTRACT_PARSED", "target": "PROBLEM_IDENTIFIED",
                  "delta": 0.3, "resistance": 0.5,
-                 "description": "Extract chronological event sequence from the raw report."},
-                {"source": "TIMELINE_PARSED", "target": "IMPACT_IDENTIFIED",
+                 "description": "Identify the core research problem and motivation."},
+                {"source": "PROBLEM_IDENTIFIED", "target": "METHOD_EXTRACTED",
                  "delta": 0.4, "resistance": 0.7,
-                 "description": "Identify affected systems, users, and business impact."},
-                {"source": "IMPACT_IDENTIFIED", "target": "TRIGGER_HYPOTHESIZED",
-                 "delta": 0.5, "resistance": 0.9,
-                 "description": "Formulate hypothesis for the immediate trigger event."},
-                {"source": "TRIGGER_HYPOTHESIZED", "target": "ROOT_CAUSE_ANALYZED",
-                 "delta": 0.6, "resistance": 1.1,
-                 "description": "Perform root cause analysis tracing trigger to underlying fault."},
-                {"source": "ROOT_CAUSE_ANALYZED", "target": "MITIGATIONS_IDENTIFIED",
-                 "delta": 0.4, "resistance": 0.8,
-                 "description": "Identify mitigations applied during incident and their effectiveness."},
-                {"source": "MITIGATIONS_IDENTIFIED", "target": "FOLLOWUPS_DRAFTED",
+                 "description": "Extract the proposed method, architecture, and key innovations."},
+                {"source": "METHOD_EXTRACTED", "target": "RESULTS_EXTRACTED",
+                 "delta": 0.5, "resistance": 0.8,
+                 "description": "Extract quantitative results, metrics, and comparisons."},
+                {"source": "RESULTS_EXTRACTED", "target": "LIMITATIONS_IDENTIFIED",
                  "delta": 0.3, "resistance": 0.6,
-                 "description": "Draft follow-up action items with owners and deadlines."},
-                {"source": "FOLLOWUPS_DRAFTED", "target": "POSTMORTEM_ASSEMBLED",
-                 "delta": 0.3, "resistance": 0.4,
-                 "description": "Assemble all sections into structured postmortem document."},
-                {"source": "POSTMORTEM_ASSEMBLED", "target": "POSTMORTEM_DELIVERED",
+                 "description": "Identify stated limitations and potential weaknesses."},
+                {"source": "LIMITATIONS_IDENTIFIED", "target": "IMPLICATIONS_DRAFTED",
+                 "delta": 0.4, "resistance": 0.7,
+                 "description": "Draft implications for the field and open questions."},
+                {"source": "IMPLICATIONS_DRAFTED", "target": "BRIEF_ASSEMBLED",
+                 "delta": 0.2, "resistance": 0.4,
+                 "description": "Assemble all sections into a coherent research brief."},
+                {"source": "BRIEF_ASSEMBLED", "target": "RESEARCH_BRIEF_DELIVERED",
                  "delta": 0.1, "resistance": 0.2,
-                 "description": "Final review card and delivery to stakeholders."},
+                 "description": "Final review and delivery of research brief."},
                 # ── Error / recovery paths ──
-                {"source": "RAW_INCIDENT_REPORT", "target": "TIMELINE_INCOMPLETE",
-                 "delta": 0.3, "resistance": 1.5,
-                 "description": "Report lacks timestamps or contains inconsistent chronology."},
-                {"source": "TIMELINE_INCOMPLETE", "target": "LOGS_INSUFFICIENT",
-                 "delta": 0.2, "resistance": 1.8,
-                 "description": "Attempt to fill gaps from logs but logs are also incomplete."},
-                {"source": "LOGS_INSUFFICIENT", "target": "HUMAN_REVIEW",
-                 "delta": 0.4, "resistance": 2.0,
-                 "description": "Escalate to human operator for manual timeline reconstruction."},
-                {"source": "HUMAN_REVIEW", "target": "TIMELINE_PARSED",
+                {"source": "PROBLEM_IDENTIFIED", "target": "METHOD_AMBIGUOUS",
+                 "delta": 0.3, "resistance": 1.2,
+                 "description": "Method description is unclear or uses non-standard terminology."},
+                {"source": "METHOD_AMBIGUOUS", "target": "METHOD_EXTRACTED",
+                 "delta": 0.4, "resistance": 1.0,
+                 "description": "Re-read with domain context, extract method with caveats."},
+                {"source": "METHOD_EXTRACTED", "target": "RESULTS_INCOMPLETE",
+                 "delta": 0.3, "resistance": 1.3,
+                 "description": "Key metrics missing or results only partially reported."},
+                {"source": "RESULTS_INCOMPLETE", "target": "HUMAN_REVIEW",
+                 "delta": 0.4, "resistance": 1.8,
+                 "description": "Escalate to human reviewer for missing data assessment."},
+                {"source": "HUMAN_REVIEW", "target": "RESULTS_EXTRACTED",
                  "delta": 0.3, "resistance": 0.8,
-                 "description": "Human provides corrected timeline, resume normal flow."},
-                {"source": "TIMELINE_INCOMPLETE", "target": "TIMELINE_PARSED",
-                 "delta": 0.4, "resistance": 1.2,
-                 "description": "Best-effort timeline reconstruction with caveats noted."},
-                # ── Root-cause ambiguity loop ──
-                {"source": "TRIGGER_HYPOTHESIZED", "target": "CAUSE_AMBIGUOUS",
-                 "delta": 0.4, "resistance": 1.6,
-                 "description": "Multiple plausible triggers, cannot isolate single cause."},
-                {"source": "CAUSE_AMBIGUOUS", "target": "ROOT_CAUSE_ANALYZED",
-                 "delta": 0.5, "resistance": 1.4,
-                 "description": "Narrow hypotheses via elimination, document uncertainty."},
+                 "description": "Human provides clarification, resume with corrected results."},
             ],
         })
 
@@ -148,19 +147,19 @@ def mock_llm_call(system: str, user: str, config: LLMConfig) -> str:
         return _json.dumps({
             "outcome": "SUCCESS",
             "result": "Transition completed successfully.",
-            "confidence": 0.85,
+            "confidence": 0.90,
         })
 
     if "Estimate the structural resistance" in user:
         return _json.dumps({
-            "resistance": 0.9,
-            "reasoning": "Incident analysis transition with moderate uncertainty.",
+            "resistance": 0.7,
+            "reasoning": "Research analysis transition with moderate complexity.",
         })
 
     # Default (extract_delta etc.)
     return _json.dumps({
-        "delta": 0.45,
-        "reasoning": "Moderate structural change in incident analysis.",
+        "delta": 0.35,
+        "reasoning": "Moderate structural change in research analysis.",
     })
 
 
@@ -174,12 +173,12 @@ def run_demo(
     goal: str = DEFAULT_GOAL,
     use_mock: bool = False,
 ):
-    """Run incident-postmortem demo with LLM-bootstrapped landscape."""
+    """Run research-brief demo with LLM-bootstrapped landscape."""
 
     print("=" * 64)
-    print("E₀ Controller — Incident Postmortem Demo (Phase 3b)")
+    print("E₀ Controller — Research Brief Demo (Phase 3c)")
     print("=" * 64)
-    print(f"\nTask: {task}")
+    print(f"\nTask: {task[:120]}...")
     print(f"Start: {start} → Goal: {goal}")
 
     # 1. Setup LLM adapter
@@ -221,7 +220,7 @@ def run_demo(
     memos = E0MemoryOS(base_dir=memos_dir)
 
     # 5. Create execute function with dynamic summary
-    session_id = "demo-incident-postmortem"
+    session_id = "demo-research-brief"
 
     def summary_provider():
         try:
