@@ -1,0 +1,39 @@
+{
+  "scenario_id": "competitor_ai_launch_001",
+  "domain": "competitor_brief",
+  "title": "Competitor launches new AI agent platform",
+  "source_text": "A major competitor announced a new AI agent platform capable of automating end-to-end business workflows. The platform integrates with ERP, CRM, and analytics systems and claims to reduce operational costs by up to 30%. Early adopters report strong productivity gains, but concerns remain about reliability and governance.",
+  "objective": "Produce an executive competitor briefing",
+  "required_outputs": [
+    "announcement_summary",
+    "capabilities",
+    "risks",
+    "market_impact",
+    "recommended_actions"
+  ],
+  "known_constraints": [
+    "avoid speculation beyond given text",
+    "clearly separate facts from interpretation",
+    "highlight uncertainty explicitly"
+  ],
+  "evaluation_points": [
+    "accuracy of summary",
+    "clarity of capability breakdown",
+    "realistic risk assessment",
+    "quality of recommended actions"
+  ],
+  "start_state": "RAW_ANNOUNCEMENT",
+  "goal_state": "BRIEFING_DELIVERED",
+  "expected_sections": [
+    "Summary",
+    "Capabilities",
+    "Risks",
+    "Market Impact",
+    "Recommended Actions"
+  ],
+  "metadata": {
+    "difficulty": "medium",
+    "source_type": "synthetic",
+    "date": "2026-03"
+  }
+}
