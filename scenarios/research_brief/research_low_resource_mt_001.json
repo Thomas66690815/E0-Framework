@@ -1,0 +1,41 @@
+{
+  "scenario_id": "research_low_resource_mt_001",
+  "domain": "research_brief",
+  "title": "Low-resource machine translation using transformers",
+  "source_text": "This paper proposes a transformer-based architecture optimized for low-resource machine translation tasks. By combining data augmentation and shared subword embeddings, the model improves BLEU scores by 6 points on average across three low-resource language pairs. However, performance degrades significantly for morphologically rich languages. The study highlights trade-offs between model capacity and data scarcity.",
+  "objective": "Produce a structured research brief",
+  "required_outputs": [
+    "problem",
+    "method",
+    "results",
+    "limitations",
+    "implications",
+    "open_questions"
+  ],
+  "known_constraints": [
+    "stay grounded in the abstract",
+    "do not invent unstated claims",
+    "mark uncertainty explicitly"
+  ],
+  "evaluation_points": [
+    "correct extraction of method",
+    "accurate summary of results",
+    "identification of limitations",
+    "quality of implications"
+  ],
+  "start_state": "RAW_PAPER_TEXT",
+  "goal_state": "RESEARCH_BRIEF_DELIVERED",
+  "expected_sections": [
+    "Problem",
+    "Method",
+    "Results",
+    "Limitations",
+    "Implications",
+    "Open Questions"
+  ],
+  "metadata": {
+    "difficulty": "medium",
+    "source_type": "synthetic",
+    "date": "2026-03"
+  }
+}
