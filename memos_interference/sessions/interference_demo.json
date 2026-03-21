@@ -1,0 +1,93 @@
+{
+  "session_id": "interference_demo",
+  "created": "2026-03-21T08:32:50.052494+00:00",
+  "updated": "2026-03-21T08:32:50.052922+00:00",
+  "canon_refs": [],
+  "landscape": {
+    "states": [
+      "A",
+      "B",
+      "S",
+      "T",
+      "XA",
+      "XB",
+      "XS",
+      "XT"
+    ],
+    "edges": [
+      {
+        "source": "S",
+        "target": "A",
+        "delta": 0.4,
+        "r0": 0.5
+      },
+      {
+        "source": "A",
+        "target": "T",
+        "delta": 0.3,
+        "r0": 0.4
+      },
+      {
+        "source": "S",
+        "target": "B",
+        "delta": 7.0,
+        "r0": 0.05
+      },
+      {
+        "source": "B",
+        "target": "T",
+        "delta": 2.2,
+        "r0": 0.05
+      },
+      {
+        "source": "T",
+        "target": "XT",
+        "delta": 1.0,
+        "r0": 5.0
+      },
+      {
+        "source": "A",
+        "target": "XA",
+        "delta": 1.0,
+        "r0": 5.1457
+      },
+      {
+        "source": "S",
+        "target": "XS",
+        "delta": 1.0,
+        "r0": 5.0432
+      },
+      {
+        "source": "B",
+        "target": "XB",
+        "delta": 1.0,
+        "r0": 5.4832
+      }
+    ]
+  },
+  "historization": {
+    "tau": 0,
+    "rho": 0.9,
+    "lambda_s": 0.15,
+    "lambda_f": 0.2,
+    "delta_max": 3.0,
+    "success_traces": {},
+    "failure_traces": {},
+    "tau_last": {}
+  },
+  "runtime": {
+    "recent_states": [],
+    "escalation_edges": [],
+    "last_escalation_type": "none",
+    "metrics": {},
+    "controller_params": {
+      "alpha": 2.0,
+      "recent_k": 3,
+      "max_escalation_R": 5.0,
+      "s_max": -1.0,
+      "c_min": 0.0
+    }
+  },
+  "runs": [],
+  "notes": {}
+}

@@ -33,6 +33,7 @@ Antisymmetrie:
 
 from __future__ import annotations
 
+import warnings
 from typing import Dict, List, Optional
 
 from .landscape import Landscape
@@ -100,9 +101,17 @@ def holonomy(L: Landscape, cycle: List[str]) -> float:
     accumulated over one full traversal. If holonomy ≠ 0,
     the landscape has non-integrable structure.
 
-    If the path is not closed (first ≠ last), this still computes
-    the path phase — but it's not a holonomy in the strict sense.
+    If the path is not closed (first ≠ last), a warning is issued
+    and the path phase is still computed — but it is not a holonomy
+    in the strict mathematical sense.
     """
+    if len(cycle) >= 2 and not is_closed(cycle):
+        warnings.warn(
+            f"holonomy() called with non-closed path "
+            f"(first={cycle[0]!r}, last={cycle[-1]!r}). "
+            f"Result is path phase Θ, not true holonomy.",
+            stacklevel=2,
+        )
     return theta(L, cycle)
 
 

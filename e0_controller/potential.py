@@ -1,6 +1,6 @@
 """
-E₀ Controller — Potential & Helmholtz-Zerlegung
-=================================================
+E₀ Controller — Potential & Spec-Aligned Decomposition
+========================================================
 Diskrete Zerlegung des Transitionsfelds in Gradient- und Rotationskomponente.
 
 Spec coverage: §9 (Lokales Potential Φ), §10 (v_grad), §11 (v_rot).
@@ -17,12 +17,14 @@ Mathematische Anmerkung:
     verbleibende nicht-integrable Rest — genau die Komponente, die Holonomie ≠ 0
     erzeugen kann.
 
-    Diese Zerlegung ist NICHT dasselbe wie eine volle Helmholtz-Zerlegung
-    (die min ||v_rot||² löst). Die Spec-Zerlegung ist deterministisch und
-    berechenbar, aber v_rot ist im Allgemeinen nicht orthogonal zu v_grad.
+    WICHTIG: Diese Zerlegung ist NICHT eine volle diskrete Helmholtz-Zerlegung
+    (die min ||v_rot||² über den Graph-Laplacian L = D − A löst). Die
+    Spec-Zerlegung ist deterministisch und berechenbar, aber v_rot ist im
+    Allgemeinen nicht orthogonal zu v_grad. Wir nennen sie deshalb bewusst
+    "Spec-Aligned Decomposition", nicht "Helmholtz-Zerlegung".
 
-    Für spätere Versionen kann eine echte diskrete Helmholtz-Zerlegung über
-    den Graph-Laplacian (L = D - A) implementiert werden.
+    Für spätere Versionen kann eine echte diskrete Helmholtz-Zerlegung
+    implementiert werden.
 
 Konvention für gerichtete Kanten:
     - v(x, y) ist nur definiert, wenn Kante x→y existiert.
@@ -49,7 +51,13 @@ def phi(L: Landscape, x: str) -> float:
     Summe der Tension-Beiträge über alle Ausgangskanten.
     States ohne Ausgangskanten (Dead-Ends) haben Φ = 0.
 
-    Interpretation: Φ(x) misst die „strukturelle Spannung" eines Zustands.
+    Interpretationshinweis (C2): Φ = 0 bei Dead-Ends bedeutet "keine
+    ausgehenden Beiträge", NICHT "ontologisch spannungsfrei". Ein
+    Dead-End kann durchaus innere Spannung tragen — es hat lediglich
+    keine definierten Ausgangstransitionen, über die sich diese Spannung
+    als Potential manifestieren könnte.
+
+    Allgemein: Φ(x) misst die „strukturelle Spannung" eines Zustands.
     Hohe Φ = viel unaufgelöste Differenz, starker Druck zur Transition.
     """
     total = 0.0
