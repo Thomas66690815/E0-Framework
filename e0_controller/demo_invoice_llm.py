@@ -140,7 +140,7 @@ def run_demo(use_mock: bool = False):
         print("Mode: MOCK (no API calls)")
         adapter = E0LLMAdapter(call_fn=mock_llm_call)
     else:
-        config = LLMConfig(model="gpt-4o-mini", temperature=0.2)
+        config = LLMConfig(model="gpt-5.4-mini", temperature=0.2)
         adapter = E0LLMAdapter(config=config)
         print(f"Mode: LIVE (model={config.model})")
 

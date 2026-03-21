@@ -43,7 +43,7 @@ class LLMResponseError(Exception):
 @dataclass
 class LLMConfig:
     """Configuration for the LLM connection."""
-    model: str = "gpt-4o-mini"
+    model: str = "gpt-5.4-mini"
     temperature: float = 0.2
     max_tokens: int = 1024
     api_key: Optional[str] = None
@@ -87,7 +87,7 @@ def openai_call(system: str, user: str, config: LLMConfig) -> str:
     response = client.chat.completions.create(
         model=config.model,
         temperature=config.temperature,
-        max_tokens=config.max_tokens,
+        max_completion_tokens=config.max_tokens,
         messages=[
             {"role": "system", "content": system},
             {"role": "user", "content": user},
