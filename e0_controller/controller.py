@@ -212,14 +212,17 @@ class E0Controller:
 
     def _admissible_neighbors(self, x: str) -> List[str]:
         """
-        K11: Admissibility with configurable thresholds.
+        K11: Full controller admissibility with configurable thresholds.
+
+        This is the *controller-level* filter, stricter than
+        Landscape.admissible_neighbors() (raw: only finite tension).
 
         A neighbor y is admissible from x if:
-        1. S_eff(x→y) < ∞  (edge exists)
-        2. S_eff(x→y) ≤ s_max  (tension ceiling)
-        3. C(x→y) ≥ c_min  (coherence floor)
+        1. S_eff(x→y) < ∞  (edge exists)            — raw layer
+        2. S_eff(x→y) ≤ s_max  (tension ceiling)     — K11
+        3. C(x→y) ≥ c_min  (coherence floor)          — K11
 
-        With defaults (s_max=∞, c_min=0.0), this behaves like before.
+        With defaults (s_max=∞, c_min=0.0), this collapses to raw.
         """
         neighbors = []
         # Check landscape edges
@@ -269,16 +272,17 @@ class E0Controller:
 
     def _penalized_tension(self, x: str, y: str) -> float:
         """
-        S_revisit(x→y) = S_eff(x→y) + α · 𝟙[y ∈ recent(k)]
+        K7: S_revisit(x→y) = S_eff(x→y) · (1 + α · 𝟙[y ∈ recent(k)])
 
-        Adds penalty for revisiting recently-seen states.
-        This breaks oscillation cycles like A↔B.
+        Multiplicative penalty for revisiting recently-seen states.
+        Scales with the local tension — avoids dominating at low S_eff
+        or vanishing at high S_eff (K7 fix over former additive form).
         """
         s_eff = self._effective_tension(x, y)
         if math.isinf(s_eff):
             return math.inf
         if y in self._recent:
-            s_eff += self.alpha
+            s_eff *= (1 + self.alpha)
         return s_eff
 
     def select_next(self, current: str) -> Tuple[Optional[str], bool, EscalationType]:
@@ -328,6 +332,12 @@ class E0Controller:
         DEAD_END:   Jump to state with most outgoing edges (max connectivity).
         FILTERED:   Lower bar — pick from raw neighbors (bypass K11 threshold).
         EXHAUSTED:  Pick least-recently-visited viable state.
+
+        Note (K5 open): These strategies are operational heuristics, not
+        yet fully derived from E₀ principles.  In particular the DEAD_END
+        strategy ("most outgoing edges") is graph-structural, not
+        tension-field-based.  A future version should select escalation
+        targets via potential φ or transition field v.
         """
         if esc_type == EscalationType.FILTERED:
             # FILTERED: raw neighbors exist but fail K11 → pick cheapest raw

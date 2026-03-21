@@ -136,7 +136,10 @@ class Landscape:
         """
         Function 5: all y where S_eff(x→y) < ∞
 
-        Returns states reachable from x with finite tension.
+        Raw landscape admissibility — returns all neighbors with finite
+        tension.  This is the base layer; the Controller applies additional
+        K11 thresholds (s_max, c_min) on top of this.  See
+        E0Controller._admissible_neighbors() for the full filter.
         """
         neighbors = []
         for edge in self._R0:
@@ -149,7 +152,10 @@ class Landscape:
         """
         §2.4: v_x(y) = Δ(x,y) · exp(-S_eff(x→y))
 
-        Simplified transition field (M_H = 1 for v0.1).
+        Spec-aligned simplified runtime form (M_H = 1 for v0.1).
+        The full generalized form (M_H derived from curvature/topology)
+        is not yet implemented.
+
         Higher v = more structurally open transition.
         Returns 0.0 if edge does not exist (no transition capacity).
         """
