@@ -113,6 +113,21 @@ class TestParseJson(unittest.TestCase):
         with self.assertRaises(LLMResponseError):
             _parse_json_response("")
 
+    def test_required_keys_pass(self):
+        data = _parse_json_response('{"delta": 0.5}', required_keys=["delta"])
+        self.assertEqual(data["delta"], 0.5)
+
+    def test_required_keys_missing_raises(self):
+        with self.assertRaises(LLMResponseError) as cm:
+            _parse_json_response('{"foo": 1}', required_keys=["delta"])
+        self.assertIn("delta", str(cm.exception))
+
+    def test_non_object_raises(self):
+        """JSON array instead of object → LLMResponseError."""
+        with self.assertRaises(LLMResponseError) as cm:
+            _parse_json_response('[1, 2, 3]')
+        self.assertIn("object", str(cm.exception))
+
 
 class TestNormalizeStateName(unittest.TestCase):
     """_normalize_state_name handles various LLM outputs."""

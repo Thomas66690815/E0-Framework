@@ -171,10 +171,19 @@ Respond with exactly this JSON (no other text):
 # Response Parsing
 # ──────────────────────────────────────────────
 
-def _parse_json_response(text: str) -> Dict[str, Any]:
+def _parse_json_response(
+    text: str,
+    required_keys: Optional[List[str]] = None,
+) -> Dict[str, Any]:
     """Extract JSON from LLM response, tolerant of markdown fences.
 
-    Raises LLMResponseError if the response cannot be parsed.
+    Args:
+        text: Raw LLM response string.
+        required_keys: If given, validates that every key is present in the
+            parsed dict.  Raises LLMResponseError on missing keys.
+
+    Raises LLMResponseError if the response cannot be parsed or is
+    structurally invalid.
     """
     raw = text
     text = text.strip()
@@ -183,12 +192,28 @@ def _parse_json_response(text: str) -> Dict[str, Any]:
     if m:
         text = m.group(1).strip()
     try:
-        return json.loads(text)
+        data = json.loads(text)
     except (json.JSONDecodeError, ValueError) as exc:
         raise LLMResponseError(
             f"LLM returned invalid JSON: {exc}",
             raw_response=raw,
         ) from exc
+
+    if not isinstance(data, dict):
+        raise LLMResponseError(
+            f"Expected JSON object, got {type(data).__name__}",
+            raw_response=raw,
+        )
+
+    if required_keys:
+        missing = [k for k in required_keys if k not in data]
+        if missing:
+            raise LLMResponseError(
+                f"LLM response missing required keys: {missing}",
+                raw_response=raw,
+            )
+
+    return data
 
 
 _STATE_NAME_RE = re.compile(r"^[A-Z][A-Z0-9_]{0,49}$")
@@ -288,9 +313,14 @@ class E0LLMAdapter:
         )
 
         raw = self._call(SYSTEM_PROMPT, prompt, self.config)
-        data = _parse_json_response(raw)
+        data = _parse_json_response(raw, required_keys=["delta"])
 
-        delta = float(data["delta"])
+        try:
+            delta = float(data["delta"])
+        except (TypeError, ValueError) as exc:
+            raise LLMResponseError(
+                f"Invalid delta value: {data['delta']!r}", raw_response=raw,
+            ) from exc
         delta = max(0.0, min(1.0, delta))  # clamp to [0, 1]
 
         return DeltaEstimate(
@@ -325,7 +355,7 @@ class E0LLMAdapter:
         )
 
         raw = self._call(SYSTEM_PROMPT, prompt, self.config)
-        data = _parse_json_response(raw)
+        data = _parse_json_response(raw, required_keys=["states"])
 
         states = []
         seen: set = set()
@@ -378,7 +408,7 @@ class E0LLMAdapter:
         )
 
         raw = self._call(SYSTEM_PROMPT, prompt, self.config)
-        data = _parse_json_response(raw)
+        data = _parse_json_response(raw, required_keys=["outcome"])
 
         outcome_str = data.get("outcome", "FAILURE").upper()
         outcome_map = {
