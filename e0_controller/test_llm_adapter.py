@@ -16,10 +16,12 @@ from e0_controller.memory_os import E0MemoryOS
 from e0_controller.llm_adapter import (
     E0LLMAdapter,
     LLMConfig,
+    LLMResponseError,
     DeltaEstimate,
     ProposedState,
     TransitionResult,
     _parse_json_response,
+    _normalize_state_name,
 )
 from e0_controller.domain_invoice import build_invoice_landscape
 
@@ -101,6 +103,35 @@ class TestParseJson(unittest.TestCase):
         data = _parse_json_response('  \n  {"delta": 0.5}  \n  ')
         self.assertEqual(data["delta"], 0.5)
 
+    def test_invalid_json_raises_llm_response_error(self):
+        """Broken JSON raises LLMResponseError with raw_response."""
+        with self.assertRaises(LLMResponseError) as cm:
+            _parse_json_response("this is not json at all")
+        self.assertIn("this is not json at all", cm.exception.raw_response)
+
+    def test_empty_string_raises_llm_response_error(self):
+        with self.assertRaises(LLMResponseError):
+            _parse_json_response("")
+
+
+class TestNormalizeStateName(unittest.TestCase):
+    """_normalize_state_name handles various LLM outputs."""
+
+    def test_already_upper(self):
+        self.assertEqual(_normalize_state_name("DATA_EXTRACTED"), "DATA_EXTRACTED")
+
+    def test_lowercase_to_upper(self):
+        self.assertEqual(_normalize_state_name("data extracted"), "DATA_EXTRACTED")
+
+    def test_hyphens_to_underscores(self):
+        self.assertEqual(_normalize_state_name("human-review"), "HUMAN_REVIEW")
+
+    def test_extra_whitespace(self):
+        self.assertEqual(_normalize_state_name("  AMOUNT OK  "), "AMOUNT_OK")
+
+    def test_multiple_underscores_collapsed(self):
+        self.assertEqual(_normalize_state_name("A__B___C"), "A_B_C")
+
 
 class TestExtractDelta(unittest.TestCase):
     """extract_delta returns structured DeltaEstimate."""
@@ -165,6 +196,40 @@ class TestProposeStates(unittest.TestCase):
         adapter = E0LLMAdapter(call_fn=empty)
         result = adapter.propose_states("X", "test")
         self.assertEqual(result, [])
+
+    def test_invalid_names_filtered(self):
+        """State names that don't match UPPER_SNAKE_CASE are skipped."""
+        def bad_names(s, u, c):
+            return json.dumps({"states": [
+                {"name": "good_state", "description": "ok", "estimated_delta": 0.3},
+                {"name": "!!!invalid!!!", "description": "bad", "estimated_delta": 0.5},
+                {"name": "", "description": "empty", "estimated_delta": 0.1},
+            ]})
+        adapter = E0LLMAdapter(call_fn=bad_names)
+        result = adapter.propose_states("X", "test")
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0].name, "GOOD_STATE")
+
+    def test_duplicate_names_deduped(self):
+        """Duplicate state names (after normalization) are filtered."""
+        def dupes(s, u, c):
+            return json.dumps({"states": [
+                {"name": "DATA_OK", "description": "first", "estimated_delta": 0.3},
+                {"name": "data ok", "description": "second", "estimated_delta": 0.4},
+            ]})
+        adapter = E0LLMAdapter(call_fn=dupes)
+        result = adapter.propose_states("X", "test")
+        self.assertEqual(len(result), 1)
+
+    def test_delta_clamped_in_proposal(self):
+        """estimated_delta > 1.0 is clamped."""
+        def over(s, u, c):
+            return json.dumps({"states": [
+                {"name": "BIG", "description": "over", "estimated_delta": 5.0},
+            ]})
+        adapter = E0LLMAdapter(call_fn=over)
+        result = adapter.propose_states("X", "test")
+        self.assertLessEqual(result[0].estimated_delta, 1.0)
 
 
 class TestExecuteTransition(unittest.TestCase):
@@ -236,6 +301,33 @@ class TestAsExecuteFn(unittest.TestCase):
         fn("A", "B")
         self.assertIn("Transition from A to B", captured["user"])
 
+    def test_dynamic_summary_provider(self):
+        """summary_provider is called per execute, takes precedence over static."""
+        call_count = [0]
+        captured_prompts = []
+
+        def capture(system, user, config):
+            captured_prompts.append(user)
+            return '{"outcome": "SUCCESS", "result": "ok", "confidence": 0.9}'
+
+        def provider():
+            call_count[0] += 1
+            return {"step": call_count[0], "current_state": f"STATE_{call_count[0]}"}
+
+        adapter = E0LLMAdapter(call_fn=capture)
+        fn = adapter.as_execute_fn(
+            {"A→B": "test", "B→C": "test2"},
+            memos_summary={"should": "be ignored"},
+            summary_provider=provider,
+        )
+        fn("A", "B")
+        fn("B", "C")
+        self.assertEqual(call_count[0], 2)
+        # Dynamic summary used, not static
+        self.assertIn("STATE_1", captured_prompts[0])
+        self.assertIn("STATE_2", captured_prompts[1])
+        self.assertNotIn("be ignored", captured_prompts[0])
+
 
 class TestControllerIntegration(unittest.TestCase):
     """LLM adapter integrates with Controller + MemOS (all mocked)."""
@@ -300,11 +392,15 @@ class TestLLMConfig(unittest.TestCase):
     def test_missing_key_raises(self):
         import os
         old = os.environ.pop("OPENAI_API_KEY", None)
+        # Temporarily override cwd so .env file is not found
+        old_cwd = os.getcwd()
+        os.chdir(os.path.dirname(__file__))
         try:
             c = LLMConfig()
             with self.assertRaises(RuntimeError):
                 c.resolve_api_key()
         finally:
+            os.chdir(old_cwd)
             if old is not None:
                 os.environ["OPENAI_API_KEY"] = old
 

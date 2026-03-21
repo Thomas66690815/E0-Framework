@@ -20,9 +20,8 @@ Requires OPENAI_API_KEY in .env or environment (unless --mock).
 from __future__ import annotations
 
 import json
+import os
 import sys
-import tempfile
-import shutil
 
 from e0_controller.primitives import Outcome
 from e0_controller.domain_invoice import build_invoice_landscape
@@ -145,15 +144,31 @@ def run_demo(use_mock: bool = False):
         adapter = E0LLMAdapter(config=config)
         print(f"Mode: LIVE (model={config.model})")
 
-    # 3. Create execute function from adapter
-    execute_fn = adapter.as_execute_fn(INVOICE_TASKS)
+    # 3. Setup MemOS (persistent in memos/)
+    memos_dir = os.path.join(os.getcwd(), "memos")
+    os.makedirs(memos_dir, exist_ok=True)
+    memos = E0MemoryOS(base_dir=memos_dir)
+    print(f"MemOS: {memos_dir}")
 
-    # 4. Build controller
+    # 4. Create execute function with dynamic summary
+    def make_summary_provider(memos_inst, landscape, sid):
+        """Return a callable that generates a fresh MemOS summary per step."""
+        def provider():
+            try:
+                ctx = memos_inst.load_context(sid)
+                # Extract last state from runtime dict
+                current = ctx.runtime.get("last_state", "RECEIVED") if ctx.runtime else "RECEIVED"
+                return memos_inst.summarize_for_llm(ctx, current, landscape=landscape)
+            except FileNotFoundError:
+                return {}
+        return provider
+
+    session_id = "demo-invoice"
+    summary_provider = make_summary_provider(memos, L, session_id)
+    execute_fn = adapter.as_execute_fn(INVOICE_TASKS, summary_provider=summary_provider)
+
+    # 5. Build controller
     ctrl = E0Controller(L, execute_fn)
-
-    # 5. Setup MemOS
-    tmp_dir = tempfile.mkdtemp(prefix="e0_demo_")
-    memos = E0MemoryOS(base_dir=tmp_dir)
 
     print(f"\nStarting: RECEIVED → APPROVED")
     print("-" * 64)
@@ -175,9 +190,9 @@ def run_demo(use_mock: bool = False):
     print(f"  Avg tension:       {metrics['avg_tension']:.4f}")
     print(f"  Unique states:     {int(metrics['unique_states'])}")
 
-    # 8. Save to MemOS
+    # 8. Save to MemOS (persistent)
     ctx = memos.snapshot_from_runtime(
-        "demo-invoice",
+        session_id,
         L, ctrl, trace,
         canon_refs=[CanonRef(
             name="ontodynamics",
@@ -186,15 +201,14 @@ def run_demo(use_mock: bool = False):
         )],
     )
     memos.save_context(ctx)
-    memos.save_run("demo-invoice", trace, goal="APPROVED")
+    memos.save_run(session_id, trace, goal="APPROVED")
 
     # 9. Show MemOS summary
     summary = memos.summarize_for_llm(ctx, trace.path[-1], landscape=L)
     print(f"\nMemOS Summary (final state = {trace.path[-1]}):")
     print(json.dumps(summary, indent=2, ensure_ascii=False))
 
-    # Cleanup
-    shutil.rmtree(tmp_dir, ignore_errors=True)
+    print(f"\nMemOS data persisted to: {memos_dir}")
 
     return trace
 

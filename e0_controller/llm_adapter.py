@@ -29,6 +29,13 @@ from typing import Any, Callable, Dict, List, Optional
 from .primitives import Outcome
 
 
+class LLMResponseError(Exception):
+    """Raised when the LLM returns unparseable or invalid output."""
+    def __init__(self, message: str, raw_response: str = ""):
+        super().__init__(message)
+        self.raw_response = raw_response
+
+
 # ──────────────────────────────────────────────
 # Configuration
 # ──────────────────────────────────────────────
@@ -165,13 +172,34 @@ Respond with exactly this JSON (no other text):
 # ──────────────────────────────────────────────
 
 def _parse_json_response(text: str) -> Dict[str, Any]:
-    """Extract JSON from LLM response, tolerant of markdown fences."""
+    """Extract JSON from LLM response, tolerant of markdown fences.
+
+    Raises LLMResponseError if the response cannot be parsed.
+    """
+    raw = text
     text = text.strip()
     # Strip markdown code fences
     m = re.search(r"```(?:json)?\s*\n?(.*?)\n?\s*```", text, re.DOTALL)
     if m:
         text = m.group(1).strip()
-    return json.loads(text)
+    try:
+        return json.loads(text)
+    except (json.JSONDecodeError, ValueError) as exc:
+        raise LLMResponseError(
+            f"LLM returned invalid JSON: {exc}",
+            raw_response=raw,
+        ) from exc
+
+
+_STATE_NAME_RE = re.compile(r"^[A-Z][A-Z0-9_]{0,49}$")
+
+
+def _normalize_state_name(name: str) -> str:
+    """Normalize a proposed state name to UPPER_SNAKE_CASE."""
+    name = name.strip().upper().replace(" ", "_").replace("-", "_")
+    # Collapse multiple underscores
+    name = re.sub(r"_+", "_", name).strip("_")
+    return name
 
 
 # ──────────────────────────────────────────────
@@ -300,11 +328,20 @@ class E0LLMAdapter:
         data = _parse_json_response(raw)
 
         states = []
+        seen: set = set()
         for s in data.get("states", []):
+            name = _normalize_state_name(s.get("name", ""))
+            if not name or not _STATE_NAME_RE.match(name):
+                continue  # skip invalid names
+            if name in seen:
+                continue  # skip duplicates
+            seen.add(name)
+            delta = float(s.get("estimated_delta", 0.5))
+            delta = max(0.0, min(1.0, delta))
             states.append(ProposedState(
-                name=s["name"],
+                name=name,
                 description=s.get("description", ""),
-                estimated_delta=float(s.get("estimated_delta", 0.5)),
+                estimated_delta=delta,
             ))
         return states
 
@@ -362,17 +399,23 @@ class E0LLMAdapter:
 
     # ── Convenience: execute_fn for E0Controller ──
 
+    # Type for dynamic summary provider: () → summary dict
+    SummaryProvider = Callable[[], Optional[Dict[str, Any]]]
+
     def as_execute_fn(
         self,
         task_map: Dict[str, str],
         memos_summary: Optional[Dict[str, Any]] = None,
+        summary_provider: Optional[SummaryProvider] = None,
     ) -> Callable[[str, str], Outcome]:
         """
         Return a callback compatible with E0Controller's execute_fn.
 
         Args:
             task_map: Dict mapping "source→target" to task descriptions.
-            memos_summary: MemOS summary to pass to each call.
+            memos_summary: Static MemOS summary (used if summary_provider is None).
+            summary_provider: Callable that returns a fresh summary per call.
+                Preferred over static memos_summary for multi-step runs.
 
         Returns:
             Callable (source, target) → Outcome
@@ -380,6 +423,8 @@ class E0LLMAdapter:
         def execute(source: str, target: str) -> Outcome:
             key = f"{source}→{target}"
             task = task_map.get(key, f"Transition from {source} to {target}")
-            result = self.execute_transition(source, target, task, memos_summary)
+            # Dynamic summary takes precedence
+            summary = summary_provider() if summary_provider else memos_summary
+            result = self.execute_transition(source, target, task, summary)
             return result.outcome
         return execute
