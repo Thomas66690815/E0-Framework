@@ -1,0 +1,41 @@
+{
+  "scenario_id": "incident_payment_outage_001",
+  "domain": "incident_postmortem",
+  "title": "Payment processing outage during peak hours",
+  "source_text": "A production payment-processing service experienced a 47-minute outage during peak hours. Monitoring showed elevated error rates at 14:02 UTC, followed by full unavailability at 14:11 UTC. Service was restored at 14:58 UTC via rollback. Preliminary indicators suggest database connection pool exhaustion caused by a missing index in a new query path.",
+  "objective": "Produce a structured postmortem briefing",
+  "required_outputs": [
+    "timeline",
+    "trigger",
+    "root_cause",
+    "impact",
+    "mitigations",
+    "followups"
+  ],
+  "known_constraints": [
+    "evidence may be incomplete",
+    "ambiguity must be explicitly labeled",
+    "do not invent missing data"
+  ],
+  "evaluation_points": [
+    "timeline completeness",
+    "root cause plausibility",
+    "impact clarity",
+    "quality of follow-up actions"
+  ],
+  "start_state": "RAW_INCIDENT_REPORT",
+  "goal_state": "POSTMORTEM_DELIVERED",
+  "expected_sections": [
+    "Timeline",
+    "Trigger",
+    "Root Cause",
+    "Impact",
+    "Mitigations",
+    "Follow-ups"
+  ],
+  "metadata": {
+    "difficulty": "medium",
+    "source_type": "synthetic",
+    "date": "2026-03"
+  }
+}
