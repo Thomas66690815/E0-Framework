@@ -167,6 +167,61 @@ Respond with exactly this JSON (no other text):
 }}"""
 
 
+ESTIMATE_RESISTANCE_PROMPT = """\
+Estimate the structural resistance R₀ for a transition between two states.
+
+R₀ measures how difficult a transition is to execute, independent of history:
+- 0.1–0.3 = easy (routine, well-understood step)
+- 0.3–0.7 = moderate (requires some effort or judgment)
+- 0.7–1.5 = hard (complex, error-prone, requires expertise)
+- 1.5–3.0 = very hard (likely to fail, deep expertise needed)
+- 3.0+    = extremely difficult (near-impossible, research-level)
+
+Context from E₀ runtime:
+{context}
+
+Estimate R₀ for this transition:
+  source: {source}
+  target: {target}
+  description: {description}
+
+Respond with exactly this JSON (no other text):
+{{"resistance": <float > 0>, "reasoning": "<one sentence>"}}"""
+
+
+BUILD_LANDSCAPE_PROMPT = """\
+Given a task description, design the complete state graph for an E₀ controller.
+
+An E₀ landscape consists of:
+- States: discrete milestones (UPPER_CASE identifiers)
+- Edges: directed transitions between states, each with:
+  - delta: structural difference Δ ∈ [0,1] (how different source and target are)
+  - resistance: base difficulty R₀ > 0 (how hard the transition is)
+
+Rules:
+- First state must be the starting point
+- Last state must be the goal
+- Include both happy path and at least one error/recovery path
+- Keep it bounded: 5–15 states, 8–25 edges
+- State names must be UPPER_CASE with underscores
+
+Context from E₀ runtime:
+{context}
+
+Task: {task}
+Start state: {start}
+Goal state: {goal}
+
+Respond with exactly this JSON (no other text):
+{{
+  "states": ["STATE_A", "STATE_B", ...],
+  "edges": [
+    {{"source": "STATE_A", "target": "STATE_B", "delta": 0.4, "resistance": 0.8, "description": "what this transition does"}},
+    ...
+  ]
+}}"""
+
+
 # ──────────────────────────────────────────────
 # Response Parsing
 # ──────────────────────────────────────────────
@@ -252,6 +307,20 @@ class TransitionResult:
     outcome: Outcome
     result: str
     confidence: float
+
+
+@dataclass
+class ResistanceEstimate:
+    """LLM's estimate of R₀(x, y)."""
+    resistance: float
+    reasoning: str
+
+
+@dataclass
+class LandscapeProposal:
+    """LLM's proposed landscape for a task."""
+    states: List[str]
+    edges: List[Dict[str, Any]]  # [{source, target, delta, resistance, description}]
 
 
 # ──────────────────────────────────────────────
@@ -429,6 +498,131 @@ class E0LLMAdapter:
 
     # ── Convenience: execute_fn for E0Controller ──
 
+    # ── 4. Estimate Resistance ──
+
+    def estimate_resistance(
+        self,
+        source: str,
+        target: str,
+        description: str,
+        memos_summary: Optional[Dict[str, Any]] = None,
+    ) -> ResistanceEstimate:
+        """
+        Ask LLM to estimate base resistance R₀(x, y).
+
+        The LLM provides a qualitative assessment which is returned as
+        a float > 0. Values are floored at 0.01 (resistance is never zero).
+
+        Args:
+            source: Source state name.
+            target: Target state name.
+            description: What this transition involves.
+            memos_summary: Output from E0MemoryOS.summarize_for_llm().
+
+        Returns:
+            ResistanceEstimate with resistance (float) and reasoning (str).
+        """
+        ctx = self._format_context(memos_summary) if memos_summary else "{}"
+        prompt = ESTIMATE_RESISTANCE_PROMPT.format(
+            context=ctx,
+            source=source,
+            target=target,
+            description=description,
+        )
+
+        raw = self._call(SYSTEM_PROMPT, prompt, self.config)
+        data = _parse_json_response(raw, required_keys=["resistance"])
+
+        try:
+            resistance = float(data["resistance"])
+        except (TypeError, ValueError) as exc:
+            raise LLMResponseError(
+                f"Invalid resistance value: {data['resistance']!r}",
+                raw_response=raw,
+            ) from exc
+        resistance = max(0.01, resistance)  # floor: R₀ > 0 always
+
+        return ResistanceEstimate(
+            resistance=resistance,
+            reasoning=data.get("reasoning", ""),
+        )
+
+    # ── 5. Build Landscape ──
+
+    def build_landscape(
+        self,
+        task: str,
+        start: str,
+        goal: str,
+        memos_summary: Optional[Dict[str, Any]] = None,
+    ) -> LandscapeProposal:
+        """
+        Ask LLM to design a complete state graph for a task.
+
+        The LLM proposes states and directed edges with Δ and R₀ values.
+        Returns a LandscapeProposal that can be materialized into a Landscape.
+
+        Args:
+            task: Natural-language description of the overall task.
+            start: Name of the starting state.
+            goal: Name of the goal state.
+            memos_summary: Output from E0MemoryOS.summarize_for_llm().
+
+        Returns:
+            LandscapeProposal with states and edges.
+        """
+        ctx = self._format_context(memos_summary) if memos_summary else "{}"
+        prompt = BUILD_LANDSCAPE_PROMPT.format(
+            context=ctx,
+            task=task,
+            start=start,
+            goal=goal,
+        )
+
+        raw = self._call(SYSTEM_PROMPT, prompt, self.config)
+        data = _parse_json_response(raw, required_keys=["states", "edges"])
+
+        # Normalize states
+        states = []
+        seen: set = set()
+        for s in data.get("states", []):
+            name = _normalize_state_name(str(s))
+            if name and _STATE_NAME_RE.match(name) and name not in seen:
+                seen.add(name)
+                states.append(name)
+
+        # Ensure start and goal are included
+        for required in [start, goal]:
+            norm = _normalize_state_name(required)
+            if norm not in seen:
+                states.append(norm)
+                seen.add(norm)
+
+        # Normalize edges
+        edges = []
+        for e in data.get("edges", []):
+            src = _normalize_state_name(str(e.get("source", "")))
+            tgt = _normalize_state_name(str(e.get("target", "")))
+            if not src or not tgt or src not in seen or tgt not in seen:
+                continue  # skip edges with unknown states
+
+            delta = float(e.get("delta", 0.5))
+            delta = max(0.0, min(1.0, delta))
+            resistance = float(e.get("resistance", 1.0))
+            resistance = max(0.01, resistance)
+
+            edges.append({
+                "source": src,
+                "target": tgt,
+                "delta": delta,
+                "resistance": resistance,
+                "description": e.get("description", ""),
+            })
+
+        return LandscapeProposal(states=states, edges=edges)
+
+    # ── Convenience: execute_fn for E0Controller ──
+
     # Type for dynamic summary provider: () → summary dict
     SummaryProvider = Callable[[], Optional[Dict[str, Any]]]
 
@@ -458,3 +652,37 @@ class E0LLMAdapter:
             result = self.execute_transition(source, target, task, summary)
             return result.outcome
         return execute
+
+
+# ──────────────────────────────────────────────
+# Landscape Materialization (Phase 3b)
+# ──────────────────────────────────────────────
+
+def materialize_landscape(proposal: LandscapeProposal) -> "Landscape":
+    """
+    Convert a LandscapeProposal into a concrete Landscape object.
+
+    This bridges the LLM's semantic output back into the deterministic
+    controller stack. Edges are created with the LLM-estimated Δ and R₀.
+    """
+    from .landscape import Landscape
+
+    L = Landscape()
+    for s in proposal.states:
+        L.add_state(s)
+    for e in proposal.edges:
+        L.add_edge(e["source"], e["target"],
+                   delta=e["delta"], resistance=e["resistance"])
+    return L
+
+
+def task_map_from_proposal(proposal: LandscapeProposal) -> Dict[str, str]:
+    """
+    Extract a task_map (for as_execute_fn) from a LandscapeProposal.
+
+    Maps each "source→target" to the edge description provided by the LLM.
+    """
+    return {
+        f"{e['source']}→{e['target']}": e.get("description", "")
+        for e in proposal.edges
+    }

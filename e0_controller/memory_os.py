@@ -502,3 +502,57 @@ class E0MemoryOS:
         """List all saved session IDs."""
         sessions_dir = self.base_dir / "sessions"
         return [f.stem for f in sorted(sessions_dir.glob("*.json"))]
+
+    def compare_runs(
+        self,
+        session_id_a: str,
+        session_id_b: str,
+        limit: int = 1,
+    ) -> Dict[str, Any]:
+        """
+        Compare the most recent runs from two sessions.
+
+        Useful for Mock vs. Live comparison or cross-domain analysis.
+
+        Returns dict with:
+            a, b:       individual run summaries
+            comparison: structural metrics delta
+        """
+        runs_a = self.retrieve_recent_runs(session_id_a, limit=limit)
+        runs_b = self.retrieve_recent_runs(session_id_b, limit=limit)
+
+        def _summarize(runs: List[Dict]) -> Dict[str, Any]:
+            if not runs:
+                return {"steps": 0, "path": [], "outcomes": {}}
+            r = runs[0]  # most recent
+            return {
+                "run_id": r.get("run_id", "?"),
+                "steps": r.get("steps", 0),
+                "path": r.get("path", []),
+                "outcomes": r.get("outcomes", {}),
+                "total_tension": r.get("total_tension", 0.0),
+                "metrics": r.get("metrics", {}),
+            }
+
+        sa = _summarize(runs_a)
+        sb = _summarize(runs_b)
+
+        # Structural comparison
+        path_match = sa["path"] == sb["path"]
+        step_diff = sa["steps"] - sb["steps"]
+        tension_diff = sa.get("total_tension", 0) - sb.get("total_tension", 0)
+        overlap = set(sa["path"]) & set(sb["path"])
+        union = set(sa["path"]) | set(sb["path"])
+        jaccard = len(overlap) / len(union) if union else 1.0
+
+        return {
+            "a": sa,
+            "b": sb,
+            "comparison": {
+                "path_identical": path_match,
+                "step_difference": step_diff,
+                "tension_difference": round(tension_diff, 4),
+                "path_jaccard": round(jaccard, 4),
+                "shared_states": sorted(overlap),
+            },
+        }

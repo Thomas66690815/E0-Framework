@@ -20,8 +20,12 @@ from e0_controller.llm_adapter import (
     DeltaEstimate,
     ProposedState,
     TransitionResult,
+    ResistanceEstimate,
+    LandscapeProposal,
     _parse_json_response,
     _normalize_state_name,
+    materialize_landscape,
+    task_map_from_proposal,
 )
 from e0_controller.domain_invoice import build_invoice_landscape
 
@@ -418,6 +422,178 @@ class TestLLMConfig(unittest.TestCase):
             os.chdir(old_cwd)
             if old is not None:
                 os.environ["OPENAI_API_KEY"] = old
+
+
+# ──────────────────────────────────────────────
+# Phase 3b: estimate_resistance
+# ──────────────────────────────────────────────
+
+def mock_resistance_call(system: str, user: str, config: LLMConfig) -> str:
+    return json.dumps({"resistance": 1.5, "reasoning": "Hard transition."})
+
+
+def mock_resistance_negative(system: str, user: str, config: LLMConfig) -> str:
+    return json.dumps({"resistance": -0.3, "reasoning": "Negative."})
+
+
+class TestEstimateResistance(unittest.TestCase):
+    """Phase 3b: LLM estimates R₀."""
+
+    def test_basic_resistance(self):
+        adapter = E0LLMAdapter(call_fn=mock_resistance_call)
+        est = adapter.estimate_resistance("A", "B", "Do something")
+        self.assertIsInstance(est, ResistanceEstimate)
+        self.assertAlmostEqual(est.resistance, 1.5)
+        self.assertEqual(est.reasoning, "Hard transition.")
+
+    def test_negative_floored(self):
+        adapter = E0LLMAdapter(call_fn=mock_resistance_negative)
+        est = adapter.estimate_resistance("A", "B", "Negative test")
+        self.assertGreaterEqual(est.resistance, 0.01)
+
+    def test_missing_key_raises(self):
+        def bad_fn(s, u, c):
+            return json.dumps({"foo": 1})
+        adapter = E0LLMAdapter(call_fn=bad_fn)
+        with self.assertRaises(LLMResponseError):
+            adapter.estimate_resistance("A", "B", "Test")
+
+
+# ──────────────────────────────────────────────
+# Phase 3b: build_landscape
+# ──────────────────────────────────────────────
+
+def mock_build_landscape_call(system: str, user: str, config: LLMConfig) -> str:
+    return json.dumps({
+        "states": ["START", "MIDDLE", "GOAL", "ERROR"],
+        "edges": [
+            {"source": "START", "target": "MIDDLE", "delta": 0.4, "resistance": 0.8,
+             "description": "First step"},
+            {"source": "MIDDLE", "target": "GOAL", "delta": 0.3, "resistance": 0.5,
+             "description": "Complete"},
+            {"source": "START", "target": "ERROR", "delta": 0.2, "resistance": 2.0,
+             "description": "Error path"},
+            {"source": "ERROR", "target": "MIDDLE", "delta": 0.5, "resistance": 1.5,
+             "description": "Recovery"},
+        ],
+    })
+
+
+class TestBuildLandscape(unittest.TestCase):
+    """Phase 3b: LLM designs state graphs."""
+
+    def test_basic_build(self):
+        adapter = E0LLMAdapter(call_fn=mock_build_landscape_call)
+        proposal = adapter.build_landscape("Do a thing", "START", "GOAL")
+        self.assertIsInstance(proposal, LandscapeProposal)
+        self.assertIn("START", proposal.states)
+        self.assertIn("GOAL", proposal.states)
+        self.assertEqual(len(proposal.edges), 4)
+
+    def test_materialize(self):
+        adapter = E0LLMAdapter(call_fn=mock_build_landscape_call)
+        proposal = adapter.build_landscape("Do a thing", "START", "GOAL")
+        L = materialize_landscape(proposal)
+        self.assertEqual(len(L.states), 4)
+        self.assertEqual(L.edge_count(), 4)
+        self.assertIsNotNone(L.difference("START", "MIDDLE"))
+        self.assertAlmostEqual(L.base_resistance("START", "MIDDLE"), 0.8)
+
+    def test_task_map(self):
+        adapter = E0LLMAdapter(call_fn=mock_build_landscape_call)
+        proposal = adapter.build_landscape("Do a thing", "START", "GOAL")
+        tm = task_map_from_proposal(proposal)
+        self.assertIn("START→MIDDLE", tm)
+        self.assertEqual(tm["START→MIDDLE"], "First step")
+
+    def test_ensures_start_goal(self):
+        """Even if LLM forgets start/goal states, they are added."""
+        def missing_fn(s, u, c):
+            return json.dumps({
+                "states": ["ONLY_ONE"],
+                "edges": [],
+            })
+        adapter = E0LLMAdapter(call_fn=missing_fn)
+        proposal = adapter.build_landscape("Task", "MY_START", "MY_GOAL")
+        self.assertIn("MY_START", proposal.states)
+        self.assertIn("MY_GOAL", proposal.states)
+
+    def test_delta_clamped(self):
+        def extreme_fn(s, u, c):
+            return json.dumps({
+                "states": ["A", "B"],
+                "edges": [{"source": "A", "target": "B",
+                           "delta": 5.0, "resistance": -1.0}],
+            })
+        adapter = E0LLMAdapter(call_fn=extreme_fn)
+        proposal = adapter.build_landscape("Task", "A", "B")
+        self.assertLessEqual(proposal.edges[0]["delta"], 1.0)
+        self.assertGreaterEqual(proposal.edges[0]["resistance"], 0.01)
+
+    def test_full_round_trip(self):
+        """Build landscape → materialize → run controller."""
+        adapter = E0LLMAdapter(call_fn=mock_build_landscape_call)
+        proposal = adapter.build_landscape("Do a thing", "START", "GOAL")
+        L = materialize_landscape(proposal)
+        tm = task_map_from_proposal(proposal)
+
+        # Use success mock for execution
+        exec_adapter = E0LLMAdapter(call_fn=mock_execute_success)
+        execute_fn = exec_adapter.as_execute_fn(tm)
+
+        ctrl = E0Controller(L, execute_fn)
+        trace = ctrl.run(start="START", goal="GOAL", max_cycles=10)
+
+        self.assertIn("GOAL", trace.path)
+        self.assertGreater(len(trace.steps), 0)
+
+
+# ──────────────────────────────────────────────
+# Phase 3b: compare_runs
+# ──────────────────────────────────────────────
+
+class TestCompareRuns(unittest.TestCase):
+    """Phase 3b: MemOS run comparison."""
+
+    def test_compare_basic(self):
+        import shutil
+        import tempfile
+        tmp = tempfile.mkdtemp()
+        try:
+            memos = E0MemoryOS(base_dir=tmp)
+            L = build_invoice_landscape()
+
+            # Run A (mock success)
+            def all_success(src, tgt):
+                return Outcome.SUCCESS
+            ctrl_a = E0Controller(L, all_success, alpha=0.0, recent_k=0)
+            trace_a = ctrl_a.run(start="RECEIVED", goal="APPROVED", max_cycles=15)
+            memos.save_run("session-a", trace_a, goal="APPROVED")
+
+            # Run B (same landscape, will have same path)
+            ctrl_b = E0Controller(L, all_success, alpha=0.0, recent_k=0)
+            trace_b = ctrl_b.run(start="RECEIVED", goal="APPROVED", max_cycles=15)
+            memos.save_run("session-b", trace_b, goal="APPROVED")
+
+            result = memos.compare_runs("session-a", "session-b")
+            self.assertIn("comparison", result)
+            self.assertTrue(result["comparison"]["path_identical"])
+            self.assertEqual(result["comparison"]["step_difference"], 0)
+            self.assertAlmostEqual(result["comparison"]["path_jaccard"], 1.0)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_compare_empty_session(self):
+        import shutil
+        import tempfile
+        tmp = tempfile.mkdtemp()
+        try:
+            memos = E0MemoryOS(base_dir=tmp)
+            result = memos.compare_runs("nonexistent-a", "nonexistent-b")
+            self.assertEqual(result["a"]["steps"], 0)
+            self.assertEqual(result["b"]["steps"], 0)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
 
 
 if __name__ == "__main__":

@@ -22,10 +22,15 @@ Phase 3a (LLM Adapter):
   - extract_delta / propose_states / execute_transition
   - Structured LLM ↔ Controller interface (A3 Hybrid)
 
+Phase 3b (Live + Open Domain):
+  - estimate_resistance / build_landscape / materialize_landscape
+  - LLM-bootstrapped Landscapes for arbitrary domains
+  - compare_runs for Mock vs. Live validation
+
 See E0_CONTROLLER_STATUS.md for full project context.
 """
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
 from .primitives import Edge, Outcome
 from .historization import Historization, TraceRecord
@@ -36,4 +41,9 @@ from .potential import phi, phi_map, v_raw, v_grad, v_rot, decomposition
 from .connection import omega, theta, holonomy, omega_map
 from .wavepath import psi, path_intensity, sum_paths, intensity, interference_analysis
 from .memory_os import E0MemoryOS, CanonRef, MemOSContext
-from .llm_adapter import E0LLMAdapter, LLMConfig, LLMResponseError, DeltaEstimate, ProposedState, TransitionResult
+from .llm_adapter import (
+    E0LLMAdapter, LLMConfig, LLMResponseError,
+    DeltaEstimate, ProposedState, TransitionResult,
+    ResistanceEstimate, LandscapeProposal,
+    materialize_landscape, task_map_from_proposal,
+)
