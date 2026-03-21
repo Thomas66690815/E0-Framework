@@ -31,10 +31,15 @@ Phase 3c (Graph Validation):
   - goal_reachable / find_happy_path / detect_traps / detect_trivial_loops
   - graph_quality — composite pre-run structural assessment
 
+Phase 3d (Cross-Domain Validation + Live Context Fix):
+  - validate_cross_domain — runs all 3 domains, compares metrics
+  - live_summary in as_execute_fn — uses actual source state per call
+  - result_log capture for LLM semantic output inspection
+
 See E0_CONTROLLER_STATUS.md for full project context.
 """
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 
 from .primitives import Edge, Outcome
 from .historization import Historization, TraceRecord
@@ -55,3 +60,4 @@ from .graph_validation import (
     goal_reachable, find_happy_path, find_recovery_edges,
     detect_traps, detect_trivial_loops, graph_quality, GraphQuality,
 )
+from .validate_cross_domain import run_validation

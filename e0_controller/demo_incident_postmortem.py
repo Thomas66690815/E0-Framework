@@ -31,7 +31,9 @@ import os
 import sys
 
 from e0_controller.controller import E0Controller
-from e0_controller.memory_os import E0MemoryOS, CanonRef
+from e0_controller.memory_os import E0MemoryOS, CanonRef, edge_to_key
+from e0_controller.primitives import Edge
+from e0_controller.tension import coherence
 from e0_controller.llm_adapter import (
     E0LLMAdapter,
     LLMConfig,
@@ -220,20 +222,39 @@ def run_demo(
     os.makedirs(memos_dir, exist_ok=True)
     memos = E0MemoryOS(base_dir=memos_dir)
 
-    # 5. Create execute function with dynamic summary
+    # 5. Create execute function with live summary (uses actual source state)
     session_id = "demo-incident-postmortem"
+    _recent: list = []  # tracks recent states during run
 
-    def summary_provider():
-        try:
-            ctx = memos.load_context(session_id)
-            current = (ctx.runtime.get("last_state", start)
-                       if ctx.runtime else start)
-            return memos.summarize_for_llm(ctx, current, landscape=L)
-        except FileNotFoundError:
-            return {}
+    def live_summary(source: str):
+        """Build LLM context from the actual source state per call."""
+        neighbors = L.admissible_neighbors(source)
+        neighbor_info = {}
+        for n in neighbors:
+            s_eff = L.effective_tension(source, n)
+            neighbor_info[n] = {
+                "s_eff": round(s_eff, 4),
+                "coherence": round(coherence(s_eff), 4),
+                "v": round(L.transition_field(source, n), 4),
+            }
+        edge_history = {}
+        for n in neighbors:
+            e = Edge(source, n)
+            ek = edge_to_key(e)
+            edge_history[ek] = {
+                "delta_H": round(L.historization.delta_H(e), 4),
+            }
+        _recent.append(source)
+        return {
+            "current_state": source,
+            "admissible_neighbors": neighbor_info,
+            "edge_history": edge_history,
+            "runtime": {"recent_states": _recent[-5:]},
+        }
 
     execute_fn = adapter.as_execute_fn(
-        task_map, summary_provider=summary_provider,
+        task_map, live_summary=live_summary,
+        result_log=(result_log := []),
     )
 
     # 6. Build controller and run
@@ -256,6 +277,18 @@ def run_demo(
     print(f"  Unique states:     {int(metrics['unique_states'])}")
     print(f"  Revisits:          {int(metrics['revisit_count'])}")
 
+    # 7b. Display LLM results per step
+    if result_log:
+        print(f"\n── Transition Details ──")
+        for i, (step, res) in enumerate(zip(trace.steps, result_log)):
+            esc = " [ESCALATION]" if step.escalated else ""
+            print(f"\n  Step {i+1}: {step.source} → {step.target}{esc}")
+            print(f"    Outcome:    {step.outcome.name} (confidence: {res.confidence:.0%})")
+            print(f"    S_eff:      {step.s_eff:.4f}")
+            if res.result:
+                text = res.result[:200] + ("..." if len(res.result) > 200 else "")
+                print(f"    LLM Result: {text}")
+
     # 8. Save to MemOS
     ctx = memos.snapshot_from_runtime(
         session_id, L, ctrl, trace,
@@ -268,7 +301,7 @@ def run_demo(
     memos.save_run(session_id, trace, goal=goal)
     print(f"\nMemOS data persisted to: {memos_dir}")
 
-    return trace, proposal
+    return trace, proposal, result_log
 
 
 if __name__ == "__main__":

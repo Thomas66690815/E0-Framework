@@ -625,12 +625,16 @@ class E0LLMAdapter:
 
     # Type for dynamic summary provider: () → summary dict
     SummaryProvider = Callable[[], Optional[Dict[str, Any]]]
+    # Type for live summary: (source) → summary dict
+    LiveSummaryProvider = Callable[[str], Optional[Dict[str, Any]]]
 
     def as_execute_fn(
         self,
         task_map: Dict[str, str],
         memos_summary: Optional[Dict[str, Any]] = None,
         summary_provider: Optional[SummaryProvider] = None,
+        live_summary: Optional[LiveSummaryProvider] = None,
+        result_log: Optional[List["TransitionResult"]] = None,
     ) -> Callable[[str, str], Outcome]:
         """
         Return a callback compatible with E0Controller's execute_fn.
@@ -640,6 +644,11 @@ class E0LLMAdapter:
             memos_summary: Static MemOS summary (used if summary_provider is None).
             summary_provider: Callable that returns a fresh summary per call.
                 Preferred over static memos_summary for multi-step runs.
+            live_summary: Callable (source_state) → summary dict.
+                Uses the actual source state from each call to build context.
+                Takes precedence over summary_provider and memos_summary.
+            result_log: If provided, each TransitionResult is appended here
+                so callers can inspect the LLM's semantic output per step.
 
         Returns:
             Callable (source, target) → Outcome
@@ -647,9 +656,16 @@ class E0LLMAdapter:
         def execute(source: str, target: str) -> Outcome:
             key = f"{source}→{target}"
             task = task_map.get(key, f"Transition from {source} to {target}")
-            # Dynamic summary takes precedence
-            summary = summary_provider() if summary_provider else memos_summary
+            # Live summary (uses actual source) takes highest precedence
+            if live_summary:
+                summary = live_summary(source)
+            elif summary_provider:
+                summary = summary_provider()
+            else:
+                summary = memos_summary
             result = self.execute_transition(source, target, task, summary)
+            if result_log is not None:
+                result_log.append(result)
             return result.outcome
         return execute
 
