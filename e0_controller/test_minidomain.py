@@ -191,6 +191,55 @@ def test_historization():
     print(f"   ✓ Clipping works (δ_H capped at δ_max=2.0)")
 
 
+def test_k2_lazy_global_decay():
+    """K2: Untouched edges properly decay over global time steps."""
+    print("── test_k2_lazy_global_decay ──")
+
+    h = Historization(rho=0.9, lambda_s=0.15, lambda_f=0.20, delta_max=3.0)
+    e1 = Edge("A", "B")
+    e2 = Edge("C", "D")
+
+    # Step 1: update e1 with SUCCESS → U(e1)=1.0
+    h.update(e1, Outcome.SUCCESS)
+    assert abs(h.success_trace(e1) - 1.0) < 1e-10
+    print(f"   τ=1: U(e1)={h.success_trace(e1):.4f}")
+
+    # Step 2: update e2 (different edge) → e1 should decay by ρ
+    h.update(e2, Outcome.FAILURE)
+    u_e1 = h.success_trace(e1)
+    expected = 0.9 ** 1 * 1.0  # one global step since e1 was written
+    assert abs(u_e1 - expected) < 1e-10, f"Expected {expected}, got {u_e1}"
+    print(f"   τ=2: U(e1)={u_e1:.4f} (decayed by ρ¹ = {expected:.4f}) ✓")
+
+    # Step 3: update e2 again → e1 decays another step
+    h.update(e2, Outcome.SUCCESS)
+    u_e1 = h.success_trace(e1)
+    expected = 0.9 ** 2 * 1.0  # two global steps since e1 was written
+    assert abs(u_e1 - expected) < 1e-10, f"Expected {expected}, got {u_e1}"
+    print(f"   τ=3: U(e1)={u_e1:.4f} (decayed by ρ² = {expected:.4f}) ✓")
+
+    # Step 4: update e1 again → lazy catch-up then standard formula
+    h.update(e1, Outcome.SUCCESS)
+    # Catch-up: u_eff = ρ^2 * 1.0 = 0.81, then: ρ * 0.81 + 1.0 = 1.729
+    u_e1 = h.success_trace(e1)
+    expected = 0.9 * (0.9 ** 2 * 1.0) + 1.0  # ρ * caught-up + signal
+    assert abs(u_e1 - expected) < 1e-10, f"Expected {expected}, got {u_e1}"
+    print(f"   τ=4: U(e1)={u_e1:.4f} (catch-up + new SUCCESS = {expected:.4f}) ✓")
+
+    # Verify δ_H also uses effective (decayed) traces
+    # At τ=4, e2 has: F from step 2 (ρ^2 * 1.0 = 0.81), U from step 3 (ρ^1 * 1.0 = 0.9)
+    # Wait, e2 was updated at τ=2 (FAILURE) and τ=3 (SUCCESS):
+    #   After step 2: F(e2) = 1.0, U(e2) = 0.0, tau_last = 2
+    #   After step 3: F(e2) = ρ*1.0 = 0.9, U(e2) = ρ*0 + 1.0 = 1.0, tau_last = 3
+    #   At τ=4: gap = 1, F_eff = 0.9 * 0.9 = 0.81, U_eff = 0.9 * 1.0 = 0.9
+    dh_e2 = h.delta_H(e2)
+    expected_dh = 0.20 * (0.9 * 0.9) - 0.15 * (0.9 * 1.0)  # λ_f·F_eff - λ_s·U_eff
+    assert abs(dh_e2 - expected_dh) < 1e-10
+    print(f"   δ_H(e2) at τ=4: {dh_e2:.6f} (with lazy decay) ✓")
+
+    print("   ✓ K2 lazy global decay verified")
+
+
 def test_landscape_core_functions():
     """Test all 5 landscape functions."""
     print("── test_landscape_core_functions ──")
@@ -660,6 +709,7 @@ def run_all_tests():
         test_primitives,
         test_tension_math,
         test_historization,
+        test_k2_lazy_global_decay,
         test_landscape_core_functions,
         test_landscape_info,
         test_seven_core_functions,

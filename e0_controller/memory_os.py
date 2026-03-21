@@ -108,12 +108,14 @@ class HistorizationSnapshot:
     delta_max: float
     success_traces: Dict[str, float]   # edge_key → U value
     failure_traces: Dict[str, float]   # edge_key → F value
+    tau_last: Dict[str, int] = field(default_factory=dict)  # K2: edge_key → last-update time
 
     @staticmethod
     def from_historization(H: Historization) -> HistorizationSnapshot:
         snap = H.to_snapshot_dict()
         u_traces = {edge_to_key(e): v for e, v in snap["U"].items()}
         f_traces = {edge_to_key(e): v for e, v in snap["F"].items()}
+        tau_last = {edge_to_key(e): v for e, v in snap.get("tau_last", {}).items()}
         return HistorizationSnapshot(
             tau=snap["tau"],
             rho=snap["rho"],
@@ -122,6 +124,7 @@ class HistorizationSnapshot:
             delta_max=snap["delta_max"],
             success_traces=u_traces,
             failure_traces=f_traces,
+            tau_last=tau_last,
         )
 
     def to_historization(self) -> Historization:
@@ -134,6 +137,7 @@ class HistorizationSnapshot:
             "delta_max": self.delta_max,
             "U": {k: v for k, v in self.success_traces.items()},
             "F": {k: v for k, v in self.failure_traces.items()},
+            "tau_last": {k: v for k, v in self.tau_last.items()},
         }
         return Historization.from_snapshot_dict(d, key_to_edge)
 
