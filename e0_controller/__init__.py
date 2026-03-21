@@ -36,10 +36,16 @@ Phase 3d (Cross-Domain Validation + Live Context Fix):
   - live_summary in as_execute_fn — uses actual source state per call
   - result_log capture for LLM semantic output inspection
 
+Phase 3e (Scenario Packets):
+  - scenario_loader — load/validate JSON Scenario Packets
+  - Scenario context injected into LLM prompts (execute + landscape)
+  - --scenario flag on all demos, auto-discovery in validate_cross_domain
+  - 100% live success rate with grounded source material
+
 See E0_CONTROLLER_STATUS.md for full project context.
 """
 
-__version__ = "0.6.0"
+__version__ = "0.7.0"
 
 from .primitives import Edge, Outcome
 from .historization import Historization, TraceRecord
@@ -61,3 +67,4 @@ from .graph_validation import (
     detect_traps, detect_trivial_loops, graph_quality, GraphQuality,
 )
 from .validate_cross_domain import run_validation
+from .scenario_loader import ScenarioPacket, load_scenario, find_scenario

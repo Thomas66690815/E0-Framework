@@ -153,11 +153,12 @@ Execute the transition from source to target state.
 
 Context from E₀ runtime:
 {context}
-
+{scenario_block}
 Transition: {source} → {target}
 Task: {task}
 
-Perform the work implied by this transition and report the outcome.
+Perform the work implied by this transition using the source material provided.
+Ground your output in the scenario content. Do not invent facts not present in the source.
 
 Respond with exactly this JSON (no other text):
 {{
@@ -207,7 +208,7 @@ Rules:
 
 Context from E₀ runtime:
 {context}
-
+{scenario_block}
 Task: {task}
 Start state: {start}
 Goal state: {goal}
@@ -452,6 +453,7 @@ class E0LLMAdapter:
         target: str,
         task: str,
         memos_summary: Optional[Dict[str, Any]] = None,
+        scenario_block: str = "",
     ) -> TransitionResult:
         """
         Ask LLM to perform the work of a transition.
@@ -464,13 +466,16 @@ class E0LLMAdapter:
             target: Target state name.
             task: Description of what needs to happen.
             memos_summary: Output from E0MemoryOS.summarize_for_llm().
+            scenario_block: Pre-formatted scenario context string.
 
         Returns:
             TransitionResult with outcome, result text, and confidence.
         """
         ctx = self._format_context(memos_summary) if memos_summary else "{}"
+        sc_block = f"\nScenario context:\n{scenario_block}\n" if scenario_block else ""
         prompt = EXECUTE_TRANSITION_PROMPT.format(
             context=ctx,
+            scenario_block=sc_block,
             source=source,
             target=target,
             task=task,
@@ -555,6 +560,7 @@ class E0LLMAdapter:
         start: str,
         goal: str,
         memos_summary: Optional[Dict[str, Any]] = None,
+        scenario_block: str = "",
     ) -> LandscapeProposal:
         """
         Ask LLM to design a complete state graph for a task.
@@ -567,13 +573,16 @@ class E0LLMAdapter:
             start: Name of the starting state.
             goal: Name of the goal state.
             memos_summary: Output from E0MemoryOS.summarize_for_llm().
+            scenario_block: Pre-formatted scenario context string.
 
         Returns:
             LandscapeProposal with states and edges.
         """
         ctx = self._format_context(memos_summary) if memos_summary else "{}"
+        sc_block = f"\nScenario context:\n{scenario_block}\n" if scenario_block else ""
         prompt = BUILD_LANDSCAPE_PROMPT.format(
             context=ctx,
+            scenario_block=sc_block,
             task=task,
             start=start,
             goal=goal,
@@ -634,6 +643,7 @@ class E0LLMAdapter:
         memos_summary: Optional[Dict[str, Any]] = None,
         summary_provider: Optional[SummaryProvider] = None,
         live_summary: Optional[LiveSummaryProvider] = None,
+        scenario_block: str = "",
         result_log: Optional[List["TransitionResult"]] = None,
     ) -> Callable[[str, str], Outcome]:
         """
@@ -647,6 +657,8 @@ class E0LLMAdapter:
             live_summary: Callable (source_state) → summary dict.
                 Uses the actual source state from each call to build context.
                 Takes precedence over summary_provider and memos_summary.
+            scenario_block: Pre-formatted scenario context string from
+                ScenarioPacket.as_prompt_block(). Passed to every transition.
             result_log: If provided, each TransitionResult is appended here
                 so callers can inspect the LLM's semantic output per step.
 
@@ -663,7 +675,10 @@ class E0LLMAdapter:
                 summary = summary_provider()
             else:
                 summary = memos_summary
-            result = self.execute_transition(source, target, task, summary)
+            result = self.execute_transition(
+                source, target, task, summary,
+                scenario_block=scenario_block,
+            )
             if result_log is not None:
                 result_log.append(result)
             return result.outcome

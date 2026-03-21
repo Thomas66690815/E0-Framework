@@ -31,6 +31,7 @@ from e0_controller.llm_adapter import (
     task_map_from_proposal,
 )
 from e0_controller.controller import RunTrace
+from e0_controller.scenario_loader import ScenarioPacket, load_scenario, find_scenario
 
 
 # ──────────────────────────────────────────────
@@ -62,10 +63,11 @@ class DomainResult:
 # Run one domain
 # ──────────────────────────────────────────────
 
-def _run_domain(run_fn, name: str, use_mock: bool) -> Optional[DomainResult]:
+def _run_domain(run_fn, name: str, use_mock: bool,
+                scenario: ScenarioPacket | None = None) -> Optional[DomainResult]:
     """Run a domain demo and collect structured results."""
     try:
-        result = run_fn(use_mock=use_mock)
+        result = run_fn(use_mock=use_mock, scenario=scenario)
         trace, proposal, result_log = result
     except Exception as e:
         print(f"  ERROR in {name}: {e}")
@@ -205,18 +207,37 @@ def run_validation(use_mock: bool = True) -> List[DomainResult]:
     from e0_controller.demo_incident_postmortem import run_demo as run_incident
     from e0_controller.demo_research_brief import run_demo as run_research
 
+    # Auto-discover scenario packets
+    sc_open = None
+    sc_incident = None
+    sc_research = None
+    for domain, var_name in [("competitor_brief", "sc_open"),
+                              ("incident_postmortem", "sc_incident"),
+                              ("research_brief", "sc_research")]:
+        path = find_scenario(domain)
+        if path:
+            sc = load_scenario(path)
+            if var_name == "sc_open":
+                sc_open = sc
+            elif var_name == "sc_incident":
+                sc_incident = sc
+            elif var_name == "sc_research":
+                sc_research = sc
+
     domains = [
-        (run_open, "Competitor Brief"),
-        (run_incident, "Incident Postmortem"),
-        (run_research, "Research Brief"),
+        (run_open, "Competitor Brief", sc_open),
+        (run_incident, "Incident Postmortem", sc_incident),
+        (run_research, "Research Brief", sc_research),
     ]
 
     results: List[DomainResult] = []
-    for run_fn, name in domains:
+    for run_fn, name, sc in domains:
         print(f"\n{'━' * 64}")
         print(f"  Running: {name}")
+        if sc:
+            print(f"  Scenario: {sc.title} [{sc.scenario_id}]")
         print(f"{'━' * 64}")
-        dr = _run_domain(run_fn, name, use_mock)
+        dr = _run_domain(run_fn, name, use_mock, scenario=sc)
         if dr:
             results.append(dr)
 

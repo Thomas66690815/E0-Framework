@@ -44,6 +44,7 @@ from e0_controller.llm_adapter import (
     task_map_from_proposal,
 )
 from e0_controller.graph_validation import graph_quality
+from e0_controller.scenario_loader import ScenarioPacket, load_scenario, find_scenario
 
 
 # ──────────────────────────────────────────────
@@ -174,13 +175,22 @@ def run_demo(
     start: str = DEFAULT_START,
     goal: str = DEFAULT_GOAL,
     use_mock: bool = False,
+    scenario: ScenarioPacket | None = None,
 ):
     """Run research-brief demo with LLM-bootstrapped landscape."""
+
+    # Override from scenario packet if provided
+    if scenario:
+        task = f"{scenario.objective}\n\nSource material:\n{scenario.source_text}"
+        start = scenario.start_state or start
+        goal = scenario.goal_state or goal
 
     print("=" * 64)
     print("E₀ Controller — Research Brief Demo (Phase 3c)")
     print("=" * 64)
-    print(f"\nTask: {task[:120]}...")
+    if scenario:
+        print(f"\nScenario: {scenario.title} [{scenario.scenario_id}]")
+    print(f"\nTask: {task[:200]}{'...' if len(task) > 200 else ''}")
     print(f"Start: {start} → Goal: {goal}")
 
     # 1. Setup LLM adapter
@@ -194,7 +204,8 @@ def run_demo(
 
     # 2. LLM designs the landscape
     print("\n── Step 1: LLM designs state graph ──")
-    proposal = adapter.build_landscape(task, start, goal)
+    sc_block = scenario.as_prompt_block() if scenario else ""
+    proposal = adapter.build_landscape(task, start, goal, scenario_block=sc_block)
     print(f"   States: {len(proposal.states)}")
     for s in proposal.states:
         print(f"     • {s}")
@@ -253,6 +264,7 @@ def run_demo(
 
     execute_fn = adapter.as_execute_fn(
         task_map, live_summary=live_summary,
+        scenario_block=sc_block,
         result_log=(result_log := []),
     )
 
@@ -306,7 +318,14 @@ def run_demo(
 if __name__ == "__main__":
     use_mock = "--mock" in sys.argv
     task = DEFAULT_TASK
+    sc = None
     for i, arg in enumerate(sys.argv):
-        if arg == "--task" and i + 1 < len(sys.argv):
+        if arg == "--scenario" and i + 1 < len(sys.argv):
+            sc = load_scenario(sys.argv[i + 1])
+        elif arg == "--task" and i + 1 < len(sys.argv):
             task = sys.argv[i + 1]
-    run_demo(task=task, use_mock=use_mock)
+    if sc is None and task == DEFAULT_TASK:
+        path = find_scenario("research_brief")
+        if path:
+            sc = load_scenario(path)
+    run_demo(task=task, use_mock=use_mock, scenario=sc)
