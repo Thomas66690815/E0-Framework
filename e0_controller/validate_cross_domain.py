@@ -37,6 +37,11 @@ from e0_controller.evaluation import (
     ScenarioEvaluation,
     format_evaluation_report,
 )
+from e0_controller.reflection import (
+    reflect,
+    ReflectionReport,
+    format_reflection_report,
+)
 
 
 # ──────────────────────────────────────────────
@@ -64,6 +69,7 @@ class DomainResult:
     result_log: List[TransitionResult]
     scenario: Optional[ScenarioPacket]
     evaluation: Optional[ScenarioEvaluation]
+    reflection: Optional[ReflectionReport]
 
 
 # ──────────────────────────────────────────────
@@ -139,6 +145,7 @@ def _run_domain(run_fn, name: str, use_mock: bool,
         result_log=result_log,
         scenario=scenario,
         evaluation=ev,
+        reflection=reflect(ev),
     )
 
 
@@ -279,6 +286,13 @@ def run_validation(use_mock: bool = True) -> List[DomainResult]:
         if evals:
             report = format_evaluation_report(evals)
             print(report)
+
+        # Reflection Layer report
+        reflections = [r.reflection for r in results if r.reflection]
+        if reflections:
+            domains = [r.name for r in results if r.reflection]
+            ref_report = format_reflection_report(reflections, domains=domains)
+            print(ref_report)
 
     return results
 

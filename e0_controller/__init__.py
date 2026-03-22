@@ -48,10 +48,16 @@ Phase 3f (Evaluation Layer):
   - A–F rating scale with efficiency, loops, semantic completeness
   - Integrated into validate_cross_domain report output
 
+Phase 3g (Reflection Layer):
+  - reflection.py — ReflectionDecision, ReflectionReport
+  - should_reflect() trigger logic: failure / quality / opportunity
+  - reflect() bounded self-reference with layer attribution
+  - Integrated into validate_cross_domain report output
+
 See E0_CONTROLLER_STATUS.md for full project context.
 """
 
-__version__ = "0.8.0"
+__version__ = "0.9.0"
 
 from .primitives import Edge, Outcome
 from .historization import Historization, TraceRecord
@@ -78,4 +84,8 @@ from .evaluation import (
     RunEvaluation, SemanticEvaluation, ScenarioEvaluation,
     evaluate_run, evaluate_semantics, evaluate_scenario,
     detect_hard_failure, format_evaluation_report,
+)
+from .reflection import (
+    ReflectionDecision, ReflectionReport,
+    should_reflect, reflect, format_reflection_report,
 )
