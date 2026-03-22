@@ -51,13 +51,15 @@ class TestPotential(unittest.TestCase):
             self.assertFalse(math.isnan(val), f"Φ({state}) darf nicht NaN sein")
             self.assertFalse(math.isinf(val), f"Φ({state}) darf nicht ∞ sein")
 
-    def test_phi_dead_end_is_zero(self):
-        """Dead-end D hat keine Ausgangskanten → Φ(D) = 0."""
-        self.assertEqual(phi(self.L, "D"), 0.0)
+    def test_phi_dead_end_is_sink(self):
+        """Dead-end D hat keine Ausgangskanten → Φ(D) < Φ(source)."""
+        self.assertLess(phi(self.L, "D"), phi(self.L, "A"),
+                        "Sink D muss niedrigeres Φ haben als Source A")
 
-    def test_phi_goal_is_zero(self):
-        """GOAL hat keine Ausgangskanten → Φ(GOAL) = 0."""
-        self.assertEqual(phi(self.L, "GOAL"), 0.0)
+    def test_phi_goal_is_sink(self):
+        """GOAL hat keine Ausgangskanten → Φ(GOAL) < Φ(source)."""
+        self.assertLess(phi(self.L, "GOAL"), phi(self.L, "A"),
+                        "Sink GOAL muss niedrigeres Φ haben als Source A")
 
     def test_phi_source_higher_than_sink(self):
         """
@@ -67,18 +69,29 @@ class TestPotential(unittest.TestCase):
         self.assertGreater(phi(self.L, "A"), phi(self.L, "D"))
         self.assertGreater(phi(self.L, "A"), phi(self.L, "GOAL"))
 
-    def test_phi_positive_for_connected_states(self):
-        """Alle States mit Ausgangskanten haben Φ > 0."""
-        for state in ["A", "B", "C", "E", "G"]:
-            self.assertGreater(phi(self.L, state), 0.0,
-                               f"Φ({state}) sollte > 0 sein")
+    def test_phi_gradient_along_main_path(self):
+        """Entlang des Hauptpfads A→B→E→G→GOAL sinkt Φ monoton."""
+        path = ["A", "B", "E", "G", "GOAL"]
+        for i in range(len(path) - 1):
+            self.assertGreater(
+                phi(self.L, path[i]), phi(self.L, path[i + 1]),
+                f"Φ({path[i]}) sollte > Φ({path[i+1]}) sein"
+            )
 
-    def test_phi_consistent_with_tension(self):
+    def test_helmholtz_orthogonality(self):
         """
-        Φ(A) = Δ(A,B)·R_eff(A,B) + Δ(A,C)·R_eff(A,C)
-             = 0.5·1.0 + 0.4·0.8 = 0.82
+        Helmholtz-Garantie: ⟨v_grad, v_rot⟩_E = 0.
+        Summe über alle Kanten von v_grad(e)·v_rot(e) muss ≈ 0 sein.
         """
-        self.assertAlmostEqual(phi(self.L, "A"), 0.82, places=5)
+        dot = 0.0
+        for edge in self.L.edges:
+            x, y = edge.source, edge.target
+            vg = v_grad(self.L, x, y)
+            vr = v_rot(self.L, x, y)
+            if vr is not None:
+                dot += vg * vr
+        self.assertAlmostEqual(dot, 0.0, places=8,
+                               msg="v_grad und v_rot müssen orthogonal sein")
 
 
 class TestDecomposition(unittest.TestCase):
@@ -393,19 +406,19 @@ class TestHistorizationEffectsOnPhase(unittest.TestCase):
     """Phase-Schicht reagiert auf Historisierung."""
 
     def test_phi_changes_after_historization(self):
-        """Φ(E) verändert sich nach Failures auf E→F."""
+        """Φ downstream verändert sich nach Failures auf E→F."""
         L = build_mini_landscape()
-        phi_before = phi(L, "E")
+        phi_f_before = phi(L, "F")
 
         # Historize some failures on E→F
         edge = Edge("E", "F")
         for _ in range(5):
             L.historization.update(edge, Outcome.FAILURE)
 
-        phi_after = phi(L, "E")
-        # After failures: R_eff(E→F) is higher → Φ(E) increases
-        self.assertGreater(phi_after, phi_before,
-                           "Φ(E) muss nach Failures steigen (höherer R_eff)")
+        phi_f_after = phi(L, "F")
+        # After failures: v(E→F) decreases → F gets less inflow → Φ(F) shifts
+        self.assertNotAlmostEqual(phi_f_after, phi_f_before, places=3,
+                                  msg="Φ(F) muss sich nach Failures auf E→F ändern")
 
     def test_psi_magnitude_changes_after_failures(self):
         """Path über failure-prone Kante wird schwächer nach Historisierung."""

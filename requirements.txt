@@ -17,6 +17,9 @@
 # API mode (recommended)
 openai
 
+# Potential & Helmholtz decomposition (graph Laplacian solver)
+numpy
+
 # Keimzelle — config parsing
 pyyaml
 

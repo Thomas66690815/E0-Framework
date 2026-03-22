@@ -55,10 +55,15 @@ class TestInvoicePotential(unittest.TestCase):
             self.assertFalse(math.isnan(val))
             self.assertFalse(math.isinf(val))
 
-    def test_phi_dead_ends_zero(self):
-        """REJECTED und APPROVED: Φ = 0."""
-        self.assertEqual(phi(self.L, "REJECTED"), 0.0)
-        self.assertEqual(phi(self.L, "APPROVED"), 0.0)
+    def test_phi_dead_ends_are_sinks(self):
+        """REJECTED und APPROVED sind Sinks → niedrigstes Φ."""
+        pm = phi_map(self.L)
+        sink_states = {"REJECTED", "APPROVED"}
+        source_states = set(pm.keys()) - sink_states
+        max_sink = max(pm[s] for s in sink_states)
+        for s in source_states:
+            self.assertGreater(pm[s], max_sink,
+                               f"Φ({s}) sollte > max(Φ(sinks)) sein")
 
     def test_phi_received_highest(self):
         """

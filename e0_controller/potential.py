@@ -1,79 +1,161 @@
 """
-E₀ Controller — Potential & Spec-Aligned Decomposition
-========================================================
-Diskrete Zerlegung des Transitionsfelds in Gradient- und Rotationskomponente.
+E₀ Controller — Potential & Helmholtz Decomposition
+=====================================================
+Diskrete Helmholtz-Zerlegung des Transitionsfelds v in orthogonale
+Gradient- und Rotationskomponenten.
 
 Spec coverage: §9 (Lokales Potential Φ), §10 (v_grad), §11 (v_rot).
 
-Core equations:
-    Φ(x)         = Σ_{y ∈ N(x)} Δ(x,y) · R_eff(x,y)     — §9 Lokales Potential
-    v_grad(x, y) = Φ(x) − Φ(y)                            — §10 Gradient-Komponente
-    v_rot(x, y)  = v(x, y) − v_grad(x, y)                 — §11 Rotations-Komponente
+Core equations (true discrete Helmholtz):
+    div(v)(x) = Σ_y v(x→y) − Σ_y v(y→x)              — Divergenz
+    L · Φ = div(v)                                      — Graph-Laplacian-Gleichung
+    v_grad(x, y) = Φ(x) − Φ(y)                         — §10 Gradient-Komponente
+    v_rot(x, y)  = v(x, y) − v_grad(x, y)              — §11 Rotations-Komponente
 
-Mathematische Anmerkung:
-    Die Spec definiert Φ als lokale Summation über Nachbarn, nicht als Lösung
-    eines Graph-Laplacian-Systems. Das bedeutet: v_grad ist die konservative
-    Komponente, die sich aus Potenzial-Differenzen ergibt. v_rot ist der
-    verbleibende nicht-integrable Rest — genau die Komponente, die Holonomie ≠ 0
-    erzeugen kann.
+Mathematische Garantie:
+    Diese Zerlegung löst die Graph-Laplacian-Gleichung L·Φ = div(v).
+    Dadurch wird Φ so bestimmt, dass v_grad und v_rot orthogonal im
+    Kantenraum sind: ⟨v_grad, v_rot⟩_E = 0.
 
-    WICHTIG: Diese Zerlegung ist NICHT eine volle diskrete Helmholtz-Zerlegung
-    (die min ||v_rot||² über den Graph-Laplacian L = D − A löst). Die
-    Spec-Zerlegung ist deterministisch und berechenbar, aber v_rot ist im
-    Allgemeinen nicht orthogonal zu v_grad. Wir nennen sie deshalb bewusst
-    "Spec-Aligned Decomposition", nicht "Helmholtz-Zerlegung".
+    Konsequenz: Holonomie Hol(γ) = Σ_γ v_rot ist wohldefiniert und
+    repräsentiert exakt den nicht-konservativen Anteil des Feldes.
 
-    Für spätere Versionen kann eine echte diskrete Helmholtz-Zerlegung
-    implementiert werden.
+    Vorherige Implementierung (bis v0.9.1) benutzte Φ(x) = Σ Δ·R_eff
+    als Heuristik. Das war spec-aligned, aber nicht orthogonal.
 
 Konvention für gerichtete Kanten:
     - v(x, y) ist nur definiert, wenn Kante x→y existiert.
-    - Φ(x) summiert nur über existierende Ausgangskanten.
-    - v_grad(x, y) = Φ(x) − Φ(y) ist auch definiert, wenn keine direkte
-      Kante x→y existiert. Aber v_rot(x, y) ist nur sinnvoll für existierende
-      Kanten.
+    - v_grad(x, y) = Φ(x) − Φ(y) ist für jedes Paar berechenbar.
+    - v_rot(x, y) ist nur sinnvoll für existierende Kanten.
     - Fehlende Kante → v(x, y) = 0.0 (keine Transitionskapazität).
+
+Requires: numpy (for graph Laplacian least-squares solve).
 """
 
 from __future__ import annotations
 
-from typing import Dict, Optional
+import math
+from typing import Dict, List, Optional
+
+import numpy as np
 
 from .landscape import Landscape
 
 
-def phi(L: Landscape, x: str) -> float:
+# ──────────────────────────────────────────────
+# 1. Divergence and Graph Laplacian
+# ──────────────────────────────────────────────
+
+def div_v(L: Landscape, x: str) -> float:
     """
-    §9: Lokales Potential.
+    Divergence of the transition field at node x.
 
-    Φ(x) = Σ_{y ∈ N(x)} Δ(x,y) · R_eff(x,y)
+    div(v)(x) = Σ_y v(x→y) − Σ_y v(y→x)
 
-    Summe der Tension-Beiträge über alle Ausgangskanten.
-    States ohne Ausgangskanten (Dead-Ends) haben Φ = 0.
-
-    Interpretationshinweis (C2): Φ = 0 bei Dead-Ends bedeutet "keine
-    ausgehenden Beiträge", NICHT "ontologisch spannungsfrei". Ein
-    Dead-End kann durchaus innere Spannung tragen — es hat lediglich
-    keine definierten Ausgangstransitionen, über die sich diese Spannung
-    als Potential manifestieren könnte.
-
-    Allgemein: Φ(x) misst die „strukturelle Spannung" eines Zustands.
-    Hohe Φ = viel unaufgelöste Differenz, starker Druck zur Transition.
+    Positive: net outflow (source-like node).
+    Negative: net inflow (sink-like node).
+    Zero: balanced flow.
     """
-    total = 0.0
+    outflow = 0.0
+    inflow = 0.0
     for edge in L.edges:
         if edge.source == x:
-            delta = L.difference(x, edge.target)
-            if delta is not None:
-                r_eff = L.effective_resistance(x, edge.target)
-                if not _is_inf(r_eff):
-                    total += delta * r_eff
-    return total
+            outflow += L.transition_field(x, edge.target)
+        if edge.target == x:
+            inflow += L.transition_field(edge.source, x)
+    return outflow - inflow
+
+
+def graph_laplacian(L: Landscape) -> tuple:
+    """
+    Build the graph Laplacian L = D − A for the underlying undirected
+    weighted graph derived from the directed edge set.
+
+    For the Helmholtz decomposition on edge space, we use the
+    *combinatorial* Laplacian of the undirected graph where edge
+    weight w(x,y) = number of directed edges between x and y.
+
+    Returns:
+        (laplacian, state_list):
+            laplacian — n×n numpy array (symmetric, positive semi-definite)
+            state_list — ordered list of state names (index mapping)
+    """
+    states = sorted(L.states)
+    n = len(states)
+    idx = {s: i for i, s in enumerate(states)}
+
+    lap = np.zeros((n, n), dtype=np.float64)
+
+    for edge in L.edges:
+        i = idx[edge.source]
+        j = idx[edge.target]
+        # Undirected weight: each directed edge contributes 1
+        lap[i, j] -= 1.0
+        lap[j, i] -= 1.0
+        lap[i, i] += 1.0
+        lap[j, j] += 1.0
+
+    return lap, states
+
+
+def _solve_helmholtz(L: Landscape) -> Dict[str, float]:
+    """
+    Solve L · Φ = div(v) for the potential Φ.
+
+    The graph Laplacian L is singular (rank n-1 for connected graph),
+    so we pin the first node to Φ = 0 and solve the reduced system.
+
+    Returns dict mapping state name → Φ value.
+    """
+    lap, states = graph_laplacian(L)
+    n = len(states)
+
+    if n == 0:
+        return {}
+    if n == 1:
+        return {states[0]: 0.0}
+
+    # Build divergence vector
+    div_vec = np.array([div_v(L, s) for s in states], dtype=np.float64)
+
+    # Pin node 0 to Φ = 0: remove row/col 0, solve reduced system
+    L_reduced = lap[1:, 1:]
+    b_reduced = div_vec[1:]
+
+    # Solve via least-squares (handles rank deficiency gracefully)
+    phi_reduced, _, _, _ = np.linalg.lstsq(L_reduced, b_reduced, rcond=None)
+
+    # Reconstruct full Φ vector with pinned node
+    phi_full = np.zeros(n, dtype=np.float64)
+    phi_full[1:] = phi_reduced
+
+    return {states[i]: float(phi_full[i]) for i in range(n)}
+
+
+# ──────────────────────────────────────────────
+# 2. Public API — Potential Functions
+# ──────────────────────────────────────────────
+
+def phi(L: Landscape, x: str) -> float:
+    """
+    §9: Potential via true discrete Helmholtz decomposition.
+
+    Φ(x) is determined by solving L · Φ = div(v), where L is the
+    graph Laplacian and div(v) is the divergence of the transition field.
+
+    This ensures v_grad ⊥ v_rot in the edge inner product space.
+
+    Interpretation: Φ(x) measures the "structural pressure" at node x.
+    High Φ = strong net outflow drive. Low Φ = sink-like.
+    Relative differences Φ(x) − Φ(y) drive gradient flow.
+    """
+    pm = _solve_helmholtz(L)
+    return pm.get(x, 0.0)
 
 
 def phi_map(L: Landscape) -> Dict[str, float]:
-    """Φ(x) for all states. Convenience function."""
-    return {x: phi(L, x) for x in L.states}
+    """Φ(x) for all states. Convenience wrapper."""
+    return _solve_helmholtz(L)
 
 
 def v_raw(L: Landscape, x: str, y: str) -> float:
@@ -92,12 +174,9 @@ def v_grad(L: Landscape, x: str, y: str) -> float:
 
     v_grad(x, y) = Φ(x) − Φ(y)
 
-    The conservative part — derivable from a potential function.
+    The conservative part — derivable from the Helmholtz potential.
     Can be computed for any pair of states, even without a direct edge.
-
-    Positive: x has higher potential than y (downhill transition).
-    Negative: y has higher potential (uphill transition).
-    Zero: even potential (no gradient drive).
+    Orthogonal to v_rot by construction.
     """
     return phi(L, x) - phi(L, y)
 
@@ -108,15 +187,13 @@ def v_rot(L: Landscape, x: str, y: str) -> Optional[float]:
 
     v_rot(x, y) = v(x, y) − v_grad(x, y)
 
-    The non-conservative remainder — this is what creates holonomy.
+    The non-conservative remainder — orthogonal to v_grad by
+    construction of the Helmholtz potential Φ.
+
+    This is what creates holonomy: Hol(γ) = Σ_γ v_rot.
     Only defined for edges that actually exist in the landscape.
 
     Returns None if edge x→y does not exist (v_rot is undefined there).
-
-    Konvention für fehlende Rückkanten:
-        Wenn Kante y→x nicht existiert, ist v_rot(y, x) nicht berechenbar.
-        Dieses Modul gibt None zurück. Die Connection-Schicht (connection.py)
-        definiert die ω-Konvention für diesen Fall.
     """
     delta = L.difference(x, y)
     if delta is None:
@@ -159,9 +236,3 @@ def decomposition_table(L: Landscape) -> list:
         d["target"] = edge.target
         rows.append(d)
     return rows
-
-
-def _is_inf(val: float) -> bool:
-    """Check for infinity."""
-    import math
-    return math.isinf(val)

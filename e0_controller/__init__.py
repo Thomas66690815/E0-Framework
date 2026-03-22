@@ -58,14 +58,17 @@ Phase 3g (Reflection Layer):
 See E0_CONTROLLER_STATUS.md for full project context.
 """
 
-__version__ = "0.9.1"
+__version__ = "0.10.0"
 
 from .primitives import Edge, Outcome
 from .historization import Historization, TraceRecord
 from .tension import tension, path_tension, coherence
 from .landscape import Landscape
 from .controller import E0Controller, StepResult, RunTrace, EscalationType
-from .potential import phi, phi_map, v_raw, v_grad, v_rot, decomposition
+from .potential import (
+    phi, phi_map, v_raw, v_grad, v_rot, decomposition,
+    div_v, graph_laplacian,
+)
 from .connection import omega, theta, holonomy, omega_map
 from .wavepath import psi, path_intensity, sum_paths, intensity, interference_analysis
 from .memory_os import E0MemoryOS, CanonRef, MemOSContext
