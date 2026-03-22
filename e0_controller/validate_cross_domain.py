@@ -26,8 +26,10 @@ from e0_controller.graph_validation import graph_quality, GraphQuality
 from e0_controller.llm_adapter import (
     E0LLMAdapter,
     LandscapeProposal,
+    LLMConfig,
     TransitionResult,
     materialize_landscape,
+    openai_call,
     task_map_from_proposal,
 )
 from e0_controller.controller import RunTrace
@@ -145,7 +147,12 @@ def _run_domain(run_fn, name: str, use_mock: bool,
         result_log=result_log,
         scenario=scenario,
         evaluation=ev,
-        reflection=reflect(ev),
+        reflection=reflect(
+            ev,
+            call_fn=openai_call if not use_mock else None,
+            config=LLMConfig() if not use_mock else None,
+            result_log=result_log,
+        ),
     )
 
 

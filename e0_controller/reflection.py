@@ -17,11 +17,14 @@ See E0_REFLECTION_LAYER_v0.1.md for architecture.
 
 from __future__ import annotations
 
+import json
+import re
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from .evaluation import ScenarioEvaluation, RunEvaluation, SemanticEvaluation
 from .graph_validation import GraphQuality
+from .llm_adapter import LLMConfig, LLMResponseError, TransitionResult
 
 
 # ──────────────────────────────────────────────
@@ -338,18 +341,191 @@ def _reflect_opportunity(ev: ScenarioEvaluation) -> ReflectionReport:
 
 
 # ──────────────────────────────────────────────
-# 6. Main Reflection Entry Point
+# 6. LLM-Backed Reflection
 # ──────────────────────────────────────────────
 
-def reflect(ev: ScenarioEvaluation) -> Optional[ReflectionReport]:
+REFLECTION_SYSTEM_PROMPT = """You are the E₀ Reflection Layer.
+You analyse structured evaluation evidence from an E₀ controller run.
+You identify patterns, attribute causes to system layers, and propose concrete improvements.
+You do NOT produce free narrative or self-mythology.
+You respond ONLY with the requested JSON structure."""
+
+REFLECTION_PROMPT = """\
+Reflect on the following E₀ run evaluation.
+
+Reflection type: {reflection_type}
+Trigger reason: {trigger_reason}
+
+--- Evaluation Evidence ---
+{evidence_block}
+
+--- Transition Output Samples ---
+{result_samples}
+
+Analyse the evidence. Identify:
+1. observed_patterns — structural or semantic patterns you see in this run
+2. likely_layers — which system layers are most responsible (from: graph_design, controller, semantic, scenario, llm_prompt)
+3. evidence — specific metrics or facts supporting your analysis
+4. recommended_actions — concrete improvements to make (be specific)
+5. preservations — patterns worth keeping for future runs (especially for opportunity reflections)
+
+Respond with exactly this JSON (no other text):
+{{
+  "observed_patterns": ["..."],
+  "likely_layers": ["..."],
+  "evidence": ["..."],
+  "recommended_actions": ["..."],
+  "preservations": ["..."]
+}}"""
+
+# Type for pluggable LLM backends (same as llm_adapter)
+ReflectionCallFn = Callable[[str, str, LLMConfig], str]
+
+
+def _build_evidence_block(ev: ScenarioEvaluation) -> str:
+    """Build a structured text block of evaluation evidence for the LLM."""
+    lines: List[str] = []
+    run = ev.run_evaluation
+
+    lines.append(f"Domain: {ev.domain}")
+    lines.append(f"Scenario: {ev.scenario_id}")
+    lines.append(f"Graph Score: {ev.graph_score:.2f}")
+    lines.append(f"Hard Failure: {ev.hard_failure or 'none'}")
+    lines.append(f"Overall Score: {ev.overall_score}")
+    lines.append("")
+    lines.append("Run Dynamics:")
+    lines.append(f"  Rating: {run.rating}")
+    lines.append(f"  Goal Reached: {run.goal_reached}")
+    lines.append(f"  Steps: {run.steps}")
+    lines.append(f"  Efficiency: {run.goal_reach_efficiency:.2f}")
+    lines.append(f"  Progress Ratio: {run.progress_ratio:.2f}")
+    lines.append(f"  Loop Penalty: {run.loop_penalty:.2f}")
+    lines.append(f"  Repeated Cycles: {run.repeated_cycles}")
+    lines.append(f"  Escalations: {run.escalations}")
+    lines.append(f"  Revisits: {run.revisits}")
+    lines.append(f"  Step Success Rate: {run.step_success_rate:.0%}")
+    lines.append(f"  Avg Tension: {run.avg_tension:.4f}")
+    if run.warnings:
+        lines.append(f"  Warnings: {'; '.join(run.warnings)}")
+
+    if ev.semantic_evaluation:
+        sem = ev.semantic_evaluation
+        lines.append("")
+        lines.append("Semantic Evaluation:")
+        lines.append(f"  Coverage: {sem.required_outputs_covered:.0%}")
+        lines.append(f"  Completeness: {sem.completeness_score:.2f}")
+        lines.append(f"  Missing: {', '.join(sem.missing_outputs) if sem.missing_outputs else 'none'}")
+        lines.append(f"  Uncertainty Marks: {sem.uncertainty_marks}")
+        lines.append(f"  Grounding Warnings: {sem.grounding_warnings}")
+
+    return "\n".join(lines)
+
+
+def _build_result_samples(
+    result_log: Optional[List[TransitionResult]],
+    max_samples: int = 5,
+) -> str:
+    """Format a few transition output samples for the LLM to inspect."""
+    if not result_log:
+        return "(no transition outputs available)"
+
+    samples = result_log[:max_samples]
+    lines: List[str] = []
+    for i, r in enumerate(samples, 1):
+        text = r.result[:200] + "..." if len(r.result) > 200 else r.result
+        lines.append(f"  [{i}] {r.outcome.name} (conf={r.confidence:.2f}): {text}")
+
+    if len(result_log) > max_samples:
+        lines.append(f"  ... ({len(result_log) - max_samples} more transitions)")
+
+    return "\n".join(lines)
+
+
+def _parse_reflection_response(raw: str, reflection_type: str) -> ReflectionReport:
+    """Parse LLM JSON response into a ReflectionReport."""
+    text = raw.strip()
+    m = re.search(r"```(?:json)?\s*\n?(.*?)\n?\s*```", text, re.DOTALL)
+    if m:
+        text = m.group(1).strip()
+    try:
+        data = json.loads(text)
+    except (json.JSONDecodeError, ValueError) as exc:
+        raise LLMResponseError(
+            f"Reflection LLM returned invalid JSON: {exc}",
+            raw_response=raw,
+        ) from exc
+
+    if not isinstance(data, dict):
+        raise LLMResponseError(
+            f"Expected JSON object, got {type(data).__name__}",
+            raw_response=raw,
+        )
+
+    return ReflectionReport(
+        reflection_type=reflection_type,
+        observed_patterns=data.get("observed_patterns", []),
+        likely_layers=data.get("likely_layers", []),
+        evidence=data.get("evidence", []),
+        recommended_actions=data.get("recommended_actions", []),
+        preservations=data.get("preservations", []),
+    )
+
+
+def reflect_with_llm(
+    ev: ScenarioEvaluation,
+    decision: ReflectionDecision,
+    call_fn: ReflectionCallFn,
+    config: LLMConfig,
+    result_log: Optional[List[TransitionResult]] = None,
+) -> ReflectionReport:
+    """Run LLM-backed reflection on a scenario evaluation.
+
+    Uses the LLM to analyse evaluation evidence and produce a structured
+    reflection report with patterns, layer attribution, and actions.
+    """
+    evidence_block = _build_evidence_block(ev)
+    result_samples = _build_result_samples(result_log)
+
+    prompt = REFLECTION_PROMPT.format(
+        reflection_type=decision.reflection_type,
+        trigger_reason=decision.reason,
+        evidence_block=evidence_block,
+        result_samples=result_samples,
+    )
+
+    raw = call_fn(REFLECTION_SYSTEM_PROMPT, prompt, config)
+    return _parse_reflection_response(raw, decision.reflection_type)
+
+
+# ──────────────────────────────────────────────
+# 7. Main Reflection Entry Point
+# ──────────────────────────────────────────────
+
+def reflect(
+    ev: ScenarioEvaluation,
+    call_fn: Optional[ReflectionCallFn] = None,
+    config: Optional[LLMConfig] = None,
+    result_log: Optional[List[TransitionResult]] = None,
+) -> Optional[ReflectionReport]:
     """Run reflection on a scenario evaluation if triggered.
 
+    If call_fn and config are provided, uses LLM-backed reflection.
+    Otherwise falls back to rule-based reflection.
     Returns a ReflectionReport if reflection was warranted, or None.
     """
     decision = should_reflect(ev)
     if not decision.reflect:
         return None
 
+    # LLM path: structured reflection with real reasoning
+    if call_fn is not None and config is not None:
+        try:
+            return reflect_with_llm(ev, decision, call_fn, config, result_log)
+        except (LLMResponseError, Exception):
+            # Fall through to rule-based on LLM failure
+            pass
+
+    # Rule-based fallback
     if decision.reflection_type == "failure":
         return _reflect_failure(ev)
     elif decision.reflection_type == "quality":
@@ -360,7 +536,7 @@ def reflect(ev: ScenarioEvaluation) -> Optional[ReflectionReport]:
 
 
 # ──────────────────────────────────────────────
-# 7. Report Formatting
+# 8. Report Formatting
 # ──────────────────────────────────────────────
 
 def format_reflection_report(reports: List[ReflectionReport], domains: Optional[List[str]] = None) -> str:

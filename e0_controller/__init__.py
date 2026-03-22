@@ -52,12 +52,13 @@ Phase 3g (Reflection Layer):
   - reflection.py — ReflectionDecision, ReflectionReport
   - should_reflect() trigger logic: failure / quality / opportunity
   - reflect() bounded self-reference with layer attribution
+  - reflect_with_llm() — LLM-backed reflection with rule-based fallback
   - Integrated into validate_cross_domain report output
 
 See E0_CONTROLLER_STATUS.md for full project context.
 """
 
-__version__ = "0.9.0"
+__version__ = "0.9.1"
 
 from .primitives import Edge, Outcome
 from .historization import Historization, TraceRecord
@@ -86,6 +87,6 @@ from .evaluation import (
     detect_hard_failure, format_evaluation_report,
 )
 from .reflection import (
-    ReflectionDecision, ReflectionReport,
-    should_reflect, reflect, format_reflection_report,
+    ReflectionDecision, ReflectionReport, ReflectionCallFn,
+    should_reflect, reflect, reflect_with_llm, format_reflection_report,
 )
