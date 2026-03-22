@@ -32,6 +32,11 @@ from e0_controller.llm_adapter import (
 )
 from e0_controller.controller import RunTrace
 from e0_controller.scenario_loader import ScenarioPacket, load_scenario, find_scenario
+from e0_controller.evaluation import (
+    evaluate_scenario,
+    ScenarioEvaluation,
+    format_evaluation_report,
+)
 
 
 # ──────────────────────────────────────────────
@@ -57,6 +62,8 @@ class DomainResult:
     trap_warnings: int
     loop_warnings: int
     result_log: List[TransitionResult]
+    scenario: Optional[ScenarioPacket]
+    evaluation: Optional[ScenarioEvaluation]
 
 
 # ──────────────────────────────────────────────
@@ -64,7 +71,7 @@ class DomainResult:
 # ──────────────────────────────────────────────
 
 def _run_domain(run_fn, name: str, use_mock: bool,
-                scenario: ScenarioPacket | None = None) -> Optional[DomainResult]:
+                scenario: Optional[ScenarioPacket] = None) -> Optional[DomainResult]:
     """Run a domain demo and collect structured results."""
     try:
         result = run_fn(use_mock=use_mock, scenario=scenario)
@@ -92,6 +99,27 @@ def _run_domain(run_fn, name: str, use_mock: bool,
     traps = len(gq.traps)
     loops = len(gq.trivial_loops)
 
+    reached = trace.path[-1] == goal if trace.path else False
+
+    # Evaluation layer
+    sc_id = scenario.scenario_id if scenario else name.lower().replace(" ", "_")
+    sc_domain = scenario.domain if scenario else name.lower().replace(" ", "_")
+    ev = evaluate_scenario(
+        scenario_id=sc_id,
+        domain=sc_domain,
+        gq=gq,
+        path=trace.path,
+        steps=int(metrics["steps"]),
+        escalation_count=int(metrics["escalation_count"]),
+        revisit_count=int(metrics["revisit_count"]),
+        success_rate=metrics["success_rate"],
+        avg_tension=metrics["avg_tension"],
+        total_tension=trace.total_tension,
+        reached_goal=reached,
+        result_log=result_log,
+        scenario=scenario,
+    )
+
     return DomainResult(
         name=name,
         mode="mock" if use_mock else "live",
@@ -105,10 +133,12 @@ def _run_domain(run_fn, name: str, use_mock: bool,
         revisits=int(metrics["revisit_count"]),
         avg_tension=metrics["avg_tension"],
         total_tension=trace.total_tension,
-        reached_goal=trace.path[-1] == goal if trace.path else False,
+        reached_goal=reached,
         trap_warnings=traps,
         loop_warnings=loops,
         result_log=result_log,
+        scenario=scenario,
+        evaluation=ev,
     )
 
 
@@ -243,6 +273,12 @@ def run_validation(use_mock: bool = True) -> List[DomainResult]:
 
     if results:
         _print_comparison(results)
+
+        # Evaluation Layer report
+        evals = [r.evaluation for r in results if r.evaluation]
+        if evals:
+            report = format_evaluation_report(evals)
+            print(report)
 
     return results
 

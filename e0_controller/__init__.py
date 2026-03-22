@@ -42,10 +42,16 @@ Phase 3e (Scenario Packets):
   - --scenario flag on all demos, auto-discovery in validate_cross_domain
   - 100% live success rate with grounded source material
 
+Phase 3f (Evaluation Layer):
+  - evaluation.py — RunEvaluation, SemanticEvaluation, ScenarioEvaluation
+  - Hard failure detection gates before overall scoring
+  - A–F rating scale with efficiency, loops, semantic completeness
+  - Integrated into validate_cross_domain report output
+
 See E0_CONTROLLER_STATUS.md for full project context.
 """
 
-__version__ = "0.7.0"
+__version__ = "0.8.0"
 
 from .primitives import Edge, Outcome
 from .historization import Historization, TraceRecord
@@ -68,3 +74,8 @@ from .graph_validation import (
 )
 from .validate_cross_domain import run_validation
 from .scenario_loader import ScenarioPacket, load_scenario, find_scenario
+from .evaluation import (
+    RunEvaluation, SemanticEvaluation, ScenarioEvaluation,
+    evaluate_run, evaluate_semantics, evaluate_scenario,
+    detect_hard_failure, format_evaluation_report,
+)
