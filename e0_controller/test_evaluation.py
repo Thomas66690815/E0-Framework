@@ -387,5 +387,126 @@ class TestReportFormatting(unittest.TestCase):
         self.assertIn("Mean Overall", report)
 
 
+# ──────────────────────────────────────────────
+# Test: Hybrid / Overlay Evaluation (Phase 3o)
+# ──────────────────────────────────────────────
+
+class TestHybridEvaluation(unittest.TestCase):
+    """Tests for hybrid/overlay fields in RunEvaluation."""
+
+    def test_default_hybrid_fields(self):
+        """evaluate_run without hybrid params has safe defaults."""
+        ev = evaluate_run(
+            path=["A", "B", "C"], steps=2, escalation_count=0,
+            revisit_count=0, success_rate=1.0, avg_tension=0.3,
+            total_tension=0.6, reached_goal=True, happy_path_length=2,
+        )
+        self.assertEqual(ev.hybrid_override_count, 0)
+        self.assertAlmostEqual(ev.hybrid_override_rate, 0.0)
+        self.assertAlmostEqual(ev.overlay_agree_rate, 1.0)
+        self.assertEqual(ev.overlay_count, 0)
+
+    def test_hybrid_fields_passed_through(self):
+        """Hybrid metrics are stored correctly in RunEvaluation."""
+        ev = evaluate_run(
+            path=["A", "B", "C", "D"], steps=3, escalation_count=0,
+            revisit_count=0, success_rate=1.0, avg_tension=0.3,
+            total_tension=0.9, reached_goal=True, happy_path_length=3,
+            hybrid_override_count=2, hybrid_override_rate=0.667,
+            overlay_agree_rate=0.333, overlay_count=3,
+        )
+        self.assertEqual(ev.hybrid_override_count, 2)
+        self.assertAlmostEqual(ev.hybrid_override_rate, 0.667, places=3)
+        self.assertAlmostEqual(ev.overlay_agree_rate, 0.333, places=3)
+        self.assertEqual(ev.overlay_count, 3)
+
+    def test_high_override_warning(self):
+        """Override rate > 50% triggers a warning."""
+        ev = evaluate_run(
+            path=["A", "B", "C", "D"], steps=3, escalation_count=0,
+            revisit_count=0, success_rate=1.0, avg_tension=0.3,
+            total_tension=0.9, reached_goal=True, happy_path_length=3,
+            hybrid_override_count=2, hybrid_override_rate=0.667,
+            overlay_agree_rate=0.333, overlay_count=3,
+        )
+        override_warnings = [w for w in ev.warnings if "override" in w.lower()]
+        self.assertEqual(len(override_warnings), 1)
+
+    def test_low_agree_warning(self):
+        """Overlay agree rate < 50% triggers a warning."""
+        ev = evaluate_run(
+            path=["A", "B", "C", "D", "E"], steps=4, escalation_count=0,
+            revisit_count=0, success_rate=1.0, avg_tension=0.3,
+            total_tension=1.2, reached_goal=True, happy_path_length=4,
+            hybrid_override_count=0, hybrid_override_rate=0.0,
+            overlay_agree_rate=0.25, overlay_count=4,
+        )
+        agree_warnings = [w for w in ev.warnings if "disagree" in w.lower()]
+        self.assertEqual(len(agree_warnings), 1)
+
+    def test_no_warning_when_rates_ok(self):
+        """No hybrid warnings when override and agree rates are healthy."""
+        ev = evaluate_run(
+            path=["A", "B", "C", "D"], steps=3, escalation_count=0,
+            revisit_count=0, success_rate=1.0, avg_tension=0.3,
+            total_tension=0.9, reached_goal=True, happy_path_length=3,
+            hybrid_override_count=1, hybrid_override_rate=0.333,
+            overlay_agree_rate=0.667, overlay_count=3,
+        )
+        hybrid_warnings = [w for w in ev.warnings
+                           if "override" in w.lower() or "disagree" in w.lower()]
+        self.assertEqual(len(hybrid_warnings), 0)
+
+
+class TestHybridScenarioEvaluation(unittest.TestCase):
+    """Tests for hybrid passthrough in evaluate_scenario."""
+
+    def test_hybrid_metrics_in_scenario(self):
+        gq = _make_gq()
+        ev = evaluate_scenario(
+            scenario_id="hybrid_001", domain="test",
+            gq=gq, path=["A", "B", "C", "D"],
+            steps=3, escalation_count=0, revisit_count=0,
+            success_rate=1.0, avg_tension=0.3, total_tension=0.9,
+            reached_goal=True, result_log=[],
+            hybrid_override_count=1, hybrid_override_rate=0.333,
+            overlay_agree_rate=0.667, overlay_count=3,
+        )
+        self.assertEqual(ev.run_evaluation.hybrid_override_count, 1)
+        self.assertAlmostEqual(ev.run_evaluation.hybrid_override_rate, 0.333, places=3)
+        self.assertEqual(ev.run_evaluation.overlay_count, 3)
+
+    def test_hybrid_report_section(self):
+        """format_evaluation_report includes hybrid section when data present."""
+        gq = _make_gq()
+        ev = evaluate_scenario(
+            scenario_id="hybrid_rpt", domain="test",
+            gq=gq, path=["A", "B", "C", "D"],
+            steps=3, escalation_count=0, revisit_count=0,
+            success_rate=1.0, avg_tension=0.3, total_tension=0.9,
+            reached_goal=True, result_log=[],
+            hybrid_override_count=2, hybrid_override_rate=0.5,
+            overlay_agree_rate=0.5, overlay_count=4,
+        )
+        report = format_evaluation_report([ev])
+        self.assertIn("Overlay Steps", report)
+        self.assertIn("Hybrid Overrides", report)
+        self.assertIn("Override Rate", report)
+
+    def test_no_hybrid_section_when_zero(self):
+        """format_evaluation_report omits hybrid section when no overlay data."""
+        gq = _make_gq()
+        ev = evaluate_scenario(
+            scenario_id="greedy_001", domain="test",
+            gq=gq, path=["A", "B", "C", "D"],
+            steps=3, escalation_count=0, revisit_count=0,
+            success_rate=1.0, avg_tension=0.3, total_tension=0.9,
+            reached_goal=True, result_log=[],
+        )
+        report = format_evaluation_report([ev])
+        self.assertNotIn("Overlay Steps", report)
+        self.assertNotIn("Hybrid Overrides", report)
+
+
 if __name__ == "__main__":
     unittest.main()

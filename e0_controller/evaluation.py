@@ -42,6 +42,11 @@ class RunEvaluation:
     step_success_rate: float    # SUCCESS outcomes / steps
     rating: str                 # A–F
     warnings: List[str] = field(default_factory=list)
+    # Hybrid / overlay metrics (Phase 3o)
+    hybrid_override_count: int = 0
+    hybrid_override_rate: float = 0.0
+    overlay_agree_rate: float = 1.0   # agree / count (1.0 if no overlay)
+    overlay_count: int = 0
 
 
 @dataclass
@@ -130,6 +135,10 @@ def evaluate_run(
     *,
     semantic_completeness: Optional[float] = None,
     hard_failure: Optional[str] = None,
+    hybrid_override_count: int = 0,
+    hybrid_override_rate: float = 0.0,
+    overlay_agree_rate: float = 1.0,
+    overlay_count: int = 0,
 ) -> RunEvaluation:
     """Build a RunEvaluation from run metrics and graph info."""
     unique_states = len(set(path)) if path else 0
@@ -152,6 +161,10 @@ def evaluate_run(
         warnings.append(f"Low progress ratio: {progress_ratio:.2f}")
     if escalation_count > steps * 0.3:
         warnings.append(f"High escalation rate: {escalation_count}/{steps}")
+    if hybrid_override_count > 0 and hybrid_override_rate > 0.5:
+        warnings.append(f"High hybrid override rate: {hybrid_override_rate:.0%} ({hybrid_override_count} overrides)")
+    if overlay_count > 0 and overlay_agree_rate < 0.5:
+        warnings.append(f"Amplitude frequently disagrees: agree {overlay_agree_rate:.0%} of {overlay_count} steps")
 
     rating = _assign_rating(
         reached_goal, efficiency, progress_ratio,
@@ -172,6 +185,10 @@ def evaluate_run(
         step_success_rate=round(success_rate, 4),
         rating=rating,
         warnings=warnings,
+        hybrid_override_count=hybrid_override_count,
+        hybrid_override_rate=round(hybrid_override_rate, 4),
+        overlay_agree_rate=round(overlay_agree_rate, 4),
+        overlay_count=overlay_count,
     )
 
 
@@ -309,6 +326,11 @@ def evaluate_scenario(
     reached_goal: bool,
     result_log: List[TransitionResult],
     scenario: Optional[ScenarioPacket] = None,
+    *,
+    hybrid_override_count: int = 0,
+    hybrid_override_rate: float = 0.0,
+    overlay_agree_rate: float = 1.0,
+    overlay_count: int = 0,
 ) -> ScenarioEvaluation:
     """Full evaluation pipeline for one scenario run."""
     happy_len = gq.happy_path_length
@@ -341,6 +363,10 @@ def evaluate_scenario(
         happy_path_length=happy_len,
         semantic_completeness=sem_coverage,
         hard_failure=hard,
+        hybrid_override_count=hybrid_override_count,
+        hybrid_override_rate=hybrid_override_rate,
+        overlay_agree_rate=overlay_agree_rate,
+        overlay_count=overlay_count,
     )
 
     # Overall score (None if hard failure)
@@ -405,6 +431,14 @@ def format_evaluation_report(evals: List[ScenarioEvaluation]) -> str:
         lines.append(f"│  Repeated Cycles:      {r.repeated_cycles}")
         lines.append(f"│  Step Success Rate:    {r.step_success_rate:.0%}")
         lines.append(f"│  Avg Tension:          {r.avg_tension:.4f}")
+
+        # Hybrid / Overlay (Phase 3o)
+        if r.overlay_count > 0 or r.hybrid_override_count > 0:
+            lines.append(f"│")
+            lines.append(f"│  Overlay Steps:        {r.overlay_count}")
+            lines.append(f"│  Overlay Agree Rate:   {r.overlay_agree_rate:.0%}")
+            lines.append(f"│  Hybrid Overrides:     {r.hybrid_override_count}")
+            lines.append(f"│  Override Rate:        {r.hybrid_override_rate:.0%}")
 
         # Semantic
         if ev.semantic_evaluation:

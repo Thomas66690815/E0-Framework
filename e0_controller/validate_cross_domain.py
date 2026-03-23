@@ -72,6 +72,11 @@ class DomainResult:
     scenario: Optional[ScenarioPacket]
     evaluation: Optional[ScenarioEvaluation]
     reflection: Optional[ReflectionReport]
+    # Hybrid / overlay (Phase 3o)
+    hybrid_override_count: int = 0
+    hybrid_override_rate: float = 0.0
+    overlay_agree_rate: float = 1.0
+    overlay_count: int = 0
 
 
 # ──────────────────────────────────────────────
@@ -79,10 +84,11 @@ class DomainResult:
 # ──────────────────────────────────────────────
 
 def _run_domain(run_fn, name: str, use_mock: bool,
-                scenario: Optional[ScenarioPacket] = None) -> Optional[DomainResult]:
+                scenario: Optional[ScenarioPacket] = None,
+                use_hybrid: bool = False) -> Optional[DomainResult]:
     """Run a domain demo and collect structured results."""
     try:
-        result = run_fn(use_mock=use_mock, scenario=scenario)
+        result = run_fn(use_mock=use_mock, use_hybrid=use_hybrid, scenario=scenario)
         trace, proposal, result_log = result
     except Exception as e:
         print(f"  ERROR in {name}: {e}")
@@ -109,6 +115,13 @@ def _run_domain(run_fn, name: str, use_mock: bool,
 
     reached = trace.path[-1] == goal if trace.path else False
 
+    # Hybrid / overlay metrics
+    h_override_count = int(metrics.get("hybrid_override_count", 0))
+    h_override_rate = float(metrics.get("hybrid_override_rate", 0.0))
+    o_count = int(metrics.get("overlay_count", 0))
+    o_agree = float(metrics.get("overlay_agree", 0))
+    o_agree_rate = o_agree / o_count if o_count > 0 else 1.0
+
     # Evaluation layer
     sc_id = scenario.scenario_id if scenario else name.lower().replace(" ", "_")
     sc_domain = scenario.domain if scenario else name.lower().replace(" ", "_")
@@ -126,6 +139,10 @@ def _run_domain(run_fn, name: str, use_mock: bool,
         reached_goal=reached,
         result_log=result_log,
         scenario=scenario,
+        hybrid_override_count=h_override_count,
+        hybrid_override_rate=h_override_rate,
+        overlay_agree_rate=o_agree_rate,
+        overlay_count=o_count,
     )
 
     return DomainResult(
@@ -153,6 +170,10 @@ def _run_domain(run_fn, name: str, use_mock: bool,
             config=LLMConfig() if not use_mock else None,
             result_log=result_log,
         ),
+        hybrid_override_count=h_override_count,
+        hybrid_override_rate=h_override_rate,
+        overlay_agree_rate=o_agree_rate,
+        overlay_count=o_count,
     )
 
 
@@ -194,6 +215,16 @@ def _print_comparison(results: List[DomainResult]) -> None:
         ("Avg Tension",    [f"{r.avg_tension:.4f}" for r in results]),
         ("Total Tension",  [f"{r.total_tension:.2f}" for r in results]),
     ]
+
+    # Hybrid rows (only show if any domain has overlay data)
+    if any(r.overlay_count > 0 or r.hybrid_override_count > 0 for r in results):
+        rows.extend([
+            ("",               ["" for _ in results]),
+            ("Overlay Steps",   [str(r.overlay_count) for r in results]),
+            ("Overlay Agree",   [f"{r.overlay_agree_rate:.0%}" for r in results]),
+            ("Hybrid Overrides",[str(r.hybrid_override_count) for r in results]),
+            ("Override Rate",   [f"{r.hybrid_override_rate:.0%}" for r in results]),
+        ])
 
     for label, values in rows:
         if not label:
@@ -244,7 +275,7 @@ def _print_comparison(results: List[DomainResult]) -> None:
 # Main
 # ──────────────────────────────────────────────
 
-def run_validation(use_mock: bool = True) -> List[DomainResult]:
+def run_validation(use_mock: bool = True, use_hybrid: bool = False) -> List[DomainResult]:
     """Run all domains and produce comparison report."""
     # Import demos
     from e0_controller.demo_open_domain import run_demo as run_open
@@ -281,7 +312,7 @@ def run_validation(use_mock: bool = True) -> List[DomainResult]:
         if sc:
             print(f"  Scenario: {sc.title} [{sc.scenario_id}]")
         print(f"{'━' * 64}")
-        dr = _run_domain(run_fn, name, use_mock, scenario=sc)
+        dr = _run_domain(run_fn, name, use_mock, scenario=sc, use_hybrid=use_hybrid)
         if dr:
             results.append(dr)
 
@@ -306,4 +337,5 @@ def run_validation(use_mock: bool = True) -> List[DomainResult]:
 
 if __name__ == "__main__":
     use_mock = "--live" not in sys.argv
-    run_validation(use_mock=use_mock)
+    use_hybrid = "--hybrid" in sys.argv
+    run_validation(use_mock=use_mock, use_hybrid=use_hybrid)
