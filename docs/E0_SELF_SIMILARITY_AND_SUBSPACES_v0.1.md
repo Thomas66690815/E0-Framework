@@ -1,6 +1,8 @@
-# E₀ Self-Similarity and Subspaces v0.1
+# [SUPERSEDED] E₀ Self-Similarity and Subspaces v0.1
 
-**Status:** Exploratory architecture / mathematics note  
+> **Superseded by:** [E0_ISOMORPHY_AND_SUBSPACES_v0.1.md](E0_ISOMORPHY_AND_SUBSPACES_v0.1.md) — replaces self-similarity framing with sharper isomorphy language.
+
+**Status:** Superseded  
 **Date:** 2026-03-21  
 **Purpose:** Explore whether the early E₀ insight of self-similarity and emergent subspaces can extend the current mathematical and system architecture  
 **Scope:** Conceptual and formal candidates only; no claims of completion

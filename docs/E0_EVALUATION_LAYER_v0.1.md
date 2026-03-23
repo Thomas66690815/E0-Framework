@@ -1,6 +1,8 @@
-# E₀ Evaluation Layer v0.1
+# [SUPERSEDED] E₀ Evaluation Layer v0.1
 
-**Status:** Draft architecture note  
+> **Superseded by:** [E0_EVALUATION_LAYER_v0.2.md](E0_EVALUATION_LAYER_v0.2.md) — extends to 4 evaluation dimensions and scenario-grounded assessment.
+
+**Status:** Superseded  
 **Date:** 2026-03-21  
 **Purpose:** Define how E₀ runs should be evaluated beyond simple step-level success  
 **Scope:** Open-domain E₀ runs, scenario-grounded semantic outputs, graph quality, and run-level assessment
