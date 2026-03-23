@@ -18,6 +18,9 @@ Usage:
     # With mock (no API key needed):
     python -m e0_controller.demo_incident_postmortem --mock
 
+    # With hybrid amplitude controller (B3):
+    python -m e0_controller.demo_incident_postmortem --mock --hybrid
+
     # Custom incident description:
     python -m e0_controller.demo_incident_postmortem --task "Database cluster failed over due to disk saturation"
 
@@ -30,7 +33,7 @@ import json
 import os
 import sys
 
-from e0_controller.controller import E0Controller
+from e0_controller.controller import E0Controller, HybridMode
 from e0_controller.memory_os import E0MemoryOS, CanonRef, edge_to_key
 from e0_controller.primitives import Edge
 from e0_controller.tension import coherence
@@ -176,6 +179,7 @@ def run_demo(
     start: str = DEFAULT_START,
     goal: str = DEFAULT_GOAL,
     use_mock: bool = False,
+    use_hybrid: bool = False,
     scenario: ScenarioPacket | None = None,
 ):
     """Run incident-postmortem demo with LLM-bootstrapped landscape."""
@@ -202,6 +206,8 @@ def run_demo(
         config = LLMConfig(model="gpt-5.4-mini", temperature=0.3)
         adapter = E0LLMAdapter(config=config)
         print(f"\nMode: LIVE (model={config.model})")
+    if use_hybrid:
+        print("Hybrid: AMPLITUDE_ON_DISAGREE (B3)")
 
     # 2. LLM designs the landscape
     print("\n── Step 1: LLM designs state graph ──")
@@ -236,6 +242,7 @@ def run_demo(
     # 5. Create execute function with live summary (uses actual source state)
     session_id = "demo-incident-postmortem"
     _recent: list = []  # tracks recent states during run
+    _ctrl_ref: list = [None]
 
     def live_summary(source: str):
         """Build LLM context from the actual source state per call."""
@@ -256,12 +263,17 @@ def run_demo(
                 "delta_H": round(L.historization.delta_H(e), 4),
             }
         _recent.append(source)
-        return {
+        summary = {
             "current_state": source,
             "admissible_neighbors": neighbor_info,
             "edge_history": edge_history,
             "runtime": {"recent_states": _recent[-5:]},
         }
+        if _ctrl_ref[0] is not None and _ctrl_ref[0].hybrid_mode != HybridMode.GREEDY:
+            ov = memos._build_overlay_summary(_ctrl_ref[0], source)
+            if ov:
+                summary["amplitude_overlay"] = ov
+        return summary
 
     execute_fn = adapter.as_execute_fn(
         task_map, live_summary=live_summary,
@@ -271,7 +283,11 @@ def run_demo(
 
     # 6. Build controller and run
     print("\n── Step 2: Controller runs ──")
-    ctrl = E0Controller(L, execute_fn, alpha=2.0, recent_k=3)
+    hybrid_mode = HybridMode.AMPLITUDE_ON_DISAGREE if use_hybrid else HybridMode.GREEDY
+    ctrl = E0Controller(L, execute_fn, alpha=2.0, recent_k=3,
+                        hybrid_mode=hybrid_mode,
+                        hybrid_goals={goal} if use_hybrid else None)
+    _ctrl_ref[0] = ctrl
     trace = ctrl.run(start=start, goal=goal, max_cycles=25)
 
     # 7. Display results
@@ -288,6 +304,9 @@ def run_demo(
     print(f"  Avg tension:       {metrics['avg_tension']:.4f}")
     print(f"  Unique states:     {int(metrics['unique_states'])}")
     print(f"  Revisits:          {int(metrics['revisit_count'])}")
+    if hybrid_mode != HybridMode.GREEDY:
+        print(f"  Hybrid overrides:  {int(metrics['hybrid_override_count'])}")
+        print(f"  Override rate:     {metrics['hybrid_override_rate']:.0%}")
 
     # 7b. Display LLM results per step
     if result_log:
@@ -318,6 +337,7 @@ def run_demo(
 
 if __name__ == "__main__":
     use_mock = "--mock" in sys.argv
+    use_hybrid = "--hybrid" in sys.argv
     task = DEFAULT_TASK
     sc = None
     for i, arg in enumerate(sys.argv):
@@ -329,4 +349,4 @@ if __name__ == "__main__":
         path = find_scenario("incident_postmortem")
         if path:
             sc = load_scenario(path)
-    run_demo(task=task, use_mock=use_mock, scenario=sc)
+    run_demo(task=task, use_mock=use_mock, use_hybrid=use_hybrid, scenario=sc)

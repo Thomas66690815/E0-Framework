@@ -14,6 +14,9 @@ Usage:
     # With mock (no API key needed):
     python -m e0_controller.demo_invoice_llm --mock
 
+    # With hybrid amplitude controller (B3):
+    python -m e0_controller.demo_invoice_llm --mock --hybrid
+
 Requires OPENAI_API_KEY in .env or environment (unless --mock).
 """
 
@@ -25,7 +28,7 @@ import sys
 
 from e0_controller.primitives import Outcome
 from e0_controller.domain_invoice import build_invoice_landscape
-from e0_controller.controller import E0Controller, RunTrace
+from e0_controller.controller import E0Controller, RunTrace, HybridMode
 from e0_controller.memory_os import E0MemoryOS, CanonRef
 from e0_controller.llm_adapter import E0LLMAdapter, LLMConfig
 
@@ -124,7 +127,7 @@ def mock_llm_call(system: str, user: str, config: LLMConfig) -> str:
 # Main Demo
 # ──────────────────────────────────────────────
 
-def run_demo(use_mock: bool = False):
+def run_demo(use_mock: bool = False, use_hybrid: bool = False):
     """Run the Invoice Domain demo with LLM adapter."""
 
     print("=" * 64)
@@ -143,6 +146,8 @@ def run_demo(use_mock: bool = False):
         config = LLMConfig(model="gpt-5.4-mini", temperature=0.2)
         adapter = E0LLMAdapter(config=config)
         print(f"Mode: LIVE (model={config.model})")
+    if use_hybrid:
+        print("Hybrid: AMPLITUDE_ON_DISAGREE (B3)")
 
     # 3. Setup MemOS (persistent in memos/)
     memos_dir = os.path.join(os.getcwd(), "memos")
@@ -151,24 +156,30 @@ def run_demo(use_mock: bool = False):
     print(f"MemOS: {memos_dir}")
 
     # 4. Create execute function with dynamic summary
-    def make_summary_provider(memos_inst, landscape, sid):
+    _ctrl_ref: list = [None]
+
+    def make_summary_provider(memos_inst, landscape, sid, ctrl_ref):
         """Return a callable that generates a fresh MemOS summary per step."""
         def provider():
             try:
                 ctx = memos_inst.load_context(sid)
-                # Extract last state from runtime dict
                 current = ctx.runtime.get("last_state", "RECEIVED") if ctx.runtime else "RECEIVED"
-                return memos_inst.summarize_for_llm(ctx, current, landscape=landscape)
+                return memos_inst.summarize_for_llm(
+                    ctx, current, landscape=landscape, controller=ctrl_ref[0],
+                )
             except FileNotFoundError:
                 return {}
         return provider
 
     session_id = "demo-invoice"
-    summary_provider = make_summary_provider(memos, L, session_id)
+    summary_provider = make_summary_provider(memos, L, session_id, _ctrl_ref)
     execute_fn = adapter.as_execute_fn(INVOICE_TASKS, summary_provider=summary_provider)
 
     # 5. Build controller
-    ctrl = E0Controller(L, execute_fn)
+    hybrid_mode = HybridMode.AMPLITUDE_ON_DISAGREE if use_hybrid else HybridMode.GREEDY
+    ctrl = E0Controller(L, execute_fn, hybrid_mode=hybrid_mode,
+                        hybrid_goals={"APPROVED"} if use_hybrid else None)
+    _ctrl_ref[0] = ctrl
 
     print(f"\nStarting: RECEIVED → APPROVED")
     print("-" * 64)
@@ -189,6 +200,9 @@ def run_demo(use_mock: bool = False):
     print(f"  Success rate:      {metrics['success_rate']:.0%}")
     print(f"  Avg tension:       {metrics['avg_tension']:.4f}")
     print(f"  Unique states:     {int(metrics['unique_states'])}")
+    if hybrid_mode != HybridMode.GREEDY:
+        print(f"  Hybrid overrides:  {int(metrics['hybrid_override_count'])}")
+        print(f"  Override rate:     {metrics['hybrid_override_rate']:.0%}")
 
     # 8. Save to MemOS (persistent)
     ctx = memos.snapshot_from_runtime(
@@ -204,7 +218,7 @@ def run_demo(use_mock: bool = False):
     memos.save_run(session_id, trace, goal="APPROVED")
 
     # 9. Show MemOS summary
-    summary = memos.summarize_for_llm(ctx, trace.path[-1], landscape=L)
+    summary = memos.summarize_for_llm(ctx, trace.path[-1], landscape=L, controller=ctrl)
     print(f"\nMemOS Summary (final state = {trace.path[-1]}):")
     print(json.dumps(summary, indent=2, ensure_ascii=False))
 
@@ -215,4 +229,5 @@ def run_demo(use_mock: bool = False):
 
 if __name__ == "__main__":
     use_mock = "--mock" in sys.argv
-    run_demo(use_mock=use_mock)
+    use_hybrid = "--hybrid" in sys.argv
+    run_demo(use_mock=use_mock, use_hybrid=use_hybrid)
