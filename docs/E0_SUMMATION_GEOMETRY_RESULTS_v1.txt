@@ -1,0 +1,178 @@
+﻿
+============================================================
+  Scenario 11: Summation Geometry Comparison — Mini-Domain
+============================================================
+
+  State A (h=3):
+    prefix         : det=C      amp=B     ✗  paths=  10  R_coh=4.2154
+        B    : P=0.5033  I=4.226426  n=5
+        C    : P=0.4967  I=4.170549  n=5
+    simple         : det=C      amp=B     ✗  paths=   7  R_coh=3.3381
+        B    : P=0.8642  I=4.226426  n=5
+        C    : P=0.1358  I=0.664060  n=2
+    first_arrival  : det=C      amp=B     ✗  paths=  10  R_coh=4.2154
+        B    : P=0.5033  I=4.226426  n=5
+        C    : P=0.4967  I=4.170549  n=5
+
+  State B (h=3):
+    prefix         : det=E      amp=E     ✓  paths=   6  R_coh=4.3856
+        E    : P=0.9823  I=9.196886  n=5
+        D    : P=0.0177  I=0.165299  n=1
+    simple         : det=E      amp=E     ✓  paths=   6  R_coh=4.3856
+        E    : P=0.9823  I=9.196886  n=5
+        D    : P=0.0177  I=0.165299  n=1
+    first_arrival  : det=E      amp=E     ✓  paths=   6  R_coh=4.3856
+        E    : P=0.9823  I=9.196886  n=5
+        D    : P=0.0177  I=0.165299  n=1
+
+  State E (h=3):
+    prefix         : det=G      amp=G     ✓  paths=   5  R_coh=2.3078
+        G    : P=0.5786  I=3.178850  n=2
+        F    : P=0.4214  I=2.315334  n=3
+    simple         : det=G      amp=G     ✓  paths=   5  R_coh=2.3078
+        G    : P=0.5786  I=3.178850  n=2
+        F    : P=0.4214  I=2.315334  n=3
+    first_arrival  : det=G      amp=G     ✓  paths=   5  R_coh=2.3078
+        G    : P=0.5786  I=3.178850  n=2
+        F    : P=0.4214  I=2.315334  n=3
+
+  State F (h=3):
+    prefix         : det=G      amp=G     ✓  paths=   2  R_coh=1.9996
+        G    : P=1.0000  I=2.130847  n=2
+    simple         : det=G      amp=G     ✓  paths=   2  R_coh=1.9996
+        G    : P=1.0000  I=2.130847  n=2
+    first_arrival  : det=G      amp=G     ✓  paths=   2  R_coh=1.9996
+        G    : P=1.0000  I=2.130847  n=2
+
+  State G (h=3):
+    prefix         : det=GOAL   amp=GOAL  ✓  paths=   1  R_coh=1.0000
+        GOAL : P=1.0000  I=0.941765  n=1
+    simple         : det=GOAL   amp=GOAL  ✓  paths=   1  R_coh=1.0000
+        GOAL : P=1.0000  I=0.941765  n=1
+    first_arrival  : det=GOAL   amp=GOAL  ✓  paths=   1  R_coh=1.0000
+        GOAL : P=1.0000  I=0.941765  n=1
+
+============================================================
+  Scenario 12: Summation Geometry Comparison — Diamond Domain
+============================================================
+
+  State S (h=3):
+    prefix         : det=C      amp=A     ✗  paths=  16  R_coh=5.0166
+        A    : P=0.5168  I=12.895914  n=8
+        B    : P=0.4535  I=11.315207  n=7
+        C    : P=0.0297  I=0.740818  n=1
+    simple         : det=C      amp=A     ✗  paths=   8  R_coh=3.1517
+        A    : P=0.6409  I=9.029353  n=4
+        B    : P=0.3065  I=4.317966  n=3
+        C    : P=0.0526  I=0.740818  n=1
+    first_arrival  : det=C      amp=A     ✗  paths=  16  R_coh=5.0166
+        A    : P=0.5168  I=12.895914  n=8
+        B    : P=0.4535  I=11.315207  n=7
+        C    : P=0.0297  I=0.740818  n=1
+
+  State A (h=3):
+    prefix         : det=M      amp=M     ✓  paths=  12  R_coh=4.1333
+        M    : P=0.9011  I=11.077099  n=4
+        S    : P=0.0989  I=1.215257  n=8
+    simple         : det=M      amp=M     ✓  paths=   8  R_coh=3.9544
+        M    : P=0.9611  I=11.077099  n=4
+        S    : P=0.0389  I=0.448386  n=4
+    first_arrival  : det=M      amp=M     ✓  paths=  12  R_coh=4.1333
+        M    : P=0.9011  I=11.077099  n=4
+        S    : P=0.0989  I=1.215257  n=8
+
+  State B (h=3):
+    prefix         : det=N      amp=S     ✗  paths=  10  R_coh=4.0414
+        S    : P=0.7084  I=6.652253  n=8
+        N    : P=0.2916  I=2.738565  n=2
+    simple         : det=N      amp=N     ✓  paths=   6  R_coh=2.6453
+        N    : P=0.5053  I=2.738565  n=2
+        S    : P=0.4947  I=2.681315  n=4
+    first_arrival  : det=N      amp=S     ✗  paths=  10  R_coh=4.0414
+        S    : P=0.7084  I=6.652253  n=8
+        N    : P=0.2916  I=2.738565  n=2
+
+  State M (h=3):
+    prefix         : det=Z      amp=N     ✗  paths=   3  R_coh=1.5977
+        N    : P=0.7498  I=2.738565  n=2
+        Z    : P=0.2502  I=0.913931  n=1
+    simple         : det=Z      amp=N     ✗  paths=   3  R_coh=1.5977
+        N    : P=0.7498  I=2.738565  n=2
+        Z    : P=0.2502  I=0.913931  n=1
+    first_arrival  : det=Z      amp=N     ✗  paths=   3  R_coh=1.5977
+        N    : P=0.7498  I=2.738565  n=2
+        Z    : P=0.2502  I=0.913931  n=1
+
+  State N (h=3):
+    prefix         : det=Z      amp=Z     ✓  paths=   1  R_coh=1.0000
+        Z    : P=1.0000  I=0.852144  n=1
+    simple         : det=Z      amp=Z     ✓  paths=   1  R_coh=1.0000
+        Z    : P=1.0000  I=0.852144  n=1
+    first_arrival  : det=Z      amp=Z     ✓  paths=   1  R_coh=1.0000
+        Z    : P=1.0000  I=0.852144  n=1
+
+============================================================
+  Scenario 13: Summation Geometry Comparison — Current-Loop Domain
+============================================================
+
+  START (h=2):
+    prefix         : det=A1     amp=A1    ✓  paths=   5  R_coh=2.2789
+        A1   : P=0.6386  I=4.742313  n=3
+        B1   : P=0.3614  I=2.683502  n=2
+    simple         : det=A1     amp=A1    ✓  paths=   4  R_coh=1.9405
+        A1   : P=0.5552  I=3.349297  n=2
+        B1   : P=0.4448  I=2.683502  n=2
+    first_arrival  : det=A1     amp=A1    ✓  paths=   5  R_coh=2.2789
+        A1   : P=0.6386  I=4.742313  n=3
+        B1   : P=0.3614  I=2.683502  n=2
+
+  START (h=3):
+    prefix         : det=A1     amp=A1    ✓  paths=  10  R_coh=4.1779
+        A1   : P=0.8033  I=15.057306  n=7
+        B1   : P=0.1967  I=3.687596  n=3
+    simple         : det=A1     amp=A1    ✓  paths=   6  R_coh=2.6664
+        A1   : P=0.6499  I=6.844635  n=3
+        B1   : P=0.3501  I=3.687596  n=3
+    first_arrival  : det=A1     amp=A1    ✓  paths=   9  R_coh=4.0445
+        A1   : P=0.8487  I=15.057306  n=7
+        B1   : P=0.1513  I=2.683502  n=2
+
+  START (h=5):
+    prefix         : det=A1     amp=A1    ✓  paths=  35  R_coh=10.7186
+        A1   : P=0.9118  I=68.417691  n=27
+        B1   : P=0.0882  I=6.619334  n=8
+    simple         : det=A1     amp=A1    ✓  paths=  10  R_coh=3.6151
+        A1   : P=0.7803  I=14.798716  n=5
+        B1   : P=0.2197  I=4.166437  n=5
+    first_arrival  : det=A1     amp=A1    ✓  paths=  28  R_coh=10.5650
+        A1   : P=0.9623  I=68.581372  n=26
+        B1   : P=0.0377  I=2.683502  n=2
+
+============================================================
+  Scenario 14: Geometry Horizon Stability — Diamond Domain at S
+============================================================
+
+  Geometry: prefix
+    h=1:  amp=C      paths=   3  P(A)=0.3401  P(B)=0.2987  P(C)=0.3612
+    h=2:  amp=B      paths=   7  P(A)=0.4360  P(B)=0.4615  P(C)=0.1025
+    h=3:  amp=A      paths=  16  P(A)=0.5168  P(B)=0.4535  P(C)=0.0297
+    h=4:  amp=A      paths=  25  P(A)=0.5399  P(B)=0.4407  P(C)=0.0195
+    h=5:  amp=B      paths=  43  P(A)=0.4709  P(B)=0.5156  P(C)=0.0134
+
+  Geometry: simple
+    h=1:  amp=C      paths=   3  P(A)=0.3401  P(B)=0.2987  P(C)=0.3612
+    h=2:  amp=A      paths=   5  P(A)=0.4741  P(B)=0.3897  P(C)=0.1361
+    h=3:  amp=A      paths=   8  P(A)=0.6409  P(B)=0.3065  P(C)=0.0526
+    h=4:  amp=A      paths=   9  P(A)=0.7209  P(B)=0.2383  P(C)=0.0409
+    h=5:  amp=A      paths=   9  P(A)=0.7209  P(B)=0.2383  P(C)=0.0409
+
+  Geometry: first_arrival
+    h=1:  amp=C      paths=   3  P(A)=0.3401  P(B)=0.2987  P(C)=0.3612
+    h=2:  amp=B      paths=   7  P(A)=0.4360  P(B)=0.4615  P(C)=0.1025
+    h=3:  amp=A      paths=  16  P(A)=0.5168  P(B)=0.4535  P(C)=0.0297
+    h=4:  amp=A      paths=  25  P(A)=0.5399  P(B)=0.4407  P(C)=0.0195
+    h=5:  amp=B      paths=  43  P(A)=0.4709  P(B)=0.5156  P(C)=0.0134
+
+============================================================
+  Geometry comparison complete.
+============================================================

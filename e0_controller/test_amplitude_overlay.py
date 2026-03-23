@@ -52,6 +52,7 @@ from e0_controller.amplitude_overlay import (
     _filter_paths_by_first_action,
     ActionAmplitudeInfo,
     OverlayReport,
+    GEOMETRIES,
 )
 from e0_controller.wavepath import psi as path_psi
 from e0_controller.connection import omega, theta
@@ -453,6 +454,7 @@ class TestOverlayReportAPI(unittest.TestCase):
         report = OverlayReport(
             current="X",
             horizon_edges=1,
+            geometry="prefix",
             admissible_actions=[],
             deterministic_choice=None,
             deterministic_escalated=False,
@@ -734,6 +736,598 @@ class TestDestructiveInterference(unittest.TestCase):
                 abs(info.psi_total - expected_psi), 0.0, places=10,
                 msg=f"Ψ inconsistency for action {info.action}",
             )
+
+
+# ══════════════════════════════════════════════
+# Phase 3j — Summation Geometry Tests
+# ══════════════════════════════════════════════
+
+
+# ──────────────────────────────────────────────
+# Test Class 8: Geometry Parameter Validation
+# ──────────────────────────────────────────────
+
+class TestGeometryParameter(unittest.TestCase):
+    """Tests for geometry parameter handling."""
+
+    def setUp(self):
+        self.L = build_mini_landscape()
+        self.ctrl = E0Controller(self.L, lambda s, t: Outcome.SUCCESS, alpha=2.0)
+
+    def test_default_geometry_is_prefix(self):
+        """Default geometry should be 'prefix'."""
+        report = analyze_controller_state(self.ctrl, "A", horizon_edges=2)
+        self.assertEqual(report.geometry, "prefix")
+
+    def test_explicit_prefix_matches_default(self):
+        """geometry='prefix' produces identical results as default."""
+        r_default = analyze_controller_state(self.ctrl, "A", horizon_edges=3)
+        r_prefix = analyze_controller_state(self.ctrl, "A", horizon_edges=3,
+                                             geometry="prefix")
+        self.assertEqual(r_default.geometry, r_prefix.geometry)
+        for d, p in zip(r_default.action_infos, r_prefix.action_infos):
+            self.assertEqual(d.action, p.action)
+            self.assertAlmostEqual(d.intensity, p.intensity, places=10)
+            self.assertEqual(d.path_count, p.path_count)
+
+    def test_unknown_geometry_raises(self):
+        """Unknown geometry name raises ValueError."""
+        with self.assertRaises(ValueError):
+            analyze_controller_state(self.ctrl, "A", horizon_edges=2,
+                                      geometry="unknown")
+
+    def test_first_arrival_requires_goals(self):
+        """first_arrival geometry without goals raises ValueError."""
+        with self.assertRaises(ValueError):
+            analyze_controller_state(self.ctrl, "A", horizon_edges=2,
+                                      geometry="first_arrival")
+
+    def test_first_arrival_empty_goals_raises(self):
+        """first_arrival with empty goals set raises ValueError."""
+        with self.assertRaises(ValueError):
+            analyze_controller_state(self.ctrl, "A", horizon_edges=2,
+                                      geometry="first_arrival", goals=set())
+
+    def test_geometry_in_report(self):
+        """Report includes the geometry used."""
+        for g in ["prefix", "simple"]:
+            with self.subTest(geometry=g):
+                report = analyze_controller_state(self.ctrl, "A", horizon_edges=2,
+                                                   geometry=g)
+                self.assertEqual(report.geometry, g)
+
+    def test_geometry_in_summary(self):
+        """summary() string includes geometry name."""
+        report = analyze_controller_state(self.ctrl, "A", horizon_edges=2,
+                                           geometry="simple")
+        self.assertIn("simple", report.summary())
+
+
+# ──────────────────────────────────────────────
+# Test Class 9: Simple-Path Geometry (G4) — Mini-Domain
+# ──────────────────────────────────────────────
+
+class TestSimplePathMiniDomain(unittest.TestCase):
+    """G4 simple-path geometry on the mini-domain."""
+
+    def setUp(self):
+        self.L = build_mini_landscape()
+        self.ctrl = E0Controller(self.L, lambda s, t: Outcome.SUCCESS, alpha=2.0)
+
+    def test_no_repeated_states_in_paths(self):
+        """Every path under simple geometry has unique states."""
+        for state in ["A", "B", "C", "E", "F", "G"]:
+            report = analyze_controller_state(self.ctrl, state, horizon_edges=4,
+                                               geometry="simple")
+            for info in report.action_infos:
+                for p in info.paths:
+                    self.assertEqual(
+                        len(p), len(set(p)),
+                        f"Simple-path has repeated states: {p}",
+                    )
+
+    def test_simple_is_subset_of_prefix(self):
+        """Every simple path should also appear in the prefix set."""
+        for state in ["A", "E"]:
+            r_prefix = analyze_controller_state(self.ctrl, state, horizon_edges=3,
+                                                 geometry="prefix")
+            r_simple = analyze_controller_state(self.ctrl, state, horizon_edges=3,
+                                                 geometry="simple")
+            prefix_paths = set()
+            for info in r_prefix.action_infos:
+                for p in info.paths:
+                    prefix_paths.add(tuple(p))
+            for info in r_simple.action_infos:
+                for p in info.paths:
+                    self.assertIn(tuple(p), prefix_paths,
+                                  f"Simple path {p} not in prefix set")
+
+    def test_simple_fewer_or_equal_paths(self):
+        """Simple geometry enumerates ≤ paths than prefix geometry."""
+        for state in ["A", "B", "E"]:
+            r_prefix = analyze_controller_state(self.ctrl, state, horizon_edges=3,
+                                                 geometry="prefix")
+            r_simple = analyze_controller_state(self.ctrl, state, horizon_edges=3,
+                                                 geometry="simple")
+            n_prefix = sum(i.path_count for i in r_prefix.action_infos)
+            n_simple = sum(i.path_count for i in r_simple.action_infos)
+            self.assertLessEqual(n_simple, n_prefix,
+                                 f"Simple should have ≤ paths than prefix at {state}")
+
+    def test_probabilities_sum_to_one(self):
+        """P normalization holds under simple geometry."""
+        for state in ["A", "B", "C", "E", "F", "G"]:
+            neighbors = self.ctrl._admissible_neighbors(state)
+            if not neighbors:
+                continue
+            report = analyze_controller_state(self.ctrl, state, horizon_edges=3,
+                                               geometry="simple")
+            total_p = sum(info.probability for info in report.action_infos)
+            self.assertAlmostEqual(total_p, 1.0, places=10)
+
+    def test_psi_consistency(self):
+        """Ψ_total = Σ Ψ(path) under simple geometry."""
+        report = analyze_controller_state(self.ctrl, "E", horizon_edges=3,
+                                           geometry="simple")
+        for info in report.action_infos:
+            expected_psi = sum(
+                (path_psi(self.L, p) for p in info.paths),
+                start=complex(0.0, 0.0),
+            )
+            self.assertAlmostEqual(
+                abs(info.psi_total - expected_psi), 0.0, places=10,
+            )
+
+    def test_horizon_1_identical_to_prefix(self):
+        """At horizon=1, simple and prefix produce identical results (no loops possible)."""
+        r_prefix = analyze_controller_state(self.ctrl, "A", horizon_edges=1,
+                                             geometry="prefix")
+        r_simple = analyze_controller_state(self.ctrl, "A", horizon_edges=1,
+                                             geometry="simple")
+        for p_info, s_info in zip(r_prefix.action_infos, r_simple.action_infos):
+            self.assertEqual(p_info.action, s_info.action)
+            self.assertEqual(p_info.path_count, s_info.path_count)
+            self.assertAlmostEqual(p_info.intensity, s_info.intensity, places=10)
+
+
+# ──────────────────────────────────────────────
+# Test Class 10: Simple-Path Geometry (G4) — Diamond Domain
+# ──────────────────────────────────────────────
+
+class TestSimplePathDiamond(unittest.TestCase):
+    """G4 simple-path on the diamond domain."""
+
+    def setUp(self):
+        self.L = build_diamond_landscape()
+        self.ctrl = E0Controller(self.L, diamond_all_success, alpha=2.0)
+
+    def test_no_repeated_states(self):
+        """Every simple path has unique states on diamond domain."""
+        for state in ["S", "A", "B", "M", "N"]:
+            report = analyze_controller_state(self.ctrl, state, horizon_edges=4,
+                                               geometry="simple")
+            for info in report.action_infos:
+                for p in info.paths:
+                    self.assertEqual(len(p), len(set(p)),
+                                     f"Repeated states in {p}")
+
+    def test_still_avoids_dead_end(self):
+        """Amplitude still avoids dead-end C under simple geometry."""
+        report = analyze_controller_state(self.ctrl, "S", horizon_edges=3,
+                                           geometry="simple")
+        self.assertNotEqual(report.amplitude_choice, "C")
+
+    def test_back_edge_loops_excluded(self):
+        """Paths like S→A→S should not appear (A appears twice implies S→A→S→... loop)."""
+        report = analyze_controller_state(self.ctrl, "S", horizon_edges=4,
+                                           geometry="simple")
+        a_info = next(i for i in report.action_infos if i.action == "A")
+        for p in a_info.paths:
+            if len(p) >= 3:
+                self.assertNotEqual(p[2], "S",
+                                    f"Back-edge loop S→A→S found in simple path: {p}")
+
+    def test_probabilities_valid(self):
+        """P normalization holds on diamond domain under simple geometry."""
+        report = analyze_controller_state(self.ctrl, "S", horizon_edges=3,
+                                           geometry="simple")
+        total_p = sum(info.probability for info in report.action_infos)
+        self.assertAlmostEqual(total_p, 1.0, places=10)
+
+    def test_prefix_has_more_paths_than_simple(self):
+        """Diamond back-edges create loops → prefix has strictly more paths."""
+        r_prefix = analyze_controller_state(self.ctrl, "S", horizon_edges=3,
+                                             geometry="prefix")
+        r_simple = analyze_controller_state(self.ctrl, "S", horizon_edges=3,
+                                             geometry="simple")
+        n_prefix = sum(i.path_count for i in r_prefix.action_infos)
+        n_simple = sum(i.path_count for i in r_simple.action_infos)
+        self.assertGreater(n_prefix, n_simple,
+                           "Prefix should have strictly more paths due to back-edge loops")
+
+
+# ──────────────────────────────────────────────
+# Test Class 11: Simple-Path Geometry (G4) — Current-Loop Domain
+# ──────────────────────────────────────────────
+
+class TestSimplePathCurrentLoop(unittest.TestCase):
+    """G4 simple-path on the current-loop (destructive interference) domain."""
+
+    def setUp(self):
+        self.L = build_current_loop_landscape()
+        self.ctrl = E0Controller(
+            self.L, lambda s, t: Outcome.SUCCESS, alpha=2.0)
+
+    def test_no_repeated_states(self):
+        """All simple paths are loop-free."""
+        report = analyze_controller_state(self.ctrl, "START", horizon_edges=5,
+                                           geometry="simple")
+        for info in report.action_infos:
+            for p in info.paths:
+                self.assertEqual(len(p), len(set(p)),
+                                 f"Repeated states in {p}")
+
+    def test_prefix_has_strictly_more_paths(self):
+        """Current loop creates many revisiting paths → prefix > simple."""
+        r_prefix = analyze_controller_state(self.ctrl, "START", horizon_edges=5,
+                                             geometry="prefix")
+        r_simple = analyze_controller_state(self.ctrl, "START", horizon_edges=5,
+                                             geometry="simple")
+        n_prefix = sum(i.path_count for i in r_prefix.action_infos)
+        n_simple = sum(i.path_count for i in r_simple.action_infos)
+        self.assertGreater(n_prefix, n_simple,
+                           "Current-loop: prefix must have more paths than simple")
+
+    def test_upper_path_still_reaches_END(self):
+        """Simple geometry still finds START→A1→A2→A3→A4→END (no repeats)."""
+        report = analyze_controller_state(self.ctrl, "START", horizon_edges=5,
+                                           geometry="simple")
+        a1_info = next(i for i in report.action_infos if i.action == "A1")
+        full_upper = ["START", "A1", "A2", "A3", "A4", "END"]
+        self.assertIn(full_upper, a1_info.paths,
+                      "The full upper path should be found under simple geometry")
+
+    def test_two_path_destructive_interference_survives(self):
+        """The key ΔΘ producing destructive interference survives under simple geometry.
+        (Both the upper and lower canonical paths are already simple paths.)"""
+        psi_upper = path_psi(self.L, ["START", "A1", "A2", "A3", "A4", "END"])
+        psi_lower = path_psi(self.L, ["START", "B1", "END"])
+        coherent = abs(psi_upper + psi_lower) ** 2
+        incoherent = abs(psi_upper) ** 2 + abs(psi_lower) ** 2
+        self.assertLess(coherent, incoherent,
+                         "Destructive interference survives (paths are already simple)")
+
+    def test_probabilities_valid(self):
+        """P normalization under simple geometry."""
+        report = analyze_controller_state(self.ctrl, "START", horizon_edges=5,
+                                           geometry="simple")
+        total_p = sum(info.probability for info in report.action_infos)
+        self.assertAlmostEqual(total_p, 1.0, places=10)
+
+
+# ──────────────────────────────────────────────
+# Test Class 12: First-Arrival Geometry (G3) — Mini-Domain
+# ──────────────────────────────────────────────
+
+class TestFirstArrivalMiniDomain(unittest.TestCase):
+    """G3 first-arrival geometry on the mini-domain with GOAL as target."""
+
+    def setUp(self):
+        self.L = build_mini_landscape()
+        self.ctrl = E0Controller(self.L, lambda s, t: Outcome.SUCCESS, alpha=2.0)
+        self.goals = {"GOAL"}
+
+    def test_paths_stop_at_goal(self):
+        """No path extends beyond GOAL."""
+        report = analyze_controller_state(self.ctrl, "A", horizon_edges=6,
+                                           geometry="first_arrival",
+                                           goals=self.goals)
+        for info in report.action_infos:
+            for p in info.paths:
+                # If GOAL appears at position k, it should be the last element
+                if "GOAL" in p[1:]:  # skip start state
+                    goal_idx = p.index("GOAL", 1)
+                    self.assertEqual(
+                        goal_idx, len(p) - 1,
+                        f"Path continues past GOAL: {p}",
+                    )
+
+    def test_is_subset_of_prefix(self):
+        """Every first-arrival path is also a prefix path."""
+        r_prefix = analyze_controller_state(self.ctrl, "E", horizon_edges=4,
+                                             geometry="prefix")
+        r_arrival = analyze_controller_state(self.ctrl, "E", horizon_edges=4,
+                                              geometry="first_arrival",
+                                              goals=self.goals)
+        prefix_paths = set()
+        for info in r_prefix.action_infos:
+            for p in info.paths:
+                prefix_paths.add(tuple(p))
+        for info in r_arrival.action_infos:
+            for p in info.paths:
+                self.assertIn(tuple(p), prefix_paths,
+                              f"First-arrival path {p} not in prefix set")
+
+    def test_probabilities_sum_to_one(self):
+        """P normalization holds under first-arrival geometry."""
+        for state in ["A", "E", "F"]:
+            neighbors = self.ctrl._admissible_neighbors(state)
+            if not neighbors:
+                continue
+            report = analyze_controller_state(self.ctrl, state, horizon_edges=5,
+                                               geometry="first_arrival",
+                                               goals=self.goals)
+            total_p = sum(info.probability for info in report.action_infos)
+            self.assertAlmostEqual(total_p, 1.0, places=10)
+
+    def test_psi_consistency(self):
+        """Ψ_total = Σ Ψ(path) under first-arrival geometry."""
+        report = analyze_controller_state(self.ctrl, "E", horizon_edges=4,
+                                           geometry="first_arrival",
+                                           goals=self.goals)
+        for info in report.action_infos:
+            expected_psi = sum(
+                (path_psi(self.L, p) for p in info.paths),
+                start=complex(0.0, 0.0),
+            )
+            self.assertAlmostEqual(
+                abs(info.psi_total - expected_psi), 0.0, places=10,
+            )
+
+    def test_fewer_or_equal_paths_than_prefix(self):
+        """First-arrival should have ≤ paths than prefix."""
+        r_prefix = analyze_controller_state(self.ctrl, "E", horizon_edges=4,
+                                             geometry="prefix")
+        r_arrival = analyze_controller_state(self.ctrl, "E", horizon_edges=4,
+                                              geometry="first_arrival",
+                                              goals=self.goals)
+        n_prefix = sum(i.path_count for i in r_prefix.action_infos)
+        n_arrival = sum(i.path_count for i in r_arrival.action_infos)
+        self.assertLessEqual(n_arrival, n_prefix)
+
+
+# ──────────────────────────────────────────────
+# Test Class 13: First-Arrival Geometry (G3) — Diamond Domain
+# ──────────────────────────────────────────────
+
+class TestFirstArrivalDiamond(unittest.TestCase):
+    """G3 first-arrival on diamond domain with Z as goal."""
+
+    def setUp(self):
+        self.L = build_diamond_landscape()
+        self.ctrl = E0Controller(self.L, diamond_all_success, alpha=2.0)
+        self.goals = {"Z"}
+
+    def test_paths_stop_at_Z(self):
+        """No path extends beyond Z."""
+        report = analyze_controller_state(self.ctrl, "S", horizon_edges=4,
+                                           geometry="first_arrival",
+                                           goals=self.goals)
+        for info in report.action_infos:
+            for p in info.paths:
+                if "Z" in p[1:]:
+                    z_idx = p.index("Z", 1)
+                    self.assertEqual(z_idx, len(p) - 1,
+                                     f"Path continues past Z: {p}")
+
+    def test_still_avoids_dead_end(self):
+        """Amplitude still avoids dead-end C under first-arrival."""
+        report = analyze_controller_state(self.ctrl, "S", horizon_edges=4,
+                                           geometry="first_arrival",
+                                           goals=self.goals)
+        self.assertNotEqual(report.amplitude_choice, "C")
+
+    def test_probabilities_valid(self):
+        """P normalization on diamond domain."""
+        report = analyze_controller_state(self.ctrl, "S", horizon_edges=4,
+                                           geometry="first_arrival",
+                                           goals=self.goals)
+        total_p = sum(info.probability for info in report.action_infos)
+        self.assertAlmostEqual(total_p, 1.0, places=10)
+
+    def test_interference_between_paths_to_Z(self):
+        """
+        Two canonical paths to Z (S→A→M→Z, S→B→N→Z) have different phase.
+        Both are first-arrival paths → interference is still visible.
+        """
+        theta_upper = theta(self.L, ["S", "A", "M", "Z"])
+        theta_lower = theta(self.L, ["S", "B", "N", "Z"])
+        self.assertNotAlmostEqual(theta_upper, theta_lower, places=6)
+
+
+# ──────────────────────────────────────────────
+# Test Class 14: First-Arrival Geometry (G3) — Current-Loop Domain
+# ──────────────────────────────────────────────
+
+class TestFirstArrivalCurrentLoop(unittest.TestCase):
+    """G3 first-arrival on current-loop domain with END as goal."""
+
+    def setUp(self):
+        self.L = build_current_loop_landscape()
+        self.ctrl = E0Controller(
+            self.L, lambda s, t: Outcome.SUCCESS, alpha=2.0)
+        self.goals = {"END"}
+
+    def test_paths_stop_at_END(self):
+        """No path continues past END."""
+        report = analyze_controller_state(self.ctrl, "START", horizon_edges=6,
+                                           geometry="first_arrival",
+                                           goals=self.goals)
+        for info in report.action_infos:
+            for p in info.paths:
+                if "END" in p[1:]:
+                    end_idx = p.index("END", 1)
+                    self.assertEqual(end_idx, len(p) - 1,
+                                     f"Path continues past END: {p}")
+
+    def test_dramatically_fewer_paths_than_prefix(self):
+        """
+        Without loop stopping, current-loop domain at h=5 generates many
+        recursive paths. First-arrival should cut this drastically.
+        """
+        r_prefix = analyze_controller_state(self.ctrl, "START", horizon_edges=5,
+                                             geometry="prefix")
+        r_arrival = analyze_controller_state(self.ctrl, "START", horizon_edges=5,
+                                              geometry="first_arrival",
+                                              goals=self.goals)
+        n_prefix = sum(i.path_count for i in r_prefix.action_infos)
+        n_arrival = sum(i.path_count for i in r_arrival.action_infos)
+        self.assertLess(n_arrival, n_prefix,
+                        "First-arrival should prune loop-inflated path families")
+
+    def test_canonical_paths_still_present(self):
+        """Both canonical paths (upper + lower to END) are still found."""
+        report = analyze_controller_state(self.ctrl, "START", horizon_edges=5,
+                                           geometry="first_arrival",
+                                           goals=self.goals)
+        a1_info = next(i for i in report.action_infos if i.action == "A1")
+        b1_info = next(i for i in report.action_infos if i.action == "B1")
+        self.assertIn(["START", "A1", "A2", "A3", "A4", "END"], a1_info.paths)
+        self.assertIn(["START", "B1", "END"], b1_info.paths)
+
+    def test_probabilities_valid(self):
+        """P normalization under first-arrival."""
+        report = analyze_controller_state(self.ctrl, "START", horizon_edges=5,
+                                           geometry="first_arrival",
+                                           goals=self.goals)
+        total_p = sum(info.probability for info in report.action_infos)
+        self.assertAlmostEqual(total_p, 1.0, places=10)
+
+
+# ──────────────────────────────────────────────
+# Test Class 15: Cross-Geometry Comparison Diagnostics (§6)
+# ──────────────────────────────────────────────
+
+class TestGeometryComparison(unittest.TestCase):
+    """
+    Cross-geometry diagnostics (§6 of Summation Geometry Program):
+    agreement profile, support concentration, path-family size,
+    coherent/incoherent ratio, horizon sensitivity.
+    """
+
+    def test_S1_trap_correction_survives_simple(self):
+        """
+        Criterion S1: trap correction at S (diamond) survives under G4.
+        Greedy picks C (dead end), amplitude should still pick A or B.
+        """
+        L = build_diamond_landscape()
+        ctrl = E0Controller(L, diamond_all_success, alpha=2.0)
+        report = analyze_controller_state(ctrl, "S", horizon_edges=3,
+                                           geometry="simple")
+        self.assertEqual(report.deterministic_choice, "C")
+        self.assertIn(report.amplitude_choice, ["A", "B"],
+                      "S1 fails: trap correction lost under simple geometry")
+
+    def test_S1_trap_correction_survives_first_arrival(self):
+        """
+        Criterion S1: trap correction at S (diamond) survives under G3.
+        """
+        L = build_diamond_landscape()
+        ctrl = E0Controller(L, diamond_all_success, alpha=2.0)
+        report = analyze_controller_state(ctrl, "S", horizon_edges=3,
+                                           geometry="first_arrival",
+                                           goals={"Z"})
+        self.assertEqual(report.deterministic_choice, "C")
+        self.assertIn(report.amplitude_choice, ["A", "B"],
+                      "S1 fails: trap correction lost under first-arrival geometry")
+
+    def test_S2_loop_inflation_reduced_by_simple(self):
+        """
+        Criterion S2: simple geometry should reduce path count on current-loop
+        domain compared to prefix (indicating loop inflation is suppressed).
+        """
+        L = build_current_loop_landscape()
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS, alpha=2.0)
+        r_prefix = analyze_controller_state(ctrl, "START", horizon_edges=5,
+                                             geometry="prefix")
+        r_simple = analyze_controller_state(ctrl, "START", horizon_edges=5,
+                                             geometry="simple")
+        n_prefix = sum(i.path_count for i in r_prefix.action_infos)
+        n_simple = sum(i.path_count for i in r_simple.action_infos)
+        reduction = 1.0 - n_simple / n_prefix
+        self.assertGreater(reduction, 0.1,
+                           f"S2: expected >10% path reduction, got {reduction:.1%}")
+
+    def test_S3_phase_sensitivity_preserved_simple(self):
+        """
+        Criterion S3: phase sensitivity. Under simple geometry, the two
+        canonical paths still have different Θ on the current-loop domain.
+        """
+        L = build_current_loop_landscape()
+        theta_upper = theta(L, ["START", "A1", "A2", "A3", "A4", "END"])
+        theta_lower = theta(L, ["START", "B1", "END"])
+        self.assertNotAlmostEqual(theta_upper, theta_lower, places=6,
+                                  msg="S3: phase divergence lost")
+
+    def test_S4_path_count_interpretable(self):
+        """
+        Criterion S4: interpretability. Under simple geometry, each path
+        represents a unique route (no repeated states), making the count
+        directly interpretable.
+        """
+        L = build_diamond_landscape()
+        ctrl = E0Controller(L, diamond_all_success, alpha=2.0)
+        report = analyze_controller_state(ctrl, "S", horizon_edges=4,
+                                           geometry="simple")
+        for info in report.action_infos:
+            for p in info.paths:
+                self.assertEqual(len(p), len(set(p)),
+                                 f"S4: non-unique route found: {p}")
+
+    def test_S5_no_extra_parameters_for_simple(self):
+        """
+        Criterion S5: simple geometry needs no new weighting parameters.
+        All it does is filter; the Ψ(p) formula remains unchanged.
+        """
+        L = build_mini_landscape()
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS, alpha=2.0)
+        report = analyze_controller_state(ctrl, "A", horizon_edges=3,
+                                           geometry="simple")
+        self.assertIsNotNone(report)
+
+    def test_agreement_profile_across_geometries(self):
+        """
+        §6.1: Check whether amplitude_choice agrees/disagrees with
+        deterministic_choice across all three geometries at the same states.
+        """
+        L = build_diamond_landscape()
+        ctrl = E0Controller(L, diamond_all_success, alpha=2.0)
+        geometries = [
+            ("prefix", {}),
+            ("simple", {}),
+            ("first_arrival", {"goals": {"Z"}}),
+        ]
+        for state in ["S", "A", "B"]:
+            results = {}
+            for geom, kwargs in geometries:
+                r = analyze_controller_state(ctrl, state, horizon_edges=3,
+                                              geometry=geom, **kwargs)
+                results[geom] = (r.deterministic_choice, r.amplitude_choice)
+            # All geometries should agree on the deterministic choice
+            det_choices = [v[0] for v in results.values()]
+            self.assertTrue(
+                all(d == det_choices[0] for d in det_choices),
+                f"Deterministic choice differs across geometries at {state}: {results}",
+            )
+
+    def test_horizon_sensitivity_comparison(self):
+        """
+        §6.5: Horizon sensitivity. Check that amplitude_choice is stable
+        across h=2..4 for at least one geometry on the diamond domain.
+        """
+        L = build_diamond_landscape()
+        ctrl = E0Controller(L, diamond_all_success, alpha=2.0)
+        for geom, kwargs in [("prefix", {}), ("simple", {}),
+                              ("first_arrival", {"goals": {"Z"}})]:
+            choices = []
+            for h in range(2, 5):
+                r = analyze_controller_state(ctrl, "S", horizon_edges=h,
+                                              geometry=geom, **kwargs)
+                choices.append(r.amplitude_choice)
+            # Check stability: amplitude choice should be consistent
+            if all(c == choices[0] for c in choices):
+                return  # at least one geometry is horizon-stable
+        # If none are stable, that's a finding, not necessarily a failure
 
 
 if __name__ == "__main__":

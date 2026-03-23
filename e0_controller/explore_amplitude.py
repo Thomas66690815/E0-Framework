@@ -348,6 +348,97 @@ def scenario_current_loop_overlay():
         print(f"    det={report.deterministic_choice}, amp={report.amplitude_choice} {match}")
 
 
+# ══════════════════════════════════════════════
+# Summation Geometry Comparison (Phase 3j)
+# ══════════════════════════════════════════════
+
+
+def _geometry_table(ctrl, state, horizon, goals=None):
+    """Print a comparison row for each geometry at one state."""
+    for geom, kwargs in [("prefix", {}), ("simple", {}),
+                          ("first_arrival", {"goals": goals} if goals else {})]:
+        if geom == "first_arrival" and not goals:
+            continue
+        r = analyze_controller_state(ctrl, state, horizon_edges=horizon,
+                                      geometry=geom, **kwargs)
+        n_paths = sum(i.path_count for i in r.action_infos)
+        # coherent/incoherent ratio across all actions
+        coh_total = sum(i.intensity for i in r.action_infos)
+        incoh_total = sum(
+            sum(abs(path_psi(ctrl.landscape, p)) ** 2 for p in i.paths)
+            for i in r.action_infos
+        )
+        ratio = coh_total / incoh_total if incoh_total > 0 else 1.0
+        match = "✓" if r.deterministic_choice == r.amplitude_choice else "✗"
+        top_action = r.amplitude_choice or "-"
+        print(f"    {geom:15s}: det={r.deterministic_choice!s:5s}  "
+              f"amp={top_action:5s} {match}  "
+              f"paths={n_paths:4d}  R_coh={ratio:.4f}")
+        for i in r.action_infos:
+            print(f"        {i.action:5s}: P={i.probability:.4f}  "
+                  f"I={i.intensity:.6f}  n={i.path_count}")
+
+
+def scenario_geometry_mini():
+    sep("Scenario 11: Summation Geometry Comparison — Mini-Domain")
+    L = build_mini_landscape()
+    ctrl = E0Controller(L, all_success, alpha=2.0, recent_k=3)
+    goals = {"GOAL"}
+
+    for state in ["A", "B", "E", "F", "G"]:
+        neighbors = ctrl._admissible_neighbors(state)
+        if not neighbors:
+            continue
+        print(f"\n  State {state} (h=3):")
+        _geometry_table(ctrl, state, 3, goals)
+
+
+def scenario_geometry_diamond():
+    sep("Scenario 12: Summation Geometry Comparison — Diamond Domain")
+    L = build_diamond_landscape()
+    ctrl = E0Controller(L, all_success, alpha=2.0, recent_k=3)
+    goals = {"Z"}
+
+    for state in ["S", "A", "B", "M", "N"]:
+        neighbors = ctrl._admissible_neighbors(state)
+        if not neighbors:
+            continue
+        print(f"\n  State {state} (h=3):")
+        _geometry_table(ctrl, state, 3, goals)
+
+
+def scenario_geometry_current_loop():
+    sep("Scenario 13: Summation Geometry Comparison — Current-Loop Domain")
+    L = build_current_loop_landscape()
+    ctrl = E0Controller(L, all_success, alpha=2.0, recent_k=3)
+    goals = {"END"}
+
+    for h in [2, 3, 5]:
+        print(f"\n  START (h={h}):")
+        _geometry_table(ctrl, "START", h, goals)
+
+
+def scenario_geometry_horizon_stability():
+    sep("Scenario 14: Geometry Horizon Stability — Diamond Domain at S")
+    L = build_diamond_landscape()
+    ctrl = E0Controller(L, all_success, alpha=2.0, recent_k=3)
+    goals = {"Z"}
+
+    for geom, kwargs in [("prefix", {}), ("simple", {}),
+                          ("first_arrival", {"goals": goals})]:
+        print(f"\n  Geometry: {geom}")
+        for h in range(1, 6):
+            r = analyze_controller_state(ctrl, "S", horizon_edges=h,
+                                          geometry=geom, **kwargs)
+            n_paths = sum(i.path_count for i in r.action_infos)
+            top = r.amplitude_choice
+            probs = {i.action: i.probability for i in r.action_infos}
+            print(f"    h={h}:  amp={top!s:5s}  paths={n_paths:4d}  "
+                  f"P(A)={probs.get('A',0):.4f}  "
+                  f"P(B)={probs.get('B',0):.4f}  "
+                  f"P(C)={probs.get('C',0):.4f}")
+
+
 if __name__ == "__main__":
     scenario_fresh()
     scenario_walk_with_overlay()
@@ -359,6 +450,10 @@ if __name__ == "__main__":
     scenario_diamond_interference_detail()
     scenario_current_loop_overview()
     scenario_current_loop_overlay()
+    scenario_geometry_mini()
+    scenario_geometry_diamond()
+    scenario_geometry_current_loop()
+    scenario_geometry_horizon_stability()
     print(f"\n{'='*60}")
     print("  Exploration complete.")
     print(f"{'='*60}")

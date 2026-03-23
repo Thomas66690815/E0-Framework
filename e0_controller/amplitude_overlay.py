@@ -41,10 +41,14 @@ without modifying the operational controller.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Sequence
+from typing import Dict, List, Optional, Sequence, Set
 
 from .controller import E0Controller
 from .wavepath import psi as path_psi
+
+
+# Supported summation geometries (§4 of Summation Geometry Program)
+GEOMETRIES = ("prefix", "simple", "first_arrival")
 
 
 @dataclass
@@ -65,6 +69,7 @@ class OverlayReport:
     """Comparison between deterministic controller choice and amplitude view."""
     current: str
     horizon_edges: int
+    geometry: str
     admissible_actions: List[str]
     deterministic_choice: str | None
     deterministic_escalated: bool
@@ -78,7 +83,7 @@ class OverlayReport:
 
     def summary(self) -> str:
         lines = [
-            f"OverlayReport(current={self.current!r}, horizon_edges={self.horizon_edges})",
+            f"OverlayReport(current={self.current!r}, horizon_edges={self.horizon_edges}, geometry={self.geometry!r})",
             f"  admissible: {self.admissible_actions}",
             f"  controller_choice: {self.deterministic_choice!r}",
             f"  amplitude_choice: {self.amplitude_choice!r}",
@@ -97,20 +102,30 @@ def _enumerate_continuations(
     controller: E0Controller,
     current: str,
     horizon_edges: int,
+    geometry: str = "prefix",
+    goals: Optional[Set[str]] = None,
 ) -> List[List[str]]:
     """
     Enumerate bounded admissible paths from current state.
 
     Paths are returned as state lists [x0, x1, ..., xn].
-    The result includes every admissible prefix path with length 1..horizon_edges.
 
-    Design choice:
-    We keep prefix paths, not only terminal leaves, because the amplitude overlay
-    is intended to measure total coherent forward support available after taking
-    an action, not just the deepest reachable frontier.
+    Geometry modes (§4 Summation Geometry Program):
+
+    - "prefix":  Include every admissible prefix path with length 1..horizon_edges.
+                  Current baseline — measures total coherent forward support.
+    - "simple":  Include only paths with no repeated states (G4).
+                  Suppresses loop inflation.
+    - "first_arrival":  Include only paths that stop upon first reaching a goal
+                         state (G3).  Requires `goals` set.  Non-goal prefixes
+                         are still included (intermediate support).
     """
     if horizon_edges <= 0:
         return []
+    if geometry not in GEOMETRIES:
+        raise ValueError(f"Unknown geometry {geometry!r}. Must be one of {GEOMETRIES}")
+    if geometry == "first_arrival" and not goals:
+        raise ValueError("first_arrival geometry requires a non-empty goals set")
 
     results: List[List[str]] = []
 
@@ -118,8 +133,17 @@ def _enumerate_continuations(
         if depth_used >= horizon_edges:
             return
         x = path[-1]
+
+        # first_arrival: stop extending once we've reached a goal
+        if geometry == "first_arrival" and x in goals and depth_used > 0:
+            return
+
         neighbors = controller._admissible_neighbors(x)
         for y in neighbors:
+            # simple-path: skip if state already visited
+            if geometry == "simple" and y in path:
+                continue
+
             new_path = path + [y]
             results.append(new_path)
             dfs(new_path, depth_used + 1)
@@ -137,6 +161,8 @@ def analyze_controller_state(
     controller: E0Controller,
     current: str,
     horizon_edges: int = 3,
+    geometry: str = "prefix",
+    goals: Optional[Set[str]] = None,
 ) -> OverlayReport:
     """
     Build an analysis-only amplitude overlay for one controller decision point.
@@ -150,6 +176,10 @@ def analyze_controller_state(
     horizon_edges:
         Maximum path length (in edges) used for bounded continuation analysis.
         Must be >= 1. Small values (2–4) are recommended.
+    geometry:
+        Summation geometry — "prefix" (default/G1), "simple" (G4), "first_arrival" (G3).
+    goals:
+        Required for "first_arrival" geometry. Set of goal states.
     """
     if horizon_edges < 1:
         raise ValueError("horizon_edges must be >= 1")
@@ -159,7 +189,8 @@ def analyze_controller_state(
     admissible = controller._admissible_neighbors(current)
 
     # Enumerate bounded admissible continuations from the current state.
-    all_paths = _enumerate_continuations(controller, current, horizon_edges)
+    all_paths = _enumerate_continuations(controller, current, horizon_edges,
+                                          geometry=geometry, goals=goals)
 
     action_infos: List[ActionAmplitudeInfo] = []
     total_intensity = 0.0
@@ -196,6 +227,7 @@ def analyze_controller_state(
     return OverlayReport(
         current=current,
         horizon_edges=horizon_edges,
+        geometry=geometry,
         admissible_actions=admissible,
         deterministic_choice=deterministic_choice,
         deterministic_escalated=escalated,
