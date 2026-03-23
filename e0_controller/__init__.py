@@ -64,7 +64,7 @@ from .primitives import Edge, Outcome
 from .historization import Historization, TraceRecord
 from .tension import tension, path_tension, coherence
 from .landscape import Landscape
-from .controller import E0Controller, StepResult, RunTrace, EscalationType
+from .controller import E0Controller, StepResult, RunTrace, EscalationType, HybridMode
 from .potential import (
     phi, phi_map, v_raw, v_grad, v_rot, decomposition,
     div_v, graph_laplacian,

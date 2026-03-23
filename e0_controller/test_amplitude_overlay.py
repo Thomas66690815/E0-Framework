@@ -46,6 +46,7 @@ import unittest
 from e0_controller.primitives import Edge, Outcome
 from e0_controller.landscape import Landscape
 from e0_controller.controller import E0Controller
+from e0_controller.controller import HybridMode
 from e0_controller.amplitude_overlay import (
     analyze_controller_state,
     _enumerate_continuations,
@@ -1330,7 +1331,191 @@ class TestGeometryComparison(unittest.TestCase):
         # If none are stable, that's a finding, not necessarily a failure
 
 
-# ── Phase 3k: Trace Integration Tests ──────────────────────────────────
+# ── Phase 3l: Hybrid Mode Tests ────────────────────────────────────────
+
+class TestHybridModeGreedy(unittest.TestCase):
+    """Verify GREEDY mode (default) behaves identically to pre-hybrid controller."""
+
+    def setUp(self):
+        self.L = build_mini_landscape()
+        self.ctrl = E0Controller(self.L, lambda s, t: Outcome.SUCCESS, alpha=2.0)
+
+    def test_default_mode_is_greedy(self):
+        """Default hybrid_mode is GREEDY."""
+        self.assertEqual(self.ctrl.hybrid_mode, HybridMode.GREEDY)
+
+    def test_greedy_no_override(self):
+        """GREEDY mode never sets hybrid_overridden."""
+        step = self.ctrl.cycle("A")
+        self.assertFalse(step.hybrid_overridden)
+
+    def test_greedy_no_overlay_by_default(self):
+        """GREEDY mode without overlay_horizon yields no overlay."""
+        step = self.ctrl.cycle("A")
+        self.assertIsNone(step.overlay)
+
+    def test_greedy_run_no_overrides(self):
+        """Full run in GREEDY mode: no hybrid overrides."""
+        trace = self.ctrl.run("A", max_cycles=10, goal="GOAL")
+        for step in trace.steps:
+            self.assertFalse(step.hybrid_overridden)
+        m = trace.metrics()
+        self.assertEqual(m["hybrid_override_count"], 0.0)
+        self.assertEqual(m["hybrid_override_rate"], 0.0)
+
+
+class TestHybridModeDiamondTrap(unittest.TestCase):
+    """
+    Diamond domain: greedy picks C (dead-end trap, S=0.15).
+    Amplitude should detect C has no forward support and override to A or B.
+    This is THE textbook case for hybrid B3.
+    """
+
+    def setUp(self):
+        L = build_diamond_landscape()
+        self.ctrl_greedy = E0Controller(
+            L, diamond_all_success, alpha=2.0,
+        )
+        L2 = build_diamond_landscape()
+        self.ctrl_hybrid = E0Controller(
+            L2, diamond_all_success, alpha=2.0,
+            hybrid_mode=HybridMode.AMPLITUDE_ON_DISAGREE,
+            hybrid_horizon=3,
+        )
+
+    def test_greedy_picks_trap(self):
+        """Greedy controller picks C (dead-end) at S."""
+        step = self.ctrl_greedy.cycle("S")
+        self.assertEqual(step.target, "C")
+
+    def test_hybrid_avoids_trap(self):
+        """Hybrid controller overrides C → picks A or B instead."""
+        step = self.ctrl_hybrid.cycle("S")
+        self.assertNotEqual(step.target, "C",
+                            "Hybrid should avoid dead-end trap C")
+        self.assertIn(step.target, ["A", "B"])
+        self.assertTrue(step.hybrid_overridden)
+
+    def test_hybrid_overlay_attached(self):
+        """Hybrid step at S carries overlay since it ran amplitude analysis."""
+        step = self.ctrl_hybrid.cycle("S")
+        self.assertIsNotNone(step.overlay)
+        self.assertEqual(step.overlay.current, "S")
+
+    def test_hybrid_reaches_goal(self):
+        """Hybrid run from S reaches Z (greedy run would get stuck at C)."""
+        trace = self.ctrl_hybrid.run("S", max_cycles=15, goal="Z")
+        self.assertIn("Z", trace.path)
+
+    def test_greedy_gets_stuck(self):
+        """Greedy run from S goes to C (dead-end), then must escalate."""
+        trace = self.ctrl_greedy.run("S", max_cycles=5, goal="Z")
+        self.assertEqual(trace.steps[0].target, "C")
+        # Second step must escalate (C has no neighbors)
+        if len(trace.steps) > 1:
+            self.assertTrue(trace.steps[1].escalated)
+
+    def test_hybrid_override_count(self):
+        """Hybrid run has at least one override (the first step at S)."""
+        trace = self.ctrl_hybrid.run("S", max_cycles=15, goal="Z")
+        m = trace.metrics()
+        self.assertGreater(m["hybrid_override_count"], 0.0)
+
+    def test_hybrid_overlay_agree_reflects_overrides(self):
+        """When hybrid overrides, overlay_agree should reflect the new target."""
+        trace = self.ctrl_hybrid.run("S", max_cycles=15, goal="Z")
+        # After override, target == amplitude_choice, so overlay_agree should be high
+        m = trace.metrics()
+        if m["overlay_count"] > 0:
+            self.assertGreater(m["overlay_agree"], 0.0)
+
+
+class TestHybridModeAgreement(unittest.TestCase):
+    """Test hybrid mode when greedy and amplitude agree — no override."""
+
+    def setUp(self):
+        L = build_mini_landscape()
+        self.ctrl = E0Controller(
+            L, lambda s, t: Outcome.SUCCESS, alpha=2.0,
+            hybrid_mode=HybridMode.AMPLITUDE_ON_DISAGREE,
+            hybrid_horizon=2,
+        )
+
+    def test_agree_no_override(self):
+        """When greedy == amplitude at a state, no override happens."""
+        # At most states in mini-domain, greedy and amplitude should agree
+        step = self.ctrl.cycle("B")
+        # Whether they agree or disagree, check consistency:
+        if step.overlay:
+            if step.overlay.amplitude_choice == step.target:
+                self.assertFalse(step.hybrid_overridden)
+
+    def test_hybrid_preserves_admissibility(self):
+        """Hybrid target is always in the admissible set."""
+        for state in ["A", "B", "C", "E", "F"]:
+            ctrl = E0Controller(
+                build_mini_landscape(),
+                lambda s, t: Outcome.SUCCESS, alpha=2.0,
+                hybrid_mode=HybridMode.AMPLITUDE_ON_DISAGREE,
+                hybrid_horizon=2,
+            )
+            step = ctrl.cycle(state)
+            if step:
+                self.assertIn(step.target, step.candidates,
+                              f"Hybrid target {step.target} not admissible from {state}")
+
+
+class TestHybridModeEscalation(unittest.TestCase):
+    """Hybrid mode should NOT interfere with escalation logic."""
+
+    def test_escalation_not_overridden(self):
+        """When controller escalates, hybrid doesn't override."""
+        L = build_diamond_landscape()
+        ctrl = E0Controller(
+            L, diamond_all_success, alpha=2.0,
+            hybrid_mode=HybridMode.AMPLITUDE_ON_DISAGREE,
+            hybrid_horizon=3,
+        )
+        # Get to C manually via select_next
+        _, _, overlay, overridden = ctrl.select_hybrid("C")[1:]
+        # C is dead-end → escalation → hybrid should not override
+        self.assertFalse(overridden)
+
+
+class TestHybridRunMetrics(unittest.TestCase):
+    """Metrics integration for hybrid runs."""
+
+    def test_metrics_keys_complete(self):
+        """All expected metric keys present."""
+        L = build_diamond_landscape()
+        ctrl = E0Controller(
+            L, diamond_all_success, alpha=2.0,
+            hybrid_mode=HybridMode.AMPLITUDE_ON_DISAGREE,
+            hybrid_horizon=3,
+        )
+        trace = ctrl.run("S", max_cycles=10, goal="Z")
+        m = trace.metrics()
+        self.assertIn("hybrid_override_count", m)
+        self.assertIn("hybrid_override_rate", m)
+        self.assertIn("overlay_agree", m)
+        self.assertIn("overlay_count", m)
+
+    def test_override_rate_bounded(self):
+        """Override rate must be between 0 and 1."""
+        L = build_diamond_landscape()
+        ctrl = E0Controller(
+            L, diamond_all_success, alpha=2.0,
+            hybrid_mode=HybridMode.AMPLITUDE_ON_DISAGREE,
+            hybrid_horizon=3,
+        )
+        trace = ctrl.run("S", max_cycles=10, goal="Z")
+        m = trace.metrics()
+        self.assertGreaterEqual(m["hybrid_override_rate"], 0.0)
+        self.assertLessEqual(m["hybrid_override_rate"], 1.0)
+
+
+if __name__ == "__main__":
+    unittest.main()
 
 class TestTraceIntegration(unittest.TestCase):
     """Tests for overlay attachment in controller.cycle() / run()."""

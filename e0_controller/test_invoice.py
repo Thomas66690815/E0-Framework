@@ -309,6 +309,7 @@ class TestMetrics(unittest.TestCase):
             "success_rate", "failure_rate", "avg_tension",
             "avg_r_eff_shift", "revisit_count", "unique_states",
             "overlay_agree", "overlay_count",
+            "hybrid_override_count", "hybrid_override_rate",
         }
         self.assertEqual(set(m.keys()), expected_keys)
 

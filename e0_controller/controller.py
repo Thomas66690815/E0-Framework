@@ -37,6 +37,12 @@ class EscalationType(Enum):
     EXHAUSTED = "exhausted"   # all admissible heavily penalized (revisit-dominant)
 
 
+class HybridMode(Enum):
+    """3l: Amplitude-hybrid selection modes."""
+    GREEDY = "greedy"                         # pure deterministic (default)
+    AMPLITUDE_ON_DISAGREE = "amplitude_on_disagree"  # B3: follow amplitude when DISAGREE
+
+
 @dataclass
 class StepResult:
     """One completed controller cycle."""
@@ -51,6 +57,7 @@ class StepResult:
     escalated: bool = False      # was this an escalation?
     escalation_type: EscalationType = EscalationType.NONE  # K12: why
     overlay: Optional["OverlayReport"] = None  # 3k: amplitude overlay snapshot
+    hybrid_overridden: bool = False  # 3l: True when amplitude overrode greedy
 
 
 @dataclass
@@ -105,6 +112,8 @@ class RunTrace:
             unique_states      — Anzahl verschiedener besuchter States
             overlay_agree      — fraction of steps where controller == amplitude choice
             overlay_count      — number of steps with overlay attached
+            hybrid_override_count — number of steps where amplitude overrode greedy
+            hybrid_override_rate  — fraction of steps with hybrid override
         """
         n = len(self.steps)
         if n == 0:
@@ -113,6 +122,7 @@ class RunTrace:
                 "success_rate", "failure_rate", "avg_tension",
                 "avg_r_eff_shift", "revisit_count", "unique_states",
                 "overlay_agree", "overlay_count",
+                "hybrid_override_count", "hybrid_override_rate",
             ]}
 
         esc = sum(1 for s in self.steps if s.escalated)
@@ -147,6 +157,10 @@ class RunTrace:
             "overlay_agree": (overlay_agree_count / overlay_count
                               if overlay_count else 0.0),
             "overlay_count": float(overlay_count),
+            "hybrid_override_count": float(sum(
+                1 for s in self.steps if s.hybrid_overridden)),
+            "hybrid_override_rate": (sum(
+                1 for s in self.steps if s.hybrid_overridden) / n),
         }
 
 
@@ -156,13 +170,14 @@ ExecuteFn = Callable[[str, str], Outcome]
 
 class E0Controller:
     """
-    Deterministic E₀ Controller v0.2
+    Deterministic E₀ Controller v0.3
 
     Implements greedy transition selection with:
     - Admissibility filter: S_max and C_min thresholds (K11)
     - Revisit-penalty: penalize recently visited states
     - Typed escalation: DEAD_END / FILTERED / EXHAUSTED (K12)
     - Historization: learn from each transition outcome
+    - Hybrid mode (3l): optional amplitude-guided override on DISAGREE
 
     Parameters:
         landscape: The Landscape L_t
@@ -172,6 +187,9 @@ class E0Controller:
         max_escalation_R: Maximum R₀ to assign during escalation (default 5.0)
         s_max: Maximum admissible tension (K11, default ∞ = no filter)
         c_min: Minimum coherence to be admissible (K11, default 0.0 = no filter)
+        hybrid_mode: HybridMode.GREEDY (default) or AMPLITUDE_ON_DISAGREE
+        hybrid_horizon: Horizon for amplitude overlay in hybrid mode (default 3)
+        hybrid_goals: Goal states for first_arrival geometry (default None)
     """
 
     def __init__(
@@ -183,6 +201,9 @@ class E0Controller:
         max_escalation_R: float = 5.0,
         s_max: float = math.inf,
         c_min: float = 0.0,
+        hybrid_mode: HybridMode = HybridMode.GREEDY,
+        hybrid_horizon: int = 3,
+        hybrid_goals: Optional[Set[str]] = None,
     ):
         self.landscape = landscape
         self.execute_fn = execute_fn
@@ -191,6 +212,9 @@ class E0Controller:
         self.max_escalation_R = max_escalation_R
         self.s_max = s_max      # K11: tension ceiling
         self.c_min = c_min      # K11: coherence floor
+        self.hybrid_mode = hybrid_mode    # 3l: hybrid selection mode
+        self.hybrid_horizon = hybrid_horizon  # 3l: overlay horizon
+        self.hybrid_goals = hybrid_goals  # 3l: goal states for overlay
         self._recent: List[str] = []   # sliding window of recent states
 
         # K1 fix: Escalation edges live here, NOT in the Landscape.
@@ -313,6 +337,9 @@ class E0Controller:
         1. Get admissible neighbors (K11 filtered).
         2. Pick argmin of penalized tension.
         3. If empty → classify WHY and escalate accordingly (K12).
+
+        This is always the pure greedy decision. Hybrid logic wraps this
+        via select_hybrid().
         """
         neighbors = self._admissible_neighbors(current)
 
@@ -388,6 +415,56 @@ class E0Controller:
 
         return max(viable, key=lambda s: len(self.landscape.admissible_neighbors(s)))
 
+    def select_hybrid(
+        self, current: str
+    ) -> Tuple[Optional[str], bool, EscalationType, Optional["OverlayReport"], bool]:
+        """
+        3l: Hybrid selection — greedy + amplitude override on DISAGREE.
+
+        Returns (target, escalated, esc_type, overlay_report, hybrid_overridden).
+
+        In GREEDY mode: delegates to select_next, overlay/override are None/False.
+        In AMPLITUDE_ON_DISAGREE mode:
+            1. Compute greedy choice via select_next()
+            2. Compute amplitude overlay
+            3. If amplitude_choice != greedy choice AND amplitude_choice is
+               admissible → override with amplitude_choice
+            4. Record whether override happened
+        """
+        greedy_target, escalated, esc_type = self.select_next(current)
+
+        if self.hybrid_mode == HybridMode.GREEDY:
+            return greedy_target, escalated, esc_type, None, False
+
+        if greedy_target is None:
+            return None, escalated, esc_type, None, False
+
+        # Skip hybrid override for escalated steps — escalation already
+        # means the normal selection failed, let it handle recovery.
+        if escalated:
+            return greedy_target, escalated, esc_type, None, False
+
+        # Compute overlay at this decision point
+        overlay = self._compute_overlay(
+            current, self.hybrid_horizon, self.hybrid_goals,
+        )
+        if overlay is None:
+            return greedy_target, escalated, esc_type, None, False
+
+        amp_choice = overlay.amplitude_choice
+        if amp_choice is None or amp_choice == greedy_target:
+            # AGREE — keep greedy
+            return greedy_target, escalated, esc_type, overlay, False
+
+        # DISAGREE — amplitude prefers a different action.
+        # Only override if amplitude choice is in the admissible set.
+        admissible = self._admissible_neighbors(current)
+        if amp_choice in admissible:
+            return amp_choice, escalated, esc_type, overlay, True
+
+        # Amplitude choice not admissible — stay with greedy
+        return greedy_target, escalated, esc_type, overlay, False
+
     def cycle(
         self,
         current: str,
@@ -398,11 +475,13 @@ class E0Controller:
         One complete controller cycle:
             select → execute → historize → report
 
-        If overlay_horizon > 0, an amplitude overlay snapshot is attached
-        to the StepResult for post-hoc analysis (does NOT alter the decision).
+        In hybrid mode, the selection may be overridden by amplitude analysis.
+        If overlay_horizon > 0 (or hybrid mode is active), an amplitude overlay
+        snapshot is attached to the StepResult.
         Returns None if no transition is possible.
         """
-        target, escalated, esc_type = self.select_next(current)
+        target, escalated, esc_type, hybrid_overlay, overridden = \
+            self.select_hybrid(current)
         if target is None:
             return None
 
@@ -429,6 +508,11 @@ class E0Controller:
         # Update recent window
         self._update_recent(current)
 
+        # Overlay: use hybrid overlay if available, else compute on-demand
+        overlay = hybrid_overlay or self._compute_overlay(
+            current, overlay_horizon, overlay_goals,
+        )
+
         return StepResult(
             tau=self.landscape.historization.tau,
             source=current,
@@ -440,7 +524,8 @@ class E0Controller:
             candidates=candidates,
             escalated=escalated,
             escalation_type=esc_type,
-            overlay=self._compute_overlay(current, overlay_horizon, overlay_goals),
+            overlay=overlay,
+            hybrid_overridden=overridden,
         )
 
     def _compute_overlay(
