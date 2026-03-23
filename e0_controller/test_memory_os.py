@@ -28,7 +28,7 @@ import unittest
 from e0_controller.primitives import Edge, Outcome
 from e0_controller.historization import Historization
 from e0_controller.landscape import Landscape
-from e0_controller.controller import E0Controller, EscalationType, RunTrace
+from e0_controller.controller import E0Controller, EscalationType, HybridMode, RunTrace
 from e0_controller.memory_os import (
     E0MemoryOS,
     CanonRef,
@@ -421,6 +421,202 @@ class TestRetrieval(unittest.TestCase):
         sessions = self.memos.list_sessions()
         self.assertIn("alpha", sessions)
         self.assertIn("beta", sessions)
+
+
+# ──────────────────────────────────────────────
+# Phase 3m: Hybrid + Overlay Snapshot Tests
+# ──────────────────────────────────────────────
+
+def build_diamond_landscape() -> Landscape:
+    """Diamond domain for hybrid tests."""
+    L = Landscape()
+    L.add_edge("S", "A", delta=0.3, resistance=0.6)
+    L.add_edge("S", "B", delta=0.35, resistance=0.7)
+    L.add_edge("S", "C", delta=0.3, resistance=0.5)
+    L.add_state("C")
+    L.add_edge("A", "M", delta=0.2, resistance=0.4)
+    L.add_edge("M", "Z", delta=0.15, resistance=0.3)
+    L.add_edge("B", "N", delta=0.25, resistance=0.6)
+    L.add_edge("N", "Z", delta=0.2, resistance=0.4)
+    L.add_edge("A", "S", delta=0.8, resistance=2.0)
+    L.add_edge("B", "S", delta=0.5, resistance=1.5)
+    L.add_edge("M", "N", delta=0.3, resistance=0.5)
+    return L
+
+
+class TestHybridSnapshot(unittest.TestCase):
+    """RuntimeSnapshot captures and restores hybrid mode params."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.memos = E0MemoryOS(base_dir=self.tmpdir)
+
+    def tearDown(self):
+        shutil.rmtree(self.tmpdir)
+
+    def test_greedy_snapshot_has_hybrid_params(self):
+        """GREEDY controller's snapshot includes hybrid_mode='greedy'."""
+        L = build_invoice_landscape()
+        ctrl = E0Controller(L, all_success)
+        snap = RuntimeSnapshot.from_controller(ctrl)
+        params = snap.controller_params
+        self.assertEqual(params["hybrid_mode"], "greedy")
+        self.assertEqual(params["hybrid_horizon"], 3)
+        self.assertEqual(params["hybrid_goals"], [])
+
+    def test_hybrid_snapshot_preserves_mode(self):
+        """AMPLITUDE_ON_DISAGREE snapshot preserves mode and goals."""
+        L = build_diamond_landscape()
+        ctrl = E0Controller(
+            L, all_success,
+            hybrid_mode=HybridMode.AMPLITUDE_ON_DISAGREE,
+            hybrid_horizon=4,
+            hybrid_goals={"Z"},
+        )
+        snap = RuntimeSnapshot.from_controller(ctrl)
+        params = snap.controller_params
+        self.assertEqual(params["hybrid_mode"], "amplitude_on_disagree")
+        self.assertEqual(params["hybrid_horizon"], 4)
+        self.assertEqual(params["hybrid_goals"], ["Z"])
+
+    def test_restore_hybrid_controller(self):
+        """Controller restored from snapshot has correct hybrid mode."""
+        L = build_diamond_landscape()
+        ctrl = E0Controller(
+            L, all_success,
+            hybrid_mode=HybridMode.AMPLITUDE_ON_DISAGREE,
+            hybrid_horizon=4,
+            hybrid_goals={"Z"},
+        )
+        trace = ctrl.run("S", max_cycles=5, goal="Z")
+        ctx = self.memos.snapshot_from_runtime("test-hybrid", L, ctrl, trace)
+        self.memos.save_context(ctx)
+
+        # Reload in "fresh process"
+        ctx2 = self.memos.load_context("test-hybrid")
+        L2 = self.memos.restore_landscape(ctx2)
+        ctrl2 = self.memos.restore_controller(ctx2, L2, all_success)
+
+        self.assertEqual(ctrl2.hybrid_mode, HybridMode.AMPLITUDE_ON_DISAGREE)
+        self.assertEqual(ctrl2.hybrid_horizon, 4)
+        self.assertEqual(ctrl2.hybrid_goals, {"Z"})
+
+    def test_restore_greedy_default(self):
+        """Old snapshot without hybrid params restores as GREEDY."""
+        L = build_invoice_landscape()
+        ctrl = E0Controller(L, all_success)
+        ctx = self.memos.snapshot_from_runtime("test-old", L, ctrl)
+        self.memos.save_context(ctx)
+
+        ctx2 = self.memos.load_context("test-old")
+        L2 = self.memos.restore_landscape(ctx2)
+        ctrl2 = self.memos.restore_controller(ctx2, L2, all_success)
+
+        self.assertEqual(ctrl2.hybrid_mode, HybridMode.GREEDY)
+
+
+class TestOverlaySummary(unittest.TestCase):
+    """summarize_for_llm includes amplitude overlay when controller provided."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.memos = E0MemoryOS(base_dir=self.tmpdir)
+
+    def tearDown(self):
+        shutil.rmtree(self.tmpdir)
+
+    def test_no_overlay_without_controller(self):
+        """Without controller param, no amplitude_overlay in summary."""
+        L = build_invoice_landscape()
+        ctrl = E0Controller(L, all_success)
+        trace = ctrl.run("RECEIVED", goal="APPROVED", max_cycles=10)
+        ctx = self.memos.snapshot_from_runtime("test-no-ov", L, ctrl, trace)
+        summary = self.memos.summarize_for_llm(ctx, "DATA_EXTRACTED", L)
+        self.assertNotIn("amplitude_overlay", summary)
+
+    def test_overlay_with_controller(self):
+        """With controller param, amplitude_overlay block is present."""
+        L = build_diamond_landscape()
+        ctrl = E0Controller(
+            L, all_success,
+            hybrid_mode=HybridMode.AMPLITUDE_ON_DISAGREE,
+            hybrid_horizon=3,
+        )
+        ctx = self.memos.snapshot_from_runtime("test-ov", L, ctrl)
+        summary = self.memos.summarize_for_llm(
+            ctx, "S", landscape=L, controller=ctrl)
+        self.assertIn("amplitude_overlay", summary)
+        ov = summary["amplitude_overlay"]
+        self.assertIn("geometry", ov)
+        self.assertIn("greedy_choice", ov)
+        self.assertIn("amplitude_choice", ov)
+        self.assertIn("agree", ov)
+        self.assertIn("actions", ov)
+        self.assertIsInstance(ov["agree"], bool)
+
+    def test_overlay_diamond_disagree(self):
+        """At Diamond/S, overlay should show DISAGREE (C vs A/B)."""
+        L = build_diamond_landscape()
+        ctrl = E0Controller(
+            L, all_success,
+            hybrid_mode=HybridMode.AMPLITUDE_ON_DISAGREE,
+            hybrid_horizon=3,
+        )
+        ctx = self.memos.snapshot_from_runtime("test-dis", L, ctrl)
+        summary = self.memos.summarize_for_llm(
+            ctx, "S", landscape=L, controller=ctrl)
+        ov = summary["amplitude_overlay"]
+        # Greedy picks C, amplitude picks A or B → disagree
+        self.assertEqual(ov["greedy_choice"], "C")
+        self.assertIn(ov["amplitude_choice"], ["A", "B"])
+        self.assertFalse(ov["agree"])
+
+    def test_overlay_actions_have_probabilities(self):
+        """Each action in overlay has probability, intensity, path_count."""
+        L = build_diamond_landscape()
+        ctrl = E0Controller(L, all_success, hybrid_horizon=3)
+        ctx = self.memos.snapshot_from_runtime("test-act", L, ctrl)
+        summary = self.memos.summarize_for_llm(
+            ctx, "S", landscape=L, controller=ctrl)
+        ov = summary["amplitude_overlay"]
+        for action, info in ov["actions"].items():
+            self.assertIn("probability", info)
+            self.assertIn("intensity", info)
+            self.assertIn("path_count", info)
+            self.assertGreaterEqual(info["probability"], 0.0)
+            self.assertLessEqual(info["probability"], 1.0)
+
+    def test_overlay_summary_json_serializable(self):
+        """Summary with overlay is JSON serializable."""
+        L = build_diamond_landscape()
+        ctrl = E0Controller(L, all_success, hybrid_horizon=3)
+        ctx = self.memos.snapshot_from_runtime("test-json", L, ctrl)
+        summary = self.memos.summarize_for_llm(
+            ctx, "S", landscape=L, controller=ctrl)
+        output = json.dumps(summary, indent=2)
+        self.assertIn("amplitude_overlay", output)
+
+    def test_summary_has_hybrid_mode_in_runtime(self):
+        """Runtime section includes hybrid_mode field."""
+        L = build_diamond_landscape()
+        ctrl = E0Controller(
+            L, all_success,
+            hybrid_mode=HybridMode.AMPLITUDE_ON_DISAGREE,
+        )
+        ctx = self.memos.snapshot_from_runtime("test-rt", L, ctrl)
+        summary = self.memos.summarize_for_llm(ctx, "S", L)
+        self.assertEqual(summary["runtime"]["hybrid_mode"],
+                         "amplitude_on_disagree")
+
+    def test_overlay_at_dead_end(self):
+        """Overlay at dead-end state C has no actions → no overlay."""
+        L = build_diamond_landscape()
+        ctrl = E0Controller(L, all_success, hybrid_horizon=3)
+        ctx = self.memos.snapshot_from_runtime("test-de", L, ctrl)
+        summary = self.memos.summarize_for_llm(
+            ctx, "C", landscape=L, controller=ctrl)
+        # C has no neighbors → no overlay
+        self.assertNotIn("amplitude_overlay", summary)
 
 
 if __name__ == "__main__":

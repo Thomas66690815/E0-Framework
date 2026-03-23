@@ -30,7 +30,7 @@ from typing import Any, Dict, List, Optional
 from .primitives import Edge, Outcome
 from .historization import Historization
 from .landscape import Landscape
-from .controller import E0Controller, EscalationType, RunTrace
+from .controller import E0Controller, EscalationType, HybridMode, RunTrace
 from .tension import coherence
 
 
@@ -182,6 +182,9 @@ class RuntimeSnapshot:
                 "max_escalation_R": ctrl.max_escalation_R,
                 "s_max": ctrl.s_max if not math.isinf(ctrl.s_max) else -1.0,
                 "c_min": ctrl.c_min,
+                "hybrid_mode": ctrl.hybrid_mode.value,
+                "hybrid_horizon": ctrl.hybrid_horizon,
+                "hybrid_goals": sorted(ctrl.hybrid_goals) if ctrl.hybrid_goals else [],
             },
         )
 
@@ -349,6 +352,15 @@ class E0MemoryOS:
         s_max_raw = params.get("s_max", -1.0)
         s_max = math.inf if s_max_raw == -1.0 else s_max_raw
 
+        # Hybrid mode params (3l)
+        hybrid_mode_str = params.get("hybrid_mode", "greedy")
+        try:
+            hybrid_mode = HybridMode(hybrid_mode_str)
+        except ValueError:
+            hybrid_mode = HybridMode.GREEDY
+        hybrid_goals_raw = params.get("hybrid_goals", [])
+        hybrid_goals = set(hybrid_goals_raw) if hybrid_goals_raw else None
+
         ctrl = E0Controller(
             landscape=landscape,
             execute_fn=execute_fn,
@@ -357,6 +369,9 @@ class E0MemoryOS:
             max_escalation_R=params.get("max_escalation_R", 5.0),
             s_max=s_max,
             c_min=params.get("c_min", 0.0),
+            hybrid_mode=hybrid_mode,
+            hybrid_horizon=int(params.get("hybrid_horizon", 3)),
+            hybrid_goals=hybrid_goals,
         )
 
         # Restore mutable runtime state
@@ -375,6 +390,7 @@ class E0MemoryOS:
         context: MemOSContext,
         current_state: str,
         landscape: Optional[Landscape] = None,
+        controller: Optional[E0Controller] = None,
     ) -> Dict[str, Any]:
         """
         Produce a bounded, token-efficient state package for the LLM.
@@ -384,6 +400,7 @@ class E0MemoryOS:
             2. Edge historization for current neighborhood
             3. Recent path / runtime context
             4. Canon references
+            5. Amplitude overlay (3m) — if controller in hybrid mode or provided
         """
         # Reconstruct landscape if not provided
         if landscape is None:
@@ -415,22 +432,80 @@ class E0MemoryOS:
             }
 
         # 3. Runtime context
+        params = context.runtime.get("controller_params", {})
+        hybrid_mode = params.get("hybrid_mode", "greedy")
         runtime = {
             "recent_states": context.runtime.get("recent_states", []),
             "escalation_type": context.runtime.get("last_escalation_type", "none"),
             "tau": context.historization.get("tau", 0),
+            "hybrid_mode": hybrid_mode,
         }
 
         # 4. Canon refs
         canon = [ref["name"] + "@" + ref["version"]
                  for ref in context.canon_refs]
 
-        return {
+        result: Dict[str, Any] = {
             "canon_refs": canon,
             "current_state": current_state,
             "admissible_neighbors": neighbor_info,
             "edge_history": edge_history,
             "runtime": runtime,
+        }
+
+        # 5. Amplitude overlay (3m)
+        if controller is not None and neighbors:
+            overlay_info = self._build_overlay_summary(
+                controller, current_state,
+            )
+            if overlay_info:
+                result["amplitude_overlay"] = overlay_info
+
+        return result
+
+    def _build_overlay_summary(
+        self,
+        controller: E0Controller,
+        current_state: str,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Compute amplitude overlay and produce a bounded LLM-friendly summary.
+
+        Returns None if overlay computation is not possible (e.g., no neighbors).
+        """
+        from .amplitude_overlay import analyze_controller_state
+
+        try:
+            report = analyze_controller_state(
+                controller, current_state,
+                horizon_edges=controller.hybrid_horizon,
+                goals=controller.hybrid_goals,
+            )
+        except (ValueError, KeyError):
+            return None
+
+        if not report.action_infos:
+            return None
+
+        actions = {}
+        for info in report.action_infos:
+            actions[info.action] = {
+                "probability": round(info.probability, 4),
+                "intensity": round(info.intensity, 6),
+                "path_count": info.path_count,
+            }
+
+        greedy_choice = report.deterministic_choice
+        amp_choice = report.amplitude_choice
+        agree = (greedy_choice == amp_choice)
+
+        return {
+            "geometry": report.geometry,
+            "horizon": report.horizon_edges,
+            "greedy_choice": greedy_choice,
+            "amplitude_choice": amp_choice,
+            "agree": agree,
+            "actions": actions,
         }
 
     # ── 6.4 Retrieve ──
