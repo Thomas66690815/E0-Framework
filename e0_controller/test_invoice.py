@@ -308,6 +308,7 @@ class TestMetrics(unittest.TestCase):
             "steps", "deterministic_rate", "escalation_count",
             "success_rate", "failure_rate", "avg_tension",
             "avg_r_eff_shift", "revisit_count", "unique_states",
+            "overlay_agree", "overlay_count",
         }
         self.assertEqual(set(m.keys()), expected_keys)
 

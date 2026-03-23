@@ -19,11 +19,14 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Callable, Dict, List, Optional, Set, Tuple
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Set, Tuple
 
 from .primitives import Edge, Outcome
 from .landscape import Landscape
 from .tension import tension, coherence
+
+if TYPE_CHECKING:
+    from .amplitude_overlay import OverlayReport
 
 
 class EscalationType(Enum):
@@ -47,6 +50,7 @@ class StepResult:
     candidates: List[str]        # who was admissible
     escalated: bool = False      # was this an escalation?
     escalation_type: EscalationType = EscalationType.NONE  # K12: why
+    overlay: Optional["OverlayReport"] = None  # 3k: amplitude overlay snapshot
 
 
 @dataclass
@@ -99,6 +103,8 @@ class RunTrace:
             avg_r_eff_shift    — mittlere Veränderung R_eff pro Step
             revisit_count      — wie oft ein State mehrfach besucht wurde
             unique_states      — Anzahl verschiedener besuchter States
+            overlay_agree      — fraction of steps where controller == amplitude choice
+            overlay_count      — number of steps with overlay attached
         """
         n = len(self.steps)
         if n == 0:
@@ -106,6 +112,7 @@ class RunTrace:
                 "steps", "deterministic_rate", "escalation_count",
                 "success_rate", "failure_rate", "avg_tension",
                 "avg_r_eff_shift", "revisit_count", "unique_states",
+                "overlay_agree", "overlay_count",
             ]}
 
         esc = sum(1 for s in self.steps if s.escalated)
@@ -118,6 +125,14 @@ class RunTrace:
         unique = set(path)
         revisits = len(path) - len(unique)
 
+        # Overlay agreement stats
+        overlay_steps = [s for s in self.steps if s.overlay is not None]
+        overlay_count = len(overlay_steps)
+        overlay_agree_count = sum(
+            1 for s in overlay_steps
+            if s.overlay.amplitude_choice == s.target
+        )
+
         return {
             "steps": float(n),
             "deterministic_rate": (n - esc) / n,
@@ -129,6 +144,9 @@ class RunTrace:
             "avg_r_eff_shift": sum(r_shifts) / n,
             "revisit_count": float(revisits),
             "unique_states": float(len(unique)),
+            "overlay_agree": (overlay_agree_count / overlay_count
+                              if overlay_count else 0.0),
+            "overlay_count": float(overlay_count),
         }
 
 
@@ -370,11 +388,18 @@ class E0Controller:
 
         return max(viable, key=lambda s: len(self.landscape.admissible_neighbors(s)))
 
-    def cycle(self, current: str) -> Optional[StepResult]:
+    def cycle(
+        self,
+        current: str,
+        overlay_horizon: int = 0,
+        overlay_goals: Optional[Set[str]] = None,
+    ) -> Optional[StepResult]:
         """
         One complete controller cycle:
             select → execute → historize → report
 
+        If overlay_horizon > 0, an amplitude overlay snapshot is attached
+        to the StepResult for post-hoc analysis (does NOT alter the decision).
         Returns None if no transition is possible.
         """
         target, escalated, esc_type = self.select_next(current)
@@ -415,6 +440,21 @@ class E0Controller:
             candidates=candidates,
             escalated=escalated,
             escalation_type=esc_type,
+            overlay=self._compute_overlay(current, overlay_horizon, overlay_goals),
+        )
+
+    def _compute_overlay(
+        self,
+        current: str,
+        overlay_horizon: int,
+        overlay_goals: Optional[Set[str]],
+    ) -> Optional["OverlayReport"]:
+        """Compute amplitude overlay if horizon > 0, else None."""
+        if overlay_horizon <= 0:
+            return None
+        from .amplitude_overlay import analyze_controller_state
+        return analyze_controller_state(
+            self, current, horizon_edges=overlay_horizon, goals=overlay_goals,
         )
 
     def run(
@@ -422,9 +462,15 @@ class E0Controller:
         start: str,
         max_cycles: int = 50,
         goal: Optional[str] = None,
+        overlay_horizon: int = 0,
+        overlay_goals: Optional[Set[str]] = None,
     ) -> RunTrace:
         """
         Run the controller from start.
+
+        If overlay_horizon > 0, each StepResult will carry an amplitude
+        overlay snapshot for that decision point (analysis only, does NOT
+        alter transitions).
 
         Stops when:
         - goal state is reached (if specified)
@@ -439,7 +485,7 @@ class E0Controller:
             if goal and current == goal:
                 break
 
-            step = self.cycle(current)
+            step = self.cycle(current, overlay_horizon, overlay_goals)
             if step is None:
                 break  # complete dead-end, no escalation possible
 

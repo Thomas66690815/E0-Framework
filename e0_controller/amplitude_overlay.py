@@ -102,7 +102,7 @@ def _enumerate_continuations(
     controller: E0Controller,
     current: str,
     horizon_edges: int,
-    geometry: str = "prefix",
+    geometry: str = "simple",
     goals: Optional[Set[str]] = None,
 ) -> List[List[str]]:
     """
@@ -161,7 +161,7 @@ def analyze_controller_state(
     controller: E0Controller,
     current: str,
     horizon_edges: int = 3,
-    geometry: str = "prefix",
+    geometry: str = "simple",
     goals: Optional[Set[str]] = None,
 ) -> OverlayReport:
     """

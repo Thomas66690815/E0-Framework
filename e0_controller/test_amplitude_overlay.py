@@ -754,21 +754,21 @@ class TestGeometryParameter(unittest.TestCase):
         self.L = build_mini_landscape()
         self.ctrl = E0Controller(self.L, lambda s, t: Outcome.SUCCESS, alpha=2.0)
 
-    def test_default_geometry_is_prefix(self):
-        """Default geometry should be 'prefix'."""
+    def test_default_geometry_is_simple(self):
+        """Default geometry should be 'simple' (v0.10.4+)."""
         report = analyze_controller_state(self.ctrl, "A", horizon_edges=2)
-        self.assertEqual(report.geometry, "prefix")
+        self.assertEqual(report.geometry, "simple")
 
-    def test_explicit_prefix_matches_default(self):
-        """geometry='prefix' produces identical results as default."""
+    def test_explicit_simple_matches_default(self):
+        """geometry='simple' produces identical results as default."""
         r_default = analyze_controller_state(self.ctrl, "A", horizon_edges=3)
-        r_prefix = analyze_controller_state(self.ctrl, "A", horizon_edges=3,
-                                             geometry="prefix")
-        self.assertEqual(r_default.geometry, r_prefix.geometry)
-        for d, p in zip(r_default.action_infos, r_prefix.action_infos):
-            self.assertEqual(d.action, p.action)
-            self.assertAlmostEqual(d.intensity, p.intensity, places=10)
-            self.assertEqual(d.path_count, p.path_count)
+        r_simple = analyze_controller_state(self.ctrl, "A", horizon_edges=3,
+                                             geometry="simple")
+        self.assertEqual(r_default.geometry, r_simple.geometry)
+        for d, s in zip(r_default.action_infos, r_simple.action_infos):
+            self.assertEqual(d.action, s.action)
+            self.assertAlmostEqual(d.intensity, s.intensity, places=10)
+            self.assertEqual(d.path_count, s.path_count)
 
     def test_unknown_geometry_raises(self):
         """Unknown geometry name raises ValueError."""
@@ -1328,6 +1328,141 @@ class TestGeometryComparison(unittest.TestCase):
             if all(c == choices[0] for c in choices):
                 return  # at least one geometry is horizon-stable
         # If none are stable, that's a finding, not necessarily a failure
+
+
+# ── Phase 3k: Trace Integration Tests ──────────────────────────────────
+
+class TestTraceIntegration(unittest.TestCase):
+    """Tests for overlay attachment in controller.cycle() / run()."""
+
+    def setUp(self):
+        self.L = build_mini_landscape()
+        self.ctrl = E0Controller(self.L, lambda s, t: Outcome.SUCCESS, alpha=2.0)
+
+    def test_overlay_none_by_default(self):
+        """Without overlay_horizon, StepResult.overlay is None."""
+        step = self.ctrl.cycle("A")
+        self.assertIsNotNone(step)
+        self.assertIsNone(step.overlay)
+
+    def test_overlay_attached_when_horizon_set(self):
+        """With overlay_horizon > 0, StepResult carries an OverlayReport."""
+        step = self.ctrl.cycle("A", overlay_horizon=2)
+        self.assertIsNotNone(step)
+        self.assertIsNotNone(step.overlay)
+        self.assertIsInstance(step.overlay, OverlayReport)
+        self.assertEqual(step.overlay.current, "A")
+        self.assertEqual(step.overlay.geometry, "simple")
+
+    def test_overlay_horizon_zero_means_none(self):
+        """overlay_horizon=0 explicitly keeps overlay None."""
+        step = self.ctrl.cycle("A", overlay_horizon=0)
+        self.assertIsNone(step.overlay)
+
+    def test_overlay_does_not_alter_decision(self):
+        """Controller target is the same with and without overlay."""
+        ctrl1 = E0Controller(self.L, lambda s, t: Outcome.SUCCESS, alpha=2.0)
+        ctrl2 = E0Controller(self.L, lambda s, t: Outcome.SUCCESS, alpha=2.0)
+        step_plain = ctrl1.cycle("A")
+        step_overlay = ctrl2.cycle("A", overlay_horizon=3)
+        self.assertEqual(step_plain.target, step_overlay.target)
+
+    def test_overlay_current_matches_step_source(self):
+        """Overlay is computed at source, not target."""
+        step = self.ctrl.cycle("A", overlay_horizon=2)
+        self.assertEqual(step.overlay.current, step.source)
+
+    def test_overlay_reports_admissible_actions(self):
+        """Overlay actions match the controller's admissible set."""
+        step = self.ctrl.cycle("A", overlay_horizon=2)
+        overlay_actions = set(step.overlay.admissible_actions)
+        step_candidates = set(step.candidates)
+        self.assertEqual(overlay_actions, step_candidates)
+
+
+class TestTraceIntegrationRun(unittest.TestCase):
+    """Tests for overlay in controller.run()."""
+
+    def setUp(self):
+        self.L = build_mini_landscape()
+        self.ctrl = E0Controller(self.L, lambda s, t: Outcome.SUCCESS, alpha=2.0)
+
+    def test_run_no_overlay(self):
+        """run() without overlay_horizon produces None on every step."""
+        trace = self.ctrl.run("A", max_cycles=5)
+        self.assertTrue(len(trace.steps) > 0)
+        for step in trace.steps:
+            self.assertIsNone(step.overlay)
+
+    def test_run_with_overlay(self):
+        """run() with overlay_horizon attaches overlay to every step."""
+        trace = self.ctrl.run("A", max_cycles=5, overlay_horizon=2)
+        self.assertTrue(len(trace.steps) > 0)
+        for step in trace.steps:
+            self.assertIsNotNone(step.overlay)
+            self.assertIsInstance(step.overlay, OverlayReport)
+
+    def test_run_overlay_geometry_is_simple(self):
+        """Default geometry in trace overlay is 'simple'."""
+        trace = self.ctrl.run("A", max_cycles=3, overlay_horizon=2)
+        for step in trace.steps:
+            self.assertEqual(step.overlay.geometry, "simple")
+
+    def test_run_overlay_metrics(self):
+        """RunTrace.metrics() includes overlay_agree and overlay_count."""
+        trace = self.ctrl.run("A", max_cycles=5, overlay_horizon=2)
+        m = trace.metrics()
+        self.assertIn("overlay_agree", m)
+        self.assertIn("overlay_count", m)
+        self.assertEqual(m["overlay_count"], float(len(trace.steps)))
+        self.assertGreaterEqual(m["overlay_agree"], 0.0)
+        self.assertLessEqual(m["overlay_agree"], 1.0)
+
+    def test_run_no_overlay_metrics_zero(self):
+        """Without overlay, overlay_count and overlay_agree are 0."""
+        trace = self.ctrl.run("A", max_cycles=5)
+        m = trace.metrics()
+        self.assertEqual(m["overlay_count"], 0.0)
+        self.assertEqual(m["overlay_agree"], 0.0)
+
+    def test_run_with_goal_and_overlay(self):
+        """run() with goal + overlay stops correctly and still attaches."""
+        trace = self.ctrl.run("A", max_cycles=20, goal="GOAL",
+                               overlay_horizon=2)
+        # Should eventually reach GOAL (mini-domain has path A→B→...→GOAL)
+        path = trace.path
+        if "GOAL" in path:
+            self.assertEqual(path[-1], "GOAL")
+        for step in trace.steps:
+            self.assertIsNotNone(step.overlay)
+
+
+class TestTraceIntegrationDiamond(unittest.TestCase):
+    """Trace integration on diamond domain — tests overlay agreement."""
+
+    def setUp(self):
+        L = build_diamond_landscape()
+        self.ctrl = E0Controller(L, diamond_all_success, alpha=2.0)
+
+    def test_diamond_trace_overlay_at_s(self):
+        """Diamond run from S: first overlay should show trap correction."""
+        trace = self.ctrl.run("S", max_cycles=10, goal="Z",
+                               overlay_horizon=3)
+        first = trace.steps[0]
+        self.assertEqual(first.source, "S")
+        self.assertIsNotNone(first.overlay)
+        # Overlay should detect C as a trap (lowest or no probability mass)
+        c_info = [a for a in first.overlay.action_infos if a.action == "C"]
+        if c_info:
+            # C should have very low P (dead-end gets less support)
+            self.assertLess(c_info[0].probability, 0.5)
+
+    def test_diamond_overlay_agree_metric(self):
+        """Diamond run metrics include overlay agreement data."""
+        trace = self.ctrl.run("S", max_cycles=10, goal="Z",
+                               overlay_horizon=3)
+        m = trace.metrics()
+        self.assertGreater(m["overlay_count"], 0.0)
 
 
 if __name__ == "__main__":
