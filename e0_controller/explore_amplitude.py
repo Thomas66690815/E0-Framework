@@ -288,6 +288,66 @@ def scenario_diamond_interference_detail():
         print()
 
 
+# ══════════════════════════════════════════════
+# Current-Loop Domain (destructive interference)
+# ══════════════════════════════════════════════
+
+from e0_controller.test_amplitude_overlay import build_current_loop_landscape
+
+
+def scenario_current_loop_overview():
+    sep("Scenario 9: Current-Loop Domain — Destructive Interference")
+    L = build_current_loop_landscape()
+    ctrl = E0Controller(L, all_success, alpha=2.0, recent_k=3)
+
+    print("\n  Domain: START→A1→A2→A3→A4→END (upper, 5 hops)")
+    print("          START→B1→END (lower, 2 hops)")
+    print("          Strong back-edges: A4→A3→A2→A1→START + END→A4")
+    print("          (creates large unidirectional circulation)\n")
+
+    print("  Phase analysis:")
+    theta_upper = theta(L, ["START","A1","A2","A3","A4","END"])
+    theta_lower = theta(L, ["START","B1","END"])
+    print(f"    Θ(upper) = {theta_upper:.6f}")
+    print(f"    Θ(lower) = {theta_lower:.6f}")
+    print(f"    ΔΘ       = {theta_upper - theta_lower:.6f}")
+    print(f"    cos(ΔΘ)  = {__import__('math').cos(theta_upper - theta_lower):.6f}")
+
+    psi_u = path_psi(L, ["START","A1","A2","A3","A4","END"])
+    psi_l = path_psi(L, ["START","B1","END"])
+    coherent = abs(psi_u + psi_l) ** 2
+    incoherent = abs(psi_u)**2 + abs(psi_l)**2
+
+    print(f"\n  Two-path interference at END:")
+    print(f"    Ψ(upper): |Ψ|={abs(psi_u):.6f}, arg={cmath.phase(psi_u):.4f}")
+    print(f"    Ψ(lower): |Ψ|={abs(psi_l):.6f}, arg={cmath.phase(psi_l):.4f}")
+    print(f"    Incoherent Σ|Ψ|² = {incoherent:.6f}")
+    print(f"    Coherent |Σ Ψ|²  = {coherent:.6f}")
+    diff = coherent - incoherent
+    print(f"    Δ = {diff:+.6f} → {'DESTRUCTIVE' if diff < -1e-10 else 'constructive'}")
+    print(f"    Ratio coherent/incoherent = {coherent/incoherent:.2%}")
+
+
+def scenario_current_loop_overlay():
+    sep("Scenario 10: Current-Loop — Overlay at START (varying horizon)")
+    L = build_current_loop_landscape()
+    ctrl = E0Controller(L, all_success, alpha=2.0, recent_k=3)
+
+    for h in [1, 2, 3, 5]:
+        report = analyze_controller_state(ctrl, "START", horizon_edges=h)
+        print(f"\n  Horizon h={h}:")
+        for info in report.action_infos:
+            coherent = info.intensity
+            incoherent = sum(abs(path_psi(L, p))**2 for p in info.paths)
+            diff = coherent - incoherent
+            kind = "DESTR" if diff < -1e-10 else ("constr" if diff > 1e-10 else "none")
+            print(f"    {info.action}: P={info.probability:.4f}, "
+                  f"coh={coherent:.6f}, incoh={incoherent:.6f}, "
+                  f"Δ={diff:+.6f} ({kind}), paths={info.path_count}")
+        match = "✓" if report.deterministic_choice == report.amplitude_choice else "✗"
+        print(f"    det={report.deterministic_choice}, amp={report.amplitude_choice} {match}")
+
+
 if __name__ == "__main__":
     scenario_fresh()
     scenario_walk_with_overlay()
@@ -297,6 +357,8 @@ if __name__ == "__main__":
     scenario_diamond_overview()
     scenario_diamond_walk()
     scenario_diamond_interference_detail()
+    scenario_current_loop_overview()
+    scenario_current_loop_overlay()
     print(f"\n{'='*60}")
     print("  Exploration complete.")
     print(f"{'='*60}")
