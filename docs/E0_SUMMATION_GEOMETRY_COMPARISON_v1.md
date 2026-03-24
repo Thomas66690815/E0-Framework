@@ -350,14 +350,37 @@ Destructive interference remains visible in the current-loop domain even after p
 - ΔΘ ≈ 2.34, cos(ΔΘ) ≈ −0.70 is an intrinsic phase property, not a loop artifact.
 - Destructive interference survives all three geometries unchanged.
 
-### H4 — PARTIALLY CONFIRMED (open flank)
+### H4 — CONFIRMED (closed by Waypoint domain)
 
 `first_arrival` gives the clearest semantics in goal-oriented domains, while `prefix` remains useful as a broader exploratory-support measure.
 
-**Evidence:**
-- Diamond domain: first_arrival ≈ prefix because the goal Z has no outgoing edges (stopping condition never triggers differently).
+**Evidence (original domains):**
+- Diamond domain: first_arrival ≈ prefix because the goal Z has no outgoing edges.
 - Current-Loop: first_arrival ≈ prefix because END has an outgoing back-edge (END→A4), so most recursive prefixes don't reach END anyway.
-- **Open:** A domain where the goal has rich outgoing edges is needed to properly differentiate first-arrival from prefix. This is the next experimental step.
+
+**Evidence (Waypoint domain — goal-with-continuations, Phase 3p):**
+
+The Waypoint domain has goal G with 2 outgoing edges (G→Y1, G→Y2) and a post-goal loop (Y1→G). Two routes to G from START: via P (S=0.32) and via W (S=0.15). Greedy picks W.
+
+| h | Geometry | Paths | amp | det | Agreement |
+|---|----------|-------|-----|-----|-----------|
+| 3 | prefix | 10 | W | W | AGREE |
+| 3 | simple | 10 | W | W | AGREE |
+| 3 | first_arrival | 6 | **P** | W | **DISAGREE** |
+| 4 | prefix | 16 | P | W | DISAGREE |
+| 4 | simple | 14 | P | W | DISAGREE |
+| 4 | first_arrival | 6 | P | W | DISAGREE |
+| 5 | prefix | 22 | P | W | DISAGREE |
+| 5 | simple | 15 | P | W | DISAGREE |
+| 5 | first_arrival | 6 | P | W | DISAGREE |
+
+Key findings:
+- **first_arrival is the earliest to disagree** (h=3), detecting that P has stronger goal-oriented forward structure before prefix and simple do.
+- **first_arrival path count is stable** across all horizons (always 6) — immune to post-goal loop inflation.
+- **prefix grows unboundedly** (10→16→22) as the G→Y1→G loop generates more paths.
+- At the goal itself (state G), prefix sees 3 loop paths (G→Y1→G→…), simple sees 0 (no repeats), first_arrival sees 1 (stops at G re-arrival).
+
+This conclusively demonstrates that first_arrival provides the cleanest, most stable goal-oriented semantics.
 
 ---
 
@@ -380,12 +403,14 @@ Destructive interference remains visible in the current-loop domain even after p
 - Both canonical paths are simple (no repeated states).
 - The destructive interference does not depend on loop families.
 
-### Outcome D — first-arrival gives the cleanest goal semantics: PARTIALLY OBSERVED
+### Outcome D — first-arrival gives the cleanest goal semantics: CONFIRMED ✓
 
-- On the current test domains, first-arrival ≈ prefix.
-- This is because the goal states (Z, END, GOAL) either have no outgoing edges or only back-edges that don't create post-goal prefix paths.
-- The differentiation of first-arrival requires a domain with goal-with-continuations.
-- This remains the main open experimental question.
+- On the original test domains (Mini, Diamond, Current-Loop), first-arrival ≈ prefix because goal states have no rich outgoing structure.
+- On the Waypoint domain (goal-with-continuations), first-arrival genuinely differs:
+  - Detects forward structure earlier (h=3 vs h=4 for prefix/simple)
+  - Path count is horizon-stable (6 paths at all horizons)
+  - Immune to post-goal loop inflation (G→Y1→G cycle)
+- This closes the main open experimental question from the original comparison.
 
 ### Unexpected finding — simple geometry convergence
 
@@ -430,9 +455,9 @@ A final section answering:
 
 ### Open
 
-1. **Goal-with-continuations domain:** Design a domain where the goal state has rich outgoing edges, so that first-arrival genuinely differs from prefix. This will close H4.
+1. ~~**Goal-with-continuations domain:**~~ **DONE (Phase 3p).** Waypoint domain implemented in `test_waypoint.py`. H4 closed.
 2. **Simple as operational default:** Consider promoting simple geometry to the recommended default for overlay analysis, given its superior convergence and loop suppression.
-3. **Overlay in run-trace integration:** Now that the summation geometry question is largely resolved, the overlay can be integrated as an optional attachment in controller StepResults.
+3. ~~**Overlay in run-trace integration:**~~ **DONE (Phase 3k).** Overlay attached as optional `StepResult.overlay` field.
 
 ---
 
@@ -454,7 +479,7 @@ The summation geometry comparison has produced clear, actionable results.
 
 ### What remains open
 
-- H4 (first-arrival differentiation) needs a purpose-built domain.
+- ~~H4 (first-arrival differentiation) needs a purpose-built domain.~~ **CLOSED.** Waypoint domain confirms first_arrival differentiation (Phase 3p).
 - The regime split (exploratory vs realization) is theoretically motivated but not yet empirically forced by the current test suite.
 
 ### Structural assessment
