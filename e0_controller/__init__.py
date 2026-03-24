@@ -55,10 +55,28 @@ Phase 3g (Reflection Layer):
   - reflect_with_llm() — LLM-backed reflection with rule-based fallback
   - Integrated into validate_cross_domain report output
 
+Phase 3h–3j (Amplitude & Summation Geometry):
+  - True Helmholtz decomposition, amplitude overlay, diamond domain
+  - Summation geometries: prefix, simple, first_arrival
+  - 3 geometries × 3 domains empirical comparison
+
+Phase 3k–3m (Hybrid Controller):
+  - Simple-default + trace integration
+  - Amplitude-hybrid B3: AMPLITUDE_ON_DISAGREE mode
+  - MemOS hybrid-aware snapshot + overlay summary
+
+Phase 3n (LLM Demo Hybrid Integration):
+  - --hybrid flag on all 4 demos
+  - Hybrid metrics display and override tracking
+
+Phase 3o (Evaluation Layer Hybrid Extension):
+  - Hybrid override/agree metrics in RunEvaluation
+  - Hybrid rows in cross-domain validation comparison
+
 See E0_CONTROLLER_STATUS.md for full project context.
 """
 
-__version__ = "0.10.0"
+__version__ = "0.10.8"
 
 from .primitives import Edge, Outcome
 from .historization import Historization, TraceRecord

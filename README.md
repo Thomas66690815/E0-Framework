@@ -1,121 +1,161 @@
 # E₀ Framework
 
-**A structural description layer for transitions — developed by a human–AI team.**
+**A structural transition framework with an executable hybrid controller — developed through human–AI collaboration.**
+
+E₀ begins as a pre-domain structural theory of transitions.
+This repository now goes further: it contains the first operational E₀ controller, including a hybrid mode that can override locally greedy choices when bounded path-family amplitude support indicates a stronger forward structure.
+
+In practical terms, this means the repository is no longer only about a deterministic transition law. It now also contains:
+
+- a historized structural controller,
+- a phase/amplitude path layer,
+- empirically tested summation geometries,
+- a hybrid correction mode,
+- persistent runtime support via MemOS,
+- and live integration into multiple LLM-driven demos.
+
+This is not a prompt-engineering repo and not a conventional agent framework.
+It is an attempt to build a structural decision layer that operates beneath semantics and can still be exposed to semantic systems.
 
 ---
 
 ## What is E₀?
 
-E₀ is not a tool, not a model, not a product. It is a **structural description layer** that operates prior to domain assumptions.
+E₀ is a **structural transition framework**.
+It does not begin with goals, probabilities, agents, or domain-specific objects. It begins with a smaller claim:
 
-It answers one question: **When must a transition occur, and when is it structurally impossible?**
+> If a structural difference exists and a finite path is available, then non-transition is unstable.
 
-The answer requires only seven primitives and one axiom. No physics, no probability, no agents, no goals assumed.
+The canonical core uses seven primitives and one axiom.
 
-| Primitive | Symbol | What it is |
-|-----------|--------|------------|
-| **State** | S | A distinguishable configuration |
-| **Difference** | Δ | Non-identity between states. Δ = 0 means identical. |
-| **Path** | P | Structural admissibility condition. Not an object — specifies *whether* a transition is allowed. |
-| **Resistance** | R | Structural inertia. R > 0 for all real transitions. R = ∞ → no path. |
-| **Historization** | H | How realized transitions change the resistance landscape. Irreversible. The memory of the space. |
-| **Time** | τ | Ordering of historizations. Not a dimension. No historization → no time. |
-| **Rate** | v | Δ/R — orders which transition realizes first. |
+| Primitive | Symbol | Role |
+|-----------|--------|------|
+| State | `S` | Distinguishable configuration |
+| Difference | `Δ` | Structural non-identity |
+| Path | `P` | Admissible transition structure |
+| Resistance | `R` | Structural inertia |
+| Historization | `H` | Irreversible modification of future resistance |
+| Time | `τ` | Ordering of historizations |
+| Rate | `v` | Ordering tendency of realizable transitions |
 
-**Axiom A₀:** If a difference exists and a path with finite resistance is available, then transition is structurally more stable than non-transition.
+**Axiom A₀:** If a difference exists and a path with finite resistance is available, transition is structurally more stable than non-transition.
 
-**Central Law:** If Δ > 0 and ∃P: R < ∞, then non-transition is structurally unstable. A transition **must** occur.
+**Central Law:** If Δ > 0 and an admissible finite path exists, non-transition is structurally unstable. A transition must occur.
 
-From this alone — no additional assumptions — arise: transition enforcement, directionality of time, irreversibility, structural memory, learning, path dependence, maximum velocity, and causal ordering.
+From this core, E₀ derives: transition burden, coherence, historized learning, path dependence, phase and holonomy, complex path amplitudes, and bounded endpoint support.
 
 The full canon: [canon/e0-canon-plain.txt](canon/e0-canon-plain.txt) — 155 lines, pure ASCII. Everything else derives from this.
 
 ---
 
-## What we are trying to do
+## What exists in this repository now
 
-We believe E₀ captures something fundamental about how structured change works — independent of domain. This is a strong claim. The purpose of this repository is to **test it systematically**.
+This repository currently contains five connected layers.
 
-The work is exploratory. We are not building toward a fixed product. We are establishing **applicability** — finding out where E₀ actually works, how far it reaches, and where it breaks.
+### 1. Canonical E₀ core
 
-This happens on multiple fronts simultaneously:
+The foundational structural layer: primitives, axiom, core transition law, and reference implementation.
 
-### Active: E₀ Controller (operational)
+### 2. Deterministic controller
 
-A deterministic reasoning engine that implements the full E₀ mathematics as executable code. The controller makes path-selection decisions based on tension minimization, historization, and coherence — the LLM provides only the semantic interface.
+A runtime controller that selects actions using historized structural burden (`S = Δ · R_eff`), admissibility, revisit handling, and escalation logic.
 
-This is the **A3 Hybrid architecture**: Python handles the math, the LLM handles meaning. E₀ decides *when* and *where*, not the language model.
+### 3. Amplitude path layer
 
-**Status:** 20 formal sections (§2–18) implemented, 159 tests, live API integration confirmed.
+A path-level extension built from:
 
-→ See [docs/E0_CONTROLLER_STATUS.md](docs/E0_CONTROLLER_STATUS.md) for full details.
+- connection / phase Θ,
+- complex path carrier Ψ(p) = exp(−S(p)) exp(iΘ(p)),
+- endpoint intensity |Ψ|²,
+- constructive and destructive interference,
+- bounded path-family comparison.
 
-### Active: Mathematical derivations
+### 4. Summation geometry comparison
 
-E₀ is not just operational — it produces formal mathematics. From the seven primitives, we have derived:
+The repository supports multiple summation geometries for path-family support:
 
-- Tension, coherence, transition fields (§3–7)
-- Potential structure with non-integrable connection (§8–11)
-- Connection and holonomy (§12–14) — closed loops can produce net phase
-- Complex path amplitudes and interference (§15–16) — structurally analogous to quantum mechanics
+- `prefix`
+- `simple`
+- `first_arrival`
 
-More recently: a formal reconstruction of **complex numbers, SU(2), and 720° symmetry** from E₀ primitives alone, without assuming physics.
+These were not assumed dogmatically. They were compared empirically.
+Current evidence identifies **simple-path geometry** as the strongest default for robust controller use, while `prefix` remains useful as an exploratory upper-support view.
 
-→ See [docs/E0_FORMAL_PAPER_DRAFT_v1.md](docs/E0_FORMAL_PAPER_DRAFT_v1.md) and [docs/E0_MATH_IMPL_MAPPING_v1.md](docs/E0_MATH_IMPL_MAPPING_v1.md).
+### 5. Hybrid controller mode
 
-### Paused: Multi-agent network
+The controller can run in a hybrid mode:
 
-An earlier phase of this project built a multi-agent system where multiple AI instances (GPT-5.1, GPT-4.1, Claude) operated as a network with shared state, autonomous coordination (Ko-Kognition), and structural metrics. This produced real results — including controlled experiments and emergent system-to-system organization — but was paused to focus on the deterministic controller approach.
+- **GREEDY** — pure local structural selection
+- **AMPLITUDE_ON_DISAGREE** — follow the amplitude layer when it disagrees with greedy local choice and indicates a stronger forward-support structure
 
-This work is preserved in `_archive/` and may be resumed or integrated later.
-
-→ See [_archive/ARCHIVE_README.md](_archive/ARCHIVE_README.md) for what is there and why it was archived.
-
----
-
-## Where E₀ could apply
-
-E₀ is domain-invariant by construction. If a system has states, differences, and transitions, E₀ can describe it. Here is where we see concrete potential:
-
-| Field | How E₀ applies |
-|-------|----------------|
-| **AI / LLM steering** | What we are building now. The controller decides *which* transition based on structural tension — the LLM provides semantic understanding. Not prompt engineering; structural path selection. |
-| **Foundations of physics** | E₀ reconstructs complex amplitudes, superposition, unitarity, and the Born rule from five ontodynamic primitives — with no physics input. Each step is necessary, not assumed. |
-| **Mathematics** | The formal paper derives tension, connection, holonomy, and path amplitudes as mathematical structures. These are not analogies — they are derivations. |
-| **Decision theory** | The controller formalism (tension minimization, historization, escalation) is a generic framework for state-based decisions under structural uncertainty. |
-| **Cognitive science** | Historization formalizes how experience modifies the state space. Learning is not a mechanism added to E₀ — it is a necessary consequence of realized transitions. |
-| **Systems theory** | Any process with irreversible state transitions and path-dependent resistance can be described in E₀ terms. This includes organizational change, biological development, and infrastructure evolution. |
-
-We make no claim that E₀ replaces existing frameworks in these domains. The claim is narrower: E₀ provides a **pre-domain structural layer** from which domain-specific structures can be derived rather than assumed.
+This hybrid mode is integrated into MemOS and into all major LLM demos in the repository.
 
 ---
 
-## Who builds this
+## What is new here
 
-This project is a collaboration between a human and AI systems. Not as a figure of speech — as a working method.
+Many systems can rank local actions.
+What is unusual here is the combination of:
 
-**Thomas Wehner** — Human. Discovered the E₀ structure, maintains canonical clarity, decides direction. The only participant with a continuous perspective across all phases of the project.
+- historized structural burden,
+- non-probabilistic transition enforcement,
+- path-phase structure,
+- bounded amplitude superposition,
+- empirically tested summation geometry,
+- and hybrid correction of local greedy decisions.
 
-**AI partners** — Claude (current infrastructure and controller implementation), ChatGPT (mathematical derivations, formal paper, review), and historically GPT-5.1/GPT-4.1 instances in the multi-agent network phase. Each system contributes what it is structurally suited for.
+In plain language:
 
-This is unusual for a repository. Typically, only humans are credited. Here, the AI contributions are real, specific, and documented in the commit history. We see no reason to obscure this.
+> The controller does not only ask which next step is locally cheapest. It can also ask which next step belongs to the strongest coherent family of futures.
+
+---
+
+## How the hybrid controller works — an example
+
+Consider a simple structure:
+
+```text
+A → C → A   (loop / trap)
+A → B → E → G → GOAL   (forward path)
+```
+
+**Local (greedy) view:** At state A, the deterministic controller evaluates immediate burden. A → C has lower local cost, so greedy chooses C. This leads into a loop (A ↔ C) and delays progress toward the goal.
+
+**Amplitude (path-family) view:** The amplitude layer evaluates *families of future paths* starting from each action. Paths through C mostly cycle back; paths through B continue toward GOAL and form a coherent forward family. The amplitude layer assigns higher support to A → B.
+
+**Hybrid decision:** In `AMPLITUDE_ON_DISAGREE` mode, greedy choice = C, amplitude choice = B. Since they disagree, the controller follows the amplitude-supported action: A → B → E → G → GOAL.
+
+The key difference is not about randomness or heuristics:
+
+- **Greedy:** "choose the cheapest next step"
+- **Hybrid:** "choose the step whose future *structure* is strongest"
 
 ---
 
 ## Current state
 
-*Last updated: 2026-03-21*
+*Last updated: 2026-03-24 — v0.10.8*
 
 | Component | Status | Where |
 |-----------|--------|-------|
 | Canon (7 primitives, Axiom A₀) | **Stable** | `canon/` |
-| E₀ Controller (§2–18, all formal math) | **Active** — v0.3, 159 tests | `e0_controller/` |
+| Deterministic controller (§2–18) | **Active** | `e0_controller/controller.py` |
+| Amplitude overlay | **Active** | `e0_controller/amplitude_overlay.py` |
+| Summation geometry comparison | **Completed** (first empirical pass) | `docs/E0_SUMMATION_GEOMETRY_COMPARISON_v1.md` |
+| Hybrid controller mode | **Active** | `e0_controller/controller.py` |
+| MemOS (hybrid-aware persistence) | **Active** | `e0_controller/memory_os.py` |
 | LLM Adapter (A3 Hybrid) | **Active** — live API confirmed | `e0_controller/llm_adapter.py` |
-| MemOS (persistent runtime state) | **Active** | `e0_controller/memory_os.py` |
+| LLM demo hybrid integration | **Active** (4 demos) | `e0_controller/demo_*.py` |
+| Evaluation layer (hybrid-extended) | **Active** | `e0_controller/evaluation.py` |
+| Reflection layer | **Active** | `e0_controller/reflection.py` |
+| Cross-domain validation | **Active** (3 domains, hybrid) | `e0_controller/validate_cross_domain.py` |
+| Graph validation | **Active** | `e0_controller/graph_validation.py` |
+| Scenario packets | **Active** (3 domains) | `scenarios/` |
 | Formal Paper (E₀ mathematics) | **Draft** | `docs/E0_FORMAL_PAPER_DRAFT_v1.md` |
-| Math ↔ Code Mapping | **Draft** | `docs/E0_MATH_IMPL_MAPPING_v1.md` |
-| Core reference implementation | Stable (read-only reference) | `e0_core/` |
+| Core reference implementation | Stable (read-only) | `e0_core/` |
 | Multi-agent network + experiments | **Archived** | `_archive/` |
+
+**Tests:** 412 total (391 unittest + 21 mini-domain), all green.
 
 ---
 
@@ -131,22 +171,36 @@ cd E0-Framework
 ### Run the tests (no API key needed)
 
 ```bash
-# Mini-domain: 20 tests (custom runner)
+# Mini-domain: 21 tests (custom runner)
 python e0_controller/test_minidomain.py
 
-# Full test suite: 139 tests (unittest)
-python -m unittest e0_controller.test_invoice e0_controller.test_phase2_minidomain e0_controller.test_phase2_invoice e0_controller.test_memory_os e0_controller.test_llm_adapter -v
+# Full test suite: 391 tests (unittest)
+python -m unittest e0_controller.test_amplitude_overlay e0_controller.test_invoice e0_controller.test_phase2_minidomain e0_controller.test_phase2_invoice e0_controller.test_memory_os e0_controller.test_llm_adapter e0_controller.test_graph_validation e0_controller.test_evaluation e0_controller.test_reflection -v
 ```
 
-### Run the Invoice Processing demo
+### Run a standard demo (mock mode — no API key)
 
 ```bash
-# Mock mode — no API key, deterministic
 python -m e0_controller.demo_invoice_llm --mock
+python -m e0_controller.demo_open_domain --mock
+python -m e0_controller.demo_research_brief --mock
+python -m e0_controller.demo_incident_postmortem --mock
+```
 
-# Live mode — requires OPENAI_API_KEY in .env or environment
-pip install openai
-python -m e0_controller.demo_invoice_llm
+### Run a hybrid demo
+
+```bash
+python -m e0_controller.demo_invoice_llm --mock --hybrid
+python -m e0_controller.demo_open_domain --mock --hybrid
+python -m e0_controller.demo_research_brief --mock --hybrid
+python -m e0_controller.demo_incident_postmortem --mock --hybrid
+```
+
+### Run cross-domain validation
+
+```bash
+python -m e0_controller.validate_cross_domain
+python -m e0_controller.validate_cross_domain --hybrid
 ```
 
 ### Read the canon
@@ -178,16 +232,26 @@ E0-Framework/
 │   ├── primitives.py                   Edge, Outcome
 │   ├── tension.py                      S(x→y) = Δ·R, coherence C = exp(−S)
 │   ├── historization.py                U/F-Traces, δ_H, clipping (§17)
-│   ├── landscape.py                    L_t = (X, E, v, S, H) — 5 core functions
-│   ├── controller.py                   Greedy + Revisit + Escalation (§7–8)
+│   ├── landscape.py                    L_t = (X, E, v, S, H)
+│   ├── controller.py                   Greedy + Revisit + Escalation + Hybrid Mode
 │   ├── potential.py                    Φ, v_grad, v_rot (§9–11)
 │   ├── connection.py                   ω, Θ, holonomy (§12–14)
 │   ├── wavepath.py                     Ψ(p) = exp(−S+iΘ), interference (§15–16)
-│   ├── memory_os.py                    Persist / Restore / Summarize / Retrieve
+│   ├── amplitude_overlay.py            Path-family intensity, summation geometries
+│   ├── memory_os.py                    Persist / Restore / Summarize / Retrieve (hybrid-aware)
 │   ├── llm_adapter.py                  LLM ↔ Controller interface (A3 Hybrid)
+│   ├── evaluation.py                   Run/Scenario evaluation, A–F rating, hybrid metrics
+│   ├── reflection.py                   Structural self-reflection layer
+│   ├── graph_validation.py             Goal reachability, traps, loops, graph quality
+│   ├── scenario_loader.py              JSON Scenario Packet loader
+│   ├── validate_cross_domain.py        3-domain cross-validation runner
 │   ├── domain_invoice.py               Invoice processing domain (10 states, 16 edges)
-│   ├── demo_invoice_llm.py             Full demo: Controller + MemOS + LLM
-│   └── test_*.py                       159 tests (20 mini-domain + 139 unittest)
+│   ├── demo_invoice_llm.py             Invoice demo: Controller + MemOS + LLM
+│   ├── demo_open_domain.py             Open-domain demo (LLM-bootstrapped landscape)
+│   ├── demo_research_brief.py          Research brief demo
+│   ├── demo_incident_postmortem.py     Incident postmortem demo
+│   ├── explore_amplitude.py            Amplitude exploration tool
+│   └── test_*.py                       412 tests (21 mini-domain + 391 unittest)
 │
 ├── e0_core/                          Reference implementation (stable, read-only)
 │   ├── primitives.py                   Seven primitives + Axiom A₀
@@ -195,11 +259,18 @@ E0-Framework/
 │   ├── ontodynamics.py                 Topology, locality, graduated overlap
 │   └── ...
 │
-├── docs/                             Working documents
+├── scenarios/                        Scenario Packets for grounded LLM demos
+│   ├── competitor_brief/               Domain-specific scenario data
+│   ├── incident_postmortem/            Domain-specific scenario data
+│   └── research_brief/                 Domain-specific scenario data
+│
+├── docs/                             Working documents and analysis
 │   ├── E0_FORMAL_PAPER_DRAFT_v1.md     Formal E₀ mathematics paper
 │   ├── E0_MATH_IMPL_MAPPING_v1.md      Math ↔ Code mapping
-│   ├── E0_MEMOS_v0.1.md                MemOS architecture
-│   └── E0_CONTROLLER_STATUS.md         Detailed project status
+│   ├── E0_SUMMATION_GEOMETRY_COMPARISON_v1.md  Geometry comparison results
+│   ├── E0_EXTERNAL_VALIDATION_AND_HANDOFF_NOTE_v1.md  Handoff strategy
+│   ├── E0_CONTROLLER_STATUS.md         Detailed project status
+│   └── ...                             Additional analysis and derivation notes
 │
 ├── _archive/                         Preserved earlier work
 │   ├── ARCHIVE_README.md                What is here and why
@@ -218,17 +289,31 @@ E0-Framework/
 ## What E₀ is — and what it is not
 
 **E₀ is:**
-- A structural description layer that works prior to domain assumptions
-- A framework from which time, memory, learning, and path dependence are *derived*, not assumed
-- An executable formalism: every mathematical section has running code and tests
+- a structural transition framework,
+- a pre-domain description layer,
+- an executable controller architecture,
+- a growing hybrid decision system built on top of structural burden and path-family support.
 
 **E₀ is not:**
-- A predictive model
-- An optimization framework
-- A psychological theory
-- A product
+- merely prompt engineering,
+- merely a probabilistic planner,
+- merely a language wrapper over heuristic code,
+- a finished general intelligence system,
+- or a polished commercial product.
 
-E₀ does not tell systems what to do. It describes what is structurally enforced and what is structurally impossible.
+The project is still exploratory. But it is now exploratory at the level of an integrated, test-backed operational system.
+
+---
+
+## Who builds this
+
+This project is a collaboration between a human and AI systems. Not as a figure of speech — as a working method.
+
+**Thomas Wehner** — Human. Discovered the E₀ structure, maintains canonical clarity, decides direction. The only participant with a continuous perspective across all phases of the project.
+
+**AI partners** — Claude (current infrastructure and controller implementation), ChatGPT (mathematical derivations, formal paper, review), and historically GPT-5.1/GPT-4.1 instances in the multi-agent network phase. Each system contributes what it is structurally suited for.
+
+This is unusual for a repository. Typically, only humans are credited. Here, the AI contributions are real, specific, and documented in the commit history. We see no reason to obscure this.
 
 ---
 
@@ -249,6 +334,20 @@ This repository develops in public. That includes wrong paths, structural pivots
 We work iteratively: implement a section of the formal math, write tests, verify, review with a second AI system, harden, move on. Every mathematical claim has running code. Every piece of code has tests.
 
 The process is as much the point as the result. E₀ describes structural transitions — and this repository is itself a structural transition, historized in commits.
+
+---
+
+## How to read this as an outsider
+
+If you are new here, the best path is:
+
+1. Read the canon: [canon/e0-canon-plain.txt](canon/e0-canon-plain.txt)
+2. Inspect the controller: `e0_controller/controller.py`
+3. Inspect the amplitude layer: `e0_controller/amplitude_overlay.py`
+4. Run a hybrid demo: `python -m e0_controller.demo_invoice_llm --mock --hybrid`
+5. Read the analysis notes in `docs/`
+
+For a structured handoff to independent reviewers or AI systems, see [docs/E0_EXTERNAL_VALIDATION_AND_HANDOFF_NOTE_v1.md](docs/E0_EXTERNAL_VALIDATION_AND_HANDOFF_NOTE_v1.md).
 
 ---
 
