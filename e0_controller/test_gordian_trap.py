@@ -37,7 +37,7 @@ from e0_controller.landscape import Landscape
 from e0_controller.connection import theta, omega
 from e0_controller.wavepath import psi, intensity, sum_paths
 from e0_controller.controller import E0Controller, HybridMode
-from e0_controller.primitives import Outcome
+from e0_controller.primitives import Outcome, Edge
 from e0_controller.amplitude_overlay import analyze_controller_state
 
 
@@ -294,6 +294,181 @@ class TestSimpleGeometryNoOverride(unittest.TestCase):
         )
         self.assertEqual(report.amplitude_choice, "A1",
                          msg="Simple geometry should favor A1 (prefix dominance)")
+
+
+# ── Historization helper ──────────────────────────────────────
+
+def _historize_path(L, path):
+    """Simulate traversal of a path: historize each edge with SUCCESS."""
+    for i in range(len(path) - 1):
+        edge = Edge(path[i], path[i + 1])
+        L.historization.update(edge, Outcome.SUCCESS)
+
+
+# ── Historization × Gordian tests ─────────────────────────────
+
+class TestHistorizationBPathStable(unittest.TestCase):
+    """Scenario A: Repeated B-path traversal — ΔΘ must not change."""
+
+    def setUp(self):
+        self.L = build_gordian_trap()
+
+    def test_delta_theta_unchanged_after_b_traversals(self):
+        """ΔΘ must be identical before and after B-path historization."""
+        dt_before = theta(self.L, A_LOOP) - theta(self.L, A_SHORT)
+        for _ in range(5):
+            _historize_path(self.L, B_PATH)
+        dt_after = theta(self.L, A_LOOP) - theta(self.L, A_SHORT)
+        self.assertAlmostEqual(dt_before, dt_after, places=6,
+                               msg="B-path traversal must not affect A-path ΔΘ")
+
+    def test_b_intensity_increases(self):
+        """I(B) should increase as B-edges get lower R_eff."""
+        I_before = abs(psi(self.L, B_PATH)) ** 2
+        for _ in range(3):
+            _historize_path(self.L, B_PATH)
+        I_after = abs(psi(self.L, B_PATH)) ** 2
+        self.assertGreater(I_after, I_before,
+                           msg="B-path intensity should rise with successful traversals")
+
+    def test_overlay_still_picks_b1(self):
+        """After 5 B-traversals, overlay must still pick B1."""
+        for _ in range(5):
+            _historize_path(self.L, B_PATH)
+        report = analyze_controller_state(
+            E0Controller(self.L, always_success), "START",
+            horizon_edges=5, geometry="goal_reaching", goals={"GOAL"},
+        )
+        self.assertEqual(report.amplitude_choice, "B1")
+
+
+class TestHistorizationAShortAdversarial(unittest.TestCase):
+    """Scenario B/E: Repeated A-short traversal (adversarial).
+
+    This is the case where greedy repeatedly takes the decoy.
+    Key finding: cos(ΔΘ) actually improves (gets closer to -1)
+    because v(short) increases → ΔΘ decreases toward π.
+    """
+
+    def setUp(self):
+        self.L = build_gordian_trap()
+
+    def test_cos_remains_strongly_negative(self):
+        """cos(ΔΘ) must stay < -0.9 after 20 A-short traversals."""
+        for _ in range(20):
+            _historize_path(self.L, A_SHORT)
+        dt = theta(self.L, A_LOOP) - theta(self.L, A_SHORT)
+        self.assertLess(math.cos(dt), -0.9,
+                        msg=f"cos(ΔΘ)={math.cos(dt):.4f} should remain < -0.9")
+
+    def test_b_wins_after_20_a_short(self):
+        """B must still win after 20 adversarial A-short passes."""
+        for _ in range(20):
+            _historize_path(self.L, A_SHORT)
+        report = analyze_controller_state(
+            E0Controller(self.L, always_success), "START",
+            horizon_edges=5, geometry="goal_reaching", goals={"GOAL"},
+        )
+        self.assertEqual(report.amplitude_choice, "B1",
+                         msg="B1 must win even after 20 A-short traversals")
+
+    def test_delta_theta_saturates(self):
+        """ΔΘ must stabilize (not drift indefinitely) due to clipping."""
+        deltas = []
+        for i in range(15):
+            dt = theta(self.L, A_LOOP) - theta(self.L, A_SHORT)
+            deltas.append(dt)
+            _historize_path(self.L, A_SHORT)
+        # Last 5 values should be approximately equal (saturated)
+        last5 = deltas[-5:]
+        spread = max(last5) - min(last5)
+        self.assertLess(spread, 0.01,
+                        msg=f"ΔΘ should saturate; spread of last 5 = {spread:.6f}")
+
+
+class TestHistorizationALoopAdversarial(unittest.TestCase):
+    """Scenario C: Repeated A-loop traversal (worst case).
+
+    A-loop edges hit R_eff=0 → v(loop) maximizes → ΔΘ overshoots π.
+    Interference weakens but B still wins.
+    """
+
+    def setUp(self):
+        self.L = build_gordian_trap()
+
+    def test_b_still_wins_after_7_loop_traversals(self):
+        """B must win even after 7 A-loop traversals (worst case)."""
+        for _ in range(7):
+            _historize_path(self.L, A_LOOP)
+        report = analyze_controller_state(
+            E0Controller(self.L, always_success), "START",
+            horizon_edges=5, geometry="goal_reaching", goals={"GOAL"},
+        )
+        self.assertEqual(report.amplitude_choice, "B1",
+                         msg="B1 must win even after 7 A-loop traversals")
+
+    def test_interference_weakens_but_holds(self):
+        """cos(ΔΘ) weakens past -0.9 but stays negative (destructive)."""
+        for _ in range(7):
+            _historize_path(self.L, A_LOOP)
+        dt = theta(self.L, A_LOOP) - theta(self.L, A_SHORT)
+        cos_dt = math.cos(dt)
+        # Weakened but still destructive
+        self.assertLess(cos_dt, 0.0,
+                        msg=f"Interference must remain destructive; cos={cos_dt:.4f}")
+
+    def test_delta_theta_overshoots_pi(self):
+        """A-loop historization pushes ΔΘ above π (overshoot)."""
+        for _ in range(3):
+            _historize_path(self.L, A_LOOP)
+        dt = theta(self.L, A_LOOP) - theta(self.L, A_SHORT)
+        self.assertGreater(dt, math.pi,
+                           msg=f"ΔΘ={dt:.4f} should overshoot π after A-loop historization")
+
+
+class TestHistorizationMixed(unittest.TestCase):
+    """Scenario D: Mixed traversal — greedy A then hybrid B."""
+
+    def setUp(self):
+        self.L = build_gordian_trap()
+
+    def test_mixed_b_wins(self):
+        """3x A-short greedy, then 2x B hybrid → B must still win."""
+        for _ in range(3):
+            _historize_path(self.L, A_SHORT)
+        for _ in range(2):
+            _historize_path(self.L, B_PATH)
+        report = analyze_controller_state(
+            E0Controller(self.L, always_success), "START",
+            horizon_edges=5, geometry="goal_reaching", goals={"GOAL"},
+        )
+        self.assertEqual(report.amplitude_choice, "B1")
+
+    def test_mixed_cos_remains_good(self):
+        """cos(ΔΘ) stays < -0.9 in mixed scenario."""
+        for _ in range(3):
+            _historize_path(self.L, A_SHORT)
+        for _ in range(2):
+            _historize_path(self.L, B_PATH)
+        dt = theta(self.L, A_LOOP) - theta(self.L, A_SHORT)
+        self.assertLess(math.cos(dt), -0.9)
+
+    def test_hybrid_run_with_historization(self):
+        """Full hybrid controller run: path goes through B even with historization."""
+        ctrl = E0Controller(
+            self.L, always_success,
+            hybrid_mode=HybridMode.AMPLITUDE_ON_DISAGREE,
+            hybrid_horizon=5,
+            hybrid_goals={"GOAL"},
+            hybrid_geometry="goal_reaching",
+        )
+        # First run
+        trace1 = ctrl.run(start="START", goal="GOAL", max_cycles=20)
+        self.assertEqual(trace1.path, ["START", "B1", "B2", "GOAL"])
+        # Second run on same (now historized) landscape
+        trace2 = ctrl.run(start="START", goal="GOAL", max_cycles=20)
+        self.assertEqual(trace2.path, ["START", "B1", "B2", "GOAL"],
+                         msg="Second run on historized landscape must still take B-path")
 
 
 if __name__ == "__main__":
