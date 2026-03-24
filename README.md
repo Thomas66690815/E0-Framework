@@ -130,6 +130,8 @@ The key difference is not about randomness or heuristics:
 - **Greedy:** "choose the cheapest next step"
 - **Hybrid:** "choose the step whose future *structure* is strongest"
 
+Run this example yourself: `python -m e0_controller.demo_greedy_trap`
+
 ---
 
 ## Current state
@@ -155,7 +157,7 @@ The key difference is not about randomness or heuristics:
 | Core reference implementation | Stable (read-only) | `e0_core/` |
 | Multi-agent network + experiments | **Archived** | `_archive/` |
 
-**Tests:** 412 total (391 unittest + 21 mini-domain), all green.
+**Tests:** 416 total (395 unittest + 21 mini-domain), all green.
 
 ---
 
@@ -181,6 +183,7 @@ python -m unittest e0_controller.test_amplitude_overlay e0_controller.test_invoi
 ### Run a standard demo (mock mode — no API key)
 
 ```bash
+python -m e0_controller.demo_greedy_trap
 python -m e0_controller.demo_invoice_llm --mock
 python -m e0_controller.demo_open_domain --mock
 python -m e0_controller.demo_research_brief --mock
@@ -251,7 +254,7 @@ E0-Framework/
 │   ├── demo_research_brief.py          Research brief demo
 │   ├── demo_incident_postmortem.py     Incident postmortem demo
 │   ├── explore_amplitude.py            Amplitude exploration tool
-│   └── test_*.py                       412 tests (21 mini-domain + 391 unittest)
+│   └── test_*.py                       416 tests (21 mini-domain + 395 unittest)
 │
 ├── e0_core/                          Reference implementation (stable, read-only)
 │   ├── primitives.py                   Seven primitives + Axiom A₀
