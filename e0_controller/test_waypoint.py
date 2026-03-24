@@ -250,7 +250,7 @@ class TestGeometryDifferentiation(unittest.TestCase):
     def test_all_three_geometries_at_start(self):
         """All three geometries produce valid reports at START."""
         for geo in GEOMETRIES:
-            goals = {"G"} if geo == "first_arrival" else None
+            goals = {"G"} if geo in ("first_arrival", "goal_reaching") else None
             report = analyze_controller_state(
                 self.ctrl, "START", horizon_edges=4,
                 geometry=geo, goals=goals

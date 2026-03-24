@@ -189,7 +189,8 @@ class E0Controller:
         c_min: Minimum coherence to be admissible (K11, default 0.0 = no filter)
         hybrid_mode: HybridMode.GREEDY (default) or AMPLITUDE_ON_DISAGREE
         hybrid_horizon: Horizon for amplitude overlay in hybrid mode (default 3)
-        hybrid_goals: Goal states for first_arrival geometry (default None)
+        hybrid_goals: Goal states for first_arrival/goal_reaching geometry (default None)
+        hybrid_geometry: Summation geometry for overlay (default "simple")
     """
 
     def __init__(
@@ -204,6 +205,7 @@ class E0Controller:
         hybrid_mode: HybridMode = HybridMode.GREEDY,
         hybrid_horizon: int = 3,
         hybrid_goals: Optional[Set[str]] = None,
+        hybrid_geometry: str = "simple",
     ):
         self.landscape = landscape
         self.execute_fn = execute_fn
@@ -215,6 +217,7 @@ class E0Controller:
         self.hybrid_mode = hybrid_mode    # 3l: hybrid selection mode
         self.hybrid_horizon = hybrid_horizon  # 3l: overlay horizon
         self.hybrid_goals = hybrid_goals  # 3l: goal states for overlay
+        self.hybrid_geometry = hybrid_geometry  # 3l: summation geometry
         self._recent: List[str] = []   # sliding window of recent states
 
         # K1 fix: Escalation edges live here, NOT in the Landscape.
@@ -447,6 +450,7 @@ class E0Controller:
         # Compute overlay at this decision point
         overlay = self._compute_overlay(
             current, self.hybrid_horizon, self.hybrid_goals,
+            self.hybrid_geometry,
         )
         if overlay is None:
             return greedy_target, escalated, esc_type, None, False
@@ -533,13 +537,15 @@ class E0Controller:
         current: str,
         overlay_horizon: int,
         overlay_goals: Optional[Set[str]],
+        overlay_geometry: str = "simple",
     ) -> Optional["OverlayReport"]:
         """Compute amplitude overlay if horizon > 0, else None."""
         if overlay_horizon <= 0:
             return None
         from .amplitude_overlay import analyze_controller_state
         return analyze_controller_state(
-            self, current, horizon_edges=overlay_horizon, goals=overlay_goals,
+            self, current, horizon_edges=overlay_horizon,
+            geometry=overlay_geometry, goals=overlay_goals,
         )
 
     def run(

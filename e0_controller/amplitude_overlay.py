@@ -48,7 +48,7 @@ from .wavepath import psi as path_psi
 
 
 # Supported summation geometries (§4 of Summation Geometry Program)
-GEOMETRIES = ("prefix", "simple", "first_arrival")
+GEOMETRIES = ("prefix", "simple", "first_arrival", "goal_reaching")
 
 
 @dataclass
@@ -119,13 +119,17 @@ def _enumerate_continuations(
     - "first_arrival":  Include only paths that stop upon first reaching a goal
                          state (G3).  Requires `goals` set.  Non-goal prefixes
                          are still included (intermediate support).
+    - "goal_reaching":  Include only paths whose final state is in `goals` (G5).
+                         Requires `goals` set.  Non-goal prefixes are excluded.
+                         Born-criterion aligned: only transition-completing paths
+                         contribute to interference.
     """
     if horizon_edges <= 0:
         return []
     if geometry not in GEOMETRIES:
         raise ValueError(f"Unknown geometry {geometry!r}. Must be one of {GEOMETRIES}")
-    if geometry == "first_arrival" and not goals:
-        raise ValueError("first_arrival geometry requires a non-empty goals set")
+    if geometry in ("first_arrival", "goal_reaching") and not goals:
+        raise ValueError(f"{geometry} geometry requires a non-empty goals set")
 
     results: List[List[str]] = []
 
@@ -134,8 +138,8 @@ def _enumerate_continuations(
             return
         x = path[-1]
 
-        # first_arrival: stop extending once we've reached a goal
-        if geometry == "first_arrival" and x in goals and depth_used > 0:
+        # first_arrival / goal_reaching: stop extending once we've reached a goal
+        if geometry in ("first_arrival", "goal_reaching") and x in goals and depth_used > 0:
             return
 
         neighbors = controller._admissible_neighbors(x)
@@ -145,7 +149,12 @@ def _enumerate_continuations(
                 continue
 
             new_path = path + [y]
-            results.append(new_path)
+            # goal_reaching: only include paths that end at a goal state
+            if geometry == "goal_reaching":
+                if new_path[-1] in goals:
+                    results.append(new_path)
+            else:
+                results.append(new_path)
             dfs(new_path, depth_used + 1)
 
     dfs([current], 0)
@@ -177,9 +186,11 @@ def analyze_controller_state(
         Maximum path length (in edges) used for bounded continuation analysis.
         Must be >= 1. Small values (2–4) are recommended.
     geometry:
-        Summation geometry — "prefix" (default/G1), "simple" (G4), "first_arrival" (G3).
+        Summation geometry — "prefix" (default/G1), "simple" (G4),
+        "first_arrival" (G3), "goal_reaching" (G5).
     goals:
-        Required for "first_arrival" geometry. Set of goal states.
+        Required for "first_arrival" and "goal_reaching" geometries.
+        Set of goal states.
     """
     if horizon_edges < 1:
         raise ValueError("horizon_edges must be >= 1")
@@ -199,9 +210,10 @@ def analyze_controller_state(
         action_paths = _filter_paths_by_first_action(all_paths, action)
 
         # Safety fallback: ensure the direct one-edge path exists in the analysis set.
-        # (Normally _enumerate_continuations already includes it.)
+        # For goal_reaching, skip unless the action itself is a goal state.
         if [current, action] not in action_paths:
-            action_paths = [[current, action]] + action_paths
+            if geometry != "goal_reaching" or (goals and action in goals):
+                action_paths = [[current, action]] + action_paths
 
         psi_total = sum((path_psi(controller.landscape, p) for p in action_paths), start=complex(0.0, 0.0))
         intensity = abs(psi_total) ** 2

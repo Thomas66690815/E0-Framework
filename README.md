@@ -77,9 +77,10 @@ The repository supports multiple summation geometries for path-family support:
 - `prefix`
 - `simple`
 - `first_arrival`
+- `goal_reaching`
 
 These were not assumed dogmatically. They were compared empirically.
-Current evidence identifies **simple-path geometry** as the strongest default for robust controller use, while `prefix` remains useful as an exploratory upper-support view.
+Current evidence identifies **simple-path geometry** as the strongest default for robust controller use, while `prefix` remains useful as an exploratory upper-support view. The newest geometry, **goal_reaching**, restricts superposition to paths that actually reach a goal state — aligned with the Born criterion. It resolves prefix-inflation artifacts and enables interference-based routing in topologies where other geometries fail (see Gordian Trap analysis).
 
 ### 5. Hybrid controller mode
 
@@ -89,6 +90,31 @@ The controller can run in a hybrid mode:
 - **AMPLITUDE_ON_DISAGREE** — follow the amplitude layer when it disagrees with greedy local choice and indicates a stronger forward-support structure
 
 This hybrid mode is integrated into MemOS and into all major LLM demos in the repository.
+
+### 6. Interference-based routing (Gordian Trap)
+
+The framework now includes a constructive proof that the amplitude layer can route through structurally deceptive topologies:
+
+- A **Gordian Trap** topology offers a greedy-attractive short path and a loop-laden alternative to the same goal.
+- The holonomy (accumulated phase difference) between the two path families is controlled by the transition field `v` on forward edges.
+- With `goal_reaching` geometry and sufficient horizon, the amplitude layer correctly identifies the coherent path and overrides the greedy choice.
+
+Key theoretical result: the holonomy ΔΘ between two paths is **independent of back-edges** — the Helmholtz potential Φ cancels exactly. Only raw `v` values on forward edges contribute:
+
+    ΔΘ = ½ [Σ v(loop edges) − Σ v(short edges)]
+
+See `e0_controller/test_gordian_trap.py` for 17 formal tests and `docs/E0_PHASE3Q_INTERFERENCE_REPORT_v1.md` for the full scientific report.
+
+---
+
+## Documentation quick links
+
+- [Architecture overview](docs/E0_ARCHITECTURE_OVERVIEW_v1.md) — how the layers connect end-to-end
+- [Hybrid controller spec](docs/E0_HYBRID_CONTROLLER_SPEC_v1.md) — exact runtime behaviour and metrics
+- [Derived / Empirical / Heuristic map](docs/E0_DERIVED_EMPIRICAL_HEURISTIC_MAP_v1.md) — classification of each subsystem
+- [Evidence & falsification status](docs/E0_EVIDENCE_AND_FALSIFICATION_STATUS_v1.md) — what is demonstrated vs open
+- [External validation / handoff note](docs/E0_EXTERNAL_VALIDATION_AND_HANDOFF_NOTE_v1.md) — package for reviewers or AI systems
+- [Phase 3q interference report](docs/E0_PHASE3Q_INTERFERENCE_REPORT_v1.md) — holonomy formula, goal_reaching geometry, Gordian Trap
 
 ---
 
@@ -136,18 +162,21 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 
 ## Current state
 
-*Last updated: 2026-03-24 — v0.10.8*
+*Last updated: 2026-03-24 — v0.10.11*
 
 | Component | Status | Where |
 |-----------|--------|-------|
 | Canon (7 primitives, Axiom A₀) | **Stable** | `canon/` |
 | Deterministic controller (§2–18) | **Active** | `e0_controller/controller.py` |
-| Amplitude overlay | **Active** | `e0_controller/amplitude_overlay.py` |
-| Summation geometry comparison | **Completed** (first empirical pass) | `docs/E0_SUMMATION_GEOMETRY_COMPARISON_v1.md` |
-| Hybrid controller mode | **Active** | `e0_controller/controller.py` |
+| Amplitude overlay | **Active** (4 geometries) | `e0_controller/amplitude_overlay.py` |
+| Summation geometry comparison | **Completed** (empirical + G5) | `docs/E0_SUMMATION_GEOMETRY_COMPARISON_v1.md` |
+| Hybrid controller mode | **Active** (`hybrid_geometry` param) | `e0_controller/controller.py` |
+| Interference routing | **Demonstrated** (Gordian Trap) | `e0_controller/test_gordian_trap.py` |
 | MemOS (hybrid-aware persistence) | **Active** | `e0_controller/memory_os.py` |
 | LLM Adapter (A3 Hybrid) | **Active** — live API confirmed | `e0_controller/llm_adapter.py` |
 | LLM demo hybrid integration | **Active** (4 demos) | `e0_controller/demo_*.py` |
+| LLM integration tests | **Active** (24 tests) | `e0_controller/test_llm_integration.py` |
+| Scaling tests | **Active** (14 tests, n≤500) | `e0_controller/test_scaling.py` |
 | Evaluation layer (hybrid-extended) | **Active** | `e0_controller/evaluation.py` |
 | Reflection layer | **Active** | `e0_controller/reflection.py` |
 | Cross-domain validation | **Active** (3 domains, hybrid) | `e0_controller/validate_cross_domain.py` |
