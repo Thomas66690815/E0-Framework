@@ -37,7 +37,7 @@
 | Summation geometry minimality | Simple empirically best for exploration; G5 proven for goal semantics | Proof that geometries are non-interchangeable (partially done: Gordian Trap shows simple fails where G5 succeeds) |
 | Amplitude scaling to large branching factors | Scaling tests pass at n=500, but path enumeration is O(paths) | Algorithmic optimisation or proof of limits |
 | Inline Verdichtungssnapshots (Claude thread) | Observed, not yet formalised | Mapping to MemOS structures |
-| **Interference stability under historization** | **Untested** | Does R_eff drift shift ΔΘ away from π? |
+| **Interference stability under historization** | **Confirmed (12 tests)** — 4 scenarios (repeated, adversarial A-short/A-loop, mixed); cos(ΔΘ) stays < 0 in all cases; three structural stability mechanisms identified | RESOLVED |
 | **Multi-goal behavior under G5** | **Untested** | How does G5 superpose paths to different goals? |
 | **Spinor extension (Θ → SU(2))** | **Theoretical (3 documents)** | Lift scalar Θ to SU(2) generator; test on Gordian Trap |
 | **Topology classification** | **Open** | Which graph structures admit interference-based routing? |
@@ -55,7 +55,7 @@ The following experiments or findings would falsify the current runtime claims:
 5. **Evaluation blind spots:** Find a run where the evaluation layer rates an obviously failed hybrid execution as `A` or `B`.
 6. **Holonomy independence violation:** Find a topology where ΔΘ between two paths depends on edges outside both paths. *(Note: theorem says this cannot happen. A counterexample would require fixing the proof.)*
 7. **G5 false positive:** Find a topology where goal_reaching geometry overrides greedy to a *worse* action — i.e., the coherent path is structurally inferior to the greedy choice despite higher amplitude support.
-8. **Historization breaks Gordian:** Run the Gordian Trap with accumulating historization and show the interference effect degrades or inverts.
+8. **Historization breaks Gordian:** ~~Run the Gordian Trap with accumulating historization and show the interference effect degrades or inverts.~~ **TESTED — interference survives.** 12 formal tests confirm stability under repeated, adversarial, and mixed historization. Target remains: can extreme historization (δ_max ≫ R₀) eventually break it?
 
 If any of these occur, the respective layer must be revisited or downgraded in the Derived/Empirical/Heuristic map.
 
@@ -68,7 +68,7 @@ If any of these occur, the respective layer must be revisited or downgraded in t
 3. **Geometry stress test:** Re-run summation comparison on randomly generated landscapes to ensure `simple` remains stable.
 4. **Hybrid persistence replay:** Load a MemOS snapshot mid-run and continue execution to confirm identical hybrid decisions.
 5. **Evaluation regression:** Expand `e0_controller/test_evaluation.py` with hybrid-specific edge cases.
-6. **Historization × Gordian:** Run Gordian Trap with `history_mode=True`, measure whether ΔΘ ≈ π holds after R_eff changes.
+6. **Historization × Gordian:** ~~Run Gordian Trap with `history_mode=True`.~~ **DONE** (commit 551ab80). Next: test extreme δ_max ≫ R₀ regime.
 7. **Multi-goal Gordian:** Add a second GOAL node, test G5 behavior with competing goal states.
 8. **SU(2) pilot:** Implement matrix-valued Ψ on Gordian Trap, compare interference predictions with scalar model.
 9. **Random topology scan:** Generate random graphs, identify those where G5 overrides greedy, verify override quality.

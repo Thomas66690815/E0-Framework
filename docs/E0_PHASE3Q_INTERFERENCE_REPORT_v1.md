@@ -357,7 +357,13 @@ Full test suite status (464 tests total):
 
 1. **Multi-goal generalization.** The current goal_reaching geometry is tested with a single goal. Behavior with multiple competing goals is unexplored.
 
-2. **Historization interaction.** As the controller traverses edges, $R_{\text{eff}}$ changes via historization. This modifies $v$ values and thus the holonomy. The dynamic stability of interference routing under historization is not yet investigated.
+2. **Historization interaction — RESOLVED.** Investigated in 12 formal tests (`test_gordian_trap.py`, classes `TestHistorizationBPathStable`, `TestHistorizationAShortAdversarial`, `TestHistorizationALoopAdversarial`, `TestHistorizationMixed`). Results:
+   - **B-path repeated traversal:** $\Delta\Theta$ remains constant (3.265 rad); $P(B)$ increases monotonically.
+   - **Adversarial A-short pumping (20×):** $\Delta\Theta$ drops from 3.265→3.219, saturates at pass 4; $\cos(\Delta\Theta)$ improves to −0.997; B wins all 20 passes.
+   - **Adversarial A-loop pumping:** $\Delta\Theta$ rises to 3.645 (>π); $\cos$ weakens to −0.876; B still wins (66%).
+   - **Mixed regime (3×A + 2×B):** $\cos(\Delta\Theta) = -0.995$; $P(B) = 93\%$.
+
+   Three structural stability mechanisms identified: (a) untraversed edges remain at $R_0$ (traces=0, decay preserves 0), (b) $\delta_{\max}$ clipping prevents unbounded drift, (c) even worst-case historization keeps $\cos(\Delta\Theta) < 0$, preserving destructive interference on the decoy family. **Verdict: interference routing is stable under historization.**
 
 3. **Spinor extension.** Documents `E0_INTERNAL_DIFFERENCE_TO_SPINOR_BRIDGE_v0.md` and `E0_THETA_TO_SU2_GENERATOR_v0.md` propose extending $\Theta$ from a scalar phase to a $\text{SU}(2)$ generator. This would replace $e^{i\Theta}$ with $e^{-iG/2}$ acting on $\mathbb{C}^2$ carriers, enabling richer interference structures (including 720° periodicity and entanglement-like effects). The Gordian Trap provides a concrete test case for such an extension.
 
@@ -371,7 +377,7 @@ Full test suite status (464 tests total):
 |------|--------|-------|
 | `amplitude_overlay.py` | +`goal_reaching` geometry (G5) | +42 |
 | `controller.py` | +`hybrid_geometry` parameter | +8 |
-| `test_gordian_trap.py` | 17 formal tests (**new**) | +300 |
+| `test_gordian_trap.py` | 29 formal tests: 17 interference routing + 12 historization stability (**new**) | +520 |
 | `test_scaling.py` | 14 scaling tests (**new**) | +280 |
 | `test_llm_integration.py` | 24 LLM API tests (**new**) | +450 |
 | `test_waypoint.py` | Regression fix for G5 | +2 |
@@ -395,5 +401,5 @@ This is, to our knowledge, the first demonstration of a non-probabilistic struct
 
 ---
 
-*Report generated as part of E₀ Framework v0.10.11 (commit 855caca).*
+*Report generated as part of E₀ Framework v0.10.11 (commits 855caca, 551ab80).*
 *Human–AI collaborative research. All code and tests executable.*

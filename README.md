@@ -103,7 +103,7 @@ Key theoretical result: the holonomy ΔΘ between two paths is **independent of 
 
     ΔΘ = ½ [Σ v(loop edges) − Σ v(short edges)]
 
-See `e0_controller/test_gordian_trap.py` for 17 formal tests and `docs/E0_PHASE3Q_INTERFERENCE_REPORT_v1.md` for the full scientific report.
+See `e0_controller/test_gordian_trap.py` for 29 formal tests (17 interference routing + 12 historization stability) and `docs/E0_PHASE3Q_INTERFERENCE_REPORT_v1.md` for the full scientific report.
 
 ---
 
@@ -186,7 +186,7 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 | Multi-agent network + experiments | **Archived** | `_archive/` |
 | Core reference implementation | **Archived** | `_archive/e0_core/` |
 
-**Tests:** 464 total (443 unittest + 21 mini-domain), all green except 1 pre-existing import issue.
+**Tests:** 476 total (455 unittest + 21 mini-domain), all green except 1 pre-existing import issue.
 
 ---
 
@@ -205,7 +205,7 @@ cd E0-Framework
 # Mini-domain: 21 tests (custom runner)
 python e0_controller/test_minidomain.py
 
-# Full test suite: 443 tests (unittest)
+# Full test suite: 455 tests (unittest)
 python -m unittest discover -s e0_controller -p "test_*.py" -v
 ```
 
@@ -281,7 +281,7 @@ E0-Framework/
 │   ├── demo_incident_postmortem.py     Incident postmortem demo
 │   ├── explore_amplitude.py            Amplitude exploration tool
 │   ├── explore_gordian.py              Gordian Trap discovery script
-│   └── test_*.py                       464 tests (21 mini-domain + 443 unittest)
+│   └── test_*.py                       476 tests (21 mini-domain + 455 unittest)
 │
 ├── scenarios/                        Scenario Packets for grounded LLM demos
 │   ├── competitor_brief/               Domain-specific scenario data
