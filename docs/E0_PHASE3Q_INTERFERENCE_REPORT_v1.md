@@ -355,7 +355,13 @@ Full test suite status (464 tests total):
 
 ### 8.2 What Remains Open
 
-1. **Multi-goal generalization.** The current goal_reaching geometry is tested with a single goal. Behavior with multiple competing goals is unexplored.
+1. **Multi-goal generalization — RESOLVED.** Extended Gordian Trap with second goal (GOAL2) and competing paths. Investigated in 15 formal tests (`test_gordian_trap.py`, classes `TestMultiGoalRegression`, `TestMultiGoalSingleGoal2`, `TestMultiGoalAmplitudeDistribution`, `TestMultiGoalHybridRun`) plus 8 LLM integration tests. Results:
+   - **Single-goal {GOAL} regression:** B1 still wins (P=96%); GOAL2 edges don't affect GOAL routing; destructive interference preserved.
+   - **Single-goal {GOAL2}:** A1 wins (P=55%) — cheaper entry, single coherent path.
+   - **Multi-goal {GOAL, GOAL2}:** A1 wins (P=39%) — GOAL2 path *rescues* A1 from destructive interference. Ordering: A1>B1>C1. All three actions have positive support.
+   - **LLM integration:** `build_landscape()` extended to accept `goals: Set[str]`; LLM correctly generates and routes multi-goal landscapes.
+
+   Key structural finding: coherent alternative-goal paths rescue actions from single-goal destructive interference without disturbing the goal-specific interference pattern. **Verdict: G5 correctly distributes amplitude across competing goals.**
 
 2. **Historization interaction — RESOLVED.** Investigated in 12 formal tests (`test_gordian_trap.py`, classes `TestHistorizationBPathStable`, `TestHistorizationAShortAdversarial`, `TestHistorizationALoopAdversarial`, `TestHistorizationMixed`). Results:
    - **B-path repeated traversal:** $\Delta\Theta$ remains constant (3.265 rad); $P(B)$ increases monotonically.
@@ -376,10 +382,13 @@ Full test suite status (464 tests total):
 | File | Change | Lines |
 |------|--------|-------|
 | `amplitude_overlay.py` | +`goal_reaching` geometry (G5) | +42 |
-| `controller.py` | +`hybrid_geometry` parameter | +8 |
-| `test_gordian_trap.py` | 29 formal tests: 17 interference routing + 12 historization stability (**new**) | +520 |
+| `controller.py` | +`hybrid_geometry` parameter, multi-goal stop condition | +15 |
+| `test_gordian_trap.py` | 44 formal tests: 17 interference + 12 historization + 15 multi-goal (**new**) | +720 |
 | `test_scaling.py` | 14 scaling tests (**new**) | +280 |
-| `test_llm_integration.py` | 24 LLM API tests (**new**) | +450 |
+| `test_llm_integration.py` | 32 LLM API tests: 24 original + 8 multi-goal (**new**) | +540 |
+| `llm_adapter.py` | +`goals` parameter for multi-goal landscape bootstrapping | +20 |
+| `graph_validation.py` | +`graph_quality_multigoal()` | +30 |
+| `explore_multigoal.py` | Multi-goal discovery exploration (**new**) | +180 |
 | `test_waypoint.py` | Regression fix for G5 | +2 |
 | `explore_gordian.py` | Discovery exploration script (**new**) | +250 |
 | `README.md` | Updated to v0.10.11 | +30 |
@@ -401,5 +410,5 @@ This is, to our knowledge, the first demonstration of a non-probabilistic struct
 
 ---
 
-*Report generated as part of E₀ Framework v0.10.11 (commits 855caca, 551ab80).*
+*Report generated as part of E₀ Framework v0.10.11 (commits 855caca, 551ab80, d07140c).*
 *Human–AI collaborative research. All code and tests executable.*

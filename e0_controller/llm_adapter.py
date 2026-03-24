@@ -211,7 +211,7 @@ Context from E₀ runtime:
 {scenario_block}
 Task: {task}
 Start state: {start}
-Goal state: {goal}
+{goal}
 
 Respond with exactly this JSON (no other text):
 {{
@@ -559,6 +559,7 @@ class E0LLMAdapter:
         task: str,
         start: str,
         goal: str,
+        goals: Optional[Set[str]] = None,
         memos_summary: Optional[Dict[str, Any]] = None,
         scenario_block: str = "",
     ) -> LandscapeProposal:
@@ -571,21 +572,33 @@ class E0LLMAdapter:
         Args:
             task: Natural-language description of the overall task.
             start: Name of the starting state.
-            goal: Name of the goal state.
+            goal: Name of the primary goal state.
+            goals: Optional set of additional goal states.  When provided,
+                the prompt tells the LLM about all goal states.
             memos_summary: Output from E0MemoryOS.summarize_for_llm().
             scenario_block: Pre-formatted scenario context string.
 
         Returns:
             LandscapeProposal with states and edges.
         """
+        all_goals = {goal}
+        if goals:
+            all_goals |= goals
+
         ctx = self._format_context(memos_summary) if memos_summary else "{}"
         sc_block = f"\nScenario context:\n{scenario_block}\n" if scenario_block else ""
+
+        if len(all_goals) > 1:
+            goal_line = "Goal states: " + ", ".join(sorted(all_goals)) + " (the task completes when ANY of these is reached)"
+        else:
+            goal_line = f"Goal state: {goal}"
+
         prompt = BUILD_LANDSCAPE_PROMPT.format(
             context=ctx,
             scenario_block=sc_block,
             task=task,
             start=start,
-            goal=goal,
+            goal=goal_line,
         )
 
         raw = self._call(SYSTEM_PROMPT, prompt, self.config)
@@ -600,8 +613,8 @@ class E0LLMAdapter:
                 seen.add(name)
                 states.append(name)
 
-        # Ensure start and goal are included
-        for required in [start, goal]:
+        # Ensure start and all goals are included
+        for required in [start] + sorted(all_goals):
             norm = _normalize_state_name(required)
             if norm not in seen:
                 states.append(norm)

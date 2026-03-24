@@ -132,6 +132,7 @@ However, G5 has a **structural justification** (Born criterion): when the questi
 | **Interference-based routing** | **Empirical (demonstrated)** | Gordian Trap: greedy A1 overridden to B1 via destructive interference at h=5 |
 | **G5 is regime-specific** | **Empirical** | G5 wins only under goal semantics; `simple` remains correct for exploration |
 | **Prefix-inflation artifact** | **Empirical (identified)** | Non-goal prefixes dominate intensity under `simple`, masking interference |
+| **Multi-goal G5 amplitude rescue** | **Empirical (demonstrated)** | Coherent alternative-goal paths rescue actions from single-goal destructive interference; ordering preserved: A1>B1>C1; single-goal regression preserved |
 
 ---
 
@@ -143,8 +144,8 @@ The following are not yet fully derived:
 - Formal derivation of summation geometry (why simple? why G5 only for goals?)
 - Scalable aggregation of amplitudes without enumeration
 - Full necessity proof for Born-style intensity in all regimes
-- Stability of interference routing under historization (does R_eff shift invalidate ΔΘ ≈ π?)
-- Multi-goal behavior under G5
+- Stability of interference routing under historization — **RESOLVED** (12 tests, 4 scenarios)
+- Multi-goal behavior under G5 — **RESOLVED** (15 tests + 8 LLM tests)
 - Spinor extension: whether scalar Θ should be lifted to SU(2) generator (see E0_THETA_TO_SU2_GENERATOR_v0.md)
 - Topology classification: which graph structures admit interference-based routing?
 

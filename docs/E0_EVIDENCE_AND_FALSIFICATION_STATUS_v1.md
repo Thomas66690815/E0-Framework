@@ -38,7 +38,7 @@
 | Amplitude scaling to large branching factors | Scaling tests pass at n=500, but path enumeration is O(paths) | Algorithmic optimisation or proof of limits |
 | Inline Verdichtungssnapshots (Claude thread) | Observed, not yet formalised | Mapping to MemOS structures |
 | **Interference stability under historization** | **Confirmed (12 tests)** — 4 scenarios (repeated, adversarial A-short/A-loop, mixed); cos(ΔΘ) stays < 0 in all cases; three structural stability mechanisms identified | RESOLVED |
-| **Multi-goal behavior under G5** | **Untested** | How does G5 superpose paths to different goals? |
+| **Multi-goal behavior under G5** | **Confirmed (15 tests + 8 LLM)** — GOAL2 path rescues A1 from destructive interference; ordering A1>B1>C1; single-goal regression preserved; LLM builds & routes multi-goal landscapes | RESOLVED |
 | **Spinor extension (Θ → SU(2))** | **Theoretical (3 documents)** | Lift scalar Θ to SU(2) generator; test on Gordian Trap |
 | **Topology classification** | **Open** | Which graph structures admit interference-based routing? |
 
@@ -69,7 +69,7 @@ If any of these occur, the respective layer must be revisited or downgraded in t
 4. **Hybrid persistence replay:** Load a MemOS snapshot mid-run and continue execution to confirm identical hybrid decisions.
 5. **Evaluation regression:** Expand `e0_controller/test_evaluation.py` with hybrid-specific edge cases.
 6. **Historization × Gordian:** ~~Run Gordian Trap with `history_mode=True`.~~ **DONE** (commit 551ab80). Next: test extreme δ_max ≫ R₀ regime.
-7. **Multi-goal Gordian:** Add a second GOAL node, test G5 behavior with competing goal states.
+7. **Multi-goal Gordian:** ~~Add a second GOAL node, test G5 behavior with competing goal states.~~ **DONE** — 15 formal tests + 8 LLM integration tests. Key finding: coherent alternative-goal paths rescue actions from single-goal destructive interference.
 8. **SU(2) pilot:** Implement matrix-valued Ψ on Gordian Trap, compare interference predictions with scalar model.
 9. **Random topology scan:** Generate random graphs, identify those where G5 overrides greedy, verify override quality.
 

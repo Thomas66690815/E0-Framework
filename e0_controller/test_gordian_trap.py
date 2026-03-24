@@ -471,5 +471,236 @@ class TestHistorizationMixed(unittest.TestCase):
                          msg="Second run on historized landscape must still take B-path")
 
 
+# ── Multi-goal domain builder ────────────────────────────────
+
+def build_multigoal_gordian() -> Landscape:
+    """
+    Multi-Goal Gordian: original trap + A-alt path to GOAL2 + C-path to GOAL2.
+
+    Additional topology:
+      A-alt:  START → A1 → D1 → GOAL2  (moderate, single coherent path)
+      C-path: START → C1 → C2 → GOAL2  (moderate-expensive)
+
+    Key structural property:
+      A1's GOAL-reaching paths still cancel destructively,
+      but A1's GOAL2-reaching path (via D1) is coherent.
+      In multi-goal mode, the GOAL2 path rescues A1's amplitude.
+    """
+    L = build_gordian_trap()
+
+    # A-alt: A1 can also reach GOAL2
+    L.add_edge("A1", "D1", delta=0.5, resistance=0.3)
+    L.add_edge("D1", "GOAL2", delta=0.4, resistance=0.3)
+
+    # C-path: direct route to GOAL2
+    L.add_edge("START", "C1", delta=0.6, resistance=0.4)
+    L.add_edge("C1", "C2", delta=0.4, resistance=0.3)
+    L.add_edge("C2", "GOAL2", delta=0.3, resistance=0.3)
+
+    return L
+
+
+A_ALT  = ["START", "A1", "D1", "GOAL2"]
+C_PATH = ["START", "C1", "C2", "GOAL2"]
+
+
+# ── Multi-goal G5 tests ──────────────────────────────────────
+
+class TestMultiGoalRegression(unittest.TestCase):
+    """Single-goal {GOAL} on multi-goal landscape must match original Gordian."""
+
+    def setUp(self):
+        self.L = build_multigoal_gordian()
+        self.ctrl = E0Controller(self.L, always_success)
+
+    def test_single_goal_b1_wins(self):
+        """Single {GOAL}: B1 must win — extra GOAL2 edges don't affect GOAL routing."""
+        report = analyze_controller_state(
+            self.ctrl, "START", horizon_edges=5,
+            geometry="goal_reaching", goals={"GOAL"},
+        )
+        self.assertEqual(report.amplitude_choice, "B1")
+
+    def test_single_goal_a1_suppressed(self):
+        """Single {GOAL}: A1 probability < 5% (destructive interference preserved)."""
+        report = analyze_controller_state(
+            self.ctrl, "START", horizon_edges=5,
+            geometry="goal_reaching", goals={"GOAL"},
+        )
+        a1 = next(ai for ai in report.action_infos if ai.action == "A1")
+        self.assertLess(a1.probability, 0.05)
+
+    def test_c1_has_no_goal_paths(self):
+        """Single {GOAL}: C1 has zero GOAL-reaching paths."""
+        report = analyze_controller_state(
+            self.ctrl, "START", horizon_edges=5,
+            geometry="goal_reaching", goals={"GOAL"},
+        )
+        c1 = next(ai for ai in report.action_infos if ai.action == "C1")
+        self.assertEqual(c1.path_count, 0)
+
+
+class TestMultiGoalSingleGoal2(unittest.TestCase):
+    """Single-goal {GOAL2}: A1 and C1 compete without interference."""
+
+    def setUp(self):
+        self.L = build_multigoal_gordian()
+        self.ctrl = E0Controller(self.L, always_success)
+
+    def test_a1_wins_goal2(self):
+        """A1 wins for GOAL2 — cheaper entry than C1, single coherent path each."""
+        report = analyze_controller_state(
+            self.ctrl, "START", horizon_edges=5,
+            geometry="goal_reaching", goals={"GOAL2"},
+        )
+        self.assertEqual(report.amplitude_choice, "A1")
+
+    def test_b1_has_no_goal2_paths(self):
+        """B1 has no GOAL2-reaching paths."""
+        report = analyze_controller_state(
+            self.ctrl, "START", horizon_edges=5,
+            geometry="goal_reaching", goals={"GOAL2"},
+        )
+        b1 = next(ai for ai in report.action_infos if ai.action == "B1")
+        self.assertEqual(b1.path_count, 0)
+
+    def test_both_a1_c1_have_support(self):
+        """Both A1 and C1 have positive probability for GOAL2."""
+        report = analyze_controller_state(
+            self.ctrl, "START", horizon_edges=5,
+            geometry="goal_reaching", goals={"GOAL2"},
+        )
+        a1 = next(ai for ai in report.action_infos if ai.action == "A1")
+        c1 = next(ai for ai in report.action_infos if ai.action == "C1")
+        self.assertGreater(a1.probability, 0.0)
+        self.assertGreater(c1.probability, 0.0)
+
+
+class TestMultiGoalAmplitudeDistribution(unittest.TestCase):
+    """Multi-goal {GOAL, GOAL2}: amplitude distribution across three actions.
+
+    Key structural finding: A1's GOAL paths cancel destructively,
+    but the GOAL2 path (A-alt) rescues A1's total amplitude.
+    Result: A1 > B1 > C1 in multi-goal mode.
+    """
+
+    def setUp(self):
+        self.L = build_multigoal_gordian()
+        self.ctrl = E0Controller(self.L, always_success)
+
+    def test_a1_wins_multigoal(self):
+        """A1 wins in multi-goal — GOAL2 path rescues from destructive interference."""
+        report = analyze_controller_state(
+            self.ctrl, "START", horizon_edges=5,
+            geometry="goal_reaching", goals={"GOAL", "GOAL2"},
+        )
+        self.assertEqual(report.amplitude_choice, "A1")
+
+    def test_all_actions_have_support(self):
+        """All three actions (A1, B1, C1) have positive probability."""
+        report = analyze_controller_state(
+            self.ctrl, "START", horizon_edges=5,
+            geometry="goal_reaching", goals={"GOAL", "GOAL2"},
+        )
+        for action in ["A1", "B1", "C1"]:
+            ai = next(a for a in report.action_infos if a.action == action)
+            self.assertGreater(ai.probability, 0.0,
+                               msg=f"{action} should have positive amplitude support")
+
+    def test_ordering_a1_b1_c1(self):
+        """Ordering: P(A1) > P(B1) > P(C1)."""
+        report = analyze_controller_state(
+            self.ctrl, "START", horizon_edges=5,
+            geometry="goal_reaching", goals={"GOAL", "GOAL2"},
+        )
+        probs = {ai.action: ai.probability for ai in report.action_infos}
+        self.assertGreater(probs["A1"], probs["B1"])
+        self.assertGreater(probs["B1"], probs["C1"])
+
+    def test_a1_has_three_goal_paths(self):
+        """A1 has 3 goal-reaching paths: A-short→GOAL, A-loop→GOAL, A-alt→GOAL2."""
+        report = analyze_controller_state(
+            self.ctrl, "START", horizon_edges=5,
+            geometry="goal_reaching", goals={"GOAL", "GOAL2"},
+        )
+        a1 = next(ai for ai in report.action_infos if ai.action == "A1")
+        self.assertEqual(a1.path_count, 3)
+
+    def test_goal_interference_survives_multigoal(self):
+        """A-family destructive interference on GOAL is preserved in multi-goal.
+
+        The coherent intensity of A1's GOAL-reaching paths alone must remain
+        suppressed (factor < 0.1) even in multi-goal configuration.
+        """
+        psi_short = psi(self.L, A_SHORT)
+        psi_loop = psi(self.L, A_LOOP)
+        I_coherent = abs(psi_short + psi_loop) ** 2
+        I_incoherent = abs(psi_short) ** 2 + abs(psi_loop) ** 2
+        factor = I_coherent / I_incoherent
+        self.assertLess(factor, 0.1,
+                        msg="GOAL-specific destructive interference must survive in multi-goal landscape")
+
+
+class TestMultiGoalHybridRun(unittest.TestCase):
+    """Hybrid controller with multi-goal reaches one of the goals."""
+
+    def setUp(self):
+        self.L = build_multigoal_gordian()
+
+    def test_multigoal_hybrid_reaches_a_goal(self):
+        """Hybrid with {GOAL, GOAL2} reaches either GOAL or GOAL2."""
+        ctrl = E0Controller(
+            self.L, always_success,
+            hybrid_mode=HybridMode.AMPLITUDE_ON_DISAGREE,
+            hybrid_horizon=5,
+            hybrid_goals={"GOAL", "GOAL2"},
+            hybrid_geometry="goal_reaching",
+        )
+        trace = ctrl.run(start="START", max_cycles=20)
+        self.assertIn(trace.path[-1], {"GOAL", "GOAL2"},
+                      msg=f"Hybrid must reach a goal. Path: {trace.path}")
+
+    def test_multigoal_hybrid_prefers_a1(self):
+        """First action in multi-goal hybrid should be A1 (amplitude winner)."""
+        ctrl = E0Controller(
+            self.L, always_success,
+            hybrid_mode=HybridMode.AMPLITUDE_ON_DISAGREE,
+            hybrid_horizon=5,
+            hybrid_goals={"GOAL", "GOAL2"},
+            hybrid_geometry="goal_reaching",
+        )
+        trace = ctrl.run(start="START", max_cycles=20)
+        # Greedy picks A1 (cheapest), amplitude also picks A1 (multi-goal) → agree
+        self.assertEqual(trace.steps[0].target, "A1")
+
+    def test_single_goal_hybrid_still_picks_b(self):
+        """Single-goal {GOAL} hybrid must still override to B1 (regression)."""
+        ctrl = E0Controller(
+            self.L, always_success,
+            hybrid_mode=HybridMode.AMPLITUDE_ON_DISAGREE,
+            hybrid_horizon=5,
+            hybrid_goals={"GOAL"},
+            hybrid_geometry="goal_reaching",
+        )
+        trace = ctrl.run(start="START", goal="GOAL", max_cycles=20)
+        self.assertEqual(trace.steps[0].target, "B1",
+                         msg="Single-goal regression: B1 must be override target")
+        self.assertEqual(trace.path[-1], "GOAL")
+
+    def test_separate_goal_runs(self):
+        """Separate single-goal runs each reach their goal."""
+        for goal in ["GOAL", "GOAL2"]:
+            with self.subTest(goal=goal):
+                ctrl = E0Controller(
+                    build_multigoal_gordian(), always_success,
+                    hybrid_mode=HybridMode.AMPLITUDE_ON_DISAGREE,
+                    hybrid_horizon=5,
+                    hybrid_goals={goal},
+                    hybrid_geometry="goal_reaching",
+                )
+                trace = ctrl.run(start="START", goal=goal, max_cycles=20)
+                self.assertEqual(trace.path[-1], goal)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -415,5 +415,120 @@ class TestLiveHybridRun(unittest.TestCase):
         self.assertIn("hybrid_override_rate", metrics)
 
 
+# ──────────────────────────────────────────────
+# Test Class 6: Multi-Goal Landscape Bootstrapping
+# ──────────────────────────────────────────────
+
+GOAL2 = "ALTERNATIVE_DELIVERED"
+MULTI_TASK = (
+    "Analyze a competitor's product announcement and produce EITHER a structured "
+    "briefing for the executive team OR an alternative quick summary for the "
+    "engineering team, depending on which path is more feasible."
+)
+
+@unittest.skipUnless(_has_api_key(), SKIP_MSG)
+class TestLiveMultiGoalLandscape(unittest.TestCase):
+    """LLM builds a landscape with multiple goal states."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.config = _build_config()
+        cls.adapter = E0LLMAdapter(config=cls.config)
+        cls.scenario = _load_scenario()
+        sc_block = cls.scenario.as_prompt_block() if cls.scenario else ""
+        cls.all_goals = {GOAL, GOAL2}
+        cls.proposal = cls.adapter.build_landscape(
+            MULTI_TASK, START, GOAL, goals=cls.all_goals,
+            scenario_block=sc_block,
+        )
+        cls.landscape = materialize_landscape(cls.proposal)
+
+    def test_both_goals_in_landscape(self):
+        """Both goal states are present in the landscape."""
+        for g in self.all_goals:
+            self.assertIn(g, self.landscape.states,
+                          f"Goal {g} not in landscape states")
+
+    def test_start_present(self):
+        """Start state is present."""
+        self.assertIn(START, self.landscape.states)
+
+    def test_at_least_one_goal_reachable(self):
+        """At least one goal must be reachable from start."""
+        from e0_controller.graph_validation import goal_reachable
+        any_reachable = any(
+            goal_reachable(self.landscape, START, g) for g in self.all_goals
+        )
+        self.assertTrue(any_reachable,
+                        "No goal is reachable from start in multi-goal landscape")
+
+    def test_proposal_has_edges(self):
+        """LLM proposes at least 4 edges."""
+        self.assertGreaterEqual(len(self.proposal.edges), 4)
+
+
+# ──────────────────────────────────────────────
+# Test Class 7: Multi-Goal Hybrid Run
+# ──────────────────────────────────────────────
+
+@unittest.skipUnless(_has_api_key(), SKIP_MSG)
+class TestLiveMultiGoalHybridRun(unittest.TestCase):
+    """Hybrid controller with multi-goal reaches one of the goals via LLM."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.config = _build_config()
+        cls.adapter = E0LLMAdapter(config=cls.config)
+        cls.scenario = _load_scenario()
+        sc_block = cls.scenario.as_prompt_block() if cls.scenario else ""
+        cls.all_goals = {GOAL, GOAL2}
+
+        cls.proposal = cls.adapter.build_landscape(
+            MULTI_TASK, START, GOAL, goals=cls.all_goals,
+            scenario_block=sc_block,
+        )
+        cls.landscape = materialize_landscape(cls.proposal)
+        cls.task_map = task_map_from_proposal(cls.proposal)
+
+        cls.result_log: list[TransitionResult] = []
+        execute_fn = cls.adapter.as_execute_fn(
+            cls.task_map,
+            scenario_block=sc_block,
+            result_log=cls.result_log,
+        )
+
+        cls.ctrl = E0Controller(
+            cls.landscape, execute_fn, alpha=2.0, recent_k=3,
+            hybrid_mode=HybridMode.AMPLITUDE_ON_DISAGREE,
+            hybrid_horizon=3,
+            hybrid_goals=cls.all_goals,
+            hybrid_geometry="goal_reaching",
+        )
+        cls.trace = cls.ctrl.run(start=START, goal=GOAL, max_cycles=20)
+
+    def test_reaches_a_goal(self):
+        """Hybrid controller reaches one of the goal states."""
+        self.assertIn(
+            self.trace.path[-1], {GOAL, GOAL2},
+            f"Hybrid did not reach any goal. Path: {' → '.join(self.trace.path)}"
+        )
+
+    def test_has_overlay_data(self):
+        """At least one step carries amplitude overlay data."""
+        overlay_count = sum(
+            1 for s in self.trace.steps if s.overlay is not None
+        )
+        self.assertGreater(overlay_count, 0,
+                           "No overlay data — multi-goal hybrid was inactive")
+
+    def test_path_not_trivial(self):
+        """Path has at least 2 entries (start + goal)."""
+        self.assertGreaterEqual(len(self.trace.path), 2)
+
+    def test_result_log_matches_steps(self):
+        """Result log has one entry per step."""
+        self.assertEqual(len(self.result_log), len(self.trace.steps))
+
+
 if __name__ == "__main__":
     unittest.main()

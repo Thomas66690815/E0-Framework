@@ -288,3 +288,45 @@ def graph_quality(
         edge_count=edge_count,
         score=round(score, 3),
     )
+
+
+def graph_quality_multigoal(
+    L: Landscape,
+    start: str,
+    goals: Set[str],
+) -> GraphQuality:
+    """Like graph_quality but for multiple goal states.
+
+    Uses the closest reachable goal for happy-path computation.
+    All goals in *goals* that are terminal (no outgoing edges) are
+    excluded from trap detection.
+    """
+    # Find closest reachable goal
+    best_gq: Optional[GraphQuality] = None
+    for g in sorted(goals):
+        gq = graph_quality(L, start, g)
+        if gq.reachable:
+            if best_gq is None or gq.happy_path_length < best_gq.happy_path_length:
+                best_gq = gq
+
+    if best_gq is not None:
+        # Re-check traps: exclude all goals (not just the single one)
+        traps_all = detect_traps(L)
+        traps = [t for t in traps_all if t not in goals]
+        # Check reachability to ALL goals
+        all_reachable = all(goal_reachable(L, start, g) for g in goals)
+        return GraphQuality(
+            reachable=all_reachable,
+            happy_path=best_gq.happy_path,
+            happy_path_length=best_gq.happy_path_length,
+            recovery_edges=best_gq.recovery_edges,
+            recovery_count=best_gq.recovery_count,
+            traps=traps,
+            trivial_loops=best_gq.trivial_loops,
+            state_count=best_gq.state_count,
+            edge_count=best_gq.edge_count,
+            score=best_gq.score,
+        )
+
+    # No goal reachable
+    return graph_quality(L, start, next(iter(goals)))

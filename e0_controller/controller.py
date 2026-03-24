@@ -564,16 +564,24 @@ class E0Controller:
         alter transitions).
 
         Stops when:
-        - goal state is reached (if specified)
+        - goal state is reached (if specified — can be a single string
+          or, via hybrid_goals, any element of a set)
         - max_cycles exceeded
         - no transition possible (complete dead-end)
         """
+        # Build effective goal set for stopping condition
+        goal_set: Optional[Set[str]] = None
+        if goal:
+            goal_set = {goal}
+        if self.hybrid_goals:
+            goal_set = (goal_set or set()) | self.hybrid_goals
+
         trace = RunTrace()
         current = start
 
         for _ in range(max_cycles):
             # Check goal
-            if goal and current == goal:
+            if goal_set and current in goal_set:
                 break
 
             step = self.cycle(current, overlay_horizon, overlay_goals)
