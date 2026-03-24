@@ -183,10 +183,10 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 | Graph validation | **Active** | `e0_controller/graph_validation.py` |
 | Scenario packets | **Active** (3 domains) | `scenarios/` |
 | Formal Paper (E₀ mathematics) | **Draft** | `docs/E0_FORMAL_PAPER_DRAFT_v1.md` |
-| Core reference implementation | Stable (read-only) | `e0_core/` |
 | Multi-agent network + experiments | **Archived** | `_archive/` |
+| Core reference implementation | **Archived** | `_archive/e0_core/` |
 
-**Tests:** 416 total (395 unittest + 21 mini-domain), all green.
+**Tests:** 464 total (443 unittest + 21 mini-domain), all green except 1 pre-existing import issue.
 
 ---
 
@@ -205,8 +205,8 @@ cd E0-Framework
 # Mini-domain: 21 tests (custom runner)
 python e0_controller/test_minidomain.py
 
-# Full test suite: 391 tests (unittest)
-python -m unittest e0_controller.test_amplitude_overlay e0_controller.test_invoice e0_controller.test_phase2_minidomain e0_controller.test_phase2_invoice e0_controller.test_memory_os e0_controller.test_llm_adapter e0_controller.test_graph_validation e0_controller.test_evaluation e0_controller.test_reflection -v
+# Full test suite: 443 tests (unittest)
+python -m unittest discover -s e0_controller -p "test_*.py" -v
 ```
 
 ### Run a standard demo (mock mode — no API key)
@@ -241,11 +241,8 @@ python -m e0_controller.validate_cross_domain --hybrid
 
 ### See E₀ without any AI
 
-```bash
-python -m e0_core.demo
-```
-
-Transitions select themselves through tension minimization. No language model involved.
+The original reference implementation is preserved in `_archive/e0_core/`.
+The active controller in `e0_controller/` demonstrates the full transition framework.
 
 ---
 
@@ -283,13 +280,8 @@ E0-Framework/
 │   ├── demo_research_brief.py          Research brief demo
 │   ├── demo_incident_postmortem.py     Incident postmortem demo
 │   ├── explore_amplitude.py            Amplitude exploration tool
-│   └── test_*.py                       416 tests (21 mini-domain + 395 unittest)
-│
-├── e0_core/                          Reference implementation (stable, read-only)
-│   ├── primitives.py                   Seven primitives + Axiom A₀
-│   ├── engine.py                       Central Law, transition enforcement
-│   ├── ontodynamics.py                 Topology, locality, graduated overlap
-│   └── ...
+│   ├── explore_gordian.py              Gordian Trap discovery script
+│   └── test_*.py                       464 tests (21 mini-domain + 443 unittest)
 │
 ├── scenarios/                        Scenario Packets for grounded LLM demos
 │   ├── competitor_brief/               Domain-specific scenario data
@@ -306,6 +298,7 @@ E0-Framework/
 │
 ├── _archive/                         Preserved earlier work
 │   ├── ARCHIVE_README.md                What is here and why
+│   ├── e0_core/                         Original reference implementation (primitives, engine, ontodynamics)
 │   ├── keimzelle/                       Multi-agent system
 │   ├── middleware/                       LLM measurement layer
 │   ├── server/                          Network orchestrator

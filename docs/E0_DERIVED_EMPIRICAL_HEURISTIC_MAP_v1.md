@@ -77,6 +77,8 @@ Used because it works in runtime, but not yet structurally derived.
 | Complex carrier Ψ(p) | Derived (partial) | Structure consistent, phase not fully derived |
 | Intensity I = |ΣΨ|² | Derived (conditional) | Supported by Born-style reasoning |
 | Phase Θ(p) | Heuristic / Open | Not fully derived from v_rot |
+| Holonomy independence (ΔΘ from forward edges only) | **Derived** | Proven: Φ cancels in holonomy. ΔΘ = ½[Σv₁ − Σv₂] |
+| Destructive interference (factor < 0.1) | **Empirical (demonstrated)** | Gordian Trap: coherent I_A = 2% of incoherent I_A |
 
 ---
 
@@ -85,12 +87,14 @@ Used because it works in runtime, but not yet structurally derived.
 | Component | Classification | Notes |
 |----------|---------------|------|
 | Prefix geometry | Empirical (rejected) | Path inflation observed |
-| Simple-path geometry | Empirical (preferred) | Stable, reduced inflation |
+| Simple-path geometry | Empirical (preferred) | Stable, reduced inflation; default for exploration |
 | First-arrival geometry | Empirical (incomplete) | Needs further testing |
+| Goal-reaching geometry (G5) | **Empirical (proven, regime-specific)** | Born-criterion aligned: only goal-ending paths. Resolves prefix-inflation. Demonstrated via Gordian Trap (P(B)=96.2%) |
 
 **Key point:**
 
 Summation geometry is currently not derived — it is selected based on behavior.
+However, G5 has a **structural justification** (Born criterion): when the question is endpoint-oriented, only endpoint-reaching paths should contribute. G5 is **not** universally superior — it requires explicit goal specification. `simple` remains the robust default for exploratory analysis.
 
 ---
 
@@ -101,6 +105,7 @@ Summation geometry is currently not derived — it is selected based on behavior
 | Dual evaluation (greedy + amplitude) | Structural + Empirical | Motivated by observed disagreement |
 | AMPLITUDE_ON_DISAGREE policy | Empirical | Works in tests |
 | Override mechanism | Empirical | Validated in scenarios |
+| `hybrid_geometry` parameter | Empirical | Allows regime-specific geometry (e.g. G5 for goal-oriented) |
 | Safety conditions | Heuristic | Prevent invalid overrides |
 
 ---
@@ -123,6 +128,10 @@ Summation geometry is currently not derived — it is selected based on behavior
 | Amplitude can correct traps | Empirical | Observed in overlay + hybrid |
 | Geometry affects correctness | Empirical | Critical dependency |
 | Hybrid improves outcomes | Empirical | Measured via runs |
+| **Holonomy independence** | **Derived** | ΔΘ depends only on forward-edge v; Φ cancels. Proven and numerically verified to 6 decimal places |
+| **Interference-based routing** | **Empirical (demonstrated)** | Gordian Trap: greedy A1 overridden to B1 via destructive interference at h=5 |
+| **G5 is regime-specific** | **Empirical** | G5 wins only under goal semantics; `simple` remains correct for exploration |
+| **Prefix-inflation artifact** | **Empirical (identified)** | Non-goal prefixes dominate intensity under `simple`, masking interference |
 
 ---
 
@@ -130,10 +139,14 @@ Summation geometry is currently not derived — it is selected based on behavior
 
 The following are not yet fully derived:
 
-- Phase Θ from rotational field (v_rot)
-- Formal derivation of summation geometry (why simple?)
+- Phase Θ from rotational field (v_rot) — partially addressed by holonomy independence theorem
+- Formal derivation of summation geometry (why simple? why G5 only for goals?)
 - Scalable aggregation of amplitudes without enumeration
 - Full necessity proof for Born-style intensity in all regimes
+- Stability of interference routing under historization (does R_eff shift invalidate ΔΘ ≈ π?)
+- Multi-goal behavior under G5
+- Spinor extension: whether scalar Θ should be lifted to SU(2) generator (see E0_THETA_TO_SU2_GENERATOR_v0.md)
+- Topology classification: which graph structures admit interference-based routing?
 
 ---
 
