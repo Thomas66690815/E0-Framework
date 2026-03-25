@@ -4,7 +4,7 @@
 > **Purpose:** connect claims, tests, evidence, and status in one place.
 
 **Last updated:** 2026-03-25  
-**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, and active edge-case work.
+**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, and active edge-case work.
 
 ---
 
@@ -464,6 +464,32 @@ MemOS correctly persists, restores, and summarizes the amplitude overlay geometr
 
 ---
 
+### C22 — Born sampling as alternative realization regime (ADR-0007)
+
+**Claim**  
+Born sampling (P ∝ I, choosing actions probabilistically from the amplitude-derived distribution) is a valid alternative realization regime alongside deterministic argmax. With goal_reaching geometry, argmax dominates or matches Born sampling on success rate. Born sampling enables stochastic exploration: it reaches all G5 goals and can randomly escape traps where argmax gets stuck due to greedy–amplitude agreement. The BORN_SAMPLING mode integrates cleanly with existing infrastructure (MemOS persistence, StepResult, escalation handling).
+
+**Evidence**  
+- `e0_controller/test_born_sampling.py` — 27 tests across 10 classes (H1–H10)
+- `e0_controller/controller.py` — HybridMode.BORN_SAMPLING + `_born_sample()` method
+
+**Result**  
+- H1: All Born-sampled transitions are valid on Diamond, Gordian, G5
+- H2: Sampling frequencies converge to P(a) = I(a) / Σ I over repeated trials
+- H3: With goal_reaching geometry, argmax ≥ born; with simple geometry, both struggle on Gordian (geometry choice matters more than decision rule)
+- H4: Diamond efficiency identical for both modes (no traps, 2-step paths)
+- H5: Born sampling reaches all 3 G5 goals across trials; argmax always picks same 1
+- H6: Argmax avg steps ≤ Born avg steps (deterministic always optimal or tied)
+- H7: Argmax variance = 0 (deterministic); Born variance > 0 on multi-path domains
+- H8: Born sampling sometimes picks trap on Gordian with simple geometry (coherence cost of stochastic exploration)
+- H9: BORN_SAMPLING mode survives MemOS save → load → restore round-trip
+- H10: StepResult correctly marks Born-chosen actions as overridden
+
+**Status**  
+✅ Confirmed
+
+---
+
 ## 4. Test-file → claim map
 
 | Test file | Primary claims covered |
@@ -486,6 +512,7 @@ MemOS correctly persists, restores, and summarizes the amplitude overlay geometr
 | `test_dynamic_horizon.py` | C19 |
 | `test_confidence_override.py` | C20 |
 | `test_memos_geometry.py` | C21 |
+| `test_born_sampling.py` | C22 |
 | `test_spinor.py` | C15 |
 | `test_resonator.py` | C16 |
 | `test_omega_uniqueness.py` | C14 |

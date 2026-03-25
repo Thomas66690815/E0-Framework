@@ -1,7 +1,7 @@
 # E₀ Test Registry v1
 
 > Central reference for all tests in the E₀ Framework.
-> **Last verified:** 2026-03-25 — **909 tests** (888 unittest + 21 standalone mini-domain + 1 pre-existing error)
+> **Last verified:** 2026-03-25 — **936 tests** (915 unittest + 21 standalone mini-domain + 1 pre-existing error)
 
 ---
 
@@ -34,7 +34,8 @@
 | 23 | `test_dynamic_horizon.py` | 45 | unittest | Dynamic horizons, topology_adaptive, capped | ✅ GREEN |
 | 24 | `test_confidence_override.py` | 31 | unittest | Confidence-weighted override gating F1-F12 | ✅ GREEN |
 | 25 | `test_memos_geometry.py` | 34 | unittest | MemOS geometry persistence G1-G10 | ✅ GREEN |
-| 26 | `test_minidomain.py` | 21 | standalone | Core mechanics, historization, K11/K12 | ✅ GREEN |
+| 26 | `test_born_sampling.py` | 27 | unittest | Born sampling vs argmax, ADR-0007 H1-H10 | ✅ GREEN |
+| 27 | `test_minidomain.py` | 21 | standalone | Core mechanics, historization, K11/K12 | ✅ GREEN |
 
 ---
 
@@ -339,7 +340,20 @@
 
 ---
 
-### 25. test_minidomain.py — 21 standalone tests
+### 26. test_born_sampling.py — 27 tests
+
+**What it tests:** Born sampling (P ∝ I) as alternative realization regime alongside deterministic argmax. Validates ADR-0007 architecture decision: argmax stays default, Born sampling is opt-in. Compares success rates on Gordian, Diamond, and G5 domains across both geometry types. Covers distribution convergence, variance, coherence loss, multi-goal coverage, MemOS round-trip, and StepResult integration.
+
+**Key findings:**
+- With goal_reaching geometry, argmax dominates or equals Born sampling on all domains
+- With simple geometry on Gordian, both modes struggle; sampling can randomly escape trap
+- Born sampling reaches all 3 G5 goals (exploration), argmax deterministically picks 1
+- BORN_SAMPLING mode survives MemOS save → load → restore cycle
+- Born sampling variance > 0 on multi-path domains (G5), argmax variance = 0
+
+---
+
+### 27. test_minidomain.py — 21 standalone tests
 
 **Runner:** `python e0_controller/test_minidomain.py` (not unittest-based)
 
@@ -359,7 +373,7 @@
 ## How to Run
 
 ```bash
-# Full unittest suite (888 tests + 1 error)
+# Full unittest suite (915 tests + 1 error)
 python -m unittest discover -s e0_controller -p "test_*.py" -v
 
 # Standalone mini-domain (21 tests)

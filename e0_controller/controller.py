@@ -17,6 +17,7 @@ Controller loop:
 from __future__ import annotations
 
 import math
+import random
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Set, Tuple
@@ -41,6 +42,7 @@ class HybridMode(Enum):
     """3l: Amplitude-hybrid selection modes."""
     GREEDY = "greedy"                         # pure deterministic (default)
     AMPLITUDE_ON_DISAGREE = "amplitude_on_disagree"  # B3: follow amplitude when DISAGREE
+    BORN_SAMPLING = "born_sampling"            # 3h: sample from P ∝ I (Born rule)
 
 
 @dataclass
@@ -469,6 +471,10 @@ class E0Controller:
         if overlay is None:
             return greedy_target, escalated, esc_type, None, False
 
+        # ── BORN_SAMPLING: sample from P ∝ I ──
+        if self.hybrid_mode == HybridMode.BORN_SAMPLING:
+            return self._born_sample(overlay, escalated, esc_type)
+
         amp_choice = overlay.amplitude_choice
         if amp_choice is None or amp_choice == greedy_target:
             # AGREE — keep greedy
@@ -485,6 +491,26 @@ class E0Controller:
 
         # Amplitude choice not admissible or below threshold — stay with greedy
         return greedy_target, escalated, esc_type, overlay, False
+
+    def _born_sample(
+        self,
+        overlay: "OverlayReport",
+        escalated: bool,
+        esc_type: EscalationType,
+    ) -> Tuple[Optional[str], bool, EscalationType, Optional["OverlayReport"], bool]:
+        """Sample an action from P ∝ I (Born rule)."""
+        infos = overlay.action_infos
+        if not infos:
+            return None, escalated, esc_type, overlay, False
+        actions = [a.action for a in infos]
+        probs = [a.probability for a in infos]
+        # Guard against degenerate distributions
+        total = sum(probs)
+        if total <= 0:
+            return actions[0], escalated, esc_type, overlay, True
+        # Weighted random choice
+        chosen = random.choices(actions, weights=probs, k=1)[0]
+        return chosen, escalated, esc_type, overlay, True
 
     def cycle(
         self,
