@@ -19,7 +19,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Set, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Set, Tuple
 
 from .primitives import Edge, Outcome
 from .landscape import Landscape
@@ -191,6 +191,8 @@ class E0Controller:
         hybrid_horizon: Horizon for amplitude overlay in hybrid mode (default 3)
         hybrid_goals: Goal states for first_arrival/goal_reaching geometry (default None)
         hybrid_geometry: Summation geometry for overlay (default "simple")
+        horizon_strategy: Optional callable(controller, current) → int.
+            When set, overrides hybrid_horizon with a per-decision dynamic value.
     """
 
     def __init__(
@@ -206,6 +208,7 @@ class E0Controller:
         hybrid_horizon: int = 3,
         hybrid_goals: Optional[Set[str]] = None,
         hybrid_geometry: str = "simple",
+        horizon_strategy: Optional[Any] = None,
     ):
         self.landscape = landscape
         self.execute_fn = execute_fn
@@ -218,6 +221,7 @@ class E0Controller:
         self.hybrid_horizon = hybrid_horizon  # 3l: overlay horizon
         self.hybrid_goals = hybrid_goals  # 3l: goal states for overlay
         self.hybrid_geometry = hybrid_geometry  # 3l: summation geometry
+        self.horizon_strategy = horizon_strategy  # 3i: dynamic horizon
         self._recent: List[str] = []   # sliding window of recent states
 
         # K1 fix: Escalation edges live here, NOT in the Landscape.
@@ -448,8 +452,11 @@ class E0Controller:
             return greedy_target, escalated, esc_type, None, False
 
         # Compute overlay at this decision point
+        h = (self.horizon_strategy(self, current)
+             if self.horizon_strategy is not None
+             else self.hybrid_horizon)
         overlay = self._compute_overlay(
-            current, self.hybrid_horizon, self.hybrid_goals,
+            current, h, self.hybrid_goals,
             self.hybrid_geometry,
         )
         if overlay is None:

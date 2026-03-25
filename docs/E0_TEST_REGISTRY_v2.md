@@ -387,6 +387,34 @@ The reflection layer triggers on amplitude-derived metrics (R_coh, Θ-consistenc
 
 ---
 
+### C19 — Dynamic horizons adapt to graph topology
+
+**Claim**  
+Amplitude overlay horizon h can be dynamically adapted per state based on topology (branching factor, goal distance, graph diameter) instead of using a fixed constant, and controller behavior remains correct under all strategies.
+
+**Evidence**  
+- `e0_controller/test_dynamic_horizon.py` — 45 tests across 15 classes (D1–D15)
+- `e0_controller/dynamic_horizon.py` — fixed, topology_adaptive, capped_adaptive strategies
+- `e0_controller/controller.py` — horizon_strategy parameter in E0Controller
+
+**Result**  
+- fixed(h) returns constant h, validates h ≥ 1
+- branching_factor correctly reports 0–5 neighbors across domains
+- goal_distance returns BFS shortest-path or None (unreachable/no goals)
+- topology_adaptive: h = max(h_min, distance) - branching_reduction, clamped to [h_min, h_max]
+- Branching reduction activates at threshold (default 3), caps at 2
+- No-goal fallback returns h_max
+- capped_adaptive: wraps topology_adaptive with explicit cap
+- Controller accepts horizon_strategy, calls it per-state in select_hybrid()
+- None strategy falls back to fixed hybrid_horizon
+- All strategies produce valid overlay reports on Mini, Diamond, Gordian domains
+- Full runs in HYBRID/GREEDY modes with all strategies: no crashes, correct traces
+
+**Status**  
+✅ Confirmed
+
+---
+
 ## 4. Test-file → claim map
 
 | Test file | Primary claims covered |
@@ -406,6 +434,7 @@ The reflection layer triggers on amplitude-derived metrics (R_coh, Θ-consistenc
 | `test_evaluation.py` | evaluation/rating support layer |
 | `test_reflection.py` | reflection support layer |
 | `test_reflection_hybrid.py` | C18 |
+| `test_dynamic_horizon.py` | C19 |
 | `test_spinor.py` | C15 |
 | `test_resonator.py` | C16 |
 | `test_omega_uniqueness.py` | C14 |
