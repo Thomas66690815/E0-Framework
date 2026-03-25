@@ -47,6 +47,12 @@ class RunEvaluation:
     hybrid_override_rate: float = 0.0
     overlay_agree_rate: float = 1.0   # agree / count (1.0 if no overlay)
     overlay_count: int = 0
+    # Amplitude hybrid metrics (Phase 3h)
+    r_coh_avg: float = 0.0           # mean coherence ratio across steps
+    r_coh_min: float = 0.0           # worst-case coherence (most cancellation)
+    r_coh_max: float = 1.0           # best-case coherence
+    theta_consistency: float = 1.0   # phase alignment [0–1]
+    amplitude_drift: float = 0.0     # 1.0 − overlay_agree_rate
 
 
 @dataclass
@@ -139,6 +145,11 @@ def evaluate_run(
     hybrid_override_rate: float = 0.0,
     overlay_agree_rate: float = 1.0,
     overlay_count: int = 0,
+    r_coh_avg: float = 0.0,
+    r_coh_min: float = 0.0,
+    r_coh_max: float = 1.0,
+    theta_consistency: float = 1.0,
+    amplitude_drift: float = 0.0,
 ) -> RunEvaluation:
     """Build a RunEvaluation from run metrics and graph info."""
     unique_states = len(set(path)) if path else 0
@@ -165,6 +176,10 @@ def evaluate_run(
         warnings.append(f"High hybrid override rate: {hybrid_override_rate:.0%} ({hybrid_override_count} overrides)")
     if overlay_count > 0 and overlay_agree_rate < 0.5:
         warnings.append(f"Amplitude frequently disagrees: agree {overlay_agree_rate:.0%} of {overlay_count} steps")
+    if r_coh_avg > 0 and r_coh_avg < 0.3:
+        warnings.append(f"Low coherence ratio: R_coh_avg={r_coh_avg:.2f}")
+    if amplitude_drift > 0.3:
+        warnings.append(f"Amplitude drift: {amplitude_drift:.0%} greedy-vs-amplitude disagreement")
 
     rating = _assign_rating(
         reached_goal, efficiency, progress_ratio,
@@ -189,6 +204,11 @@ def evaluate_run(
         hybrid_override_rate=round(hybrid_override_rate, 4),
         overlay_agree_rate=round(overlay_agree_rate, 4),
         overlay_count=overlay_count,
+        r_coh_avg=round(r_coh_avg, 4),
+        r_coh_min=round(r_coh_min, 4),
+        r_coh_max=round(r_coh_max, 4),
+        theta_consistency=round(theta_consistency, 4),
+        amplitude_drift=round(amplitude_drift, 4),
     )
 
 
@@ -331,6 +351,11 @@ def evaluate_scenario(
     hybrid_override_rate: float = 0.0,
     overlay_agree_rate: float = 1.0,
     overlay_count: int = 0,
+    r_coh_avg: float = 0.0,
+    r_coh_min: float = 0.0,
+    r_coh_max: float = 1.0,
+    theta_consistency: float = 1.0,
+    amplitude_drift: float = 0.0,
 ) -> ScenarioEvaluation:
     """Full evaluation pipeline for one scenario run."""
     happy_len = gq.happy_path_length
@@ -367,6 +392,11 @@ def evaluate_scenario(
         hybrid_override_rate=hybrid_override_rate,
         overlay_agree_rate=overlay_agree_rate,
         overlay_count=overlay_count,
+        r_coh_avg=r_coh_avg,
+        r_coh_min=r_coh_min,
+        r_coh_max=r_coh_max,
+        theta_consistency=theta_consistency,
+        amplitude_drift=amplitude_drift,
     )
 
     # Overall score (None if hard failure)
@@ -439,6 +469,13 @@ def format_evaluation_report(evals: List[ScenarioEvaluation]) -> str:
             lines.append(f"│  Overlay Agree Rate:   {r.overlay_agree_rate:.0%}")
             lines.append(f"│  Hybrid Overrides:     {r.hybrid_override_count}")
             lines.append(f"│  Override Rate:        {r.hybrid_override_rate:.0%}")
+
+        # Amplitude hybrid metrics (Phase 3h)
+        if r.r_coh_avg > 0 or r.amplitude_drift > 0:
+            lines.append(f"│")
+            lines.append(f"│  R_coh (avg/min/max):  {r.r_coh_avg:.3f} / {r.r_coh_min:.3f} / {r.r_coh_max:.3f}")
+            lines.append(f"│  Θ Consistency:        {r.theta_consistency:.3f}")
+            lines.append(f"│  Amplitude Drift:      {r.amplitude_drift:.0%}")
 
         # Semantic
         if ev.semantic_evaluation:

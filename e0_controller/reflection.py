@@ -74,6 +74,12 @@ _OPPORTUNITY_RATING = "A"
 _OPPORTUNITY_EFFICIENCY_FLOOR = 0.8
 _OPPORTUNITY_GRAPH_SCORE_FLOOR = 0.9
 
+# Amplitude hybrid triggers (Phase 3h)
+_AMPLITUDE_DRIFT_THRESHOLD = 0.3       # > 30% greedy-vs-amplitude mismatch
+_COHERENCE_QUALITY_FLOOR = 0.3         # R_coh < 30% triggers quality
+_COHERENCE_OPPORTUNITY_FLOOR = 0.8     # R_coh > 80% is opportunity
+_THETA_OPPORTUNITY_FLOOR = 0.9         # Θ > 90% is opportunity
+
 
 # ──────────────────────────────────────────────
 # 4. Should Reflect?
@@ -131,6 +137,14 @@ def should_reflect(ev: ScenarioEvaluation) -> ReflectionDecision:
             quality_reasons.append(
                 f"weak semantic coverage ({sem.required_outputs_covered:.0%})")
 
+    # Amplitude hybrid (Phase 3h)
+    if run.amplitude_drift > _AMPLITUDE_DRIFT_THRESHOLD:
+        quality_reasons.append(
+            f"amplitude drift ({run.amplitude_drift:.0%} disagreement)")
+    if run.r_coh_avg > 0 and run.r_coh_avg < _COHERENCE_QUALITY_FLOOR:
+        quality_reasons.append(
+            f"low coherence ratio (R_coh={run.r_coh_avg:.2f})")
+
     if quality_reasons:
         return ReflectionDecision(
             reflect=True,
@@ -150,6 +164,14 @@ def should_reflect(ev: ScenarioEvaluation) -> ReflectionDecision:
     if ev.graph_score >= _OPPORTUNITY_GRAPH_SCORE_FLOOR:
         opportunity_reasons.append(
             f"strong graph ({ev.graph_score:.2f})")
+
+    # Amplitude hybrid (Phase 3h)
+    if run.r_coh_avg >= _COHERENCE_OPPORTUNITY_FLOOR:
+        opportunity_reasons.append(
+            f"high coherence (R_coh={run.r_coh_avg:.2f})")
+    if run.theta_consistency >= _THETA_OPPORTUNITY_FLOOR and run.r_coh_avg > 0:
+        opportunity_reasons.append(
+            f"strong phase alignment (Θ={run.theta_consistency:.2f})")
 
     if opportunity_reasons:
         return ReflectionDecision(
@@ -218,6 +240,13 @@ def _reflect_failure(ev: ScenarioEvaluation) -> ReflectionReport:
             evidence.append(f"missing: {', '.join(sem.missing_outputs)}")
         actions.append("Check scenario packet required_outputs alignment with graph states")
 
+    # Amplitude coherence collapse (Phase 3h)
+    if run.r_coh_avg > 0 and run.r_coh_min < 0.1:
+        patterns.append(f"Coherence collapse detected (R_coh_min={run.r_coh_min:.3f})")
+        evidence.append(f"r_coh_avg={run.r_coh_avg:.3f}, r_coh_min={run.r_coh_min:.3f}")
+        layers.append("controller")
+        actions.append("Investigate destructive phase cancellation in graph topology")
+
     # Deduplicate layers
     layers = list(dict.fromkeys(layers))
 
@@ -279,6 +308,18 @@ def _reflect_quality(ev: ScenarioEvaluation) -> ReflectionReport:
             layers.append("semantic")
             actions.append("Review LLM outputs for unsupported claims")
 
+    # Amplitude hybrid (Phase 3h)
+    if run.amplitude_drift > _AMPLITUDE_DRIFT_THRESHOLD:
+        patterns.append(f"Amplitude drift: {run.amplitude_drift:.0%} greedy-vs-amplitude disagreement")
+        evidence.append(f"amplitude_drift={run.amplitude_drift:.2f}, overlay_agree_rate={run.overlay_agree_rate:.2f}")
+        layers.append("controller")
+        actions.append("Review penalized tension weights — amplitude suggests alternative pathways")
+    if run.r_coh_avg > 0 and run.r_coh_avg < _COHERENCE_QUALITY_FLOOR:
+        patterns.append(f"Low coherence ratio (R_coh_avg={run.r_coh_avg:.2f})")
+        evidence.append(f"r_coh_min={run.r_coh_min:.3f}, r_coh_max={run.r_coh_max:.3f}")
+        layers.append("graph_design")
+        actions.append("Graph phases cause cancellation — consider simplifying parallel branches")
+
     layers = list(dict.fromkeys(layers))
 
     return ReflectionReport(
@@ -328,6 +369,18 @@ def _reflect_opportunity(ev: ScenarioEvaluation) -> ReflectionReport:
         if sem.grounding_warnings == 0 and sem.uncertainty_marks > 0:
             patterns.append("Good epistemic discipline (uncertainty marked, no unsupported claims)")
             preservations.append("LLM exhibited appropriate epistemic caution")
+
+    # Amplitude hybrid (Phase 3h)
+    if run.r_coh_avg >= _COHERENCE_OPPORTUNITY_FLOOR:
+        patterns.append(f"High coherence ratio (R_coh_avg={run.r_coh_avg:.2f})")
+        evidence.append(f"r_coh_avg={run.r_coh_avg:.2f}, r_coh_min={run.r_coh_min:.2f}")
+        preservations.append("Graph phase structure supports constructive interference — preserve topology")
+    if run.theta_consistency >= _THETA_OPPORTUNITY_FLOOR and run.r_coh_avg > 0:
+        patterns.append(f"Strong phase alignment (Θ={run.theta_consistency:.2f})")
+        preservations.append("Path phases are well-aligned — graph has coherent forward flow")
+    if run.amplitude_drift == 0.0 and run.overlay_count > 0:
+        patterns.append("Perfect greedy-amplitude agreement")
+        preservations.append("Deterministic controller and amplitude view fully agree — ideal structure")
 
     layers = list(dict.fromkeys(layers))
 
@@ -407,6 +460,14 @@ def _build_evidence_block(ev: ScenarioEvaluation) -> str:
     lines.append(f"  Avg Tension: {run.avg_tension:.4f}")
     if run.warnings:
         lines.append(f"  Warnings: {'; '.join(run.warnings)}")
+
+    # Amplitude hybrid metrics (Phase 3h)
+    if run.r_coh_avg > 0 or run.amplitude_drift > 0:
+        lines.append("")
+        lines.append("Amplitude Hybrid Metrics:")
+        lines.append(f"  R_coh (avg/min/max): {run.r_coh_avg:.3f} / {run.r_coh_min:.3f} / {run.r_coh_max:.3f}")
+        lines.append(f"  Θ Consistency: {run.theta_consistency:.3f}")
+        lines.append(f"  Amplitude Drift: {run.amplitude_drift:.2f}")
 
     if ev.semantic_evaluation:
         sem = ev.semantic_evaluation

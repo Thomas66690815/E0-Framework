@@ -362,6 +362,31 @@ Uniqueness verified:
 
 ---
 
+### C18 — Reflection layer incorporates amplitude-hybrid metrics
+
+**Claim**  
+The reflection layer triggers on amplitude-derived metrics (R_coh, Θ-consistency, amplitude drift) and produces structured observations, layer attributions, and recommendations based on coherence anomalies.
+
+**Evidence**  
+- `e0_controller/test_reflection_hybrid.py` — 42 tests across 12 classes (H1–H12)
+- `e0_controller/evaluation.py` — RunEvaluation extended with r_coh_avg/min/max, theta_consistency, amplitude_drift
+- `e0_controller/reflection.py` — should_reflect() extended with amplitude quality/opportunity triggers
+
+**Result**  
+- RunEvaluation carries 5 amplitude fields (r_coh_avg, r_coh_min, r_coh_max, theta_consistency, amplitude_drift)
+- evaluate_run() / evaluate_scenario() accept, round, and store all fields
+- Warnings fire on low R_coh (< 0.3) and high drift (> 30%)
+- should_reflect() triggers quality on drift > 0.3 or R_coh < 0.3
+- should_reflect() triggers opportunity on R_coh > 0.8 or Θ > 0.9
+- Rule-based reflection (_reflect_failure/quality/opportunity) surfaces amplitude patterns
+- Evidence block includes amplitude section for LLM reflection
+- No false triggers when amplitude data is absent (R_coh=0)
+
+**Status**  
+✅ Confirmed
+
+---
+
 ## 4. Test-file → claim map
 
 | Test file | Primary claims covered |
@@ -380,6 +405,7 @@ Uniqueness verified:
 | `test_graph_validation.py` | graph-quality support layer |
 | `test_evaluation.py` | evaluation/rating support layer |
 | `test_reflection.py` | reflection support layer |
+| `test_reflection_hybrid.py` | C18 |
 | `test_spinor.py` | C15 |
 | `test_resonator.py` | C16 |
 | `test_omega_uniqueness.py` | C14 |

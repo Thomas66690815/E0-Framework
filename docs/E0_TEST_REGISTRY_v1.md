@@ -1,7 +1,7 @@
 # E₀ Test Registry v1
 
 > Central reference for all tests in the E₀ Framework.
-> **Last verified:** 2026-03-25 — **752 tests** (731 unittest + 21 standalone mini-domain + 1 pre-existing error)
+> **Last verified:** 2026-03-25 — **794 tests** (773 unittest + 21 standalone mini-domain + 1 pre-existing error)
 
 ---
 
@@ -30,7 +30,8 @@
 | 19 | `test_omega_uniqueness.py` | 27 | unittest | ω uniqueness, 5 alternatives falsified | ✅ GREEN |
 | 20 | `test_historization_gordian.py` | 36 | unittest | Historization × Gordian interaction | ✅ GREEN |
 | 21 | `test_born_regime.py` | 44 | unittest | Born regime B1-B5, uniqueness U1-U3 | ✅ GREEN |
-| 22 | `test_minidomain.py` | 21 | standalone | Core mechanics, historization, K11/K12 | ✅ GREEN |
+| 22 | `test_reflection_hybrid.py` | 42 | unittest | Reflection hybrid metrics R_coh, Θ, drift | ✅ GREEN |
+| 23 | `test_minidomain.py` | 21 | standalone | Core mechanics, historization, K11/K12 | ✅ GREEN |
 
 ---
 
