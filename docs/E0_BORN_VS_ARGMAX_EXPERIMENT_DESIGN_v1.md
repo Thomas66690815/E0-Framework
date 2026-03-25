@@ -1,8 +1,13 @@
 # E₀ — Argmax vs Born Sampling Experiment Design
 
-**Status:** Experimental Protocol  
+**Status:** Experimental Protocol — **Executed (Path H, commit `b3ac2c3`)**  
 **Date:** 2026-03-25  
 **Purpose:** Empirically evaluate deterministic vs stochastic realization regimes
+
+> **Note (2026-03-25):** This experiment has been implemented and executed as
+> Path H. Results: 27 tests in `test_born_sampling.py`, Claim C22 in
+> `E0_TEST_REGISTRY_v2.md`. Key finding: geometry choice dominates over
+> decision rule choice. See ADR-0007-v1 for the updated architecture decision.
 
 ---
 

@@ -1,10 +1,15 @@
 # E₀ Controller Born-Regime Check
 ## Does the current controller instantiate the Born-Criterion Regime?
 
-**Status:** Structural audit note  
-**Date:** 2026-03-23  
+**Status:** Structural audit note — **Updated 2026-03-25**  
+**Date:** 2026-03-23 (original), 2026-03-25 (update)  
 **Language:** English  
 **Purpose:** Check the current operational controller against the previously derived amplitude regime criteria before any direct implementation changes.
+
+> **Update (2026-03-25):** The original audit (§1–§12) was written before the
+> amplitude overlay existed. Since then, Paths D1–H have implemented all three
+> options proposed in §10. See **§13 (Post-Implementation Re-Audit)** at the
+> end of this document for the current assessment.
 
 ---
 
@@ -272,4 +277,86 @@ That would reveal whether the amplitude regime merely reformulates the existing 
 
 ---
 
-## End of Note
+## End of Original Audit (2026-03-23)
+
+---
+
+## 13. Post-Implementation Re-Audit (2026-03-25)
+
+Since the original audit, the E₀ controller has been extended through
+Paths D1–H. All three options from §10 are now implemented:
+
+| Option | §10 Proposal | Implementation | Mode |
+|--------|-------------|----------------|------|
+| 1 | Deterministic amplitude controller | `AMPLITUDE_ON_DISAGREE` | Default |
+| 2 | Born-regime controller | `BORN_SAMPLING` | Opt-in |
+| 3 | Hybrid semantic split | Confidence gating + geometry selection | Configurable |
+
+### 13.1 Re-evaluation of the four criteria
+
+**Criterion 1 — Bounded alternatives:** ✅ Still satisfied.
+The amplitude overlay enumerates paths within a bounded horizon
+and computes I(a) for each admissible action.
+
+**Criterion 2 — Exclusive realization:** ✅ Still satisfied.
+Both argmax and Born sampling select exactly one action per step.
+
+**Criterion 3 — Canonical support scalar:** ✅ **Now satisfied.**
+The amplitude overlay computes:
+```
+Ψ(a) = Σ_p exp(−S(p)) · exp(iΘ(p))
+I(a) = |Ψ(a)|²
+P(a) = I(a) / Σ I
+```
+This is exactly the canonical support scalar that was missing in v1.
+Implemented in `amplitude_overlay.py`, used by both AMPLITUDE_ON_DISAGREE
+and BORN_SAMPLING modes.
+
+**Criterion 4 — No overriding distortion rule:** ⚠️ Partially satisfied.
+The revisit-penalty and escalation heuristics remain as operational overlays
+in the greedy layer. However, BORN_SAMPLING mode delegates directly to
+`_born_sample()` which uses only the amplitude-derived P(a) — no distortion.
+Escalated steps fall back to greedy (operational necessity, not distortion
+of the Born rule itself).
+
+### 13.2 Updated structural classification
+
+The controller is now best described as:
+
+> **Multi-regime: deterministic structural control (default) with
+>  opt-in Born realization (BORN_SAMPLING).**
+
+The original audit's conclusion — "right geometry, wrong support semantics" —
+has been resolved. The support semantics are now amplitude-derived.
+
+### 13.3 What §9 identified as missing — status
+
+| Gap from §9 | Status |
+|-------------|--------|
+| 9.1 Path aggregation | ✅ Implemented — bounded-horizon Ψ(a) aggregation in `amplitude_overlay.py` |
+| 9.2 Orientational residue (Θ) | ✅ Implemented — phase Θ(p) computed per path, interference is real |
+| 9.3 Support-based choice rule | ✅ Implemented — argmax(I) in AMPLITUDE_ON_DISAGREE, sample(P) in BORN_SAMPLING |
+
+### 13.4 Key empirical finding (Path H)
+
+> Geometry choice (simple vs goal_reaching) has more impact on controller
+> success than decision rule choice (argmax vs sampling).
+
+With `goal_reaching` geometry, argmax dominates. With `simple` geometry
+on Gordian, both modes struggle because greedy and amplitude agree on
+the trap action. This validates the original audit's emphasis on
+structural geometry as the foundation.
+
+### 13.5 Conclusion
+
+The Born-Criterion Regime is now **operationally instantiated** in the
+E₀ controller as `HybridMode.BORN_SAMPLING`. All four criteria are
+satisfied (Criterion 4 with the caveat that escalated steps bypass
+the Born rule for operational safety).
+
+The original audit's prediction — that the controller was "the right place
+to test the derivation" — has been confirmed.
+
+---
+
+_End of document._

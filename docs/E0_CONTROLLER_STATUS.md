@@ -1,6 +1,6 @@
 # E₀ Controller — Status, Lücken, Lösungswege
 
-**Stand:** 2026-03-20 (v1.0 — Phase 3a: LLM-Adapter)
+**Stand:** 2026-03-25 (v2.0 — Phase 5h: Born-Sampling Comparison)
 **Kontext:** Neuansatz nach 3 Wochen Pause. Multi-Agent-Orchestrierung (Keimzelle) verworfen.
 **Neuer Ansatz:** Einzelner deterministischer E₀ Controller als Reasoning-Engine.
 
@@ -17,7 +17,18 @@
 | **Phase 2b-fix** — K11+K12 Fixes (Admissibility+Escalation) | ✅ Abgeschlossen (109/109 Tests) | `0178e67` |
 | **Phase 2c** — E₀ MemOS v0.1 (Persistenz-Substrat) | ✅ Abgeschlossen (126/126 Tests) | `6803466` |
 | **Phase 3a** — LLM-Adapter (OpenAI API) | ✅ Abgeschlossen (148/148 Tests) | — |
-| **Phase 4** — Spin-1/2 offene Punkte | ⬜ Nicht begonnen (parallel) | — |
+| **Phase 4a** — Spinor SU(2) Layer | ✅ Abgeschlossen (52 Tests) | — |
+| **Phase 4b** — Resonator Kernel | ✅ Abgeschlossen (48 Tests) | — |
+| **Phase 5a** — Omega Uniqueness (Path A) | ✅ Abgeschlossen (27 Tests, C14) | `1d2a11d` |
+| **Phase 5b** — Historization × Gordian (Path B) | ✅ Abgeschlossen (36 Tests, C8/C9) | `201bcef` |
+| **Phase 5c** — Reflection Hybrid Metrics (Path C) | ✅ Abgeschlossen (42 Tests, C18) | `a0068a8` |
+| **Phase 5d** — Born-Regime Axioms (Path D1) | ✅ Abgeschlossen (44 Tests, C17) | `5ce68d2` |
+| **Phase 5e** — Dynamic Horizons (Path E) | ✅ Abgeschlossen (45 Tests, C19) | `81d8580` |
+| **Phase 5f** — Confidence-Weighted Override (Path F) | ✅ Abgeschlossen (31 Tests, C20) | `c72bfff` |
+| **Phase 5g** — MemOS Geometry Persistence (Path G) | ✅ Abgeschlossen (34 Tests, C21) | `cd64208` |
+| **Phase 5h** — Born-Sampling Comparison (Path H) | ✅ Abgeschlossen (27 Tests, C22) | `b3ac2c3` |
+
+**Gesamt:** 936 Tests (915 unittest + 21 standalone), 22 Claims (C1–C22), 3 HybridModes.
 
 ---
 

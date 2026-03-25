@@ -1,6 +1,6 @@
 # E₀ — Mathematics ↔ Implementation Mapping v1.0
 
-**Status:** Draft (post Phase 3a)  
+**Status:** Draft (post Phase 5h / Path H)  
 **Purpose:** Exact correspondence between formal E₀ mathematics and current implementation  
 **Scope:** `e0_controller/` package  
 **Language:** English
@@ -793,20 +793,22 @@ The current implementation realizes the following derived chain:
 with controller-level realization through:
 
 ```text
-argmin S_eff
+GREEDY_ONLY:           argmin S_eff
+AMPLITUDE_ON_DISAGREE: argmax I (override on disagree)
+BORN_SAMPLING:         sample P ∝ I
 ```
 
 and persistence/semantic extension through:
 
 ```text
-MemOS + LLM Adapter
+MemOS (geometry + confidence + snapshots) + LLM Adapter
 ```
 
 ---
 
 ## 28. Scope Note
 
-This document maps the current runtime and mathematical structure as implemented after Phase 3a.
+This document maps the current runtime and mathematical structure as implemented after Phase 5h (Path H).
 
 It does **not** claim:
 
@@ -816,6 +818,181 @@ It does **not** claim:
 - completion of the spin-1/2 derivation program.
 
 It is an exact mapping document for the current implemented system.
+
+---
+
+## 29. Amplitude Overlay — Bounded Path-Family Support
+
+### Mathematics
+
+For each admissible action `a` from state `x`, within bounded horizon `h`:
+
+```text
+Paths(a, h) = { p : x → a → ... | len(p) ≤ h }
+I(a) = | Σ_{p ∈ Paths(a,h)} Ψ(p) |²
+P(a) = I(a) / Σ_a' I(a')
+```
+
+### Implementation
+
+Implemented via:
+
+```python
+amplitude_overlay.analyze_controller_state(controller, state, goal_states, geometry, horizon)
+```
+
+Returns `OverlayReport` containing:
+
+- `action_infos[].intensity` — I(a)
+- `action_infos[].probability` — P(a)
+- `action_infos[].psi_total` — Ψ(a) (complex)
+- `action_infos[].override_confidence` — 1 − 2·min(P, 1−P)
+
+Implementation source:
+
+- `amplitude_overlay.py`
+
+---
+
+## 30. Summation Geometry
+
+### Mathematics
+
+Four geometry variants determine which paths contribute to Ψ(a):
+
+| Geometry | Filter |
+|----------|--------|
+| `simple` | All paths up to horizon h |
+| `prefix` | All prefixes of all paths |
+| `first_arrival` | Only first-visit paths to each intermediate state |
+| `goal_reaching` | Only paths that terminate at a goal state |
+
+### Implementation
+
+Geometry is a string parameter passed to `analyze_controller_state()`.
+Path filtering happens inside the overlay computation.
+
+Persisted in `RuntimeSnapshot.controller_params["hybrid_geometry"]` (Path G).
+
+Implementation sources:
+
+- `amplitude_overlay.py`
+- `memory_os.py`
+
+---
+
+## 31. HybridMode — Three Decision Regimes
+
+### Mathematics
+
+Three selection rules over the same amplitude overlay:
+
+```text
+GREEDY_ONLY:            a* = argmin_a S(a)          (no overlay)
+AMPLITUDE_ON_DISAGREE:  a* = argmax_a I(a)          (if ≠ greedy)
+BORN_SAMPLING:          a* ~ P(a) = I(a) / Σ I     (sample)
+```
+
+### Implementation
+
+```python
+class HybridMode(str, Enum):
+    GREEDY_ONLY = "greedy_only"
+    AMPLITUDE_ON_DISAGREE = "amplitude_on_disagree"
+    BORN_SAMPLING = "born_sampling"
+```
+
+Mode selection in `select_hybrid()`:
+
+- `BORN_SAMPLING` → delegates to `_born_sample(overlay, escalated, esc_type)`
+- `AMPLITUDE_ON_DISAGREE` → AGREE/DISAGREE arbitration with optional confidence gating
+- `GREEDY_ONLY` → no overlay computation
+
+Implementation source:
+
+- `controller.py`
+
+---
+
+## 32. Born Sampling — _born_sample()
+
+### Mathematics
+
+```text
+a ~ P(a) = I(a) / Σ I(a')
+```
+
+where sampling uses the intensity-derived probability distribution.
+
+### Implementation
+
+```python
+def _born_sample(self, overlay, escalated, esc_type):
+    actions = [ai.action for ai in overlay.action_infos]
+    probs = [ai.probability for ai in overlay.action_infos]
+    chosen = random.choices(actions, weights=probs, k=1)[0]
+    return (chosen, escalated, esc_type, overlay, True)
+```
+
+Properties:
+
+- Always marks `overridden = True`
+- Escalated steps bypass sampling (fall back to greedy)
+- Uses Python's `random.choices` with `weights=P`
+
+Implementation source:
+
+- `controller.py` → `_born_sample()`
+
+---
+
+## 33. Confidence Gating (Path F)
+
+### Mathematics
+
+```text
+override_confidence = 1 − 2 · min(P_greedy, 1 − P_greedy)
+```
+
+Override is applied only if:
+
+```text
+override_confidence ≥ confidence_threshold
+```
+
+### Implementation
+
+- `OverlayReport.override_confidence` — computed in amplitude overlay
+- `E0Controller.confidence_threshold` — configurable parameter (default 0.0)
+- Gating check in `select_hybrid()` DISAGREE branch
+- `StepResult.override_confidence` — recorded per step
+- `avg_override_confidence` — aggregated in run metrics
+
+Implementation sources:
+
+- `amplitude_overlay.py`
+- `controller.py`
+
+---
+
+## 34. Structural Summary (Updated)
+
+The current implementation realizes:
+
+```text
+Δ → R₀ → H → δ_H → R_eff → S → C → Φ → v_grad / v_rot → ω → Θ → Ψ
+                                                                      ↓
+                                                              Amplitude Overlay
+                                                              I = |ΣΨ|², P = I/ΣI
+                                                                      ↓
+                                                              ┌───────┴───────┐
+                                                              │               │
+                                                           argmax(I)      sample(P)
+                                                           (default)      (opt-in)
+```
+
+with controller-level realization through three modes, persistence through MemOS,
+and semantic extension through the LLM Adapter.
 
 ---
 

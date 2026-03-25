@@ -1,20 +1,21 @@
 # E₀ Hybrid Controller Specification v1
 
 **Status:** Draft (operational)  
-**Date:** 2026-03-24  
+**Date:** 2026-03-25  
 **Purpose:** Define the behavior, guarantees, limits, and metrics of the E₀ hybrid controller.
 
 ---
 
 ## 1. Overview
 
-The E₀ controller operates in two modes:
+The E₀ controller operates in three modes:
 
-- **GREEDY** — selects the action with minimal local structural burden
-- **AMPLITUDE_ON_DISAGREE** — compares greedy choice with amplitude-based path-family support and may override
+- **GREEDY_ONLY** — selects the action with minimal local structural burden
+- **AMPLITUDE_ON_DISAGREE** — compares greedy choice with amplitude-based path-family support and may override (default)
+- **BORN_SAMPLING** — samples from P ∝ I instead of argmax (opt-in, ADR-0007-v1)
 
 The hybrid controller does **not** replace the greedy controller.  
-It augments it with a second evaluation regime.
+It augments it with additional evaluation regimes.
 
 ---
 
@@ -45,8 +46,18 @@ At each decision step:
 
 6. Arbitration:
 
-   - if `a_greedy == a_amp` → select `a_greedy`
-   - if `a_greedy != a_amp` → apply hybrid policy
+   - if mode is `BORN_SAMPLING` → sample from P (see §2.1)
+   - if `a_greedy == a_amp` → select `a_greedy` (AGREE)
+   - if `a_greedy != a_amp` → apply hybrid policy (see §3)
+
+### 2.1 Born sampling sub-pipeline
+
+When `hybrid_mode == BORN_SAMPLING`:
+
+1. Compute overlay as above (same Ψ, I, P)
+2. Sample action: `a = random.choices(actions, weights=P, k=1)[0]`
+3. Mark as overridden (`override = True`)
+4. Escalated steps bypass sampling and fall back to greedy
 
 ---
 
@@ -67,6 +78,18 @@ The hybrid layer must **not override** when:
 - no admissible continuation exists
 - amplitude computation is invalid or incomplete
 
+### Confidence gating (Path F)
+
+Overrides are gated by `override_confidence` from the amplitude overlay:
+
+- if `override_confidence < confidence_threshold` → fall back to greedy
+- default `confidence_threshold = 0.0` (no gating)
+
+`override_confidence` is computed as `1 − 2·min(P, 1−P)` where P is the
+probability of the greedy action. Ranges from 0 (50/50 split) to 1 (dominant action).
+
+This applies to AMPLITUDE_ON_DISAGREE mode. BORN_SAMPLING always samples.
+
 ---
 
 ## 4. Metrics
@@ -77,11 +100,13 @@ The following runtime metrics must be tracked:
 - `hybrid_override_rate`
 - `agreement_rate`
 - `avg_horizon`
+- `avg_override_confidence` (Path F)
 
-Optional (future):
+Born-specific metrics (optional):
 
-- `avg_intensity_gap`
-- `trap_escape_events`
+- `sample_variance` — variance across repeated Born runs
+- `ensemble_success_rate` — fraction of Born trials reaching goal
+- `goal_coverage` — number of distinct goals reached (multi-goal domains)
 
 ---
 
@@ -93,13 +118,16 @@ Currently supported:
 
 - `prefix`
 - `simple` (default)
-- `first_arrival` (experimental)
+- `first_arrival`
+- `goal_reaching` — filters to only goal-reaching paths (Path A/D1)
 
 ### Current status
 
-- `simple` is empirically most stable
+- `simple` is empirically most stable for general use
+- `goal_reaching` is best for trap-escape domains (Gordian)
 - `prefix` overcounts recursive paths
 - `first_arrival` requires further validation
+- Geometry is persisted via MemOS (Path G)
 
 ---
 
@@ -115,9 +143,11 @@ Currently supported:
 
 The hybrid controller:
 
-- preserves deterministic structure (no randomness)
+- preserves deterministic structure in GREEDY_ONLY and AMPLITUDE_ON_DISAGREE modes
+- provides stochastic exploration in BORN_SAMPLING mode
 - can override greedy traps in bounded domains
 - remains stable under historization
+- persists geometry and confidence settings across sessions (MemOS)
 
 ---
 
@@ -128,6 +158,7 @@ The hybrid controller does **not** yet guarantee:
 - global optimality
 - scalability to large branching factors
 - full phase-consistent field derivation
+- that Born sampling outperforms argmax (empirically, argmax dominates with correct geometry)
 
 ---
 
@@ -146,10 +177,14 @@ The hybrid approach would be challenged if:
 The hybrid controller implements:
 
 > local structural minimization + bounded future coherence comparison
+> + optional probabilistic realization (Born sampling)
 
 It is not probabilistic planning.  
 It is not heuristic search.  
-It is a structural decision system with dual evaluation regimes.
+It is a structural decision system with three evaluation regimes.
+
+Key empirical finding (Path H, ADR-0007-v1):
+> Geometry choice dominates over decision rule choice.
 
 ---
 

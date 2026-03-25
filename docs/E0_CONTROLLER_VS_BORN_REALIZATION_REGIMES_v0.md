@@ -1,8 +1,12 @@
 # E₀ — Controller vs Born Realization Regimes
 
-**Status:** Architecture Decision Record (ADR)  
+**Status:** Architecture Decision Record (ADR) — **Superseded by v1**  
 **Date:** 2026-03-25  
-**Decision ID:** ADR-0007  
+**Decision ID:** ADR-0007-v0  
+
+> **Note:** This is the original v0 decision. It was updated to v1 after Path H
+> implemented Born sampling as an opt-in alternative realization mode.
+> See `E0_CONTROLLER_VS_BORN_REALIZATION_REGIMES_v1.md` for the current version.
 
 ---
 
