@@ -134,6 +134,7 @@ However, G5 has a **structural justification** (Born criterion): when the questi
 | **Prefix-inflation artifact** | **Empirical (identified)** | Non-goal prefixes dominate intensity under `simple`, masking interference |
 | **Multi-goal G5 amplitude rescue** | **Empirical (demonstrated)** | Coherent alternative-goal paths rescue actions from single-goal destructive interference; ordering preserved: A1>B1>C1; single-goal regression preserved |
 | **Topology classification (G5 override)** | **Empirical (380-graph scan)** | Override requires ≥2 path families; phase opposition |ΔΘ|>π/2 is strongest predictor; triangle=0%, diamond=37%, gordian=93%; G5 uniquely differs (30.3% exclusive) |
+| **G5 edge case robustness** | **Empirical (5-family stress)** | No saturation (entropy↓ as |G|↑), generalist wins in conflict (P=0.665), rescue from δ=0.01 (S=Δ·R tiny → |Ψ|≈1), unreachable goals ≡ zero effect, selectivity sharpens |
 
 ---
 

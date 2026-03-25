@@ -173,6 +173,7 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 | Hybrid controller mode | **Active** (`hybrid_geometry` param) | `e0_controller/controller.py` |
 | Interference routing | **Demonstrated** (Gordian Trap) | `e0_controller/test_gordian_trap.py` |
 | Topology classification | **Demonstrated** (380-graph scan, 23 tests) | `e0_controller/test_topology_classification.py` |
+| G5 edge case suite | **Stressed** (5 families, 28 tests) | `e0_controller/test_g5_edge_cases.py` |
 | MemOS (hybrid-aware persistence) | **Active** | `e0_controller/memory_os.py` |
 | LLM Adapter (A3 Hybrid) | **Active** — live API confirmed | `e0_controller/llm_adapter.py` |
 | LLM demo hybrid integration | **Active** (4 demos) | `e0_controller/demo_*.py` |
@@ -187,7 +188,7 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 | Multi-agent network + experiments | **Archived** | `_archive/` |
 | Core reference implementation | **Archived** | `_archive/e0_core/` |
 
-**Tests:** 522 total (501 unittest + 21 mini-domain), all green except 1 pre-existing import issue.
+**Tests:** 550 total (529 unittest + 21 mini-domain), all green except 1 pre-existing import issue.
 
 ---
 

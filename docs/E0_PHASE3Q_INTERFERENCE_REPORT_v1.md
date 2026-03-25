@@ -371,7 +371,16 @@ Full test suite status (464 tests total):
 
    Three structural stability mechanisms identified: (a) untraversed edges remain at $R_0$ (traces=0, decay preserves 0), (b) $\delta_{\max}$ clipping prevents unbounded drift, (c) even worst-case historization keeps $\cos(\Delta\Theta) < 0$, preserving destructive interference on the decoy family. **Verdict: interference routing is stable under historization.**
 
-3. **Spinor extension.** Documents `E0_INTERNAL_DIFFERENCE_TO_SPINOR_BRIDGE_v0.md` and `E0_THETA_TO_SU2_GENERATOR_v0.md` propose extending $\Theta$ from a scalar phase to a $\text{SU}(2)$ generator. This would replace $e^{i\Theta}$ with $e^{-iG/2}$ acting on $\mathbb{C}^2$ carriers, enabling richer interference structures (including 720° periodicity and entanglement-like effects). The Gordian Trap provides a concrete test case for such an extension.
+3. **G5 edge case stress test — RESOLVED.** Five-family stress suite (28 formal tests in `test_g5_edge_cases.py`, 7 classes). Findings:
+   - **Family A (Goal-Count):** Winner stable across |G|=1..5. Selectivity peaks at |G|=2–3 (P=0.901), no saturation collapse at |G|=5 (P=0.527). Entropy bounded.
+   - **Family B (Irrelevant Goals):** Unreachable goals produce zero effect (exact probability preservation). "Weak"/"noisy" goals with coherent reachable paths shift the winner — this is CORRECT (they are not truly irrelevant if structurally reachable).
+   - **Family C (Competing Goals):** Single-goal specialists (A→G_ALPHA, B→G_BETA) each dominate their goal. Multi-goal: generalist C (reaching both) wins at P=0.665. Specialists symmetric at P≈0.168.
+   - **Family D (Rescue Threshold):** Rescue works from δ=0.01 (!). Key insight: low-Δ paths have HIGH amplitude (S=Δ·R tiny → |Ψ|≈1). Crossover A→B between δ=0.8–1.5.
+   - **Family E (Ranking Sharpness):** Entropy DECREASES from 1.585→1.103 as |G| grows 1→8. Top-gap INCREASES from 0.010→0.555. Selectivity IMPROVES — opposite of feared F1 saturation.
+
+   **Verdict: No failure signatures (F1–F4) triggered. G5 is robust under goal-set expansion, irrelevant injection, conflict, parametric rescue, and ranking stress.**
+
+4. **Spinor extension.** Documents `E0_INTERNAL_DIFFERENCE_TO_SPINOR_BRIDGE_v0.md` and `E0_THETA_TO_SU2_GENERATOR_v0.md` propose extending $\Theta$ from a scalar phase to a $\text{SU}(2)$ generator. This would replace $e^{i\Theta}$ with $e^{-iG/2}$ acting on $\mathbb{C}^2$ carriers, enabling richer interference structures (including 720° periodicity and entanglement-like effects). The Gordian Trap provides a concrete test case for such an extension.
 
 4. **Formal topology classification — RESOLVED.** Systematic scan of 380 graphs (180 structured + 200 random) under all 4 geometries. 23 formal tests in `test_topology_classification.py` (8 classes). Key findings:
    - **G5 overrides greedy in 37.1% of all graphs** — interference routing is not rare.
@@ -401,12 +410,14 @@ Full test suite status (464 tests total):
 | `explore_multigoal.py` | Multi-goal discovery exploration (**new**) | +180 |
 | `explore_topology_scan.py` | Topology classification scan — 380 graphs, 4 geometries (**new**) | +420 |
 | `test_topology_classification.py` | 23 formal topology tests across 8 classes (**new**) | +330 |
+| `explore_g5_edge_cases.py` | G5 edge case exploration — 5 families (**new**) | +380 |
+| `test_g5_edge_cases.py` | 28 formal G5 edge case tests across 7 classes (**new**) | +360 |
 | `test_waypoint.py` | Regression fix for G5 | +2 |
 | `explore_gordian.py` | Discovery exploration script (**new**) | +250 |
 | `README.md` | Updated to v0.10.11 | +30 |
 | `e0_core/` → `_archive/e0_core/` | Legacy code archived | 0 (move) |
 
-Total: **+2423 insertions**, 22 files changed.
+Total: **+3163 insertions**, 24 files changed.
 
 ---
 
