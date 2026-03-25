@@ -1,7 +1,7 @@
 # E₀ Test Registry v1
 
 > Central reference for all tests in the E₀ Framework.
-> **Last verified:** 2026-03-25 — **677 tests** (656 unittest + 21 standalone mini-domain + 1 pre-existing error)
+> **Last verified:** 2026-03-25 — **708 tests** (687 unittest + 21 standalone mini-domain + 1 pre-existing error)
 
 ---
 
@@ -28,7 +28,8 @@
 | 17 | `test_greedy_trap.py` | — | unittest | Greedy-trap walkthrough | ❌ IMPORT ERROR |
 | 18 | `test_resonator.py` | 48 | unittest | Resonator kernel, R1-R4, classification | ✅ GREEN |
 | 19 | `test_omega_uniqueness.py` | 27 | unittest | ω uniqueness, 5 alternatives falsified | ✅ GREEN |
-| 20 | `test_minidomain.py` | 21 | standalone | Core mechanics, historization, K11/K12 | ✅ GREEN |
+| 20 | `test_historization_gordian.py` | 36 | unittest | Historization × Gordian interaction | ✅ GREEN |
+| 21 | `test_minidomain.py` | 21 | standalone | Core mechanics, historization, K11/K12 | ✅ GREEN |
 
 ---
 
@@ -284,7 +285,21 @@
 
 ---
 
-### 20. test_greedy_trap.py — IMPORT ERROR ❌
+### 20. test_historization_gordian.py — 36 tests
+
+**What it tests:** Formal verification of historization × Gordian trap interaction across 10 test classes: parametric resilience (δ_max, ρ, λ_s, λ_f), FAILURE outcomes (R_eff raise, v reduction), K2 lazy decay recovery (trace decay, R_eff recovery, ΔΘ recovery), clipping saturation (δ_H bounds, R_eff floor), alternating adversarial (A-short/A-loop interleave), recovery from adversarial, holonomy formula invariance under historization (holds for success, failure, mixed, loop), multi-goal × historization, extreme stress (100 A-short, 50 alternating), hybrid multi-cycle (greedy pollution, alternating greedy/hybrid).
+
+**Key findings:**
+- Interference routing (B1 wins) survives under all tested parameter regimes
+- cos(ΔΘ) remains destructive (< 0) even under 100+ adversarial passes
+- Holonomy formula ΔΘ = ½[Σv_loop − Σv_short] holds precisely after all historization patterns
+- K2 lazy decay recovers R_eff and ΔΘ toward pristine values
+- δ_H saturates at ±δ_max, R_eff never reaches zero (structural floor)
+- Hybrid controller overrides correctly even after greedy pollution
+
+---
+
+### 21. test_greedy_trap.py — IMPORT ERROR ❌
 
 **What it tests:** Greedy controller trapped in A↔C loop, hybrid escapes via amplitude override.
 
@@ -292,7 +307,7 @@
 
 ---
 
-### 21. test_minidomain.py — 21 standalone tests
+### 22. test_minidomain.py — 21 standalone tests
 
 **Runner:** `python e0_controller/test_minidomain.py` (not unittest-based)
 
