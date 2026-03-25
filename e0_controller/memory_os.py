@@ -185,6 +185,8 @@ class RuntimeSnapshot:
                 "hybrid_mode": ctrl.hybrid_mode.value,
                 "hybrid_horizon": ctrl.hybrid_horizon,
                 "hybrid_goals": sorted(ctrl.hybrid_goals) if ctrl.hybrid_goals else [],
+                "hybrid_geometry": ctrl.hybrid_geometry,
+                "confidence_threshold": ctrl.confidence_threshold,
             },
         )
 
@@ -372,6 +374,8 @@ class E0MemoryOS:
             hybrid_mode=hybrid_mode,
             hybrid_horizon=int(params.get("hybrid_horizon", 3)),
             hybrid_goals=hybrid_goals,
+            hybrid_geometry=params.get("hybrid_geometry", "simple"),
+            confidence_threshold=params.get("confidence_threshold", 0.0),
         )
 
         # Restore mutable runtime state
@@ -479,6 +483,7 @@ class E0MemoryOS:
             report = analyze_controller_state(
                 controller, current_state,
                 horizon_edges=controller.hybrid_horizon,
+                geometry=controller.hybrid_geometry,
                 goals=controller.hybrid_goals,
             )
         except (ValueError, KeyError):

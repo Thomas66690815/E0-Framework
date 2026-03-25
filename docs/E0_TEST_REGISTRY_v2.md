@@ -441,6 +441,29 @@ Amplitude overlay override can be gated by a confidence threshold (P_best − P_
 
 ---
 
+### C21 — MemOS geometry persistence round-trip
+
+**Claim**  
+MemOS correctly persists, restores, and summarizes the amplitude overlay geometry (hybrid_geometry) and confidence threshold (confidence_threshold) across save/load cycles. All four geometry types survive JSON round-trip. Old sessions without the geometry field default gracefully to "simple".
+
+**Evidence**  
+- `e0_controller/test_memos_geometry.py` — 34 tests across 10 classes (G1–G10)
+- `e0_controller/memory_os.py` — hybrid_geometry + confidence_threshold in RuntimeSnapshot, restore_controller, and _build_overlay_summary
+
+**Result**  
+- RuntimeSnapshot.controller_params now includes hybrid_geometry and confidence_threshold
+- All 4 geometries (prefix, simple, first_arrival, goal_reaching) survive save→load→restore
+- restore_controller passes hybrid_geometry and confidence_threshold to E0Controller.__init__
+- _build_overlay_summary passes controller.hybrid_geometry to analyze_controller_state
+- Old persisted data (no geometry/threshold fields) defaults to "simple" / 0.0 gracefully
+- Geometry stable across two save/restore cycles; independent across sessions
+- Diamond + Gordian domain integration verified with restored controllers
+
+**Status**  
+✅ Confirmed
+
+---
+
 ## 4. Test-file → claim map
 
 | Test file | Primary claims covered |
@@ -462,6 +485,7 @@ Amplitude overlay override can be gated by a confidence threshold (P_best − P_
 | `test_reflection_hybrid.py` | C18 |
 | `test_dynamic_horizon.py` | C19 |
 | `test_confidence_override.py` | C20 |
+| `test_memos_geometry.py` | C21 |
 | `test_spinor.py` | C15 |
 | `test_resonator.py` | C16 |
 | `test_omega_uniqueness.py` | C14 |

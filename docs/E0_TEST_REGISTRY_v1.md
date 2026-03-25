@@ -1,7 +1,7 @@
 # E₀ Test Registry v1
 
 > Central reference for all tests in the E₀ Framework.
-> **Last verified:** 2026-03-25 — **875 tests** (854 unittest + 21 standalone mini-domain + 1 pre-existing error)
+> **Last verified:** 2026-03-25 — **909 tests** (888 unittest + 21 standalone mini-domain + 1 pre-existing error)
 
 ---
 
@@ -33,7 +33,8 @@
 | 22 | `test_reflection_hybrid.py` | 42 | unittest | Reflection hybrid metrics R_coh, Θ, drift | ✅ GREEN |
 | 23 | `test_dynamic_horizon.py` | 45 | unittest | Dynamic horizons, topology_adaptive, capped | ✅ GREEN |
 | 24 | `test_confidence_override.py` | 31 | unittest | Confidence-weighted override gating F1-F12 | ✅ GREEN |
-| 25 | `test_minidomain.py` | 21 | standalone | Core mechanics, historization, K11/K12 | ✅ GREEN |
+| 25 | `test_memos_geometry.py` | 34 | unittest | MemOS geometry persistence G1-G10 | ✅ GREEN |
+| 26 | `test_minidomain.py` | 21 | standalone | Core mechanics, historization, K11/K12 | ✅ GREEN |
 
 ---
 
@@ -324,7 +325,21 @@
 
 ---
 
-### 24. test_minidomain.py — 21 standalone tests
+### 24. test_memos_geometry.py — 34 tests
+
+**What it tests:** MemOS persistence of hybrid_geometry and confidence_threshold across save/load/restore cycles. All 4 geometry types (prefix, simple, first_arrival, goal_reaching) round-trip correctly. Overlay summary uses correct geometry from controller. Backward compatibility (old sessions without geometry field default to "simple"). Multi-run geometry stability. Diamond and Gordian domain integration.
+
+**Key findings:**
+- hybrid_geometry + confidence_threshold now explicitly stored in RuntimeSnapshot.controller_params
+- All 4 geometries survive JSON round-trip (save → load → restore)
+- summarize_for_llm overlay now passes controller.hybrid_geometry to analyze_controller_state
+- Old persisted data (no geometry field) gracefully defaults to "simple" / 0.0
+- Geometry stays stable across two save/restore cycles
+- Different sessions maintain independent geometry configurations
+
+---
+
+### 25. test_minidomain.py — 21 standalone tests
 
 **Runner:** `python e0_controller/test_minidomain.py` (not unittest-based)
 
@@ -344,7 +359,7 @@
 ## How to Run
 
 ```bash
-# Full unittest suite (854 tests + 1 error)
+# Full unittest suite (888 tests + 1 error)
 python -m unittest discover -s e0_controller -p "test_*.py" -v
 
 # Standalone mini-domain (21 tests)
