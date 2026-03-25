@@ -334,6 +334,32 @@ Closed interference structures plus historization can form self-sustaining local
 **Status**  
 ✅ Confirmed
 
+### C17 — Born-regime axioms are satisfied on E₀ domains
+
+**Claim**  
+The 5 Born-Criterion axioms (bounded alternatives, mutual exclusivity, representation invariance, monotonicity, coarse-graining consistency) hold on concrete E₀ domains, and P(z) = I(z)/ΣI is the unique minimal realization rule.
+
+**Evidence**  
+- `e0_controller/test_born_regime.py` — 44 tests across 10 classes
+- `docs/E0_BORN_CRITERION_ANALYSIS_v1.md` — theoretical derivation of 5 axioms
+- `docs/E0_INTENSITY_AND_BORN_PROGRAM_v1.md` — structural analysis of |Ψ|²
+
+**Result**  
+All 5 axioms verified numerically on 5 domains (MiniDomain, Diamond, Gordian, Multi-goal, Current-loop):
+- B1: Finite bounded Ω confirmed (2–3 actions per domain)
+- B2: Unique amplitude winner on every domain (no ties)
+- B3: I = |Ψ|² phase-invariant to 10 decimals under 5 different global rotations
+- B4: P ordering matches I ordering on all domains and geometries
+- B5: Partition additivity ΣP = 1.0 ± 1e-10 on all domains
+
+Uniqueness verified:
+- U1: √I, I², log(1+I) distortions all change the distribution (not faithful)
+- U2: |Ψ| shows weaker interference suppression than |Ψ|² (squared norm privileged)
+- U3: ΣP = 1.0 across all 4 geometries (prefix, simple, first_arrival, goal_reaching)
+
+**Status**  
+✅ Confirmed (conditional: inside bounded-exclusive regime)
+
 ---
 
 ## 4. Test-file → claim map
@@ -358,6 +384,7 @@ Closed interference structures plus historization can form self-sustaining local
 | `test_resonator.py` | C16 |
 | `test_omega_uniqueness.py` | C14 |
 | `test_historization_gordian.py` | C8, C9 |
+| `test_born_regime.py` | C17 |
 | `test_minidomain.py` | base mechanics, historization, K11/K12 |
 
 ---
