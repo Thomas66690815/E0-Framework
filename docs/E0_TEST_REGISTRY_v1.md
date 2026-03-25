@@ -1,7 +1,7 @@
 # E₀ Test Registry v1
 
 > Central reference for all tests in the E₀ Framework.
-> **Last verified:** 2026-03-25 — **623 tests** (602 unittest + 21 standalone mini-domain + 1 pre-existing error)
+> **Last verified:** 2026-03-25 — **677 tests** (656 unittest + 21 standalone mini-domain + 1 pre-existing error)
 
 ---
 
@@ -26,7 +26,9 @@
 | 15 | `test_scaling.py` | 14 | unittest | O(n) complexity, n ≤ 500 | ✅ GREEN |
 | 16 | `test_spinor.py` | 52 | unittest | SU(2) lift, geometric coupling, 720° | ✅ GREEN |
 | 17 | `test_greedy_trap.py` | — | unittest | Greedy-trap walkthrough | ❌ IMPORT ERROR |
-| 18 | `test_minidomain.py` | 21 | standalone | Core mechanics, historization, K11/K12 | ✅ GREEN |
+| 18 | `test_resonator.py` | 48 | unittest | Resonator kernel, R1-R4, classification | ✅ GREEN |
+| 19 | `test_omega_uniqueness.py` | 27 | unittest | ω uniqueness, 5 alternatives falsified | ✅ GREEN |
+| 20 | `test_minidomain.py` | 21 | standalone | Core mechanics, historization, K11/K12 | ✅ GREEN |
 
 ---
 
@@ -249,7 +251,40 @@
 
 ---
 
-### 17. test_greedy_trap.py — IMPORT ERROR ❌
+### 18. test_resonator.py — 48 tests
+
+**What it tests:** Minimal 3-node resonator kernel (A→B→C→A + leakage C→OUT), R1–R4 stability criteria, classification (DECAY/METASTABLE/RESONATOR), loop path families, measurement protocol, historization-driven regime transitions, SU(2) holonomy on loop, three-theory separation.
+
+**Key findings:**
+- M2 (balanced)/H0 and M3 (reinforced)/H0: genuine RESONATOR (R_coh > 0.3, leakage non-dominant)
+- M1 (transient): METASTABLE→RESONATOR transition via historization (≥10 rounds)
+- C1 (acyclic): DECAY — no loop = no resonance
+- C2 (dephased): DECAY — high R kills coherence (I_coh < 0.001)
+- Loop holonomy ∈ SU(2), three-theory intensities diverge on multi-cycle paths
+- Phase doubles linearly: θ(2 cycles) = 2·θ(1 cycle)
+- R_coh = I_coh/I_inc verified, measurement protocol self-consistent
+- Historization boosts M1 I_coh by 20× but can destabilize M2/M3 (over-amplification)
+
+---
+
+### 19. test_omega_uniqueness.py — 27 tests
+
+**What it tests:** Numerical falsification of the Uniqueness Conjecture from E0_THETA_ANTISYMMETRY_DERIVATION_v0. Five alternative ω candidates tested against axioms A1 (orientation), A3 (gauge invariance), A4 (reciprocity), P1 (non-degeneracy), P2 (correct interference). Helmholtz orthogonality. Gradient telescoping.
+
+**Key findings:**
+- ω_sym = ½(v_rot(x,y) + v_rot(y,x)): fails A1 (orientation) and A4 (reciprocity)
+- ω_full = v_rot(x,y): fails A1 (not antisymmetric)
+- ω_v = v(x,y): fails A1 (gradient contamination)
+- ω_grad = Φ(x)−Φ(y): fails P1 (zero holonomy — degenerate, telescopes on all paths)
+- ω_nonlin = sign(d)·d²: fails P2 (R_coh = 1.73 vs 0.35 — wrong interference)
+- **Only ω_true = ½(v_rot(x,y) − v_rot(y,x)) survives all axioms**
+- Helmholtz orthogonality ⟨v_grad, v_rot⟩_E = 0 verified on Diamond, Asymmetric Triangle, Gordian
+- Gradient always path-independent: Σ v_grad = Φ(start) − Φ(end)
+- ω_true exactly matches standard connection.omega and reproduces standard wavepath intensity
+
+---
+
+### 20. test_greedy_trap.py — IMPORT ERROR ❌
 
 **What it tests:** Greedy controller trapped in A↔C loop, hybrid escapes via amplitude override.
 
@@ -257,7 +292,7 @@
 
 ---
 
-### 17. test_minidomain.py — 21 standalone tests
+### 21. test_minidomain.py — 21 standalone tests
 
 **Runner:** `python e0_controller/test_minidomain.py` (not unittest-based)
 
@@ -277,7 +312,7 @@
 ## How to Run
 
 ```bash
-# Full unittest suite (549 tests + 1 error)
+# Full unittest suite (656 tests + 1 error)
 python -m unittest discover -s e0_controller -p "test_*.py" -v
 
 # Standalone mini-domain (21 tests)

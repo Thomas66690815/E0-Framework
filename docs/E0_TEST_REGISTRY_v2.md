@@ -284,33 +284,36 @@ Live LLM tests are conditional and non-deterministic; integration is operational
 ### C14 — Phase derivation from v_rot is fully closed
 
 **Claim**  
-Θ is fully derived from E₀ primitives without operational gaps.
+Θ is fully derived from E₀ primitives without operational gaps. ω = ½(v_rot(x,y) − v_rot(y,x)) is the unique admissible phase generator (up to scale).
 
 **Evidence**  
-- phase-layer docs and tests support parts of this
-- no full proof yet
+- `e0_controller/test_omega_uniqueness.py` — 27 tests, 8 classes
+- `e0_controller/explore_omega_uniqueness.py` — 5 alternatives tested on 4 domains
+- `docs/E0_THETA_ANTISYMMETRY_DERIVATION_v0.md` — theoretical derivation with axioms A1–A4
 
 **Result**  
-Holonomy structure is strong, but the derivation remains incomplete.
+Five alternative phase generators (ω_sym, ω_full, ω_v, ω_grad, ω_nonlin) each violate at least one axiom. Only ω_true satisfies all: A1 (antisymmetry), A3 (gauge invariance), A4 (reciprocity neutrality), P1 (non-degeneracy). Helmholtz orthogonality v_grad ⊥ v_rot verified. Gradient always path-independent (telescopes). The derivation chain v → v_rot → ω → Θ → SU(2) is now justified at every link.
 
 **Status**  
-🔄 In progress
+✅ Confirmed
 
 ---
 
 ### C15 — SU(2) / spinor lift is operationally realized
 
 **Claim**  
-Scalar Θ has been lifted to an SU(2) generator with matrix-valued propagation.
+Scalar Θ has been lifted to an SU(2) generator with matrix-valued propagation. Phase 4b: rotation axis n̂ derived from local Helmholtz vorticity (geometric coupling).
 
 **Evidence**  
-- theoretical docs only (`E0_INTERNAL_DIFFERENCE_TO_SPINOR_BRIDGE_v0.md`, `E0_THETA_TO_SU2_GENERATOR_v0.md`, related notes)
+- `e0_controller/test_spinor.py` — 52 tests across 8 classes
+- `e0_controller/spinor_connection.py` — Phase 4a (minimal σ_z) + Phase 4b (geometric A⃗)
+- `e0_controller/explore_spinor.py` — 6 domain explorations
 
 **Result**  
-No operational implementation yet.
+SU(2) primitives verified (Pauli algebra, det=1, unitarity). Single-path magnitudes match U(1). Phase halving Θ→Θ/2 changes interference (double cover). 720° periodicity confirmed. **Geometric coupling** derives 3-component connection A⃗ = (A₁, A₂, A₃) from Helmholtz decomposition: A₁ = vorticity gradient, A₂ = face holonomy, A₃ = ω. Three-theory separation (U(1), SU(2)-min, SU(2)-geo) observed: up to 55.3% divergence on Gordian. Winner flips between U(1) and SU(2) on Gordian Trap.
 
 **Status**  
-❓ Untested
+✅ Confirmed
 
 ---
 
@@ -320,13 +323,15 @@ No operational implementation yet.
 Closed interference structures plus historization can form self-sustaining localized entities.
 
 **Evidence**  
-- design/docs only (`E0_RESONATOR_STABILITY_CRITERION_v0.md`, `E0_MINIMAL_RESONATOR_TEST_DESIGN_v0.md`)
+- `e0_controller/test_resonator.py` — 48 tests across 9 classes
+- `e0_controller/explore_resonator.py` — 5 regimes (M1/M2/M3/C1/C2), 4 historization modes
+- `docs/E0_RESONATOR_STABILITY_CRITERION_v0.md`, `docs/E0_MINIMAL_RESONATOR_TEST_DESIGN_v0.md`
 
 **Result**  
-No dedicated experiment run yet.
+3-node resonator kernel (A→B→C→A + leakage C→OUT) tested across 5 regimes. M2/H0 and M3/H0 are genuine RESONATOR: R_coh > 0.3, leakage non-dominant. M1 transitions METASTABLE→RESONATOR with ≥10 historization rounds (memory enables resonance). C1 (acyclic) = DECAY, C2 (dephased) = DECAY — both negative controls pass. Historization can enable resonance (M1) or destabilize it via over-amplification (M2/M3). Loop holonomy ∈ SU(2) confirmed, three-theory separation on resonator domain.
 
 **Status**  
-❓ Untested
+✅ Confirmed
 
 ---
 
@@ -348,6 +353,9 @@ No dedicated experiment run yet.
 | `test_graph_validation.py` | graph-quality support layer |
 | `test_evaluation.py` | evaluation/rating support layer |
 | `test_reflection.py` | reflection support layer |
+| `test_spinor.py` | C15 |
+| `test_resonator.py` | C16 |
+| `test_omega_uniqueness.py` | C14 |
 | `test_minidomain.py` | base mechanics, historization, K11/K12 |
 
 ---
@@ -384,23 +392,23 @@ Introduce weighted goal sets only if edge-case failures emerge.
 
 ---
 
-### O4 — SU(2) pilot on Gordian / loop domains
+### O4 — SU(2) operational integration
 
 **Target claim**  
-C15.
+C15 extended — use SU(2) intensities in actual controller decisions (currently research-only).
 
 **Recommended test**  
-Replace scalar phase propagation with matrix-valued carrier on a minimal domain.
+Swap U(1) intensity for SU(2) intensity in amplitude overlay and compare override decisions.
 
 ---
 
-### O5 — Resonator baseline
+### O5 — Resonator scaling and multi-loop structures
 
 **Target claim**  
-C16.
+C16 extended — resonator behavior in larger topologies with multiple loops.
 
 **Recommended test**  
-Run the minimal resonator design with frozen vs live historization and compare persistence metrics.
+Extend 3-node kernel to 4+ node loops, nested loops, and multi-resonator coupling.
 
 ---
 
