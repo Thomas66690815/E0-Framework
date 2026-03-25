@@ -188,7 +188,7 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 | Multi-agent network + experiments | **Archived** | `_archive/` |
 | Core reference implementation | **Archived** | `_archive/e0_core/` |
 
-**Tests:** 550 total (529 unittest + 21 mini-domain), all green except 1 pre-existing import issue.
+**Tests:** 570 total (549 unittest + 21 standalone mini-domain), all green except 1 pre-existing import issue. See [`docs/E0_TEST_REGISTRY_v1.md`](docs/E0_TEST_REGISTRY_v1.md) for per-file details.
 
 ---
 
@@ -283,7 +283,7 @@ E0-Framework/
 │   ├── demo_incident_postmortem.py     Incident postmortem demo
 │   ├── explore_amplitude.py            Amplitude exploration tool
 │   ├── explore_gordian.py              Gordian Trap discovery script
-│   └── test_*.py                       499 tests (21 mini-domain + 478 unittest)
+│   └── test_*.py                       570 tests (see docs/E0_TEST_REGISTRY_v1.md)
 │
 ├── scenarios/                        Scenario Packets for grounded LLM demos
 │   ├── competitor_brief/               Domain-specific scenario data
