@@ -1,7 +1,7 @@
 # E₀ Test Registry v1
 
 > Central reference for all tests in the E₀ Framework.
-> **Last verified:** 2026-03-25 — **609 tests** (588 unittest + 21 standalone mini-domain + 1 pre-existing error)
+> **Last verified:** 2026-03-25 — **623 tests** (602 unittest + 21 standalone mini-domain + 1 pre-existing error)
 
 ---
 
@@ -24,7 +24,7 @@
 | 13 | `test_phase2_invoice.py` | 18 | unittest | Invoice phase-layer validation | ✅ GREEN |
 | 14 | `test_waypoint.py` | 17 | unittest | Goal-with-continuations, H4 | ✅ GREEN |
 | 15 | `test_scaling.py` | 14 | unittest | O(n) complexity, n ≤ 500 | ✅ GREEN |
-| 16 | `test_spinor.py` | 39 | unittest | SU(2) lift, 720°, phase halving | ✅ GREEN |
+| 16 | `test_spinor.py` | 52 | unittest | SU(2) lift, geometric coupling, 720° | ✅ GREEN |
 | 17 | `test_greedy_trap.py` | — | unittest | Greedy-trap walkthrough | ❌ IMPORT ERROR |
 | 18 | `test_minidomain.py` | 21 | standalone | Core mechanics, historization, K11/K12 | ✅ GREEN |
 
@@ -234,18 +234,18 @@
 
 ---
 
-### 16. test_spinor.py — 39 tests
+### 16. test_spinor.py — 52 tests
 
-**What it tests:** SU(2) lift of the scalar U(1) phase layer — Pauli algebra (anticommutation, hermiticity, tracelessness), 720° periodicity (exp(−iπσ)=−𝕀, exp(−i2πσ)=+𝕀), single-path magnitude consistency (‖Ψ_SU2‖ = |Ψ_U1|), phase halving effect (Θ→Θ/2), winner divergence (U(1) vs SU(2) on Gordian Trap), non-commutativity (multi-axis transport), graph holonomy (loop transport, size dependence), structural invariants (empty paths, inadmissible paths, reference spinor independence).
+**What it tests:** SU(2) lift of the scalar U(1) phase layer — Pauli algebra (anticommutation, hermiticity, tracelessness), 720° periodicity (exp(−iπσ)=−𝕀, exp(−i2πσ)=+𝕀), single-path magnitude consistency (‖Ψ_SU2‖ = |Ψ_U1|), phase halving effect (Θ→Θ/2), winner divergence (U(1) vs SU(2) on Gordian Trap), non-commutativity (multi-axis transport), graph holonomy (loop transport, size dependence), structural invariants (empty paths, inadmissible paths, reference spinor independence), **geometric coupling** (Phase 4b: vorticity-derived axis from Helmholtz decomposition).
 
 **Key findings:**
 - **Phase halving:** SU(2) uses exp(−iΘ/2·σ_z)|↑⟩, not exp(iΘ). Relative phase ΔΘ/2 ≈ π/2 (orthogonal) vs ΔΘ ≈ π (destructive in U(1))
 - **Winner flips on Gordian Trap:** U(1) I(A1) = 0.018 (B1 wins), SU(2) I(A1) = 0.838 (A1 wins)
+- **Geometric coupling (Phase 4b):** su(2) connection vector A⃗ = (A₁, A₂, A₃) from local Helmholtz geometry. A₁ = vorticity gradient (≤92.9% off-axis on Gordian), A₂ = face holonomy (non-zero on triangles). Geometric SU(2) intensity sits between U(1) and minimal SU(2). Gordian A+loop: 55.3% divergence geo vs min. Triangle domain: 16.7% divergence.
 - 720° periodicity: exact for all axes, including arbitrary unit vectors
 - Non-commutativity: ‖[U(σ_z), U(σ_x)]‖ > 0 on multi-axis domain
-- Multi-axis populates both ℂ² components; σ_z-only stays in first component
-- Single-path intensities identical in both theories (divergence only in superposition)
 - All transport matrices verified SU(2): det = 1, U†U = 𝕀
+- Antisymmetry A⃗(y,x) = −A⃗(x,y) and transport reversal U(y,x) = U(x,y)† verified
 
 ---
 

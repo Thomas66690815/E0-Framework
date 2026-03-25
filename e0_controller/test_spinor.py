@@ -33,6 +33,10 @@ from e0_controller.spinor_connection import (
     compare_u1_su2, spinor_path_analysis,
     is_identity, is_minus_identity, is_su2,
     SIGMA_X, SIGMA_Y, SIGMA_Z, IDENTITY, SPINOR_UP,
+    su2_connection, su2_geometric_transport,
+    su2_geometric_path_transport, spinor_geometric_psi,
+    spinor_geometric_intensity, compare_minimal_geometric,
+    connection_analysis,
 )
 
 
@@ -477,6 +481,150 @@ class TestStructuralProperties(unittest.TestCase):
         expected = math.exp(-2 * s)
         self.assertAlmostEqual(I_up, expected, places=10)
         self.assertAlmostEqual(I_down, expected, places=10)
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Class 8: Geometric Coupling (Phase 4b)
+# ═══════════════════════════════════════════════════════════════════
+
+def build_triangle_domain():
+    """Dense 3-node graph with all 6 directed edges — maximizes A₂."""
+    L = Landscape()
+    L.add_edge("A", "B", delta=3.0, resistance=0.2)
+    L.add_edge("B", "C", delta=2.0, resistance=0.3)
+    L.add_edge("C", "A", delta=1.5, resistance=0.4)
+    L.add_edge("A", "C", delta=1.0, resistance=0.5)
+    L.add_edge("B", "A", delta=0.8, resistance=0.3)
+    L.add_edge("C", "B", delta=2.5, resistance=0.25)
+    return L
+
+
+class TestGeometricCoupling(unittest.TestCase):
+    """Phase 4b: Axis n̂ derived from local Helmholtz vorticity."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.L_gordian = build_gordian_trap()
+        cls.L_tri = build_triangle_domain()
+
+    # ── Antisymmetry ────────────────────────────────────────────
+
+    def test_connection_antisymmetric(self):
+        """A⃗(y,x) = −A⃗(x,y) for all edges."""
+        for edge in self.L_gordian.edges:
+            x, y = edge.source, edge.target
+            A_xy = su2_connection(self.L_gordian, x, y)
+            A_yx = su2_connection(self.L_gordian, y, x)
+            np.testing.assert_allclose(
+                A_xy, -A_yx, atol=1e-12,
+                err_msg=f"Antisymmetry violated on {x}→{y}")
+
+    def test_transport_reversal(self):
+        """U_geo(y,x) = U_geo(x,y)† for all edges."""
+        for edge in self.L_gordian.edges:
+            x, y = edge.source, edge.target
+            U_xy = su2_geometric_transport(self.L_gordian, x, y)
+            U_yx = su2_geometric_transport(self.L_gordian, y, x)
+            np.testing.assert_allclose(
+                U_yx, U_xy.conj().T, atol=1e-12,
+                err_msg=f"Transport reversal violated on {x}→{y}")
+
+    # ── SU(2) membership ──────────────────────────────────────
+
+    def test_geometric_transport_is_su2(self):
+        """All geometric transport matrices are SU(2): det=1, U†U=𝕀."""
+        for edge in self.L_gordian.edges:
+            U = su2_geometric_transport(
+                self.L_gordian, edge.source, edge.target)
+            self.assertTrue(is_su2(U),
+                            f"{edge.source}→{edge.target}: not SU(2)")
+
+    def test_geometric_path_transport_is_su2(self):
+        """Path transport is SU(2) even with off-axis components."""
+        path = ["START", "A1", "L1", "L2", "L3", "GOAL"]
+        U = su2_geometric_path_transport(self.L_gordian, path)
+        self.assertTrue(is_su2(U))
+
+    # ── Connection vector structure ────────────────────────────
+
+    def test_A3_equals_omega(self):
+        """Third component A₃ = ω(x,y) — the direct connection."""
+        for edge in self.L_gordian.edges:
+            x, y = edge.source, edge.target
+            A = su2_connection(self.L_gordian, x, y)
+            w = omega(self.L_gordian, x, y)
+            self.assertAlmostEqual(A[2], w, places=12,
+                                   msg=f"A₃ ≠ ω on {x}→{y}")
+
+    def test_vorticity_gradient_nonzero(self):
+        """A₁ (vorticity gradient) is non-zero on edges with asymmetric neighborhoods."""
+        # A1→A2 has neighbors A1:{A2,L1,START→via back}, A2:{GOAL}
+        A = su2_connection(self.L_gordian, "A1", "A2")
+        self.assertGreater(abs(A[0]), 0.1,
+                           "A₁ should be significant on A1→A2")
+
+    def test_face_holonomy_nonzero_on_triangle(self):
+        """A₂ (face holonomy) is non-zero on fully connected triangle."""
+        A = su2_connection(self.L_tri, "A", "B")
+        self.assertGreater(abs(A[1]), 0.1,
+                           "A₂ should be non-zero on triangle domain")
+
+    def test_face_holonomy_zero_on_dag(self):
+        """A₂ = 0 on Gordian Trap (DAG with no directed triangles)."""
+        for edge in self.L_gordian.edges:
+            x, y = edge.source, edge.target
+            A = su2_connection(self.L_gordian, x, y)
+            self.assertAlmostEqual(A[1], 0.0, places=12,
+                                   msg=f"A₂ should be 0 on DAG edge {x}→{y}")
+
+    # ── U(1) reduction ───────────────────────────────────────────
+
+    def test_single_path_matches_u1(self):
+        """Single-path intensity: U(1) = SU(2)-min = SU(2)-geo."""
+        path = ["START", "B1", "B2", "GOAL"]
+        cmp = compare_minimal_geometric(self.L_gordian, [path])
+        self.assertAlmostEqual(
+            cmp["u1_intensity"], cmp["geometric_intensity"], places=10)
+        self.assertAlmostEqual(
+            cmp["minimal_intensity"], cmp["geometric_intensity"], places=10)
+
+    def test_leaf_edge_matches_minimal(self):
+        """Edge to leaf node (no other neighbors) has A₁ = 0 → geo = min."""
+        # B2→GOAL: B2 has one outgoing edge (GOAL), GOAL has none
+        A = su2_connection(self.L_gordian, "B2", "GOAL")
+        self.assertAlmostEqual(A[0], 0.0, places=12, msg="A₁ should be 0")
+        self.assertAlmostEqual(A[1], 0.0, places=12, msg="A₂ should be 0")
+        # Transport should match minimal
+        U_min = su2_edge_transport(self.L_gordian, "B2", "GOAL")
+        U_geo = su2_geometric_transport(self.L_gordian, "B2", "GOAL")
+        np.testing.assert_allclose(U_geo, U_min, atol=1e-12)
+
+    # ── Divergence ─────────────────────────────────────────────
+
+    def test_geometric_diverges_on_interference(self):
+        """Geometric coupling changes interference on Gordian A-short+loop."""
+        paths = [["START", "A1", "A2", "GOAL"],
+                 ["START", "A1", "L1", "L2", "L3", "GOAL"]]
+        cmp = compare_minimal_geometric(self.L_gordian, paths)
+        self.assertGreater(cmp["geo_vs_min_pct"], 10.0,
+                           "Geometric should diverge >10% from minimal on interference")
+
+    def test_triangle_geometric_diverges(self):
+        """Triangle domain: face holonomy drives geo ≠ min."""
+        paths = [["A", "B", "C"], ["A", "C"]]
+        cmp = compare_minimal_geometric(self.L_tri, paths)
+        self.assertGreater(cmp["geo_vs_min_pct"], 10.0,
+                           "Triangle domain should show >10% geo vs min divergence")
+
+    def test_geometric_intensity_non_negative(self):
+        """Geometric intensity I ≥ 0 on all domains."""
+        for L, paths in [
+            (self.L_gordian, [["START", "A1", "A2", "GOAL"],
+                              ["START", "B1", "B2", "GOAL"]]),
+            (self.L_tri, [["A", "B", "C"], ["A", "C"]]),
+        ]:
+            I = spinor_geometric_intensity(L, paths)
+            self.assertGreaterEqual(I, 0.0)
 
 
 if __name__ == "__main__":

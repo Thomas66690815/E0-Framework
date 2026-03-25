@@ -36,6 +36,9 @@ from e0_controller.spinor_connection import (
     compare_u1_su2, spinor_path_analysis,
     is_identity, is_minus_identity, is_su2,
     SIGMA_X, SIGMA_Y, SIGMA_Z, IDENTITY, SPINOR_UP,
+    su2_connection, su2_geometric_transport,
+    su2_geometric_path_transport, spinor_geometric_intensity,
+    compare_minimal_geometric, connection_analysis,
 )
 
 WIDTH = 70
@@ -476,6 +479,122 @@ def run_domain_5():
 
 
 # ═══════════════════════════════════════════════════════════════════
+# Domain VI: Geometric Coupling — Helmholtz-derived axis
+# ═══════════════════════════════════════════════════════════════════
+
+def run_domain_6():
+    header("Domain VI: Geometric Coupling — Axis from Helmholtz Vorticity")
+
+    # ── Part A: Connection vector analysis on Gordian Trap ────────
+    subheader("A. su(2) connection vectors on Gordian Trap")
+    L = build_gordian_trap()
+    print(f"  {'edge':>12s}  {'ω':>8s}  {'A₁':>8s}  {'A₂':>8s}  {'A₃':>8s}  {'‖A⃗‖':>8s}  {'off-axis%':>9s}")
+    all_off_axis = []
+    for edge in L.edges:
+        x, y = edge.source, edge.target
+        info = connection_analysis(L, x, y)
+        A = info['A_vector']
+        off = info['off_axis_fraction'] * 100
+        all_off_axis.append(off)
+        print(f"  {x+'→'+y:>12s}  {info['omega']:+8.4f}  {A[0]:+8.5f}  {A[1]:+8.5f}  {A[2]:+8.5f}  {info['A_norm']:8.5f}  {off:8.2f}%")
+    avg_off = np.mean(all_off_axis) if all_off_axis else 0.0
+    print(f"\n  Average off-axis fraction: {avg_off:.2f}%")
+
+    # ── Part B: Antisymmetry check ───────────────────────────────
+    subheader("B. Antisymmetry: A⃗(y,x) = −A⃗(x,y)?")
+    max_violation = 0.0
+    checked = 0
+    for edge in L.edges:
+        x, y = edge.source, edge.target
+        A_xy = su2_connection(L, x, y)
+        A_yx = su2_connection(L, y, x)
+        viol = np.max(np.abs(A_xy + A_yx))
+        max_violation = max(max_violation, viol)
+        checked += 1
+    print(f"  Checked {checked} edge pairs")
+    print(f"  Max ‖A⃗(x,y) + A⃗(y,x)‖_∞ = {max_violation:.2e}")
+    print(f"  Antisymmetric? {'✓ YES' if max_violation < 1e-10 else '✗ NO'}")
+
+    # ── Part C: Transport reversal U(y,x) = U(x,y)† ─────────────
+    subheader("C. Transport reversal: U_geo(y,x) = U_geo(x,y)†?")
+    max_rev = 0.0
+    for edge in L.edges:
+        x, y = edge.source, edge.target
+        U_xy = su2_geometric_transport(L, x, y)
+        U_yx = su2_geometric_transport(L, y, x)
+        rev_err = np.max(np.abs(U_yx - U_xy.conj().T))
+        max_rev = max(max_rev, rev_err)
+    print(f"  Max ‖U(y,x) − U(x,y)†‖_∞ = {max_rev:.2e}")
+    print(f"  Reversal holds? {'✓ YES' if max_rev < 1e-10 else '✗ NO'}")
+
+    # ── Part D: Minimal vs Geometric on Gordian paths ────────────
+    subheader("D. Minimal vs Geometric intensity on Gordian Trap")
+    paths_A_short = [["START", "A1", "A2", "GOAL"]]
+    paths_A_loop = [["START", "A1", "A2", "GOAL"],
+                    ["START", "A1", "L1", "L2", "L3", "GOAL"]]
+    paths_B = [["START", "B1", "B2", "GOAL"]]
+
+    for label, paths in [("A-short", paths_A_short),
+                         ("A-short+loop", paths_A_loop),
+                         ("B-path", paths_B)]:
+        cmp = compare_minimal_geometric(L, paths)
+        print(f"  {label}:")
+        print(f"    U(1)       : I = {cmp['u1_intensity']:.6f}")
+        print(f"    SU(2)-min  : I = {cmp['minimal_intensity']:.6f}")
+        print(f"    SU(2)-geo  : I = {cmp['geometric_intensity']:.6f}")
+        print(f"    geo vs min : {cmp['geo_vs_min_pct']:.4f}%")
+
+    # ── Part E: Multi-axis domain ────────────────────────────────
+    subheader("E. Geometric coupling on multi-axis domain")
+    L_multi = build_multi_axis_domain()
+    print(f"  {'edge':>12s}  {'A₁':>8s}  {'A₂':>8s}  {'A₃':>8s}  {'off-axis%':>9s}")
+    for edge in L_multi.edges:
+        x, y = edge.source, edge.target
+        info = connection_analysis(L_multi, x, y)
+        A = info['A_vector']
+        off = info['off_axis_fraction'] * 100
+        print(f"  {x+'→'+y:>12s}  {A[0]:+8.5f}  {A[1]:+8.5f}  {A[2]:+8.5f}  {off:8.2f}%")
+
+    paths_multi = [["S", "A", "B", "GOAL"], ["S", "C", "GOAL"]]
+    cmp_multi = compare_minimal_geometric(L_multi, paths_multi)
+    print(f"\n  Three-theory comparison on multi-axis paths:")
+    print(f"    U(1)      : I = {cmp_multi['u1_intensity']:.6f}")
+    print(f"    SU(2)-min : I = {cmp_multi['minimal_intensity']:.6f}")
+    print(f"    SU(2)-geo : I = {cmp_multi['geometric_intensity']:.6f}")
+    print(f"    geo vs min: {cmp_multi['geo_vs_min_pct']:.4f}%")
+    print(f"    geo vs U1 : {cmp_multi['geo_vs_u1_pct']:.4f}%")
+
+    # ── Part F: Triangle domain (maximal face holonomy) ──────────
+    subheader("F. Triangle domain — rich face holonomy")
+    L_tri = Landscape()
+    L_tri.add_edge("A", "B", delta=3.0, resistance=0.2)
+    L_tri.add_edge("B", "C", delta=2.0, resistance=0.3)
+    L_tri.add_edge("C", "A", delta=1.5, resistance=0.4)
+    L_tri.add_edge("A", "C", delta=1.0, resistance=0.5)
+    L_tri.add_edge("B", "A", delta=0.8, resistance=0.3)
+    L_tri.add_edge("C", "B", delta=2.5, resistance=0.25)
+    print(f"  Triangle landscape: 3 nodes, {len(list(L_tri.edges))} edges")
+
+    for edge in L_tri.edges:
+        x, y = edge.source, edge.target
+        A = su2_connection(L_tri, x, y)
+        norm = np.linalg.norm(A)
+        off = np.sqrt(A[0]**2 + A[1]**2) / norm * 100 if norm > 1e-15 else 0.0
+        print(f"  {x+'→'+y:>6s}: A⃗ = [{A[0]:+.5f}, {A[1]:+.5f}, {A[2]:+.5f}]  ‖A⃗‖={norm:.5f}  off-axis={off:.1f}%")
+
+    paths_tri = [["A", "B", "C"], ["A", "C"]]
+    cmp_tri = compare_minimal_geometric(L_tri, paths_tri)
+    print(f"\n  Paths A→B→C vs A→C:")
+    print(f"    U(1)      : I = {cmp_tri['u1_intensity']:.6f}")
+    print(f"    SU(2)-min : I = {cmp_tri['minimal_intensity']:.6f}")
+    print(f"    SU(2)-geo : I = {cmp_tri['geometric_intensity']:.6f}")
+    geo_diverges = cmp_tri['geo_vs_min_pct'] > 0.1
+    print(f"    geo vs min: {cmp_tri['geo_vs_min_pct']:.4f}% {'★ DIVERGES' if geo_diverges else '= matches'}")
+
+    return avg_off, geo_diverges
+
+
+# ═══════════════════════════════════════════════════════════════════
 # Summary
 # ═══════════════════════════════════════════════════════════════════
 
@@ -516,4 +635,5 @@ if __name__ == "__main__":
     u1_w_3, su2_w_3, dev_3 = run_domain_3()
     run_domain_4()
     run_domain_5()
+    avg_off, geo_div = run_domain_6()
     run_summary(dev_1, theta_2, alg_ok_2, u1_w_3, su2_w_3, dev_3)
