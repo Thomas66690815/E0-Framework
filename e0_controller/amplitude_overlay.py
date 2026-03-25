@@ -81,6 +81,19 @@ class OverlayReport:
             return None
         return max(self.action_infos, key=lambda a: a.intensity).action
 
+    @property
+    def override_confidence(self) -> float:
+        """Probability gap between best and second-best amplitude action.
+
+        Returns P_best - P_second.  Range [0, 1].
+        - 0.0  → tied or single action (no discriminating power)
+        - 1.0  → all probability mass on one action
+        """
+        probs = sorted((a.probability for a in self.action_infos), reverse=True)
+        if len(probs) < 2:
+            return 0.0
+        return probs[0] - probs[1]
+
     def summary(self) -> str:
         lines = [
             f"OverlayReport(current={self.current!r}, horizon_edges={self.horizon_edges}, geometry={self.geometry!r})",

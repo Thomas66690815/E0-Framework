@@ -1,7 +1,7 @@
 # E₀ Test Registry v1
 
 > Central reference for all tests in the E₀ Framework.
-> **Last verified:** 2026-03-25 — **839 tests** (818 unittest + 21 standalone mini-domain + 1 pre-existing error)
+> **Last verified:** 2026-03-25 — **875 tests** (854 unittest + 21 standalone mini-domain + 1 pre-existing error)
 
 ---
 
@@ -32,7 +32,8 @@
 | 21 | `test_born_regime.py` | 44 | unittest | Born regime B1-B5, uniqueness U1-U3 | ✅ GREEN |
 | 22 | `test_reflection_hybrid.py` | 42 | unittest | Reflection hybrid metrics R_coh, Θ, drift | ✅ GREEN |
 | 23 | `test_dynamic_horizon.py` | 45 | unittest | Dynamic horizons, topology_adaptive, capped | ✅ GREEN |
-| 24 | `test_minidomain.py` | 21 | standalone | Core mechanics, historization, K11/K12 | ✅ GREEN |
+| 24 | `test_confidence_override.py` | 31 | unittest | Confidence-weighted override gating F1-F12 | ✅ GREEN |
+| 25 | `test_minidomain.py` | 21 | standalone | Core mechanics, historization, K11/K12 | ✅ GREEN |
 
 ---
 
@@ -310,7 +311,20 @@
 
 ---
 
-### 22. test_minidomain.py — 21 standalone tests
+### 23. test_confidence_override.py — 31 tests
+
+**What it tests:** `OverlayReport.override_confidence` (P_best − P_second gap), confidence threshold gating in `select_hybrid()`, `StepResult.override_confidence` field, `RunTrace.metrics()['avg_override_confidence']`, edge cases (single action, equal probabilities, dominant action, 3+ actions), backward compatibility with threshold=0.0, high-threshold blocking across topologies (Gordian, Diamond, Wide), end-to-end threshold sweep monotonicity.
+
+**Key findings:**
+- Confidence gap correctly computed as P_best − P_second
+- Threshold=0.0 preserves 100% backward compatibility (all prior behavior unchanged)
+- On Gordian with goal_reaching geometry, confidence reaches 1.0 (one action has 0 goal-reaching paths)
+- Higher threshold → monotonically fewer overrides (sweep verified)
+- Diamond topology always reaches goal even when override is blocked
+
+---
+
+### 24. test_minidomain.py — 21 standalone tests
 
 **Runner:** `python e0_controller/test_minidomain.py` (not unittest-based)
 
@@ -330,7 +344,7 @@
 ## How to Run
 
 ```bash
-# Full unittest suite (656 tests + 1 error)
+# Full unittest suite (854 tests + 1 error)
 python -m unittest discover -s e0_controller -p "test_*.py" -v
 
 # Standalone mini-domain (21 tests)

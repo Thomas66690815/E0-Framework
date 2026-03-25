@@ -58,6 +58,7 @@ class StepResult:
     escalation_type: EscalationType = EscalationType.NONE  # K12: why
     overlay: Optional["OverlayReport"] = None  # 3k: amplitude overlay snapshot
     hybrid_overridden: bool = False  # 3l: True when amplitude overrode greedy
+    override_confidence: float = 0.0  # 3f: P_best - P_second at override point
 
 
 @dataclass
@@ -161,6 +162,10 @@ class RunTrace:
                 1 for s in self.steps if s.hybrid_overridden)),
             "hybrid_override_rate": (sum(
                 1 for s in self.steps if s.hybrid_overridden) / n),
+            "avg_override_confidence": (
+                sum(s.override_confidence for s in self.steps if s.hybrid_overridden)
+                / max(1, sum(1 for s in self.steps if s.hybrid_overridden))
+            ),
         }
 
 
@@ -209,6 +214,7 @@ class E0Controller:
         hybrid_goals: Optional[Set[str]] = None,
         hybrid_geometry: str = "simple",
         horizon_strategy: Optional[Any] = None,
+        confidence_threshold: float = 0.0,
     ):
         self.landscape = landscape
         self.execute_fn = execute_fn
@@ -222,6 +228,7 @@ class E0Controller:
         self.hybrid_goals = hybrid_goals  # 3l: goal states for overlay
         self.hybrid_geometry = hybrid_geometry  # 3l: summation geometry
         self.horizon_strategy = horizon_strategy  # 3i: dynamic horizon
+        self.confidence_threshold = confidence_threshold  # 3f: override gating
         self._recent: List[str] = []   # sliding window of recent states
 
         # K1 fix: Escalation edges live here, NOT in the Landscape.
@@ -468,12 +475,15 @@ class E0Controller:
             return greedy_target, escalated, esc_type, overlay, False
 
         # DISAGREE — amplitude prefers a different action.
-        # Only override if amplitude choice is in the admissible set.
+        # Only override if amplitude choice is admissible AND confidence
+        # exceeds threshold (Phase 3f confidence-weighted override).
         admissible = self._admissible_neighbors(current)
         if amp_choice in admissible:
-            return amp_choice, escalated, esc_type, overlay, True
+            conf = overlay.override_confidence
+            if conf >= self.confidence_threshold:
+                return amp_choice, escalated, esc_type, overlay, True
 
-        # Amplitude choice not admissible — stay with greedy
+        # Amplitude choice not admissible or below threshold — stay with greedy
         return greedy_target, escalated, esc_type, overlay, False
 
     def cycle(
@@ -537,6 +547,7 @@ class E0Controller:
             escalation_type=esc_type,
             overlay=overlay,
             hybrid_overridden=overridden,
+            override_confidence=(overlay.override_confidence if overlay else 0.0),
         )
 
     def _compute_overlay(

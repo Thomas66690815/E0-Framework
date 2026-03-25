@@ -415,6 +415,32 @@ Amplitude overlay horizon h can be dynamically adapted per state based on topolo
 
 ---
 
+### C20 — Confidence-weighted override gating
+
+**Claim**  
+Amplitude overlay override can be gated by a confidence threshold (P_best − P_second ≥ θ), so low-confidence overlays fall back to greedy instead of overriding. With θ = 0 all prior behavior is preserved (backward-compatible).
+
+**Evidence**  
+- `e0_controller/test_confidence_override.py` — 31 tests across 12 classes (F1–F12)
+- `e0_controller/amplitude_overlay.py` — `override_confidence` property on `OverlayReport`
+- `e0_controller/controller.py` — `confidence_threshold` parameter, gating in `select_hybrid()`
+
+**Result**  
+- Confidence gap = P_best − P_second, correctly computed for 2–5 actions
+- Single action → confidence 0 (no second action to compare)
+- Equal probabilities → gap ≈ 0
+- Threshold=0.0 matches pre-existing behavior exactly (no regressions in 875-test suite)
+- High threshold blocks override on Diamond, Wide, and simple-geometry Gordian
+- On Gordian with goal_reaching: one action has 0 goal paths → confidence = 1.0 (correct edge case)
+- StepResult.override_confidence populated from overlay each cycle
+- RunTrace.metrics()['avg_override_confidence'] averages across overridden steps
+- Threshold sweep: higher θ → monotonically ≤ overrides (verified)
+
+**Status**  
+✅ Confirmed
+
+---
+
 ## 4. Test-file → claim map
 
 | Test file | Primary claims covered |
@@ -435,6 +461,7 @@ Amplitude overlay horizon h can be dynamically adapted per state based on topolo
 | `test_reflection.py` | reflection support layer |
 | `test_reflection_hybrid.py` | C18 |
 | `test_dynamic_horizon.py` | C19 |
+| `test_confidence_override.py` | C20 |
 | `test_spinor.py` | C15 |
 | `test_resonator.py` | C16 |
 | `test_omega_uniqueness.py` | C14 |
