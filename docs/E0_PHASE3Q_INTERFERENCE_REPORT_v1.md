@@ -373,7 +373,17 @@ Full test suite status (464 tests total):
 
 3. **Spinor extension.** Documents `E0_INTERNAL_DIFFERENCE_TO_SPINOR_BRIDGE_v0.md` and `E0_THETA_TO_SU2_GENERATOR_v0.md` propose extending $\Theta$ from a scalar phase to a $\text{SU}(2)$ generator. This would replace $e^{i\Theta}$ with $e^{-iG/2}$ acting on $\mathbb{C}^2$ carriers, enabling richer interference structures (including 720° periodicity and entanglement-like effects). The Gordian Trap provides a concrete test case for such an extension.
 
-4. **Formal topology classification.** Which graph topologies admit interference-based routing corrections? The Gordian Trap is a constructive example, but no characterization theorem exists.
+4. **Formal topology classification — RESOLVED.** Systematic scan of 380 graphs (180 structured + 200 random) under all 4 geometries. 23 formal tests in `test_topology_classification.py` (8 classes). Key findings:
+   - **G5 overrides greedy in 37.1% of all graphs** — interference routing is not rare.
+   - **Geometry matters in 31.3%** — G5 is the ONLY geometry that meaningfully differs (prefix ≡ first_arrival, simple ≈ prefix at 97.6%).
+   - **Necessary condition:** ≥2 path families from START. Single-family topologies (triangle) produce 0% overrides.
+   - **Strongest predictor:** Phase opposition (|ΔΘ| > π/2) → +25.1% correlation with override.
+   - **Topology spectrum:** triangle (0%) < diamond (36.7%) < parallel (43.3%) < dense random (52%) < gordian_lite (93.3%).
+   - **Override strength:** Median I(G5)/I(greedy) ratio = 2.245 (not marginal).
+   - **Smallest override graph:** Diamond — 4 nodes, 4 edges, 2 paths.
+   - **G5 exclusive:** 30.3% of graphs have G5-exclusive disagreement (all other geometries agree, G5 alone differs).
+
+   **Verdict: Interference routing is a robust, widespread phenomenon. G5 is structurally unique among geometries.**
 
 ---
 
@@ -389,12 +399,14 @@ Full test suite status (464 tests total):
 | `llm_adapter.py` | +`goals` parameter for multi-goal landscape bootstrapping | +20 |
 | `graph_validation.py` | +`graph_quality_multigoal()` | +30 |
 | `explore_multigoal.py` | Multi-goal discovery exploration (**new**) | +180 |
+| `explore_topology_scan.py` | Topology classification scan — 380 graphs, 4 geometries (**new**) | +420 |
+| `test_topology_classification.py` | 23 formal topology tests across 8 classes (**new**) | +330 |
 | `test_waypoint.py` | Regression fix for G5 | +2 |
 | `explore_gordian.py` | Discovery exploration script (**new**) | +250 |
 | `README.md` | Updated to v0.10.11 | +30 |
 | `e0_core/` → `_archive/e0_core/` | Legacy code archived | 0 (move) |
 
-Total: **+1673 insertions**, 20 files changed.
+Total: **+2423 insertions**, 22 files changed.
 
 ---
 

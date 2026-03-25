@@ -133,6 +133,7 @@ However, G5 has a **structural justification** (Born criterion): when the questi
 | **G5 is regime-specific** | **Empirical** | G5 wins only under goal semantics; `simple` remains correct for exploration |
 | **Prefix-inflation artifact** | **Empirical (identified)** | Non-goal prefixes dominate intensity under `simple`, masking interference |
 | **Multi-goal G5 amplitude rescue** | **Empirical (demonstrated)** | Coherent alternative-goal paths rescue actions from single-goal destructive interference; ordering preserved: A1>B1>C1; single-goal regression preserved |
+| **Topology classification (G5 override)** | **Empirical (380-graph scan)** | Override requires ≥2 path families; phase opposition |ΔΘ|>π/2 is strongest predictor; triangle=0%, diamond=37%, gordian=93%; G5 uniquely differs (30.3% exclusive) |
 
 ---
 
@@ -147,7 +148,7 @@ The following are not yet fully derived:
 - Stability of interference routing under historization — **RESOLVED** (12 tests, 4 scenarios)
 - Multi-goal behavior under G5 — **RESOLVED** (15 tests + 8 LLM tests)
 - Spinor extension: whether scalar Θ should be lifted to SU(2) generator (see E0_THETA_TO_SU2_GENERATOR_v0.md)
-- Topology classification: which graph structures admit interference-based routing?
+- Topology classification: which graph structures admit interference-based routing? — **RESOLVED** (23 tests, 380-graph scan)
 
 ---
 
