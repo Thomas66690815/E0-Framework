@@ -380,7 +380,14 @@ Full test suite status (464 tests total):
 
    **Verdict: No failure signatures (F1–F4) triggered. G5 is robust under goal-set expansion, irrelevant injection, conflict, parametric rescue, and ranking stress.**
 
-4. **Spinor extension.** Documents `E0_INTERNAL_DIFFERENCE_TO_SPINOR_BRIDGE_v0.md` and `E0_THETA_TO_SU2_GENERATOR_v0.md` propose extending $\Theta$ from a scalar phase to a $\text{SU}(2)$ generator. This would replace $e^{i\Theta}$ with $e^{-iG/2}$ acting on $\mathbb{C}^2$ carriers, enabling richer interference structures (including 720° periodicity and entanglement-like effects). The Gordian Trap provides a concrete test case for such an extension.
+4. **Spinor extension (Θ → SU(2)) — RESOLVED.** Implemented SU(2) lift in `spinor_connection.py` (Pauli algebra, matrix transport, ℂ² spinor amplitudes). 39 formal tests in `test_spinor.py` across 7 classes. Key findings:
+   - **Phase halving effect:** SU(2) uses phase Θ/2 (not Θ), which is the spinor double-cover. On the Gordian Trap, U(1) ΔΘ ≈ π (destructive, I=0.018) → SU(2) ΔΘ/2 ≈ π/2 (orthogonal, I=0.838). **Winner changes:** U(1) picks B1, SU(2) picks A1.
+   - **720° periodicity confirmed:** exp(−iπ·n̂·σ) = −𝕀, exp(−i2π·n̂·σ) = +𝕀 for all axes. Spinor |↑⟩ picks up −1 sign at 360°.
+   - **Non-commutativity verified:** Multi-axis transport (σ_z, σ_x, σ_y) produces ‖[U₁,U₂]‖ > 0. Multi-axis extends |↑⟩ into both ℂ² components.
+   - **Single-path equivalence:** ‖Ψ_SU2(p)‖ = |Ψ_U1(p)| = exp(−S) for every path. Divergence arises ONLY in superposition.
+   - **All transport matrices verified SU(2):** det=1, U†U=𝕀.
+
+   **Verdict: SU(2) is a consistent extension that halves phase angles, preventing destructive interference in the Gordian Trap. The spinor double-cover effect is the mechanism. Phase 4 status: IMPLEMENTED and TESTED, not yet integrated into controller.**
 
 4. **Formal topology classification — RESOLVED.** Systematic scan of 380 graphs (180 structured + 200 random) under all 4 geometries. 23 formal tests in `test_topology_classification.py` (8 classes). Key findings:
    - **G5 overrides greedy in 37.1% of all graphs** — interference routing is not rare.
@@ -412,12 +419,15 @@ Full test suite status (464 tests total):
 | `test_topology_classification.py` | 23 formal topology tests across 8 classes (**new**) | +330 |
 | `explore_g5_edge_cases.py` | G5 edge case exploration — 5 families (**new**) | +380 |
 | `test_g5_edge_cases.py` | 28 formal G5 edge case tests across 7 classes (**new**) | +360 |
+| `spinor_connection.py` | SU(2) lift: Pauli algebra, matrix transport, ℂ² spinor amplitudes (**new**) | +230 |
+| `explore_spinor.py` | Spinor exploration: 5 domains, holonomy scan (**new**) | +330 |
+| `test_spinor.py` | 39 formal spinor tests across 7 classes (**new**) | +350 |
 | `test_waypoint.py` | Regression fix for G5 | +2 |
 | `explore_gordian.py` | Discovery exploration script (**new**) | +250 |
 | `README.md` | Updated to v0.10.11 | +30 |
 | `e0_core/` → `_archive/e0_core/` | Legacy code archived | 0 (move) |
 
-Total: **+3163 insertions**, 24 files changed.
+Total: **+4073 insertions**, 27 files changed.
 
 ---
 

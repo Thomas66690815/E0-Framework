@@ -135,6 +135,7 @@ However, G5 has a **structural justification** (Born criterion): when the questi
 | **Multi-goal G5 amplitude rescue** | **Empirical (demonstrated)** | Coherent alternative-goal paths rescue actions from single-goal destructive interference; ordering preserved: A1>B1>C1; single-goal regression preserved |
 | **Topology classification (G5 override)** | **Empirical (380-graph scan)** | Override requires ≥2 path families; phase opposition |ΔΘ|>π/2 is strongest predictor; triangle=0%, diamond=37%, gordian=93%; G5 uniquely differs (30.3% exclusive) |
 | **G5 edge case robustness** | **Empirical (5-family stress)** | No saturation (entropy↓ as |G|↑), generalist wins in conflict (P=0.665), rescue from δ=0.01 (S=Δ·R tiny → |Ψ|≈1), unreachable goals ≡ zero effect, selectivity sharpens |
+| **SU(2) spinor extension** | **Empirical (39 tests, 7 classes)** | Phase halving Θ→Θ/2 changes interference (Gordian Trap: U1 destructive I=0.018, SU2 orthogonal I=0.838, winner flips B1→A1); 720° periodicity confirmed; non-commutativity verified; single-path magnitudes identical |
 
 ---
 
@@ -148,7 +149,7 @@ The following are not yet fully derived:
 - Full necessity proof for Born-style intensity in all regimes
 - Stability of interference routing under historization — **RESOLVED** (12 tests, 4 scenarios)
 - Multi-goal behavior under G5 — **RESOLVED** (15 tests + 8 LLM tests)
-- Spinor extension: whether scalar Θ should be lifted to SU(2) generator (see E0_THETA_TO_SU2_GENERATOR_v0.md)
+- Spinor extension: whether scalar Θ should be lifted to SU(2) generator — **RESOLVED** (39 tests, Gordian Trap shows phase halving Θ→Θ/2 flips winner; 720° periodicity confirmed)
 - Topology classification: which graph structures admit interference-based routing? — **RESOLVED** (23 tests, 380-graph scan)
 
 ---

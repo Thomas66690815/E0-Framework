@@ -40,7 +40,7 @@
 | **Interference stability under historization** | **Confirmed (12 tests)** — 4 scenarios (repeated, adversarial A-short/A-loop, mixed); cos(ΔΘ) stays < 0 in all cases; three structural stability mechanisms identified | RESOLVED |
 | **Multi-goal behavior under G5** | **Confirmed (15 tests + 8 LLM)** — GOAL2 path rescues A1 from destructive interference; ordering A1>B1>C1; single-goal regression preserved; LLM builds & routes multi-goal landscapes | RESOLVED |
 | **G5 edge case robustness** | **Confirmed (28 tests, 5 families)** — No F1 saturation (entropy↓ as |G|→8), no F2 drift (unreachable ≡ zero), no F3 noise rescue, no F4 instability. Generalist wins in conflict. Rescue from δ=0.01. | RESOLVED |
-| **Spinor extension (Θ → SU(2))** | **Theoretical (3 documents)** | Lift scalar Θ to SU(2) generator; test on Gordian Trap |
+| **Spinor extension (Θ → SU(2))** | **Confirmed (39 tests, 7 classes)** — Phase halving Θ→Θ/2 changes interference on Gordian Trap (winner flips U1:B1 → SU2:A1); 720° periodicity algebraically proven; non-commutativity verified; single-path magnitudes identical | RESOLVED |
 | **Topology classification** | **Confirmed (23 tests, 380-graph scan)** — Override requires ≥2 path families; phase opposition is strongest predictor; triangle (0%) < diamond (37%) < gordian (93%); G5 is uniquely geometry-sensitive | RESOLVED |
 
 ---
@@ -71,7 +71,7 @@ If any of these occur, the respective layer must be revisited or downgraded in t
 5. **Evaluation regression:** Expand `e0_controller/test_evaluation.py` with hybrid-specific edge cases.
 6. **Historization × Gordian:** ~~Run Gordian Trap with `history_mode=True`.~~ **DONE** (commit 551ab80). Next: test extreme δ_max ≫ R₀ regime.
 7. **Multi-goal Gordian:** ~~Add a second GOAL node, test G5 behavior with competing goal states.~~ **DONE** — 15 formal tests + 8 LLM integration tests. Key finding: coherent alternative-goal paths rescue actions from single-goal destructive interference.
-8. **SU(2) pilot:** Implement matrix-valued Ψ on Gordian Trap, compare interference predictions with scalar model.
+8. **SU(2) pilot:** ~~Implement matrix-valued Ψ on Gordian Trap, compare interference predictions with scalar model.~~ **DONE** — 39 formal tests. Key: SU(2) halves phase angle, turning Gordian Trap destructive interference (I=0.018) into near-orthogonal superposition (I=0.838). Winner flips from B1 (U1) to A1 (SU2). Phase 4 status: implemented and tested.
 10. **G5 edge case suite:** ~~Stress G5 under goal expansion, irrelevant injection, conflict, rescue threshold, ranking sharpness.~~ **DONE** — 28 formal tests, all 5 families clean. No failure signatures triggered.
 9. **Random topology scan:** ~~Generate random graphs, identify those where G5 overrides greedy, verify override quality.~~ **DONE** — 380-graph scan (180 structured + 200 random). 37.1% override rate, 23 formal tests. Key: ≥2 families necessary, phase opposition strongest predictor, G5 uniquely differs from other geometries.
 
