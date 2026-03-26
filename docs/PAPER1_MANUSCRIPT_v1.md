@@ -11,8 +11,10 @@ derives complex path amplitudes from three structural primitives: difference,
 resistance, and historization. Through a constructive chain — tension,
 coherence, Helmholtz field decomposition, connection, and phase — we obtain
 amplitudes $\Psi = \exp(-S + i\Theta)$ that exhibit constructive and
-destructive interference without postulating quantum mechanics or probability
-theory. We prove a Holonomy Independence Theorem establishing that phase
+destructive interference without postulating quantum mechanics. Probability
+is not assumed but emerges from interference: normalized intensities
+$P(a) = I(a)/\sum I(a')$ form a distribution derived from structural
+amplitudes, not from axiomatic measure theory. We prove a Holonomy Independence Theorem establishing that phase
 differences between paths depend only on path-local quantities. A hybrid
 controller uses this interference to escape structural traps undetectable by
 greedy methods. Our central empirical finding, validated across 380 graph
@@ -465,6 +467,20 @@ edge inner product:
 
 $$\langle v_{\text{grad}}, v_{\text{rot}} \rangle_E = 0$$
 
+**Remark** (Symmetrization). The Laplacian $\mathbf{L}$ is formed from the
+*undirected skeleton* of $\mathcal{G}$, obtained by treating each directed
+edge $(x,y) \in E$ as an undirected edge $\{x,y\}$. This is a deliberate
+design choice: the divergence $\text{div}(\mathbf{v})$ already encodes the
+full directional information of the transition field (Def. 10), so the
+potential $\Phi$ need only redistribute it over the node set. The undirected
+Laplacian provides the minimal symmetric operator for this redistribution.
+On strongly asymmetric graphs (where most edges are one-directional), the
+rotational residual $v_{\text{rot}}$ absorbs all directional asymmetry,
+preserving the decomposition's validity. An alternative formulation using
+the directed Hodge Laplacian (Jiang et al., 2011) would yield a richer
+decomposition at the cost of additional structure; we leave this extension
+to future work.
+
 ### 3.6 Connection and Phase
 
 The rotational component of the transition field induces a connection
@@ -479,6 +495,22 @@ $$\omega(x, y) = \frac{1}{2}\bigl(v_{\text{rot}}(x, y) - v_{\text{rot}}(y, x)\bi
 with the convention that $v_{\text{rot}}(x, y) = 0$ whenever $(x, y) \notin E$.
 
 **Property** (Antisymmetry). By construction, $\omega(x, y) = -\omega(y, x)$.
+
+**Remark** (Gauge Freedom). The connection $\omega$ depends on the Helmholtz
+decomposition, which in turn depends on the gauge-fixing choice
+$\Phi(x_0) = 0$ (Def. 11). A different reference node $x_0'$ shifts $\Phi$
+by a constant, leaving $v_{\text{grad}}(x,y) = \Phi(x) - \Phi(y)$ invariant.
+Consequently, $v_{\text{rot}}$, $\omega$, and $\Theta$ are *gauge-invariant*
+with respect to reference node choice. However, the antisymmetrization in
+Def. 14 is itself a *structural convention*: it is the unique antisymmetric
+extraction from $v_{\text{rot}}$, but alternative connection definitions
+(e.g., based on a directed Hodge decomposition) could yield different phase
+assignments. We therefore state: $\Theta$ is *derived up to the gauge class*
+defined by the Helmholtz decomposition and the antisymmetric extraction.
+This gauge freedom is analogous to the choice of gauge in fiber-bundle
+theory, where observables (here: holonomy, interference) are
+gauge-invariant even though the connection itself is not unique across
+gauge classes.
 
 **Definition 15** (Path Phase).
 The *path phase* accumulated along a path $p = (x_0, x_1, \ldots, x_n)$ is
@@ -538,6 +570,15 @@ This is not a quantum postulate. It is a mathematically natural compact
 representation that combines:
 - *path coherence* $|\Psi(p)| = \exp(-S(p)) = C(p)$ as magnitude, and
 - *accumulated phase* $\arg(\Psi(p)) = \Theta(p)$ as angle.
+
+**Remark** (On Probability). The normalized intensity $P(a) = I(a)/\sum I(a')$
+(Def. 20) is a well-defined probability distribution over actions. However,
+this probability is not *assumed* — it *emerges* from the interference of
+complex amplitudes. The distinction is structural: in classical decision
+theory, probabilities are primitive inputs; in E₀, they are derived outputs
+of the amplitude summation. This parallels the Born rule in quantum mechanics,
+where probabilities emerge from squared amplitudes rather than being
+postulated independently.
 
 **Key properties:**
 - $\Psi(p) = 0$ if $S(p) = \infty$ (inadmissible path).
@@ -1093,15 +1134,41 @@ We distinguish three categories following the framework's own honesty map
 - Escalation logic type classification.
 - Specific parameter choices ($\rho = 0.9$, $\lambda_s = 0.15$,
   $\lambda_f = 0.20$, $\delta_{\max} = 3.0$).
-- Phase $\Theta$ — while structurally motivated from $v_{\text{rot}}$,
-  it is not uniquely determined by the primitives.
+- Phase $\Theta$ — derived up to the gauge class defined by the Helmholtz
+  decomposition and antisymmetric extraction (see §3.6, Gauge Freedom
+  remark). Within this gauge class, $\Theta$ is uniquely determined;
+  across gauge classes, the holonomy $\text{Hol}(\gamma)$ and interference
+  effects remain invariant.
 
 ### 9.2 Computational Limitations
 
 Path enumeration under all geometries is $O(k^h)$ where $k$ is the maximum
 branching factor and $h$ is the horizon. This is tractable for $k \leq 5$,
-$h \leq 10$, but does not scale to large dense graphs. Approximation methods
-(sampling-based enumeration, truncated DFS) are not explored in this paper.
+$h \leq 10$, but does not scale to large dense graphs.
+
+We identify three approximation strategies for future work:
+
+1. **Interference-aware pruning.** During path enumeration, discard path
+   families whose coherence $C(p) < \epsilon_{\text{prune}}$ falls below a
+   threshold. Low-coherence paths contribute negligible amplitude and cannot
+   produce significant interference. This reduces the effective branching
+   factor without altering high-signal decisions.
+
+2. **Stochastic path sampling.** Instead of exhaustive enumeration, sample
+   $N$ paths per action according to a distribution biased toward
+   low-tension edges. The amplitude estimate $\hat{\Psi}_G(a) =
+   \frac{1}{N}\sum_{i=1}^{N} \Psi(p_i)$ converges to the true amplitude
+   as $N \to \infty$. The key question — whether interference structure
+   is preserved under sampling — is an open empirical problem.
+
+3. **Truncated DFS with interference budget.** Enumerate paths in DFS
+   order, maintaining a running amplitude sum. Terminate enumeration for
+   an action when the marginal change $|\Delta\Psi| / |\Psi_{\text{acc}}|$
+   falls below a tolerance, indicating that further paths do not
+   qualitatively change the interference pattern.
+
+These strategies are not explored in this paper but represent natural
+extensions of the bounded enumeration framework.
 
 ### 9.3 Domain Limitations
 
@@ -1186,6 +1253,13 @@ The hybrid architecture (domain-agnostic structural core + domain-specific
 evaluation function) offers a separation of concerns: the mathematical
 machinery of interference is generic, while the definition of $\Delta$, $R_0$,
 and the goal set $\mathcal{T}$ encodes domain semantics.
+
+A key design principle emerges: E₀ is not "probability-free" — the
+normalized intensity $P(a)$ is a probability distribution. Rather, E₀
+replaces *assumed* probability with *emergent* probability: the distribution
+over actions is a derived consequence of amplitude interference, not an
+axiomatic input. This inverts the standard construction in decision theory,
+where probabilities are primitive and utilities are derived.
 
 ---
 
