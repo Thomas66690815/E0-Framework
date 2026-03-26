@@ -307,6 +307,15 @@ def e0_greedy_run(
     return reached, len(trace.steps), trace.path
 
 
+# NOTE: Amplitude overlay is intentionally excluded from this grid
+# benchmark. On 5×5 grids, the amplitude horizon (3-4 edges) cannot
+# reach the goal (8+ edges away), so intensities degenerate to
+# single-edge fallbacks and the override fights the controller's
+# revisit-penalty recovery. Amplitude's value is topology-aware
+# interference on smaller structured graphs — validated separately
+# in test_greedy_trap and the Gordian trap suite.
+
+
 # ──────────────────────────────────────────────
 # Benchmark Runner
 # ──────────────────────────────────────────────
