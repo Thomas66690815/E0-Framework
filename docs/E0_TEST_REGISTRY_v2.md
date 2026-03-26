@@ -716,23 +716,26 @@ C16 extended — resonator behavior in larger topologies with multiple loops.
 
 ---
 
-### P3 — Paper 3: Multi-Axis SU(2) and Non-Abelian Structure in E₀
+### P3 — Paper 3: Non-Abelian Structure in E₀ (Multi-Axis SU(2) and Curvature Modulation)
 
 **Target**  
-Dedicated publication exploring per-edge SU(2) rotation axes as non-abelian gauge structure. Extends the SU(2) lift (C15) from global σ_z to per-edge axis assignment. Key results: non-commutativity, axis-dependent holonomy, interference divergence from U(1) and single-axis SU(2), four-theory comparison, and backward compatibility.
+Dedicated publication extending the E₀ phase structure from Abelian U(1) to non-Abelian SU(2). Three-stage extension: per-edge rotation axes (B1), geometry-derived su(2) connection (B4), and curvature modulation M_H (B2). Builds on Papers 1–2.
 
 **Foundation**  
 - B1 implementation complete (C25): 36 tests, full stack integration
-- Canon Alignment §9 Bridge B1: per-edge rotation axes
-- Builds on Paper 2 (SU(2) lift) by adding the non-abelian dimension
+- B2 implementation complete (C26): 35 tests, experimental curvature_modulation switch
+- B4 geometry-derived connection: su2_connection() in spinor_connection.py
+- Canon Alignment §9 Bridge Items B1–B2
+- SU(2) topology reclassification (C23): Gordian override 90% → 0%
+- 144 SU(2)-related tests total across 4 test files
 
-**Open questions for Paper 3**  
-- How does axis assignment relate to physical geometry (embedding dimension)?
-- Can axis_fn be derived from topology rather than assigned?
-- What is the relationship between multi-axis holonomy and M_H topological invariant (B2)?
-- Does multi-axis SU(2) predict new topology reclassifications beyond C23?
+**Draft**  
+- `docs/E0_PAPER3_NON_ABELIAN_STRUCTURE_v1.md` — 8 sections + 2 appendices
+- Abstract, Introduction, SU(2) Transport, Geometric Connection, Curvature Modulation, Numerical Verification, Discussion, Conclusion
+- Appendix A: Implementation reference (11 functions, 4 test suites)
+- Appendix B: Derived/Empirical/Heuristic classification
 
-**Status:** 🔄 In progress (B1 engineering complete; paper draft pending)
+**Status:** 🔄 Draft v1.0 written (review and refinement pending)
 
 ---
 
