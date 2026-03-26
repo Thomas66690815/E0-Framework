@@ -4,7 +4,7 @@
 > **Purpose:** connect claims, tests, evidence, and status in one place.
 
 **Last updated:** 2026-03-26  
-**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), and active edge-case work.
+**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, and active edge-case work.
 
 ---
 
@@ -306,7 +306,7 @@ Five alternative phase generators (ω_sym, ω_full, ω_v, ω_grad, ω_nonlin) ea
 Scalar Θ has been lifted to an SU(2) generator with matrix-valued propagation. Phase 4b: rotation axis n̂ derived from local Helmholtz vorticity (geometric coupling). SU(2) is now wired into the controller's amplitude overlay as an operational switch (`use_su2=True` for SU(2)-minimal, `use_su2="geometric"` for SU(2)-geometric with Helmholtz A⃗).
 
 **Evidence**  
-- `e0_controller/test_spinor.py` — 76 tests across 12 classes:
+- `e0_controller/test_spinor.py` — 71 tests across 11 classes:
   - `TestSU2ControllerOverlay` — 5 integration tests
   - `TestThreeTheoryNaturalDomains` — 11 natural domain tests (Diamond, Leaf, Triangle-Dense, Gordian-lite)
   - `TestPerformanceScaling` — 3 performance overhead tests (10-node mesh, 36 edges)
@@ -368,7 +368,7 @@ Closed interference structures plus historization can form self-sustaining local
 The 5 Born-Criterion axioms (bounded alternatives, mutual exclusivity, representation invariance, monotonicity, coarse-graining consistency) hold on concrete E₀ domains, and P(z) = I(z)/ΣI is the unique minimal realization rule.
 
 **Evidence**  
-- `e0_controller/test_born_regime.py` — 44 tests across 10 classes
+- `e0_controller/test_born_regime.py` — 44 tests across 9 classes
 - `docs/E0_BORN_CRITERION_ANALYSIS_v1.md` — theoretical derivation of 5 axioms
 - `docs/E0_INTENSITY_AND_BORN_PROGRAM_v1.md` — structural analysis of |Ψ|²
 
@@ -498,7 +498,7 @@ MemOS correctly persists, restores, and summarizes the amplitude overlay geometr
 Born sampling (P ∝ I, choosing actions probabilistically from the amplitude-derived distribution) is a valid alternative realization regime alongside deterministic argmax. With goal_reaching geometry, argmax dominates or matches Born sampling on success rate. Born sampling enables stochastic exploration: it reaches all G5 goals and can randomly escape traps where argmax gets stuck due to greedy–amplitude agreement. The BORN_SAMPLING mode integrates cleanly with existing infrastructure (MemOS persistence, StepResult, escalation handling).
 
 **Evidence**  
-- `e0_controller/test_born_sampling.py` — 27 tests across 10 classes (H1–H10)
+- `e0_controller/test_born_sampling.py` — 31 tests across 11 classes (H1–H11)
 - `e0_controller/controller.py` — HybridMode.BORN_SAMPLING + `_born_sample()` method
 
 **Result**  
@@ -532,7 +532,7 @@ Born sampling (P ∝ I, choosing actions probabilistically from the amplitude-de
 | `test_llm_adapter.py` | C13 |
 | `test_llm_integration.py` | C13 |
 | `test_invoice.py` | C7, C13 |
-| `test_memory_os.py` | persistence support for hybrid workflows |
+| `test_memory_os.py` | persistence support for hybrid workflows, C28 |
 | `test_graph_validation.py` | graph-quality support layer |
 | `test_evaluation.py` | evaluation/rating support layer |
 | `test_reflection.py` | reflection support layer |
@@ -552,6 +552,8 @@ Born sampling (P ∝ I, choosing actions probabilistically from the amplitude-de
 | `test_born_sampling.py` | C22, C23 (H11 class) |
 | `test_multi_axis_su2.py` | C15, C23, C25 |
 | `test_curvature_modulation.py` | C26 |
+| `test_llm_context.py` | C13, C27 |
+| `test_k5_escalation.py` | C27 |
 
 ---
 
@@ -633,6 +635,62 @@ The SU(2) spinor transport can be extended from a single global axis (σ_z) to p
 
 **Test domain design note:**  
 Strongly asymmetric edge parameters (forward: δ=5.0, r=0.1; reverse: δ=0.1, r=0.9) are required to produce non-zero ω. Symmetric edges give ω=0 via the Helmholtz decomposition (v_rot(x,y) = v_rot(y,x)), which makes axis choice irrelevant.
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C27 — LLM context enrichment and K5 field-based escalation
+
+**Claim**  
+The LLM adapter SYSTEM_PROMPT encodes the complete E₀ canon essence (11 symbols: Δ, R, H, S, C, v, ω, Θ, Ψ, I, M_H), giving the LLM semantic grounding for all E₀ primitives. The MemOS summary exposes curvature_modulation and use_su2 when active (token-efficient conditional inclusion). The K5 escalation strategy for DEAD_END uses the E₀-native transition field (y* = argmax_y Σ_z v(y→z)) instead of a connectivity heuristic, making escalation consistent with the core theory.
+
+**Evidence**  
+- `e0_controller/test_llm_context.py` — 23 tests across 5 classes:
+  - `TestCanonEssence` (14): all 11 symbols present in SYSTEM_PROMPT, structural keywords
+  - `TestSummaryCurvatureOff` (2): curvature_modulation absent when off
+  - `TestSummaryCurvatureOn` (2): curvature_modulation and M_H present when on
+  - `TestOverlaySummaryFields` (2): override_confidence and psi_phase in overlay
+  - `TestEvidenceBlockOverrides` (3): override count in reflection evidence
+- `e0_controller/test_k5_escalation.py` — 9 tests across 5 classes:
+  - `TestK5FieldBasedDeadEnd` (3): field-based target selection, strongest outflow wins
+  - `TestK5DeadEndRunCompletion` (2): dead-end runs complete via field escalation
+  - `TestK5FilteredAndExhaustedUnchanged` (2): non-DEAD_END strategies unchanged
+  - `TestK5EqualFieldTiebreak` (1): deterministic tiebreak on equal fields
+  - `TestK5CurvatureModulationAffectsEscalation` (1): curvature changes target selection
+
+**Result**  
+- SYSTEM_PROMPT covers all 11 E₀ symbols with semantic explanations (~500 tokens)
+- Curvature_modulation and M_H per neighbor conditionally included (token-efficient)
+- Override_confidence and psi_phase present in overlay summary when hybrid active
+- K5 DEAD_END escalation selects strongest-outflow state (v-weighted, not degree-weighted)
+- FILTERED (cheapest tension) and EXHAUSTED (least-recently-visited) strategies preserved
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C28 — MemOS persistence fidelity for SU(2), curvature, and escalation context
+
+**Claim**  
+All controller state relevant to B1 (SU(2)), B2 (curvature modulation), and K5 (escalation strategy) survives the full MemOS snapshot → save → load → restore cycle. `use_su2` is serialized in RuntimeSnapshot.controller_params, `curvature_modulation` is serialized in LandscapeSnapshot, and escalation edges carry `created_by` (dead_end/filtered/exhausted) through persistence.
+
+**Evidence**  
+- `e0_controller/test_memory_os.py` — 10 new tests across 3 classes:
+  - `TestUseSu2Roundtrip` (4): use_su2=True persists, use_su2=False default, exposure in LLM summary, absent when false
+  - `TestCurvatureModulationRoundtrip` (3): curvature_modulation=True persists, default False, snapshot field reflects landscape
+  - `TestEscalationEdgeCreatedBy` (3): dead_end created_by stored, roundtrip persistence, created_by in snapshot JSON
+- `e0_controller/memory_os.py` — RuntimeSnapshot.controller_params includes use_su2; LandscapeSnapshot.curvature_modulation field; escalation edges store (Δ, R₀, created_by)
+- `e0_controller/controller.py` — _escalation_edges changed to Dict[Edge, Tuple[float, float, str]]
+
+**Result**  
+- `use_su2=True` survives snapshot → save → load → restore → controller.use_su2 == True
+- `curvature_modulation=True` survives snapshot → save → load → restore → landscape.curvature_modulation == True
+- Escalation edge `created_by` survives full roundtrip, defaults to "unknown" for legacy data
+- `summarize_for_llm` exposes `use_su2` in runtime section when active (token-efficient)
+- Backward compatible: old snapshots without these fields restore gracefully with defaults
 
 **Status**  
 ✅ Confirmed
@@ -745,7 +803,7 @@ Dedicated publication extending the E₀ phase structure from Abelian U(1) to no
 The topological modulation factor M_H(x,y) = 1/(1 + κ(x,y)), where κ is the mean absolute face holonomy through edge x→y, correctly modulates the transition field v(x,y) = Δ · M_H · exp(−S_eff). When `curvature_modulation=False` (default), M_H = 1 and all existing behavior is preserved. When enabled, high-curvature edges are damped, the full downstream chain (Helmholtz → Φ → v_rot → ω → Θ → holonomy) responds to the modulation, and the circular dependency (transition_field → M_H → κ → ω → v_rot → transition_field) is resolved by computing κ from base (unmodulated) ω.
 
 **Evidence**  
-- `e0_controller/test_curvature_modulation.py` — 35 tests across 10 classes:
+- `e0_controller/test_curvature_modulation.py` — 35 tests across 11 classes:
   - `TestEdgeCurvature` (6 tests): κ=0 for line graph and symmetric triangles; κ>0 for asymmetric triangle; κ non-negative everywhere; tetrahedron all edges curved; diamond shows κ variation
   - `TestMHFactor` (5 tests): no curvature → M_H=1; curvature → M_H<1; M_H ∈ (0,1]; formula 1/(1+κ) verified; symmetric → unit M_H
   - `TestCurvatureModulationSwitch` (2 tests): default False; explicit True

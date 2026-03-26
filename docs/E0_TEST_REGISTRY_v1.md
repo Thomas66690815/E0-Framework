@@ -1,7 +1,7 @@
 # E₀ Test Registry v1
 
 > Central reference for all tests in the E₀ Framework.
-> **Last verified:** 2026-03-26 — **1117 tests** (1096 unittest + 21 standalone mini-domain; 32 skipped, 0 failures)
+> **Last verified:** 2026-03-26 — **1159 tests** (1159 unittest; 32 skipped, 0 non-LLM failures)
 
 ---
 
@@ -17,27 +17,29 @@
 | 6 | `test_reflection.py` | 36 | unittest | Reflection triggers, LLM fallback | ✅ GREEN |
 | 7 | `test_invoice.py` | 33 | unittest | Invoice domain end-to-end | ✅ GREEN |
 | 8 | `test_llm_integration.py` | 32 | unittest | Live LLM (requires API key) | ⚠ CONDITIONAL |
-| 9 | `test_g5_edge_cases.py` | 28 | unittest | G5 robustness, 5 families A–E | ✅ GREEN |
-| 10 | `test_memory_os.py` | 28 | unittest | Persistence, save/load round-trip | ✅ GREEN |
+| 9 | `test_g5_edge_cases.py` | 55 | unittest | G5 robustness, 5 families A–E, SU(2) | ✅ GREEN |
+| 10 | `test_memory_os.py` | 38 | unittest | Persistence, save/load round-trip, SU(2)/curvature/escalation | ✅ GREEN |
 | 11 | `test_graph_validation.py` | 24 | unittest | Reachability, traps, quality score | ✅ GREEN |
-| 12 | `test_topology_classification.py` | 23 | unittest | 380-graph scan, override prediction | ✅ GREEN |
+| 12 | `test_topology_classification.py` | 30 | unittest | 380-graph scan, override prediction, SU(2) | ✅ GREEN |
 | 13 | `test_phase2_invoice.py` | 18 | unittest | Invoice phase-layer validation | ✅ GREEN |
 | 14 | `test_waypoint.py` | 17 | unittest | Goal-with-continuations, H4 | ✅ GREEN |
 | 15 | `test_scaling.py` | 14 | unittest | O(n) complexity, n ≤ 500 | ✅ GREEN |
-| 16 | `test_spinor.py` | 52 | unittest | SU(2) lift, geometric coupling, 720° | ✅ GREEN |
-| 17 | `test_greedy_trap.py` | — | unittest | Greedy-trap walkthrough | ❌ IMPORT ERROR |
-| 18 | `test_resonator.py` | 48 | unittest | Resonator kernel, R1-R4, classification | ✅ GREEN |
+| 16 | `test_spinor.py` | 71 | unittest | SU(2) lift, geometric coupling, 720° | ✅ GREEN |
+| 17 | `test_greedy_trap.py` | 4 | unittest | Greedy-trap walkthrough | ✅ GREEN |
+| 18 | `test_resonator.py` | 73 | unittest | Resonator kernel, R1-R4, multi-loop, coupled | ✅ GREEN |
 | 19 | `test_omega_uniqueness.py` | 27 | unittest | ω uniqueness, 5 alternatives falsified | ✅ GREEN |
-| 20 | `test_historization_gordian.py` | 36 | unittest | Historization × Gordian interaction | ✅ GREEN |
+| 20 | `test_historization_gordian.py` | 61 | unittest | Historization × Gordian, non-Gordian topologies | ✅ GREEN |
 | 21 | `test_born_regime.py` | 44 | unittest | Born regime B1-B5, uniqueness U1-U3 | ✅ GREEN |
 | 22 | `test_reflection_hybrid.py` | 42 | unittest | Reflection hybrid metrics R_coh, Θ, drift | ✅ GREEN |
 | 23 | `test_dynamic_horizon.py` | 45 | unittest | Dynamic horizons, topology_adaptive, capped | ✅ GREEN |
 | 24 | `test_confidence_override.py` | 31 | unittest | Confidence-weighted override gating F1-F12 | ✅ GREEN |
 | 25 | `test_memos_geometry.py` | 34 | unittest | MemOS geometry persistence G1-G10 | ✅ GREEN |
-| 26 | `test_born_sampling.py` | 27 | unittest | Born sampling vs argmax, ADR-0007 H1-H10 | ✅ GREEN |
-| 27 | `test_minidomain.py` | 21 | standalone | Core mechanics, historization, K11/K12 | ✅ GREEN |
+| 26 | `test_born_sampling.py` | 31 | unittest | Born sampling vs argmax, ADR-0007 H1-H11 | ✅ GREEN |
+| 27 | `test_minidomain.py` | — | — | (empty — tests migrated to test_phase2_minidomain) | — |
 | 28 | `test_multi_axis_su2.py` | 36 | unittest | Per-edge SU(2) axes, non-commutativity, multi-axis interference, controller integration | ✅ GREEN |
 | 29 | `test_curvature_modulation.py` | 35 | unittest | M_H topological invariant, edge curvature, curvature modulation switch, downstream effects | ✅ GREEN |
+| 30 | `test_llm_context.py` | 23 | unittest | LLM canon essence, summary enrichment, overlay fields | ✅ GREEN |
+| 31 | `test_k5_escalation.py` | 9 | unittest | K5 field-based escalation, dead-end/filtered/exhausted strategies | ✅ GREEN |
 
 ---
 
@@ -147,9 +149,9 @@
 
 ---
 
-### 9. test_g5_edge_cases.py — 28 tests
+### 9. test_g5_edge_cases.py — 55 tests
 
-**What it tests:** G5 multi-goal robustness across 5 stress families:
+**What it tests:** G5 multi-goal robustness across 5 stress families (A–E), large goal sets (|G| = 16, 32), unreachable goal stress, SU(2) winner stability/structural invariants/selectivity:
 - **Family A** — Winner stability as |G| grows from 1 → 5
 - **Family B** — Unreachable, weak, and noisy goal injection
 - **Family C** — Competing goals (generalist vs. specialist actions)
@@ -166,9 +168,9 @@
 
 ---
 
-### 10. test_memory_os.py — 28 tests
+### 10. test_memory_os.py — 38 tests
 
-**What it tests:** Edge serialization, context save/load round-trip, landscape/controller restoration from snapshot, E0MemoryOS summarize_for_llm, historization persistence across sessions, behavior change from restored memory, hybrid controller snapshots, session listing.
+**What it tests:** Edge serialization, context save/load round-trip, landscape/controller restoration from snapshot, E0MemoryOS summarize_for_llm, historization persistence across sessions, behavior change from restored memory, hybrid controller snapshots, session listing, use_su2 roundtrip, curvature_modulation roundtrip, escalation edge created_by persistence.
 
 **Key findings:**
 - Edge key format: "SOURCE→TARGET"
@@ -192,9 +194,9 @@
 
 ---
 
-### 12. test_topology_classification.py — 23 tests
+### 12. test_topology_classification.py — 30 tests
 
-**What it tests:** 380-graph parametric scan across triangle/diamond/gordian-lite topologies — override rate prediction from path family count and phase opposition.
+**What it tests:** 380-graph parametric scan across triangle/diamond/gordian-lite topologies — override rate prediction from path family count and phase opposition. SU(2) phase halving effect on topology classification.
 
 **Key findings:**
 - Triangle (1 family) → 0% overrides
@@ -245,9 +247,9 @@
 
 ---
 
-### 16. test_spinor.py — 52 tests
+### 16. test_spinor.py — 71 tests
 
-**What it tests:** SU(2) lift of the scalar U(1) phase layer — Pauli algebra (anticommutation, hermiticity, tracelessness), 720° periodicity (exp(−iπσ)=−𝕀, exp(−i2πσ)=+𝕀), single-path magnitude consistency (‖Ψ_SU2‖ = |Ψ_U1|), phase halving effect (Θ→Θ/2), winner divergence (U(1) vs SU(2) on Gordian Trap), non-commutativity (multi-axis transport), graph holonomy (loop transport, size dependence), structural invariants (empty paths, inadmissible paths, reference spinor independence), **geometric coupling** (Phase 4b: vorticity-derived axis from Helmholtz decomposition).
+**What it tests:** SU(2) lift of the scalar U(1) phase layer — Pauli algebra (anticommutation, hermiticity, tracelessness), 720° periodicity (exp(−iπσ)=−𝕀, exp(−i2πσ)=+𝕀), single-path magnitude consistency (‖Ψ_SU2‖ = |Ψ_U1|), phase halving effect (Θ→Θ/2), winner divergence (U(1) vs SU(2) on Gordian Trap), non-commutativity (multi-axis transport), graph holonomy (loop transport, size dependence), structural invariants (empty paths, inadmissible paths, reference spinor independence), **geometric coupling** (Phase 4b: vorticity-derived axis from Helmholtz decomposition), three-theory natural domain validation (Diamond, Leaf, Triangle-Dense, Gordian-lite), performance scaling.
 
 **Key findings:**
 - **Phase halving:** SU(2) uses exp(−iΘ/2·σ_z)|↑⟩, not exp(iΘ). Relative phase ΔΘ/2 ≈ π/2 (orthogonal) vs ΔΘ ≈ π (destructive in U(1))
@@ -260,9 +262,9 @@
 
 ---
 
-### 18. test_resonator.py — 48 tests
+### 18. test_resonator.py — 73 tests
 
-**What it tests:** Minimal 3-node resonator kernel (A→B→C→A + leakage C→OUT), R1–R4 stability criteria, classification (DECAY/METASTABLE/RESONATOR), loop path families, measurement protocol, historization-driven regime transitions, SU(2) holonomy on loop, three-theory separation.
+**What it tests:** Minimal 3-node resonator kernel (A→B→C→A + leakage C→OUT), R1–R4 stability criteria, classification (DECAY/METASTABLE/RESONATOR), loop path families, measurement protocol, historization-driven regime transitions, SU(2) holonomy on loop, three-theory separation. **Multi-loop extension:** 4-node ring, nested loops (constructive interference factor ≈2.0), coupled resonators (kernel isolation + bridge coupling), multi-loop SU(2).
 
 **Key findings:**
 - M2 (balanced)/H0 and M3 (reinforced)/H0: genuine RESONATOR (R_coh > 0.3, leakage non-dominant)
@@ -293,9 +295,9 @@
 
 ---
 
-### 20. test_historization_gordian.py — 36 tests
+### 20. test_historization_gordian.py — 61 tests
 
-**What it tests:** Formal verification of historization × Gordian trap interaction across 10 test classes: parametric resilience (δ_max, ρ, λ_s, λ_f), FAILURE outcomes (R_eff raise, v reduction), K2 lazy decay recovery (trace decay, R_eff recovery, ΔΘ recovery), clipping saturation (δ_H bounds, R_eff floor), alternating adversarial (A-short/A-loop interleave), recovery from adversarial, holonomy formula invariance under historization (holds for success, failure, mixed, loop), multi-goal × historization, extreme stress (100 A-short, 50 alternating), hybrid multi-cycle (greedy pollution, alternating greedy/hybrid).
+**What it tests:** Formal verification of historization × Gordian trap interaction across 14 test classes: parametric resilience (δ_max, ρ, λ_s, λ_f), FAILURE outcomes (R_eff raise, v reduction), K2 lazy decay recovery (trace decay, R_eff recovery, ΔΘ recovery), clipping saturation (δ_H bounds, R_eff floor), alternating adversarial (A-short/A-loop interleave), recovery from adversarial, holonomy formula invariance under historization (holds for success, failure, mixed, loop), multi-goal × historization, extreme stress (100 A-short, 50 alternating), hybrid multi-cycle (greedy pollution, alternating greedy/hybrid), **non-Gordian topologies** (Triangle, Diamond, Gordian-lite under U(1) and SU(2)), cross-topology invariants.
 
 **Key findings:**
 - Interference routing (B1 wins) survives under all tested parameter regimes
@@ -307,7 +309,36 @@
 
 ---
 
-### 21. test_greedy_trap.py — IMPORT ERROR ❌
+### 21. test_greedy_trap.py — 4 tests
+
+**What it tests:** Greedy-trap walkthrough demonstrating local-burden minimization pitfalls.
+
+**Status:** ✅ GREEN
+
+---
+
+### 30. test_llm_context.py — 23 tests
+
+**What it tests:** LLM SYSTEM_PROMPT canon essence (all 11 E₀ symbols: Δ, R, H, S, C, v, ω, Θ, Ψ, I, M_H), summarize_for_llm curvature_modulation exposure, overlay summary fields (override_confidence, psi_phase), reflection evidence block override count.
+
+**Key findings:**
+- Canon essence covers all 11 primitives with semantic descriptions
+- Curvature modulation flag conditionally exposed (token-efficient)
+- Override confidence and psi_phase present when overlay active
+- Evidence block includes override count when overrides occurred
+
+---
+
+### 31. test_k5_escalation.py — 9 tests
+
+**What it tests:** K5 field-based DEAD_END escalation (y* = argmax_y Σ_z v(y→z)), FILTERED and EXHAUSTED strategies unchanged, curvature_modulation effect on escalation target selection.
+
+**Key findings:**
+- DEAD_END target = state with strongest total transition field outflow
+- Replaces prior max-connectivity heuristic with E₀-native field computation
+- Equal-field tiebreak is deterministic
+- Curvature modulation changes escalation targets by damping high-curvature edges
+- FILTERED (cheapest raw neighbor) and EXHAUSTED (least-recently-visited) unchanged
 
 **What it tests:** Greedy controller trapped in A↔C loop, hybrid escapes via amplitude override.
 
