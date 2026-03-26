@@ -392,17 +392,14 @@ class E0Controller:
 
     def _escalation_target(self, current: str, esc_type: EscalationType) -> Optional[str]:
         """
-        K12: Different escalation strategies per type.
+        K12/K5: Different escalation strategies per type.
 
-        DEAD_END:   Jump to state with most outgoing edges (max connectivity).
+        DEAD_END:   Jump to state with strongest total transition field
+                    Σ_z v(y→z).  This is E₀-native: v integrates Δ, M_H,
+                    and exp(−S_eff), so the target is the state with the
+                    strongest coherent outflow.
         FILTERED:   Lower bar — pick from raw neighbors (bypass K11 threshold).
         EXHAUSTED:  Pick least-recently-visited viable state.
-
-        Note (K5 open): These strategies are operational heuristics, not
-        yet fully derived from E₀ principles.  In particular the DEAD_END
-        strategy ("most outgoing edges") is graph-structural, not
-        tension-field-based.  A future version should select escalation
-        targets via potential φ or transition field v.
         """
         if esc_type == EscalationType.FILTERED:
             # FILTERED: raw neighbors exist but fail K11 → pick cheapest raw
@@ -424,7 +421,9 @@ class E0Controller:
                     return min(not_recent, key=lambda y: self._effective_tension(current, y))
                 return min(neighbors, key=lambda y: self._effective_tension(current, y))
 
-        # DEAD_END (or fallback): global jump to most-connected state
+        # DEAD_END (or fallback): K5 — field-based global jump
+        # Select the state with the strongest total transition field outflow:
+        #   y* = argmax_y Σ_z v(y → z)
         all_states = self.landscape.states - {current}
         if not all_states:
             return None
@@ -433,7 +432,13 @@ class E0Controller:
         if not viable:
             return None
 
-        return max(viable, key=lambda s: len(self.landscape.admissible_neighbors(s)))
+        def _total_outflow(s: str) -> float:
+            return sum(
+                self.landscape.transition_field(s, z)
+                for z in self.landscape.admissible_neighbors(s)
+            )
+
+        return max(viable, key=_total_outflow)
 
     def select_hybrid(
         self, current: str
