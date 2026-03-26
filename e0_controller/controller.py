@@ -217,7 +217,7 @@ class E0Controller:
         hybrid_geometry: str = "simple",
         horizon_strategy: Optional[Any] = None,
         confidence_threshold: float = 0.0,
-        use_su2: bool = False,
+        use_su2: object = False,
     ):
         self.landscape = landscape
         self.execute_fn = execute_fn

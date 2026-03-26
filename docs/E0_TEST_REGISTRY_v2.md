@@ -303,13 +303,16 @@ Five alternative phase generators (ω_sym, ω_full, ω_v, ω_grad, ω_nonlin) ea
 ### C15 — SU(2) / spinor lift is operationally realized
 
 **Claim**  
-Scalar Θ has been lifted to an SU(2) generator with matrix-valued propagation. Phase 4b: rotation axis n̂ derived from local Helmholtz vorticity (geometric coupling). SU(2) is now wired into the controller’s amplitude overlay as an operational switch (`use_su2=True`).
+Scalar Θ has been lifted to an SU(2) generator with matrix-valued propagation. Phase 4b: rotation axis n̂ derived from local Helmholtz vorticity (geometric coupling). SU(2) is now wired into the controller's amplitude overlay as an operational switch (`use_su2=True` for SU(2)-minimal, `use_su2="geometric"` for SU(2)-geometric with Helmholtz A⃗).
 
 **Evidence**  
-- `e0_controller/test_spinor.py` — 57 tests across 9 classes (including `TestSU2ControllerOverlay` — 5 integration tests)
+- `e0_controller/test_spinor.py` — 76 tests across 12 classes:
+  - `TestSU2ControllerOverlay` — 5 integration tests
+  - `TestThreeTheoryNaturalDomains` — 11 natural domain tests (Diamond, Leaf, Triangle-Dense, Gordian-lite)
+  - `TestPerformanceScaling` — 3 performance overhead tests (10-node mesh, 36 edges)
 - `e0_controller/spinor_connection.py` — Phase 4a (minimal σ_z) + Phase 4b (geometric A⃗)
 - `e0_controller/explore_spinor.py` — 6 domain explorations
-- `e0_controller/amplitude_overlay.py` — `use_su2` parameter in `analyze_controller_state()`
+- `e0_controller/amplitude_overlay.py` — `use_su2` parameter: `False` (U(1)), `True` (SU(2)-min), `"geometric"` (SU(2)-geo)
 - `e0_controller/controller.py` — `use_su2` parameter threaded through `E0Controller.__init__()` → `_compute_overlay()`
 
 **Result**  
@@ -319,7 +322,19 @@ SU(2) primitives verified (Pauli algebra, det=1, unitarity). Single-path magnitu
 - Gordian trap: U(1) I(A1)=9.41, SU(2) I(A1)=18.06 (47.9% divergence on multi-path A-family)
 - Single-path B1: U(1) ≈ SU(2) (2.1% divergence — confirming single-path equivalence)
 - SU(2) sharpens probability discrimination: P(A1)=0.79 vs U(1) P(A1)=0.66
-- Hybrid mode with `use_su2=True` reaches GOAL correctly
+- Hybrid mode with `use_su2=True` and `use_su2="geometric"` both reach GOAL correctly
+
+**Three-theory natural domain validation:**
+- Diamond / Leaf: all three theories produce identical results (single-path families — no multi-path interference)
+- Triangle-Dense: winner agrees across all theories; intensity difference < 2%
+- Gordian-lite: U(1)→B winner, SU(2)-min→A (I=1.028), SU(2)-geo→A (I=0.556) — geo intensity lies between U(1) and min
+- SU(2)-geo hybrid controller reaches goal correctly on Gordian
+
+**Performance overhead (10-node mesh, 36 edges, horizon=4):**
+- U(1): ~800 µs/call
+- SU(2)-min: ~1344 µs/call (1.7×)
+- SU(2)-geo: ~3941 µs/call (4.9×)
+- Overhead bounded by generous ceilings (10× for min, 20× for geo) to avoid CI flakiness
 
 **Status**  
 ✅ Confirmed
@@ -521,7 +536,7 @@ Born sampling (P ∝ I, choosing actions probabilistically from the amplitude-de
 | `test_confidence_override.py` | C20 |
 | `test_memos_geometry.py` | C21 |
 | `test_born_sampling.py` | C22 |
-| `test_spinor.py` | C15, C23 |
+| `test_spinor.py` | C15, C23, C12 |
 | `test_resonator.py` | C16 |
 | `test_omega_uniqueness.py` | C14 |
 | `test_historization_gordian.py` | C8, C9 |

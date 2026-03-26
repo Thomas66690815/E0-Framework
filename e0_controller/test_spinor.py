@@ -712,5 +712,286 @@ class TestSU2ControllerOverlay(unittest.TestCase):
             self.assertAlmostEqual(a_d.intensity, a_e.intensity, places=12)
 
 
+# ═══════════════════════════════════════════════════════════════════
+# Class 11: Three-Theory Natural Domain Validation (Paper 2 §7.3)
+# ═══════════════════════════════════════════════════════════════════
+
+def _build_diamond_natural():
+    """Diamond: S→A→G, S→B→G. Two single-path families."""
+    L = Landscape()
+    L.add_edge("S", "A", delta=0.5, resistance=0.3)
+    L.add_edge("A", "G", delta=0.8, resistance=0.2)
+    L.add_edge("S", "B", delta=2.0, resistance=0.1)
+    L.add_edge("B", "G", delta=1.5, resistance=0.15)
+    return L
+
+
+def _build_leaf_natural():
+    """Leaf: S→A→B→G. Single path, no branching."""
+    L = Landscape()
+    L.add_edge("S", "A", delta=0.5, resistance=0.3)
+    L.add_edge("A", "B", delta=0.6, resistance=0.4)
+    L.add_edge("B", "G", delta=0.4, resistance=0.3)
+    return L
+
+
+def _build_triangle_natural():
+    """Triangle-Dense: S→A→G, S→B→G + back-edges A↔B → face holonomy."""
+    L = Landscape()
+    L.add_edge("S", "A", delta=0.5, resistance=0.3)
+    L.add_edge("S", "B", delta=2.0, resistance=0.1)
+    L.add_edge("A", "G", delta=0.8, resistance=0.2)
+    L.add_edge("B", "G", delta=1.5, resistance=0.15)
+    L.add_edge("A", "B", delta=1.2, resistance=0.25)
+    L.add_edge("B", "A", delta=0.9, resistance=0.3)
+    return L
+
+
+def _build_gordian_natural():
+    """Gordian-lite: A short+loop → G (multi-path), B single → G."""
+    L = Landscape()
+    L.add_edge("S", "A", delta=0.3, resistance=0.3)
+    L.add_edge("A", "X", delta=0.3, resistance=0.3)
+    L.add_edge("X", "G", delta=0.3, resistance=0.3)
+    L.add_edge("A", "L1", delta=2.5, resistance=0.05)
+    L.add_edge("L1", "L2", delta=2.5, resistance=0.05)
+    L.add_edge("L2", "G", delta=2.5, resistance=0.05)
+    L.add_edge("S", "B", delta=0.8, resistance=0.3)
+    L.add_edge("B", "G", delta=0.7, resistance=0.3)
+    return L
+
+
+class TestThreeTheoryNaturalDomains(unittest.TestCase):
+    """Validate three-theory separation on Paper 1 benchmark domains.
+
+    Theories:
+      - U(1):      Ψ = exp(-S+iΘ), scalar interference
+      - SU(2)-min: Ψ = exp(-S)·U_z·|↑⟩, minimal axis (σ_z)
+      - SU(2)-geo: Ψ = exp(-S)·U_A⃗·|↑⟩, Helmholtz-derived axis
+    """
+
+    @staticmethod
+    def _acs(*args, **kwargs):
+        from e0_controller.amplitude_overlay import analyze_controller_state
+        return analyze_controller_state(*args, **kwargs)
+
+    def _reports(self, L, start="S", goals=None, horizon=5):
+        from e0_controller.controller import E0Controller
+        from e0_controller.primitives import Outcome
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS)
+        goals = goals or {"G"}
+        kw = dict(horizon_edges=horizon, geometry="goal_reaching", goals=goals)
+        r_u1 = self._acs(ctrl, start, use_su2=False, **kw)
+        r_min = self._acs(ctrl, start, use_su2=True, **kw)
+        r_geo = self._acs(ctrl, start, use_su2="geometric", **kw)
+        return r_u1, r_min, r_geo
+
+    # ── Diamond: single-path families → all three identical ──
+
+    def test_diamond_all_three_identical(self):
+        """Diamond single-path families: U(1) ≡ SU(2)-min ≡ SU(2)-geo."""
+        r_u1, r_min, r_geo = self._reports(_build_diamond_natural())
+        for ai_u1, ai_min, ai_geo in zip(
+            sorted(r_u1.action_infos, key=lambda a: a.action),
+            sorted(r_min.action_infos, key=lambda a: a.action),
+            sorted(r_geo.action_infos, key=lambda a: a.action),
+        ):
+            self.assertAlmostEqual(ai_u1.intensity, ai_min.intensity, places=6,
+                                   msg=f"Diamond {ai_u1.action}: U(1) ≠ SU(2)-min")
+            self.assertAlmostEqual(ai_u1.intensity, ai_geo.intensity, places=6,
+                                   msg=f"Diamond {ai_u1.action}: U(1) ≠ SU(2)-geo")
+
+    def test_diamond_winner_unanimous(self):
+        """All three theories agree on Diamond winner."""
+        r_u1, r_min, r_geo = self._reports(_build_diamond_natural())
+        self.assertEqual(r_u1.amplitude_choice, r_min.amplitude_choice)
+        self.assertEqual(r_u1.amplitude_choice, r_geo.amplitude_choice)
+
+    # ── Leaf: single path → all three identical ──
+
+    def test_leaf_all_three_identical(self):
+        """Leaf single path: U(1) ≡ SU(2)-min ≡ SU(2)-geo."""
+        r_u1, r_min, r_geo = self._reports(_build_leaf_natural())
+        for ai_u1, ai_min, ai_geo in zip(
+            sorted(r_u1.action_infos, key=lambda a: a.action),
+            sorted(r_min.action_infos, key=lambda a: a.action),
+            sorted(r_geo.action_infos, key=lambda a: a.action),
+        ):
+            self.assertAlmostEqual(ai_u1.intensity, ai_min.intensity, places=6)
+            self.assertAlmostEqual(ai_u1.intensity, ai_geo.intensity, places=6)
+
+    # ── Triangle-Dense: face holonomy → theories may diverge slightly ──
+
+    def test_triangle_winner_agrees(self):
+        """All three theories agree on Triangle-Dense winner."""
+        r_u1, r_min, r_geo = self._reports(_build_triangle_natural())
+        self.assertEqual(r_u1.amplitude_choice, r_min.amplitude_choice)
+        self.assertEqual(r_u1.amplitude_choice, r_geo.amplitude_choice)
+
+    def test_triangle_intensities_close(self):
+        """Triangle-Dense: intensities differ by <5% across theories."""
+        r_u1, r_min, r_geo = self._reports(_build_triangle_natural())
+        for ai_u1, ai_geo in zip(
+            sorted(r_u1.action_infos, key=lambda a: a.action),
+            sorted(r_geo.action_infos, key=lambda a: a.action),
+        ):
+            if ai_u1.intensity > 1e-10:
+                diff = abs(ai_u1.intensity - ai_geo.intensity) / ai_u1.intensity
+                self.assertLess(diff, 0.05,
+                                f"Triangle {ai_u1.action}: {diff:.1%} divergence")
+
+    # ── Gordian-lite: multi-path → three-theory separation ──
+
+    def test_gordian_u1_picks_b_others_pick_a(self):
+        """Gordian-lite: U(1) → B (destructive A), SU(2)-min/geo → A."""
+        r_u1, r_min, r_geo = self._reports(_build_gordian_natural())
+        self.assertEqual(r_u1.amplitude_choice, "B")
+        self.assertEqual(r_min.amplitude_choice, "A")
+        self.assertEqual(r_geo.amplitude_choice, "A")
+
+    def test_gordian_geo_between_u1_and_min(self):
+        """SU(2)-geo A-intensity lies between U(1) and SU(2)-min."""
+        r_u1, r_min, r_geo = self._reports(_build_gordian_natural())
+        i_u1_a = next(a.intensity for a in r_u1.action_infos if a.action == "A")
+        i_min_a = next(a.intensity for a in r_min.action_infos if a.action == "A")
+        i_geo_a = next(a.intensity for a in r_geo.action_infos if a.action == "A")
+        # U(1) I(A) < geo I(A) < min I(A)
+        self.assertGreater(i_geo_a, i_u1_a,
+                           f"geo I(A)={i_geo_a:.4f} should exceed U(1) I(A)={i_u1_a:.4f}")
+        self.assertLess(i_geo_a, i_min_a,
+                        f"geo I(A)={i_geo_a:.4f} should be less than min I(A)={i_min_a:.4f}")
+
+    def test_gordian_b_intensity_invariant(self):
+        """B single-path: same intensity across all three theories."""
+        r_u1, r_min, r_geo = self._reports(_build_gordian_natural())
+        i_u1_b = next(a.intensity for a in r_u1.action_infos if a.action == "B")
+        i_min_b = next(a.intensity for a in r_min.action_infos if a.action == "B")
+        i_geo_b = next(a.intensity for a in r_geo.action_infos if a.action == "B")
+        self.assertAlmostEqual(i_u1_b, i_min_b, places=6)
+        self.assertAlmostEqual(i_u1_b, i_geo_b, places=6)
+
+    # ── Structural invariants across all theories and domains ──
+
+    def test_probabilities_sum_to_one(self):
+        """All theories and domains: P sums to 1.0."""
+        domains = [
+            _build_diamond_natural(),
+            _build_leaf_natural(),
+            _build_triangle_natural(),
+            _build_gordian_natural(),
+        ]
+        for L in domains:
+            for r in self._reports(L):
+                total = sum(ai.probability for ai in r.action_infos)
+                self.assertAlmostEqual(total, 1.0, places=8)
+
+    def test_intensities_non_negative(self):
+        """All theories: intensities >= 0."""
+        domains = [
+            _build_diamond_natural(),
+            _build_leaf_natural(),
+            _build_triangle_natural(),
+            _build_gordian_natural(),
+        ]
+        for L in domains:
+            for r in self._reports(L):
+                for ai in r.action_infos:
+                    self.assertGreaterEqual(ai.intensity, 0.0)
+
+    def test_geometric_hybrid_reaches_goal(self):
+        """Hybrid controller with SU(2)-geo reaches goal on Gordian."""
+        from e0_controller.controller import E0Controller, HybridMode
+        from e0_controller.primitives import Outcome
+        L = _build_gordian_natural()
+        ctrl = E0Controller(
+            L, lambda s, t: Outcome.SUCCESS,
+            hybrid_mode=HybridMode.AMPLITUDE_ON_DISAGREE,
+            hybrid_horizon=5, hybrid_goals={"G"},
+            hybrid_geometry="goal_reaching",
+            use_su2="geometric",
+        )
+        trace = ctrl.run("S", goal="G", max_cycles=10)
+        self.assertIn("G", trace.path)
+
+
+# ---------------------------------------------------------------------------
+# Performance scaling — SU(2) overhead must stay within generous bounds
+# ---------------------------------------------------------------------------
+
+def _build_mesh(n_internal=10, seed=42):
+    """Dense mesh with many multi-path families (36 edges, 12 nodes)."""
+    import random as _random
+    rng = _random.Random(seed)
+    L = Landscape()
+    nodes = [f"N{i}" for i in range(n_internal)]
+    L.add_edge("S", nodes[0], delta=rng.uniform(0.1, 2), resistance=rng.uniform(0.1, 0.8))
+    for i in range(n_internal - 1):
+        L.add_edge(nodes[i], nodes[i + 1], delta=rng.uniform(0.1, 2), resistance=rng.uniform(0.1, 0.8))
+    L.add_edge(nodes[-1], "G", delta=rng.uniform(0.1, 2), resistance=rng.uniform(0.1, 0.8))
+    for i in range(n_internal):
+        for j in range(n_internal):
+            if i != j and rng.random() < 0.25:
+                L.add_edge(nodes[i], nodes[j], delta=rng.uniform(0.1, 3), resistance=rng.uniform(0.05, 1))
+    for n in nodes[1:3]:
+        L.add_edge("S", n, delta=rng.uniform(0.1, 2), resistance=rng.uniform(0.1, 0.8))
+    for n in nodes[-3:]:
+        L.add_edge(n, "G", delta=rng.uniform(0.1, 2), resistance=rng.uniform(0.1, 0.8))
+    return L
+
+
+class TestPerformanceScaling(unittest.TestCase):
+    """Verify SU(2) overhead stays within acceptable bounds.
+
+    Measured baselines (10-node mesh, 36 edges, horizon=4):
+        U(1)      ~  800 µs/call
+        SU(2)-min ~ 1344 µs/call  (1.7×)
+        SU(2)-geo ~ 3941 µs/call  (4.9×)
+
+    Tests use generous 10× / 20× ceilings to avoid CI flakiness.
+    """
+
+    def _timed_calls(self, su2_mode, n=50):
+        import time
+        from e0_controller.controller import E0Controller
+        from e0_controller.primitives import Outcome
+        from e0_controller.amplitude_overlay import analyze_controller_state
+        L = _build_mesh()
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS)
+        t0 = time.perf_counter()
+        for _ in range(n):
+            analyze_controller_state(ctrl, "S", horizon_edges=4,
+                                     geometry="goal_reaching", goals={"G"},
+                                     use_su2=su2_mode)
+        return (time.perf_counter() - t0) / n
+
+    def test_su2_min_overhead_bounded(self):
+        """SU(2)-min must be < 10× U(1)."""
+        t_u1 = self._timed_calls(False)
+        t_min = self._timed_calls(True)
+        ratio = t_min / t_u1
+        self.assertLess(ratio, 10.0, f"SU(2)-min overhead {ratio:.1f}× exceeds 10×")
+
+    def test_su2_geo_overhead_bounded(self):
+        """SU(2)-geo must be < 20× U(1)."""
+        t_u1 = self._timed_calls(False)
+        t_geo = self._timed_calls("geometric")
+        ratio = t_geo / t_u1
+        self.assertLess(ratio, 20.0, f"SU(2)-geo overhead {ratio:.1f}× exceeds 20×")
+
+    def test_all_modes_produce_valid_result_on_mesh(self):
+        """All three modes must return a valid overlay dict on the mesh."""
+        from e0_controller.controller import E0Controller
+        from e0_controller.primitives import Outcome
+        from e0_controller.amplitude_overlay import analyze_controller_state
+        L = _build_mesh()
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS)
+        for su2 in [False, True, "geometric"]:
+            result = analyze_controller_state(ctrl, "S", horizon_edges=4,
+                                              geometry="goal_reaching", goals={"G"},
+                                              use_su2=su2)
+            self.assertTrue(hasattr(result, "amplitude_choice"), f"mode={su2} missing amplitude_choice")
+            self.assertTrue(hasattr(result, "action_infos"), f"mode={su2} missing action_infos")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
