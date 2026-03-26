@@ -107,7 +107,7 @@ This paper does **not** claim:
 - A complete physical theory.
 
 It claims a formally explicit, reproducible, and honestly scoped framework
-for structural interference in discrete transition systems
+for structural interference in discrete transition systems.
 
 ---
 
@@ -267,11 +267,13 @@ The surveyed traditions each provide one axis of E₀'s construction:
 | Multi-goal RL | Goal-reaching geometry | Geometric path filter, not reward conditioning |
 | History-dependent planning | Historization $\delta_H$ | Modifies phase structure, not just costs |
 
+**Table 4: Positioning of E₀ relative to related traditions**
+
 E₀'s contribution is the *combination*: coherent path aggregation with
 complex interference on directed graphs, using a derived (not postulated)
 connection/holonomy structure, with multi-goal geometry and
 historization-driven adaptation — in a single deterministic decision
-framework. No prior work integrates all five axes
+framework. No prior work integrates all five axes.
 
 ---
 
@@ -422,10 +424,10 @@ gradient (conservative) and rotational (non-conservative) component.
 **Definition 10** (Transition Field).
 The *transition field* assigns to each directed edge $(x, y) \in E$ the value
 
-$$v(x, y) = \Delta(x, y) \cdot \exp\bigl(-S_{\text{eff}}(x, y)\bigr)$$
+$$v(x, y) = \Delta(x, y) \cdot \exp\bigl(-S(x, y)\bigr)$$
 
-where $S_{\text{eff}}(x,y) = \Delta(x,y) \cdot R_{\text{eff}}(x,y)$. For
-$(x, y) \notin E$, we set $v(x, y) = 0$.
+where $S(x,y) = \Delta(x,y) \cdot R_{\text{eff}}(x,y)$ is the edge tension
+(Def. 7). For $(x, y) \notin E$, we set $v(x, y) = 0$.
 
 **Remark.** The transition field is not a probability. It is a structural
 measure of *transition openness* — the degree to which a transition is both
@@ -544,7 +546,7 @@ representation that combines:
 
 **Definition 18** (Endpoint Amplitude and Summation Geometry).
 Given a state $x$, an admissible action $a \in N^+(x)$, a horizon $h \in
-\mathbb{N}$, and a *summation geometry* $G$ (Definition 20), the *endpoint
+\mathbb{N}$, and a *summation geometry* $G$ (Definition 21, §4), the *endpoint
 amplitude* is
 
 $$\Psi_G(a; x, h) = \sum_{p \in \mathcal{P}_G(x, a, h)} \Psi(p)$$
@@ -720,8 +722,8 @@ goal-reaching continuations.*
 *Under $G_{\text{goal}}$, only the $k$ and $k'$ goal-reaching paths
 contribute, and the inflation artifact is eliminated.*
 
-**Demonstration** (Gordian Trap). Consider the Gordian Trap domain (Fig. 3,
-Appendix B). From state START, action A1 leads to a decoy path-family with
+**Demonstration** (Gordian Trap). Consider the Gordian Trap domain
+(Appendix B.2). From state START, action A1 leads to a decoy path-family with
 one short path (A1→A2→GOAL) and one loop path
 (A1→L1→L2→L3→GOAL) that creates strong phase
 opposition ($|\Delta\Theta| \approx \pi$). Action B1 leads to a single
@@ -828,6 +830,10 @@ I(\text{decoy})$ and the amplitude choice overrides greedy. $\square$
 *The hybrid controller under AMPLITUDE\_ON\_DISAGREE mode is deterministic:
 identical input (graph, state, historization) always produces the same
 output.*
+
+*Proof.* Every step in Algorithms 1–3 is deterministic: $\arg\min$ and
+$\arg\max$ over finite sets with real-valued scores. Ties are broken by a
+fixed ordering. No randomness is introduced at any stage. $\square$
 
 ### 5.4 Born Sampling Mode
 
