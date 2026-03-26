@@ -111,3 +111,9 @@ from .reflection import (
     ReflectionDecision, ReflectionReport, ReflectionCallFn,
     should_reflect, reflect, reflect_with_llm, format_reflection_report,
 )
+from .self_tuning import (
+    RunFieldSummary, DerivedThresholds, ParameterSensitivity,
+    TuningProposal, MetaTuningResult,
+    field_summary_from_run, derive_thresholds,
+    compute_parameter_sensitivities, propose_tuning, apply_tuning,
+)

@@ -85,13 +85,26 @@ _THETA_OPPORTUNITY_FLOOR = 0.9         # Θ > 90% is opportunity
 # 4. Should Reflect?
 # ──────────────────────────────────────────────
 
-def should_reflect(ev: ScenarioEvaluation) -> ReflectionDecision:
+def should_reflect(
+    ev: ScenarioEvaluation,
+    field_summary: Optional[Any] = None,
+) -> ReflectionDecision:
     """Determine whether reflection should be triggered for this evaluation.
 
     Checks failure triggers first (highest priority), then quality,
     then opportunity.  Returns the first matching trigger class.
+
+    If *field_summary* (a RunFieldSummary from self_tuning) is provided,
+    quality and opportunity thresholds are derived from the run's own
+    field quantities instead of the module-level constants.
     """
     run = ev.run_evaluation
+
+    # B4.1: derive thresholds from field if available
+    _dt = None
+    if field_summary is not None:
+        from .self_tuning import derive_thresholds
+        _dt = derive_thresholds(field_summary)
 
     # ── Failure triggers (hard) ──
     if ev.hard_failure:
@@ -119,16 +132,22 @@ def should_reflect(ev: ScenarioEvaluation) -> ReflectionDecision:
     # ── Quality triggers (soft) ──
     quality_reasons: List[str] = []
 
-    if run.goal_reach_efficiency < _QUALITY_EFFICIENCY_CEIL:
+    # B4.1: use derived or static thresholds
+    _q_eff = _dt.quality_efficiency if _dt else _QUALITY_EFFICIENCY_CEIL
+    _q_loop = _dt.quality_loop if _dt else _QUALITY_LOOP_PENALTY_CEIL
+    _q_esc = _dt.quality_escalation if _dt else _QUALITY_ESCALATION_RATIO
+    _q_prog = _dt.quality_progress if _dt else _QUALITY_PROGRESS_FLOOR
+
+    if run.goal_reach_efficiency < _q_eff:
         quality_reasons.append(
             f"low efficiency ({run.goal_reach_efficiency:.2f})")
-    if run.loop_penalty > _QUALITY_LOOP_PENALTY_CEIL:
+    if run.loop_penalty > _q_loop:
         quality_reasons.append(
             f"non-trivial looping (penalty {run.loop_penalty:.2f})")
-    if run.steps > 0 and run.escalations / run.steps > _QUALITY_ESCALATION_RATIO:
+    if run.steps > 0 and run.escalations / run.steps > _q_esc:
         quality_reasons.append(
             f"high escalation rate ({run.escalations}/{run.steps})")
-    if run.progress_ratio < _QUALITY_PROGRESS_FLOOR:
+    if run.progress_ratio < _q_prog:
         quality_reasons.append(
             f"low progress ({run.progress_ratio:.2f})")
     if ev.semantic_evaluation:
@@ -156,12 +175,16 @@ def should_reflect(ev: ScenarioEvaluation) -> ReflectionDecision:
     # ── Opportunity triggers (positive) ──
     opportunity_reasons: List[str] = []
 
+    # B4.1: derived opportunity thresholds
+    _o_eff = _dt.opportunity_efficiency if _dt else _OPPORTUNITY_EFFICIENCY_FLOOR
+    _o_prog = _dt.opportunity_progress if _dt else _OPPORTUNITY_GRAPH_SCORE_FLOOR
+
     if run.rating == _OPPORTUNITY_RATING:
         opportunity_reasons.append("A-rated run")
-    if run.goal_reach_efficiency >= _OPPORTUNITY_EFFICIENCY_FLOOR:
+    if run.goal_reach_efficiency >= _o_eff:
         opportunity_reasons.append(
             f"high efficiency ({run.goal_reach_efficiency:.2f})")
-    if ev.graph_score >= _OPPORTUNITY_GRAPH_SCORE_FLOOR:
+    if ev.graph_score >= _o_prog:
         opportunity_reasons.append(
             f"strong graph ({ev.graph_score:.2f})")
 
