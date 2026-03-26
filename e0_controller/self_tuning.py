@@ -1,6 +1,6 @@
 """
-E₀ Self-Tuning Layer (B4.1 + B4.2)
-====================================
+E₀ Self-Tuning Layer (B4.1 + B4.2 + B4.3)
+=============================================
 Reflexivity as self-application of E₀ dynamics.
 
 The key insight: reflexivity is NOT a new primitive.  It is the E₀
@@ -50,13 +50,29 @@ The feedback loop closes the reflection → tuning → verification arc:
     4. Apply adjustments and re-run
     5. Measure Δ_meta = quality_after − quality_before
     6. Accept if improved, revert if degraded (meta-admissibility)
+
+Cross-Run Memory (B4.3)
+-----------------------
+TuningMemory persists a bounded history of TuningSnapshots across
+runs.  Each snapshot captures Q, the 5 τ metrics, controller params,
+and applied changes.  Analysis functions extract:
+
+    quality_trend   — linear slope of Q over last N runs
+    recurring_issues — which τ dimensions trigger issues repeatedly
+    parameter_drift — net parameter movement over time
+    suggest_from_history — cross-run pattern → actionable insight
+
+Serialization via to_dict/from_dict integrates with MemOS.
 """
 
 from __future__ import annotations
 
+import json
 import math
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 
 # ──────────────────────────────────────────────
@@ -813,3 +829,354 @@ def tune(
         final_params=final_params,
         converged=converged,
     )
+
+
+# ──────────────────────────────────────────────
+# 10. Cross-Run Memory (B4.3)
+# ──────────────────────────────────────────────
+
+@dataclass
+class TuningSnapshot:
+    """Serializable record of one run's tuning-relevant data.
+
+    Captures everything needed for cross-run pattern recognition:
+    quality score, field metrics, parameter state, and changes.
+    """
+    timestamp: str                       # ISO UTC
+    quality: float                       # Q ∈ [0, 1]
+    goal_reached: bool
+    tau_eff: float
+    tau_loop: float
+    tau_esc: float
+    tau_progress: float
+    tau_efficiency: float
+    params: Dict[str, float]             # controller θ at time of run
+    applied_changes: List[str]           # human-readable change log
+    accepted: bool                       # True if tuning was accepted
+
+
+def snapshot_from_cycle(result: TuningCycleResult) -> TuningSnapshot:
+    """Extract a TuningSnapshot from a completed TuningCycleResult."""
+    fs = result.field_after if result.field_after is not None else result.field_before
+    q = result.quality_after if result.quality_after is not None else result.quality_before
+    goal = result.goal_reached_after if result.goal_reached_after is not None else result.goal_reached_before
+
+    return TuningSnapshot(
+        timestamp=datetime.now(timezone.utc).isoformat(),
+        quality=q,
+        goal_reached=goal,
+        tau_eff=fs.tau_eff,
+        tau_loop=fs.tau_loop,
+        tau_esc=fs.tau_esc,
+        tau_progress=fs.tau_progress,
+        tau_efficiency=fs.tau_efficiency,
+        params=dict(result.tuning.meta_historization.get("__snapshot_params", {})
+                    or {p.parameter: p.old_value for p in result.tuning.proposals}
+                    or {}),
+        applied_changes=list(result.applied_changes),
+        accepted=result.accepted,
+    )
+
+
+def _snapshot_from_cycle_with_params(
+    result: TuningCycleResult,
+    params: Dict[str, float],
+) -> TuningSnapshot:
+    """Internal: snapshot with explicit param dict (avoids re-extraction)."""
+    fs = result.field_after if result.field_after is not None else result.field_before
+    q = result.quality_after if result.quality_after is not None else result.quality_before
+    goal = (
+        result.goal_reached_after
+        if result.goal_reached_after is not None
+        else result.goal_reached_before
+    )
+    return TuningSnapshot(
+        timestamp=datetime.now(timezone.utc).isoformat(),
+        quality=q,
+        goal_reached=goal,
+        tau_eff=fs.tau_eff,
+        tau_loop=fs.tau_loop,
+        tau_esc=fs.tau_esc,
+        tau_progress=fs.tau_progress,
+        tau_efficiency=fs.tau_efficiency,
+        params=dict(params),
+        applied_changes=list(result.applied_changes),
+        accepted=result.accepted,
+    )
+
+
+# ── Issue detection thresholds (from DerivedThresholds defaults) ──
+_ISSUE_LOOP_THRESHOLD = 0.25     # τ_loop above this → loop issue
+_ISSUE_ESC_THRESHOLD = 0.2       # τ_esc above this → escalation issue
+_ISSUE_EFFICIENCY_FLOOR = 0.4    # τ_efficiency below this → efficiency issue
+_ISSUE_PROGRESS_FLOOR = 0.5      # τ_progress below this → progress issue
+
+
+@dataclass
+class TuningMemory:
+    """Bounded cross-run tuning history with analysis.
+
+    Stores TuningSnapshots and provides temporal analysis:
+    quality trends, recurring issues, parameter drift, and
+    cross-run insights.  Serializable for MemOS persistence.
+    """
+    entries: List[TuningSnapshot] = field(default_factory=list)
+    max_entries: int = 50
+
+    def record(self, snapshot: TuningSnapshot) -> None:
+        """Append a snapshot, dropping oldest if at capacity."""
+        self.entries.append(snapshot)
+        if len(self.entries) > self.max_entries:
+            self.entries = self.entries[-self.max_entries:]
+
+    def quality_trend(self, n: int = 5) -> float:
+        """Linear slope of Q over the last *n* entries.
+
+        Positive = improving, negative = degrading, ~0 = stable.
+        Uses simple least-squares regression on indices.
+        Returns 0.0 if fewer than 2 entries.
+        """
+        recent = self.entries[-n:] if n > 0 else []
+        if len(recent) < 2:
+            return 0.0
+
+        m = len(recent)
+        xs = list(range(m))
+        ys = [e.quality for e in recent]
+        x_mean = sum(xs) / m
+        y_mean = sum(ys) / m
+
+        num = sum((x - x_mean) * (y - y_mean) for x, y in zip(xs, ys))
+        den = sum((x - x_mean) ** 2 for x in xs)
+        return num / den if den > 0 else 0.0
+
+    def recurring_issues(self, n: int = 10) -> Dict[str, int]:
+        """Count which τ dimensions triggered issues over last *n* runs.
+
+        Returns e.g. {"loop": 3, "escalation": 2, "efficiency": 5}.
+        A dimension counts as an issue if it exceeds its threshold.
+        """
+        recent = self.entries[-n:] if n > 0 else []
+        counts: Dict[str, int] = {}
+        for e in recent:
+            if e.tau_loop > _ISSUE_LOOP_THRESHOLD:
+                counts["loop"] = counts.get("loop", 0) + 1
+            if e.tau_esc > _ISSUE_ESC_THRESHOLD:
+                counts["escalation"] = counts.get("escalation", 0) + 1
+            if e.tau_efficiency < _ISSUE_EFFICIENCY_FLOOR:
+                counts["efficiency"] = counts.get("efficiency", 0) + 1
+            if e.tau_progress < _ISSUE_PROGRESS_FLOOR:
+                counts["progress"] = counts.get("progress", 0) + 1
+        return counts
+
+    def parameter_drift(self, param: str, n: int = 10) -> float:
+        """Net change of *param* over the last *n* entries.
+
+        Returns last_value − first_value.  0.0 if param not found or
+        fewer than 2 entries.
+        """
+        recent = self.entries[-n:] if n > 0 else []
+        values = [e.params.get(param) for e in recent if param in e.params]
+        if len(values) < 2:
+            return 0.0
+        return values[-1] - values[0]
+
+    def effective_proposals(self, n: int = 10) -> List[str]:
+        """Proposals from accepted cycles over the last *n* entries."""
+        recent = self.entries[-n:] if n > 0 else []
+        result: List[str] = []
+        for e in recent:
+            if e.accepted and e.applied_changes:
+                result.extend(e.applied_changes)
+        return result
+
+    def suggest_from_history(self) -> List[str]:
+        """Generate cross-run insights from accumulated history.
+
+        Looks for persistent patterns that single-run analysis misses:
+        - Chronic issues: same τ dimension triggers in >50% of recent runs
+        - Plateau: quality stable despite tuning → structural limit
+        - Drift: parameter moves monotonically → may be approaching bound
+        """
+        suggestions: List[str] = []
+        if len(self.entries) < 3:
+            return suggestions
+
+        # Chronic issues (>50% of last 10 runs)
+        issues = self.recurring_issues(10)
+        n_recent = min(len(self.entries), 10)
+        for dim, count in issues.items():
+            if count > n_recent * 0.5:
+                suggestions.append(
+                    f"Chronic {dim} issue: triggered in {count}/{n_recent} "
+                    f"recent runs — may indicate structural landscape problem"
+                )
+
+        # Quality plateau (slope near zero despite tuning)
+        trend = self.quality_trend(5)
+        has_tuning = any(
+            e.applied_changes for e in self.entries[-5:]
+        )
+        if abs(trend) < 0.01 and has_tuning:
+            suggestions.append(
+                "Quality plateau: tuning active but Q stable — "
+                "consider landscape restructuring instead of parameter adjustment"
+            )
+
+        # Parameter drift toward bounds
+        for param, (lo, hi) in TUNABLE_PARAMS.items():
+            drift = self.parameter_drift(param, 10)
+            if abs(drift) < 1e-6:
+                continue
+            # Check if last value is near a bound
+            last_values = [
+                e.params.get(param) for e in self.entries[-5:]
+                if param in e.params
+            ]
+            if not last_values:
+                continue
+            last_val = last_values[-1]
+            param_range = hi - lo
+            if param_range <= 0:
+                continue
+            if (last_val - lo) / param_range < 0.1:
+                suggestions.append(
+                    f"{param} drifting toward lower bound "
+                    f"({last_val:.3f} → {lo}) — may need "
+                    f"landscape or strategy change"
+                )
+            elif (hi - last_val) / param_range < 0.1:
+                suggestions.append(
+                    f"{param} drifting toward upper bound "
+                    f"({last_val:.3f} → {hi}) — may need "
+                    f"landscape or strategy change"
+                )
+
+        return suggestions
+
+    # ── Serialization ──
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize to a JSON-compatible dict."""
+        return {
+            "max_entries": self.max_entries,
+            "entries": [asdict(e) for e in self.entries],
+        }
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "TuningMemory":
+        """Reconstruct from a serialized dict."""
+        mem = cls(max_entries=d.get("max_entries", 50))
+        for entry_d in d.get("entries", []):
+            mem.entries.append(TuningSnapshot(**entry_d))
+        return mem
+
+
+# ──────────────────────────────────────────────
+# 11. tune() with Memory (B4.3)
+# ──────────────────────────────────────────────
+
+def tune_with_memory(
+    controller,
+    start: str,
+    goal: Optional[str] = None,
+    max_cycles_per_run: int = 50,
+    max_tuning_iterations: int = 5,
+    step_fraction: float = _STEP_FRACTION,
+    memory: Optional[TuningMemory] = None,
+) -> MultiCycleTuningResult:
+    """Like tune() but records each cycle into a TuningMemory.
+
+    If *memory* is provided, snapshots are appended to it.
+    If None, a fresh TuningMemory is created (and discarded).
+
+    The memory can be persisted via MemOS between sessions
+    to enable cross-run pattern recognition.
+    """
+    if memory is None:
+        memory = TuningMemory()
+
+    param_history: Dict[str, List[float]] = {}
+    cycles: List[TuningCycleResult] = []
+    consecutive_reverts = 0
+
+    for _ in range(max_tuning_iterations):
+        result = tuning_cycle(
+            controller, start, goal=goal,
+            max_cycles=max_cycles_per_run,
+            param_history=param_history,
+            step_fraction=step_fraction,
+        )
+        cycles.append(result)
+
+        # Record snapshot into cross-run memory
+        params = _extract_controller_params(controller)
+        snapshot = _snapshot_from_cycle_with_params(result, params)
+        memory.record(snapshot)
+
+        # Propagate meta-historization
+        param_history = dict(result.tuning.meta_historization)
+
+        # Check stopping conditions
+        if not result.tuning.proposals:
+            break
+
+        if result.reverted:
+            consecutive_reverts += 1
+            if consecutive_reverts >= 2:
+                break
+        else:
+            consecutive_reverts = 0
+
+    total_delta = sum(
+        (c.delta_quality for c in cycles if c.delta_quality is not None),
+        0.0,
+    )
+    final_params = _extract_controller_params(controller)
+    converged = bool(cycles) and not cycles[-1].tuning.proposals
+
+    return MultiCycleTuningResult(
+        cycles=cycles,
+        total_delta=total_delta,
+        final_params=final_params,
+        converged=converged,
+    )
+
+
+# ──────────────────────────────────────────────
+# 12. MemOS Persistence Bridge (B4.3)
+# ──────────────────────────────────────────────
+
+_TUNING_DIR = "tuning"
+
+
+def save_tuning_memory(
+    memory: TuningMemory,
+    session_id: str,
+    base_dir: str = "memos",
+) -> Path:
+    """Persist a TuningMemory as JSON under the MemOS directory tree.
+
+    Writes to ``{base_dir}/tuning/{session_id}.json``.
+    """
+    d = Path(base_dir) / _TUNING_DIR
+    d.mkdir(parents=True, exist_ok=True)
+    path = d / f"{session_id}.json"
+    path.write_text(
+        json.dumps(memory.to_dict(), indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    return path
+
+
+def load_tuning_memory(
+    session_id: str,
+    base_dir: str = "memos",
+    max_entries: int = 50,
+) -> TuningMemory:
+    """Load a persisted TuningMemory, or return an empty one."""
+    path = Path(base_dir) / _TUNING_DIR / f"{session_id}.json"
+    if not path.exists():
+        return TuningMemory(max_entries=max_entries)
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return TuningMemory.from_dict(data)

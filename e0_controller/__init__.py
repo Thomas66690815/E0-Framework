@@ -115,7 +115,10 @@ from .self_tuning import (
     RunFieldSummary, DerivedThresholds, ParameterSensitivity,
     TuningProposal, MetaTuningResult,
     TuningCycleResult, MultiCycleTuningResult,
+    TuningSnapshot, TuningMemory,
     field_summary_from_run, derive_thresholds,
     compute_parameter_sensitivities, propose_tuning, apply_tuning,
     quality_score, tuning_cycle, tune,
+    snapshot_from_cycle, tune_with_memory,
+    save_tuning_memory, load_tuning_memory,
 )

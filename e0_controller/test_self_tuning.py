@@ -1,14 +1,17 @@
 """
-Tests for B4.1 + B4.2: Self-Tuning Meta-Layer
-================================================
+Tests for B4.1 + B4.2 + B4.3: Self-Tuning Meta-Layer
+=====================================================
 Tests the field-derived threshold system, parameter sensitivity
 analysis, tuning proposals, oscillation protection, tuning cycles,
-multi-cycle convergence, and integration with the reflection layer.
+multi-cycle convergence, cross-run memory, and integration with
+the reflection layer.
 
-33 tests (B4.1) + 20 tests (B4.2) in 13 test classes.
+33 tests (B4.1) + 17 tests (B4.2) + 22 tests (B4.3) in 18 test classes.
 """
 
+import os
 import math
+import tempfile
 import unittest
 from unittest.mock import MagicMock
 
@@ -24,6 +27,8 @@ from e0_controller.self_tuning import (
     MetaTuningResult,
     TuningCycleResult,
     MultiCycleTuningResult,
+    TuningSnapshot,
+    TuningMemory,
     field_summary_from_run,
     derive_thresholds,
     compute_parameter_sensitivities,
@@ -32,6 +37,10 @@ from e0_controller.self_tuning import (
     quality_score,
     tuning_cycle,
     tune,
+    snapshot_from_cycle,
+    tune_with_memory,
+    save_tuning_memory,
+    load_tuning_memory,
     _would_oscillate,
     _reset_landscape,
     TUNABLE_PARAMS,
@@ -662,6 +671,320 @@ class TestTuningImprovement(unittest.TestCase):
         ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS)
         result = tune(ctrl, "A", goal="GOAL")
         self.assertGreaterEqual(result.total_delta, 0.0)
+
+
+# ══════════════════════════════════════════════
+# B4.3: Cross-Run Memory Tests
+# ══════════════════════════════════════════════
+
+
+def _make_snapshot(
+    quality=0.6,
+    goal_reached=True,
+    tau_eff=0.5,
+    tau_loop=0.1,
+    tau_esc=0.05,
+    tau_progress=0.7,
+    tau_efficiency=0.8,
+    params=None,
+    applied_changes=None,
+    accepted=False,
+):
+    return TuningSnapshot(
+        timestamp="2026-03-26T00:00:00+00:00",
+        quality=quality,
+        goal_reached=goal_reached,
+        tau_eff=tau_eff,
+        tau_loop=tau_loop,
+        tau_esc=tau_esc,
+        tau_progress=tau_progress,
+        tau_efficiency=tau_efficiency,
+        params=params or {"alpha": 2.0},
+        applied_changes=applied_changes or [],
+        accepted=accepted,
+    )
+
+
+# ──────────────────────────────────────────────
+# 14. TuningSnapshot
+# ──────────────────────────────────────────────
+
+class TestTuningSnapshot(unittest.TestCase):
+
+    def test_fields_accessible(self):
+        s = _make_snapshot(quality=0.75, tau_loop=0.3)
+        self.assertAlmostEqual(s.quality, 0.75)
+        self.assertAlmostEqual(s.tau_loop, 0.3)
+
+    def test_snapshot_from_cycle(self):
+        """snapshot_from_cycle extracts data from a TuningCycleResult."""
+        L = _make_clean_landscape()
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS, alpha=2.0)
+        result = tuning_cycle(ctrl, "A", goal="GOAL", max_cycles=20)
+        snap = snapshot_from_cycle(result)
+        self.assertIsInstance(snap, TuningSnapshot)
+        self.assertGreaterEqual(snap.quality, 0.0)
+        self.assertLessEqual(snap.quality, 1.0)
+        self.assertTrue(snap.goal_reached)
+
+
+# ──────────────────────────────────────────────
+# 15. TuningMemory Core
+# ──────────────────────────────────────────────
+
+class TestTuningMemoryCore(unittest.TestCase):
+
+    def test_record_appends(self):
+        mem = TuningMemory()
+        mem.record(_make_snapshot())
+        mem.record(_make_snapshot(quality=0.8))
+        self.assertEqual(len(mem.entries), 2)
+
+    def test_bounded_capacity(self):
+        mem = TuningMemory(max_entries=3)
+        for i in range(5):
+            mem.record(_make_snapshot(quality=i * 0.1))
+        self.assertEqual(len(mem.entries), 3)
+        # Oldest dropped, most recent kept
+        self.assertAlmostEqual(mem.entries[0].quality, 0.2)
+
+    def test_empty_memory_defaults(self):
+        mem = TuningMemory()
+        self.assertEqual(mem.quality_trend(), 0.0)
+        self.assertEqual(mem.recurring_issues(), {})
+        self.assertEqual(mem.parameter_drift("alpha"), 0.0)
+        self.assertEqual(mem.effective_proposals(), [])
+        self.assertEqual(mem.suggest_from_history(), [])
+
+
+# ──────────────────────────────────────────────
+# 16. Quality Trend
+# ──────────────────────────────────────────────
+
+class TestQualityTrend(unittest.TestCase):
+
+    def test_improving_trend(self):
+        mem = TuningMemory()
+        for q in [0.3, 0.4, 0.5, 0.6, 0.7]:
+            mem.record(_make_snapshot(quality=q))
+        trend = mem.quality_trend(5)
+        self.assertGreater(trend, 0)
+
+    def test_degrading_trend(self):
+        mem = TuningMemory()
+        for q in [0.7, 0.6, 0.5, 0.4, 0.3]:
+            mem.record(_make_snapshot(quality=q))
+        trend = mem.quality_trend(5)
+        self.assertLess(trend, 0)
+
+    def test_stable_trend(self):
+        mem = TuningMemory()
+        for _ in range(5):
+            mem.record(_make_snapshot(quality=0.5))
+        trend = mem.quality_trend(5)
+        self.assertAlmostEqual(trend, 0.0)
+
+    def test_single_entry_returns_zero(self):
+        mem = TuningMemory()
+        mem.record(_make_snapshot())
+        self.assertAlmostEqual(mem.quality_trend(), 0.0)
+
+
+# ──────────────────────────────────────────────
+# 17. Recurring Issues
+# ──────────────────────────────────────────────
+
+class TestRecurringIssues(unittest.TestCase):
+
+    def test_loop_detected(self):
+        mem = TuningMemory()
+        mem.record(_make_snapshot(tau_loop=0.5))  # above 0.25
+        mem.record(_make_snapshot(tau_loop=0.01))  # below
+        issues = mem.recurring_issues(2)
+        self.assertEqual(issues.get("loop", 0), 1)
+
+    def test_efficiency_detected(self):
+        mem = TuningMemory()
+        mem.record(_make_snapshot(tau_efficiency=0.2))  # below 0.4
+        issues = mem.recurring_issues(1)
+        self.assertIn("efficiency", issues)
+
+    def test_no_issues_on_clean(self):
+        mem = TuningMemory()
+        mem.record(_make_snapshot())  # defaults are clean
+        issues = mem.recurring_issues(1)
+        self.assertEqual(issues, {})
+
+
+# ──────────────────────────────────────────────
+# 18. Parameter Drift
+# ──────────────────────────────────────────────
+
+class TestParameterDrift(unittest.TestCase):
+
+    def test_increasing_drift(self):
+        mem = TuningMemory()
+        mem.record(_make_snapshot(params={"alpha": 1.0}))
+        mem.record(_make_snapshot(params={"alpha": 2.0}))
+        mem.record(_make_snapshot(params={"alpha": 3.0}))
+        self.assertAlmostEqual(mem.parameter_drift("alpha", 3), 2.0)
+
+    def test_no_drift_if_missing(self):
+        mem = TuningMemory()
+        mem.record(_make_snapshot(params={"alpha": 1.0}))
+        self.assertAlmostEqual(mem.parameter_drift("s_max", 1), 0.0)
+
+
+# ──────────────────────────────────────────────
+# 19. Effective Proposals
+# ──────────────────────────────────────────────
+
+class TestEffectiveProposals(unittest.TestCase):
+
+    def test_collects_accepted(self):
+        mem = TuningMemory()
+        mem.record(_make_snapshot(
+            applied_changes=["alpha: 1.0 → 1.5"], accepted=True
+        ))
+        mem.record(_make_snapshot(
+            applied_changes=["alpha: 1.5 → 1.0"], accepted=False
+        ))
+        eff = mem.effective_proposals(2)
+        self.assertEqual(len(eff), 1)
+        self.assertIn("1.0 → 1.5", eff[0])
+
+
+# ──────────────────────────────────────────────
+# 20. Cross-Run Suggestions
+# ──────────────────────────────────────────────
+
+class TestSuggestFromHistory(unittest.TestCase):
+
+    def test_chronic_loop_detected(self):
+        """If loop issue triggers >50% of runs, suggest structural fix."""
+        mem = TuningMemory()
+        for _ in range(8):
+            mem.record(_make_snapshot(tau_loop=0.5))
+        for _ in range(2):
+            mem.record(_make_snapshot(tau_loop=0.0))
+        suggestions = mem.suggest_from_history()
+        chronic_loop = [s for s in suggestions if "loop" in s.lower()]
+        self.assertTrue(len(chronic_loop) > 0)
+
+    def test_quality_plateau_detected(self):
+        """Stable Q with active tuning → plateau suggestion."""
+        mem = TuningMemory()
+        for _ in range(5):
+            mem.record(_make_snapshot(
+                quality=0.6,
+                applied_changes=["alpha: 2.0 → 2.1"],
+            ))
+        suggestions = mem.suggest_from_history()
+        plateau = [s for s in suggestions if "plateau" in s.lower()]
+        self.assertTrue(len(plateau) > 0)
+
+    def test_no_suggestions_on_short_history(self):
+        mem = TuningMemory()
+        mem.record(_make_snapshot())
+        self.assertEqual(mem.suggest_from_history(), [])
+
+
+# ──────────────────────────────────────────────
+# 21. Serialization
+# ──────────────────────────────────────────────
+
+class TestTuningMemorySerialization(unittest.TestCase):
+
+    def test_round_trip(self):
+        mem = TuningMemory(max_entries=10)
+        mem.record(_make_snapshot(quality=0.3, params={"alpha": 1.5}))
+        mem.record(_make_snapshot(quality=0.7, params={"alpha": 2.5}))
+
+        d = mem.to_dict()
+        restored = TuningMemory.from_dict(d)
+
+        self.assertEqual(len(restored.entries), 2)
+        self.assertAlmostEqual(restored.entries[0].quality, 0.3)
+        self.assertAlmostEqual(restored.entries[1].params["alpha"], 2.5)
+        self.assertEqual(restored.max_entries, 10)
+
+    def test_empty_round_trip(self):
+        mem = TuningMemory()
+        restored = TuningMemory.from_dict(mem.to_dict())
+        self.assertEqual(len(restored.entries), 0)
+
+
+# ──────────────────────────────────────────────
+# 22. MemOS Persistence Bridge
+# ──────────────────────────────────────────────
+
+class TestTuningMemoryPersistence(unittest.TestCase):
+
+    def test_save_and_load(self):
+        mem = TuningMemory()
+        mem.record(_make_snapshot(quality=0.55, params={"alpha": 2.0}))
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            save_tuning_memory(mem, "test_session", base_dir=tmpdir)
+            loaded = load_tuning_memory("test_session", base_dir=tmpdir)
+
+        self.assertEqual(len(loaded.entries), 1)
+        self.assertAlmostEqual(loaded.entries[0].quality, 0.55)
+
+    def test_load_missing_returns_empty(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            loaded = load_tuning_memory("nonexistent", base_dir=tmpdir)
+        self.assertEqual(len(loaded.entries), 0)
+
+
+# ──────────────────────────────────────────────
+# 23. tune_with_memory Integration
+# ──────────────────────────────────────────────
+
+class TestTuneWithMemory(unittest.TestCase):
+
+    def test_memory_populated(self):
+        """tune_with_memory populates the TuningMemory."""
+        L = _make_clean_landscape()
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS, alpha=2.0)
+        mem = TuningMemory()
+        result = tune_with_memory(
+            ctrl, "A", goal="GOAL", max_tuning_iterations=2, memory=mem,
+        )
+        self.assertGreater(len(mem.entries), 0)
+        self.assertTrue(mem.entries[0].goal_reached)
+
+    def test_creates_memory_if_none(self):
+        """tune_with_memory works without explicit memory."""
+        L = _make_clean_landscape()
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS)
+        result = tune_with_memory(ctrl, "A", goal="GOAL")
+        self.assertIsInstance(result, MultiCycleTuningResult)
+
+    def test_memory_survives_round_trip(self):
+        """Persist memory → load → continue tuning."""
+        L = _make_clean_landscape()
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS, alpha=2.0)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Session 1
+            mem = TuningMemory()
+            tune_with_memory(
+                ctrl, "A", goal="GOAL", max_tuning_iterations=1, memory=mem,
+            )
+            save_tuning_memory(mem, "sess1", base_dir=tmpdir)
+            count_after_s1 = len(mem.entries)
+
+            # Session 2: load and continue
+            mem2 = load_tuning_memory("sess1", base_dir=tmpdir)
+            self.assertEqual(len(mem2.entries), count_after_s1)
+
+            L2 = _make_clean_landscape()
+            ctrl2 = E0Controller(L2, lambda s, t: Outcome.SUCCESS, alpha=2.0)
+            tune_with_memory(
+                ctrl2, "A", goal="GOAL", max_tuning_iterations=1, memory=mem2,
+            )
+            self.assertGreater(len(mem2.entries), count_after_s1)
 
 
 if __name__ == "__main__":
