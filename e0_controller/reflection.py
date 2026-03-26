@@ -468,6 +468,8 @@ def _build_evidence_block(ev: ScenarioEvaluation) -> str:
         lines.append(f"  R_coh (avg/min/max): {run.r_coh_avg:.3f} / {run.r_coh_min:.3f} / {run.r_coh_max:.3f}")
         lines.append(f"  Θ Consistency: {run.theta_consistency:.3f}")
         lines.append(f"  Amplitude Drift: {run.amplitude_drift:.2f}")
+        if hasattr(run, 'override_count') and run.override_count > 0:
+            lines.append(f"  Overrides: {run.override_count} (amplitude disagreed with greedy)")
 
     if ev.semantic_evaluation:
         sem = ev.semantic_evaluation

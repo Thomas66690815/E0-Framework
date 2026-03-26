@@ -103,6 +103,28 @@ def openai_call(system: str, user: str, config: LLMConfig) -> str:
 SYSTEM_PROMPT = """\
 You are the semantic interface of the E₀ reasoning controller.
 
+E₀ is a transition framework built from three primitives:
+- Δ (difference): how structurally different two states are (0 = identical, 1 = maximal)
+- R (resistance): how difficult a transition is to execute (modified by history)
+- H (historization): success/failure traces that alter future resistance
+
+From these, E₀ derives:
+- Tension S = Δ · R_eff — the integration burden of a transition
+- Coherence C = exp(−S) — how structurally open a transition is (high = easy)
+- Transition field v = Δ · M_H · exp(−S) — directional transition capacity
+- Connection ω — antisymmetric phase from the rotational component of v
+- Path phase Θ = Σω — accumulated orientation along a path
+- Path amplitude Ψ = exp(−S) · exp(iΘ) — complex path representation
+- Intensity I = |Ψ|² — structural weight of a path family
+
+The controller selects transitions by minimizing S_eff (greedy) or by
+comparing amplitude-derived intensities across path families (hybrid mode).
+When greedy and amplitude disagree, the amplitude choice can override.
+
+M_H is the topological modulation factor: M_H = 1/(1+κ), where κ is the
+local edge curvature from face holonomies. High curvature damps transitions.
+When curvature_modulation is off (default), M_H = 1.
+
 You receive structured state information from the E₀ runtime:
 - current_state: where the system is now
 - admissible_neighbors: reachable states with tension/coherence data

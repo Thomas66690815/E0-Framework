@@ -416,11 +416,14 @@ class E0MemoryOS:
         for n in neighbors:
             s_eff = landscape.effective_tension(current_state, n)
             edge = Edge(current_state, n)
-            neighbor_info[n] = {
+            info = {
                 "s_eff": round(s_eff, 4),
                 "coherence": round(coherence(s_eff), 4),
                 "v": round(landscape.transition_field(current_state, n), 4),
             }
+            if landscape.curvature_modulation:
+                info["M_H"] = round(landscape._get_M_H(current_state, n), 4)
+            neighbor_info[n] = info
 
         # 2. Edge history for current neighborhood
         edge_history = {}
@@ -444,6 +447,10 @@ class E0MemoryOS:
             "tau": context.historization.get("tau", 0),
             "hybrid_mode": hybrid_mode,
         }
+
+        # Curvature modulation (B2)
+        if landscape.curvature_modulation:
+            runtime["curvature_modulation"] = True
 
         # 4. Canon refs
         canon = [ref["name"] + "@" + ref["version"]
@@ -494,11 +501,15 @@ class E0MemoryOS:
 
         actions = {}
         for info in report.action_infos:
-            actions[info.action] = {
+            entry: Dict[str, Any] = {
                 "probability": round(info.probability, 4),
                 "intensity": round(info.intensity, 6),
                 "path_count": info.path_count,
             }
+            if info.path_count > 1 and abs(info.psi_total) > 1e-15:
+                import cmath
+                entry["psi_phase"] = round(cmath.phase(info.psi_total), 4)
+            actions[info.action] = entry
 
         greedy_choice = report.deterministic_choice
         amp_choice = report.amplitude_choice
@@ -510,6 +521,7 @@ class E0MemoryOS:
             "greedy_choice": greedy_choice,
             "amplitude_choice": amp_choice,
             "agree": agree,
+            "override_confidence": round(report.override_confidence, 4),
             "actions": actions,
         }
 
