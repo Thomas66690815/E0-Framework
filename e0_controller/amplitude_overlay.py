@@ -190,6 +190,7 @@ def analyze_controller_state(
     geometry: str = "simple",
     goals: Optional[Set[str]] = None,
     use_su2: object = False,
+    axis_fn=None,
 ) -> OverlayReport:
     """
     Build an analysis-only amplitude overlay for one controller decision point.
@@ -242,7 +243,7 @@ def analyze_controller_state(
             intensity = float(np.real(np.vdot(psi_total_su2, psi_total_su2)))
         elif use_su2:
             psi_total_su2 = sum(
-                (path_psi_su2(controller.landscape, p) for p in action_paths),
+                (path_psi_su2(controller.landscape, p, axis_fn=axis_fn) for p in action_paths),
                 start=np.zeros(2, dtype=complex),
             )
             psi_total = complex(psi_total_su2[0])
