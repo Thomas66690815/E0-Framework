@@ -1,7 +1,7 @@
 # E₀ Test Registry v1
 
 > Central reference for all tests in the E₀ Framework.
-> **Last verified:** 2026-03-25 — **936 tests** (915 unittest + 21 standalone mini-domain + 1 pre-existing error)
+> **Last verified:** 2026-03-26 — **1082 tests** (1061 unittest + 21 standalone mini-domain; 32 skipped, 0 failures)
 
 ---
 
@@ -36,6 +36,7 @@
 | 25 | `test_memos_geometry.py` | 34 | unittest | MemOS geometry persistence G1-G10 | ✅ GREEN |
 | 26 | `test_born_sampling.py` | 27 | unittest | Born sampling vs argmax, ADR-0007 H1-H10 | ✅ GREEN |
 | 27 | `test_minidomain.py` | 21 | standalone | Core mechanics, historization, K11/K12 | ✅ GREEN |
+| 28 | `test_multi_axis_su2.py` | 36 | unittest | Per-edge SU(2) axes, non-commutativity, multi-axis interference, controller integration | ✅ GREEN |
 
 ---
 
@@ -370,10 +371,28 @@
 
 ---
 
+### 28. test_multi_axis_su2.py — 36 tests
+
+**Runner:** `python -m unittest e0_controller.test_multi_axis_su2 -v`
+
+**What it tests:** Per-edge SU(2) rotation axes (B1 from Canon Alignment §9). Extends the SU(2) spinor transport from global σ_z to per-edge axis assignment via `axis_fn(L, x, y) → n̂`. Tests across 11 classes: Pauli non-commutativity, tetrahedron domain with orthogonal per-edge axes, edge/path transport with custom axis_fn, holonomy orientation dependence, multi-axis interference vs single-axis, spinor structural invariants, controller/overlay integration (fan graph with multi-path actions), path-order dependence, four-theory comparison (U(1)/σ_z/geometric/multi-axis), and single-path axis-insensitivity control.
+
+**Key findings:**
+- Non-commutativity: max|AB−BA| > 0.1 for all Pauli pairs; same-axis commutes (< 1e-12)
+- Strongly asymmetric edge parameters needed for non-zero ω (symmetric edges give ω=0 via Helmholtz)
+- Multi-axis holonomy dist_to_I = 0.92 vs single-axis 0.05 on tetrahedron triangle
+- Multi-axis interference intensity 1.04 vs single-axis 0.82 (diff 0.23) on 3-path family
+- Single-path families axis-independent (magnitude-only, 10 decimal places)
+- Overlay intensity diff = 0.015 on fan graph with multi-path action
+- Four theories all produce distinct intensities on tetrahedron
+- axis_fn=None backward-compatible (identical to single-axis, 10 decimal places)
+
+---
+
 ## How to Run
 
 ```bash
-# Full unittest suite (915 tests + 1 error)
+# Full unittest suite (1061 tests, 32 skipped)
 python -m unittest discover -s e0_controller -p "test_*.py" -v
 
 # Standalone mini-domain (21 tests)

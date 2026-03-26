@@ -4,7 +4,7 @@
 > **Purpose:** connect claims, tests, evidence, and status in one place.
 
 **Last updated:** 2026-03-26  
-**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, and active edge-case work.
+**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), and active edge-case work.
 
 ---
 
@@ -550,6 +550,7 @@ Born sampling (P ∝ I, choosing actions probabilistically from the amplitude-de
 | `test_g5_edge_cases.py` | C10, C23 (SU(2) classes) |
 | `test_topology_classification.py` | C11, C23 (SU(2) classes) |
 | `test_born_sampling.py` | C22, C23 (H11 class) |
+| `test_multi_axis_su2.py` | C15, C23, C25 |
 
 ---
 
@@ -590,6 +591,47 @@ Resonance (R1–R4 criteria) is not limited to the minimal 3-node kernel. Larger
 - **4-node ring**: Classifies as RESONATOR; I_coh positive across 8 cycles; leakage non-dominant; θ ≠ 0; acyclic control has no loop closure; SU(2) holonomy nontrivial (tr=1.78); three-theory separation: U(1)=1.78, SU(2)-min=4.67, SU(2)-geo=3.72; SU(2)-min > U(1) (phase halving constructive)
 - **Nested loop**: Outer loop independently RESONATOR; inner path B→X→C has measurable intensity; **constructive interference factor ≈ 2.0** between outer and inner loop families (nearly pure constructive); phase difference Δθ=0.14 rad; SU(2) shows three-theory separation on mixed paths
 - **Coupled resonators**: Both kernels independently RESONATOR; K1-historization completely isolated from K2 (I_coh unchanged to 6 decimals); cross-kernel path A→B→C→P→Q→R→P has measurable intensity; bridge historization increases coupling intensity; identical parameters produce identical holonomies; both holonomies ∈ SU(2); single cross-kernel path shows U(1)≡SU(2) (expected: single path)
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C25 — Per-edge SU(2) rotation axes produce non-trivial multi-axis structure (B1)
+
+**Claim**  
+The SU(2) spinor transport can be extended from a single global axis (σ_z) to per-edge rotation axes via `axis_fn(L, x, y) → n̂ ∈ ℝ³`. When edges carry orthogonal axes (σ_x, σ_y, σ_z), transport matrices no longer commute across different edges, holonomy becomes axis-assignment-dependent, and multi-path interference patterns diverge from both single-axis SU(2) and U(1). The `axis_fn` parameter is threaded through the full stack: `E0Controller.__init__()` → `_compute_overlay()` → `analyze_controller_state()` → `spinor_psi()`. Backward compatibility is preserved: `axis_fn=None` produces identical results to the existing single-axis (σ_z) behavior.
+
+**Evidence**  
+- `e0_controller/test_multi_axis_su2.py` — 36 tests across 11 classes:
+  - `TestPauliNonCommutativity` (4 tests): σ_x/σ_y/σ_z non-commutativity, same-axis commutativity, SU(2) closure
+  - `TestTetrahedronDomain` (3 tests): 12-edge tetrahedron with orthogonal per-edge axes, every triangle uses all 3 axes
+  - `TestEdgeTransportMultiAxis` (3 tests): per-edge transport differs from default σ_z, SU(2) preservation, inverse transport
+  - `TestPathTransportMultiAxis` (4 tests): A→B→C ≠ A→C→B with multi-axis, SU(2) preservation, magnitude = exp(−S)
+  - `TestMultiAxisHolonomy` (4 tests): nontrivial holonomy, different triangles differ, orientation dependence, single-axis diagonal
+  - `TestMultiAxisInterference` (4 tests): multi-axis ≠ single-axis intensity, single-path axis-independence, three-way U(1)/σ_z/multi separation, tetrahedron multi-path interference
+  - `TestMultiAxisSpinorProperties` (4 tests): probability normalization, non-negativity, magnitude preservation, reference-spinor properties
+  - `TestControllerAxisFn` (5 tests): constructor accepts axis_fn, overlay produces results, overlay differs from single-axis (fan graph), cycle completes, axis_fn=None backward-compatible
+  - `TestPathOrderDependence` (3 tests): different routes produce different spinors, three routes give distinct directions, path reversal changes transport
+  - `TestFourTheoryComparison` (1 test): U(1), SU(2)-σ_z, SU(2)-geometric, SU(2)-multi-axis all differ
+  - `TestDiamondAxisInsensitivity` (1 test): single-path families are axis-independent (control)
+- `e0_controller/spinor_connection.py` — `axis_fn` parameter already threaded through `su2_path_transport`, `spinor_psi`, `spinor_sum_paths`, `spinor_intensity` (unchanged)
+- `e0_controller/controller.py` — `axis_fn=None` parameter added to `E0Controller.__init__()`
+- `e0_controller/amplitude_overlay.py` — `axis_fn=None` parameter added to `analyze_controller_state()`
+
+**Result**  
+- **Non-commutativity**: max|AB−BA| > 0.1 for all Pauli pairs; same-axis products commute (< 1e-12)
+- **Edge transport**: σ_x transport differs from σ_z by 0.44 on tetrahedron edges with ω ≈ 0.9
+- **Path non-commutativity**: A→B→C vs A→C→B differ by 1.29 under multi-axis (0.06 single-axis)
+- **Holonomy**: Triangle A→B→C→A has dist_to_I = 0.92 (multi-axis) vs 0.05 (single-axis); different triangles differ by 1.19; reversed orientation differs
+- **Interference**: Multi-axis intensity 1.043 vs single-axis 0.817 (diff 0.23) on tetrahedron 3-path family
+- **Single-path invariance**: Diamond single-path families identical under any axis assignment (10 decimal places)
+- **Controller integration**: Fan graph (action M has 2 paths) shows overlay intensity diff = 0.015 between single-axis and multi-axis
+- **Four theories all differ**: U(1), σ_z, geometric, multi-axis produce distinct intensities on tetrahedron
+- **Backward compatibility**: axis_fn=None intensities identical to old behavior (10 decimal places)
+
+**Test domain design note:**  
+Strongly asymmetric edge parameters (forward: δ=5.0, r=0.1; reverse: δ=0.1, r=0.9) are required to produce non-zero ω. Symmetric edges give ω=0 via the Helmholtz decomposition (v_rot(x,y) = v_rot(y,x)), which makes axis choice irrelevant.
 
 **Status**  
 ✅ Confirmed
@@ -670,6 +712,26 @@ C16 extended — resonator behavior in larger topologies with multiple loops.
 - `explore_resonator.py`: 3 new builders (`build_4node_loop`, `build_nested_loop`, `build_coupled_resonators`), generalized measurement (`generic_loop_paths`, `measure_generic_loop`, `apply_generic_historization`)
 - `test_resonator.py`: 25 tests across 4 new classes — 4-node ring, nested interference, coupled kernel isolation/coupling, multi-loop SU(2)
 - Key finding: constructive interference factor ≈ 2.0 on nested loops; coupled kernels show isolation + bridge-mediated coupling
+
+---
+
+### P3 — Paper 3: Multi-Axis SU(2) and Non-Abelian Structure in E₀
+
+**Target**  
+Dedicated publication exploring per-edge SU(2) rotation axes as non-abelian gauge structure. Extends the SU(2) lift (C15) from global σ_z to per-edge axis assignment. Key results: non-commutativity, axis-dependent holonomy, interference divergence from U(1) and single-axis SU(2), four-theory comparison, and backward compatibility.
+
+**Foundation**  
+- B1 implementation complete (C25): 36 tests, full stack integration
+- Canon Alignment §9 Bridge B1: per-edge rotation axes
+- Builds on Paper 2 (SU(2) lift) by adding the non-abelian dimension
+
+**Open questions for Paper 3**  
+- How does axis assignment relate to physical geometry (embedding dimension)?
+- Can axis_fn be derived from topology rather than assigned?
+- What is the relationship between multi-axis holonomy and M_H topological invariant (B2)?
+- Does multi-axis SU(2) predict new topology reclassifications beyond C23?
+
+**Status:** 🔄 In progress (B1 engineering complete; paper draft pending)
 
 ---
 
