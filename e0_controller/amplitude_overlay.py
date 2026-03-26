@@ -43,8 +43,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Sequence, Set
 
+import numpy as np
+
 from .controller import E0Controller
 from .wavepath import psi as path_psi
+from .spinor_connection import spinor_psi as path_psi_su2
 
 
 # Supported summation geometries (§4 of Summation Geometry Program)
@@ -185,6 +188,7 @@ def analyze_controller_state(
     horizon_edges: int = 3,
     geometry: str = "simple",
     goals: Optional[Set[str]] = None,
+    use_su2: bool = False,
 ) -> OverlayReport:
     """
     Build an analysis-only amplitude overlay for one controller decision point.
@@ -228,8 +232,16 @@ def analyze_controller_state(
             if geometry != "goal_reaching" or (goals and action in goals):
                 action_paths = [[current, action]] + action_paths
 
-        psi_total = sum((path_psi(controller.landscape, p) for p in action_paths), start=complex(0.0, 0.0))
-        intensity = abs(psi_total) ** 2
+        if use_su2:
+            psi_total_su2 = sum(
+                (path_psi_su2(controller.landscape, p) for p in action_paths),
+                start=np.zeros(2, dtype=complex),
+            )
+            psi_total = complex(psi_total_su2[0])  # store first component for report
+            intensity = float(np.real(np.vdot(psi_total_su2, psi_total_su2)))
+        else:
+            psi_total = sum((path_psi(controller.landscape, p) for p in action_paths), start=complex(0.0, 0.0))
+            intensity = abs(psi_total) ** 2
         info = ActionAmplitudeInfo(
             action=action,
             direct_s_eff=controller._effective_tension(current, action),

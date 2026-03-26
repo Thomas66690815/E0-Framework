@@ -627,5 +627,90 @@ class TestGeometricCoupling(unittest.TestCase):
             self.assertGreaterEqual(I, 0.0)
 
 
+# ═══════════════════════════════════════════════════════════════════
+# Class 10: SU(2) Controller Integration (Paper 2 §5.4)
+# ═══════════════════════════════════════════════════════════════════
+
+class TestSU2ControllerOverlay(unittest.TestCase):
+    """Verify the SU(2) switch in amplitude_overlay produces correct results."""
+
+    @classmethod
+    def setUpClass(cls):
+        from e0_controller.controller import E0Controller, HybridMode
+        from e0_controller.primitives import Outcome
+
+        cls.E0Controller = E0Controller
+        cls.HybridMode = HybridMode
+        cls.Outcome = Outcome
+
+        cls.L = build_gordian_trap()
+        cls.ctrl = E0Controller(cls.L, lambda s, t: Outcome.SUCCESS,
+                                hybrid_mode=HybridMode.GREEDY)
+
+    @staticmethod
+    def _acs(*args, **kwargs):
+        from e0_controller.amplitude_overlay import analyze_controller_state
+        return analyze_controller_state(*args, **kwargs)
+
+    def test_su2_intensities_differ_from_u1_on_gordian(self):
+        """SU(2) intensity diverges from U(1) on multi-path Gordian A-family."""
+        r_u1 = self._acs(self.ctrl, "START", horizon_edges=4,
+                         goals={"GOAL"}, use_su2=False)
+        r_su2 = self._acs(self.ctrl, "START", horizon_edges=4,
+                          goals={"GOAL"}, use_su2=True)
+        i_u1_a1 = next(a for a in r_u1.action_infos if a.action == "A1")
+        i_su2_a1 = next(a for a in r_su2.action_infos if a.action == "A1")
+        # Phase halving increases A1 intensity under SU(2)
+        self.assertGreater(i_su2_a1.intensity, i_u1_a1.intensity * 1.3,
+                           "SU(2) should boost A1 via phase halving (>30% increase)")
+
+    def test_su2_single_path_matches_u1(self):
+        """Single-path B-family intensity: SU(2) ≈ U(1) (no multi-path interference)."""
+        r_u1 = self._acs(self.ctrl, "START", horizon_edges=4,
+                            goals={"GOAL"}, use_su2=False)
+        r_su2 = self._acs(self.ctrl, "START", horizon_edges=4,
+                             goals={"GOAL"}, use_su2=True)
+        i_u1_b1 = next(a for a in r_u1.action_infos if a.action == "B1")
+        i_su2_b1 = next(a for a in r_su2.action_infos if a.action == "B1")
+        # B-family has only one path → no interference → U(1) ≈ SU(2)
+        self.assertAlmostEqual(i_su2_b1.intensity, i_u1_b1.intensity,
+                               delta=i_u1_b1.intensity * 0.05,
+                               msg="B1 should be nearly identical (single-path)")
+
+    def test_su2_probability_sharper_on_gordian(self):
+        """SU(2) produces sharper probability distribution (higher P for winner)."""
+        r_u1 = self._acs(self.ctrl, "START", horizon_edges=4,
+                            goals={"GOAL"}, use_su2=False)
+        r_su2 = self._acs(self.ctrl, "START", horizon_edges=4,
+                             goals={"GOAL"}, use_su2=True)
+        p_u1_a1 = next(a for a in r_u1.action_infos if a.action == "A1").probability
+        p_su2_a1 = next(a for a in r_su2.action_infos if a.action == "A1").probability
+        self.assertGreater(p_su2_a1, p_u1_a1,
+                           "SU(2) should give A1 higher P (sharper discrimination)")
+
+    def test_su2_hybrid_reaches_goal(self):
+        """E₀ hybrid with SU(2) reaches GOAL on Gordian trap."""
+        L = build_gordian_trap()
+        ctrl = self.E0Controller(
+            L, lambda s, t: self.Outcome.SUCCESS,
+            hybrid_mode=self.HybridMode.AMPLITUDE_ON_DISAGREE,
+            hybrid_horizon=4, hybrid_goals={"GOAL"}, use_su2=True,
+        )
+        trace = ctrl.run("START", goal="GOAL", max_cycles=10)
+        self.assertIn("GOAL", trace.path)
+
+    def test_su2_flag_false_matches_default(self):
+        """use_su2=False should produce identical results to no flag."""
+        r_default = self._acs(self.ctrl, "START", horizon_edges=4,
+                                 goals={"GOAL"})
+        r_explicit = self._acs(self.ctrl, "START", horizon_edges=4,
+                                  goals={"GOAL"}, use_su2=False)
+        for a_d, a_e in zip(
+            sorted(r_default.action_infos, key=lambda a: a.action),
+            sorted(r_explicit.action_infos, key=lambda a: a.action),
+        ):
+            self.assertAlmostEqual(a_d.intensity, a_e.intensity, places=12)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

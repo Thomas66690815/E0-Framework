@@ -217,6 +217,7 @@ class E0Controller:
         hybrid_geometry: str = "simple",
         horizon_strategy: Optional[Any] = None,
         confidence_threshold: float = 0.0,
+        use_su2: bool = False,
     ):
         self.landscape = landscape
         self.execute_fn = execute_fn
@@ -231,6 +232,7 @@ class E0Controller:
         self.hybrid_geometry = hybrid_geometry  # 3l: summation geometry
         self.horizon_strategy = horizon_strategy  # 3i: dynamic horizon
         self.confidence_threshold = confidence_threshold  # 3f: override gating
+        self.use_su2 = use_su2  # Paper 2: ℂ² spinor interference
         self._recent: List[str] = []   # sliding window of recent states
 
         # K1 fix: Escalation edges live here, NOT in the Landscape.
@@ -590,6 +592,7 @@ class E0Controller:
         return analyze_controller_state(
             self, current, horizon_edges=overlay_horizon,
             geometry=overlay_geometry, goals=overlay_goals,
+            use_su2=self.use_su2,
         )
 
     def run(
