@@ -69,6 +69,7 @@ class LandscapeSnapshot:
     """Serializable capture of a Landscape."""
     states: List[str]
     edges: List[Dict[str, Any]]  # [{source, target, delta, r0}, ...]
+    curvature_modulation: bool = False
 
     @staticmethod
     def from_landscape(L: Landscape) -> LandscapeSnapshot:
@@ -83,11 +84,15 @@ class LandscapeSnapshot:
                 "delta": delta,
                 "r0": r0,
             })
-        return LandscapeSnapshot(states=states, edges=edges)
+        return LandscapeSnapshot(
+            states=states, edges=edges,
+            curvature_modulation=L.curvature_modulation,
+        )
 
     def to_landscape(self, historization: Optional[Historization] = None) -> Landscape:
         """Reconstruct a Landscape from this snapshot."""
         L = Landscape()
+        L.curvature_modulation = self.curvature_modulation
         if historization is not None:
             L.historization = historization
         for s in self.states:
@@ -155,10 +160,11 @@ class RuntimeSnapshot:
     def from_controller(ctrl: E0Controller,
                         trace: Optional[RunTrace] = None) -> RuntimeSnapshot:
         esc_edges = []
-        for e, (delta, r0) in ctrl._escalation_edges.items():
+        for e, (delta, r0, *rest) in ctrl._escalation_edges.items():
             esc_edges.append({
                 "source": e.source, "target": e.target,
                 "delta": delta, "r0": r0,
+                "created_by": rest[0] if rest else "unknown",
             })
 
         # K-MemOS-2: last escalation type from trace
@@ -187,6 +193,7 @@ class RuntimeSnapshot:
                 "hybrid_goals": sorted(ctrl.hybrid_goals) if ctrl.hybrid_goals else [],
                 "hybrid_geometry": ctrl.hybrid_geometry,
                 "confidence_threshold": ctrl.confidence_threshold,
+                "use_su2": bool(ctrl.use_su2),
             },
         )
 
@@ -376,6 +383,7 @@ class E0MemoryOS:
             hybrid_goals=hybrid_goals,
             hybrid_geometry=params.get("hybrid_geometry", "simple"),
             confidence_threshold=params.get("confidence_threshold", 0.0),
+            use_su2=params.get("use_su2", False),
         )
 
         # Restore mutable runtime state
@@ -383,7 +391,10 @@ class E0MemoryOS:
 
         for ee in context.runtime.get("escalation_edges", []):
             edge = Edge(ee["source"], ee["target"])
-            ctrl._escalation_edges[edge] = (ee["delta"], ee["r0"])
+            ctrl._escalation_edges[edge] = (
+                ee["delta"], ee["r0"],
+                ee.get("created_by", "unknown"),
+            )
 
         return ctrl
 
@@ -451,6 +462,10 @@ class E0MemoryOS:
         # Curvature modulation (B2)
         if landscape.curvature_modulation:
             runtime["curvature_modulation"] = True
+
+        # SU(2) spinor interference (Paper 2 / B1)
+        if params.get("use_su2"):
+            runtime["use_su2"] = True
 
         # 4. Canon refs
         canon = [ref["name"] + "@" + ref["version"]

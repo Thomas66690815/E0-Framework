@@ -619,5 +619,156 @@ class TestOverlaySummary(unittest.TestCase):
         self.assertNotIn("amplitude_overlay", summary)
 
 
+# ──────────────────────────────────────────────────────
+# Persistence gap fixes — roundtrip tests
+# ──────────────────────────────────────────────────────
+
+class TestUseSu2Roundtrip(unittest.TestCase):
+    """use_su2 flag survives snapshot → restore cycle."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.memos = E0MemoryOS(base_dir=self.tmpdir)
+
+    def tearDown(self):
+        shutil.rmtree(self.tmpdir)
+
+    def test_su2_true_persists(self):
+        L = build_invoice_landscape()
+        ctrl = E0Controller(L, all_success, use_su2=True)
+        ctx = self.memos.snapshot_from_runtime("test-su2", L, ctrl)
+        self.memos.save_context(ctx)
+
+        ctx2 = self.memos.load_context("test-su2")
+        L2 = self.memos.restore_landscape(ctx2)
+        ctrl2 = self.memos.restore_controller(ctx2, L2, all_success)
+        self.assertTrue(ctrl2.use_su2)
+
+    def test_su2_false_default(self):
+        L = build_invoice_landscape()
+        ctrl = E0Controller(L, all_success)
+        ctx = self.memos.snapshot_from_runtime("test-su2d", L, ctrl)
+        self.memos.save_context(ctx)
+
+        ctx2 = self.memos.load_context("test-su2d")
+        L2 = self.memos.restore_landscape(ctx2)
+        ctrl2 = self.memos.restore_controller(ctx2, L2, all_success)
+        self.assertFalse(ctrl2.use_su2)
+
+    def test_su2_in_llm_summary(self):
+        """use_su2=True is exposed in summarize_for_llm runtime."""
+        L = build_invoice_landscape()
+        ctrl = E0Controller(L, all_success, use_su2=True)
+        ctx = self.memos.snapshot_from_runtime("test-su2s", L, ctrl)
+        summary = self.memos.summarize_for_llm(ctx, "RECEIVED", L)
+        self.assertTrue(summary["runtime"].get("use_su2"))
+
+    def test_su2_absent_when_false(self):
+        """use_su2=False → not in LLM summary (token efficiency)."""
+        L = build_invoice_landscape()
+        ctrl = E0Controller(L, all_success, use_su2=False)
+        ctx = self.memos.snapshot_from_runtime("test-su2n", L, ctrl)
+        summary = self.memos.summarize_for_llm(ctx, "RECEIVED", L)
+        self.assertNotIn("use_su2", summary["runtime"])
+
+
+class TestCurvatureModulationRoundtrip(unittest.TestCase):
+    """curvature_modulation flag survives snapshot → restore cycle."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.memos = E0MemoryOS(base_dir=self.tmpdir)
+
+    def tearDown(self):
+        shutil.rmtree(self.tmpdir)
+
+    def test_curvature_on_persists(self):
+        L = build_invoice_landscape()
+        L.curvature_modulation = True
+        ctx = self.memos.snapshot_from_runtime(
+            "test-curv", L, E0Controller(L, all_success))
+        self.memos.save_context(ctx)
+
+        ctx2 = self.memos.load_context("test-curv")
+        L2 = self.memos.restore_landscape(ctx2)
+        self.assertTrue(L2.curvature_modulation)
+
+    def test_curvature_off_default(self):
+        L = build_invoice_landscape()
+        ctx = self.memos.snapshot_from_runtime(
+            "test-curvd", L, E0Controller(L, all_success))
+        self.memos.save_context(ctx)
+
+        ctx2 = self.memos.load_context("test-curvd")
+        L2 = self.memos.restore_landscape(ctx2)
+        self.assertFalse(L2.curvature_modulation)
+
+    def test_curvature_snapshot_field(self):
+        """LandscapeSnapshot.curvature_modulation reflects landscape."""
+        L = build_invoice_landscape()
+        L.curvature_modulation = True
+        snap = LandscapeSnapshot.from_landscape(L)
+        self.assertTrue(snap.curvature_modulation)
+
+
+class TestEscalationEdgeCreatedBy(unittest.TestCase):
+    """Escalation edges carry created_by through persistence."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.memos = E0MemoryOS(base_dir=self.tmpdir)
+
+    def tearDown(self):
+        shutil.rmtree(self.tmpdir)
+
+    def test_dead_end_created_by(self):
+        """Escalation from DEAD_END stores created_by='dead_end'."""
+        L = Landscape()
+        L.add_edge("A", "B", delta=0.5, resistance=1.0)
+        L.add_edge("C", "A", delta=0.3, resistance=0.5)
+        L.add_state("D")  # reachable but no outgoing edges from B
+
+        ctrl = E0Controller(L, all_success)
+        trace = ctrl.run("A", max_cycles=5)
+
+        # Find escalation edge
+        self.assertTrue(len(ctrl._escalation_edges) > 0)
+        for edge, (delta, r0, created_by) in ctrl._escalation_edges.items():
+            self.assertIn(created_by, ["dead_end", "filtered", "exhausted"])
+
+    def test_created_by_roundtrip(self):
+        """created_by persists through snapshot → save → load → restore."""
+        L = Landscape()
+        L.add_edge("A", "B", delta=0.5, resistance=1.0)
+        L.add_edge("C", "A", delta=0.3, resistance=0.5)
+        L.add_state("D")
+
+        ctrl = E0Controller(L, all_success)
+        trace = ctrl.run("A", max_cycles=5)
+
+        ctx = self.memos.snapshot_from_runtime("test-cb", L, ctrl, trace)
+        self.memos.save_context(ctx)
+
+        ctx2 = self.memos.load_context("test-cb")
+        L2 = self.memos.restore_landscape(ctx2)
+        ctrl2 = self.memos.restore_controller(ctx2, L2, all_success)
+
+        for edge, (delta, r0, created_by) in ctrl2._escalation_edges.items():
+            self.assertIn(created_by, ["dead_end", "filtered", "exhausted", "unknown"])
+
+    def test_created_by_in_snapshot_json(self):
+        """RuntimeSnapshot escalation_edges include created_by field."""
+        L = Landscape()
+        L.add_edge("A", "B", delta=0.5, resistance=1.0)
+        L.add_edge("C", "A", delta=0.3, resistance=0.5)
+
+        ctrl = E0Controller(L, all_success)
+        trace = ctrl.run("A", max_cycles=5)
+
+        snap = RuntimeSnapshot.from_controller(ctrl, trace)
+        for ee in snap.escalation_edges:
+            self.assertIn("created_by", ee)
+
+
 if __name__ == "__main__":
     unittest.main()

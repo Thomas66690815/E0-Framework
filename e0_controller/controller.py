@@ -238,7 +238,7 @@ class E0Controller:
         self._recent: List[str] = []   # sliding window of recent states
 
         # K1 fix: Escalation edges live here, NOT in the Landscape.
-        self._escalation_edges: Dict[Edge, Tuple[float, float]] = {}
+        self._escalation_edges: Dict[Edge, Tuple[float, float, str]] = {}
 
     # --- Edge resolution (landscape + escalation overlay) ---
 
@@ -294,7 +294,7 @@ class E0Controller:
                 if self._passes_admissibility(s):
                     neighbors.append(edge.target)
         # Check escalation overlay
-        for edge, (_delta, _r0) in self._escalation_edges.items():
+        for edge, (_delta, _r0, _cb) in self._escalation_edges.items():
             if edge.source == x and edge.target not in neighbors:
                 s = self._effective_tension(x, edge.target)
                 if self._passes_admissibility(s):
@@ -387,7 +387,7 @@ class E0Controller:
 
         # Store escalation edge in controller buffer
         edge = Edge(current, target)
-        self._escalation_edges[edge] = (1.0, self.max_escalation_R)
+        self._escalation_edges[edge] = (1.0, self.max_escalation_R, esc_type.value)
         return target, True, esc_type
 
     def _escalation_target(self, current: str, esc_type: EscalationType) -> Optional[str]:
