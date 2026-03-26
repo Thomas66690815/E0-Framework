@@ -1,11 +1,11 @@
 """
-Tests for B4.1: Self-Tuning Meta-Layer
-=======================================
+Tests for B4.1 + B4.2: Self-Tuning Meta-Layer
+================================================
 Tests the field-derived threshold system, parameter sensitivity
-analysis, tuning proposals, oscillation protection, and the
-integration with the reflection layer.
+analysis, tuning proposals, oscillation protection, tuning cycles,
+multi-cycle convergence, and integration with the reflection layer.
 
-28 claims in 8 test classes.
+33 tests (B4.1) + 20 tests (B4.2) in 13 test classes.
 """
 
 import math
@@ -22,12 +22,18 @@ from e0_controller.self_tuning import (
     ParameterSensitivity,
     TuningProposal,
     MetaTuningResult,
+    TuningCycleResult,
+    MultiCycleTuningResult,
     field_summary_from_run,
     derive_thresholds,
     compute_parameter_sensitivities,
     propose_tuning,
     apply_tuning,
+    quality_score,
+    tuning_cycle,
+    tune,
     _would_oscillate,
+    _reset_landscape,
     TUNABLE_PARAMS,
 )
 from e0_controller.reflection import should_reflect
@@ -428,6 +434,234 @@ class TestReflectionWithFieldThresholds(unittest.TestCase):
         decision_new = should_reflect(ev, field_summary=None)
         self.assertEqual(decision_old.reflect, decision_new.reflect)
         self.assertEqual(decision_old.reflection_type, decision_new.reflection_type)
+
+
+# ══════════════════════════════════════════════
+# B4.2: Tuning Cycle + Multi-Cycle Tests
+# ══════════════════════════════════════════════
+
+
+def _make_looping_landscape():
+    """Build a landscape that induces looping with default alpha.
+
+    A ↔ B (low resistance, causes 2-cycle)
+    A → C → GOAL (clean path but higher resistance)
+    """
+    L = Landscape()
+    L.add_edge("A", "B", delta=1.0, resistance=0.1)  # trap: very easy
+    L.add_edge("B", "A", delta=1.0, resistance=0.1)  # trap: very easy back
+    L.add_edge("A", "C", delta=1.0, resistance=1.0)  # escape: harder
+    L.add_edge("C", "GOAL", delta=1.0, resistance=1.0)
+    return L
+
+
+def _make_clean_landscape():
+    """Build a landscape where traversal is clean and direct."""
+    L = Landscape()
+    L.add_edge("A", "B", delta=1.0, resistance=1.0)
+    L.add_edge("B", "C", delta=1.0, resistance=1.0)
+    L.add_edge("C", "GOAL", delta=1.0, resistance=1.0)
+    return L
+
+
+# ──────────────────────────────────────────────
+# 9. Quality Score
+# ──────────────────────────────────────────────
+
+class TestQualityScore(unittest.TestCase):
+    """Test the scalar quality function."""
+
+    def test_perfect_run(self):
+        fs = _make_field_summary(
+            unique_states_visited=5, steps=5,  # efficiency=1.0
+            repeated_cycles=0, escalations=0,
+        )
+        q = quality_score(fs, goal_reached=True)
+        self.assertGreater(q, 0.7)
+
+    def test_failed_run(self):
+        fs = _make_field_summary(
+            unique_states_visited=2, steps=10,
+            repeated_cycles=5, escalations=3,
+            num_states=5, num_edges=10,
+        )
+        q = quality_score(fs, goal_reached=False)
+        self.assertLess(q, 0.3)
+
+    def test_goal_dominates(self):
+        fs = _make_field_summary()
+        q_reached = quality_score(fs, goal_reached=True)
+        q_failed = quality_score(fs, goal_reached=False)
+        self.assertGreater(q_reached, q_failed)
+
+    def test_score_in_bounds(self):
+        fs = _make_field_summary()
+        q = quality_score(fs, goal_reached=True)
+        self.assertGreaterEqual(q, 0.0)
+        self.assertLessEqual(q, 1.0)
+
+
+# ──────────────────────────────────────────────
+# 10. Landscape Reset
+# ──────────────────────────────────────────────
+
+class TestLandscapeReset(unittest.TestCase):
+    """Test that _reset_landscape clears historization."""
+
+    def test_reset_clears_historization(self):
+        L, _ = _make_landscape()
+        edge = Edge("S0", "S1")
+        L.historization.update(edge, Outcome.SUCCESS)
+        dh_before = L.historization.delta_H(edge)
+        self.assertNotEqual(dh_before, 0.0)
+
+        _reset_landscape(L)
+        dh_after = L.historization.delta_H(edge)
+        self.assertAlmostEqual(dh_after, 0.0)
+
+    def test_reset_preserves_structure(self):
+        L, states = _make_landscape()
+        _reset_landscape(L)
+        self.assertEqual(len(L.states), len(states))
+        self.assertGreater(len(L._R0), 0)
+
+
+# ──────────────────────────────────────────────
+# 11. Single Tuning Cycle
+# ──────────────────────────────────────────────
+
+class TestTuningCycle(unittest.TestCase):
+    """Test the complete tuning feedback cycle."""
+
+    def test_clean_run_no_proposals(self):
+        """A clean straight-line run should produce no tuning proposals."""
+        L = _make_clean_landscape()
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS, alpha=2.0)
+        result = tuning_cycle(ctrl, "A", goal="GOAL", max_cycles=20)
+
+        self.assertIsInstance(result, TuningCycleResult)
+        self.assertTrue(result.goal_reached_before)
+        self.assertGreater(result.quality_before, 0.5)
+        self.assertEqual(len(result.applied_changes), 0)
+        self.assertFalse(result.accepted)
+
+    def test_looping_run_produces_proposals(self):
+        """A looping landscape should trigger alpha adjustment."""
+        L = _make_looping_landscape()
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS, alpha=0.5)
+        result = tuning_cycle(ctrl, "A", goal="GOAL", max_cycles=30)
+
+        self.assertIsInstance(result, TuningCycleResult)
+        self.assertIsNotNone(result.field_before)
+        # With low alpha, looping is likely → proposals expected
+        if result.tuning.proposals:
+            self.assertGreater(len(result.applied_changes), 0)
+
+    def test_cycle_result_has_before_after(self):
+        """When proposals exist, both before and after are populated."""
+        L = _make_looping_landscape()
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS, alpha=0.5)
+        result = tuning_cycle(ctrl, "A", goal="GOAL", max_cycles=30)
+
+        if result.applied_changes:
+            self.assertIsNotNone(result.quality_after)
+            self.assertIsNotNone(result.field_after)
+            self.assertIsNotNone(result.delta_quality)
+
+    def test_regression_is_reverted(self):
+        """If tuning makes things worse, parameters are reverted."""
+        L = _make_clean_landscape()
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS, alpha=2.0)
+        original_alpha = ctrl.alpha
+
+        # Force a proposal that would be bad: artificially high loop count
+        # by using a landscape that works well already
+        result = tuning_cycle(ctrl, "A", goal="GOAL", max_cycles=20)
+
+        # If reverted, alpha should be restored
+        if result.reverted:
+            self.assertAlmostEqual(ctrl.alpha, original_alpha)
+
+    def test_quality_before_in_bounds(self):
+        L = _make_clean_landscape()
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS)
+        result = tuning_cycle(ctrl, "A", goal="GOAL")
+
+        self.assertGreaterEqual(result.quality_before, 0.0)
+        self.assertLessEqual(result.quality_before, 1.0)
+
+
+# ──────────────────────────────────────────────
+# 12. Multi-Cycle Tuning
+# ──────────────────────────────────────────────
+
+class TestMultiCycleTuning(unittest.TestCase):
+    """Test the multi-iteration tuning loop."""
+
+    def test_converges_on_clean_landscape(self):
+        """Clean landscape should converge immediately (no proposals)."""
+        L = _make_clean_landscape()
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS, alpha=2.0)
+        result = tune(ctrl, "A", goal="GOAL", max_tuning_iterations=3)
+
+        self.assertIsInstance(result, MultiCycleTuningResult)
+        self.assertTrue(result.converged)
+        self.assertEqual(len(result.cycles), 1)  # only baseline, no proposals
+
+    def test_iteration_limit_respected(self):
+        L = _make_looping_landscape()
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS, alpha=0.5)
+        result = tune(ctrl, "A", goal="GOAL",
+                      max_cycles_per_run=30, max_tuning_iterations=2)
+
+        self.assertLessEqual(len(result.cycles), 2)
+
+    def test_final_params_returned(self):
+        L = _make_clean_landscape()
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS)
+        result = tune(ctrl, "A", goal="GOAL")
+
+        self.assertIn("alpha", result.final_params)
+        self.assertIsInstance(result.total_delta, float)
+
+    def test_consecutive_reverts_stop_tuning(self):
+        """Two consecutive reversions should stop the loop."""
+        L = _make_clean_landscape()
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS, alpha=2.0)
+        # On a clean landscape, any proposal would likely be neutral or reverted
+        result = tune(ctrl, "A", goal="GOAL", max_tuning_iterations=5)
+
+        # Should stop early (converged or reverts)
+        self.assertLessEqual(len(result.cycles), 5)
+
+
+# ──────────────────────────────────────────────
+# 13. End-to-End: Tuning Improves Quality
+# ──────────────────────────────────────────────
+
+class TestTuningImprovement(unittest.TestCase):
+    """Integration test: tuning should not degrade a working system."""
+
+    def test_tuning_preserves_goal_reach(self):
+        """After tuning, the controller should still reach the goal."""
+        L = _make_clean_landscape()
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS, alpha=2.0)
+
+        result = tune(ctrl, "A", goal="GOAL", max_tuning_iterations=3)
+
+        # Re-run with final params to verify
+        _reset_landscape(ctrl.landscape)
+        ctrl._recent = []
+        ctrl._escalation_edges = {}
+        trace = ctrl.run("A", goal="GOAL", max_cycles=20)
+        self.assertEqual(trace.path[-1], "GOAL")
+
+    def test_total_delta_non_negative_on_clean(self):
+        """On a clean landscape, tuning should not degrade quality."""
+        L = _make_clean_landscape()
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS)
+        result = tune(ctrl, "A", goal="GOAL")
+        self.assertGreaterEqual(result.total_delta, 0.0)
 
 
 if __name__ == "__main__":

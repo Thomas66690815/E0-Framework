@@ -1,6 +1,6 @@
 """
-E₀ Self-Tuning Layer (B4.1)
-==============================
+E₀ Self-Tuning Layer (B4.1 + B4.2)
+====================================
 Reflexivity as self-application of E₀ dynamics.
 
 The key insight: reflexivity is NOT a new primitive.  It is the E₀
@@ -39,6 +39,17 @@ Bounded Adjustment (Oscillation Protection)
 Meta-historization H_meta prevents oscillation: a parameter that was
 recently adjusted in one direction cannot be immediately pushed back.
 This mirrors the object-level historization semantics exactly.
+
+Tuning Cycle (B4.2)
+--------------------
+The feedback loop closes the reflection → tuning → verification arc:
+
+    1. Run controller on landscape
+    2. Extract RunFieldSummary from the run
+    3. Propose parameter adjustments via meta-layer
+    4. Apply adjustments and re-run
+    5. Measure Δ_meta = quality_after − quality_before
+    6. Accept if improved, revert if degraded (meta-admissibility)
 """
 
 from __future__ import annotations
@@ -528,3 +539,277 @@ def apply_tuning(controller, proposals: List[TuningProposal]) -> List[str]:
         )
 
     return applied
+
+
+# ──────────────────────────────────────────────
+# 7. Quality Score (Meta-Burden)
+# ──────────────────────────────────────────────
+
+def quality_score(fs: RunFieldSummary, goal_reached: bool) -> float:
+    """Compute a scalar quality score Q ∈ [0, 1] from field summary.
+
+    Q is the *negative meta-burden*: higher is better.
+
+    Q = w_goal · 𝟙[goal] + w_eff · τ_efficiency + w_prog · τ_progress
+        − w_loop · τ_loop − w_esc · τ_esc
+
+    The weights reflect E₀ priorities:
+    - Goal achievement dominates (0.4)
+    - Efficiency and progress contribute positively
+    - Loops and escalations are costs
+
+    Result is clamped to [0, 1].
+    """
+    raw = (
+        0.4 * (1.0 if goal_reached else 0.0)
+        + 0.25 * fs.tau_efficiency
+        + 0.15 * fs.tau_progress
+        - 0.1 * min(fs.tau_loop, 1.0)
+        - 0.1 * min(fs.tau_esc, 1.0)
+    )
+    return max(0.0, min(1.0, raw))
+
+
+# ──────────────────────────────────────────────
+# 8. Tuning Cycle (B4.2)
+# ──────────────────────────────────────────────
+
+@dataclass
+class TuningCycleResult:
+    """Complete output of one tuning feedback cycle.
+
+    Documents the before/after state so the improvement
+    (or regression) is fully auditable.
+    """
+    # Before tuning
+    quality_before: float
+    field_before: RunFieldSummary
+    goal_reached_before: bool
+
+    # Tuning decision
+    tuning: MetaTuningResult
+    applied_changes: List[str]
+
+    # After tuning (None if no proposals or tuning skipped)
+    quality_after: Optional[float] = None
+    field_after: Optional[RunFieldSummary] = None
+    goal_reached_after: Optional[bool] = None
+
+    # Meta-result
+    delta_quality: Optional[float] = None  # Q_after − Q_before
+    accepted: bool = False                 # True if improvement accepted
+    reverted: bool = False                 # True if regression was reverted
+
+
+def _extract_controller_params(controller) -> Dict[str, float]:
+    """Extract current tunable parameter values from a controller."""
+    params = {}
+    for name in TUNABLE_PARAMS:
+        if hasattr(controller, name):
+            params[name] = float(getattr(controller, name))
+    return params
+
+
+def _reset_landscape(landscape) -> None:
+    """Reset historization for a clean re-run.
+
+    Clears δ_H and trace records so the landscape is structurally
+    identical but without run history.
+    """
+    from .historization import Historization
+    # Preserve learning parameters, reset state
+    old_h = landscape.historization
+    landscape.historization = Historization(
+        rho=old_h.rho,
+        lambda_s=old_h.lambda_s,
+        lambda_f=old_h.lambda_f,
+        delta_max=old_h.delta_max,
+    )
+    # Invalidate M_H cache if curvature modulation is active
+    if hasattr(landscape, '_M_H_cache'):
+        delattr(landscape, '_M_H_cache')
+
+
+def tuning_cycle(
+    controller,
+    start: str,
+    goal: Optional[str] = None,
+    max_cycles: int = 50,
+    param_history: Optional[Dict[str, List[float]]] = None,
+    step_fraction: float = _STEP_FRACTION,
+) -> TuningCycleResult:
+    """Execute one complete tuning feedback cycle.
+
+    The cycle:
+    1. Run the controller from *start* (baseline run).
+    2. Extract field summary and compute quality score Q_before.
+    3. Propose tuning adjustments via meta-layer.
+    4. If proposals exist: apply, reset landscape, re-run.
+    5. Compute Q_after and Δ_meta = Q_after − Q_before.
+    6. If Δ_meta < 0 (regression): revert parameters.
+
+    The controller's landscape historization is reset between runs
+    so both runs face the same structural conditions.
+
+    Returns a TuningCycleResult documenting the full cycle.
+    """
+    if param_history is None:
+        param_history = {}
+
+    # ── Phase 1: Baseline run ──
+    _reset_landscape(controller.landscape)
+    controller._recent = []
+    controller._escalation_edges = {}
+
+    trace_before = controller.run(start, max_cycles=max_cycles, goal=goal)
+    fs_before = field_summary_from_run(controller.landscape, trace_before)
+    goal_reached_before = (
+        trace_before.path[-1] == goal if (goal and trace_before.path) else False
+    )
+    q_before = quality_score(fs_before, goal_reached_before)
+
+    # ── Phase 2: Propose tuning ──
+    params = _extract_controller_params(controller)
+    tuning_result = propose_tuning(
+        fs_before, params,
+        param_history=param_history,
+        step_fraction=step_fraction,
+    )
+
+    if not tuning_result.proposals:
+        return TuningCycleResult(
+            quality_before=q_before,
+            field_before=fs_before,
+            goal_reached_before=goal_reached_before,
+            tuning=tuning_result,
+            applied_changes=[],
+            accepted=False,
+        )
+
+    # ── Phase 3: Apply and re-run ──
+    # Save old values for potential revert
+    saved_params = dict(params)
+    applied = apply_tuning(controller, tuning_result.proposals)
+
+    # Reset for clean re-run
+    _reset_landscape(controller.landscape)
+    controller._recent = []
+    controller._escalation_edges = {}
+
+    trace_after = controller.run(start, max_cycles=max_cycles, goal=goal)
+    fs_after = field_summary_from_run(controller.landscape, trace_after)
+    goal_reached_after = (
+        trace_after.path[-1] == goal if (goal and trace_after.path) else False
+    )
+    q_after = quality_score(fs_after, goal_reached_after)
+
+    delta = q_after - q_before
+
+    # ── Phase 4: Accept or revert ──
+    if delta < 0:
+        # Regression: revert all changed parameters
+        for p in tuning_result.proposals:
+            if hasattr(controller, p.parameter) and p.parameter in saved_params:
+                setattr(controller, p.parameter, saved_params[p.parameter])
+
+        return TuningCycleResult(
+            quality_before=q_before,
+            field_before=fs_before,
+            goal_reached_before=goal_reached_before,
+            tuning=tuning_result,
+            applied_changes=applied,
+            quality_after=q_after,
+            field_after=fs_after,
+            goal_reached_after=goal_reached_after,
+            delta_quality=delta,
+            accepted=False,
+            reverted=True,
+        )
+
+    # Improvement (or neutral): accept
+    return TuningCycleResult(
+        quality_before=q_before,
+        field_before=fs_before,
+        goal_reached_before=goal_reached_before,
+        tuning=tuning_result,
+        applied_changes=applied,
+        quality_after=q_after,
+        field_after=fs_after,
+        goal_reached_after=goal_reached_after,
+        delta_quality=delta,
+        accepted=True,
+        reverted=False,
+    )
+
+
+# ──────────────────────────────────────────────
+# 9. Multi-Cycle Tuning
+# ──────────────────────────────────────────────
+
+@dataclass
+class MultiCycleTuningResult:
+    """Output of a multi-iteration tuning session."""
+    cycles: List[TuningCycleResult]
+    total_delta: float                  # cumulative Δ Q
+    final_params: Dict[str, float]      # controller params after all cycles
+    converged: bool                     # True if last cycle had no proposals
+
+
+def tune(
+    controller,
+    start: str,
+    goal: Optional[str] = None,
+    max_cycles_per_run: int = 50,
+    max_tuning_iterations: int = 5,
+    step_fraction: float = _STEP_FRACTION,
+) -> MultiCycleTuningResult:
+    """Run multiple tuning cycles until convergence or iteration limit.
+
+    Each cycle: run → diagnose → adjust → verify → accept/revert.
+    Stops when:
+    - No proposals are generated (converged), or
+    - max_tuning_iterations reached, or
+    - Two consecutive reversions (stuck)
+
+    Returns a MultiCycleTuningResult with the complete history.
+    """
+    param_history: Dict[str, List[float]] = {}
+    cycles: List[TuningCycleResult] = []
+    consecutive_reverts = 0
+
+    for _ in range(max_tuning_iterations):
+        result = tuning_cycle(
+            controller, start, goal=goal,
+            max_cycles=max_cycles_per_run,
+            param_history=param_history,
+            step_fraction=step_fraction,
+        )
+        cycles.append(result)
+
+        # Propagate meta-historization
+        param_history = dict(result.tuning.meta_historization)
+
+        # Check stopping conditions
+        if not result.tuning.proposals:
+            break  # converged — no more adjustments needed
+
+        if result.reverted:
+            consecutive_reverts += 1
+            if consecutive_reverts >= 2:
+                break  # stuck — stop tuning
+        else:
+            consecutive_reverts = 0
+
+    total_delta = sum(
+        (c.delta_quality for c in cycles if c.delta_quality is not None),
+        0.0,
+    )
+    final_params = _extract_controller_params(controller)
+    converged = bool(cycles) and not cycles[-1].tuning.proposals
+
+    return MultiCycleTuningResult(
+        cycles=cycles,
+        total_delta=total_delta,
+        final_params=final_params,
+        converged=converged,
+    )

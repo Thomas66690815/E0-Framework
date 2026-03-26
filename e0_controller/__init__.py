@@ -114,6 +114,8 @@ from .reflection import (
 from .self_tuning import (
     RunFieldSummary, DerivedThresholds, ParameterSensitivity,
     TuningProposal, MetaTuningResult,
+    TuningCycleResult, MultiCycleTuningResult,
     field_summary_from_run, derive_thresholds,
     compute_parameter_sensitivities, propose_tuning, apply_tuning,
+    quality_score, tuning_cycle, tune,
 )
