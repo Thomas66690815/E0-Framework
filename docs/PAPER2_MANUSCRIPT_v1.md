@@ -323,15 +323,28 @@ $\mathbb{C}^2$ by matrix multiplication, satisfying:
 Therefore $\mathbb{C}^2$ with SU(2) transport is the minimal *faithful
 non-abelian* carrier. $\square$
 
-**Remark.** The group SO(3) also satisfies non-commutativity, but
-SO(3) $\cong$ SU(2)$/\mathbb{Z}_2$ is not simply connected:
-$\pi_1(\text{SO}(3)) = \mathbb{Z}_2$. This means SO(3) has a topological
-sign ambiguity on paths — a $2\pi$ rotation in SO(3) is topologically
-non-trivial. The simply connected cover SU(2) resolves this ambiguity,
-at the cost of introducing 720° periodicity (§4.2). The choice between
-SO(3) and SU(2) is not arbitrary: SU(2), as the universal cover, is the
-*canonical* choice for path-dependent transport, because it avoids the
-sign ambiguity that would make path amplitudes representation-dependent.
+**Remark** (Why not SO(3)?). The group SO(3) also satisfies
+non-commutativity, but SO(3) $\cong$ SU(2)$/\mathbb{Z}_2$ is not simply
+connected: $\pi_1(\text{SO}(3)) = \mathbb{Z}_2$. This means SO(3) has a
+topological sign ambiguity on paths — a $2\pi$ rotation in SO(3) is
+topologically non-trivial. Operationally, SO(3) fails to provide a
+consistent path amplitude because the sign of a transport product
+$U(e_n) \cdots U(e_1)$ depends on the choice of lift from SO(3) to its
+cover, making interference *representation-dependent*. The simply
+connected cover SU(2) resolves this ambiguity at the cost of introducing
+720° periodicity (§4.2). SU(2), as the universal cover, is therefore not
+merely a convenient choice but the *structurally forced* one: it is the
+smallest group in which path amplitudes are unambiguous and interference
+is representation-independent.
+
+**Remark** (Why not higher groups?). One might ask whether SU(3), Sp(2),
+or other non-abelian groups are equally valid. The answer is minimality
+(C5): SU(2) is the *lowest-dimensional* non-abelian compact connected Lie
+group (3-dimensional), acting faithfully on the *lowest-dimensional*
+carrier $\mathbb{C}^2$. Any higher group (SU(3) on $\mathbb{C}^3$, etc.)
+satisfies C1–C4 but violates C5. The structural chain derives the minimal
+faithful carrier; it does not exclude richer representations — it
+identifies the floor.
 
 ### 3.5 The Spinor Lift
 
@@ -545,6 +558,16 @@ numerically to $10^{-12}$.
 $\det(U_{\text{geo}}) = 1$ and $U_{\text{geo}}^\dagger U_{\text{geo}} =
 \mathbb{I}$ for all edges, verified across all test domains.
 
+**Remark** (Admissibility, not uniqueness). The geometric connection
+$\vec{A}$ (Def. 7) is one *admissible* lifting of the scalar connection
+$\omega$ to a three-component vector field. The construction is
+structurally motivated (vorticity gradient, face holonomy, and direct
+connection are the three natural local geometric quantities), but
+uniqueness of this particular lifting is open. Other three-component
+decompositions satisfying antisymmetry and SU(2) membership may exist.
+The present construction is a first instance; the question of whether it
+is canonical is deferred to future work.
+
 ### 4.6 Divergence Between Minimal and Geometric Transport
 
 **Definition 9** (Spinor Divergence).
@@ -647,8 +670,8 @@ or external parameter is introduced.
 ### 5.3 Derivation
 
 **Theorem 2** (Born Criterion).
-*Under Axioms BER-1 through BER-4, the unique probability distribution
-over outcomes is*
+*Under Axioms BER-1 through BER-4, the unique minimal probability
+distribution over outcomes is*
 
 $$P(z) = \frac{I(z)}{\sum_{w \in \Omega} I(w)} = \frac{\|\Psi(z)\|^2}{\sum_{w \in \Omega} \|\Psi(w)\|^2}$$
 
@@ -680,7 +703,15 @@ gauge-invariant scalar derived from the amplitude, no further
 transformation is structurally motivated.
 
 Therefore $P(z) = I(z) / \sum I(w)$ is the unique non-arbitrary
-distribution. $\square$
+distribution under the no-extra-structure constraint. $\square$
+
+**Remark** (Minimality, not inevitability). The Born criterion is
+*minimal*: it is the simplest distribution compatible with Axioms
+BER-1–4. It is not *inevitable* in the sense that relaxing any axiom
+(especially BER-4) opens a family of alternatives
+$P(z) \propto I(z)^\alpha$. The result's force comes from the claim that
+$\alpha \neq 1$ requires justification the structural chain does not
+provide — not from a proof that $\alpha \neq 1$ is impossible.
 
 **Remark** (Status). This derivation is *conditional*: it holds if and
 only if Axioms BER-1 through BER-4 are satisfied. The key assumption
@@ -774,7 +805,11 @@ $\cos(\pi/2) \approx 0$ (orthogonal, no interference), so $I$ rises to
 
 This is not a numerical artifact — it is a direct consequence of SU(2)'s
 double-cover topology. The decision flip is *structurally predicted* by
-Proposition 3 whenever $\Delta\Theta$ is near $\pi$.
+Proposition 3 whenever $\Delta\Theta$ is near $\pi$. While the Gordian
+domain is constructed, it isolates the structural regime where phase
+halving *must* produce divergence: any domain with $\Delta\Theta \approx
+\pi$ between interfering path families will exhibit the same effect. The
+construction is diagnostic, not cherry-picked.
 
 ### 6.4 Conditions for Divergence
 
