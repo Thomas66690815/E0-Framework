@@ -484,6 +484,174 @@ def _analyze_su2(ctrl, goals, horizon=5):
     )
 
 
+# ══════════════════════════════════════════════════════════════
+# O2 — Large Goal Sets (|G| > 8)
+# ══════════════════════════════════════════════════════════════
+
+def build_isolation_stress(n_real: int, n_unreachable: int) -> Landscape:
+    """n_real goals reachable by A (all) and B (even). n_unreachable TRULY
+    isolated goals with no path from START — must have zero effect on ranking."""
+    L = Landscape()
+    L.add_edge(START, "A", delta=0.5, resistance=0.2)
+    L.add_edge(START, "B", delta=0.4, resistance=0.3)
+    for i in range(n_real):
+        g = f"GR{i}"
+        L.add_edge("A", f"AM{i}", delta=0.5, resistance=0.25)
+        L.add_edge(f"AM{i}", g, delta=0.4, resistance=0.3)
+        if i % 2 == 0:
+            L.add_edge("B", f"BM{i}", delta=0.3, resistance=0.4)
+            L.add_edge(f"BM{i}", g, delta=0.3, resistance=0.4)
+    for i in range(n_unreachable):
+        L.add_edge(f"ISO{i}", f"GU{i}", delta=1.0, resistance=0.5)
+    return L
+
+
+class TestFamilyE_LargeGoalSets(unittest.TestCase):
+    """O2: extend Family E anti-saturation tests beyond |G|=8 to |G|=32."""
+
+    def _measure(self, n_goals):
+        L = build_family_e(n_goals)
+        ctrl = E0Controller(L, evaluate)
+        goals = {f"G{i+1}" for i in range(n_goals)}
+        return _analyze(ctrl, goals)
+
+    def test_a_wins_at_16_goals(self):
+        """A (full coverage) wins at |G|=16."""
+        r = self._measure(16)
+        self.assertEqual(r.amplitude_choice, "A")
+
+    def test_a_wins_at_32_goals(self):
+        """A (full coverage) wins at |G|=32."""
+        r = self._measure(32)
+        self.assertEqual(r.amplitude_choice, "A")
+
+    def test_entropy_overall_decreases_to_32(self):
+        """Overall trend: H(32) < H(1) — selectivity sharpens at scale."""
+        ent_1 = _entropy(self._measure(1))
+        ent_32 = _entropy(self._measure(32))
+        self.assertLess(ent_32, ent_1,
+                        f"H(32)={ent_32:.4f} >= H(1)={ent_1:.4f}")
+
+    def test_top_gap_overall_increases_to_32(self):
+        """Overall trend: gap(32) > gap(1) — winner margin widens at scale."""
+        gap_1 = _top_gap(self._measure(1))
+        gap_32 = _top_gap(self._measure(32))
+        self.assertGreater(gap_32, gap_1,
+                           f"gap(32)={gap_32:.4f} <= gap(1)={gap_1:.4f}")
+
+    def test_no_saturation_at_32_goals(self):
+        """F1 check: P(A) > 0.6 at |G|=32 — no saturation collapse."""
+        r = self._measure(32)
+        top1 = max(ai.probability for ai in r.action_infos)
+        self.assertGreater(top1, 0.6,
+                           f"P(top)={top1:.4f} at |G|=32 — F1 saturation")
+
+    def test_path_count_scales_to_32(self):
+        """A should have exactly 32 paths at |G|=32 (one per goal)."""
+        r = self._measure(32)
+        pc = next(ai.path_count for ai in r.action_infos if ai.action == "A")
+        self.assertEqual(pc, 32)
+
+    def test_probability_bounded_at_scale(self):
+        """P(A) stays in [0.70, 0.80] for all |G| in {16, 20, 24, 28, 32}."""
+        for n in [16, 20, 24, 28, 32]:
+            r = self._measure(n)
+            pa = next(ai.probability for ai in r.action_infos if ai.action == "A")
+            self.assertGreater(pa, 0.70,
+                               f"|G|={n}: P(A)={pa:.4f} < 0.70")
+            self.assertLess(pa, 0.80,
+                            f"|G|={n}: P(A)={pa:.4f} > 0.80")
+
+    def test_periodicity_convergence(self):
+        """At multiples of 6 (LCM of coverage moduli), P(A) converges."""
+        values = []
+        for n in [6, 12, 18, 24, 30]:
+            r = self._measure(n)
+            pa = next(ai.probability for ai in r.action_infos if ai.action == "A")
+            values.append(pa)
+        # Values should converge: spread decreases
+        spread = max(values) - min(values)
+        self.assertLess(spread, 0.001,
+                        f"P(A) spread at LCM-6 = {spread:.6f} > 0.001")
+
+
+class TestUnreachableGoalStress(unittest.TestCase):
+    """O2/F2: truly unreachable goals must have exactly zero effect at scale."""
+
+    def test_64_unreachable_zero_probability_drift(self):
+        """Adding 64 isolated goals changes no probability by more than 1e-14."""
+        L_base = build_isolation_stress(8, 0)
+        L_ext = build_isolation_stress(8, 64)
+        ctrl_b = E0Controller(L_base, evaluate)
+        ctrl_e = E0Controller(L_ext, evaluate)
+        real = {f"GR{i}" for i in range(8)}
+        unreach = {f"GU{i}" for i in range(64)}
+        r_base = _analyze(ctrl_b, real)
+        r_ext = _analyze(ctrl_e, real | unreach)
+        for ab, ae in zip(r_base.action_infos, r_ext.action_infos):
+            self.assertAlmostEqual(ab.probability, ae.probability, places=14,
+                                   msg=f"{ab.action}: P drifted with unreachable goals")
+
+    def test_winner_unchanged_with_mass_unreachable(self):
+        """Winner is identical with 0 vs 64 unreachable goals."""
+        L_base = build_isolation_stress(16, 0)
+        L_ext = build_isolation_stress(16, 64)
+        ctrl_b = E0Controller(L_base, evaluate)
+        ctrl_e = E0Controller(L_ext, evaluate)
+        real = {f"GR{i}" for i in range(16)}
+        unreach = {f"GU{i}" for i in range(64)}
+        r_base = _analyze(ctrl_b, real)
+        r_ext = _analyze(ctrl_e, real | unreach)
+        self.assertEqual(r_base.amplitude_choice, r_ext.amplitude_choice)
+
+    def test_entropy_unchanged_with_mass_unreachable(self):
+        """Entropy identical with 0 vs 64 unreachable goals."""
+        L_base = build_isolation_stress(8, 0)
+        L_ext = build_isolation_stress(8, 64)
+        ctrl_b = E0Controller(L_base, evaluate)
+        ctrl_e = E0Controller(L_ext, evaluate)
+        real = {f"GR{i}" for i in range(8)}
+        unreach = {f"GU{i}" for i in range(64)}
+        h_base = _entropy(_analyze(ctrl_b, real))
+        h_ext = _entropy(_analyze(ctrl_e, real | unreach))
+        self.assertAlmostEqual(h_base, h_ext, places=14,
+                               msg=f"H drifted: {h_base:.10f} vs {h_ext:.10f}")
+
+
+class TestLargeGoalSetsUnderSU2(unittest.TestCase):
+    """O2: SU(2) must preserve large-|G| stability properties."""
+
+    def _measure_su2(self, n_goals):
+        L = build_family_e(n_goals)
+        ctrl = E0Controller(L, evaluate)
+        goals = {f"G{i+1}" for i in range(n_goals)}
+        return _analyze_su2(ctrl, goals)
+
+    def test_su2_a_wins_at_16(self):
+        """A wins at |G|=16 under SU(2)."""
+        r = self._measure_su2(16)
+        self.assertEqual(r.amplitude_choice, "A")
+
+    def test_su2_a_wins_at_32(self):
+        """A wins at |G|=32 under SU(2)."""
+        r = self._measure_su2(32)
+        self.assertEqual(r.amplitude_choice, "A")
+
+    def test_su2_entropy_trend_to_32(self):
+        """SU(2): H(32) < H(1) — selectivity sharpens at scale."""
+        ent_1 = _entropy(self._measure_su2(1))
+        ent_32 = _entropy(self._measure_su2(32))
+        self.assertLess(ent_32, ent_1,
+                        f"SU(2) H(32)={ent_32:.4f} >= H(1)={ent_1:.4f}")
+
+    def test_su2_no_saturation_at_32(self):
+        """SU(2): P(A) > 0.6 at |G|=32 — no saturation."""
+        r = self._measure_su2(32)
+        top1 = max(ai.probability for ai in r.action_infos)
+        self.assertGreater(top1, 0.6,
+                           f"SU(2) P(top)={top1:.4f} at |G|=32")
+
+
 class TestG5UnderSU2_WinnerStability(unittest.TestCase):
     """SU(2) must preserve G5 winner identities across all families."""
 

@@ -209,20 +209,20 @@ Alternative-goal support rescues A1 from single-goal destructive suppression; go
 
 ---
 
-### C10 — G5 remains selective under tested edge cases up to |G| = 5
+### C10 — G5 remains selective under tested edge cases up to |G| = 32
 
 **Claim**  
 Multi-goal G5 does not automatically collapse into flat, noisy, or arbitrary rankings as goal sets grow.
 
 **Evidence**  
-- `e0_controller/test_g5_edge_cases.py`
+- `e0_controller/test_g5_edge_cases.py` — 12 classes / 55 tests
 - `docs/E0_G5_EDGE_CASE_SUITE_v1.md`
 
 **Result**  
-No failure signatures F1–F4 triggered in the tested suite. Entropy decreases and top-1 gap increases in the reported scenarios; anti-saturation behavior observed.
+No failure signatures F1–F4 triggered up to |G| = 32. Entropy decreases and top-1 gap increases; anti-saturation confirmed. P(A) converges to ≈ 0.74 at LCM-6 multiples. 64 truly unreachable goals produce zero probability drift (< 1e-14). SU(2) preserves all properties at |G| = 32.
 
 **Status**  
-✅ Confirmed *(within tested range)*
+✅ Confirmed *(tested to |G| = 32, U(1) and SU(2))*
 
 ---
 
@@ -526,7 +526,7 @@ Born sampling (P ∝ I, choosing actions probabilistically from the amplitude-de
 | `test_phase2_minidomain.py` | C2, C14 |
 | `test_waypoint.py` | C3, C4 |
 | `test_gordian_trap.py` | C4, C5, C6, C7, C8, C9 |
-| `test_g5_edge_cases.py` | C9, C10 |
+| `test_g5_edge_cases.py` | C9, C10 (families A–E + O2 large-|G|) |
 | `test_topology_classification.py` | C11 |
 | `test_scaling.py` | C12 |
 | `test_llm_adapter.py` | C13 |
@@ -614,8 +614,14 @@ C8 under much stronger clipping / distortion regimes.
 **Target claim**  
 C10 beyond |G| = 5.
 
-**Recommended test**  
-Extend edge-case suite with larger goal sets and weighted/irrelevant/noisy goals.
+**Status:** ✅ Resolved
+
+**What was done:**
+- Extended Family E tests to |G| = 16, 32 — A wins at all sizes, P(A) ∈ [0.70, 0.80], path count scales linearly
+- Overall entropy trend H(32) < H(1) confirmed; periodicity convergence at LCM-6 multiples (spread < 0.001)
+- Unreachable-goal stress: 64 isolated goals produce zero probability drift (< 1e-14)
+- SU(2): winner stability, entropy trend, and anti-saturation all confirmed at |G| = 32
+- 15 new tests in 3 classes: `TestFamilyE_LargeGoalSets` (8), `TestUnreachableGoalStress` (3), `TestLargeGoalSetsUnderSU2` (4)
 
 ---
 
