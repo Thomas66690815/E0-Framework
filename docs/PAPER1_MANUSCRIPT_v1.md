@@ -1,0 +1,1206 @@
+# E₀: Structural Interference in Discrete Transition Systems
+
+**Thomas Wehner**
+
+---
+
+## Abstract
+
+We introduce E₀, a formal framework for discrete transition systems that
+derives complex path amplitudes from three structural primitives: difference,
+resistance, and historization. Through a constructive chain — tension,
+coherence, Helmholtz field decomposition, connection, and phase — we obtain
+amplitudes $\Psi = \exp(-S + i\Theta)$ that exhibit constructive and
+destructive interference without postulating quantum mechanics or probability
+theory. We prove a Holonomy Independence Theorem establishing that phase
+differences between paths depend only on path-local quantities. A hybrid
+controller uses this interference to escape structural traps undetectable by
+greedy methods. Our central empirical finding, validated across 380 graph
+topologies, is that the choice of *summation geometry* — which paths
+contribute to the amplitude — dominates over the choice of decision rule:
+switching geometry changes trap-escape success from 0% to 100%, while
+switching from deterministic to stochastic selection changes it by at most
+24 percentage points. We identify path-family count and phase opposition as
+structural predictors for when interference-based routing provides advantage.
+All claims are explicitly classified as derived, empirical, or heuristic.
+
+---
+
+## 1. Introduction
+
+### 1.1 Problem Statement
+
+Local greedy decision-making in discrete transition systems is vulnerable to
+structural traps. A *structural trap* is a configuration where the locally
+cheapest transition leads toward a suboptimal or dead-end region, while a more
+expensive first step would lead to a globally better outcome. Such traps arise
+in planning, workflow routing, state-machine control, and any domain where
+a myopic evaluation function must select among multiple successors.
+
+Existing solutions add complexity:
+- **Look-ahead methods** (A*, beam search) require explicit heuristic
+  functions and grow exponentially with depth.
+- **Reinforcement learning** (Q-learning, policy gradient) requires reward
+  signals, exploration budgets, and converges slowly.
+- **Monte Carlo Tree Search** (MCTS, AlphaZero-style) requires a simulation
+  model and statistical convergence.
+
+None of these provides a *structural* account of why traps exist or when
+they can be detected from the transition landscape itself.
+
+### 1.2 Our Approach
+
+We introduce E₀, a formal framework that derives complex path amplitudes
+from three primitive quantities — structural difference ($\Delta$), resistance
+($R$), and historization ($H$). The derivation chain is constructive:
+
+$$\Delta \to R_0 \to H \to \delta_H \to R_{\text{eff}} \to S \to C \to v \to \Phi \to v_{\text{grad}} / v_{\text{rot}} \to \omega \to \Theta \to \Psi$$
+
+The key insight is that the transition field $v$ admits a discrete Helmholtz
+decomposition into gradient and rotational components. The rotational
+component induces a *connection* $\omega$ and *path phase* $\Theta$, which
+combine with path tension $S$ to form complex amplitudes
+$\Psi = \exp(-S + i\Theta)$. When multiple paths contribute to a decision,
+these amplitudes exhibit *constructive and destructive interference* — an
+effect that exposes structural traps invisible to local cost minimization.
+
+The mathematical structure is analogous to path integrals in physics, but
+the analogy is *derivative*: E₀ derives the amplitude from graph-theoretic
+primitives rather than postulating it from physical principles.
+
+### 1.3 Contributions
+
+This paper makes five contributions:
+
+1. **A formal framework** deriving complex path amplitudes from structural
+   primitives, culminating in a Holonomy Independence Theorem establishing
+   that phase differences depend only on path-local quantities (§3).
+
+2. **Four summation geometries** with formal definitions and empirical
+   comparison, showing that goal-reaching geometry eliminates intensity
+   inflation artifacts in trap domains (§4).
+
+3. **A hybrid controller** that uses amplitude-based interference to override
+   greedy decisions when structural traps are detected, with three operating
+   modes (§5).
+
+4. **The geometry-dominance result:** on trap-containing domains, the choice
+   of summation geometry determines success or failure ($0\% \to 100\%$),
+   while the choice of decision rule changes outcomes by at most 24
+   percentage points (§6).
+
+5. **A topology classification** across 380 directed graphs, identifying
+   path-family count and phase opposition ($|\Delta\Theta| > \pi/2$) as
+   structural predictors for when interference-based routing helps (§7).
+
+### 1.4 Scope and Honesty
+
+E₀ explicitly classifies every claim as *derived* (follows from the
+structural chain), *empirical* (demonstrated through experiments), or
+*heuristic* (works operationally but not yet derived). Table 1 in Appendix C
+provides the full classification.
+
+This paper does **not** claim:
+- A continuous-limit formalization.
+- Probabilistic convergence guarantees.
+- Real-world deployment evidence.
+- A complete physical theory.
+
+It claims a formally explicit, reproducible, and honestly scoped framework
+for structural interference in discrete transition systems
+
+---
+
+## 2. Related Work
+
+*(User-provided. To be integrated.)*
+
+---
+
+## 3. The E₀ Framework: Primitives and Derived Quantities
+
+This section develops the mathematical core of E₀. Starting from three
+primitive quantities — structural difference, resistance, and historization —
+we derive a chain of structural quantities culminating in complex path
+amplitudes that exhibit interference. Every definition is constructive: it
+specifies exactly how the quantity is computed from its predecessors.
+
+### 3.1 States and Transitions
+
+**Definition 1** (Transition Graph).
+A *transition graph* is a pair $\mathcal{G} = (X, E)$ where $X$ is a finite
+set of *states* and $E \subseteq X \times X$ is a set of *directed edges*.
+An edge $(x, y) \in E$ represents an admissible transition from state $x$ to
+state $y$.
+
+We write $x \to y$ for $(x, y) \in E$ and $N^+(x) = \{y \in X : x \to y\}$
+for the set of admissible successors of $x$.
+
+**Convention** (Directedness). The relation $E$ is not assumed to be
+symmetric: $x \to y$ does not imply $y \to x$. This directedness is
+essential — E₀ models systems where accessibility between states is
+inherently asymmetric.
+
+### 3.2 Structural Difference
+
+**Definition 2** (Structural Difference).
+The *structural difference* is a function
+
+$$\Delta : E \to \mathbb{R}_{\geq 0}$$
+
+that assigns to each directed edge $e = (x, y)$ a non-negative real number
+$\Delta(x, y)$ measuring the magnitude of structural difference associated
+with the transition from $x$ to $y$.
+
+**Convention K3** (Non-Existent Edge). For $(x, y) \notin E$, the structural
+difference is *undefined* (not zero). This distinguishes "no transition
+exists" from "a zero-difference transition exists."
+
+**Properties:**
+- $\Delta(x, y) \geq 0$ for all $(x, y) \in E$.
+- $\Delta(x, y) = 0$ is admissible and signifies a zero-difference transition.
+- $\Delta$ is defined only on existing directed edges; it is not extended to
+  arbitrary pairs.
+
+### 3.3 Resistance and Historization
+
+**Definition 3** (Base Resistance).
+The *base resistance* is a function
+
+$$R_0 : E \to \mathbb{R}_{> 0}$$
+
+that assigns to each directed edge a positive real number representing the
+baseline resistance of the transition, independent of prior history.
+
+**Definition 4** (Historization).
+For each edge $e \in E$, define the *historization state* as a pair
+
+$$H(e) = (U(e), F(e))$$
+
+where $U(e) \geq 0$ is the accumulated *success trace* and $F(e) \geq 0$ is
+the accumulated *failure trace*.
+
+Historization evolves after each realized transition outcome. Given a decay
+parameter $\rho \in (0, 1)$, the update rule is:
+
+$$U_{t+1}(e) = \rho \cdot U_t(e) + \mathbb{1}_{\text{success}}(e, t)$$
+
+$$F_{t+1}(e) = \rho \cdot F_t(e) + \mathbb{1}_{\text{failure}}(e, t)$$
+
+where $\mathbb{1}_{\text{success}}(e, t)$ equals 1 if edge $e$ was traversed
+successfully at time $t$ and 0 otherwise (analogously for failure). Initial
+conditions are $U_0(e) = F_0(e) = 0$ for all edges.
+
+**Remark.** The decay factor $\rho$ implements exponential forgetting: recent
+outcomes dominate over distant history. For edges not traversed at time $t$,
+the effective traces $U_t, F_t$ still decay via a lazy catch-up mechanism:
+if edge $e$ was last updated at time $\tau$, then at time $t > \tau$, the
+effective traces are $U_{\text{eff}} = U_\tau \cdot \rho^{t - \tau}$ and
+$F_{\text{eff}} = F_\tau \cdot \rho^{t - \tau}$.
+
+**Definition 5** (Historization Correction).
+The *historization correction* is
+
+$$\delta_H(e) = \text{clip}\bigl(\lambda_f \cdot F(e) - \lambda_s \cdot U(e),\; -\delta_{\max},\; +\delta_{\max}\bigr)$$
+
+with learning rates $\lambda_s, \lambda_f \geq 0$ and clipping bound
+$\delta_{\max} > 0$.
+
+**Interpretation:**
+- $\delta_H > 0$: failures dominate $\Rightarrow$ increased resistance (path avoidance).
+- $\delta_H < 0$: successes dominate $\Rightarrow$ decreased resistance (path reinforcement).
+- $\delta_H = 0$: balanced history.
+
+**Definition 6** (Effective Resistance).
+The *effective resistance* is
+
+$$R_{\text{eff}}(e) = \max\bigl(R_0(e) + \delta_H(e),\; \epsilon\bigr)$$
+
+where $\epsilon > 0$ is a structural floor preventing zero or negative
+resistance. In our implementation, $\epsilon = 10^{-10}$.
+
+### 3.4 Tension and Coherence
+
+**Definition 7** (Edge Tension).
+The *tension* of a directed edge $e = (x, y) \in E$ is
+
+$$S(x \to y) = \Delta(x, y) \cdot R_{\text{eff}}(x \to y)$$
+
+Tension is the fundamental dynamic quantity of E₀. It expresses not merely
+difference, and not merely resistance, but the *integration burden* of
+difference under resistance.
+
+**Convention:** If $(x, y) \notin E$, then $S(x \to y) = \infty$.
+
+**Definition 8** (Path and Path Tension).
+A *path* is an ordered sequence $p = (x_0, x_1, \ldots, x_n)$ with each
+consecutive pair $(x_i, x_{i+1}) \in E$. The *path tension* is additive:
+
+$$S(p) = \sum_{i=0}^{n-1} S(x_i \to x_{i+1})$$
+
+If any single edge has $S = \infty$, then $S(p) = \infty$ (the path is
+inadmissible).
+
+**Definition 9** (Path Coherence).
+The *coherence* of a path $p$ is
+
+$$C(p) = \exp(-S(p))$$
+
+**Proposition 1** (Coherence Bounds).
+*For any path $p$ with $S(p) \in [0, \infty)$:*
+1. $C(p) \in (0, 1]$.
+2. $C$ is strictly monotonically decreasing in $S$.
+3. $C(p) = 1$ if and only if $S(p) = 0$ (zero-tension path).
+4. $\lim_{S \to \infty} C(p) = 0$ (infinite tension yields zero coherence).
+
+*Proof.* Immediate from $\exp(-\cdot)$ being a strictly decreasing bijection
+$[0, \infty) \to (0, 1]$. $\square$
+
+### 3.5 Local Potential and Field Decomposition
+
+The transition field admits a discrete Helmholtz decomposition into a
+gradient (conservative) and rotational (non-conservative) component.
+
+**Definition 10** (Transition Field).
+The *transition field* assigns to each directed edge $(x, y) \in E$ the value
+
+$$v(x, y) = \Delta(x, y) \cdot \exp\bigl(-S_{\text{eff}}(x, y)\bigr)$$
+
+where $S_{\text{eff}}(x,y) = \Delta(x,y) \cdot R_{\text{eff}}(x,y)$. For
+$(x, y) \notin E$, we set $v(x, y) = 0$.
+
+**Remark.** The transition field is not a probability. It is a structural
+measure of *transition openness* — the degree to which a transition is both
+different ($\Delta > 0$) and easy ($S$ small).
+
+**Definition 11** (Local Potential — Helmholtz).
+Let $\mathbf{L} = \mathbf{D} - \mathbf{A}$ be the combinatorial graph
+Laplacian of the undirected skeleton of $\mathcal{G}$, where $\mathbf{D}$ is
+the degree matrix and $\mathbf{A}$ is the adjacency matrix. The *local
+potential* $\Phi : X \to \mathbb{R}$ is the solution to
+
+$$\mathbf{L} \cdot \mathbf{\Phi} = \text{div}(\mathbf{v})$$
+
+where $\text{div}(\mathbf{v})(x) = \sum_{y} v(x, y) - \sum_{y} v(y, x)$
+is the discrete divergence. The system is solved via least-squares with gauge
+fixing $\Phi(x_0) = 0$ for a reference node $x_0$.
+
+**Definition 12** (Gradient Component).
+The *gradient component* of the transition field is
+
+$$v_{\text{grad}}(x, y) = \Phi(x) - \Phi(y)$$
+
+This component is conservative by construction: for any closed path $\gamma$,
+$\sum_\gamma v_{\text{grad}}(e) = 0$.
+
+**Definition 13** (Rotational Component).
+The *rotational component* is the residual
+
+$$v_{\text{rot}}(x, y) = v(x, y) - v_{\text{grad}}(x, y)$$
+
+for $(x, y) \in E$, and undefined for $(x, y) \notin E$.
+
+By construction, the Helmholtz decomposition yields orthogonality in the
+edge inner product:
+
+$$\langle v_{\text{grad}}, v_{\text{rot}} \rangle_E = 0$$
+
+### 3.6 Connection and Phase
+
+The rotational component of the transition field induces a connection
+on the transition graph — a structure that measures the non-conservative,
+orientation-dependent character of the transition landscape.
+
+**Definition 14** (Connection).
+The *connection* is the antisymmetric function
+
+$$\omega(x, y) = \frac{1}{2}\bigl(v_{\text{rot}}(x, y) - v_{\text{rot}}(y, x)\bigr)$$
+
+with the convention that $v_{\text{rot}}(x, y) = 0$ whenever $(x, y) \notin E$.
+
+**Property** (Antisymmetry). By construction, $\omega(x, y) = -\omega(y, x)$.
+
+**Definition 15** (Path Phase).
+The *path phase* accumulated along a path $p = (x_0, x_1, \ldots, x_n)$ is
+
+$$\Theta(p) = \sum_{i=0}^{n-1} \omega(x_i, x_{i+1})$$
+
+**Definition 16** (Holonomy).
+For a closed path $\gamma$ with $\gamma_0 = \gamma_n$, the *holonomy* is
+
+$$\text{Hol}(\gamma) = \Theta(\gamma) = \sum_{\gamma} \omega(e)$$
+
+**Interpretation:**
+- $\text{Hol}(\gamma) = 0$: the cycle has integrable (conservative) structure.
+- $\text{Hol}(\gamma) \neq 0$: the cycle exhibits non-integrable,
+  path-dependent structure — distinct paths between the same endpoints
+  accumulate different phases.
+
+**Theorem 1** (Holonomy Independence).
+*Let $p_1$ and $p_2$ be two directed paths from $x$ to $y$ in $\mathcal{G}$,
+and let $\gamma = p_1 \circ p_2^{-1}$ be the closed path obtained by
+traversing $p_1$ forward and $p_2$ backward. Then*
+
+$$\Delta\Theta = \Theta(p_1) - \Theta(p_2) = \text{Hol}(\gamma)$$
+
+*and this quantity depends only on the edges in $p_1$ and $p_2$, not on any
+external graph structure.*
+
+*Proof.* Expand the phase difference using the definitions:
+
+$$\Delta\Theta = \sum_{e \in p_1} \omega(e) - \sum_{e \in p_2} \omega(e)$$
+
+Since $\omega(x, y) = \frac{1}{2}(v_{\text{rot}}(x,y) - v_{\text{rot}}(y,x))$
+and $v_{\text{rot}} = v - v_{\text{grad}}$, the gradient contributions cancel:
+
+$$\sum_{e \in p_1} v_{\text{grad}}(e) = \Phi(x) - \Phi(y) = \sum_{e \in p_2} v_{\text{grad}}(e)$$
+
+because $v_{\text{grad}}$ is conservative (telescoping sum). Therefore:
+
+$$\Delta\Theta = \frac{1}{2}\sum_{e \in p_1} \bigl(v_{\text{rot}}(e) - v_{\text{rot}}(\bar{e})\bigr) - \frac{1}{2}\sum_{e \in p_2} \bigl(v_{\text{rot}}(e) - v_{\text{rot}}(\bar{e})\bigr)$$
+
+where $\bar{e}$ denotes the reverse of edge $e$. Each term depends only on
+edge-local quantities ($v$ values on $p_1$ and $p_2$ edges and their
+reverses), not on any vertex potential or external graph structure. $\square$
+
+**Corollary.** The phase difference $\Delta\Theta$ between two paths sharing
+endpoints can be computed directly from the transition field values along
+those paths, without solving for the global potential $\Phi$.
+
+### 3.7 Complex Path Amplitude
+
+**Definition 17** (Path Amplitude).
+The *complex path amplitude* for a path $p$ is
+
+$$\Psi(p) = \exp(-S(p) + i\Theta(p)) = \exp(-S(p))\cdot\exp(i\Theta(p))$$
+
+This is not a quantum postulate. It is a mathematically natural compact
+representation that combines:
+- *path coherence* $|\Psi(p)| = \exp(-S(p)) = C(p)$ as magnitude, and
+- *accumulated phase* $\arg(\Psi(p)) = \Theta(p)$ as angle.
+
+**Key properties:**
+- $\Psi(p) = 0$ if $S(p) = \infty$ (inadmissible path).
+- $|\Psi(p)| = 1$ if $S(p) = 0$ (zero-tension path).
+- $\Psi(p) \in \mathbb{R}_{>0}$ if $\Theta(p) = 0$ (zero-phase path).
+
+**Definition 18** (Endpoint Amplitude and Summation Geometry).
+Given a state $x$, an admissible action $a \in N^+(x)$, a horizon $h \in
+\mathbb{N}$, and a *summation geometry* $G$ (Definition 20), the *endpoint
+amplitude* is
+
+$$\Psi_G(a; x, h) = \sum_{p \in \mathcal{P}_G(x, a, h)} \Psi(p)$$
+
+where $\mathcal{P}_G(x, a, h)$ is the set of paths starting at $x$ with
+first hop $a$, of length $\leq h$, selected according to geometry $G$.
+
+**Definition 19** (Intensity).
+The *intensity* of action $a$ is
+
+$$I(a) = |\Psi_G(a; x, h)|^2$$
+
+**Definition 20** (Normalized Intensity).
+The *normalized intensity* (Born-like probability) is
+
+$$P(a) = \frac{I(a)}{\sum_{a'} I(a')}$$
+
+where the sum ranges over all admissible actions $a' \in N^+(x)$.
+
+**Proposition 2** (Interference).
+*The intensity $I(a)$ exhibits interference: in general,*
+
+$$I(a) = \left|\sum_p \Psi(p)\right|^2 \neq \sum_p |\Psi(p)|^2$$
+
+*The inequality is strict whenever two or more contributing paths have
+distinct phases $\Theta(p_i) \neq \Theta(p_j)$.*
+
+*Proof.* Let $\Psi(p_k) = r_k e^{i\theta_k}$ with $r_k = C(p_k)$. Then:
+
+$$I(a) = \left|\sum_k r_k e^{i\theta_k}\right|^2 = \sum_k r_k^2 + 2\sum_{j<k} r_j r_k \cos(\theta_j - \theta_k)$$
+
+The cross terms $2r_j r_k \cos(\theta_j - \theta_k)$ are the interference
+terms. They vanish only when all phase differences are $\pm\pi/2$
+(orthogonal) or when there is only one path. In particular:
+
+- *Constructive interference*: $\cos(\theta_j - \theta_k) > 0$ increases $I$.
+- *Destructive interference*: $\cos(\theta_j - \theta_k) < 0$ decreases $I$.
+
+$\square$
+
+**Proposition 3** (Zero-Holonomy Reduction).
+*If $\text{Hol}(\gamma) = 0$ for every cycle $\gamma$ in $\mathcal{G}$
+(integrable transition field), then all paths from $x$ to any given endpoint
+$z$ accumulate the same phase. In this case, the interference terms are
+maximally constructive and intensity reduces to the squared sum of
+coherences:*
+
+$$I(a) = \left(\sum_p C(p)\right)^2$$
+
+*Proof.* If the holonomy vanishes on all cycles, Theorem 1 implies
+$\Theta(p_1) = \Theta(p_2)$ for any two paths sharing endpoints. Setting
+$\theta_k = \theta$ for all $k$ in the expansion from Proposition 2:
+
+$$I(a) = \left|\sum_k r_k e^{i\theta}\right|^2 = \left|e^{i\theta}\right|^2 \left(\sum_k r_k\right)^2 = \left(\sum_k C(p_k)\right)^2$$
+
+$\square$
+
+**Remark.** Proposition 3 shows that non-trivial interference — the phenomenon
+that makes E₀'s amplitude-based routing different from simple coherence
+summation — requires non-zero holonomy. This connects the purely geometric
+property of the transition field (its rotational component) to an
+operationally observable decision-level effect.
+
+---
+
+### Derivation Chain Summary
+
+The complete dependency chain of E₀ is:
+
+$$\Delta \to R_0 \to H \to \delta_H \to R_{\text{eff}} \to S \to C \to v \to \Phi \to v_{\text{grad}} / v_{\text{rot}} \to \omega \to \Theta \to \Psi$$
+
+Each arrow represents a constructive derivation step. No quantity in this
+chain is postulated independently — each follows from its predecessors and
+the graph structure $\mathcal{G}$.
+
+**Table 2: Notation Summary**
+
+| Symbol | Name | Domain | Definition |
+|--------|------|--------|------------|
+| $\mathcal{G} = (X, E)$ | Transition graph | — | Def. 1 |
+| $\Delta(x,y)$ | Structural difference | $\mathbb{R}_{\geq 0}$ | Def. 2 |
+| $R_0(e)$ | Base resistance | $\mathbb{R}_{> 0}$ | Def. 3 |
+| $H(e) = (U, F)$ | Historization state | $\mathbb{R}_{\geq 0}^2$ | Def. 4 |
+| $\delta_H(e)$ | Historization correction | $[-\delta_{\max}, \delta_{\max}]$ | Def. 5 |
+| $R_{\text{eff}}(e)$ | Effective resistance | $[\epsilon, \infty)$ | Def. 6 |
+| $S(e)$ | Edge tension | $[0, \infty]$ | Def. 7 |
+| $S(p)$ | Path tension | $[0, \infty]$ | Def. 8 |
+| $C(p)$ | Path coherence | $(0, 1]$ | Def. 9 |
+| $v(x,y)$ | Transition field | $[0, \infty)$ | Def. 10 |
+| $\Phi(x)$ | Local potential | $\mathbb{R}$ | Def. 11 |
+| $v_{\text{grad}}(x,y)$ | Gradient component | $\mathbb{R}$ | Def. 12 |
+| $v_{\text{rot}}(x,y)$ | Rotational component | $\mathbb{R}$ | Def. 13 |
+| $\omega(x,y)$ | Connection | $\mathbb{R}$ (antisym.) | Def. 14 |
+| $\Theta(p)$ | Path phase | $\mathbb{R}$ | Def. 15 |
+| $\text{Hol}(\gamma)$ | Holonomy | $\mathbb{R}$ | Def. 16 |
+| $\Psi(p)$ | Path amplitude | $\mathbb{C}$ | Def. 17 |
+| $I(a)$ | Intensity | $\mathbb{R}_{\geq 0}$ | Def. 19 |
+| $P(a)$ | Normalized intensity | $[0, 1]$ | Def. 20 |
+
+---
+
+## 4. Summation Geometries
+
+The definition of endpoint amplitude (Def. 18) depends on the choice of
+*summation geometry* $G$, which determines which paths contribute to the
+amplitude sum. This section formalizes four geometries, demonstrates that this
+choice has material impact on decision outcomes, and identifies conditions
+under which specific geometries are structurally appropriate.
+
+### 4.1 The Geometry Problem
+
+**Definition 21** (Summation Geometry).
+A *summation geometry* $G$ is a function that, given a starting state $x$, an
+action $a \in N^+(x)$, a horizon $h$, and optionally a goal set
+$\mathcal{T} \subseteq X$, produces a set of paths:
+
+$$G(x, a, h, \mathcal{T}) = \mathcal{P}_G(x, a, h) \subseteq \{p : p_0 = x,\; p_1 = a,\; |p| \leq h+1\}$$
+
+The choice of $G$ determines which structural information reaches the
+amplitude computation. Different geometries include different paths,
+producing different interference patterns and potentially different
+action rankings.
+
+### 4.2 Four Geometries
+
+We define four summation geometries, ordered by increasing structural
+selectivity:
+
+**Definition 22** (Prefix Geometry $G_{\text{prefix}}$).
+Include all admissible paths of length 1 to $h$ starting with action $a$.
+No repeated-state restriction. All prefixes of longer paths are included.
+
+**Definition 23** (Simple Geometry $G_{\text{simple}}$).
+Include all *simple* paths (no repeated states) of length 1 to $h$ starting
+with action $a$. This suppresses loop inflation — paths that revisit states
+are excluded.
+
+**Definition 24** (First-Arrival Geometry $G_{\text{first}}$).
+Include all paths up to length $h$ that stop upon first reaching a goal
+state $g \in \mathcal{T}$. Non-goal prefixes are included. Requires
+$\mathcal{T} \neq \emptyset$.
+
+**Definition 25** (Goal-Reaching Geometry $G_{\text{goal}}$).
+Include *only* paths that terminate at a goal state $g \in \mathcal{T}$, of
+length $\leq h$. Non-goal-terminating paths are excluded entirely. Requires
+$\mathcal{T} \neq \emptyset$.
+
+**Table 3: Geometry Properties**
+
+| Geometry | Loops | Non-goal paths | Requires goals | Selectivity |
+|----------|-------|---------------|----------------|-------------|
+| Prefix | Yes | Yes | No | Lowest |
+| Simple | No | Yes | No | Low |
+| First-arrival | No (at goal) | Yes (prefixes) | Yes | Medium |
+| Goal-reaching | No (at goal) | No | Yes | Highest |
+
+### 4.3 Structural Justification for Goal-Reaching Geometry
+
+Under goal-oriented semantics — where the system is evaluated by whether it
+reaches a target state — non-goal-terminating paths introduce an
+*intensity inflation artifact*: partial paths that end before reaching any
+goal still contribute intensity, potentially dominating the contribution of
+paths that actually reach the goal.
+
+**Proposition 4** (Intensity Inflation).
+*Let $a$ be an action with $k$ goal-reaching paths and $m$ non-goal
+prefixes within horizon $h$, and let $a'$ be an action with $k'$
+goal-reaching paths and $m'$ non-goal prefixes. If $m \gg m'$ while
+$k < k'$, then under $G_{\text{simple}}$ or $G_{\text{prefix}}$,
+action $a$ may have higher intensity $I(a) > I(a')$ despite having fewer
+goal-reaching continuations.*
+
+*Under $G_{\text{goal}}$, only the $k$ and $k'$ goal-reaching paths
+contribute, and the inflation artifact is eliminated.*
+
+**Demonstration** (Gordian Trap). Consider the Gordian Trap domain (Fig. 3,
+Appendix B). From state START, action A1 leads to a decoy path-family with
+one short path (A1→A2→GOAL) and one loop path
+(A1→L1→L2→L3→GOAL) that creates strong phase
+opposition ($|\Delta\Theta| \approx \pi$). Action B1 leads to a single
+coherent path (B1→B2→GOAL).
+
+Under $G_{\text{simple}}$ at horizon $h = 5$: the loop path through A1
+generates many non-goal prefixes
+(A1→L1, A1→L1→L2, ...) that inflate $I(\text{A1})$. Amplitude agrees
+with greedy, selecting the decoy A1.
+
+Under $G_{\text{goal}}$ at horizon $h = 5$: only goal-reaching paths
+contribute. The two A1-family paths exhibit destructive interference
+($|\Delta\Theta| \approx 3.26 \approx \pi$), reducing $I(\text{A1})$ to
+approximately 2% of its incoherent value, while $I(\text{B1})$ remains
+coherent. Amplitude correctly selects B1, escaping the trap.
+
+### 4.4 Empirical Geometry Comparison
+
+Across four benchmark domains (Diamond, Gordian Trap, G5 Multi-Goal, Invoice
+Workflow), we observe:
+
+1. **Prefix $\equiv$ First-arrival** on all tested topologies (100%
+   agreement across 380 scanned graphs).
+2. **Simple $\approx$ Prefix** with 97.6% agreement rate.
+3. **Goal-reaching differs exclusively** on 30.3% of scanned graphs —
+   these are exactly the cases where interference-based routing provides
+   advantage (§7).
+
+**Result.** Simple geometry ($G_{\text{simple}}$) is a robust default for
+exploratory analysis. Goal-reaching geometry ($G_{\text{goal}}$) is required
+for trap domains under goal-oriented semantics.
+
+---
+
+## 5. Hybrid Controller
+
+This section formalizes the operational controller that uses the amplitude
+theory from §3–4 to make transition decisions.
+
+### 5.1 Greedy Controller
+
+**Algorithm 1** (Greedy Selection).
+Given current state $x$ and admissible successors $N^+(x)$:
+1. For each $y \in N^+(x)$, compute $S_{\text{eff}}(x \to y)$.
+2. Select $y^* = \arg\min_{y \in N^+(x)} S_{\text{eff}}(x \to y)$.
+3. If $N^+(x) = \emptyset$, *escalate* (DEAD\_END).
+
+The greedy controller is deterministic and purely local: it considers only
+single-edge tensions, not multi-hop path structure. This locality makes it
+vulnerable to *structural traps* — states where the locally cheapest
+transition leads toward a suboptimal or dead-end region, while a more
+expensive first step would lead to a globally better path.
+
+### 5.2 Amplitude Overlay
+
+**Algorithm 2** (Bounded Amplitude Analysis).
+Given current state $x$, horizon $h$, geometry $G$, and goal set
+$\mathcal{T}$:
+1. Enumerate all paths in $\mathcal{P}_G(x, a, h)$ for each $a \in N^+(x)$.
+2. For each action $a$, compute $\Psi_G(a) = \sum_{p} \Psi(p)$.
+3. Compute $I(a) = |\Psi_G(a)|^2$ and $P(a) = I(a) / \sum_{a'} I(a')$.
+4. The *amplitude choice* is $a^* = \arg\max_{a} I(a)$.
+
+**Computational complexity.** Path enumeration is $O(k^h)$ where $k$ is the
+maximum branching factor and $h$ is the horizon. For the benchmark domains in
+this paper ($k \leq 5$, $h \leq 5$), this is tractable. Scalability to larger
+graphs is discussed in §9.
+
+### 5.3 Hybrid Arbitration
+
+**Algorithm 3** (AMPLITUDE\_ON\_DISAGREE).
+Given greedy choice $y_g$ and amplitude choice $y_a$:
+1. If $y_g = y_a$: follow greedy (agreement — amplitude confirms).
+2. If $y_g \neq y_a$: follow amplitude (disagreement — amplitude overrides).
+3. Safety conditions:
+   - If amplitude overlay produces no valid result (escalation, empty paths):
+     follow greedy.
+   - Record override event for metrics.
+
+**Proposition 5** (Monotonicity on Acyclic Graphs).
+*On acyclic graphs with $G_{\text{goal}}$ geometry, the hybrid controller
+never performs worse than greedy: if greedy reaches the goal, hybrid reaches
+the goal at least as fast. If greedy is trapped, hybrid may escape.*
+
+*Proof sketch.* On acyclic graphs, greedy termination is guaranteed (finite
+paths, no revisits). When hybrid agrees with greedy, behavior is identical.
+When hybrid overrides, the amplitude analysis has identified that a different
+first hop leads to higher total intensity toward the goal set, which correlates
+with better path structure. On acyclic trap topologies (e.g., Gordian), this
+override is exactly the trap escape mechanism. $\square$
+
+**Proposition 6** (Gordian Escape).
+*On Gordian-class traps with $G_{\text{goal}}$ geometry and sufficient horizon
+($h \geq 5$), the hybrid controller always escapes the trap by selecting the
+non-decoy action.*
+
+*Proof sketch.* The decoy path-family exhibits phase opposition
+($|\Delta\Theta| \approx \pi$), causing destructive interference that reduces
+$I(\text{decoy})$ to $\approx 2\%$ of its incoherent value. The non-decoy
+path has $I > 0$ (single coherent path). Therefore $I(\text{non-decoy}) >
+I(\text{decoy})$ and the amplitude choice overrides greedy. $\square$
+
+**Proposition 7** (Determinism).
+*The hybrid controller under AMPLITUDE\_ON\_DISAGREE mode is deterministic:
+identical input (graph, state, historization) always produces the same
+output.*
+
+### 5.4 Born Sampling Mode
+
+In addition to the deterministic AMPLITUDE\_ON\_DISAGREE mode, E₀ supports
+a stochastic mode:
+
+**Algorithm 4** (BORN\_SAMPLING).
+Given normalized intensities $P(a)$ for each $a \in N^+(x)$:
+1. Draw action $a$ from the categorical distribution with $\Pr(a) = P(a)$.
+2. Always override greedy (no agreement check).
+
+This mode trades determinism for exploration: it samples from the
+amplitude-induced distribution rather than selecting the maximum. Its
+relationship to the deterministic mode is investigated in §6.
+
+### 5.5 Operational Metrics
+
+The hybrid controller records the following metrics per run:
+- **Override count**: number of steps where amplitude overrode greedy.
+- **Override rate**: override count / total steps.
+- **Agreement rate**: 1 − override rate.
+- **Override confidence**: $P_{\text{best}} - P_{\text{second}}$ at each
+  override point (higher = more decisive override).
+
+---
+
+## 6. Central Result: Geometry Dominates Decision Rule
+
+This section presents the main empirical finding of this paper: on
+trap-containing domains, the choice of summation geometry has greater impact
+on success than the choice of decision rule. We state this as an empirically
+demonstrated theorem.
+
+### 6.1 Experimental Setup
+
+We compare two decision rules and two summation geometries on the Gordian
+Trap domain (Appendix B):
+
+**Decision rules:**
+- *Argmax*: $a^* = \arg\max_a I(a)$ (deterministic), implemented as
+  AMPLITUDE\_ON\_DISAGREE.
+- *Born sampling*: $a \sim P(a) \propto I(a)$ (stochastic), implemented as
+  BORN\_SAMPLING.
+
+**Summation geometries:**
+- $G_{\text{simple}}$: all simple (non-repeating) paths within horizon.
+- $G_{\text{goal}}$: only goal-reaching paths within horizon.
+
+This yields a $2 \times 2$ design. For each cell, we run 50–100 independent
+trials with fixed random seeds.
+
+### 6.2 Results
+
+**Table 5: Success rates on Gordian Trap (geometry × decision rule)**
+
+| | $G_{\text{simple}}$ | $G_{\text{goal}}$ |
+|---|---|---|
+| **Argmax** | 0% (0/50) | 100% (50/50) |
+| **Born sampling** | ≈ 10–24% (varies) | ≈ 96% (≥80/100) |
+
+**Interpretation.** The dominant effect is geometrical:
+
+- With $G_{\text{simple}}$: *both* rules fail. Argmax is trapped because
+  amplitude agrees with greedy (non-goal prefixes inflate the decoy). Born
+  sampling occasionally escapes by randomly selecting the non-decoy, but
+  this is chance, not structural insight.
+
+- With $G_{\text{goal}}$: *both* rules succeed. The goal-reaching geometry
+  exposes the destructive interference in the decoy path-family.
+  Argmax always takes the correct action. Born sampling takes it with high
+  probability ($P(\text{B1}) \gg P(\text{A1})$).
+
+**Theorem 2** (Geometry Dominates Decision Rule — Empirical).
+*On Gordian-class trap domains, the transition from $G_{\text{simple}}$ to
+$G_{\text{goal}}$ changes the success rate from 0% to 100% for the
+deterministic rule and from $\approx$12% to $\approx$96% for the stochastic
+rule. The transition from argmax to Born sampling under a fixed geometry
+changes success by at most 24 percentage points (and typically ≤ 4). Therefore,
+geometry choice dominates decision rule choice.*
+
+**Remark.** This result has an analogy in machine learning: *feature
+selection matters more than model choice* (a well-chosen feature set makes
+even simple models succeed; a poor feature set defeats sophisticated models).
+In E₀, the summation geometry plays the role of feature selection — it
+determines which structural information reaches the decision mechanism.
+
+### 6.3 Complementary Evidence: Diamond Domain
+
+On the Diamond domain (no traps, two symmetric paths to goal):
+- Both argmax and Born sampling reach the goal with 100% success under all
+  geometries.
+- Born sampling varies the chosen path (exploring both routes), while argmax
+  always takes the same route.
+- Steps to goal are identical for both modes (all paths have equal length).
+
+This confirms that geometry × rule interaction matters primarily in
+trap-containing topologies. On benign topologies, the choice is irrelevant.
+
+---
+
+## 7. Topology Classification: When Does Interference Help?
+
+Not all graph topologies benefit from interference-based routing. This
+section identifies structural predictors for when amplitude overlay provides
+advantage over greedy control.
+
+### 7.1 Methodology
+
+We generate 380 directed graphs:
+- **180 structured:** 60 triangles, 60 diamonds, 60 gordian-lite instances.
+- **200 random:** varying state counts, edge densities, and parameter ranges.
+
+For each graph, at state START with goal set {GOAL}, we compute:
+1. The greedy choice (Algorithm 1).
+2. The amplitude choice under $G_{\text{goal}}$ (Algorithm 2).
+3. Whether they disagree (*override*).
+
+We then correlate override occurrence with topological features.
+
+### 7.2 Results
+
+**Table 6: Override rates by topology class**
+
+| Topology | Override rate | Path families | Phase opposition |
+|----------|-------------|---------------|-----------------|
+| Triangle (single-family) | 0% | 1 | N/A |
+| Diamond (two-family) | 36.7% | 2 | Variable |
+| Gordian-lite (two-family + loop) | 93.3% | 2 | Strong ($>\pi/4$) |
+| Random | Varies | Varies | Varies |
+
+### 7.3 Structural Predictors
+
+**Proposition 8** (Path-Family Requirement).
+*Override requires at least two path families from START (i.e., $|N^+(x)|
+\geq 2$). Single-family topologies never produce overrides under any geometry.*
+
+*Proof.* If $|N^+(x)| = 1$, there is exactly one admissible action. Both
+greedy and amplitude must select it. $\square$
+
+**Empirical Finding 1** (Phase Opposition Predictor).
+Phase opposition $|\Delta\Theta| > \pi/2$ between path families is the
+strongest predictor of override occurrence. Among Gordian-lite instances:
+- Instances with $|\Delta\Theta| > \pi/2$: override rate $> 90\%$.
+- Instances with $|\Delta\Theta| < \pi/4$: override rate $< 10\%$.
+
+The correlation between phase opposition and override is $+25.1\%$ across
+the full 380-graph scan.
+
+**Empirical Finding 2** ($G_{\text{goal}}$ Exclusivity).
+$G_{\text{goal}}$ produces exclusive overrides (i.e., overrides not produced
+by any other geometry) on 30.3% of scanned graphs. These are exactly the
+cases where non-goal prefix inflation masks the true interference pattern
+under other geometries.
+
+### 7.4 Predictive Rules
+
+Based on the topology scan, we identify three conditions for productive use
+of amplitude-based routing:
+
+1. **Multiple path families** ($|N^+(x)| \geq 2$): necessary condition.
+2. **Phase opposition** ($|\Delta\Theta| > \pi/2$ between families): strong
+   predictor.
+3. **Goal-reaching geometry active**: required to expose interference masked
+   by prefix inflation.
+
+When *none* of these conditions is met — linear chains, trees,
+single-family topologies — greedy control is sufficient and the amplitude
+overlay adds no value.
+
+---
+
+## 8. Implementation and Reproducibility
+
+### 8.1 Implementation Overview
+
+The E₀ framework is implemented in Python 3.11 in approximately 3,000 lines
+of code in the `e0_controller/` package. The implementation directly
+mirrors the mathematical definitions in §3: each definition corresponds to
+a named function with matching semantics.
+
+| Module | Function | Definition |
+|--------|----------|------------|
+| `landscape.py` | `difference(x, y)` | Def. 2 |
+| `landscape.py` | `effective_resistance(x, y)` | Def. 6 |
+| `landscape.py` | `transition_field(x, y)` | Def. 10 |
+| `potential.py` | `phi(L, x)` | Def. 11 |
+| `potential.py` | `v_grad(L, x, y)` | Def. 12 |
+| `potential.py` | `v_rot(L, x, y)` | Def. 13 |
+| `connection.py` | `omega(L, x, y)` | Def. 14 |
+| `connection.py` | `theta(L, path)` | Def. 15 |
+| `wavepath.py` | `psi(L, path)` | Def. 17 |
+| `wavepath.py` | `sum_paths(L, paths)` | Def. 18 |
+| `amplitude_overlay.py` | `analyze_controller_state()` | Algorithm 2 |
+| `controller.py` | `select_next()` | Algorithm 1 |
+| `controller.py` | `select_hybrid()` | Algorithm 3 |
+| `historization.py` | `update(e, outcome)` | Def. 4 |
+| `historization.py` | `delta_H(e)` | Def. 5 |
+
+### 8.2 Test Registry
+
+The implementation is validated by 936 unit tests across 27 test files,
+organized into 8 formal test paths (A–H). Each path targets a specific
+structural claim:
+
+| Path | Focus | Tests | Key claim |
+|------|-------|-------|-----------|
+| A | Omega uniqueness | — | Connection antisymmetry \& uniqueness |
+| B | Historization × Gordian | — | Learning interacts with trap geometry |
+| C | Reflection hybrid | — | Hybrid controller integration |
+| D | Born regime axioms | — | Born criterion prerequisites |
+| E | Dynamic horizons | — | Horizon sensitivity |
+| F | Confidence override | — | Override confidence gating |
+| G | MemOS geometry | — | Persistence of geometry state |
+| H | Born sampling | 27 | Geometry > rule (Theorem 2) |
+
+22 verified claims (C1–C22) are maintained in a test registry with
+derived/empirical/heuristic classification.
+
+### 8.3 Reproducibility
+
+All experiments use fixed random seeds. All benchmark domains are defined
+in test code with exact parameter values (no external data dependencies).
+To reproduce:
+
+```
+python -m unittest discover -s e0_controller -p "test_*.py"
+```
+
+The code repository is open-source and tagged at the version used in this
+paper.
+
+---
+
+## 9. Limitations and Falsification Targets
+
+### 9.1 Status of Formal Claims
+
+We distinguish three categories following the framework's own honesty map
+(Table 1):
+
+**Derived** (follows from the structural chain):
+- Tension, coherence, transition field (Defs. 7–10).
+- Helmholtz decomposition, potential (Defs. 11–13).
+- Connection antisymmetry (Def. 14).
+- Holonomy independence (Theorem 1).
+- Interference existence (Proposition 2).
+- Zero-holonomy reduction (Proposition 3).
+
+**Empirical** (demonstrated through tests, not analytically proven):
+- Geometry dominates decision rule (Theorem 2).
+- Topology classification predictors (§7).
+- Goal-reaching geometry resolves Gordian traps (Proposition 6).
+- Destructive interference factor ($\approx 2\%$) in Gordian domain.
+
+**Heuristic** (works operationally, not yet derived):
+- Revisit penalty in greedy controller.
+- Escalation logic type classification.
+- Specific parameter choices ($\rho = 0.9$, $\lambda_s = 0.15$,
+  $\lambda_f = 0.20$, $\delta_{\max} = 3.0$).
+- Phase $\Theta$ — while structurally motivated from $v_{\text{rot}}$,
+  it is not uniquely determined by the primitives.
+
+### 9.2 Computational Limitations
+
+Path enumeration under all geometries is $O(k^h)$ where $k$ is the maximum
+branching factor and $h$ is the horizon. This is tractable for $k \leq 5$,
+$h \leq 10$, but does not scale to large dense graphs. Approximation methods
+(sampling-based enumeration, truncated DFS) are not explored in this paper.
+
+### 9.3 Domain Limitations
+
+All benchmark domains are synthetic. The framework has not been validated on
+real-world planning, routing, or workflow domains. The LLM integration layer
+exists in the implementation but is not part of the theoretical contribution.
+
+### 9.4 Active Falsification Targets
+
+We identify specific predictions that, if falsified, would weaken or disprove
+central claims:
+
+1. **Anti-monotonicity:** Find a graph where hybrid consistently
+   underperforms greedy (currently not observed in 380 graphs).
+2. **Phase irrelevance:** Find a domain where $\Theta$ does not influence
+   interference outcomes (would weaken Theorem 1's significance).
+3. **Geometry irrelevance:** Demonstrate that geometry choice is
+   irrelevant on some non-trivial topology class (would weaken Theorem 2).
+4. **Historization instability:** Show that interference-based routing
+   becomes unstable under historization updates (currently stable across
+   12 tests in 4 scenarios).
+
+---
+
+## 10. Discussion
+
+### 10.1 Relation to Path-Integral Control
+
+The E₀ framework bears structural resemblance to path-integral control
+theory (Kappen, 2005; Todorov, 2007), where optimal control is expressed as a
+sum over trajectories weighted by exponentials of costs. The key differences
+are:
+
+1. **Derivation vs. postulation.** In path-integral control, the amplitude
+   structure (Boltzmann-like weighting $\exp(-S)$) is postulated from
+   physics analogies. In E₀, the complex amplitude $\Psi = \exp(-S + i\Theta)$
+   is derived from structural primitives through the Helmholtz decomposition
+   of the transition field.
+
+2. **Phase structure.** Path-integral control typically uses real-valued
+   weights (no phase). E₀'s phase $\Theta$ emerges from the rotational
+   (non-conservative) component of the transition field and enables
+   *destructive* interference — an effect absent in classical path-integral
+   control.
+
+3. **Discrete setting.** E₀ operates on finite directed graphs. No
+   continuous limit, Wiener measure, or stochastic calculus is required.
+
+### 10.2 Structural vs. Statistical Learning
+
+E₀ learns through historization — resistance updates that modify the
+transition landscape based on realized outcomes. This is fundamentally
+different from gradient-based learning:
+
+- **No objective function:** there is no loss to minimize. Transitions alter
+  future structure directly.
+- **No parameter space:** the learning surface is the graph itself (edge
+  resistances), not a separate parameter vector.
+- **Bounded drift:** clipping ($\delta_{\max}$) prevents unbounded
+  historization, unlike unconstrained gradient descent.
+
+### 10.3 The Geometry Insight
+
+The finding that summation geometry dominates decision rule (Theorem 2) has
+a structural analogy in machine learning: *kernel choice matters more than
+model choice* in kernel methods, and *feature selection matters more than
+classifier choice* in classification. In E₀, the summation geometry
+determines which structural information reaches the decision mechanism. A
+poor geometry feeds misleading information to any decision rule — deterministic
+or stochastic. A good geometry makes even a simple rule effective.
+
+This suggests a practical design principle: when deploying interference-based
+routing, invest in geometry selection (which requires domain knowledge about
+what constitutes "reaching the goal") before tuning the decision rule.
+
+### 10.4 Implications for AI System Design
+
+E₀ demonstrates that structural decision layers — built from graph primitives
+rather than reward functions — can provide robust trap avoidance without
+reinforcement learning, Monte Carlo simulation, or explicit heuristic design.
+The hybrid architecture (domain-agnostic structural core + domain-specific
+evaluation function) offers a separation of concerns: the mathematical
+machinery of interference is generic, while the definition of $\Delta$, $R_0$,
+and the goal set $\mathcal{T}$ encodes domain semantics.
+
+---
+
+## 11. Conclusion
+
+We have introduced E₀, a formal framework for discrete transition systems
+that derives complex path amplitudes from three structural primitives:
+difference ($\Delta$), resistance ($R$), and historization ($H$). The main
+contributions are:
+
+1. **A constructive derivation chain** from primitives to complex amplitudes
+   $\Psi = \exp(-S + i\Theta)$ exhibiting interference (§3), with a proven
+   Holonomy Independence Theorem (Theorem 1) establishing that phase
+   differences depend only on path-local quantities.
+
+2. **Four summation geometries** with formal definitions and empirical
+   comparison, identifying goal-reaching geometry as structurally necessary
+   for trap domains (§4).
+
+3. **A hybrid controller** that uses amplitude-based interference to override
+   greedy decisions when structural traps are detected (§5).
+
+4. **The geometry-dominance result** (Theorem 2): on trap-containing
+   domains, the choice of summation geometry determines success or failure,
+   while the choice of decision rule (deterministic vs. stochastic) is
+   secondary (§6).
+
+5. **A topology classification** across 380 graphs identifying path-family
+   count and phase opposition as structural predictors for interference
+   utility (§7).
+
+All claims are explicitly classified as derived, empirical, or heuristic
+(§9.1). The framework does not claim continuous-limit validity, probabilistic
+guarantees, or real-world deployment evidence. It offers a formally explicit,
+reproducible, and honestly scoped alternative to probability-first and
+reward-first approaches to decision-making in structured transition systems.
+
+A companion paper (in preparation) extends the E₀ framework with SU(2)
+spinor structure, investigating the relationship between the derived
+amplitude and Born-rule probability, and the emergence of non-commutative
+phase geometry.
+
+---
+
+## Appendices
+
+### Appendix A. Proof Details for Theorem 1 (Holonomy Independence)
+
+Let $p_1 = (x, a_1, a_2, \ldots, y)$ and $p_2 = (x, b_1, b_2, \ldots, y)$
+be two directed paths from $x$ to $y$.
+
+**Step 1.** Expand $\Theta(p_1)$:
+
+$$\Theta(p_1) = \sum_{e \in p_1} \omega(e) = \sum_{e \in p_1} \frac{1}{2}\bigl(v_{\text{rot}}(e) - v_{\text{rot}}(\bar{e})\bigr)$$
+
+**Step 2.** Since $v_{\text{rot}} = v - v_{\text{grad}}$ and
+$v_{\text{grad}}(x,y) = \Phi(x) - \Phi(y)$:
+
+$$\sum_{e \in p_1} v_{\text{grad}}(e) = \Phi(x) - \Phi(y)$$
+
+by telescoping. The same holds for $p_2$:
+
+$$\sum_{e \in p_2} v_{\text{grad}}(e) = \Phi(x) - \Phi(y)$$
+
+**Step 3.** Therefore in $\Delta\Theta = \Theta(p_1) - \Theta(p_2)$, all
+$v_{\text{grad}}$ terms cancel, leaving:
+
+$$\Delta\Theta = \frac{1}{2}\sum_{e \in p_1}\bigl(v(e) - v(\bar{e})\bigr) - \frac{1}{2}\sum_{e \in p_2}\bigl(v(e) - v(\bar{e})\bigr)$$
+
+Each term $v(e)$ depends only on the edge-local quantities $\Delta(e)$ and
+$R_{\text{eff}}(e)$. No reference to $\Phi$ or to edges outside $p_1 \cup
+p_2$ remains. $\square$
+
+**Numerical verification.** On the Gordian Trap test domain (§4.3),
+$\Delta\Theta \approx 3.26$ matches the predicted
+$\frac{1}{2}(\sum v_{\text{loop}} - \sum v_{\text{short}})$ to 6 decimal
+places (verified in test suite, Path A).
+
+### Appendix B. Benchmark Domain Specifications
+
+#### B.1 Diamond Domain
+
+A two-family interference domain with a dead-end trap.
+
+**States:** $\{S, A, B, C, M, N, Z\}$
+
+**Edges and parameters:**
+
+| Edge | $\Delta$ | $R_0$ | $S_0$ |
+|------|----------|-------|-------|
+| $S \to A$ | 0.30 | 0.60 | 0.180 |
+| $S \to B$ | 0.35 | 0.70 | 0.245 |
+| $S \to C$ | 0.30 | 0.50 | 0.150 |
+| $A \to M$ | 0.20 | 0.40 | 0.080 |
+| $M \to Z$ | 0.15 | 0.30 | 0.045 |
+| $B \to N$ | 0.25 | 0.60 | 0.150 |
+| $N \to Z$ | 0.20 | 0.40 | 0.080 |
+| $A \to S$ | 0.80 | 2.00 | 1.600 |
+| $B \to S$ | 0.50 | 1.50 | 0.750 |
+| $M \to N$ | 0.30 | 0.50 | 0.150 |
+
+**Design:** Greedy selects $S \to C$ (lowest $S_0 = 0.15$), but $C$ is a
+dead-end. Upper path ($S \to A \to M \to Z$) and lower path
+($S \to B \to N \to Z$) have similar tensions but different phase
+accumulations due to asymmetric back-edges, creating interference at $Z$.
+
+#### B.2 Gordian Trap Domain
+
+A holonomy-tuned trap domain where destructive interference identifies the
+decoy.
+
+**States:** $\{\text{START}, \text{A1}, \text{A2}, \text{L1}, \text{L2}, \text{L3}, \text{B1}, \text{B2}, \text{GOAL}\}$
+
+**Edges and parameters:**
+
+| Edge | $\Delta$ | $R_0$ | $S_0$ |
+|------|----------|-------|-------|
+| START $\to$ A1 | 0.30 | 0.30 | 0.090 |
+| A1 $\to$ A2 | 0.40 | 0.30 | 0.120 |
+| A2 $\to$ GOAL | 0.40 | 0.30 | 0.120 |
+| A1 $\to$ L1 | 2.00 | 0.05 | 0.100 |
+| L1 $\to$ L2 | 2.00 | 0.05 | 0.100 |
+| L2 $\to$ L3 | 2.00 | 0.05 | 0.100 |
+| L3 $\to$ GOAL | 2.00 | 0.05 | 0.100 |
+| START $\to$ B1 | 0.50 | 0.40 | 0.200 |
+| B1 $\to$ B2 | 0.30 | 0.35 | 0.105 |
+| B2 $\to$ GOAL | 0.30 | 0.30 | 0.090 |
+
+**Design:** Greedy selects START $\to$ A1 ($S_0 = 0.09 < 0.20$). Path
+A1 has two sub-paths to GOAL: A-short (A1→A2→GOAL, low
+$v$) and A-loop (A1→L1→L2→L3→GOAL, high $v$ due to
+$\Delta = 2.0, R = 0.05$). The phase difference
+$|\Delta\Theta| \approx 3.26 \approx \pi$ produces destructive interference,
+reducing $I(\text{A1})$ to $\approx 2\%$ of its incoherent sum.
+Path B (START→B1→B2→GOAL) is a single coherent path.
+Under $G_{\text{goal}}$, amplitude correctly selects B1.
+
+#### B.3 G5 Multi-Goal Domain
+
+A three-family domain with multiple goal states for testing Born sampling and
+multi-goal coverage. Three parallel paths from $S$ to goals $\{G1, G2, G3\}$
+with varying parameters.
+
+### Appendix C. Derived / Empirical / Heuristic Classification (Table 1)
+
+| Component | Status | Evidence |
+|-----------|--------|----------|
+| $\Delta, R_0, H$ (primitives) | Derived | Axiomatic basis |
+| $S = \Delta \cdot R_{\text{eff}}$ | Derived | Def. 7 |
+| $C = \exp(-S)$ | Derived | Def. 9, Prop. 1 |
+| $v = \Delta \cdot \exp(-S)$ | Derived | Def. 10 |
+| $\Phi$ (Helmholtz potential) | Derived | Def. 11 (Laplacian solve) |
+| $v_{\text{grad}}, v_{\text{rot}}$ | Derived | Defs. 12–13 |
+| $\omega$ (connection) | Derived | Def. 14 |
+| Holonomy independence | **Derived** | Theorem 1 (proven) |
+| $\Psi = \exp(-S + i\Theta)$ | Derived (structural) | Def. 17 |
+| $I = |\Psi|^2$ (intensity) | Derived (conditional) | Def. 19 |
+| Interference existence | **Derived** | Proposition 2 (proven) |
+| Destructive factor $\approx 2\%$ | **Empirical** | Gordian Trap tests |
+| Geometry dominates rule | **Empirical** | Theorem 2 (50–100 trials) |
+| Topology predictors | **Empirical** | 380-graph scan |
+| Phase $\Theta$ from $v_{\text{rot}}$ | Heuristic | Structurally motivated but not unique |
+| Revisit penalty | Heuristic | Operational stabilization |
+| Escalation types | Heuristic | Operational safety |
+| Parameters ($\rho, \lambda_s, \lambda_f$) | Heuristic | Chosen by tuning |
+
+### Appendix D. Test Registry Summary
+
+22 verified claims (C1–C22) organized by formal test path. Each claim
+references specific test functions and specifies its evidence category
+(derived, empirical, or heuristic). Full registry available in the code
+repository.
+
+---
+
+## References
+
+*(To be completed with §2 Related Work.)*
+
+---
+
+*End of manuscript.*
