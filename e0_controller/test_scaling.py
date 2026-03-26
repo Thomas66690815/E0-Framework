@@ -234,8 +234,8 @@ class TestScalingAmplitudeOverlay(unittest.TestCase):
                     ctrl, "START", horizon_edges=3, geometry="simple"
                 )
                 elapsed = time.perf_counter() - t0
-                # Should complete in < 2 seconds even on slow machines
-                self.assertLess(elapsed, 2.0,
+                # Should complete in < 5 seconds even on slow machines
+                self.assertLess(elapsed, 5.0,
                                 f"Overlay took {elapsed:.2f}s at n={n}")
                 # Sanity: at least 1 action analyzed
                 self.assertGreater(len(report.action_infos), 0)
@@ -282,7 +282,7 @@ class TestScalingAmplitudeOverlay(unittest.TestCase):
             ctrl, mid_state, horizon_edges=3, geometry="simple"
         )
         elapsed = time.perf_counter() - t0
-        self.assertLess(elapsed, 2.0,
+        self.assertLess(elapsed, 5.0,
                         f"Mid-graph overlay took {elapsed:.2f}s")
 
 

@@ -6,8 +6,8 @@ Verifies the core claim: greedy gets trapped, hybrid reaches GOAL.
 
 import unittest
 
-from .controller import E0Controller, HybridMode
-from .demo_greedy_trap import build_trap_landscape, always_success
+from e0_controller.controller import E0Controller, HybridMode
+from e0_controller.demo_greedy_trap import build_trap_landscape, always_success
 
 
 class TestGreedyTrapWalkthrough(unittest.TestCase):
