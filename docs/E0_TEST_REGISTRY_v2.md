@@ -4,7 +4,7 @@
 > **Purpose:** connect claims, tests, evidence, and status in one place.
 
 **Last updated:** 2026-03-26  
-**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, and active edge-case work.
+**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, and active edge-case work.
 
 ---
 
@@ -554,6 +554,8 @@ Born sampling (P ∝ I, choosing actions probabilistically from the amplitude-de
 | `test_curvature_modulation.py` | C26 |
 | `test_llm_context.py` | C13, C27 |
 | `test_k5_escalation.py` | C27 |
+| `test_self_tuning.py` | C29 |
+| `test_session.py` | C30 |
 
 ---
 
@@ -691,6 +693,70 @@ All controller state relevant to B1 (SU(2)), B2 (curvature modulation), and K5 (
 - Escalation edge `created_by` survives full roundtrip, defaults to "unknown" for legacy data
 - `summarize_for_llm` exposes `use_su2` in runtime section when active (token-efficient)
 - Backward compatible: old snapshots without these fields restore gracefully with defaults
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C29 — B4 Self-Tuning Meta-Layer (field-derived thresholds, feedback loop, cross-run memory, perturbation sensitivity)
+
+**Claim**  
+The E₀ controller can be self-tuned via a four-layer meta-system:
+1. **B4.1 Meta-Layer:** Field-derived thresholds replace ad-hoc constants. ParameterSensitivity identifies which controller parameters (alpha, recent_k, etc.) most affect run quality.
+2. **B4.2 Feedback Loop:** A closed run→diagnose→adjust→verify cycle with quality score Q ∈ [0,1] drives iterative parameter improvement.
+3. **B4.3 Cross-Run Memory:** TuningMemory accumulates quality trends, recurring issues, and parameter drift across runs, with MemOS persistence.
+4. **B4.4 True Sensitivity:** Perturbation-based ∂Q/∂θ via finite differences provides empirical gradient for parameter proposals.
+
+**Evidence**  
+- `e0_controller/test_self_tuning.py` — 87 tests across 25 classes
+- `e0_controller/self_tuning.py` — ~1200 lines, 13 sections covering all four sub-layers
+- B4.1: `RunFieldSummary`, `DerivedThresholds`, `ParameterSensitivity`, `propose_tuning`, `apply_tuning`, `H_meta` oscillation protection
+- B4.2: `quality_score`, `tuning_cycle`, `tune` (multi-cycle with landscape reset)
+- B4.3: `TuningSnapshot`, `TuningMemory`, `save_tuning_memory`, `load_tuning_memory`, `tune_with_memory`
+- B4.4: `perturbation_sensitivity`, `propose_tuning_empirical`
+
+**Result**  
+- **Q formula verified:** Q = 0.4·goal + 0.25·τ_eff + 0.15·progress − 0.1·loop − 0.1·esc, clamped to [0,1]
+- **DerivedThresholds:** Eliminate ad-hoc constants by computing thresholds from RunFieldSummary (mean tension, max R, etc.)
+- **ParameterSensitivity:** Correctly ranks parameters by ΔQ/default magnitude
+- **Oscillation protection:** H_meta guards against back-and-forth parameter toggling
+- **Tuning cycle:** Single run→diagnose→adjust→verify completes; landscape correctly reset between cycles
+- **Multi-cycle convergence:** Q improves or stabilizes within 5 cycles; tune() returns best-Q controller
+- **TuningMemory:** trend, recurring_issues, parameter_drift computed from snapshot history
+- **Serialization:** JSON round-trip preserves all fields; MemOS persistence save/load verified
+- **tune_with_memory:** Integrates TuningMemory suggestions into tuning cycle
+- **Perturbation ∂Q/∂θ:** Finite differences correctly identify sensitive parameters (alpha, recent_k)
+- **propose_tuning_empirical:** Selects adjustments aligned with gradient sign; step size proportional to |gradient|
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C30 — Session Orchestrator provides automatic persistence without controller coupling
+
+**Claim**  
+A thin Session layer wraps the E₀ controller with automatic MemOS persistence. The controller has zero persistence awareness. Session manages: create → run → save (context + run record + tuning memory). Session.resume() restores landscape, historization, controller params, and tuning memory from disk. Multiple runs accumulate within and across sessions.
+
+**Evidence**  
+- `e0_controller/test_session.py` — 13 tests across 3 classes
+  - `TestSessionLifecycle` (7): creation, run result, context saved, run record saved, canon refs, controller kwargs, multi-run append
+  - `TestSessionResume` (4): resume restores controller, historization persists, runs accumulate, nonexistent raises
+  - `TestSessionTuningMemory` (2): tuning memory saved, tuning memory survives resume
+- `e0_controller/session.py` — Session class, SessionResult dataclass
+- `e0_controller/demo_session_persist.py` — live end-to-end validation (greedy-trap + resume)
+
+**Result**  
+- `Session(id, landscape, execute_fn)` creates fresh session, auto-loads tuning memory
+- `session.run(start, goal)` delegates to controller, auto-saves context + run record + tuning memory
+- `Session.resume(id, execute_fn)` restores full state from disk: landscape, historization, controller params, tuning memory
+- `session.recent_runs(limit)` retrieves run history from disk
+- Resumed sessions accumulate run records correctly (run_0001, run_0002, …)
+- Historization from prior runs persists into resumed session (resistance shifts visible)
+- Controller kwargs (alpha, hybrid_mode, hybrid_goals, etc.) survive round-trip
+- Canon refs persist through save/resume cycle
+- Live demo verified: 3 files on disk (sessions/, runs/, tuning/), resume produces `resumed=True`
 
 **Status**  
 ✅ Confirmed

@@ -1,7 +1,7 @@
 # E₀ Test Registry v1
 
 > Central reference for all tests in the E₀ Framework.
-> **Last verified:** 2026-03-26 — **1159 tests** (1159 unittest; 32 skipped, 0 non-LLM failures)
+> **Last verified:** 2026-03-26 — **1254 tests** (1254 unittest via discover; 32 conditional LLM; 21 standalone; 0 non-LLM failures)
 
 ---
 
@@ -40,6 +40,8 @@
 | 29 | `test_curvature_modulation.py` | 35 | unittest | M_H topological invariant, edge curvature, curvature modulation switch, downstream effects | ✅ GREEN |
 | 30 | `test_llm_context.py` | 23 | unittest | LLM canon essence, summary enrichment, overlay fields | ✅ GREEN |
 | 31 | `test_k5_escalation.py` | 9 | unittest | K5 field-based escalation, dead-end/filtered/exhausted strategies | ✅ GREEN |
+| 32 | `test_self_tuning.py` | 87 | unittest | B4 self-tuning: field summary, derived thresholds, quality score, tuning cycle, tuning memory, perturbation sensitivity | ✅ GREEN |
+| 33 | `test_session.py` | 13 | unittest | Session orchestrator lifecycle, resume, tuning memory persistence | ✅ GREEN |
 
 ---
 
@@ -340,9 +342,67 @@
 - Curvature modulation changes escalation targets by damping high-curvature edges
 - FILTERED (cheapest raw neighbor) and EXHAUSTED (least-recently-visited) unchanged
 
-**What it tests:** Greedy controller trapped in A↔C loop, hybrid escapes via amplitude override.
+---
 
-**Status:** Pre-existing import error (missing dependency or circular import). Does not affect other tests. 4 test methods exist in source.
+### 32. test_self_tuning.py — 87 tests
+
+**What it tests:** Full B4 self-tuning meta-layer across 25 classes. Covers four sub-layers:
+- **B4.1 Meta-Layer:** RunFieldSummary, field_summary_from_run, DerivedThresholds, ParameterSensitivity, propose_tuning, apply_tuning, H_meta oscillation protection
+- **B4.2 Feedback Loop:** quality_score Q ∈ [0,1], tuning_cycle (run→diagnose→adjust→verify), tune() multi-cycle with improvement tracking, landscape reset between cycles
+- **B4.3 Cross-Run Memory:** TuningSnapshot, TuningMemory (trend, recurring_issues, drift, suggest), serialization round-trip, MemOS persistence bridge (save/load), tune_with_memory integration
+- **B4.4 True Sensitivity:** perturbation_sensitivity (∂Q/∂θ via finite differences), propose_tuning_empirical
+
+**Test classes (25):**
+- `TestRunFieldSummary` — field summary from landscape metrics
+- `TestFieldSummaryFromRun` — field summary from controller trace
+- `TestDerivedThresholds` — field-derived vs ad-hoc threshold comparison
+- `TestParameterSensitivity` — Q → θ sensitivity analysis
+- `TestOscillationProtection` — H_meta oscillation guard
+- `TestTuningProposals` — propose_tuning rule-based suggestions
+- `TestApplyTuning` — apply proposed changes to controller
+- `TestReflectionWithFieldThresholds` — field thresholds in reflection
+- `TestQualityScore` — Q formula with weights
+- `TestLandscapeReset` — landscape restoration between tuning cycles
+- `TestTuningCycle` — single run→diagnose→adjust→verify cycle
+- `TestMultiCycleTuning` — multi-cycle tune() convergence
+- `TestTuningImprovement` — improvement detected across cycles
+- `TestTuningSnapshot` — snapshot dataclass
+- `TestTuningMemoryCore` — memory record/retrieve
+- `TestQualityTrend` — trend calculation from history
+- `TestRecurringIssues` — repeated issue detection
+- `TestParameterDrift` — drift measurement
+- `TestEffectiveProposals` — drift-aware proposal filtering
+- `TestSuggestFromHistory` — suggest() combining all signals
+- `TestTuningMemorySerialization` — JSON round-trip
+- `TestTuningMemoryPersistence` — save/load to disk
+- `TestTuneWithMemory` — tune_with_memory integration
+- `TestPerturbationSensitivity` — ∂Q/∂θ finite differences
+- `TestProposeTuningEmpirical` — empirical gradient-based proposals
+
+**Key findings:**
+- Q = 0.4·goal + 0.25·τ_eff + 0.15·progress − 0.1·loop − 0.1·esc ∈ [0,1]
+- DerivedThresholds from field summary eliminate ad-hoc constants
+- Multi-cycle tuning converges: Q improves or stabilizes within 5 cycles
+- TuningMemory tracks trend, recurring issues, and parameter drift across runs
+- Perturbation ∂Q/∂θ correctly identifies sensitive parameters (alpha, recent_k)
+- propose_tuning_empirical selects adjustments aligned with gradient sign
+- Serialization round-trip preserves all fields exactly
+
+---
+
+### 33. test_session.py — 13 tests
+
+**What it tests:** Session orchestrator lifecycle across 3 classes:
+- `TestSessionLifecycle` (7): session creation, run returns SessionResult, context saved, run record saved, canon refs persisted, controller kwargs forwarded, multiple runs append
+- `TestSessionResume` (4): resume from disk restores controller, historization survives, run accumulation, nonexistent session raises FileNotFoundError
+- `TestSessionTuningMemory` (2): tuning memory saved to disk, tuning memory survives resume
+
+**Key findings:**
+- Session wraps controller + MemOS with zero persistence in the controller itself
+- Auto-saves context, run record, and tuning memory after each run
+- Resume restores landscape, historization, controller params, and tuning memory
+- Multiple runs within a session and across resumed sessions accumulate correctly
+- Uses tempfile for test isolation — no disk pollution
 
 ---
 
@@ -373,7 +433,7 @@
 
 ---
 
-### 26. test_born_sampling.py — 27 tests
+### 26. test_born_sampling.py — 31 tests
 
 **What it tests:** Born sampling (P ∝ I) as alternative realization regime alongside deterministic argmax. Validates ADR-0007 architecture decision: argmax stays default, Born sampling is opt-in. Compares success rates on Gordian, Diamond, and G5 domains across both geometry types. Covers distribution convergence, variance, coherence loss, multi-goal coverage, MemOS round-trip, and StepResult integration.
 
@@ -443,7 +503,7 @@
 ## How to Run
 
 ```bash
-# Full unittest suite (1096 tests, 32 skipped)
+# Full unittest suite (1254 tests via discover, ~32 LLM-conditional)
 python -m unittest discover -s e0_controller -p "test_*.py" -v
 
 # Standalone mini-domain (21 tests)
@@ -459,4 +519,5 @@ python -m unittest e0_controller.test_gordian_trap -v
 
 - When adding a new test file: add a row to the **Overview Table** and a **Per-File Details** section.
 - Update `Last verified` date and total count after full regression.
-- The 1 pre-existing error (`test_greedy_trap`) is a known import issue, not a test failure.
+- LLM integration tests (`test_llm_integration`) fail without `OPENAI_API_KEY` — not counted as regression failures.
+- `test_minidomain.py` runs standalone (21 tests, not discovered by unittest discover).
