@@ -1051,6 +1051,52 @@ When *none* of these conditions is met — linear chains, trees,
 single-family topologies — greedy control is sufficient and the amplitude
 overlay adds no value.
 
+### 7.5 Grid World Benchmark
+
+To validate E₀'s operational mechanisms on a standard planning domain, we
+compare three methods on $5 \times 5$ grid worlds:
+
+- **Naive Greedy**: picks the neighbor with lowest $\Delta$ at each step.
+  No memory, no revisit penalty, no escalation.
+- **E₀ Greedy**: the full E₀ controller in GREEDY mode — includes revisit
+  penalty ($\alpha = 2.0$, $k = 3$) and typed escalation (§5.1), but no
+  amplitude overlay.
+- **A\***: optimal shortest-path baseline with Manhattan heuristic.
+
+Three grid variants test distinct failure modes:
+
+**V1 — Detour Wall.** A vertical wall at column 2 (rows 1–4) blocks the
+direct path; the only gap is at row 0. Naive greedy reaches the wall and
+oscillates (0% success). E₀ Greedy's EXHAUSTED escalation detects the cycle
+and routes through the gap (100%, 16 steps vs.\ optimal 8).
+
+**V2 — Dead-End Lure.** A moderate-$\Delta$ dead-end ($\Delta = 0.20$)
+attracts greedy agents into a pocket walled off from the goal. Naive greedy
+enters and is trapped (0%). E₀'s revisit penalty raises the penalized
+tension on lure edges ($0.20 \times 3.0 = 0.60$) above exit tension
+($\approx 0.45$), enabling escape (100%, 10 steps).
+
+**V3 — Trap Loop.** A 3-cell cycle with $\Delta = 0.18$ creates a locally
+attractive loop on the direct path to goal. Naive greedy enters the loop
+and cycles indefinitely (0%). E₀'s revisit penalty immediately raises loop
+tension above exit alternatives, and the controller reaches the goal in 8
+steps (optimal).
+
+**Table 6: Grid World Benchmark Results (10 trials per method)**
+
+| Variant | Naive Greedy | E₀ Greedy | A\* (optimal) |
+|---------|-------------|-----------|---------------|
+| V1 Detour Wall | 0% | 100% (16 steps) | 8 steps |
+| V2 Dead-End Lure | 0% | 100% (10 steps) | 8 steps |
+| V3 Trap Loop | 0% | 100% (8 steps) | 8 steps |
+
+**Interpretation.** The revisit penalty and escalation mechanisms of the E₀
+controller — derived from historization (§3.3) — are sufficient to escape
+all three trap types. The amplitude overlay is not tested here; it is
+designed for structured decision points with interference-producing topology
+(§6–7). The benchmark source code is included in
+`e0_controller/benchmark_gridworld.py`.
+
 ---
 
 ## 8. Implementation and Reproducibility
@@ -1306,6 +1352,10 @@ contributions are:
    count and phase opposition as structural predictors for interference
    utility (§7).
 
+6. **A grid world benchmark** demonstrating that E₀'s operational mechanisms
+   (revisit penalty, escalation) achieve 100% success on three trap domains
+   where memoryless greedy fails completely (§7.5).
+
 All claims are explicitly classified as derived, empirical, or heuristic
 (§9.1). The framework does not claim continuous-limit validity, probabilistic
 guarantees, or real-world deployment evidence. It offers a formally explicit,
@@ -1417,6 +1467,53 @@ Under $G_{\text{goal}}$, amplitude correctly selects B1.
 A three-family domain with multiple goal states for testing Born sampling and
 multi-goal coverage. Three parallel paths from $S$ to goals $\{G1, G2, G3\}$
 with varying parameters.
+
+#### B.4 Grid World Domains
+
+Three $5 \times 5$ grid worlds for testing operational mechanisms (§7.5).
+All use 4-connected grids with start $(0,0)$ and goal $(4,4)$. Edge $\Delta$
+defaults to $\Delta_0 + 0.5 \cdot d_{\text{target}} / (R + C)$ where
+$d_{\text{target}}$ is the Manhattan distance from target cell to goal and
+$\Delta_0 = 0.3$. Specific edges have $\Delta$ overrides as noted below.
+
+**V1 — Detour Wall.** Wall at column 2, rows 1–4. Only gap at row 0.
+No $\Delta$ overrides. A* optimal: 8 steps.
+
+```
+    0 1 2 3 4
+0   S . . . .
+1   . . # . .
+2   . . # . .
+3   . . # . .
+4   . . # . G
+```
+
+**V2 — Dead-End Lure.** Walls at (2,1), (2,2), (4,1). Edges into and
+within the dead-end pocket have $\Delta = 0.20$. A* optimal: 8 steps.
+
+```
+    0 1 2 3 4
+0   S . . . .
+1   . . . . .
+2   . # # . .
+3   L L . . .
+4   L # . . G
+```
+
+**V3 — Trap Loop.** Wall at (2,2). Edges between trap cells (1,1),
+(1,2), (2,1) have $\Delta = 0.18$; entry edges have $\Delta = 0.20$.
+A* optimal: 8 steps.
+
+```
+    0 1 2 3 4
+0   S . . . .
+1   . T T . .
+2   . T # . .
+3   . . . . .
+4   . . . . G
+```
+
+Source code: `e0_controller/benchmark_gridworld.py`.
 
 ### Appendix C. Derived / Empirical / Heuristic Classification (Table 1)
 
