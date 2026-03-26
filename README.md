@@ -192,7 +192,7 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 | Interference routing | **Demonstrated** (Gordian Trap) | `e0_controller/test_gordian_trap.py` |
 | Topology classification | **Demonstrated** (380-graph scan, 23 tests) | `e0_controller/test_topology_classification.py` |
 | G5 edge case suite | **Stressed** (5 families, 28 tests) | `e0_controller/test_g5_edge_cases.py` |
-| MemOS (hybrid-aware persistence) | **Active** | `e0_controller/memory_os.py` |
+| MemOS (hybrid-aware persistence) | **Active** — full roundtrip for SU(2), curvature, escalation context | `e0_controller/memory_os.py` |
 | LLM Adapter (canon-enriched) | **Active** — live API confirmed | `e0_controller/llm_adapter.py` |
 | LLM demo hybrid integration | **Active** (4 demos) | `e0_controller/demo_*.py` |
 | LLM integration tests | **Active** (32 live tests) | `e0_controller/test_llm_integration.py` |
@@ -206,8 +206,9 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 | Paper 3 (Non-Abelian Structure) | **Draft** | `docs/E0_PAPER3_NON_ABELIAN_STRUCTURE_v1.md` |
 | Multi-agent network + experiments | **Archived** | `_archive/` |
 | Core reference implementation | **Archived** | `_archive/e0_core/` |
+| axis_fn Registry Pattern | **Planned** — full SU(2) axis persistence | — |
 
-**Tests:** 1140 total (unittest), 0 failures, 32 skipped (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
+**Tests:** 1155 total (unittest), 0 failures, 32 skipped (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
 
 ---
 
