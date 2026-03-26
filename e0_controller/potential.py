@@ -105,15 +105,29 @@ def _solve_helmholtz(L: Landscape) -> Dict[str, float]:
     The graph Laplacian L is singular (rank n-1 for connected graph),
     so we pin the first node to Φ = 0 and solve the reduced system.
 
+    Uses a per-Landscape cache keyed on (edge_count, τ) to avoid
+    redundant O(n³) solves within a single controller step.
+
     Returns dict mapping state name → Φ value.
     """
+    cache_key = (L.edge_count(), L.historization.tau)
+    cached = getattr(L, '_phi_cache', None)
+    if cached is not None and getattr(L, '_phi_cache_key', None) == cache_key:
+        return cached
+
     lap, states = graph_laplacian(L)
     n = len(states)
 
     if n == 0:
-        return {}
+        result: Dict[str, float] = {}
+        L._phi_cache = result
+        L._phi_cache_key = cache_key
+        return result
     if n == 1:
-        return {states[0]: 0.0}
+        result = {states[0]: 0.0}
+        L._phi_cache = result
+        L._phi_cache_key = cache_key
+        return result
 
     # Build divergence vector
     div_vec = np.array([div_v(L, s) for s in states], dtype=np.float64)
@@ -129,7 +143,10 @@ def _solve_helmholtz(L: Landscape) -> Dict[str, float]:
     phi_full = np.zeros(n, dtype=np.float64)
     phi_full[1:] = phi_reduced
 
-    return {states[i]: float(phi_full[i]) for i in range(n)}
+    result = {states[i]: float(phi_full[i]) for i in range(n)}
+    L._phi_cache = result
+    L._phi_cache_key = cache_key
+    return result
 
 
 # ──────────────────────────────────────────────
