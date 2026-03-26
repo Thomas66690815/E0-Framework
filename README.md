@@ -11,7 +11,10 @@ In practical terms, this means the repository is no longer only about a determin
 - a phase/amplitude path layer,
 - empirically tested summation geometries,
 - a hybrid correction mode,
+- SU(2) multi-axis spinor transport (B1),
+- topological curvature modulation M_H (B2),
 - persistent runtime support via MemOS,
+- an LLM adapter with embedded E₀ semantic context,
 - and live integration into multiple LLM-driven demos.
 
 This is not a prompt-engineering repo and not a conventional agent framework.
@@ -82,7 +85,18 @@ The repository supports multiple summation geometries for path-family support:
 These were not assumed dogmatically. They were compared empirically.
 Current evidence identifies **simple-path geometry** as the strongest default for robust controller use, while `prefix` remains useful as an exploratory upper-support view. The newest geometry, **goal_reaching**, restricts superposition to paths that actually reach a goal state — aligned with the Born criterion. It resolves prefix-inflation artifacts and enables interference-based routing in topologies where other geometries fail (see Gordian Trap analysis).
 
-### 5. Hybrid controller mode
+### 5. SU(2) multi-axis transport and topological modulation
+
+Two structural extensions deepen the non-Abelian and geometric character of E₀:
+
+- **SU(2) multi-axis spinor transport (B1):** Each edge can carry its own rotation axis via `axis_fn`. The spinor connection lifts U(1) phase transport to full SU(2) matrix transport, enabling anisotropic interference patterns across geometrically complex landscapes.
+- **Curvature modulation M_H (B2):** The topological invariant `M_H(x,y) = 1/(1+κ)` modulates the transition field based on local edge curvature κ derived from face holonomies. High-curvature regions naturally damp transitions. Controlled via `Landscape(curvature_modulation=True)`.
+
+The central formula becomes:
+
+    v(x,y) = Δ(x,y) · M_H(x,y) · exp(−S_eff(x→y))
+
+### 6. Hybrid controller mode
 
 The controller can run in a hybrid mode:
 
@@ -91,7 +105,7 @@ The controller can run in a hybrid mode:
 
 This hybrid mode is integrated into MemOS and into all major LLM demos in the repository.
 
-### 6. Interference-based routing (Gordian Trap)
+### 7. Interference-based routing (Gordian Trap)
 
 The framework now includes a constructive proof that the amplitude layer can route through structurally deceptive topologies:
 
@@ -115,6 +129,8 @@ See `e0_controller/test_gordian_trap.py` for 44 formal tests (17 interference ro
 - [Evidence & falsification status](docs/E0_EVIDENCE_AND_FALSIFICATION_STATUS_v1.md) — what is demonstrated vs open
 - [External validation / handoff note](docs/E0_EXTERNAL_VALIDATION_AND_HANDOFF_NOTE_v1.md) — package for reviewers or AI systems
 - [Phase 3q interference report](docs/E0_PHASE3Q_INTERFERENCE_REPORT_v1.md) — holonomy formula, goal_reaching geometry, Gordian Trap
+- [Paper 3: Non-Abelian Structure](docs/E0_PAPER3_NON_ABELIAN_STRUCTURE_v1.md) — SU(2) transport, curvature modulation, topological invariants
+- [Test Registry v2](docs/E0_TEST_REGISTRY_v2.md) — complete per-file test inventory (1140 tests)
 
 ---
 
@@ -162,7 +178,7 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 
 ## Current state
 
-*Last updated: 2026-03-24 — v0.10.11*
+*Last updated: 2026-03-26*
 
 | Component | Status | Where |
 |-----------|--------|-------|
@@ -171,14 +187,15 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 | Amplitude overlay | **Active** (4 geometries) | `e0_controller/amplitude_overlay.py` |
 | Summation geometry comparison | **Completed** (empirical + G5) | `docs/E0_SUMMATION_GEOMETRY_COMPARISON_v1.md` |
 | Hybrid controller mode | **Active** (`hybrid_geometry` param) | `e0_controller/controller.py` |
+| SU(2) multi-axis transport (B1) | **Active** (36 tests) | `e0_controller/spinor_connection.py` |
+| Curvature modulation M_H (B2) | **Active** (35 tests) | `e0_controller/connection.py`, `landscape.py` |
 | Interference routing | **Demonstrated** (Gordian Trap) | `e0_controller/test_gordian_trap.py` |
 | Topology classification | **Demonstrated** (380-graph scan, 23 tests) | `e0_controller/test_topology_classification.py` |
 | G5 edge case suite | **Stressed** (5 families, 28 tests) | `e0_controller/test_g5_edge_cases.py` |
-| SU(2) spinor extension | **Phase 4** (52 tests, geometric coupling) | `e0_controller/spinor_connection.py` |
 | MemOS (hybrid-aware persistence) | **Active** | `e0_controller/memory_os.py` |
-| LLM Adapter (A3 Hybrid) | **Active** — live API confirmed | `e0_controller/llm_adapter.py` |
+| LLM Adapter (canon-enriched) | **Active** — live API confirmed | `e0_controller/llm_adapter.py` |
 | LLM demo hybrid integration | **Active** (4 demos) | `e0_controller/demo_*.py` |
-| LLM integration tests | **Active** (32 tests) | `e0_controller/test_llm_integration.py` |
+| LLM integration tests | **Active** (32 live tests) | `e0_controller/test_llm_integration.py` |
 | Scaling tests | **Active** (14 tests, n≤500) | `e0_controller/test_scaling.py` |
 | Evaluation layer (hybrid-extended) | **Active** | `e0_controller/evaluation.py` |
 | Reflection layer | **Active** | `e0_controller/reflection.py` |
@@ -186,10 +203,11 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 | Graph validation | **Active** | `e0_controller/graph_validation.py` |
 | Scenario packets | **Active** (3 domains) | `scenarios/` |
 | Formal Paper (E₀ mathematics) | **Draft** | `docs/E0_FORMAL_PAPER_DRAFT_v1.md` |
+| Paper 3 (Non-Abelian Structure) | **Draft** | `docs/E0_PAPER3_NON_ABELIAN_STRUCTURE_v1.md` |
 | Multi-agent network + experiments | **Archived** | `_archive/` |
 | Core reference implementation | **Archived** | `_archive/e0_core/` |
 
-**Tests:** 623 total (602 unittest + 21 standalone mini-domain), all green except 1 pre-existing import issue. See [`docs/E0_TEST_REGISTRY_v1.md`](docs/E0_TEST_REGISTRY_v1.md) for per-file details.
+**Tests:** 1140 total (unittest), 0 failures, 32 skipped (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
 
 ---
 
@@ -208,7 +226,7 @@ cd E0-Framework
 # Mini-domain: 21 tests (custom runner)
 python e0_controller/test_minidomain.py
 
-# Full test suite: 478 tests (unittest)
+# Full test suite: 1140 tests (unittest)
 python -m unittest discover -s e0_controller -p "test_*.py" -v
 ```
 
@@ -267,11 +285,13 @@ E0-Framework/
 │   ├── landscape.py                    L_t = (X, E, v, S, H)
 │   ├── controller.py                   Greedy + Revisit + Escalation + Hybrid Mode
 │   ├── potential.py                    Φ, v_grad, v_rot (§9–11)
-│   ├── connection.py                   ω, Θ, holonomy (§12–14)
+│   ├── connection.py                   ω, Θ, holonomy, edge curvature κ, M_H (§12–14, B2)
 │   ├── wavepath.py                     Ψ(p) = exp(−S+iΘ), interference (§15–16)
+│   ├── spinor_connection.py            SU(2) multi-axis transport, 720° periodicity (B1)
 │   ├── amplitude_overlay.py            Path-family intensity, summation geometries
-│   ├── memory_os.py                    Persist / Restore / Summarize / Retrieve (hybrid-aware)
-│   ├── llm_adapter.py                  LLM ↔ Controller interface (A3 Hybrid)
+│   ├── dynamic_horizon.py              Adaptive path horizon for amplitude overlay
+│   ├── memory_os.py                    Persist / Restore / Summarize / Retrieve (curvature-aware)
+│   ├── llm_adapter.py                  LLM ↔ Controller interface (canon-enriched)
 │   ├── evaluation.py                   Run/Scenario evaluation, A–F rating, hybrid metrics
 │   ├── reflection.py                   Structural self-reflection layer
 │   ├── graph_validation.py             Goal reachability, traps, loops, graph quality
@@ -284,7 +304,7 @@ E0-Framework/
 │   ├── demo_incident_postmortem.py     Incident postmortem demo
 │   ├── explore_amplitude.py            Amplitude exploration tool
 │   ├── explore_gordian.py              Gordian Trap discovery script
-│   └── test_*.py                       570 tests (see docs/E0_TEST_REGISTRY_v1.md)
+│   └── test_*.py                       1140 tests (see docs/E0_TEST_REGISTRY_v2.md)
 │
 ├── scenarios/                        Scenario Packets for grounded LLM demos
 │   ├── competitor_brief/               Domain-specific scenario data
