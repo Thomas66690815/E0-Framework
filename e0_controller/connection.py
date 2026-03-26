@@ -145,3 +145,44 @@ def connection_info(L: Landscape, x: str, y: str) -> Dict:
         "has_forward": L.difference(x, y) is not None,
         "has_reverse": L.difference(y, x) is not None,
     }
+
+
+# ──────────────────────────────────────────────
+# Curvature & Topological Modulation (B2)
+# ──────────────────────────────────────────────
+
+def edge_curvature(L: Landscape, x: str, y: str) -> float:
+    """
+    Local curvature κ(x,y) from face holonomies through edge x→y.
+
+    κ = mean |Θ(x→y→z→x)| over all directed triangles containing
+    the edge x→y, where z closes the triangle.
+
+    If no triangles exist through this edge, κ = 0 (flat).
+
+    Uses the same triangle-finding logic as su2_connection (A₂),
+    but takes the absolute value — curvature is unsigned.
+    """
+    y_targets = {e.target for e in L.edges if e.source == y}
+    z_closing = {e.source for e in L.edges if e.target == x}
+    triangles = (y_targets & z_closing) - {x, y}
+
+    if not triangles:
+        return 0.0
+
+    holonomies = [abs(omega(L, x, y) + omega(L, y, z) + omega(L, z, x))
+                  for z in sorted(triangles)]
+    return float(sum(holonomies) / len(holonomies))
+
+
+def M_H_factor(L: Landscape, x: str, y: str) -> float:
+    """
+    Topological modulation factor M_H(x,y) = 1 / (1 + κ(x,y)).
+
+    κ = 0  (flat)  → M_H = 1 (no modulation, current default).
+    κ → ∞ (curved) → M_H → 0 (strongly damped transition).
+
+    Alternative: M_H = exp(−κ) — smoother decay but same limits.
+    """
+    kappa = edge_curvature(L, x, y)
+    return 1.0 / (1.0 + kappa)

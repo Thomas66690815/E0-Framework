@@ -49,6 +49,9 @@ class Landscape:
     # Dynamic structure
     historization: Historization = field(default_factory=Historization)
 
+    # Experimental: curvature modulation (B2)
+    curvature_modulation: bool = False
+
     # --- Construction ---
 
     def add_state(self, name: str) -> None:
@@ -150,11 +153,15 @@ class Landscape:
 
     def transition_field(self, x: str, y: str) -> float:
         """
-        §2.4: v_x(y) = Δ(x,y) · exp(-S_eff(x→y))
+        §2.4: v_x(y) = Δ(x,y) · M_H(x,y) · exp(-S_eff(x→y))
 
-        Spec-aligned simplified runtime form (M_H = 1 for v0.1).
-        The full generalized form (M_H derived from curvature/topology)
-        is not yet implemented.
+        When curvature_modulation is False (default), M_H = 1 — the
+        current runtime form.
+
+        When curvature_modulation is True, M_H is derived from local
+        face holonomy (curvature). High curvature → damped transition.
+        M_H is cached and computed from the base (unmodulated) ω to
+        avoid circular dependency.
 
         Higher v = more structurally open transition.
         Returns 0.0 if edge does not exist (no transition capacity).
@@ -163,7 +170,46 @@ class Landscape:
         if delta is None:
             return 0.0
         s_eff = self.effective_tension(x, y)
-        return delta * coherence(s_eff)
+        v = delta * coherence(s_eff)
+        if self.curvature_modulation:
+            v *= self._get_M_H(x, y)
+        return v
+
+    def _get_M_H(self, x: str, y: str) -> float:
+        """Return cached M_H(x,y). Build cache on first call."""
+        cache = getattr(self, '_M_H_cache', None)
+        if cache is None:
+            self._build_M_H_cache()
+        return self._M_H_cache.get((x, y), 1.0)
+
+    def _build_M_H_cache(self) -> None:
+        """
+        Pre-compute M_H for all edges from base (unmodulated) ω.
+
+        Temporarily disables curvature_modulation to break the
+        circular dependency: transition_field → M_H → κ → ω →
+        v_rot → v_raw → transition_field.
+
+        The base ω reflects the pure geometric structure.
+        M_H then modulates it — a one-way dependency, not circular.
+        """
+        from .connection import M_H_factor
+
+        # Temporarily disable to compute base ω without M_H
+        self.curvature_modulation = False
+        # Invalidate Helmholtz cache so base v is used
+        self._phi_cache = None
+        try:
+            cache = {}
+            for edge in self._R0:
+                cache[(edge.source, edge.target)] = M_H_factor(
+                    self, edge.source, edge.target
+                )
+        finally:
+            self.curvature_modulation = True
+            # Invalidate again so downstream sees modulated v
+            self._phi_cache = None
+        self._M_H_cache = cache
 
     # --- Inspection ---
 

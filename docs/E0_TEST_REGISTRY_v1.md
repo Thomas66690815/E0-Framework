@@ -1,7 +1,7 @@
 # E₀ Test Registry v1
 
 > Central reference for all tests in the E₀ Framework.
-> **Last verified:** 2026-03-26 — **1082 tests** (1061 unittest + 21 standalone mini-domain; 32 skipped, 0 failures)
+> **Last verified:** 2026-03-26 — **1117 tests** (1096 unittest + 21 standalone mini-domain; 32 skipped, 0 failures)
 
 ---
 
@@ -37,6 +37,7 @@
 | 26 | `test_born_sampling.py` | 27 | unittest | Born sampling vs argmax, ADR-0007 H1-H10 | ✅ GREEN |
 | 27 | `test_minidomain.py` | 21 | standalone | Core mechanics, historization, K11/K12 | ✅ GREEN |
 | 28 | `test_multi_axis_su2.py` | 36 | unittest | Per-edge SU(2) axes, non-commutativity, multi-axis interference, controller integration | ✅ GREEN |
+| 29 | `test_curvature_modulation.py` | 35 | unittest | M_H topological invariant, edge curvature, curvature modulation switch, downstream effects | ✅ GREEN |
 
 ---
 
@@ -389,10 +390,29 @@
 
 ---
 
+### 29. test_curvature_modulation.py — 35 tests
+
+**Runner:** `python -m unittest e0_controller.test_curvature_modulation -v`
+
+**What it tests:** M_H topological invariant (B2 from Canon Alignment §9). Edge curvature κ(x,y) from face holonomies, modulation factor M_H = 1/(1+κ), experimental curvature_modulation switch on Landscape, forward/backward compatibility, cache consistency, downstream effects on Helmholtz/ω/holonomy, and quantitative behavior. Tests across 10 classes with 4 graph topologies (triangle, line, diamond, tetrahedron).
+
+**Key findings:**
+- Line graph (no triangles): κ = 0, M_H = 1, v unchanged — correct flat behavior
+- Symmetric triangle: ω = 0 → κ = 0 → M_H = 1 → no modulation effect
+- Asymmetric triangle: κ > 0, M_H < 1, v_mod < v_base — curvature damps transitions
+- v_mod / v_base = M_H holds to 8 decimal places
+- curvature_modulation=False (default): zero change from existing behavior (1082 tests unaffected)
+- Downstream chain verified: v → Helmholtz → Φ → v_rot → ω → holonomy all change with modulation
+- Admissible neighbors unchanged — M_H only scales v, never removes edges
+- M_H cache built lazily, used for all subsequent calls
+- Circular dependency (transition_field → M_H → κ → ω → v_rot → transition_field) resolved via temporary flag disable during cache build
+
+---
+
 ## How to Run
 
 ```bash
-# Full unittest suite (1061 tests, 32 skipped)
+# Full unittest suite (1096 tests, 32 skipped)
 python -m unittest discover -s e0_controller -p "test_*.py" -v
 
 # Standalone mini-domain (21 tests)

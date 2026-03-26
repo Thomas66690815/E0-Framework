@@ -551,6 +551,7 @@ Born sampling (P ∝ I, choosing actions probabilistically from the amplitude-de
 | `test_topology_classification.py` | C11, C23 (SU(2) classes) |
 | `test_born_sampling.py` | C22, C23 (H11 class) |
 | `test_multi_axis_su2.py` | C15, C23, C25 |
+| `test_curvature_modulation.py` | C26 |
 
 ---
 
@@ -732,6 +733,46 @@ Dedicated publication exploring per-edge SU(2) rotation axes as non-abelian gaug
 - Does multi-axis SU(2) predict new topology reclassifications beyond C23?
 
 **Status:** 🔄 In progress (B1 engineering complete; paper draft pending)
+
+---
+
+### C26 — M_H topological invariant modulates transition field via curvature (B2)
+
+**Claim**  
+The topological modulation factor M_H(x,y) = 1/(1 + κ(x,y)), where κ is the mean absolute face holonomy through edge x→y, correctly modulates the transition field v(x,y) = Δ · M_H · exp(−S_eff). When `curvature_modulation=False` (default), M_H = 1 and all existing behavior is preserved. When enabled, high-curvature edges are damped, the full downstream chain (Helmholtz → Φ → v_rot → ω → Θ → holonomy) responds to the modulation, and the circular dependency (transition_field → M_H → κ → ω → v_rot → transition_field) is resolved by computing κ from base (unmodulated) ω.
+
+**Evidence**  
+- `e0_controller/test_curvature_modulation.py` — 35 tests across 10 classes:
+  - `TestEdgeCurvature` (6 tests): κ=0 for line graph and symmetric triangles; κ>0 for asymmetric triangle; κ non-negative everywhere; tetrahedron all edges curved; diamond shows κ variation
+  - `TestMHFactor` (5 tests): no curvature → M_H=1; curvature → M_H<1; M_H ∈ (0,1]; formula 1/(1+κ) verified; symmetric → unit M_H
+  - `TestCurvatureModulationSwitch` (2 tests): default False; explicit True
+  - `TestTransitionFieldModulation` (6 tests): off unchanged; on differs from off; v_mod ≤ v_base; line graph unaffected; symmetric triangle unaffected; missing edge returns 0
+  - `TestCacheConsistency` (3 tests): cache built once; entries for all edges; Helmholtz Φ differs (diamond topology)
+  - `TestDownstreamEffects` (3 tests): ω changes; v_rot changes; holonomy changes
+  - `TestAdmissibleNeighbors` (1 test): same admissible set with or without modulation
+  - `TestSpecFormula` (1 test): v = Δ · M_H · coherence(S_eff) verified to 12 decimal places
+  - `TestRepr` (1 test): repr works with modulation enabled
+  - `TestEdgeCases` (4 tests): single edge no crash; empty landscape; self-loop ignored; tetrahedron lower v
+  - `TestQuantitativeBehavior` (3 tests): κ magnitude vs ω; M_H moderate damping (0.1, 1.0); v_mod/v_base = M_H (8 places)
+- `e0_controller/connection.py` — `edge_curvature(L, x, y)` and `M_H_factor(L, x, y)` functions
+- `e0_controller/landscape.py` — `curvature_modulation=False` parameter on `Landscape`, `_get_M_H()` and `_build_M_H_cache()` methods, modified `transition_field()`
+
+**Result**  
+- **Default off (1082 existing tests unaffected)**: curvature_modulation=False → M_H=1 → zero behavioral change
+- **Flat geometry**: Line graphs (no triangles) and symmetric triangles (ω=0) produce κ=0, M_H=1 — modulation is a no-op
+- **Curved geometry**: Asymmetric triangle κ > 0, M_H ∈ (0.3, 1.0), v_mod < v_base
+- **Downstream propagation**: Helmholtz Φ, v_rot, ω, and holonomy all respond to modulation
+- **Admissibility preserved**: M_H only scales v, never removes neighbors
+- **Circular dependency resolved**: M_H cache built from base ω (curvature_modulation temporarily disabled during cache build), then re-enabled with stale Helmholtz cache invalidated
+- **Helmholtz cache key**: Extended from (edge_count, τ) to (edge_count, τ, curvature_modulation)
+- **Formula verified**: v_mod/v_base = M_H to 8 decimal places for all edges
+- **Canon Alignment §9 B2**: "M_H als topologischer Invariant" — now implemented with experimental switch
+
+**Design note:**  
+Alternative formula M_H = exp(−κ) provides smoother decay but same asymptotic limits. Current choice 1/(1+κ) is algebraically simpler and provides moderate damping for typical curvature values.
+
+**Status**  
+✅ Confirmed
 
 ---
 
