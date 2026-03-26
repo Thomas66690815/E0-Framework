@@ -524,5 +524,122 @@ class TestH10StepResult(unittest.TestCase):
         self.assertGreater(len(step.overlay.action_infos), 0)
 
 
+# ══════════════════════════════════════════════════════════════
+# H11 — Born Sampling under SU(2) transport
+# ══════════════════════════════════════════════════════════════
+
+def _build_gordian_multipath():
+    """Gordian with multi-path families: A has short+loop to G, B has single path.
+    Under U(1): A destructive → Born samples mostly B.
+    Under SU(2): phase halving → A coherent → Born samples mostly A.
+    """
+    L = Landscape()
+    # A short path (low Θ)
+    L.add_edge("S", "A", delta=0.3, resistance=0.3)
+    L.add_edge("A", "X", delta=0.3, resistance=0.3)
+    L.add_edge("X", "G", delta=0.3, resistance=0.3)
+    # A loop path (high Θ → destructive under U(1))
+    L.add_edge("A", "L1", delta=2.5, resistance=0.05)
+    L.add_edge("L1", "L2", delta=2.5, resistance=0.05)
+    L.add_edge("L2", "G", delta=2.5, resistance=0.05)
+    # B single path
+    L.add_edge("S", "B", delta=0.5, resistance=0.3)
+    L.add_edge("B", "G", delta=0.5, resistance=0.3)
+    return L
+
+
+class TestH11BornSamplingUnderSU2(unittest.TestCase):
+    """Born sampling distribution changes under SU(2) on multi-path domains."""
+
+    def test_su2_born_valid_transitions(self):
+        """BORN_SAMPLING + SU(2) produces valid transitions on Diamond."""
+        L = _build_diamond()
+        ctrl = E0Controller(
+            L, _success,
+            hybrid_mode=HybridMode.BORN_SAMPLING,
+            hybrid_horizon=3, hybrid_goals={"G"}, use_su2=True,
+        )
+        for _ in range(20):
+            step = ctrl.cycle("S")
+            self.assertIn(step.target, ["A", "B"])
+
+    def test_su2_shifts_born_distribution_on_gordian(self):
+        """SU(2) phase halving shifts Born distribution toward A on Gordian."""
+        n = 200
+        u1_a_count = 0
+        su2_a_count = 0
+        for _ in range(n):
+            L = _build_gordian_multipath()
+            ctrl_u1 = E0Controller(
+                L, _success,
+                hybrid_mode=HybridMode.BORN_SAMPLING,
+                hybrid_horizon=5, hybrid_goals={"G"},
+                hybrid_geometry="goal_reaching",
+                use_su2=False,
+            )
+            ctrl_su2 = E0Controller(
+                L, _success,
+                hybrid_mode=HybridMode.BORN_SAMPLING,
+                hybrid_horizon=5, hybrid_goals={"G"},
+                hybrid_geometry="goal_reaching",
+                use_su2=True,
+            )
+            step_u1 = ctrl_u1.cycle("S")
+            step_su2 = ctrl_su2.cycle("S")
+            if step_u1.target == "A":
+                u1_a_count += 1
+            if step_su2.target == "A":
+                su2_a_count += 1
+        # SU(2) should sample A much more often (phase halving removes destruction)
+        self.assertGreater(su2_a_count, u1_a_count,
+                           f"SU(2) A-samples={su2_a_count} should exceed "
+                           f"U(1) A-samples={u1_a_count}")
+
+    def test_su2_born_reaches_goal(self):
+        """BORN_SAMPLING + SU(2) still reaches goal on Gordian multi-path."""
+        L = _build_gordian_multipath()
+        ctrl = E0Controller(
+            L, _success,
+            hybrid_mode=HybridMode.BORN_SAMPLING,
+            hybrid_horizon=5, hybrid_goals={"G"},
+            hybrid_geometry="goal_reaching",
+            use_su2=True,
+        )
+        trace = ctrl.run("S", goal="G", max_cycles=10)
+        self.assertIn("G", trace.path)
+
+    def test_su2_diamond_single_path_matches_u1(self):
+        """Diamond has single-path families → SU(2) Born ≈ U(1) Born."""
+        n = 300
+        u1_a_count = 0
+        su2_a_count = 0
+        for _ in range(n):
+            L = _build_diamond()
+            ctrl_u1 = E0Controller(
+                L, _success,
+                hybrid_mode=HybridMode.BORN_SAMPLING,
+                hybrid_horizon=3, hybrid_goals={"G"},
+                use_su2=False,
+            )
+            ctrl_su2 = E0Controller(
+                L, _success,
+                hybrid_mode=HybridMode.BORN_SAMPLING,
+                hybrid_horizon=3, hybrid_goals={"G"},
+                use_su2=True,
+            )
+            step_u1 = ctrl_u1.cycle("S")
+            step_su2 = ctrl_su2.cycle("S")
+            if step_u1.target == "A":
+                u1_a_count += 1
+            if step_su2.target == "A":
+                su2_a_count += 1
+        # Single-path families → rates should be similar (within 8%)
+        u1_rate = u1_a_count / n
+        su2_rate = su2_a_count / n
+        self.assertAlmostEqual(u1_rate, su2_rate, delta=0.08,
+                               msg=f"Diamond single-path: U(1)={u1_rate:.1%} "
+                                   f"vs SU(2)={su2_rate:.1%} — should match")
+
+
 if __name__ == "__main__":
     unittest.main()

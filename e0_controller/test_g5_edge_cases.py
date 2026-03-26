@@ -473,5 +473,165 @@ class TestCrossFamily_StructuralProperties(unittest.TestCase):
             self.assertAlmostEqual(b_info.intensity, 0.0, places=10)
 
 
+# ══════════════════════════════════════════════════════════════
+# G5 under SU(2) — Robustness preservation (Paper 2 §7.2)
+# ══════════════════════════════════════════════════════════════
+
+def _analyze_su2(ctrl, goals, horizon=5):
+    return analyze_controller_state(
+        ctrl, START, horizon_edges=horizon,
+        geometry="goal_reaching", goals=goals, use_su2=True,
+    )
+
+
+class TestG5UnderSU2_WinnerStability(unittest.TestCase):
+    """SU(2) must preserve G5 winner identities across all families."""
+
+    def test_family_a_winner_stable(self):
+        """A should still win for all |G|=1..5 under SU(2)."""
+        L = build_family_a()
+        ctrl = E0Controller(L, evaluate)
+        all_goals = ["G1", "G2", "G3", "G4", "G5"]
+        for n in range(1, 6):
+            goals = set(all_goals[:n])
+            report = _analyze_su2(ctrl, goals)
+            self.assertEqual(report.amplitude_choice, "A",
+                             f"SU(2) |G|={n}: expected A, got {report.amplitude_choice}")
+
+    def test_family_c_generalist_wins_multigoal(self):
+        """C should still win {G_ALPHA, G_BETA} under SU(2)."""
+        L = build_family_c()
+        ctrl = E0Controller(L, evaluate)
+        report = _analyze_su2(ctrl, {"G_ALPHA", "G_BETA"})
+        self.assertEqual(report.amplitude_choice, "C",
+                         f"SU(2) expected C, got {report.amplitude_choice}")
+
+    def test_family_d_single_goal_winner_flips_to_a(self):
+        """SU(2) winner flip: U(1) B wins (A destructive), SU(2) A wins (phase halving)."""
+        L = build_family_d(0.5)
+        ctrl = E0Controller(L, evaluate)
+        r_u1 = _analyze(ctrl, {"G1"})
+        r_su2 = _analyze_su2(ctrl, {"G1"})
+        # U(1): destructive interference suppresses A → B wins
+        self.assertEqual(r_u1.amplitude_choice, "B")
+        # SU(2): phase halving Θ→Θ/2 weakens destruction → A wins
+        self.assertEqual(r_su2.amplitude_choice, "A",
+                         f"SU(2) should flip winner to A, got {r_su2.amplitude_choice}")
+
+    def test_family_d_rescue_still_works(self):
+        """A should be rescued by G2 at low delta under SU(2)."""
+        L = build_family_d(0.1)
+        ctrl = E0Controller(L, evaluate)
+        report = _analyze_su2(ctrl, {"G1", "G2"})
+        self.assertEqual(report.amplitude_choice, "A",
+                         f"SU(2) rescue: expected A, got {report.amplitude_choice}")
+
+    def test_family_e_a_wins_all_goal_counts(self):
+        """A should still win for |G|=1..8 under SU(2)."""
+        for n in [1, 4, 8]:
+            L = build_family_e(n)
+            ctrl = E0Controller(L, evaluate)
+            goals = {f"G{i+1}" for i in range(n)}
+            report = _analyze_su2(ctrl, goals)
+            self.assertEqual(report.amplitude_choice, "A",
+                             f"SU(2) |G|={n}: expected A, got {report.amplitude_choice}")
+
+
+class TestG5UnderSU2_StructuralInvariants(unittest.TestCase):
+    """SU(2) must preserve normalization, non-negativity, and zero-path rules."""
+
+    def test_probabilities_sum_to_one(self):
+        """All SU(2) reports must have probs summing to 1.0."""
+        cases = [
+            (build_family_a(), {"G1", "G2", "G3"}),
+            (build_family_b(), {"G_REAL", "G_NOISY"}),
+            (build_family_c(), {"G_ALPHA", "G_BETA"}),
+            (build_family_d(0.5), {"G1", "G2"}),
+            (build_family_e(5), {f"G{i+1}" for i in range(5)}),
+        ]
+        for L, goals in cases:
+            ctrl = E0Controller(L, evaluate)
+            report = _analyze_su2(ctrl, goals)
+            total = sum(ai.probability for ai in report.action_infos)
+            self.assertAlmostEqual(total, 1.0, places=8,
+                                   msg=f"SU(2) probs sum to {total:.10f}")
+
+    def test_intensity_non_negative(self):
+        """All SU(2) intensities must be >= 0."""
+        cases = [
+            (build_family_a(), {"G1", "G2", "G3", "G4", "G5"}),
+            (build_family_c(), {"G_ALPHA", "G_BETA"}),
+            (build_family_d(0.01), {"G1", "G2"}),
+        ]
+        for L, goals in cases:
+            ctrl = E0Controller(L, evaluate)
+            report = _analyze_su2(ctrl, goals)
+            for ai in report.action_infos:
+                self.assertGreaterEqual(ai.intensity, 0.0,
+                                        f"SU(2) {ai.action} has negative I")
+
+    def test_empty_action_has_zero_paths(self):
+        """Actions with no goal-reaching paths should still have I=0 under SU(2)."""
+        L = build_family_c()
+        ctrl = E0Controller(L, evaluate)
+        report = _analyze_su2(ctrl, {"G_ALPHA"})
+        b_info = next((ai for ai in report.action_infos if ai.action == "B"), None)
+        if b_info:
+            self.assertEqual(b_info.path_count, 0)
+            self.assertAlmostEqual(b_info.intensity, 0.0, places=10)
+
+    def test_unreachable_goal_zero_effect(self):
+        """Unreachable goal has zero effect under SU(2), same as U(1)."""
+        L = build_family_b()
+        ctrl = E0Controller(L, evaluate)
+        base = _analyze_su2(ctrl, {"G_REAL"})
+        extended = _analyze_su2(ctrl, {"G_REAL", "G_UNREACH"})
+        base_probs = _probs(base)
+        ext_probs = _probs(extended)
+        for action in base_probs:
+            self.assertAlmostEqual(base_probs[action], ext_probs[action],
+                                   places=10,
+                                   msg=f"SU(2) {action}: unreachable changed P")
+
+
+class TestG5UnderSU2_Selectivity(unittest.TestCase):
+    """SU(2) should preserve selectivity trends from U(1)."""
+
+    def test_entropy_decreases_with_more_goals(self):
+        """Entropy should still decrease from |G|=1 to |G|=8 under SU(2)."""
+        L_1 = build_family_e(1)
+        L_8 = build_family_e(8)
+        ctrl_1 = E0Controller(L_1, evaluate)
+        ctrl_8 = E0Controller(L_8, evaluate)
+        r_1 = _analyze_su2(ctrl_1, {"G1"})
+        r_8 = _analyze_su2(ctrl_8, {f"G{i+1}" for i in range(8)})
+        ent_1 = _entropy(r_1)
+        ent_8 = _entropy(r_8)
+        self.assertLess(ent_8, ent_1,
+                        f"SU(2) entropy: H(8)={ent_8:.3f} >= H(1)={ent_1:.3f}")
+
+    def test_no_saturation_at_5_goals(self):
+        """Top-1 P should remain > 0.4 at |G|=5 under SU(2)."""
+        L = build_family_a()
+        ctrl = E0Controller(L, evaluate)
+        report = _analyze_su2(ctrl, {"G1", "G2", "G3", "G4", "G5"})
+        top1 = max(ai.probability for ai in report.action_infos)
+        self.assertGreater(top1, 0.4,
+                           f"SU(2) top-1 P={top1:.3f} at |G|=5 — saturation")
+
+    def test_su2_diverges_from_u1_on_multipath(self):
+        """SU(2) and U(1) should produce different intensities on Family D (Gordian-style)."""
+        L = build_family_d(0.5)
+        ctrl = E0Controller(L, evaluate)
+        r_u1 = _analyze(ctrl, {"G1", "G2"})
+        r_su2 = _analyze_su2(ctrl, {"G1", "G2"})
+        i_u1 = {ai.action: ai.intensity for ai in r_u1.action_infos}
+        i_su2 = {ai.action: ai.intensity for ai in r_su2.action_infos}
+        # A has multi-path to G1 (destructive loop) — SU(2) phase halving changes I
+        diffs = [abs(i_u1[a] - i_su2[a]) for a in i_u1 if a in i_su2]
+        self.assertGreater(max(diffs), 0.0,
+                           "SU(2) and U(1) should diverge on Gordian-style domain")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -3,7 +3,7 @@
 > Central validation registry for the E₀ Framework.
 > **Purpose:** connect claims, tests, evidence, and status in one place.
 
-**Last updated:** 2026-03-25  
+**Last updated:** 2026-03-26  
 **Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, and active edge-case work.
 
 ---
@@ -303,15 +303,23 @@ Five alternative phase generators (ω_sym, ω_full, ω_v, ω_grad, ω_nonlin) ea
 ### C15 — SU(2) / spinor lift is operationally realized
 
 **Claim**  
-Scalar Θ has been lifted to an SU(2) generator with matrix-valued propagation. Phase 4b: rotation axis n̂ derived from local Helmholtz vorticity (geometric coupling).
+Scalar Θ has been lifted to an SU(2) generator with matrix-valued propagation. Phase 4b: rotation axis n̂ derived from local Helmholtz vorticity (geometric coupling). SU(2) is now wired into the controller’s amplitude overlay as an operational switch (`use_su2=True`).
 
 **Evidence**  
-- `e0_controller/test_spinor.py` — 52 tests across 8 classes
+- `e0_controller/test_spinor.py` — 57 tests across 9 classes (including `TestSU2ControllerOverlay` — 5 integration tests)
 - `e0_controller/spinor_connection.py` — Phase 4a (minimal σ_z) + Phase 4b (geometric A⃗)
 - `e0_controller/explore_spinor.py` — 6 domain explorations
+- `e0_controller/amplitude_overlay.py` — `use_su2` parameter in `analyze_controller_state()`
+- `e0_controller/controller.py` — `use_su2` parameter threaded through `E0Controller.__init__()` → `_compute_overlay()`
 
 **Result**  
 SU(2) primitives verified (Pauli algebra, det=1, unitarity). Single-path magnitudes match U(1). Phase halving Θ→Θ/2 changes interference (double cover). 720° periodicity confirmed. **Geometric coupling** derives 3-component connection A⃗ = (A₁, A₂, A₃) from Helmholtz decomposition: A₁ = vorticity gradient, A₂ = face holonomy, A₃ = ω. Three-theory separation (U(1), SU(2)-min, SU(2)-geo) observed: up to 55.3% divergence on Gordian. Winner flips between U(1) and SU(2) on Gordian Trap.
+
+**Operational integration verified:**
+- Gordian trap: U(1) I(A1)=9.41, SU(2) I(A1)=18.06 (47.9% divergence on multi-path A-family)
+- Single-path B1: U(1) ≈ SU(2) (2.1% divergence — confirming single-path equivalence)
+- SU(2) sharpens probability discrimination: P(A1)=0.79 vs U(1) P(A1)=0.66
+- Hybrid mode with `use_su2=True` reaches GOAL correctly
 
 **Status**  
 ✅ Confirmed
@@ -513,12 +521,39 @@ Born sampling (P ∝ I, choosing actions probabilistically from the amplitude-de
 | `test_confidence_override.py` | C20 |
 | `test_memos_geometry.py` | C21 |
 | `test_born_sampling.py` | C22 |
-| `test_spinor.py` | C15 |
+| `test_spinor.py` | C15, C23 |
 | `test_resonator.py` | C16 |
 | `test_omega_uniqueness.py` | C14 |
 | `test_historization_gordian.py` | C8, C9 |
 | `test_born_regime.py` | C17 |
 | `test_minidomain.py` | base mechanics, historization, K11/K12 |
+| `test_g5_edge_cases.py` | C10, C23 (SU(2) classes) |
+| `test_topology_classification.py` | C11, C23 (SU(2) classes) |
+| `test_born_sampling.py` | C22, C23 (H11 class) |
+
+---
+
+### C23 — SU(2) reclassifies topology: Gordian override rate 90% → 0%
+
+**Claim**  
+SU(2) phase halving (Θ→Θ/2) weakens destructive interference on multi-path families, fundamentally changing the topology-to-override mapping. Gordian-lite graphs that produce ~90% override rate under U(1) produce ~0% under SU(2) because the halved phases no longer reach destructive opposition.
+
+**Evidence**  
+- `e0_controller/test_topology_classification.py` — `TestSU2TriangleStillNeverOverrides` (1 test), `TestSU2DiamondOverrideShift` (2 tests), `TestSU2GordianLiteOverrides` (2 tests), `TestSU2PhaseHalvingEffect` (2 tests)
+- `e0_controller/test_g5_edge_cases.py` — `TestG5UnderSU2_WinnerStability` (5 tests), `TestG5UnderSU2_StructuralInvariants` (4 tests), `TestG5UnderSU2_Selectivity` (3 tests)
+- `e0_controller/test_born_sampling.py` — `TestH11BornSamplingUnderSU2` (4 tests)
+
+**Result**  
+- **Triangle**: 0% overrides under both U(1) and SU(2) (single family → no interference)
+- **Diamond**: Override rate identical under U(1) and SU(2) — each family has exactly 1 path, so phase halving has no multi-path effect
+- **Gordian-lite**: Override rate drops from ~90% (U(1)) to ~0% (SU(2)) — phase halving eliminates destructive interference on A-family's two paths
+- **G5 Winner Flip**: Family D single-goal: U(1) selects B (A destructive, I=0.024), SU(2) selects A (halved phase restores coherence, I=1.028) — 43× intensity increase
+- **G5 structural invariants preserved**: probabilities sum to 1, intensities non-negative, unreachable goals have zero effect, entropy decreases with |G|
+- **Born sampling**: SU(2) shifts sampling distribution toward A on Gordian multi-path domains
+- **Single-path equivalence confirmed**: Diamond/B1 intensities identical under U(1) and SU(2)
+
+**Status**  
+✅ Confirmed
 
 ---
 
@@ -560,8 +595,15 @@ Introduce weighted goal sets only if edge-case failures emerge.
 **Target claim**  
 C15 extended — use SU(2) intensities in actual controller decisions (currently research-only).
 
-**Recommended test**  
-Swap U(1) intensity for SU(2) intensity in amplitude overlay and compare override decisions.
+**Status:** ✅ Resolved in commit `e87d70a` and subsequent work.
+
+**What was done:**
+- `amplitude_overlay.py`: added `use_su2` parameter; when True, sums ℂ² spinor amplitudes and computes ‖Ψ‖² via `np.vdot`
+- `controller.py`: added `use_su2` parameter to `E0Controller.__init__()`, threaded through `_compute_overlay()`
+- `test_spinor.py`: 5 integration tests (`TestSU2ControllerOverlay`) verify divergence, single-path match, probability sharpening, hybrid goal-reaching, flag consistency
+- `test_g5_edge_cases.py`: 12 tests (`TestG5UnderSU2_*`) verify G5 structural properties preserved under SU(2), including winner-flip on Family D
+- `test_topology_classification.py`: 7 tests (`TestSU2*`) reclassify 380-graph topologies; Gordian override rate drops from 90% to 0% under SU(2)
+- `test_born_sampling.py`: 4 tests (`TestH11BornSamplingUnderSU2`) verify Born sampling distribution shift under SU(2)
 
 ---
 

@@ -496,5 +496,150 @@ class TestStatisticalStability(unittest.TestCase):
                         f"Gordian rates too variable: {rate1:.1%} vs {rate2:.1%}")
 
 
+# ══════════════════════════════════════════════════════════════
+# SU(2) Topology Reclassification — Paper 2 §7.3
+# ══════════════════════════════════════════════════════════════
+
+def _analyze_su2(L, horizon=4, geometry="goal_reaching"):
+    """Helper: run overlay analysis at START with SU(2) transport."""
+    ctrl = E0Controller(L, evaluate)
+    return analyze_controller_state(
+        ctrl, START, horizon_edges=horizon, geometry=geometry,
+        goals={GOAL}, use_su2=True,
+    )
+
+
+class TestSU2TriangleStillNeverOverrides(unittest.TestCase):
+    """SU(2) should not introduce overrides on single-family topology."""
+
+    def test_triangle_50_seeds_no_override_su2(self):
+        """50 random triangles under SU(2): still no overrides."""
+        overrides = 0
+        for seed in range(50):
+            rng = random.Random(seed)
+            L = build_triangle(rng)
+            report = _analyze_su2(L, horizon=4)
+            if report.amplitude_choice != report.deterministic_choice:
+                overrides += 1
+        self.assertEqual(overrides, 0,
+                         "SU(2) triangle should NEVER produce override")
+
+
+class TestSU2DiamondOverrideShift(unittest.TestCase):
+    """SU(2) changes phase arithmetic → override rate shifts on Diamond."""
+
+    def test_diamond_su2_still_produces_overrides(self):
+        """SU(2) diamond should still produce some overrides (2 families exist)."""
+        overrides = 0
+        for seed in range(100):
+            rng = random.Random(seed)
+            L = build_diamond(rng)
+            report = _analyze_su2(L, horizon=4)
+            if report.amplitude_choice != report.deterministic_choice:
+                overrides += 1
+        self.assertGreater(overrides, 0,
+                           "SU(2) diamond should produce at least some overrides")
+
+    def test_diamond_su2_rate_matches_u1(self):
+        """Diamond has single-path families → SU(2) ≡ U(1) on override rate."""
+        n = 200
+        u1_overrides = 0
+        su2_overrides = 0
+        for seed in range(n):
+            rng = random.Random(seed + 5000)
+            L = build_diamond(rng)
+            r_u1 = _analyze(L, horizon=4)
+            r_su2 = _analyze_su2(L, horizon=4)
+            if r_u1.amplitude_choice != r_u1.deterministic_choice:
+                u1_overrides += 1
+            if r_su2.amplitude_choice != r_su2.deterministic_choice:
+                su2_overrides += 1
+        u1_rate = u1_overrides / n
+        su2_rate = su2_overrides / n
+        # Diamond: each family has exactly 1 path → no multi-path interference
+        # → phase halving has no effect → rates must match
+        self.assertAlmostEqual(u1_rate, su2_rate, places=1,
+                               msg=f"U(1)={u1_rate:.1%} vs SU(2)={su2_rate:.1%} — "
+                                   "single-path families should match")
+
+
+class TestSU2GordianLiteOverrides(unittest.TestCase):
+    """SU(2) on Gordian-lite: override rate may shift but remains elevated."""
+
+    def test_gordian_su2_override_rate_near_zero(self):
+        """SU(2) phase halving eliminates Gordian destructive interference.
+
+        Under U(1), Gordian-lite produces ~90% overrides because
+        A-family's two paths destructively interfere (cos(ΔΘ) ≈ -1).
+        Under SU(2), Θ→Θ/2 weakens destruction → A stays coherent →
+        A wins both greedy and amplitude → override drops to ~0%.
+        This is the key Paper 2 prediction (double cover effect).
+        """
+        overrides = 0
+        n = 100
+        for seed in range(n):
+            rng = random.Random(seed + 6000)
+            L = build_gordian_lite(rng)
+            report = _analyze_su2(L, horizon=5)
+            if report.amplitude_choice != report.deterministic_choice:
+                overrides += 1
+        rate = overrides / n
+        self.assertLess(rate, 0.10,
+                        f"SU(2) Gordian override rate {rate:.1%} — "
+                        "phase halving should eliminate most overrides")
+
+    def test_gordian_su2_winner_flips_exist(self):
+        """Some Gordian graphs should have different winners under U(1) vs SU(2)."""
+        flips = 0
+        for seed in range(100):
+            rng = random.Random(seed + 7000)
+            L = build_gordian_lite(rng)
+            r_u1 = _analyze(L, horizon=5)
+            r_su2 = _analyze_su2(L, horizon=5)
+            if r_u1.amplitude_choice != r_su2.amplitude_choice:
+                flips += 1
+        self.assertGreater(flips, 0,
+                           "SU(2) should produce at least some winner flips vs U(1)")
+
+
+class TestSU2PhaseHalvingEffect(unittest.TestCase):
+    """Phase halving Θ→Θ/2 is observable in aggregate intensity statistics."""
+
+    def test_su2_intensities_differ_on_multipath(self):
+        """On multi-path Gordian, SU(2) and U(1) intensities systematically differ."""
+        diffs = []
+        for seed in range(50):
+            rng = random.Random(seed + 8000)
+            L = build_gordian_lite(rng)
+            r_u1 = _analyze(L, horizon=5)
+            r_su2 = _analyze_su2(L, horizon=5)
+            i_u1 = {ai.action: ai.intensity for ai in r_u1.action_infos}
+            i_su2 = {ai.action: ai.intensity for ai in r_su2.action_infos}
+            for act in i_u1:
+                if act in i_su2 and i_u1[act] > 1e-10:
+                    diffs.append(abs(i_u1[act] - i_su2[act]) / i_u1[act])
+        # Average relative difference should be > 1% (phase halving is real)
+        avg_diff = sum(diffs) / len(diffs) if diffs else 0
+        self.assertGreater(avg_diff, 0.01,
+                           f"Average U(1)/SU(2) intensity difference {avg_diff:.1%} — "
+                           "phase halving should be observable")
+
+    def test_symmetric_diamond_su2_equals_u1(self):
+        """Symmetric diamond: SU(2) and U(1) should give identical intensities."""
+        L = Landscape()
+        L.add_edge(START, "A", delta=1.0, resistance=0.5)
+        L.add_edge("A", GOAL, delta=1.0, resistance=0.5)
+        L.add_edge(START, "B", delta=1.0, resistance=0.5)
+        L.add_edge("B", GOAL, delta=1.0, resistance=0.5)
+        r_u1 = _analyze(L)
+        r_su2 = _analyze_su2(L)
+        for ai_u1, ai_su2 in zip(
+            sorted(r_u1.action_infos, key=lambda a: a.action),
+            sorted(r_su2.action_infos, key=lambda a: a.action),
+        ):
+            self.assertAlmostEqual(ai_u1.intensity, ai_su2.intensity, places=6,
+                                   msg=f"Symmetric: {ai_u1.action} should match")
+
+
 if __name__ == "__main__":
     unittest.main()
