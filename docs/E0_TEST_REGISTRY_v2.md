@@ -179,14 +179,14 @@ Interference-based routing in Gordian remains structurally stable under repeated
 
 **Evidence**  
 - historization scenarios integrated into `e0_controller/test_gordian_trap.py`
-- `e0_controller/test_historization_gordian.py` — 36 dedicated tests across 10 classes
+- `e0_controller/test_historization_gordian.py` — 61 dedicated tests across 14 classes
 - `docs/E0_EVIDENCE_AND_FALSIFICATION_STATUS_v1.md`
 
 **Result**  
-Across tested scenarios, `cos(ΔΘ)` remains destructive (< 0), B-path dominance survives, and hybrid routing remains stable. Extended verification covers: parametric resilience (δ_max, ρ, λ_s, λ_f), FAILURE outcomes, K2 lazy decay recovery, clipping saturation, alternating adversarial, recovery from adversarial, holonomy formula invariance under historization, multi-goal × historization, extreme stress (100+ passes), and hybrid multi-cycle.
+Across tested scenarios, `cos(ΔΘ)` remains destructive (< 0), B-path dominance survives, and hybrid routing remains stable. Extended verification covers: parametric resilience (δ_max, ρ, λ_s, λ_f), FAILURE outcomes, K2 lazy decay recovery, clipping saturation, alternating adversarial, recovery from adversarial, holonomy formula invariance under historization, multi-goal × historization, extreme stress (100+ passes), hybrid multi-cycle, **and non-Gordian topologies (Triangle, Diamond, Gordian-lite) under U(1) and SU(2)**.
 
 **Status**  
-✅ Confirmed
+✅ Confirmed *(Gordian + Triangle + Diamond + Gordian-lite)*
 
 ---
 
@@ -544,7 +544,7 @@ Born sampling (P ∝ I, choosing actions probabilistically from the amplitude-de
 | `test_spinor.py` | C15, C23, C12 |
 | `test_resonator.py` | C16, C24 |
 | `test_omega_uniqueness.py` | C14 |
-| `test_historization_gordian.py` | C8, C9 |
+| `test_historization_gordian.py` | C8, C9 (Gordian + O1 non-Gordian) |
 | `test_born_regime.py` | C17 |
 | `test_minidomain.py` | base mechanics, historization, K11/K12 |
 | `test_g5_edge_cases.py` | C10, C23 (SU(2) classes) |
@@ -603,9 +603,16 @@ Resonance (R1–R4 criteria) is not limited to the minimal 3-node kernel. Larger
 **Target claim**  
 C8 under much stronger clipping / distortion regimes.
 
-**Status:** ✅ Largely addressed by `test_historization_gordian.py` — covers δ_max=0.5/10.0, ρ=0.5/1.0, λ variations, 100 adversarial passes, 50 alternating cycles, FAILURE outcomes, K2 decay recovery, and clipping saturation.
+**Status:** ✅ Resolved
 
-**Remaining gap:** Cross-domain generalization (non-Gordian topologies with historization stress).
+**What was done:**
+- Extended `test_historization_gordian.py` with 4 new classes (25 tests):
+  - `TestTriangleHistorization` (6): single-family topology immune to historization — P(A)=1.0 under all regimes, SU(2) included
+  - `TestDiamondHistorization` (6): two-family winner shifts (expected intensity reweighting) with structural invariants preserved
+  - `TestGordianLiteHistorization` (10): cos(ΔΘ) < 0 under all 6 regimes (pristine, short-success, loop-success, alternating, failure, mixed-100×); SU(2) A-wins preserved
+  - `TestCrossTopologyHistorizationInvariants` (3): normalization + non-negativity + SU(2) normalization across all topologies
+- File total: 61 tests / 14 classes (was 36/10)
+- Key finding: Historization modifies resistance but cannot create or destroy interference patterns — topology determines interference possibility
 
 ---
 

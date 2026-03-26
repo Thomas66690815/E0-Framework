@@ -574,5 +574,339 @@ class TestHybridMultiCycle(unittest.TestCase):
             self.assertEqual(trace_h.steps[0].target, "B1")
 
 
+# ══════════════════════════════════════════════════════════════
+# O1 — Historization × Non-Gordian Topologies
+# ══════════════════════════════════════════════════════════════
+
+# ── Non-Gordian domain builders ───────────────────────────────
+
+def build_triangle(**hist_kwargs) -> Landscape:
+    """Triangle: START → A → GOAL, A → B → GOAL. Single family (all via A)."""
+    L = Landscape()
+    if hist_kwargs:
+        L.historization = Historization(**hist_kwargs)
+    else:
+        L.historization = Historization()
+    L.add_edge("START", "A", delta=0.5, resistance=0.3)
+    L.add_edge("A", "GOAL", delta=0.4, resistance=0.3)
+    L.add_edge("A", "B", delta=0.8, resistance=0.2)
+    L.add_edge("B", "GOAL", delta=0.6, resistance=0.3)
+    return L
+
+
+def build_diamond(**hist_kwargs) -> Landscape:
+    """Diamond: START → A → GOAL, START → B → GOAL. Two independent families."""
+    L = Landscape()
+    if hist_kwargs:
+        L.historization = Historization(**hist_kwargs)
+    else:
+        L.historization = Historization()
+    L.add_edge("START", "A", delta=0.5, resistance=0.3)
+    L.add_edge("A", "GOAL", delta=0.4, resistance=0.3)
+    L.add_edge("START", "B", delta=0.7, resistance=0.4)
+    L.add_edge("B", "GOAL", delta=0.6, resistance=0.3)
+    return L
+
+
+def build_gordian_lite(**hist_kwargs) -> Landscape:
+    """Gordian-lite: A-short + A-loop (phase opposition) + B-detour."""
+    L = Landscape()
+    if hist_kwargs:
+        L.historization = Historization(**hist_kwargs)
+    else:
+        L.historization = Historization()
+    L.add_edge("START", "A", delta=0.3, resistance=0.3)
+    L.add_edge("A", "X", delta=0.3, resistance=0.3)
+    L.add_edge("X", "GOAL", delta=0.3, resistance=0.3)
+    L.add_edge("A", "L1", delta=2.5, resistance=0.1)
+    L.add_edge("L1", "L2", delta=2.5, resistance=0.1)
+    L.add_edge("L2", "GOAL", delta=2.5, resistance=0.1)
+    L.add_edge("START", "B", delta=0.8, resistance=0.3)
+    L.add_edge("B", "GOAL", delta=0.8, resistance=0.3)
+    return L
+
+
+# Paths for non-Gordian topologies
+TRI_SHORT = ["START", "A", "GOAL"]
+TRI_LONG  = ["START", "A", "B", "GOAL"]
+DIA_A     = ["START", "A", "GOAL"]
+DIA_B     = ["START", "B", "GOAL"]
+GL_SHORT  = ["START", "A", "X", "GOAL"]
+GL_LOOP   = ["START", "A", "L1", "L2", "GOAL"]
+
+
+class TestTriangleHistorization(unittest.TestCase):
+    """O1: Triangle (single-family) is immune to historization effects."""
+
+    def test_single_family_always_a(self):
+        """Triangle has only A as first action — P(A)=1.0 regardless."""
+        L = build_triangle()
+        report = _overlay_choice(L)
+        self.assertEqual(report, "A")
+
+    def test_short_path_success_no_effect(self):
+        """10× A→GOAL success: P(A) stays 1.0."""
+        L = build_triangle()
+        for _ in range(10):
+            _historize_path(L, TRI_SHORT)
+        self.assertEqual(_overlay_choice(L), "A")
+
+    def test_long_path_success_no_effect(self):
+        """20× A→B→GOAL success: P(A) stays 1.0."""
+        L = build_triangle()
+        for _ in range(20):
+            _historize_path(L, TRI_LONG)
+        self.assertEqual(_overlay_choice(L), "A")
+
+    def test_failure_no_effect(self):
+        """10× A→GOAL failure: P(A) stays 1.0 (still single family)."""
+        L = build_triangle()
+        for _ in range(10):
+            _historize_path(L, TRI_SHORT, Outcome.FAILURE)
+        self.assertEqual(_overlay_choice(L), "A")
+
+    def test_extreme_mixed_no_effect(self):
+        """50× alternating success/failure: P(A) stays 1.0."""
+        L = build_triangle()
+        for i in range(50):
+            p = TRI_SHORT if i % 2 == 0 else TRI_LONG
+            o = Outcome.SUCCESS if i % 3 != 0 else Outcome.FAILURE
+            _historize_path(L, p, o)
+        self.assertEqual(_overlay_choice(L), "A")
+
+    def test_su2_historization_no_effect(self):
+        """SU(2) + 50× mixed historization: P(A) stays 1.0."""
+        L = build_triangle()
+        for i in range(50):
+            p = TRI_SHORT if i % 2 == 0 else TRI_LONG
+            o = Outcome.SUCCESS if i % 3 != 0 else Outcome.FAILURE
+            _historize_path(L, p, o)
+        report = analyze_controller_state(
+            E0Controller(L, always_success), "START",
+            horizon_edges=4, geometry="goal_reaching",
+            goals={"GOAL"}, use_su2=True,
+        )
+        self.assertEqual(report.amplitude_choice, "A")
+
+
+class TestDiamondHistorization(unittest.TestCase):
+    """O1: Diamond (two independent families) — winner shifts but structure preserved."""
+
+    def test_pristine_winner(self):
+        """Pristine Diamond: A wins (lower tension)."""
+        L = build_diamond()
+        self.assertEqual(_overlay_choice(L), "A")
+
+    def test_b_success_flips_winner(self):
+        """Historizing B-path enough flips winner to B."""
+        L = build_diamond()
+        for _ in range(10):
+            _historize_path(L, DIA_B)
+        self.assertEqual(_overlay_choice(L), "B")
+
+    def test_a_failure_flips_winner(self):
+        """Failing A-path raises its resistance → B wins."""
+        L = build_diamond()
+        for _ in range(10):
+            _historize_path(L, DIA_A, Outcome.FAILURE)
+        self.assertEqual(_overlay_choice(L), "B")
+
+    def test_alternate_preserves_near_balance(self):
+        """50× alternating A/B success: winner near-balanced."""
+        L = build_diamond()
+        for i in range(50):
+            p = DIA_A if i % 2 == 0 else DIA_B
+            _historize_path(L, p)
+        report = analyze_controller_state(
+            E0Controller(L, always_success), "START",
+            horizon_edges=4, geometry="goal_reaching", goals={"GOAL"},
+        )
+        probs = {ai.action: ai.probability for ai in report.action_infos}
+        # Both should be close to 0.5
+        self.assertGreater(probs.get("A", 0), 0.40)
+        self.assertGreater(probs.get("B", 0), 0.40)
+
+    def test_structural_invariants_extreme(self):
+        """100× mixed: probs sum to 1.0, all non-negative."""
+        L = build_diamond()
+        for i in range(100):
+            if i % 3 == 0:
+                _historize_path(L, DIA_A, Outcome.FAILURE)
+            elif i % 3 == 1:
+                _historize_path(L, DIA_B, Outcome.SUCCESS)
+            else:
+                _historize_path(L, DIA_A, Outcome.SUCCESS)
+        report = analyze_controller_state(
+            E0Controller(L, always_success), "START",
+            horizon_edges=4, geometry="goal_reaching", goals={"GOAL"},
+        )
+        total = sum(ai.probability for ai in report.action_infos)
+        self.assertAlmostEqual(total, 1.0, places=8)
+        for ai in report.action_infos:
+            self.assertGreaterEqual(ai.intensity, 0.0)
+
+    def test_su2_flip_preserved(self):
+        """SU(2) + B-success historization: B still wins."""
+        L = build_diamond()
+        for _ in range(10):
+            _historize_path(L, DIA_B)
+        report = analyze_controller_state(
+            E0Controller(L, always_success), "START",
+            horizon_edges=4, geometry="goal_reaching",
+            goals={"GOAL"}, use_su2=True,
+        )
+        self.assertEqual(report.amplitude_choice, "B")
+
+
+class TestGordianLiteHistorization(unittest.TestCase):
+    """O1: Gordian-lite — destructive interference persists under historization."""
+
+    def test_cos_dt_negative_pristine(self):
+        """Pristine: cos(ΔΘ) < 0 — destructive interference."""
+        L = build_gordian_lite()
+        dt = theta(L, GL_LOOP) - theta(L, GL_SHORT)
+        self.assertLess(math.cos(dt), 0.0)
+
+    def test_cos_dt_negative_after_short_success(self):
+        """50× A-short success: cos(ΔΘ) remains < 0."""
+        L = build_gordian_lite()
+        for _ in range(50):
+            _historize_path(L, GL_SHORT)
+        dt = theta(L, GL_LOOP) - theta(L, GL_SHORT)
+        self.assertLess(math.cos(dt), 0.0)
+
+    def test_cos_dt_negative_after_loop_success(self):
+        """10× A-loop success: cos(ΔΘ) remains < 0."""
+        L = build_gordian_lite()
+        for _ in range(10):
+            _historize_path(L, GL_LOOP)
+        dt = theta(L, GL_LOOP) - theta(L, GL_SHORT)
+        self.assertLess(math.cos(dt), 0.0)
+
+    def test_cos_dt_negative_after_alternating(self):
+        """50× alternating short/loop: cos(ΔΘ) remains < 0."""
+        L = build_gordian_lite()
+        for i in range(50):
+            p = GL_SHORT if i % 2 == 0 else GL_LOOP
+            _historize_path(L, p)
+        dt = theta(L, GL_LOOP) - theta(L, GL_SHORT)
+        self.assertLess(math.cos(dt), 0.0)
+
+    def test_cos_dt_negative_after_failure(self):
+        """50× A-short failure: cos(ΔΘ) remains < 0."""
+        L = build_gordian_lite()
+        for _ in range(50):
+            _historize_path(L, GL_SHORT, Outcome.FAILURE)
+        dt = theta(L, GL_LOOP) - theta(L, GL_SHORT)
+        self.assertLess(math.cos(dt), 0.0)
+
+    def test_cos_dt_negative_extreme_mixed(self):
+        """100× mixed success/failure on both paths: cos(ΔΘ) still < 0."""
+        L = build_gordian_lite()
+        for i in range(100):
+            p = GL_SHORT if i % 2 == 0 else GL_LOOP
+            o = Outcome.SUCCESS if i % 3 != 0 else Outcome.FAILURE
+            _historize_path(L, p, o)
+        dt = theta(L, GL_LOOP) - theta(L, GL_SHORT)
+        self.assertLess(math.cos(dt), 0.0)
+
+    def test_pristine_b_wins(self):
+        """Pristine Gordian-lite: B wins (A suppressed by interference)."""
+        L = build_gordian_lite()
+        self.assertEqual(_overlay_choice(L), "B")
+
+    def test_su2_a_wins_pristine(self):
+        """SU(2) on Gordian-lite: A wins (phase halving weakens destruction)."""
+        L = build_gordian_lite()
+        report = analyze_controller_state(
+            E0Controller(L, always_success), "START",
+            horizon_edges=4, geometry="goal_reaching",
+            goals={"GOAL"}, use_su2=True,
+        )
+        self.assertEqual(report.amplitude_choice, "A")
+
+    def test_su2_a_wins_after_historization(self):
+        """SU(2) + 50× mixed historization: A still wins."""
+        L = build_gordian_lite()
+        for i in range(50):
+            p = GL_SHORT if i % 2 == 0 else GL_LOOP
+            _historize_path(L, p)
+        report = analyze_controller_state(
+            E0Controller(L, always_success), "START",
+            horizon_edges=4, geometry="goal_reaching",
+            goals={"GOAL"}, use_su2=True,
+        )
+        self.assertEqual(report.amplitude_choice, "A")
+
+    def test_structural_invariants(self):
+        """100× extreme mixed: probs sum to 1, all non-negative."""
+        L = build_gordian_lite()
+        for i in range(100):
+            p = GL_SHORT if i % 2 == 0 else GL_LOOP
+            o = Outcome.SUCCESS if i % 3 != 0 else Outcome.FAILURE
+            _historize_path(L, p, o)
+        report = analyze_controller_state(
+            E0Controller(L, always_success), "START",
+            horizon_edges=4, geometry="goal_reaching", goals={"GOAL"},
+        )
+        total = sum(ai.probability for ai in report.action_infos)
+        self.assertAlmostEqual(total, 1.0, places=8)
+        for ai in report.action_infos:
+            self.assertGreaterEqual(ai.intensity, 0.0)
+
+
+class TestCrossTopologyHistorizationInvariants(unittest.TestCase):
+    """O1: Properties that must hold across all three topologies under historization."""
+
+    def _stress_and_analyze(self, builder, paths, n=50, use_su2=False):
+        """Apply n mixed historization steps, return report."""
+        L = builder()
+        for i in range(n):
+            p = paths[i % len(paths)]
+            o = Outcome.SUCCESS if i % 3 != 0 else Outcome.FAILURE
+            _historize_path(L, p, o)
+        return analyze_controller_state(
+            E0Controller(L, always_success), "START",
+            horizon_edges=4, geometry="goal_reaching",
+            goals={"GOAL"}, use_su2=use_su2,
+        )
+
+    def test_normalization_all_topologies(self):
+        """Probabilities sum to 1.0 after 50× stress on all topologies."""
+        configs = [
+            (build_triangle, [TRI_SHORT, TRI_LONG]),
+            (build_diamond, [DIA_A, DIA_B]),
+            (build_gordian_lite, [GL_SHORT, GL_LOOP]),
+        ]
+        for builder, paths in configs:
+            report = self._stress_and_analyze(builder, paths)
+            total = sum(ai.probability for ai in report.action_infos)
+            self.assertAlmostEqual(total, 1.0, places=8)
+
+    def test_non_negativity_all_topologies(self):
+        """All intensities >= 0 after 50× stress on all topologies."""
+        configs = [
+            (build_triangle, [TRI_SHORT, TRI_LONG]),
+            (build_diamond, [DIA_A, DIA_B]),
+            (build_gordian_lite, [GL_SHORT, GL_LOOP]),
+        ]
+        for builder, paths in configs:
+            report = self._stress_and_analyze(builder, paths)
+            for ai in report.action_infos:
+                self.assertGreaterEqual(ai.intensity, 0.0)
+
+    def test_su2_normalization_all_topologies(self):
+        """SU(2) probs sum to 1.0 after 50× stress on all topologies."""
+        configs = [
+            (build_triangle, [TRI_SHORT, TRI_LONG]),
+            (build_diamond, [DIA_A, DIA_B]),
+            (build_gordian_lite, [GL_SHORT, GL_LOOP]),
+        ]
+        for builder, paths in configs:
+            report = self._stress_and_analyze(builder, paths, use_su2=True)
+            total = sum(ai.probability for ai in report.action_infos)
+            self.assertAlmostEqual(total, 1.0, places=8)
+
+
 if __name__ == "__main__":
     unittest.main()
