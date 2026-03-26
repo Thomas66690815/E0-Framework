@@ -78,6 +78,58 @@ See E0_CONTROLLER_STATUS.md for full project context.
 
 __version__ = "0.10.8"
 
+# ── Public API ──────────────────────────────────────────────
+__all__ = [
+    # Primitives
+    "Edge", "Outcome",
+    # Tension / Coherence
+    "tension", "path_tension", "coherence",
+    # Historization
+    "Historization", "TraceRecord",
+    # Landscape
+    "Landscape",
+    # Controller
+    "E0Controller", "StepResult", "RunTrace", "EscalationType", "HybridMode",
+    # Potential / Helmholtz
+    "phi", "phi_map", "v_raw", "v_grad", "v_rot", "decomposition",
+    "div_v", "graph_laplacian",
+    # Connection / Phase
+    "omega", "theta", "holonomy", "omega_map",
+    # Wave Path / Amplitude
+    "psi", "path_intensity", "sum_paths", "intensity", "interference_analysis",
+    # MemOS Persistence
+    "E0MemoryOS", "CanonRef", "MemOSContext",
+    # Session Orchestrator
+    "Session", "SessionResult",
+    # LLM Adapter
+    "E0LLMAdapter", "LLMConfig", "LLMResponseError",
+    "DeltaEstimate", "ProposedState", "TransitionResult",
+    "ResistanceEstimate", "LandscapeProposal",
+    "materialize_landscape", "task_map_from_proposal",
+    # Graph Validation
+    "goal_reachable", "find_happy_path", "find_recovery_edges",
+    "detect_traps", "detect_trivial_loops", "graph_quality", "GraphQuality",
+    # Evaluation
+    "RunEvaluation", "SemanticEvaluation", "ScenarioEvaluation",
+    "evaluate_run", "evaluate_semantics", "evaluate_scenario",
+    "detect_hard_failure", "format_evaluation_report",
+    # Reflection
+    "ReflectionDecision", "ReflectionReport", "ReflectionCallFn",
+    "should_reflect", "reflect", "reflect_with_llm", "format_reflection_report",
+    # Self-Tuning (B4)
+    "RunFieldSummary", "DerivedThresholds", "ParameterSensitivity",
+    "TuningProposal", "MetaTuningResult",
+    "TuningCycleResult", "MultiCycleTuningResult",
+    "TuningSnapshot", "TuningMemory",
+    "quality_score", "tuning_cycle", "tune",
+    "tune_with_memory", "perturbation_sensitivity", "propose_tuning_empirical",
+    "save_tuning_memory", "load_tuning_memory",
+    # Scenarios
+    "ScenarioPacket", "load_scenario", "find_scenario",
+    # Cross-Domain Validation
+    "run_validation",
+]
+
 from .primitives import Edge, Outcome
 from .historization import Historization, TraceRecord
 from .tension import tension, path_tension, coherence

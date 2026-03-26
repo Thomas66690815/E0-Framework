@@ -13,6 +13,8 @@ In practical terms, this means the repository is no longer only about a determin
 - a hybrid correction mode,
 - SU(2) multi-axis spinor transport (B1),
 - topological curvature modulation M_H (B2),
+- self-tuning meta-layer with cross-run memory (B4),
+- a session orchestrator with automatic MemOS persistence,
 - persistent runtime support via MemOS,
 - an LLM adapter with embedded E₀ semantic context,
 - and live integration into multiple LLM-driven demos.
@@ -102,10 +104,37 @@ The controller can run in a hybrid mode:
 
 - **GREEDY** — pure local structural selection
 - **AMPLITUDE_ON_DISAGREE** — follow the amplitude layer when it disagrees with greedy local choice and indicates a stronger forward-support structure
+- **BORN_SAMPLING** — stochastic action selection proportional to amplitude-derived probabilities
 
 This hybrid mode is integrated into MemOS and into all major LLM demos in the repository.
 
-### 7. Interference-based routing (Gordian Trap)
+### 7. Self-tuning meta-layer (B4)
+
+A four-layer self-tuning system that eliminates ad-hoc constants and enables autonomous parameter optimization:
+
+- **B4.1 Meta-Layer:** Field-derived thresholds from run statistics replace hardcoded constants. `ParameterSensitivity` identifies which controller parameters most affect run quality.
+- **B4.2 Feedback Loop:** Closed run→diagnose→adjust→verify cycle with quality score `Q ∈ [0,1]`.
+- **B4.3 Cross-Run Memory:** `TuningMemory` accumulates quality trends, recurring issues, and parameter drift across runs, persisted via MemOS.
+- **B4.4 True Sensitivity:** Perturbation-based `∂Q/∂θ` via finite differences for empirical gradient-based parameter proposals.
+
+### 8. Session orchestrator
+
+A thin orchestration layer between the controller and MemOS persistence:
+
+```python
+session = Session("my-session", landscape, execute_fn)
+result  = session.run("START", goal="GOAL")
+# → context, run record, and tuning memory auto-saved to disk
+
+# Later / new process:
+session2 = Session.resume("my-session", execute_fn)
+result2  = session2.run("START", goal="GOAL")
+# → picks up where it left off (historization, params, memory)
+```
+
+The controller stays pure — zero persistence awareness. The Session handles the lifecycle.
+
+### 9. Interference-based routing (Gordian Trap)
 
 The framework now includes a constructive proof that the amplitude layer can route through structurally deceptive topologies:
 
@@ -130,7 +159,7 @@ See `e0_controller/test_gordian_trap.py` for 44 formal tests (17 interference ro
 - [External validation / handoff note](docs/E0_EXTERNAL_VALIDATION_AND_HANDOFF_NOTE_v1.md) — package for reviewers or AI systems
 - [Phase 3q interference report](docs/E0_PHASE3Q_INTERFERENCE_REPORT_v1.md) — holonomy formula, goal_reaching geometry, Gordian Trap
 - [Paper 3: Non-Abelian Structure](docs/E0_PAPER3_NON_ABELIAN_STRUCTURE_v1.md) — SU(2) transport, curvature modulation, topological invariants
-- [Test Registry v2](docs/E0_TEST_REGISTRY_v2.md) — complete per-file test inventory (1140 tests)
+- [Test Registry v2](docs/E0_TEST_REGISTRY_v2.md) — complete per-file test inventory (1254 tests)
 
 ---
 
@@ -192,6 +221,8 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 | Interference routing | **Demonstrated** (Gordian Trap) | `e0_controller/test_gordian_trap.py` |
 | Topology classification | **Demonstrated** (380-graph scan, 23 tests) | `e0_controller/test_topology_classification.py` |
 | G5 edge case suite | **Stressed** (5 families, 28 tests) | `e0_controller/test_g5_edge_cases.py` |
+| B4 Self-Tuning Meta-Layer | **Active** (87 tests) | `e0_controller/self_tuning.py` |
+| Session Orchestrator | **Active** (13 tests) | `e0_controller/session.py` |
 | MemOS (hybrid-aware persistence) | **Active** — full roundtrip for SU(2), curvature, escalation context | `e0_controller/memory_os.py` |
 | LLM Adapter (canon-enriched) | **Active** — live API confirmed | `e0_controller/llm_adapter.py` |
 | LLM demo hybrid integration | **Active** (4 demos) | `e0_controller/demo_*.py` |
@@ -208,7 +239,7 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 | Core reference implementation | **Archived** | `_archive/e0_core/` |
 | axis_fn Registry Pattern | **Planned** — full SU(2) axis persistence | — |
 
-**Tests:** 1155 total (unittest), 0 failures, 32 skipped (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
+**Tests:** 1254 total (unittest discover), 0 non-LLM failures, 32 conditional (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
 
 ---
 
@@ -221,13 +252,25 @@ git clone https://github.com/Thomas66690815/E0-Framework.git
 cd E0-Framework
 ```
 
+### Install as a package (editable)
+
+```bash
+pip install -e .
+```
+
+This makes `e0_controller` importable from anywhere:
+
+```python
+from e0_controller import E0Controller, Landscape, Session, Outcome
+```
+
 ### Run the tests (no API key needed)
 
 ```bash
 # Mini-domain: 21 tests (custom runner)
 python e0_controller/test_minidomain.py
 
-# Full test suite: 1140 tests (unittest)
+# Full test suite: 1254 tests (unittest)
 python -m unittest discover -s e0_controller -p "test_*.py" -v
 ```
 
@@ -239,6 +282,7 @@ python -m e0_controller.demo_invoice_llm --mock
 python -m e0_controller.demo_open_domain --mock
 python -m e0_controller.demo_research_brief --mock
 python -m e0_controller.demo_incident_postmortem --mock
+python -m e0_controller.demo_session_persist
 ```
 
 ### Run a hybrid demo
@@ -291,6 +335,8 @@ E0-Framework/
 │   ├── spinor_connection.py            SU(2) multi-axis transport, 720° periodicity (B1)
 │   ├── amplitude_overlay.py            Path-family intensity, summation geometries
 │   ├── dynamic_horizon.py              Adaptive path horizon for amplitude overlay
+│   ├── self_tuning.py                  B4 self-tuning meta-layer (field thresholds, feedback, memory)
+│   ├── session.py                      Session orchestrator (auto-persistence via MemOS)
 │   ├── memory_os.py                    Persist / Restore / Summarize / Retrieve (curvature-aware)
 │   ├── llm_adapter.py                  LLM ↔ Controller interface (canon-enriched)
 │   ├── evaluation.py                   Run/Scenario evaluation, A–F rating, hybrid metrics
@@ -303,9 +349,10 @@ E0-Framework/
 │   ├── demo_open_domain.py             Open-domain demo (LLM-bootstrapped landscape)
 │   ├── demo_research_brief.py          Research brief demo
 │   ├── demo_incident_postmortem.py     Incident postmortem demo
+│   ├── demo_session_persist.py         Session persistence demo (save + resume from disk)
 │   ├── explore_amplitude.py            Amplitude exploration tool
 │   ├── explore_gordian.py              Gordian Trap discovery script
-│   └── test_*.py                       1140 tests (see docs/E0_TEST_REGISTRY_v2.md)
+│   └── test_*.py                       1254 tests (see docs/E0_TEST_REGISTRY_v2.md)
 │
 ├── scenarios/                        Scenario Packets for grounded LLM demos
 │   ├── competitor_brief/               Domain-specific scenario data
