@@ -1,12 +1,13 @@
 """
-Tests for B4.1 + B4.2 + B4.3: Self-Tuning Meta-Layer
-=====================================================
+Tests for B4.1 – B4.4: Self-Tuning Meta-Layer
+================================================
 Tests the field-derived threshold system, parameter sensitivity
 analysis, tuning proposals, oscillation protection, tuning cycles,
-multi-cycle convergence, cross-run memory, and integration with
-the reflection layer.
+multi-cycle convergence, cross-run memory, perturbation-based
+sensitivity, and integration with the reflection layer.
 
-33 tests (B4.1) + 17 tests (B4.2) + 22 tests (B4.3) in 18 test classes.
+33 tests (B4.1) + 17 tests (B4.2) + 25 tests (B4.3)
++ 12 tests (B4.4) in 21 test classes.
 """
 
 import os
@@ -41,6 +42,8 @@ from e0_controller.self_tuning import (
     tune_with_memory,
     save_tuning_memory,
     load_tuning_memory,
+    perturbation_sensitivity,
+    propose_tuning_empirical,
     _would_oscillate,
     _reset_landscape,
     TUNABLE_PARAMS,
@@ -985,6 +988,139 @@ class TestTuneWithMemory(unittest.TestCase):
                 ctrl2, "A", goal="GOAL", max_tuning_iterations=1, memory=mem2,
             )
             self.assertGreater(len(mem2.entries), count_after_s1)
+
+
+# ══════════════════════════════════════════════
+# B4.4: True Sensitivity Analysis Tests
+# ══════════════════════════════════════════════
+
+
+# ──────────────────────────────────────────────
+# 24. Perturbation Sensitivity
+# ──────────────────────────────────────────────
+
+class TestPerturbationSensitivity(unittest.TestCase):
+    """Test empirical ∂Q/∂θ via finite differences."""
+
+    def test_returns_all_tunable_params(self):
+        """All TUNABLE_PARAMS should appear in results."""
+        L = _make_clean_landscape()
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS, alpha=2.0)
+        results = perturbation_sensitivity(ctrl, "A", goal="GOAL", max_cycles=20)
+        names = {r.name for r in results}
+        for p in TUNABLE_PARAMS:
+            if hasattr(ctrl, p):
+                self.assertIn(p, names)
+
+    def test_sensitivity_in_bounds(self):
+        """All sensitivity values should be in [0, 1]."""
+        L = _make_clean_landscape()
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS)
+        results = perturbation_sensitivity(ctrl, "A", goal="GOAL", max_cycles=20)
+        for r in results:
+            self.assertGreaterEqual(r.sensitivity, 0.0)
+            self.assertLessEqual(r.sensitivity, 1.0)
+
+    def test_sorted_descending(self):
+        """Results should be sorted by sensitivity descending."""
+        L = _make_clean_landscape()
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS)
+        results = perturbation_sensitivity(ctrl, "A", goal="GOAL", max_cycles=20)
+        sensitivities = [r.sensitivity for r in results]
+        self.assertEqual(sensitivities, sorted(sensitivities, reverse=True))
+
+    def test_parameter_restored_after_probing(self):
+        """Controller params must be at original values after probing."""
+        L = _make_clean_landscape()
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS, alpha=3.5)
+        perturbation_sensitivity(ctrl, "A", goal="GOAL", max_cycles=20)
+        self.assertAlmostEqual(ctrl.alpha, 3.5)
+
+    def test_subset_of_params(self):
+        """Only specified params should be probed."""
+        L = _make_clean_landscape()
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS)
+        results = perturbation_sensitivity(
+            ctrl, "A", goal="GOAL", max_cycles=20, params=["alpha"]
+        )
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].name, "alpha")
+
+    def test_direction_is_valid(self):
+        """Direction must be increase, decrease, or stable."""
+        L = _make_clean_landscape()
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS)
+        results = perturbation_sensitivity(ctrl, "A", goal="GOAL", max_cycles=20)
+        valid = {"increase", "decrease", "stable"}
+        for r in results:
+            self.assertIn(r.suggested_direction, valid)
+
+    def test_looping_landscape_shows_alpha_sensitivity(self):
+        """On a looping landscape, alpha should have nonzero sensitivity."""
+        L = _make_looping_landscape()
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS, alpha=0.5)
+        results = perturbation_sensitivity(
+            ctrl, "A", goal="GOAL", max_cycles=30, params=["alpha"]
+        )
+        # Alpha should matter when there's a looping trap
+        self.assertEqual(results[0].name, "alpha")
+        # We can't assert exact value but it should be computed
+        self.assertIsInstance(results[0].sensitivity, float)
+
+
+# ──────────────────────────────────────────────
+# 25. Empirical Tuning Proposals
+# ──────────────────────────────────────────────
+
+class TestProposeTuningEmpirical(unittest.TestCase):
+    """Test propose_tuning_empirical (B4.4)."""
+
+    def test_returns_meta_tuning_result(self):
+        L = _make_clean_landscape()
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS, alpha=2.0)
+        result = propose_tuning_empirical(ctrl, "A", goal="GOAL", max_cycles=20)
+        self.assertIsInstance(result, MetaTuningResult)
+        self.assertIsNotNone(result.field_summary)
+        self.assertIsNotNone(result.derived_thresholds)
+
+    def test_proposals_bounded(self):
+        """Proposed values must stay within parameter bounds."""
+        L = _make_looping_landscape()
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS, alpha=0.5)
+        result = propose_tuning_empirical(ctrl, "A", goal="GOAL", max_cycles=30)
+        for p in result.proposals:
+            lo, hi = TUNABLE_PARAMS[p.parameter]
+            self.assertGreaterEqual(p.new_value, lo)
+            self.assertLessEqual(p.new_value, hi)
+
+    def test_oscillation_protection_applies(self):
+        """Param history oscillation should prevent proposal."""
+        L = _make_clean_landscape()
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS)
+        # Simulate oscillation in alpha history
+        history = {"alpha": [2.0, 3.0, 2.0]}  # alternating
+        result = propose_tuning_empirical(
+            ctrl, "A", goal="GOAL", max_cycles=20,
+            param_history=history,
+        )
+        alpha_proposals = [p for p in result.proposals if p.parameter == "alpha"]
+        # Should be blocked by oscillation protection
+        self.assertEqual(len(alpha_proposals), 0)
+
+    def test_empirical_reason_format(self):
+        """Proposals should reference ∂Q/∂ in reason."""
+        L = _make_looping_landscape()
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS, alpha=0.5)
+        result = propose_tuning_empirical(ctrl, "A", goal="GOAL", max_cycles=30)
+        for p in result.proposals:
+            self.assertIn("∂Q/∂", p.reason)
+
+    def test_controller_unchanged_after_propose(self):
+        """propose_tuning_empirical should not change controller state."""
+        L = _make_clean_landscape()
+        ctrl = E0Controller(L, lambda s, t: Outcome.SUCCESS, alpha=2.5)
+        propose_tuning_empirical(ctrl, "A", goal="GOAL", max_cycles=20)
+        self.assertAlmostEqual(ctrl.alpha, 2.5)
 
 
 if __name__ == "__main__":

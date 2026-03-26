@@ -121,4 +121,5 @@ from .self_tuning import (
     quality_score, tuning_cycle, tune,
     snapshot_from_cycle, tune_with_memory,
     save_tuning_memory, load_tuning_memory,
+    perturbation_sensitivity, propose_tuning_empirical,
 )

@@ -1,6 +1,6 @@
 """
-E₀ Self-Tuning Layer (B4.1 + B4.2 + B4.3)
-=============================================
+E₀ Self-Tuning Layer (B4.1 – B4.4)
+=====================================
 Reflexivity as self-application of E₀ dynamics.
 
 The key insight: reflexivity is NOT a new primitive.  It is the E₀
@@ -63,6 +63,18 @@ and applied changes.  Analysis functions extract:
     suggest_from_history — cross-run pattern → actionable insight
 
 Serialization via to_dict/from_dict integrates with MemOS.
+
+True Sensitivity Analysis (B4.4)
+---------------------------------
+Replace heuristic sensitivity attribution with empirical
+finite-difference gradients:
+
+    ∂Q/∂θ_i ≈ (Q(θ + ε_i) − Q(θ − ε_i)) / 2ε
+
+Each parameter is perturbed independently, the controller re-runs
+under identical conditions, and the quality delta is measured.
+This replaces the heuristic rules in compute_parameter_sensitivities
+with ground-truth gradients from the actual landscape.
 """
 
 from __future__ import annotations
@@ -1180,3 +1192,208 @@ def load_tuning_memory(
         return TuningMemory(max_entries=max_entries)
     data = json.loads(path.read_text(encoding="utf-8"))
     return TuningMemory.from_dict(data)
+
+
+# ──────────────────────────────────────────────
+# 13. True Sensitivity Analysis (B4.4)
+# ──────────────────────────────────────────────
+
+_DEFAULT_EPSILON_FRAC = 0.05   # perturb by 5% of param range
+
+
+def _run_and_score(
+    controller,
+    start: str,
+    goal: Optional[str],
+    max_cycles: int,
+) -> Tuple[float, RunFieldSummary]:
+    """Reset landscape, run controller, return (Q, field_summary)."""
+    _reset_landscape(controller.landscape)
+    controller._recent = []
+    controller._escalation_edges = {}
+
+    trace = controller.run(start, max_cycles=max_cycles, goal=goal)
+    fs = field_summary_from_run(controller.landscape, trace)
+    goal_reached = (
+        trace.path[-1] == goal if (goal and trace.path) else False
+    )
+    return quality_score(fs, goal_reached), fs
+
+
+def perturbation_sensitivity(
+    controller,
+    start: str,
+    goal: Optional[str] = None,
+    max_cycles: int = 50,
+    epsilon_frac: float = _DEFAULT_EPSILON_FRAC,
+    params: Optional[List[str]] = None,
+) -> List[ParameterSensitivity]:
+    """∂Q/∂θ via central finite differences on real controller runs.
+
+    For each tunable parameter θ_i:
+        1. Set θ_i = current + ε, run → Q⁺
+        2. Set θ_i = current − ε, run → Q⁻
+        3. gradient_i = (Q⁺ − Q⁻) / 2ε
+        4. Restore θ_i to original value
+
+    The gradient magnitude gives true sensitivity.
+    The sign gives direction: positive = increasing θ helps.
+
+    Parameters
+    ----------
+    controller : E0Controller
+        The controller whose parameters are perturbed.
+    start : str
+        Start state for each probe run.
+    goal : str, optional
+        Goal state.
+    max_cycles : int
+        Max cycles per probe run.
+    epsilon_frac : float
+        Perturbation as fraction of parameter range (default 5%).
+    params : list of str, optional
+        Subset of TUNABLE_PARAMS to probe. None = all.
+
+    Returns
+    -------
+    List[ParameterSensitivity]
+        Sorted by sensitivity descending, with empirical gradients.
+    """
+    param_names = params or list(TUNABLE_PARAMS.keys())
+    results: List[ParameterSensitivity] = []
+
+    for name in param_names:
+        if name not in TUNABLE_PARAMS:
+            continue
+        if not hasattr(controller, name):
+            continue
+
+        lo, hi = TUNABLE_PARAMS[name]
+        current = float(getattr(controller, name))
+        param_range = hi - lo
+        if param_range <= 0:
+            continue
+
+        eps = param_range * epsilon_frac
+
+        # θ + ε (clamped to upper bound)
+        val_plus = min(current + eps, hi)
+        setattr(controller, name, val_plus)
+        q_plus, _ = _run_and_score(controller, start, goal, max_cycles)
+
+        # θ − ε (clamped to lower bound)
+        val_minus = max(current - eps, lo)
+        setattr(controller, name, val_minus)
+        q_minus, _ = _run_and_score(controller, start, goal, max_cycles)
+
+        # Restore
+        setattr(controller, name, current)
+
+        # Central difference
+        denom = val_plus - val_minus
+        if abs(denom) < 1e-12:
+            gradient = 0.0
+        else:
+            gradient = (q_plus - q_minus) / denom
+
+        # Normalise gradient to [0, 1] sensitivity
+        # Scale by param_range so sensitivity is dimensionless
+        raw_sens = abs(gradient) * param_range
+        sens = min(max(raw_sens, 0.0), 1.0)
+
+        # Direction from sign of gradient
+        if abs(gradient) < 1e-8:
+            direction = "stable"
+        elif gradient > 0:
+            direction = "increase"
+        else:
+            direction = "decrease"
+
+        results.append(ParameterSensitivity(
+            name=name,
+            current_value=current,
+            sensitivity=sens,
+            suggested_direction=direction,
+            bounds=(lo, hi),
+        ))
+
+    results.sort(key=lambda p: p.sensitivity, reverse=True)
+    return results
+
+
+def propose_tuning_empirical(
+    controller,
+    start: str,
+    goal: Optional[str] = None,
+    max_cycles: int = 50,
+    param_history: Optional[Dict[str, List[float]]] = None,
+    step_fraction: float = _STEP_FRACTION,
+    epsilon_frac: float = _DEFAULT_EPSILON_FRAC,
+) -> MetaTuningResult:
+    """Like propose_tuning but uses empirical sensitivity (B4.4).
+
+    Performs 2·|params| probe runs to compute true ∂Q/∂θ,
+    then generates bounded proposals using the same oscillation
+    protection as the heuristic variant.
+    """
+    # Run baseline to get field summary
+    q_base, fs = _run_and_score(controller, start, goal, max_cycles)
+    thresholds = derive_thresholds(fs)
+
+    # Get empirical sensitivities
+    sensitivities = perturbation_sensitivity(
+        controller, start, goal=goal,
+        max_cycles=max_cycles,
+        epsilon_frac=epsilon_frac,
+    )
+
+    if param_history is None:
+        param_history = {}
+
+    controller_params = _extract_controller_params(controller)
+    proposals: List[TuningProposal] = []
+
+    for ps in sensitivities:
+        if ps.sensitivity < 0.05 or ps.suggested_direction == "stable":
+            continue
+
+        # H_meta: oscillation check
+        history = param_history.get(ps.name, [])
+        if _would_oscillate(history, ps.suggested_direction):
+            continue
+
+        current = ps.current_value
+        lo, hi = ps.bounds
+        param_range = hi - lo
+        max_step = param_range * step_fraction * ps.sensitivity
+
+        if ps.suggested_direction == "increase":
+            new_val = min(current + max_step, hi)
+            reason = f"∂Q/∂{ps.name}={ps.sensitivity:.3f} → increase {ps.name}"
+        else:
+            new_val = max(current - max_step, lo)
+            reason = f"∂Q/∂{ps.name}={ps.sensitivity:.3f} → decrease {ps.name}"
+
+        if abs(new_val - current) < 1e-10:
+            continue
+
+        proposals.append(TuningProposal(
+            parameter=ps.name,
+            old_value=current,
+            new_value=new_val,
+            sensitivity=ps.sensitivity,
+            reason=reason,
+        ))
+
+        new_history = list(history) + [new_val]
+        if len(new_history) > _PARAM_HISTORY_WINDOW:
+            new_history = new_history[-_PARAM_HISTORY_WINDOW:]
+        param_history[ps.name] = new_history
+
+    return MetaTuningResult(
+        field_summary=fs,
+        derived_thresholds=thresholds,
+        sensitivities=sensitivities,
+        proposals=proposals,
+        meta_historization=dict(param_history),
+    )
