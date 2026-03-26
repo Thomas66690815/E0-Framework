@@ -347,12 +347,17 @@ SU(2) primitives verified (Pauli algebra, det=1, unitarity). Single-path magnitu
 Closed interference structures plus historization can form self-sustaining localized entities.
 
 **Evidence**  
-- `e0_controller/test_resonator.py` — 48 tests across 9 classes
-- `e0_controller/explore_resonator.py` — 5 regimes (M1/M2/M3/C1/C2), 4 historization modes
+- `e0_controller/test_resonator.py` — 73 tests across 13 classes (9 original + 4 multi-loop)
+- `e0_controller/explore_resonator.py` — 5 regimes (M1/M2/M3/C1/C2), 4 historization modes, 3 multi-loop builders
 - `docs/E0_RESONATOR_STABILITY_CRITERION_v0.md`, `docs/E0_MINIMAL_RESONATOR_TEST_DESIGN_v0.md`
 
 **Result**  
 3-node resonator kernel (A→B→C→A + leakage C→OUT) tested across 5 regimes. M2/H0 and M3/H0 are genuine RESONATOR: R_coh > 0.3, leakage non-dominant. M1 transitions METASTABLE→RESONATOR with ≥10 historization rounds (memory enables resonance). C1 (acyclic) = DECAY, C2 (dephased) = DECAY — both negative controls pass. Historization can enable resonance (M1) or destabilize it via over-amplification (M2/M3). Loop holonomy ∈ SU(2) confirmed, three-theory separation on resonator domain.
+
+**Multi-loop extension (O5):**
+- **4-node ring** (A→B→C→D→A + leak): RESONATOR, longer phase accumulation survives, SU(2)-min I > U(1) I (phase halving constructive), three-theory separation confirmed
+- **Nested loops** (outer A→B→C→A, inner B→X→C): constructive interference factor ~2.0 between outer and inner families, phase difference Δθ=0.14, SU(2) differs from U(1) on mixed paths
+- **Coupled resonators** (K1: A-B-C, K2: P-Q-R, bridge C→P): both kernels independently RESONATOR, K1-historization isolated from K2, bridge historization increases cross-kernel coupling, identical holonomies for identical parameters
 
 **Status**  
 ✅ Confirmed
@@ -537,7 +542,7 @@ Born sampling (P ∝ I, choosing actions probabilistically from the amplitude-de
 | `test_memos_geometry.py` | C21 |
 | `test_born_sampling.py` | C22 |
 | `test_spinor.py` | C15, C23, C12 |
-| `test_resonator.py` | C16 |
+| `test_resonator.py` | C16, C24 |
 | `test_omega_uniqueness.py` | C14 |
 | `test_historization_gordian.py` | C8, C9 |
 | `test_born_regime.py` | C17 |
@@ -566,6 +571,25 @@ SU(2) phase halving (Θ→Θ/2) weakens destructive interference on multi-path f
 - **G5 structural invariants preserved**: probabilities sum to 1, intensities non-negative, unreachable goals have zero effect, entropy decreases with |G|
 - **Born sampling**: SU(2) shifts sampling distribution toward A on Gordian multi-path domains
 - **Single-path equivalence confirmed**: Diamond/B1 intensities identical under U(1) and SU(2)
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C24 — Resonator behavior scales to multi-loop and coupled topologies
+
+**Claim**  
+Resonance (R1–R4 criteria) is not limited to the minimal 3-node kernel. Larger rings (4-node), nested loops (two interfering loop families), and coupled resonator pairs all exhibit measurable resonance, constructive interference, and SU(2) structure.
+
+**Evidence**  
+- `e0_controller/test_resonator.py` — `TestFourNodeLoop` (6 tests), `TestNestedLoop` (6 tests), `TestCoupledResonators` (7 tests), `TestMultiLoopSU2` (6 tests)
+- `e0_controller/explore_resonator.py` — `build_4node_loop()`, `build_nested_loop()`, `build_coupled_resonators()`, `generic_loop_paths()`, `measure_generic_loop()`
+
+**Result**  
+- **4-node ring**: Classifies as RESONATOR; I_coh positive across 8 cycles; leakage non-dominant; θ ≠ 0; acyclic control has no loop closure; SU(2) holonomy nontrivial (tr=1.78); three-theory separation: U(1)=1.78, SU(2)-min=4.67, SU(2)-geo=3.72; SU(2)-min > U(1) (phase halving constructive)
+- **Nested loop**: Outer loop independently RESONATOR; inner path B→X→C has measurable intensity; **constructive interference factor ≈ 2.0** between outer and inner loop families (nearly pure constructive); phase difference Δθ=0.14 rad; SU(2) shows three-theory separation on mixed paths
+- **Coupled resonators**: Both kernels independently RESONATOR; K1-historization completely isolated from K2 (I_coh unchanged to 6 decimals); cross-kernel path A→B→C→P→Q→R→P has measurable intensity; bridge historization increases coupling intensity; identical parameters produce identical holonomies; both holonomies ∈ SU(2); single cross-kernel path shows U(1)≡SU(2) (expected: single path)
 
 **Status**  
 ✅ Confirmed
@@ -627,8 +651,12 @@ C15 extended — use SU(2) intensities in actual controller decisions (currently
 **Target claim**  
 C16 extended — resonator behavior in larger topologies with multiple loops.
 
-**Recommended test**  
-Extend 3-node kernel to 4+ node loops, nested loops, and multi-resonator coupling.
+**Status:** ✅ Resolved — see C24.
+
+**What was done:**
+- `explore_resonator.py`: 3 new builders (`build_4node_loop`, `build_nested_loop`, `build_coupled_resonators`), generalized measurement (`generic_loop_paths`, `measure_generic_loop`, `apply_generic_historization`)
+- `test_resonator.py`: 25 tests across 4 new classes — 4-node ring, nested interference, coupled kernel isolation/coupling, multi-loop SU(2)
+- Key finding: constructive interference factor ≈ 2.0 on nested loops; coupled kernels show isolation + bridge-mediated coupling
 
 ---
 
