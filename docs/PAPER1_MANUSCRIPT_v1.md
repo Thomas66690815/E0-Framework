@@ -555,6 +555,13 @@ where $\bar{e}$ denotes the reverse of edge $e$. Each term depends only on
 edge-local quantities ($v$ values on $p_1$ and $p_2$ edges and their
 reverses), not on any vertex potential or external graph structure. $\square$
 
+**Remark** (Locality). Although the Helmholtz decomposition that produces
+$v_{\text{rot}}$ depends on the global graph structure (the Laplacian
+pseudoinverse), the phase *difference* $\Delta\Theta$ reduces to edge-local
+evaluations once $v_{\text{rot}}$ is computed. The global computation is a
+one-time preprocessing step; all interference-relevant quantities are then
+path-local.
+
 **Corollary.** The phase difference $\Delta\Theta$ between two paths sharing
 endpoints can be computed directly from the transition field values along
 those paths, without solving for the global potential $\Phi$.
@@ -947,7 +954,7 @@ trials with fixed random seeds.
   Argmax always takes the correct action. Born sampling takes it with high
   probability ($P(\text{B1}) \gg P(\text{A1})$).
 
-**Theorem 2** (Geometry Dominates Decision Rule — Empirical).
+**Empirical Result 1** (Geometry Dominates Decision Rule).
 *On Gordian-class trap domains, the transition from $G_{\text{simple}}$ to
 $G_{\text{goal}}$ changes the success rate from 0% to 100% for the
 deterministic rule and from $\approx$12% to $\approx$96% for the stochastic
@@ -1088,7 +1095,7 @@ structural claim:
 | E | Dynamic horizons | — | Horizon sensitivity |
 | F | Confidence override | — | Override confidence gating |
 | G | MemOS geometry | — | Persistence of geometry state |
-| H | Born sampling | 27 | Geometry > rule (Theorem 2) |
+| H | Born sampling | 27 | Geometry > rule (Empirical Result 1) |
 
 22 verified claims (C1–C22) are maintained in a test registry with
 derived/empirical/heuristic classification.
@@ -1124,7 +1131,7 @@ We distinguish three categories following the framework's own honesty map
 - Zero-holonomy reduction (Proposition 3).
 
 **Empirical** (demonstrated through tests, not analytically proven):
-- Geometry dominates decision rule (Theorem 2).
+- Geometry dominates decision rule (Empirical Result 1).
 - Topology classification predictors (§7).
 - Goal-reaching geometry resolves Gordian traps (Proposition 6).
 - Destructive interference factor ($\approx 2\%$) in Gordian domain.
@@ -1186,7 +1193,7 @@ central claims:
 2. **Phase irrelevance:** Find a domain where $\Theta$ does not influence
    interference outcomes (would weaken Theorem 1's significance).
 3. **Geometry irrelevance:** Demonstrate that geometry choice is
-   irrelevant on some non-trivial topology class (would weaken Theorem 2).
+   irrelevant on some non-trivial topology class (would weaken Empirical Result 1).
 4. **Historization instability:** Show that interference-based routing
    becomes unstable under historization updates (currently stable across
    12 tests in 4 scenarios).
@@ -1232,7 +1239,7 @@ different from gradient-based learning:
 
 ### 10.3 The Geometry Insight
 
-The finding that summation geometry dominates decision rule (Theorem 2) has
+The finding that summation geometry dominates decision rule (Empirical Result 1) has
 a structural analogy in machine learning: *kernel choice matters more than
 model choice* in kernel methods, and *feature selection matters more than
 classifier choice* in classification. In E₀, the summation geometry
@@ -1261,6 +1268,14 @@ over actions is a derived consequence of amplitude interference, not an
 axiomatic input. This inverts the standard construction in decision theory,
 where probabilities are primitive and utilities are derived.
 
+More broadly, interference acts as a *non-local decision signal*: it
+aggregates structural information across entire path families — including
+destructive cancellation from topological traps — without explicit search
+heuristics, lookahead trees, or learned value functions. This non-locality
+is what enables trap avoidance: the interference pattern at the decision
+point encodes information about distant graph structure that no local
+(one-step) evaluation can access.
+
 ---
 
 ## 11. Conclusion
@@ -1282,7 +1297,7 @@ contributions are:
 3. **A hybrid controller** that uses amplitude-based interference to override
    greedy decisions when structural traps are detected (§5).
 
-4. **The geometry-dominance result** (Theorem 2): on trap-containing
+4. **The geometry-dominance result** (Empirical Result 1): on trap-containing
    domains, the choice of summation geometry determines success or failure,
    while the choice of decision rule (deterministic vs. stochastic) is
    secondary (§6).
@@ -1419,7 +1434,7 @@ with varying parameters.
 | $I = |\Psi|^2$ (intensity) | Derived (conditional) | Def. 19 |
 | Interference existence | **Derived** | Proposition 2 (proven) |
 | Destructive factor $\approx 2\%$ | **Empirical** | Gordian Trap tests |
-| Geometry dominates rule | **Empirical** | Theorem 2 (50–100 trials) |
+| Geometry dominates rule | **Empirical** | Empirical Result 1 (50–100 trials) |
 | Topology predictors | **Empirical** | 380-graph scan |
 | Phase $\Theta$ from $v_{\text{rot}}$ | Heuristic | Structurally motivated but not unique |
 | Revisit penalty | Heuristic | Operational stabilization |
