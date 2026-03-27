@@ -399,24 +399,118 @@ The metadata block keeps the object replayable and auditable.
 
 ---
 
-## 10. Current status of this schema
+## 10. Co-cognition review and code-mapping (2026-03-27)
 
-This schema is a **draft working proposal**.
+This schema was developed across two co-cognition sessions:
 
-It should currently be read as:
+1. **Session 1** (ChatGPT + Gemini): Architectural brainstorming — four-layer model, JSON envelope, reflection-as-gate concept.
+2. **Session 2** (Copilot / Claude): Systematic mapping against the actual E₀ codebase — field-by-field comparison of schema vs. implementation.
 
-- a design bridge between architecture and implementation,
-- a future interface contract for hooks and adapters,
-- and an explicit statement that E₀ should act on structure, not on hidden semantic residue.
+### 10.1 What already exists in code
 
-It is not yet a canonical law. It is a repository-native proposal emerging from the lived principles of the work.
+The **Core block** has strong code backing (~80%):
+
+| Schema field | Code equivalent | Status |
+|---|---|---|
+| `states[].id` | `Landscape._states: Set[str]` | ✅ exists |
+| `transitions.from/to/delta/resistance` | `Edge`, `Landscape._delta`, `Landscape._R0` | ✅ exists |
+| `goals.target_states` | `E0Controller.hybrid_goals` + `goal` param | ✅ exists |
+| `controller.mode` | `HybridMode` enum (GREEDY, AMPLITUDE_ON_DISAGREE, BORN_SAMPLING) | ✅ exists |
+| `controller.geometry` | `hybrid_geometry: str` (simple, goal_reaching, first_arrival, prefix) | ✅ exists |
+| `controller.horizon_edges` | `hybrid_horizon: int` + `DynamicHorizon` strategies | ✅ exists |
+| `controller.confidence_threshold` | `confidence_threshold: float` | ✅ exists |
+| `context.history_handle` | `Session.session_id` → `E0MemoryOS` persistence | ✅ exists |
+| `context.memory_context` | `MemOSContext` dataclass (richer than schema proposes) | ✅ exists |
+
+Partial matches:
+- `states[].role` — implicit (start/goal are runtime args, not state metadata)
+- `controller.transport` — binary `use_su2` flag, not a typed enum of transport regimes
+- `goals.goal_mode` — implicit via presence/absence of `hybrid_goals`
+- `egress.alternatives` — `OverlayReport.action_infos` (richer: intensity, phase, probability)
+
+### 10.2 What is speculative (no code basis)
+
+| Block | Schema fields | Code coverage |
+|---|---|---|
+| **Ingress** | source_type, mapping_mode, mapping_agent, mapping_confidence, unresolved_ambiguities | ~5% — only `ProvenanceLog.source_id` loosely analogous |
+| **Reflection** | mapping_integrity (status/score/issues), mode_selection, action_guard (allow_actuation/escalate/require_remap) | ~0% — **fundamentally different concept** |
+| **Egress wrapper** | machine_output, ui_output, decision.geometry_used, decision.transport_used | ~0% |
+| **Core extensions** | states[].label, states[].attributes, transitions[].constraints, goal_weights | 0% |
+
+### 10.3 Critical finding: Reflection concept mismatch
+
+The existing `reflection.py` operates as **post-run diagnostics** — it evaluates run quality after the controller has acted (patterns, recommended_actions, layers).
+
+The schema proposes a **pre-decision integrity gate** — it would decide *whether to act at all*, *which geometry to use*, and *whether to escalate or refuse*.
+
+These are fundamentally different roles. The schema's reflection block is an **open research question**, not a formalization of existing behavior. The question "Is this structural mapping good enough to act on?" has no current answer in code.
+
+### 10.4 ProvenanceLog overlap
+
+`ProvenanceLog` (implemented, tested, live-validated) and the schema carry overlapping data:
+
+| ProvenanceLog stage | Schema block overlap |
+|---|---|
+| `InputRecord` (text, SHA-256, source_id) | Ingress (source_reference) |
+| `LLMCallRecord` (prompt, response, model, timing) | Ingress (mapping_agent) |
+| `ProposalRecord` (states, edges) | Core (states, transitions) |
+| `RunRecord` (path, config, overrides) | Egress (decision) |
+| `EvaluationRecord` (findings) | Reflection (post-run) |
+
+Key difference: ProvenanceLog is a **temporal audit chain** (what happened when). The schema proposes a **structural envelope** (simultaneous snapshot). Both are needed, but must be designed together to avoid redundancy.
+
+---
+
+## 11. Strategic decision: Domänen → Schema, not Schema → Domänen
+
+### The risk of premature standardization
+
+The E₀ project has built everything bottom-up: each feature proven by tests, then formalized, then extended. The Beipackzettel demo showed how valuable this is — real data, real LLM-generated edges, real provenance chain.
+
+This schema was developed top-down (co-cognition brainstorming). Standardizing Ingress/Reflection/Egress before a second real-world domain risks freezing the wrong abstractions.
+
+### The plan
+
+```
+Beipackzettel (Domäne 1)     ✅ done — 8 states, 10 edges, live provenance
+         ↓
+Zweite reale Domäne           → build next
+         ↓
+Dritte reale Domäne           → build after
+         ↓
+Cross-domain comparison       → what was EQUAL across all ingress paths?
+         ↓
+Schema v0.2                   → formalize the ACTUAL commonalities
+```
+
+### What to implement now
+
+| Action | Rationale |
+|---|---|
+| **Core block → `E0Envelope` dataclass** | ~80% proven. Stabilizes the existing interface between adapters and controller. |
+| **Core.controller.transport → `TransportRegime` enum** | Replace binary `use_su2` flag with typed `u1 / su2_min / su2_geo / su2_multi_axis`. |
+| **Core.states[].role → optional per-state metadata** | Useful for LLM-generated landscapes (start/goal/intermediate). |
+
+### What to defer
+
+| Block | Wait for |
+|---|---|
+| **Ingress** | 2nd + 3rd real domain → observe actual ingress patterns |
+| **Reflection (pre-decision gate)** | Research question — needs a concrete mechanism, not just a schema shape |
+| **Egress (machine_output, ui_output)** | 1st real integration target (API, UI, actuator) |
+| **goal_weights** | Real multi-goal domain where weighting matters |
 
 ---
 
 ## Status
 
-**Status:** Draft protocol note  
-**Version:** 0.1  
-**Relation to canon:** compatible, but not canonical  
-**Relation to implementation:** intended future bridge between adapters and controller  
-**Relation to papers:** architectural companion, not a substitute for formal derivation
+**Status:** Draft protocol note + co-cognition review  
+**Version:** 0.1 → reviewed, partially actionable  
+**Origin:** ChatGPT/Gemini brainstorming + Copilot/Claude code-mapping  
+**Relation to canon:** compatible, not canonical  
+**Relation to implementation:**
+- Core block → ready for `E0Envelope` implementation
+- Ingress/Reflection/Egress → deferred until 2–3 real-world domains provide evidence  
+
+**Relation to papers:** architectural companion, not a substitute for formal derivation  
+**Next action:** Build second real-world domain, then revisit schema with cross-domain evidence
