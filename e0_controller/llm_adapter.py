@@ -367,9 +367,16 @@ class E0LLMAdapter:
         self,
         config: Optional[LLMConfig] = None,
         call_fn: Optional[LLMCallFn] = None,
+        provenance: Optional["ProvenanceLog"] = None,
     ):
         self.config = config or LLMConfig()
-        self._call = call_fn or openai_call
+        base_call = call_fn or openai_call
+        if provenance is not None:
+            self._call = provenance.wrap_call_fn(base_call)
+            self._provenance = provenance
+        else:
+            self._call = base_call
+            self._provenance = None
 
     def _format_context(self, memos_summary: Dict[str, Any]) -> str:
         """Format MemOS summary as compact context string for prompts."""
@@ -663,7 +670,12 @@ class E0LLMAdapter:
                 "description": e.get("description", ""),
             })
 
-        return LandscapeProposal(states=states, edges=edges)
+        proposal = LandscapeProposal(states=states, edges=edges)
+
+        if self._provenance is not None:
+            self._provenance.record_proposal(proposal)
+
+        return proposal
 
     # ── Convenience: execute_fn for E0Controller ──
 

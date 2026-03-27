@@ -545,5 +545,204 @@ class TestLiveMultiGoalHybridRun(unittest.TestCase):
         self.assertEqual(len(self.result_log), len(self.trace.steps))
 
 
+# ──────────────────────────────────────────────
+# Test Class 7: Beipackzettel Provenance (Live LLM)
+# ──────────────────────────────────────────────
+
+BEIPACKZETTEL_TEXT = """\
+Ibuprofen 400 mg Filmtabletten.
+Wirkstoff: Ibuprofen.
+
+Anwendungsgebiete: Leichte bis mäßig starke Schmerzen wie Kopfschmerzen,
+Zahnschmerzen, Regelschmerzen. Fieber.
+
+Dosierung: Erwachsene und Jugendliche ab 12 Jahren: 1 Tablette (400 mg)
+alle 6-8 Stunden. Maximale Tagesdosis: 1200 mg (3 Tabletten).
+Bei unzureichender Wirkung NICHT die Dosis eigenmächtig erhöhen.
+
+Gegenanzeigen: Überempfindlichkeit gegen Ibuprofen oder andere NSAR.
+Bestehende Magen-Darm-Geschwüre. Schwere Leber- oder Niereninsuffizienz.
+Letztes Drittel der Schwangerschaft.
+
+Wechselwirkungen: ASS (Acetylsalicylsäure): Ibuprofen kann die
+thrombozytenaggregationshemmende Wirkung von ASS abschwächen.
+Gleichzeitige Anwendung erhöht das Risiko gastrointestinaler Blutungen.
+
+Nebenwirkungen:
+Häufig (1-10%): Magen-Darm-Beschwerden, Übelkeit, Sodbrennen.
+Gelegentlich (0.1-1%): Magengeschwür, Magenblutung.
+Selten (<0.1%): Schwere Hautreaktionen, Niereninsuffizienz.
+Sehr selten (<0.01%): Kardiovaskuläre Ereignisse bei Langzeitanwendung.
+"""
+
+BEIPACKZETTEL_START = "KOPFSCHMERZ"
+BEIPACKZETTEL_GOAL = "GESUND"
+
+
+@unittest.skipUnless(_can_run_llm(), SKIP_MSG)
+class TestLiveProvenanceBeipackzettel(unittest.TestCase):
+    """Live LLM pipeline with full provenance chain.
+
+    This is the non-circular validation:
+    - The LLM reads a real Beipackzettel and generates the landscape
+    - Every step is recorded in a ProvenanceLog
+    - The provenance log is saved as JSON for external review
+    - A third party can verify: prompt → response → landscape → result
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        from e0_controller.provenance import ProvenanceLog
+
+        cls.log = ProvenanceLog(source_id="beipackzettel-ibuprofen-live")
+        cls.log.record_input(BEIPACKZETTEL_TEXT)
+
+        config = LLMConfig(model="gpt-5.4-mini", temperature=0.2, max_tokens=2048)
+        cls.adapter = E0LLMAdapter(config=config, provenance=cls.log)
+
+        cls.proposal = cls.adapter.build_landscape(
+            task=BEIPACKZETTEL_TEXT,
+            start=BEIPACKZETTEL_START,
+            goal=BEIPACKZETTEL_GOAL,
+        )
+        cls.landscape = materialize_landscape(cls.proposal)
+        cls.log.record_landscape(
+            cls.landscape, BEIPACKZETTEL_START, BEIPACKZETTEL_GOAL,
+        )
+
+        cls.task_map = task_map_from_proposal(cls.proposal)
+        cls.result_log: list[TransitionResult] = []
+        execute_fn = cls.adapter.as_execute_fn(
+            cls.task_map, result_log=cls.result_log,
+        )
+
+        # Run 1: goal_reaching geometry
+        cls.ctrl_goal = E0Controller(
+            cls.landscape, execute_fn,
+            hybrid_mode=HybridMode.AMPLITUDE_ON_DISAGREE,
+            hybrid_horizon=4,
+            hybrid_goals={BEIPACKZETTEL_GOAL},
+            hybrid_geometry="goal_reaching",
+        )
+        cls.trace_goal = cls.ctrl_goal.run(
+            start=BEIPACKZETTEL_START,
+            goal=BEIPACKZETTEL_GOAL,
+            max_cycles=20,
+        )
+        cls.log.record_run(cls.trace_goal, {
+            "goal": BEIPACKZETTEL_GOAL,
+            "hybrid_geometry": "goal_reaching",
+            "hybrid_mode": "amplitude_on_disagree",
+            "hybrid_horizon": 4,
+        })
+
+        # Run 2: simple geometry (same landscape, different geometry)
+        cls.result_log_simple: list[TransitionResult] = []
+        execute_fn_simple = cls.adapter.as_execute_fn(
+            cls.task_map, result_log=cls.result_log_simple,
+        )
+        cls.ctrl_simple = E0Controller(
+            cls.landscape, execute_fn_simple,
+            hybrid_mode=HybridMode.AMPLITUDE_ON_DISAGREE,
+            hybrid_horizon=4,
+            hybrid_goals={BEIPACKZETTEL_GOAL},
+            hybrid_geometry="simple",
+        )
+        cls.trace_simple = cls.ctrl_simple.run(
+            start=BEIPACKZETTEL_START,
+            goal=BEIPACKZETTEL_GOAL,
+            max_cycles=20,
+        )
+        cls.log.record_run(cls.trace_simple, {
+            "goal": BEIPACKZETTEL_GOAL,
+            "hybrid_geometry": "simple",
+            "hybrid_mode": "amplitude_on_disagree",
+            "hybrid_horizon": 4,
+        })
+
+        # Evaluation
+        goal_reached_gr = BEIPACKZETTEL_GOAL in cls.trace_goal.path
+        goal_reached_simple = BEIPACKZETTEL_GOAL in cls.trace_simple.path
+        cls.log.record_evaluation({
+            "goal_reached_goal_reaching": goal_reached_gr,
+            "goal_reached_simple": goal_reached_simple,
+            "path_goal_reaching": cls.trace_goal.path,
+            "path_simple": cls.trace_simple.path,
+            "geometry_difference_observed": goal_reached_gr != goal_reached_simple,
+            "llm_model": config.model,
+        })
+
+        # Save provenance log
+        import tempfile
+        cls._provenance_dir = os.path.join(
+            os.path.dirname(__file__), "..", "provenance",
+        )
+        os.makedirs(cls._provenance_dir, exist_ok=True)
+        cls._provenance_path = os.path.join(
+            cls._provenance_dir, "beipackzettel_live.json",
+        )
+        cls.log.save(cls._provenance_path)
+
+    def test_provenance_chain_complete(self):
+        """All 6 stages recorded."""
+        self.assertTrue(self.log.chain_complete(),
+                        self.log.chain_summary())
+
+    def test_llm_call_recorded(self):
+        """At least one LLM call was recorded with full prompt."""
+        self.assertGreaterEqual(len(self.log.llm_calls), 1)
+        call = self.log.llm_calls[0]
+        self.assertIn("E₀", call.system_prompt)
+        self.assertIn("Ibuprofen", call.user_prompt)
+        self.assertTrue(len(call.raw_response) > 50)
+
+    def test_proposal_has_states_and_edges(self):
+        """LLM-generated proposal is structurally valid."""
+        self.assertGreaterEqual(self.log.proposal.state_count, 5)
+        self.assertGreaterEqual(self.log.proposal.edge_count, 6)
+
+    def test_landscape_has_start_and_goal(self):
+        """Materialized landscape includes start and goal."""
+        self.assertEqual(self.log.landscape.start, BEIPACKZETTEL_START)
+        self.assertEqual(self.log.landscape.goal, BEIPACKZETTEL_GOAL)
+        self.assertTrue(self.log.landscape.goal_reachable)
+
+    def test_goal_reaching_succeeds(self):
+        """goal_reaching geometry finds the therapeutic goal."""
+        self.assertIn(
+            BEIPACKZETTEL_GOAL, self.trace_goal.path,
+            f"goal_reaching failed. Path: {' → '.join(self.trace_goal.path)}",
+        )
+
+    def test_two_runs_recorded(self):
+        """Both geometry runs are in the provenance log."""
+        self.assertEqual(len(self.log.runs), 2)
+        geos = [r.controller_config["hybrid_geometry"] for r in self.log.runs]
+        self.assertIn("goal_reaching", geos)
+        self.assertIn("simple", geos)
+
+    def test_provenance_log_saved(self):
+        """Provenance log was written to disk as valid JSON."""
+        self.assertTrue(os.path.exists(self._provenance_path))
+        from e0_controller.provenance import ProvenanceLog
+        restored = ProvenanceLog.load(self._provenance_path)
+        self.assertTrue(restored.chain_complete())
+        self.assertEqual(restored.source_id, "beipackzettel-ibuprofen-live")
+
+    def test_evaluation_contains_geometry_comparison(self):
+        """Evaluation records both geometry outcomes."""
+        findings = self.log.evaluation.findings
+        self.assertIn("goal_reached_goal_reaching", findings)
+        self.assertIn("goal_reached_simple", findings)
+        self.assertIn("path_goal_reaching", findings)
+        self.assertIn("path_simple", findings)
+
+    def test_input_fingerprinted(self):
+        """Input text has a stable SHA-256 fingerprint."""
+        import hashlib
+        expected = hashlib.sha256(BEIPACKZETTEL_TEXT.encode()).hexdigest()
+        self.assertEqual(self.log.input.sha256, expected)
+
+
 if __name__ == "__main__":
     unittest.main()

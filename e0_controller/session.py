@@ -40,6 +40,7 @@ from .self_tuning import (
     load_tuning_memory,
     save_tuning_memory,
 )
+from .provenance import ProvenanceLog
 
 
 @dataclass
@@ -72,6 +73,7 @@ class Session:
         base_dir: str = "memos",
         canon_refs: Optional[List[CanonRef]] = None,
         controller_kwargs: Optional[Dict[str, Any]] = None,
+        provenance: Optional[ProvenanceLog] = None,
     ):
         """Create a new session (no disk load).
 
@@ -96,6 +98,7 @@ class Session:
         self.base_dir = base_dir
         self.canon_refs = canon_refs or []
         self._resumed = False
+        self._provenance = provenance
 
         kwargs = controller_kwargs or {}
         self.controller = E0Controller(landscape, execute_fn, **kwargs)
@@ -144,6 +147,7 @@ class Session:
         obj.base_dir = base_dir
         obj.canon_refs = canon_refs
         obj._resumed = True
+        obj._provenance = None
         obj.controller = controller
         obj.memos = memos
         obj.tuning_memory = load_tuning_memory(
@@ -190,6 +194,19 @@ class Session:
                 )
 
         trace = self.controller.run(start, max_cycles=max_cycles, goal=goal)
+
+        if self._provenance is not None:
+            ctrl = self.controller
+            config = {
+                "goal": goal or "",
+                "max_cycles": max_cycles,
+                "hybrid_mode": ctrl.hybrid_mode.value,
+                "hybrid_geometry": ctrl.hybrid_geometry,
+                "hybrid_horizon": ctrl.hybrid_horizon,
+                "alpha": ctrl.alpha,
+                "confidence_threshold": ctrl.confidence_threshold,
+            }
+            self._provenance.record_run(trace, config)
 
         ctx = self.memos.snapshot_from_runtime(
             self.session_id,

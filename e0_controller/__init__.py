@@ -101,6 +101,8 @@ __all__ = [
     "E0MemoryOS", "CanonRef", "MemOSContext",
     # Session Orchestrator
     "Session", "SessionResult",
+    # Provenance
+    "ProvenanceLog",
     # LLM Adapter
     "E0LLMAdapter", "LLMConfig", "LLMResponseError",
     "DeltaEstimate", "ProposedState", "TransitionResult",
@@ -179,3 +181,4 @@ from .self_tuning import (
     perturbation_sensitivity, propose_tuning_empirical,
 )
 from .session import Session, SessionResult
+from .provenance import ProvenanceLog
