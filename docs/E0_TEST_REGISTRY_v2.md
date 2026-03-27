@@ -3,8 +3,8 @@
 > Central validation registry for the E₀ Framework.
 > **Purpose:** connect claims, tests, evidence, and status in one place.
 
-**Last updated:** 2026-03-28  
-**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, and active edge-case work.
+**Last updated:** 2026-03-27 — **1483 tests** (0 failures)  
+**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, and active edge-case work.
 
 ---
 
@@ -560,7 +560,8 @@ Born sampling (P ∝ I, choosing actions probabilistically from the amplitude-de
 | `test_provenance.py` | C33 |
 | `test_mass_trap_detector.py` | C34 |
 | `test_ezb_zinsentscheidung.py` | C35 |
-| `test_envelope.py` | typed config (TransportRegime, E0Envelope) |
+| `test_residual_tension.py` | C37, C37b |
+| `test_envelope.py` | C38 |
 | `test_burnout_composite.py` | Domäne 3 composite |
 
 ---
@@ -743,7 +744,7 @@ The E₀ controller can be self-tuned via a four-layer meta-system:
 ### C30 — Session Orchestrator provides automatic persistence without controller coupling
 
 **Claim**  
-A thin Session layer wraps the E₀ controller with automatic MemOS persistence. The controller has zero persistence awareness. Session manages: create → run → save (context + run record + tuning memory). Session.resume() restores landscape, historization, controller params, and tuning memory from disk. Multiple runs accumulate within and across sessions.
+A thin Session layer wraps the E₀ controller with automatic MemOS persistence. The controller has zero persistence awareness. Session manages: create → run → save (context + run record + tuning memory). Session.resume() restores landscape, historization, controller params, and tuning memory from disk. Multiple runs accumulate within and across sessions. **Extended in C37:** `Session.iterate()` adds multi-run iterative control with residual tension tracking and inter-iteration reflection (see C37).
 
 **Evidence**  
 - `e0_controller/test_session.py` — 13 tests across 3 classes
@@ -1054,6 +1055,75 @@ Dedicated publication extending the E₀ phase structure from Abelian U(1) to no
 - Appendix B: Derived/Empirical/Heuristic classification
 
 **Status:** 🔄 Draft v1.0 written (review and refinement pending)
+
+---
+
+### C37 — Residual Tension Map and Iterative Session Control (Axiom A₀)
+
+**Claim**  
+After a controller run, the per-edge residual tension can be mapped to identify hotspots (high unresolved tension on admissible edges), and the decision whether to iterate emerges from this landscape structure rather than being prescribed. If Δ > 0 and a path with finite R exists, "stop now" is structurally unstable (Axiom A₀ applied at the iteration level). The system iterates until tension equilibrium, stagnation, or budget — the iteration count is not an input but an output of the process. Between iterations, reflection fires when structural problems are detected (C37b).
+
+**Evidence**  
+- `e0_controller/residual_tension.py` — `ResidualTension`, `ResidualTensionMap`, `IterationVerdict`, `compute_residual_map()`, `should_continue()`, `snapshot_tensions()`, `format_residual_map()`
+- `e0_controller/session.py` — `Session.iterate()`, `IterationResult` dataclass, `_inter_iteration_reflect()`
+- `e0_controller/test_residual_tension.py` — 31 tests across 6 classes:
+  - `TestSnapshotTensions` (3): pre-run snapshot captures all edges, s_eff values, zero delta
+  - `TestComputeResidualMap` (8): visited/unvisited edges, delta computation, hotspot identification, resolved count, iteration tracking
+  - `TestShouldContinue` (9): hotspot → CONTINUE, no hotspot → equilibrium STOP, stagnation detection (Δ < 0.02), budget exhaustion (max_iterations), threshold sensitivity, should_reflect on stagnation
+  - `TestSessionIterate` (5): single-iteration equilibrium, multi-iteration with hotspots, max_iterations budget, tension_threshold parameter, historization carries across iterations
+  - `TestFormatResidualMap` (3): key info present, hotspot display, equilibrium message
+  - `TestIterateReflection` (5; C37b): reflections list length = iterations, failure reflection on unreachable goal, clean equilibrium no reflection, failure_fn triggers reflection, _inter_iteration_reflect builds evaluation
+
+**Result**  
+- `snapshot_tensions()` captures pre-run baseline; `compute_residual_map()` computes post-run deltas
+- Hotspots: edges with s_eff > hotspot_threshold (default 0.5) and admissible (not yet resolved)
+- `should_continue()` returns `IterationVerdict` with 4 stopping conditions:
+  - `CONTINUE` (hotspots remain)
+  - `EQUILIBRIUM` (max_s_eff < tension_threshold, default 0.1)
+  - `STAGNATION` (Δ max_s_eff < stagnation_delta, default 0.02)
+  - `BUDGET` (iteration ≥ max_iterations)
+- `Session.iterate()` loops: run → compute_residual_map → should_continue → (reflect) → repeat
+- Iteration count is emergent: burnout live demo produced exactly 2 iterations
+- C37b: `_inter_iteration_reflect()` fires between iterations; produces `ReflectionReport` on failure/quality triggers; `IterationResult.reflections` list has one entry per iteration
+- `format_residual_map()` produces human-readable hotspot/equilibrium summary
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C38 — E0Envelope + TransportRegime: Typed Structural Configuration
+
+**Claim**  
+The E₀ controller configuration is captured in a frozen, serializable `E0Envelope` dataclass. The polymorphic `use_su2` parameter (False/True/"geometric") is replaced by a typed `TransportRegime` enum (U1, SU2_MINIMAL, SU2_GEOMETRIC). The envelope provides backward-compatible controller instantiation (`to_controller_kwargs()`), full JSON round-trip (`to_dict()`/`from_dict()`), extraction from a live controller (`from_controller()`), and a typed `controller.transport` property. The envelope is immutable (frozen) and hashable.
+
+**Evidence**  
+- `e0_controller/envelope.py` — `E0Envelope` dataclass, `transport_to_use_su2()`, `use_su2_to_transport()` bridge functions
+- `e0_controller/primitives.py` — `TransportRegime` enum
+- `e0_controller/controller.py` — `Controller.transport` property
+- `e0_controller/test_envelope.py` — 48 tests across 10 classes:
+  - `TestTransportRegime` (5): enum values, identity, string conversion
+  - `TestTransportBridge` (6): transport→use_su2 and use_su2→transport round-trip for all 3 regimes
+  - `TestEnvelopeDefaults` (5): default mode, geometry, horizon, transport, goals
+  - `TestEnvelopeToKwargs` (8): backward-compatible kwargs for all modes, geometries, and transport values
+  - `TestEnvelopeSerialization` (6): to_dict/from_dict round-trip, custom values, frozen goals survive
+  - `TestEnvelopeFromController` (5): extraction from live controller, all fields match
+  - `TestControllerTransportProperty` (4): typed property returns correct TransportRegime
+  - `TestEnvelopeImmutability` (3): frozen, hashable, equal envelopes hash same
+  - `TestEnvelopeSummary` (4): human-readable summary, all key fields present
+  - `TestEnvelopeIntegration` (2): Session accepts envelope, controller runs correctly with envelope
+
+**Result**  
+- `TransportRegime.U1`, `.SU2_MINIMAL`, `.SU2_GEOMETRIC` replace boolean/string `use_su2`
+- `to_controller_kwargs()` produces the exact dict `E0Controller.__init__(**kwargs)` expects
+- `to_dict()`/`from_dict()` survive JSON serialization (including frozenset goals → sorted list → frozenset)
+- `from_controller()` extracts envelope from a live controller instance
+- `controller.transport` property returns `TransportRegime` from the internal `use_su2` value
+- `E0Envelope` is frozen (`@dataclass(frozen=True)`) and hashable
+- Backward compatibility: all 1483 existing tests pass without modification
+
+**Status**  
+✅ Confirmed
 
 ---
 

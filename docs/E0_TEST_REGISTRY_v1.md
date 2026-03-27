@@ -1,7 +1,7 @@
 # E₀ Test Registry v1
 
 > Central reference for all tests in the E₀ Framework.
-> **Last verified:** 2026-03-27 — **1452 tests** (1452 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures)
+> **Last verified:** 2026-03-27 — **1483 tests** (1483 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures)
 
 ---
 
@@ -49,6 +49,7 @@
 | 38 | `test_mass_trap_detector.py` | 25 | unittest | Mass trap detection: path_count_imbalance, reflection trigger, self-tuning horizon inversion | ✅ GREEN |
 | 39 | `test_envelope.py` | 48 | unittest | E0Envelope + TransportRegime: typed config, serialization, bridge, controller integration | ✅ GREEN |
 | 40 | `test_burnout_composite.py` | 39 | unittest | Burnout Domäne 3: fragments, mock landscape, envelope presets, full demo run (greedy + hybrid), topology | ✅ GREEN |
+| 41 | `test_residual_tension.py` | 31 | unittest | C37 Residual Tension: snapshot, compute_residual_map, should_continue (4 stopping conditions), Session.iterate(), format, C37b iterate-reflection | ✅ GREEN |
 
 ---
 
@@ -559,10 +560,24 @@
 
 ---
 
-## How to Run
+### 41. test_residual_tension.py — 31 tests
+
+**What it tests:** C37 Residual Tension Map and Iterative Session Control. 6 test classes:
+- `TestSnapshotTensions` (3): pre-run snapshot captures all edges, s_eff values, zero initial delta
+- `TestComputeResidualMap` (8): visited/unvisited edge tracking, delta_s computation, hotspot identification, resolved count, iteration tracking
+- `TestShouldContinue` (9): hotspot → CONTINUE verdict, no hotspot → EQUILIBRIUM, stagnation detection (Δ < 0.02), budget exhaustion (max_iterations), threshold sensitivity, should_reflect on stagnation
+- `TestSessionIterate` (5): single-iteration equilibrium, multi-iteration with hotspots, max_iterations budget, tension_threshold parameter, historization carries across iterations
+- `TestFormatResidualMap` (3): key info present in output, hotspot display, equilibrium message
+- `TestIterateReflection` (5; C37b): reflections list length = iterations, failure reflection on unreachable goal, clean equilibrium no reflection, failure_fn triggers reflection, _inter_iteration_reflect builds evaluation
+
+**Key findings:**
+- Iteration count is emergent (not prescribed): burnout live demo produced exactly 2 iterations
+- `should_continue()` implements 4 stopping conditions: CONTINUE, EQUILIBRIUM, STAGNATION, BUDGET
+- C37b: `_inter_iteration_reflect()` fires between iterations, producing ReflectionReport on failure/quality triggers
+- `IterationResult.reflections` list has one entry per iteration (may be None if no trigger)
 
 ```bash
-# Standard unittest suite (1452 tests, no LLM calls, ~7s)
+# Standard unittest suite (1483 tests, no LLM calls, ~8s)
 py -3 -m unittest discover -s e0_controller -p "test_*.py" -t .
 
 # Live LLM tests (requires API key, ~22s)
