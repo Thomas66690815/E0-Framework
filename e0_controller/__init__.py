@@ -198,3 +198,7 @@ from .residual_tension import (
 )
 from .provenance import ProvenanceLog
 from .envelope import E0Envelope, transport_to_use_su2, use_su2_to_transport
+from .resonator import (
+    detect_cycles, cycle_coherence, resonance_map,
+    build_resonance_modifier, ResonanceInfo,
+)

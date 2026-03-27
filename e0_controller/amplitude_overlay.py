@@ -41,7 +41,7 @@ without modifying the operational controller.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Sequence, Set
+from typing import Callable, Dict, List, Optional, Sequence, Set
 
 import numpy as np
 
@@ -209,6 +209,7 @@ def analyze_controller_state(
     goals: Optional[Set[str]] = None,
     use_su2: object = False,
     axis_fn=None,
+    intensity_modifier: Optional[Callable[[str, float], float]] = None,
 ) -> OverlayReport:
     """
     Build an analysis-only amplitude overlay for one controller decision point.
@@ -228,6 +229,10 @@ def analyze_controller_state(
     goals:
         Required for "first_arrival" and "goal_reaching" geometries.
         Set of goal states.
+    intensity_modifier:
+        Optional callable (action, raw_intensity) → modified_intensity.
+        Applied after computing I(a) but before probability normalization.
+        Used by resonator modulation to boost actions in resonant cycles.
     """
     if horizon_edges < 1:
         raise ValueError("horizon_edges must be >= 1")
@@ -280,6 +285,13 @@ def analyze_controller_state(
         )
         action_infos.append(info)
         total_intensity += intensity
+
+    # Apply intensity modifier (e.g., resonator modulation) before normalization.
+    if intensity_modifier is not None:
+        total_intensity = 0.0
+        for info in action_infos:
+            info.intensity = intensity_modifier(info.action, info.intensity)
+            total_intensity += info.intensity
 
     if total_intensity > 0.0:
         for info in action_infos:
