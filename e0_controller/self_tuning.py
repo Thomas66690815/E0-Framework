@@ -110,6 +110,7 @@ class RunFieldSummary:
     escalations: int            # escalation count
     repeated_cycles: int        # 2-cycle count
     unique_states_visited: int  # distinct states visited
+    path_count_imbalance_max: float = 1.0  # max path_count ratio across steps
 
     @property
     def tau_eff(self) -> float:
@@ -219,7 +220,24 @@ def field_summary_from_run(landscape, trace) -> RunFieldSummary:
         escalations=escalations,
         repeated_cycles=repeated_cycles,
         unique_states_visited=len(unique),
+        path_count_imbalance_max=_extract_imbalance_max(trace),
     )
+
+
+def _extract_imbalance_max(trace) -> float:
+    """Extract maximum path_count_imbalance across all overlay steps.
+
+    Each StepResult may carry an OverlayReport with a
+    path_count_imbalance property.  Returns the worst (highest)
+    imbalance seen across the entire run.
+    """
+    worst = 1.0
+    for step in trace.steps:
+        if step.overlay is not None:
+            imb = step.overlay.path_count_imbalance
+            if imb > worst:
+                worst = imb
+    return worst
 
 
 # ──────────────────────────────────────────────
@@ -370,11 +388,23 @@ def compute_parameter_sensitivities(
             sens = fs.tau_esc * (1.0 - fs.tau_eff)
             direction = "decrease" if fs.tau_esc > 0.1 else "stable"
         elif name == "confidence_threshold":
-            sens = (1.0 - fs.tau_eff) * 0.5
-            direction = "decrease" if fs.tau_eff < 0.3 else "stable"
+            # Mass trap: raise threshold to resist biased amplitude override
+            if fs.tau_loop > 0 and fs.path_count_imbalance_max > 3.0:
+                sens = min(fs.path_count_imbalance_max / 5.0, 1.0)
+                direction = "increase"
+            else:
+                sens = (1.0 - fs.tau_eff) * 0.5
+                direction = "decrease" if fs.tau_eff < 0.3 else "stable"
         elif name == "hybrid_horizon":
-            sens = 1.0 - fs.tau_eff
-            direction = "increase" if fs.tau_eff < 0.5 else "stable"
+            # Mass trap inversion: when looping WITH path count imbalance,
+            # more horizon = more paths enumerated = WORSE trap.
+            # Correct response: DECREASE horizon to cut off biased paths.
+            if fs.tau_loop > 0 and fs.path_count_imbalance_max > 3.0:
+                sens = min(fs.tau_loop * fs.path_count_imbalance_max / 3.0, 1.0)
+                direction = "decrease"
+            else:
+                sens = 1.0 - fs.tau_eff
+                direction = "increase" if fs.tau_eff < 0.5 else "stable"
         else:
             sens = 0.0
             direction = "stable"

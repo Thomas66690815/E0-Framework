@@ -86,6 +86,24 @@ class OverlayReport:
         return max(self.action_infos, key=lambda a: a.intensity).action
 
     @property
+    def path_count_imbalance(self) -> float:
+        """Ratio of max to min path counts across actions.
+
+        Detects the amplitude mass trap: when one action has far more
+        contributing paths than others, |ΣΨ|² is structurally biased
+        regardless of per-path quality.
+
+        Returns max(counts) / min(counts).  Range [1, ∞).
+        - 1.0  → balanced path families (no structural bias)
+        - >3.0 → mass trap risk (one action dominates by path count)
+        Returns 1.0 when fewer than 2 actions have paths.
+        """
+        counts = [a.path_count for a in self.action_infos if a.path_count > 0]
+        if len(counts) < 2:
+            return 1.0
+        return max(counts) / min(counts)
+
+    @property
     def override_confidence(self) -> float:
         """Probability gap between best and second-best amplitude action.
 

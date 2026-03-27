@@ -79,6 +79,7 @@ _AMPLITUDE_DRIFT_THRESHOLD = 0.3       # > 30% greedy-vs-amplitude mismatch
 _COHERENCE_QUALITY_FLOOR = 0.3         # R_coh < 30% triggers quality
 _COHERENCE_OPPORTUNITY_FLOOR = 0.8     # R_coh > 80% is opportunity
 _THETA_OPPORTUNITY_FLOOR = 0.9         # Θ > 90% is opportunity
+_MASS_TRAP_IMBALANCE_THRESHOLD = 3.0   # path_count ratio > 3 + looping = mass trap
 
 
 # ──────────────────────────────────────────────
@@ -163,6 +164,13 @@ def should_reflect(
     if run.r_coh_avg > 0 and run.r_coh_avg < _COHERENCE_QUALITY_FLOOR:
         quality_reasons.append(
             f"low coherence ratio (R_coh={run.r_coh_avg:.2f})")
+
+    # Mass trap detection: path count imbalance + looping
+    if (run.path_count_imbalance_max > _MASS_TRAP_IMBALANCE_THRESHOLD
+            and run.repeated_cycles > 0):
+        quality_reasons.append(
+            f"mass trap suspect (imbalance={run.path_count_imbalance_max:.1f}, "
+            f"cycles={run.repeated_cycles})")
 
     if quality_reasons:
         return ReflectionDecision(
@@ -342,6 +350,20 @@ def _reflect_quality(ev: ScenarioEvaluation) -> ReflectionReport:
         evidence.append(f"r_coh_min={run.r_coh_min:.3f}, r_coh_max={run.r_coh_max:.3f}")
         layers.append("graph_design")
         actions.append("Graph phases cause cancellation — consider simplifying parallel branches")
+
+    # Mass trap: path count imbalance drives amplitude toward high-connectivity node
+    if (run.path_count_imbalance_max > _MASS_TRAP_IMBALANCE_THRESHOLD
+            and run.repeated_cycles > 0):
+        patterns.append(
+            f"Amplitude mass trap: path count imbalance "
+            f"{run.path_count_imbalance_max:.1f}x with {run.repeated_cycles} cycles")
+        evidence.append(
+            f"path_count_imbalance_max={run.path_count_imbalance_max:.1f}, "
+            f"repeated_cycles={run.repeated_cycles}")
+        layers.append("controller")
+        actions.append(
+            "Reduce hybrid_horizon to limit path enumeration bias, "
+            "or raise confidence_threshold to resist amplitude override")
 
     layers = list(dict.fromkeys(layers))
 
