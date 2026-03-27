@@ -117,7 +117,9 @@ __all__ = [
     "detect_hard_failure", "format_evaluation_report",
     # Reflection
     "ReflectionDecision", "ReflectionReport", "ReflectionCallFn",
+    "StructuralDiagnostic",
     "should_reflect", "reflect", "reflect_with_llm", "format_reflection_report",
+    "build_structural_diagnostic",
     # Self-Tuning (B4)
     "RunFieldSummary", "DerivedThresholds", "ParameterSensitivity",
     "TuningProposal", "MetaTuningResult",
@@ -168,7 +170,9 @@ from .evaluation import (
 )
 from .reflection import (
     ReflectionDecision, ReflectionReport, ReflectionCallFn,
+    StructuralDiagnostic,
     should_reflect, reflect, reflect_with_llm, format_reflection_report,
+    build_structural_diagnostic,
 )
 from .self_tuning import (
     RunFieldSummary, DerivedThresholds, ParameterSensitivity,

@@ -535,7 +535,7 @@ Born sampling (P ∝ I, choosing actions probabilistically from the amplitude-de
 | `test_memory_os.py` | persistence support for hybrid workflows, C28 |
 | `test_graph_validation.py` | graph-quality support layer |
 | `test_evaluation.py` | evaluation/rating support layer |
-| `test_reflection.py` | reflection support layer |
+| `test_reflection.py` | reflection support layer, C36 |
 | `test_reflection_hybrid.py` | C18 |
 | `test_dynamic_horizon.py` | C19 |
 | `test_confidence_override.py` | C20 |
@@ -911,6 +911,40 @@ Resolution: topology surgery (remove the problematic edge) or the `path_count_im
 - Rezession scenario: REZ→ZS→KE→W (3 steps, 0 overrides, burden=0.535)
 - Stagflation scenario: STAG→ZE→IS→PS (3 steps, 1 override, burden=0.745)
 - Override at STAGFLATION: greedy picks ZINS_SENKUNG (lowest S_eff), goal_reaching overrides to ZINS_ERHOEHUNG (Volcker path to PREISSTABILITAET)
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C36 — Structural Reflection: landscape-level diagnostics and rebuild
+
+**Claim**  
+When parameter tuning reaches a plateau (quality stable despite active tuning), chronic issues persist across runs, or parameters drift to bounds, the system detects this as a structural problem requiring landscape restructuring — not further parameter adjustment. A diagnostic package identifies dead states, loop states, chronic issues, and parameter saturation. The LLM adapter can rebuild the landscape topology using this diagnostic as context.
+
+**Evidence**  
+- `e0_controller/test_reflection.py` — 21 new tests across 5 classes:
+  - `TestStructuralTriggers` (7): plateau triggers structural, chronic loop triggers structural, param bound triggers structural, no tuning_memory skips structural, too few entries skips, quality takes precedence, failure takes precedence
+  - `TestStructuralDiagnostic` (6): dead states detected, loop states detected, chronic issues from memory, plateau evidence, parameter bounds hit, empty diagnostic without context
+  - `TestReflectStructural` (4): structural report from reflect(), plateau pattern present, dead states in report, format_reflection_report includes structural icon
+  - `TestRebuildLandscape` (4): diagnostic in prompt, state normalization, start/goal ensured, scenario_block inclusion
+- `e0_controller/reflection.py` — `StructuralDiagnostic` dataclass, `build_structural_diagnostic()`, `_reflect_structural()`, `"structural"` trigger in `should_reflect()` (between quality and opportunity, priority "high")
+- `e0_controller/llm_adapter.py` — `REBUILD_LANDSCAPE_PROMPT`, `E0LLMAdapter.rebuild_landscape()` (takes old proposal + diagnostic → restructured proposal)
+
+**Design**  
+Three-part minimal-invasive design:
+1. **Trigger**: `should_reflect()` accepts optional `tuning_memory` (TuningMemory). If plateau (|trend| < 0.01 with active tuning) OR chronic issues (>50% of recent runs) OR parameter drift to bounds → `ReflectionDecision(type="structural", priority="high")`
+2. **Diagnostic**: `build_structural_diagnostic()` analyzes landscape topology (dead states, bidirectional edges) and TuningMemory (chronic issues, plateau evidence, bounds) → `StructuralDiagnostic`
+3. **Rebuild**: `E0LLMAdapter.rebuild_landscape()` sends old topology + diagnostic to LLM with explicit instruction to restructure (not tweak). Returns a new `LandscapeProposal`.
+
+Key insight: `build_landscape()` IS already X→X' (landscape restructuring). The gap was the diagnostic bridge: Controller metrics → structured diagnostic → LLM rebuild instruction.
+
+**Result**  
+- Trigger priority: failure > quality > **structural** > opportunity
+- Dead state detection: landscape states − visited states
+- Loop state detection: bidirectional edges in topology
+- Diagnostic flows into rebuild prompt with structured context
+- No handcoded merge/split/add operations — LLM generates complete new landscape
 
 **Status**  
 ✅ Confirmed
