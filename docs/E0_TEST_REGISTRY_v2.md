@@ -904,7 +904,7 @@ The E₀ structural primitives correctly model macroeconomic monetary policy (EC
 **Key finding: Amplitude Mass Trap is domain-invariant**  
 When a high-connectivity node (STAGFLATION: 3 exits) is reachable, its path families produce constructive interference that overwhelms the direct shorter path.  The controller cycles: IH→STAG→ZS→W→IH→…  
 This is the SAME structural phenomenon observed in Beipackzettel (NEBENWIRKUNG node).  
-Resolution: topology surgery (remove the problematic edge) or a future `path_family_imbalance` detector in the amplitude overlay + self-tuning coupling.
+Resolution: topology surgery (remove the problematic edge) or the `path_count_imbalance` detector (implemented: `OverlayReport.path_count_imbalance`, reflection mass\_trap\_suspect trigger, self-tuning horizon inversion). See `test_mass_trap_detector.py` (25 tests).
 
 **Result**  
 - Inflation scenario: INFL→ZE→IS→PS (3 steps, 0 overrides, burden=0.455)
