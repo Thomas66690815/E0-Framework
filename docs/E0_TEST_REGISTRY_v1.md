@@ -1,7 +1,7 @@
 # E₀ Test Registry v1
 
 > Central reference for all tests in the E₀ Framework.
-> **Last verified:** 2026-03-27 — **1290 tests** (1290 unittest via discover; 32 conditional LLM; 21 standalone; 0 non-LLM failures)
+> **Last verified:** 2026-03-28 — **1286 tests** (1286 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures)
 
 ---
 
@@ -16,7 +16,7 @@
 | 5 | `test_phase2_minidomain.py` | 38 | unittest | Φ, ω, holonomy, Ψ = e^(−S+iΘ) | ✅ GREEN |
 | 6 | `test_reflection.py` | 36 | unittest | Reflection triggers, LLM fallback | ✅ GREEN |
 | 7 | `test_invoice.py` | 33 | unittest | Invoice domain end-to-end | ✅ GREEN |
-| 8 | `test_llm_integration.py` | 32 | unittest | Live LLM (requires API key) | ⚠ CONDITIONAL |
+| 8 | `live_test_llm.py` | 41 | explicit | Live LLM + Provenance (requires API key, separated from discover) | ⚠ LIVE |
 | 9 | `test_g5_edge_cases.py` | 55 | unittest | G5 robustness, 5 families A–E, SU(2) | ✅ GREEN |
 | 10 | `test_memory_os.py` | 38 | unittest | Persistence, save/load round-trip, SU(2)/curvature/escalation | ✅ GREEN |
 | 11 | `test_graph_validation.py` | 24 | unittest | Reachability, traps, quality score | ✅ GREEN |
@@ -44,6 +44,7 @@
 | 33 | `test_session.py` | 13 | unittest | Session orchestrator lifecycle, resume, tuning memory persistence | ✅ GREEN |
 | 34 | `test_beipackzettel.py` | 20 | unittest | Real-world Beipackzettel landscape, amplitude mass trap, goal_reaching vs simple | ✅ GREEN |
 | 35 | `test_beipackzettel_noncircular.py` | 11 | unittest | Non-circular LLM validation, geometry warning, structural amplitude trap | ✅ GREEN |
+| 36 | `test_provenance.py` | 28 | unittest | ProvenanceLog 6-stage evidence chain, serialization, adapter/session integration | ✅ GREEN |
 
 ---
 
@@ -528,17 +529,40 @@
 
 ---
 
+### 36. test_provenance.py — 28 tests
+
+**What it tests:** Full 6-stage ProvenanceLog evidence chain (Input → LLM Call → Proposal → Landscape → Run → Evaluation). 11 test classes:
+- `TestInputRecord` (4): SHA-256 hashing, metadata storage, format validation
+- `TestLLMCallRecord` (4): prompt/response/model/timing capture, call recording
+- `TestProposalRecord` (1): state/edge proposal extraction
+- `TestLandscapeRecord` (2): S_eff matrix, reachability flags
+- `TestRunRecord` (2): path/override/controller-config recording
+- `TestEvaluationRecord` (1): findings dict capture
+- `TestSerialization` (3): JSON round-trip, save/load file I/O, empty log
+- `TestChainCompleteness` (4): chain_complete() logic, chain_summary() formatting
+- `TestAdapterProvenance` (3): transparent call wrapping in E0LLMAdapter
+- `TestSessionProvenance` (2): automatic run recording in Session
+- `TestEndToEndProvenance` (2): full pipeline mock, chain completeness verification
+
+**Key findings:**
+- ProvenanceLog provides lückenlose (gapless) evidence chain from raw input to evaluation
+- All stages independently testable and JSON-serializable
+- `wrap_call_fn()` intercepts LLM calls transparently — no adapter code changes needed
+- Session auto-records controller config (goal, geometry, hybrid_mode, alpha, etc.)
+
+---
+
 ## How to Run
 
 ```bash
-# Full unittest suite (1290 tests via discover, ~32 LLM-conditional)
-python -m unittest discover -s e0_controller -p "test_*.py" -v
+# Standard unittest suite (1286 tests, no LLM calls, ~10s)
+py -3 -m unittest discover -s e0_controller -p "test_*.py" -t .
 
-# Standalone mini-domain (21 tests)
-python e0_controller/test_minidomain.py
+# Live LLM tests (requires API key, ~22s)
+py -3 -m unittest e0_controller.live_test_llm -v
 
 # Single file
-python -m unittest e0_controller.test_gordian_trap -v
+py -3 -m unittest e0_controller.test_gordian_trap -v
 ```
 
 ---
