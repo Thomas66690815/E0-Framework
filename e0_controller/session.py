@@ -28,6 +28,7 @@ Usage
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Set
 
@@ -177,6 +178,17 @@ class Session:
         SessionResult
             Contains trace, context, tuning memory, and metadata.
         """
+        if goal is not None and hasattr(self.controller, "hybrid_geometry"):
+            geom = self.controller.hybrid_geometry
+            if geom != "goal_reaching":
+                warnings.warn(
+                    f"Goal '{goal}' is set but hybrid_geometry='{geom}'. "
+                    f"Without goal_reaching geometry, amplitude may prefer "
+                    f"high-branching states over goal-directed paths. "
+                    f"Consider hybrid_geometry='goal_reaching'.",
+                    stacklevel=2,
+                )
+
         trace = self.controller.run(start, max_cycles=max_cycles, goal=goal)
 
         ctx = self.memos.snapshot_from_runtime(

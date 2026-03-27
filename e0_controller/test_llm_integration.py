@@ -404,6 +404,7 @@ class TestLiveHybridRun(unittest.TestCase):
             cls.landscape, execute_fn, alpha=2.0, recent_k=3,
             hybrid_mode=HybridMode.AMPLITUDE_ON_DISAGREE,
             hybrid_goals={GOAL},
+            hybrid_geometry="goal_reaching",
         )
         cls.trace = cls.ctrl.run(start=START, goal=GOAL, max_cycles=30)
 
