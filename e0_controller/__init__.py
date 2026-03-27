@@ -100,7 +100,11 @@ __all__ = [
     # MemOS Persistence
     "E0MemoryOS", "CanonRef", "MemOSContext",
     # Session Orchestrator
-    "Session", "SessionResult",
+    "Session", "SessionResult", "IterationResult",
+    # Residual Tension (C37)
+    "ResidualTension", "ResidualTensionMap", "IterationVerdict",
+    "compute_residual_map", "should_continue", "snapshot_tensions",
+    "format_residual_map",
     # Provenance
     "ProvenanceLog",
     # LLM Adapter
@@ -186,6 +190,11 @@ from .self_tuning import (
     save_tuning_memory, load_tuning_memory,
     perturbation_sensitivity, propose_tuning_empirical,
 )
-from .session import Session, SessionResult
+from .session import Session, SessionResult, IterationResult
+from .residual_tension import (
+    ResidualTension, ResidualTensionMap, IterationVerdict,
+    compute_residual_map, should_continue, snapshot_tensions,
+    format_residual_map,
+)
 from .provenance import ProvenanceLog
 from .envelope import E0Envelope, transport_to_use_su2, use_su2_to_transport

@@ -7,8 +7,7 @@ The controller stays pure — no persistence awareness.
 The orchestrator manages the lifecycle:
 
     load  → (restore context + tuning memory from disk)
-    run   → (delegate to controller.run)
-    save  → (persist context + run record + tuning memory)
+    run   → (delegate to controller.run)    iterate → (multi-run until tension equilibrium, C37)    save  → (persist context + run record + tuning memory)
 
 This is the handoff point for external systems.  Anything that
 wants to use E₀ as a core should go through Session, not through
@@ -41,6 +40,13 @@ from .self_tuning import (
     save_tuning_memory,
 )
 from .provenance import ProvenanceLog
+from .residual_tension import (
+    ResidualTensionMap,
+    IterationVerdict,
+    compute_residual_map,
+    should_continue,
+    snapshot_tensions,
+)
 
 
 @dataclass
@@ -51,6 +57,16 @@ class SessionResult:
     tuning_memory: TuningMemory
     session_id: str
     resumed: bool             # True if loaded from prior state
+
+
+@dataclass
+class IterationResult:
+    """Output of Session.iterate() — multi-run until equilibrium."""
+    results: List[SessionResult]           # one per iteration
+    verdicts: List[IterationVerdict]       # one per iteration
+    final_map: Optional[ResidualTensionMap]  # last tension map
+    iterations: int                        # how many runs were made
+    stop_reason: str                       # "equilibrium" | "stagnation" | "budget"
 
 
 class Session:
@@ -236,6 +252,83 @@ class Session:
     def recent_runs(self, limit: int = 5) -> List[Dict[str, Any]]:
         """Retrieve recent run records from disk."""
         return self.memos.retrieve_recent_runs(self.session_id, limit=limit)
+
+    def iterate(
+        self,
+        start: str,
+        goal: Optional[str] = None,
+        max_cycles: int = 50,
+        *,
+        max_iterations: int = 10,
+        tension_threshold: float = 0.1,
+    ) -> "IterationResult":
+        """Run the controller repeatedly until tension equilibrium.
+
+        Each iteration:
+        1. Snapshot pre-run tensions
+        2. Run the controller
+        3. Compute residual tension map
+        4. Decide: continue, reflect, or present
+
+        Stops on: equilibrium, stagnation, or budget.
+        The number of iterations is not prescribed — it emerges
+        from the landscape's tension structure (Axiom A₀).
+
+        Parameters
+        ----------
+        start : str
+            Start state for each run.
+        goal : str, optional
+            Goal state.
+        max_cycles : int
+            Maximum controller cycles per run.
+        max_iterations : int
+            Hard budget limit on iterations.
+        tension_threshold : float
+            Residual tension below this is considered resolved.
+
+        Returns
+        -------
+        IterationResult
+            Contains all session results, verdicts, and final map.
+        """
+        results: List[SessionResult] = []
+        verdicts: List[IterationVerdict] = []
+        prev_map: Optional[ResidualTensionMap] = None
+
+        for i in range(1, max_iterations + 1):
+            # 1. Snapshot tensions before run
+            pre = snapshot_tensions(self.landscape)
+
+            # 2. Run
+            result = self.run(start, goal=goal, max_cycles=max_cycles)
+            results.append(result)
+
+            # 3. Compute residual tension map
+            rmap = compute_residual_map(
+                self.landscape, result.trace, pre, iteration=i,
+            )
+
+            # 4. Decide
+            verdict = should_continue(
+                rmap, prev_map,
+                iteration=i,
+                max_iterations=max_iterations,
+                tension_threshold=tension_threshold,
+            )
+            verdicts.append(verdict)
+            prev_map = rmap
+
+            if not verdict.should_continue:
+                break
+
+        return IterationResult(
+            results=results,
+            verdicts=verdicts,
+            final_map=prev_map,
+            iterations=len(results),
+            stop_reason=verdicts[-1].reason if verdicts else "empty",
+        )
 
     @property
     def exists_on_disk(self) -> bool:
