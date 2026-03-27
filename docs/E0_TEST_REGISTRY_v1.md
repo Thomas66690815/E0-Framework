@@ -1,7 +1,7 @@
 # E₀ Test Registry v1
 
 > Central reference for all tests in the E₀ Framework.
-> **Last verified:** 2026-03-28 — **1344 tests** (1344 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures)
+> **Last verified:** 2026-03-28 — **1392 tests** (1392 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures)
 
 ---
 
@@ -47,6 +47,7 @@
 | 36 | `test_provenance.py` | 28 | unittest | ProvenanceLog 6-stage evidence chain, serialization, adapter/session integration | ✅ GREEN |
 | 37 | `test_ezb_zinsentscheidung.py` | 33 | unittest | EZB-Zinsentscheidung real-world domain, Gordian trap, amplitude mass trap, non-circular mock LLM | ✅ GREEN |
 | 38 | `test_mass_trap_detector.py` | 25 | unittest | Mass trap detection: path_count_imbalance, reflection trigger, self-tuning horizon inversion | ✅ GREEN |
+| 39 | `test_envelope.py` | 48 | unittest | E0Envelope + TransportRegime: typed config, serialization, bridge, controller integration | ✅ GREEN |
 
 ---
 

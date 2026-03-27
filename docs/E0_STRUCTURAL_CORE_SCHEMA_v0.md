@@ -487,8 +487,8 @@ Schema v0.2                   → formalize the ACTUAL commonalities
 
 | Action | Rationale |
 |---|---|
-| **Core block → `E0Envelope` dataclass** | ~80% proven. Stabilizes the existing interface between adapters and controller. |
-| **Core.controller.transport → `TransportRegime` enum** | Replace binary `use_su2` flag with typed `u1 / su2_min / su2_geo / su2_multi_axis`. |
+| **Core block → `E0Envelope` dataclass** | ✅ Implemented (`envelope.py`). Frozen, serializable, backward-compatible. 48 tests. |
+| **Core.controller.transport → `TransportRegime` enum** | ✅ Implemented (`primitives.py`). Replaces `use_su2` with typed `U1 / SU2_MINIMAL / SU2_GEOMETRIC`. Bridge functions preserve backward compatibility. |
 | **Core.states[].role → optional per-state metadata** | Useful for LLM-generated landscapes (start/goal/intermediate). |
 
 ### What to defer
@@ -509,8 +509,9 @@ Schema v0.2                   → formalize the ACTUAL commonalities
 **Origin:** ChatGPT/Gemini brainstorming + Copilot/Claude code-mapping  
 **Relation to canon:** compatible, not canonical  
 **Relation to implementation:**
-- Core block → ready for `E0Envelope` implementation
+- Core block → `E0Envelope` dataclass: ✅ implemented (`envelope.py`, 48 tests)
+- `TransportRegime` enum: ✅ implemented (`primitives.py`, replaces `use_su2`)
 - Ingress/Reflection/Egress → deferred until 2–3 real-world domains provide evidence  
 
 **Relation to papers:** architectural companion, not a substitute for formal derivation  
-**Next action:** Build second real-world domain, then revisit schema with cross-domain evidence
+**Next action:** Build third real-world domain using E0Envelope, then revisit schema with cross-domain evidence
