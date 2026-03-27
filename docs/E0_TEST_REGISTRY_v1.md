@@ -1,7 +1,7 @@
 # E₀ Test Registry v1
 
 > Central reference for all tests in the E₀ Framework.
-> **Last verified:** 2026-03-28 — **1431 tests** (1431 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures)
+> **Last verified:** 2026-03-27 — **1452 tests** (1452 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures)
 
 ---
 
@@ -14,7 +14,7 @@
 | 3 | `test_gordian_trap.py` | 44 | unittest | Holonomy, Gordian trap, multi-goal | ✅ GREEN |
 | 4 | `test_evaluation.py` | 42 | unittest | Run/semantic/scenario evaluation | ✅ GREEN |
 | 5 | `test_phase2_minidomain.py` | 38 | unittest | Φ, ω, holonomy, Ψ = e^(−S+iΘ) | ✅ GREEN |
-| 6 | `test_reflection.py` | 36 | unittest | Reflection triggers, LLM fallback | ✅ GREEN |
+| 6 | `test_reflection.py` | 57 | unittest | Reflection triggers, LLM fallback, structural reflection (C36) | ✅ GREEN |
 | 7 | `test_invoice.py` | 33 | unittest | Invoice domain end-to-end | ✅ GREEN |
 | 8 | `live_test_llm.py` | 41 | explicit | Live LLM + Provenance (requires API key, separated from discover) | ⚠ LIVE |
 | 9 | `test_g5_edge_cases.py` | 55 | unittest | G5 robustness, 5 families A–E, SU(2) | ✅ GREEN |
@@ -35,7 +35,7 @@
 | 24 | `test_confidence_override.py` | 31 | unittest | Confidence-weighted override gating F1-F12 | ✅ GREEN |
 | 25 | `test_memos_geometry.py` | 34 | unittest | MemOS geometry persistence G1-G10 | ✅ GREEN |
 | 26 | `test_born_sampling.py` | 31 | unittest | Born sampling vs argmax, ADR-0007 H1-H11 | ✅ GREEN |
-| 27 | `test_minidomain.py` | — | — | (empty — tests migrated to test_phase2_minidomain) | — |
+| 27 | `test_minidomain.py` | 21 | standalone | Mini-Domain graph, tension, coherence, historization, K11/K12 | ✅ GREEN |
 | 28 | `test_multi_axis_su2.py` | 36 | unittest | Per-edge SU(2) axes, non-commutativity, multi-axis interference, controller integration | ✅ GREEN |
 | 29 | `test_curvature_modulation.py` | 35 | unittest | M_H topological invariant, edge curvature, curvature modulation switch, downstream effects | ✅ GREEN |
 | 30 | `test_llm_context.py` | 23 | unittest | LLM canon essence, summary enrichment, overlay fields | ✅ GREEN |
@@ -119,9 +119,9 @@
 
 ---
 
-### 6. test_reflection.py — 36 tests
+### 6. test_reflection.py — 57 tests
 
-**What it tests:** Reflection decision triggers (failure, quality, opportunity), evidence block construction for LLM, result sampling and truncation, JSON parsing of LLM reflection responses, multi-scenario summary formatting.
+**What it tests:** Reflection decision triggers (failure, quality, opportunity, structural), evidence block construction for LLM, result sampling and truncation, JSON parsing of LLM reflection responses, multi-scenario summary formatting. Structural reflection (C36): StructuralDiagnostic (dead states, loop states, chronic issues, plateau, parameter bounds), structural trigger from TuningMemory, rebuild_landscape() prompt integration.
 
 **Key findings:**
 - Hard failures trigger "failure" reflection with high priority
@@ -129,6 +129,9 @@
 - Repeated cycles > 3 with loop_penalty > 0.2 trigger reflection
 - Opportunity type only when rating ≥ B and coverage high
 - LLM reflection has fallback to rule-based on call failure
+- Structural trigger fires between quality and opportunity when TuningMemory shows plateau, chronic issues, or parameter bounds
+- StructuralDiagnostic identifies dead states, loop states, and chronic dimensions
+- rebuild_landscape() passes diagnostic context to LLM for topology restructuring
 
 ---
 
@@ -143,9 +146,9 @@
 
 ---
 
-### 8. test_llm_integration.py — 32 tests ⚠
+### 8. live_test_llm.py — 41 tests ⚠
 
-**What it tests:** Live LLM landscape proposal, transition execution (SUCCESS/FAILURE/PARTIAL), confidence extraction, delta/resistance estimation, full controller run, semantic evaluation, hybrid mode with real LLM, multi-goal handling.
+**What it tests:** Live LLM integration tests (requires API key, separated from unittest discover). Landscape proposal, transition execution (SUCCESS/FAILURE/PARTIAL), confidence extraction, delta/resistance estimation, full controller run, semantic evaluation, hybrid mode with real LLM, multi-goal handling, provenance chain.
 
 **Key findings:**
 - LLM proposes connected graph with ≥ 4 states, goal always reachable
@@ -154,7 +157,7 @@
 - Full runs reach goal ≥ 85% with LLM
 - Multi-goal runs path to at least one goal
 
-**Note:** Skipped when `OPENAI_API_KEY` not set. Results may vary due to LLM non-determinism.
+**Note:** Requires `OPENAI_API_KEY`. Separated from unittest discover to avoid CI failures. Run explicitly: `py -3 -m unittest e0_controller.live_test_llm -v`.
 
 ---
 
@@ -559,7 +562,7 @@
 ## How to Run
 
 ```bash
-# Standard unittest suite (1286 tests, no LLM calls, ~10s)
+# Standard unittest suite (1452 tests, no LLM calls, ~7s)
 py -3 -m unittest discover -s e0_controller -p "test_*.py" -t .
 
 # Live LLM tests (requires API key, ~22s)

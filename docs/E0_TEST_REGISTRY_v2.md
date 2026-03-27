@@ -522,15 +522,17 @@ Born sampling (P ∝ I, choosing actions probabilistically from the amplitude-de
 
 | Test file | Primary claims covered |
 |-----------|------------------------|
+| `test_greedy_trap.py` | C1 |
 | `test_amplitude_overlay.py` | C2, C3, C7 |
 | `test_phase2_minidomain.py` | C2, C14 |
+| `test_phase2_invoice.py` | C2, C14 |
 | `test_waypoint.py` | C3, C4 |
 | `test_gordian_trap.py` | C4, C5, C6, C7, C8, C9 |
-| `test_g5_edge_cases.py` | C9, C10 (families A–E + O2 large-|G|) |
-| `test_topology_classification.py` | C11 |
+| `test_g5_edge_cases.py` | C9, C10, C23 (families A–E, O2, SU(2)) |
+| `test_topology_classification.py` | C11, C23 (SU(2) classes) |
 | `test_scaling.py` | C12 |
 | `test_llm_adapter.py` | C13 |
-| `test_llm_integration.py` | C13 |
+| `live_test_llm.py` | C13 (live, requires API key) |
 | `test_invoice.py` | C7, C13 |
 | `test_memory_os.py` | persistence support for hybrid workflows, C28 |
 | `test_graph_validation.py` | graph-quality support layer |
@@ -540,22 +542,26 @@ Born sampling (P ∝ I, choosing actions probabilistically from the amplitude-de
 | `test_dynamic_horizon.py` | C19 |
 | `test_confidence_override.py` | C20 |
 | `test_memos_geometry.py` | C21 |
-| `test_born_sampling.py` | C22 |
+| `test_born_sampling.py` | C22, C23 (H11 class) |
 | `test_spinor.py` | C15, C23, C12 |
 | `test_resonator.py` | C16, C24 |
 | `test_omega_uniqueness.py` | C14 |
 | `test_historization_gordian.py` | C8, C9 (Gordian + O1 non-Gordian) |
 | `test_born_regime.py` | C17 |
 | `test_minidomain.py` | base mechanics, historization, K11/K12 |
-| `test_g5_edge_cases.py` | C10, C23 (SU(2) classes) |
-| `test_topology_classification.py` | C11, C23 (SU(2) classes) |
-| `test_born_sampling.py` | C22, C23 (H11 class) |
 | `test_multi_axis_su2.py` | C15, C23, C25 |
 | `test_curvature_modulation.py` | C26 |
 | `test_llm_context.py` | C13, C27 |
 | `test_k5_escalation.py` | C27 |
 | `test_self_tuning.py` | C29 |
 | `test_session.py` | C30 |
+| `test_beipackzettel.py` | C31 |
+| `test_beipackzettel_noncircular.py` | C32 |
+| `test_provenance.py` | C33 |
+| `test_mass_trap_detector.py` | C34 |
+| `test_ezb_zinsentscheidung.py` | C35 |
+| `test_envelope.py` | typed config (TransportRegime, E0Envelope) |
+| `test_burnout_composite.py` | Domäne 3 composite |
 
 ---
 
