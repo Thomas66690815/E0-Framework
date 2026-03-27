@@ -421,9 +421,9 @@ The E₀ Controller as of 2026-03-27 is a **fully operational, multi-layered str
 
 ### 6.3 Three-Tier Claim Classification (updated)
 
-**Derived (mathematically necessary):**
-- ω = ½(v_rot(x,y) − v_rot(y,x)) is the unique antisymmetric phase generator (C14)
-- P(z) = I(z)/ΣI satisfies axioms B1–B5 and is the unique minimal realization rule (C17)
+**Derived (within E₀ axiom system):**
+- ω = ½(v_rot(x,y) − v_rot(y,x)) is the unique antisymmetric phase generator (C14, within axioms A1/A3/A4)
+- P(z) = I(z)/ΣI satisfies axioms B1–B5 and is the unique minimal realization rule (C17, under BER-1–5)
 - SU(2) edge transport U = exp(−iω/2 · n̂ · σ⃗) is non-Abelian when axes differ (B1)
 - M_H = 1/(1+κ) is bounded in (0,1] and equals 1 on flat (κ=0) graphs (B2)
 - If Δ > 0 and a path with finite R exists, non-transition is structurally unstable (Axiom A₀) — **now implemented at both the edge level (controller) and the iteration level (C37)**

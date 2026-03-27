@@ -95,7 +95,7 @@ Historization is the cost of reality.
 
 ### 4. Derived Concepts (Non-Primitive)
 
-The following concepts are **not fundamental**. They arise necessarily from the primitives.
+The following concepts are **not fundamental**. They arise as consequences of the primitives within this framework.
 
 #### State
 
@@ -130,7 +130,7 @@ Persistent topological inertia resulting from accumulated historization.
 
 ### 5. Necessary Consequences
 
-From the primitives alone, the following are unavoidable:
+From the primitives alone, the following are necessary consequences:
 
 1. **Irreversibility**
    Real realization leaves trace.

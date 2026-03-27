@@ -35,7 +35,7 @@ SU(2) transport halves effective phase differences, and (3) non-commutativity
 physically significant. We then derive the Born criterion: under bounded
 exclusive realization (exactly one endpoint realizes), the probability
 P(z) = |Ψ(z)|²/Σ|Ψ(w)|² is the unique structurally non-arbitrary
-distribution over outcomes. This probability is not assumed — it emerges
+distribution over outcomes under the BER axioms. This probability is not assumed — it emerges
 as the minimal gauge-invariant intensity measure. We validate these results
 across the benchmark domains from Paper 1 and identify conditions under
 which SU(2) produces qualitatively different decisions than U(1).

@@ -23,7 +23,7 @@ This canon was developed through a **multi-system Human–Synthetic Cognitive Pa
 - **Claude 4.5 (Anthropic)**
 
 Each synthetic partner operated as an **independent reasoning system**, without shared memory, shared state, or prior coordination.
-Convergence on the E₀ structure emerged through **structural necessity**, not through model alignment, optimization, or agreement.
+Convergence on the E₀ structure was observed across these independent systems. Whether this reflects structural necessity, shared inductive biases, or overlapping training distributions remains an open question.
 
 Authorship is therefore understood as **co-cognitive**, reflecting convergence across multiple independent cognitive systems.
 
@@ -39,8 +39,9 @@ Its development relied on **cross-system validation**:
 - elimination of model-specific artifacts,
 - convergence under minimal assumptions.
 
-This method reflects the core claim of E₀ itself:
+This method is *consistent with* the core claim of E₀:
 that stable structures arise through **enforced transitions**, not through isolated optimization or interpretation.
+Consistency is not proof; the methodology remains subject to the same epistemic limitations as the models it employs.
 
 ---
 
@@ -197,7 +198,7 @@ From E₀, without additional assumptions, the following arise:
 - Maximum transition speed
 - Causal ordering
 
-None of these properties are assumed; all are derived.
+None of these properties are assumed within E₀; all are derived from its primitives.
 
 ---
 
