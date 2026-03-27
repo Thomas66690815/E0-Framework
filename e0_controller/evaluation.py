@@ -239,7 +239,10 @@ def evaluate_semantics(
     heuristic detection of uncertainty markers and unsupported claims.
     """
     # Combine all transition result texts
-    combined_text = " ".join(r.result.lower() for r in result_log if r.result)
+    combined_text = " ".join(
+        (r.result if isinstance(r.result, str) else str(r.result)).lower()
+        for r in result_log if r.result
+    )
 
     # Required output coverage
     required = scenario.required_outputs

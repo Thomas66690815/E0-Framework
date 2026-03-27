@@ -1,24 +1,16 @@
 """
-E₀ LLM Integration Tests (Phase 3q)
+E₀ LLM Live Tests (Phase 3q)
 =====================================
 Live LLM tests that validate the full pipeline against the OpenAI API.
 
-These tests are SKIPPED unless OPENAI_API_KEY is set in the environment
-or in a .env file.  They make real API calls and verify:
+These tests are NOT part of the standard test suite (discover pattern: test_*.py).
+They require OPENAI_API_KEY in the environment or .env file.
 
-  1. Landscape bootstrapping returns a valid, connected graph
-  2. Transition execution produces parseable, sensible results
-  3. Semantic coverage > 0% against a scenario packet
-  4. Full controller run reaches the goal
-  5. Evaluation rating ≥ C on a live run
-  6. Hybrid mode also reaches goal with overlay data
+Run explicitly:
+    python -m unittest e0_controller.live_test_llm -v
 
-Run:
-    # Only runs if OPENAI_API_KEY is available:
-    python -m unittest e0_controller.test_llm_integration -v
-
-    # Explicit:
-    OPENAI_API_KEY=sk-... python -m unittest e0_controller.test_llm_integration -v
+    # Or only the provenance test:
+    python -m unittest e0_controller.live_test_llm.TestLiveProvenanceBeipackzettel -v
 """
 
 from __future__ import annotations
