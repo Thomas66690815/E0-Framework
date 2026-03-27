@@ -240,6 +240,12 @@ class E0Controller:
         # K1 fix: Escalation edges live here, NOT in the Landscape.
         self._escalation_edges: Dict[Edge, Tuple[float, float, str]] = {}
 
+    @property
+    def transport(self):
+        """TransportRegime derived from use_su2 (backward-compatible)."""
+        from .envelope import use_su2_to_transport
+        return use_su2_to_transport(self.use_su2)
+
     # --- Edge resolution (landscape + escalation overlay) ---
 
     def _get_delta(self, x: str, y: str) -> Optional[float]:

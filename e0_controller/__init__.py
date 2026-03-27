@@ -81,7 +81,7 @@ __version__ = "0.5.0"
 # ── Public API ──────────────────────────────────────────────
 __all__ = [
     # Primitives
-    "Edge", "Outcome",
+    "Edge", "Outcome", "TransportRegime",
     # Tension / Coherence
     "tension", "path_tension", "coherence",
     # Historization
@@ -133,9 +133,11 @@ __all__ = [
     "ScenarioPacket", "load_scenario", "find_scenario",
     # Cross-Domain Validation
     "run_validation",
+    # Envelope
+    "E0Envelope", "transport_to_use_su2", "use_su2_to_transport",
 ]
 
-from .primitives import Edge, Outcome
+from .primitives import Edge, Outcome, TransportRegime
 from .historization import Historization, TraceRecord
 from .tension import tension, path_tension, coherence
 from .landscape import Landscape
@@ -182,3 +184,4 @@ from .self_tuning import (
 )
 from .session import Session, SessionResult
 from .provenance import ProvenanceLog
+from .envelope import E0Envelope, transport_to_use_su2, use_su2_to_transport
