@@ -878,6 +878,45 @@ The ProvenanceLog (C33) captures a complete, verifiable evidence chain when run 
 
 ---
 
+### C35 — EZB-Zinsentscheidung cross-domain validation (Domäne 2)
+
+**Claim**  
+The E₀ structural primitives correctly model macroeconomic monetary policy (ECB rate decisions) and the controller exhibits domain-appropriate behavior across three structurally distinct scenarios: inflation control, recession recovery, and stagflation escape.  The amplitude mass trap is confirmed as a cross-domain structural phenomenon.
+
+**Evidence**  
+- `e0_controller/demo_ezb_zinsentscheidung.py` — 16 edges, 11 states, 3 scenarios
+- `e0_controller/test_ezb_zinsentscheidung.py` — 33 tests across 10 classes:
+  - `TestEZBLandscapeStructure` (7): edge/state count, cycle existence, single-exit validation
+  - `TestStagflationGordianTrap` (5): 3 exits, isolated trap, R₀ ≥ 0.70, burden comparison, worst-option ordering
+  - `TestInflationScenario` (4): goal_reaching reaches PREISSTABILITAET, path includes ZINS_ERHOEHUNG, avoids STAGFLATION, ≤ 4 steps
+  - `TestRezessionMultiGoal` (3): reaches WACHSTUM, avoids STAGFLATION, first step = ZINS_SENKUNG
+  - `TestStagflationScenario` (3): escapes trap, higher burden + more/equal steps vs inflation
+  - `TestGeometryDifference` (1): both geometries reach goal from REZESSION
+  - `TestCycleDetection` (2): max_cycles terminates, historization shifts tension
+  - `TestNonCircularEZBLandscape` (6): mock LLM landscape with 19 edges (incl. INFL→STAG)
+  - `TestNonCircularAmplitudeMassTrap` (4): **proves the trap**: controller cycles with amplitude overlay, GREEDY escapes (graph IS navigable), demo landscape avoids trap
+- Domain contrast vs. Beipackzettel (Domäne 1):
+  - Cycles (boom-bust feedback loops) — Beipackzettel has none
+  - Multi-goal (Preisstabilität + Wachstum) — Beipackzettel has single goal
+  - Gordian topology (Stagflation: all 3 exits R₀ ≥ 0.70) — Beipackzettel has mild branching
+  - Amplitude mass trap confirmed cross-domain: mock LLM landscape with INFL→STAG triggers same structural phenomenon
+
+**Key finding: Amplitude Mass Trap is domain-invariant**  
+When a high-connectivity node (STAGFLATION: 3 exits) is reachable, its path families produce constructive interference that overwhelms the direct shorter path.  The controller cycles: IH→STAG→ZS→W→IH→…  
+This is the SAME structural phenomenon observed in Beipackzettel (NEBENWIRKUNG node).  
+Resolution: topology surgery (remove the problematic edge) or a future `path_family_imbalance` detector in the amplitude overlay + self-tuning coupling.
+
+**Result**  
+- Inflation scenario: INFL→ZE→IS→PS (3 steps, 0 overrides, burden=0.455)
+- Rezession scenario: REZ→ZS→KE→W (3 steps, 0 overrides, burden=0.535)
+- Stagflation scenario: STAG→ZE→IS→PS (3 steps, 1 override, burden=0.745)
+- Override at STAGFLATION: greedy picks ZINS_SENKUNG (lowest S_eff), goal_reaching overrides to ZINS_ERHOEHUNG (Volcker path to PREISSTABILITAET)
+
+**Status**  
+✅ Confirmed
+
+---
+
 ## 5. Open claims with recommended next tests
 
 ### O1 — Extreme historization stress

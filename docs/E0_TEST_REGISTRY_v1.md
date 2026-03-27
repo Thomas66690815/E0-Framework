@@ -1,7 +1,7 @@
 # E₀ Test Registry v1
 
 > Central reference for all tests in the E₀ Framework.
-> **Last verified:** 2026-03-28 — **1286 tests** (1286 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures)
+> **Last verified:** 2026-03-28 — **1319 tests** (1319 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures)
 
 ---
 
@@ -45,6 +45,7 @@
 | 34 | `test_beipackzettel.py` | 20 | unittest | Real-world Beipackzettel landscape, amplitude mass trap, goal_reaching vs simple | ✅ GREEN |
 | 35 | `test_beipackzettel_noncircular.py` | 11 | unittest | Non-circular LLM validation, geometry warning, structural amplitude trap | ✅ GREEN |
 | 36 | `test_provenance.py` | 28 | unittest | ProvenanceLog 6-stage evidence chain, serialization, adapter/session integration | ✅ GREEN |
+| 37 | `test_ezb_zinsentscheidung.py` | 33 | unittest | EZB-Zinsentscheidung real-world domain, Gordian trap, amplitude mass trap, non-circular mock LLM | ✅ GREEN |
 
 ---
 
