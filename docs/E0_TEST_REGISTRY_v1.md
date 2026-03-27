@@ -1,7 +1,7 @@
 # E₀ Test Registry v1
 
 > Central reference for all tests in the E₀ Framework.
-> **Last verified:** 2026-03-26 — **1254 tests** (1254 unittest via discover; 32 conditional LLM; 21 standalone; 0 non-LLM failures)
+> **Last verified:** 2026-03-27 — **1290 tests** (1290 unittest via discover; 32 conditional LLM; 21 standalone; 0 non-LLM failures)
 
 ---
 
@@ -42,6 +42,8 @@
 | 31 | `test_k5_escalation.py` | 9 | unittest | K5 field-based escalation, dead-end/filtered/exhausted strategies | ✅ GREEN |
 | 32 | `test_self_tuning.py` | 87 | unittest | B4 self-tuning: field summary, derived thresholds, quality score, tuning cycle, tuning memory, perturbation sensitivity | ✅ GREEN |
 | 33 | `test_session.py` | 13 | unittest | Session orchestrator lifecycle, resume, tuning memory persistence | ✅ GREEN |
+| 34 | `test_beipackzettel.py` | 20 | unittest | Real-world Beipackzettel landscape, amplitude mass trap, goal_reaching vs simple | ✅ GREEN |
+| 35 | `test_beipackzettel_noncircular.py` | 11 | unittest | Non-circular LLM validation, geometry warning, structural amplitude trap | ✅ GREEN |
 
 ---
 
@@ -500,10 +502,36 @@
 
 ---
 
+### 34. test_beipackzettel.py — 20 tests
+
+**What it tests:** Real-world Beipackzettel (package insert) landscape for Ibuprofen, mapped to E₀ states and edges. 23 edges, 16 states. Three scenarios: (1) goal_reaching finds GESUND in 3 steps, (2) simple geometry gets trapped in amplitude mass trap through MAGEN_REIZUNG loop, (3) ASS interaction scenario with goal_reaching finds safe path. Tests validate landscape structure, path outcomes, and geometry-dependent behavior.
+
+**Key findings:**
+- Amplitude mass trap confirmed: states with more outgoing edges accumulate more Ψ-terms under simple geometry → I(a) biased toward high-branching states
+- goal_reaching geometry reliably finds GESUND; simple geometry loops through side-effect states
+- Greedy takes dose escalation path (IBU_400→KEINE_WIRKUNG→IBU_800→BESSERUNG→GESUND) — not trapped, but via longer pharmacological route
+- Real-world domain validates E₀ geometry distinction beyond synthetic benchmarks
+
+---
+
+### 35. test_beipackzettel_noncircular.py — 11 tests
+
+**What it tests:** Non-circular validation of the amplitude mass trap. Uses mock LLM function that generates pharmacologically plausible Δ/R₀ values from Beipackzettel text without knowledge of what parameter values "work". Three test classes:
+- `TestNonCircularLandscapeBuild` (4): landscape size, edges, delta/resistance ranges from LLM-derived values
+- `TestNonCircularGeometryDifference` (4): goal_reaching finds goal, simple geometry does not, greedy succeeds (via longer path), hybrid override count ≥ 1
+- `TestSessionGeometryWarning` (3): Session.run() emits UserWarning when goal set but geometry≠goal_reaching, no warning when geometry matches, no warning when no goal
+
+**Key findings:**
+- Amplitude mass trap is structural (topology-dependent), not parameter-dependent — persists with LLM-derived values
+- Validates that the Session geometry warning fires correctly
+- Breaks circularity: parameters come from text analysis, not from knowing which values produce the desired demo outcome
+
+---
+
 ## How to Run
 
 ```bash
-# Full unittest suite (1254 tests via discover, ~32 LLM-conditional)
+# Full unittest suite (1290 tests via discover, ~32 LLM-conditional)
 python -m unittest discover -s e0_controller -p "test_*.py" -v
 
 # Standalone mini-domain (21 tests)
@@ -521,3 +549,4 @@ python -m unittest e0_controller.test_gordian_trap -v
 - Update `Last verified` date and total count after full regression.
 - LLM integration tests (`test_llm_integration`) fail without `OPENAI_API_KEY` — not counted as regression failures.
 - `test_minidomain.py` runs standalone (21 tests, not discovered by unittest discover).
+- `test_beipackzettel_noncircular.py` uses mock LLM — no API key needed.
