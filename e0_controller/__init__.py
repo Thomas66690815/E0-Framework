@@ -76,7 +76,7 @@ Phase 3o (Evaluation Layer Hybrid Extension):
 See E0_CONTROLLER_STATUS.md for full project context.
 """
 
-__version__ = "0.10.8"
+__version__ = "0.5.0"
 
 # ── Public API ──────────────────────────────────────────────
 __all__ = [
@@ -121,8 +121,11 @@ __all__ = [
     "TuningProposal", "MetaTuningResult",
     "TuningCycleResult", "MultiCycleTuningResult",
     "TuningSnapshot", "TuningMemory",
+    "field_summary_from_run", "derive_thresholds",
+    "compute_parameter_sensitivities", "propose_tuning", "apply_tuning",
     "quality_score", "tuning_cycle", "tune",
-    "tune_with_memory", "perturbation_sensitivity", "propose_tuning_empirical",
+    "snapshot_from_cycle", "tune_with_memory",
+    "perturbation_sensitivity", "propose_tuning_empirical",
     "save_tuning_memory", "load_tuning_memory",
     # Scenarios
     "ScenarioPacket", "load_scenario", "find_scenario",

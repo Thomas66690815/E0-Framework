@@ -5,7 +5,7 @@
 > was ist neu entstanden, und was haben wir gelernt.
 >
 > **Datum:** 2026-03-26  
-> **Basis:** 1046 Tests, 0 Failures, 24 bestätigte Claims (C1–C24)  
+> **Basis:** 1254 Tests, 0 Failures, 30 bestätigte Claims (C1–C30)  
 > **Canon-Dokumente:** `e0-canonical-reference.txt`, `e0-canon-plain.txt`,
 > `ontodynamics.txt`, `e0-agi-blueprint.md`
 
@@ -499,7 +499,7 @@ Canon — aber der Canon *prognostiziert* sie auch nicht.
 
 ### 8.5 Tests sind der Kompass
 
-24 Claims, 1046 Tests. Jede Hypothese wurde falsifizierbar formuliert
+30 Claims, 1254 Tests. Jede Hypothese wurde falsifizierbar formuliert
 und dann getestet. Das hat den Unterschied zwischen „wir glauben, Interferenz
 existiert" und „C6: unter Gordian-Bedingungen fällt der A-Interferenzfaktor
 unter 0.1, und die Hybridarbitration überschreibt A1 → B1" gemacht.

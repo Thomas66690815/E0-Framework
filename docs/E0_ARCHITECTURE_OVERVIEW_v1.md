@@ -24,6 +24,10 @@ Confidence Gating (override_confidence threshold)
   ↓
 MemOS Persistence (snapshots, hybrid traces, geometry + threshold)
   ↓
+Self-Tuning B4 (meta-layer, feedback loop, cross-run memory, sensitivity)
+  ↓
+Session Orchestrator (controller + MemOS lifecycle, resume, persistence)
+  ↓
 Evaluation + Reflection + Demos
 ```
 
@@ -49,6 +53,8 @@ Each arrow represents a dependency:
 | Persistence | `e0_controller/memory_os.py` | Stores landscapes, historisation, hybrid overrides |
 | Evaluation | `e0_controller/evaluation.py`, `docs/E0_EVALUATION_LAYER_v0.2.md` | Run/Scenario scoring, hybrid metrics |
 | Reflection | `e0_controller/reflection.py`, `docs/E0_REFLECTION_LAYER_v0.1.md` | Structured self-observation |
+| Self-Tuning (B4) | `e0_controller/self_tuning.py` | Meta-layer, feedback loop, cross-run memory, parameter sensitivity |
+| Session Orchestrator | `e0_controller/session.py` | Controller + MemOS lifecycle wrapper, resume, disk persistence |
 | External interface | `e0_controller/llm_adapter.py`, `docs/E0_EXTERNAL_VALIDATION_AND_HANDOFF_NOTE_v1.md` | Bounded LLM context, handoff strategy |
 
 ---
@@ -96,12 +102,12 @@ For deeper detail:
 
 ## 6. Open questions
 
-1. Full derivation of `Θ` from the rotational field (`v_rot`)  
+1. ~~Full derivation of `Θ` from the rotational field (`v_rot`)~~ — **resolved** via C14 omega uniqueness  
 2. Proof-level justification for the `simple` summation geometry default  
 3. Scalable amplitude aggregation without explicit enumeration  
 4. Formal link between inline Verdichtungssnapshots and MemOS snapshots  
 5. Adaptive mode selection (auto-switch between argmax/Born per domain)  
-6. SU(2) intensities in operational controller decisions (O4)
+6. ~~SU(2) intensities in operational controller decisions (O4)~~ — **resolved** via O4 multi-axis SU(2)
 
 These open points connect the current operational system back to the mathematical research agenda.
 
