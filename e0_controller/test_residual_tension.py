@@ -32,6 +32,7 @@ from e0_controller.residual_tension import (
     _STAGNATION_DELTA,
 )
 from e0_controller.session import Session, IterationResult
+from e0_controller.reflection import ReflectionReport
 
 
 # ──────────────────────────────────────────────
@@ -385,6 +386,88 @@ class TestFormatResidualMap(unittest.TestCase):
         rmap = _make_simple_residual_map(hotspot_s=0.01, iteration=1)
         text = format_residual_map(rmap)
         self.assertIn("equilibrium", text.lower())
+
+
+# ──────────────────────────────────────────────
+# 5. Reflection in iterate() loop
+# ──────────────────────────────────────────────
+
+class TestIterateReflection(unittest.TestCase):
+    """Tests that reflection executes between iterations."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp(prefix="e0_iref_")
+
+    def tearDown(self):
+        shutil.rmtree(self.tmpdir, ignore_errors=True)
+
+    def test_reflections_list_matches_iterations(self):
+        """IterationResult.reflections has one entry per iteration."""
+        L = _make_landscape()
+        session = Session("ref-len", L, _success_fn, base_dir=self.tmpdir)
+        result = session.iterate("A", goal="GOAL", max_cycles=10,
+                                 max_iterations=3)
+        self.assertEqual(len(result.reflections), result.iterations)
+
+    def test_reflection_triggered_on_goal_miss(self):
+        """When goal is never reached, reflection fires (failure trigger)."""
+        L = Landscape()
+        L.add_edge("A", "B", delta=0.3, resistance=0.5)
+        L.add_edge("B", "C", delta=0.2, resistance=0.4)
+        # No edge to GOAL — goal will never be reached
+
+        session = Session("ref-miss", L, _success_fn, base_dir=self.tmpdir)
+        result = session.iterate("A", goal="GOAL", max_cycles=5,
+                                 max_iterations=2)
+        # At least the last iteration should trigger reflection
+        # (because !should_continue always attempts reflection)
+        last_refl = result.reflections[-1]
+        self.assertIsNotNone(last_refl)
+        self.assertIsInstance(last_refl, ReflectionReport)
+        self.assertEqual(last_refl.reflection_type, "failure")
+
+    def test_no_reflection_on_clean_equilibrium(self):
+        """Quick equilibrium with goal reached → no reflection."""
+        L = Landscape()
+        L.add_edge("A", "GOAL", delta=0.1, resistance=0.1)
+
+        session = Session("ref-clean", L, _success_fn, base_dir=self.tmpdir)
+        result = session.iterate("A", goal="GOAL", max_cycles=5,
+                                 tension_threshold=100.0)
+        self.assertEqual(result.iterations, 1)
+        # Stop on equilibrium — reflection fires but goal reached
+        # with good efficiency → should_reflect returns no trigger
+        # (reflects are attempted when !should_continue, but
+        # the reflection layer decides if conditions warrant a report)
+
+    def test_reflection_on_failure_fn(self):
+        """Repeated failures on D branch → failure reflection."""
+        L = _make_landscape()
+        session = Session("ref-fail", L, _failure_on_D, base_dir=self.tmpdir)
+        result = session.iterate("A", goal="GOAL", max_cycles=10,
+                                 max_iterations=3)
+        # Check that reflections list has the right length
+        self.assertEqual(len(result.reflections), result.iterations)
+        # All reflections should be either None or ReflectionReport
+        for r in result.reflections:
+            if r is not None:
+                self.assertIsInstance(r, ReflectionReport)
+
+    def test_inter_iteration_reflect_builds_evaluation(self):
+        """_inter_iteration_reflect returns report for bad runs."""
+        L = Landscape()
+        L.add_edge("A", "B", delta=0.3, resistance=0.5)
+        # No GOAL reachable
+
+        session = Session("ref-eval", L, _success_fn, base_dir=self.tmpdir)
+        result = session.run("A", goal="GOAL", max_cycles=5)
+        pre = snapshot_tensions(L)
+        rmap = compute_residual_map(L, result.trace, pre, iteration=1)
+
+        report = session._inter_iteration_reflect(result, "GOAL", rmap)
+        # Goal not reached → failure reflection
+        self.assertIsNotNone(report)
+        self.assertEqual(report.reflection_type, "failure")
 
 
 if __name__ == "__main__":

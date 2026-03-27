@@ -39,6 +39,7 @@ from e0_controller import (
     graph_quality,
     format_residual_map,
 )
+from e0_controller.reflection import format_reflection_report
 from e0_controller.demo_burnout_composite import (
     ALL_FRAGMENTS,
     BURNOUT_TASK,
@@ -133,8 +134,8 @@ def run_iterative_demo(use_mock: bool = False) -> None:
     print(f"Stop reason: {iter_result.stop_reason}")
     print(f"{'=' * 64}")
 
-    for i, (res, verdict) in enumerate(
-        zip(iter_result.results, iter_result.verdicts), 1
+    for i, (res, verdict, refl) in enumerate(
+        zip(iter_result.results, iter_result.verdicts, iter_result.reflections), 1
     ):
         trace = res.trace
         path_str = " → ".join(trace.path)
@@ -167,6 +168,14 @@ def run_iterative_demo(use_mock: bool = False) -> None:
               f" ({verdict.reason})")
         if verdict.should_reflect:
             print(f"   → Reflection recommended before next iteration")
+        if refl:
+            print(f"\n   Reflection ({refl.reflection_type}):")
+            if refl.observed_patterns:
+                print(f"     Patterns: {', '.join(refl.observed_patterns[:3])}")
+            if refl.likely_layers:
+                print(f"     Layers: {', '.join(refl.likely_layers)}")
+            if refl.recommended_actions:
+                print(f"     → {refl.recommended_actions[0]}")
 
     # ── 5. Final tension map ────────────────────────────────────
     if iter_result.final_map:
@@ -186,6 +195,8 @@ def run_iterative_demo(use_mock: bool = False) -> None:
     print(f"{'=' * 64}")
     print(f"  Iterations:     {iter_result.iterations} (emerged, not prescribed)")
     print(f"  Stop reason:    {iter_result.stop_reason}")
+    reflections_triggered = sum(1 for r in iter_result.reflections if r is not None)
+    print(f"  Reflections:    {reflections_triggered}")
     print(f"  First run goal: {'REACHED' if first_reached else 'MISSED'}")
     print(f"  Last run goal:  {'REACHED' if last_reached else 'MISSED'}")
     if iter_result.final_map:

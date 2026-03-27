@@ -47,6 +47,15 @@ from .residual_tension import (
     should_continue,
     snapshot_tensions,
 )
+from .evaluation import (
+    evaluate_run,
+    ScenarioEvaluation,
+)
+from .reflection import (
+    ReflectionReport,
+    reflect,
+    should_reflect as _should_reflect,
+)
 
 
 @dataclass
@@ -64,6 +73,7 @@ class IterationResult:
     """Output of Session.iterate() — multi-run until equilibrium."""
     results: List[SessionResult]           # one per iteration
     verdicts: List[IterationVerdict]       # one per iteration
+    reflections: List[Optional[ReflectionReport]]  # one per iteration (None if not triggered)
     final_map: Optional[ResidualTensionMap]  # last tension map
     iterations: int                        # how many runs were made
     stop_reason: str                       # "equilibrium" | "stagnation" | "budget"
@@ -294,6 +304,7 @@ class Session:
         """
         results: List[SessionResult] = []
         verdicts: List[IterationVerdict] = []
+        reflections: List[Optional[ReflectionReport]] = []
         prev_map: Optional[ResidualTensionMap] = None
 
         for i in range(1, max_iterations + 1):
@@ -319,15 +330,77 @@ class Session:
             verdicts.append(verdict)
             prev_map = rmap
 
+            # 5. Reflect between iterations if warranted
+            report = None
+            if verdict.should_reflect or not verdict.should_continue:
+                report = self._inter_iteration_reflect(
+                    result, goal, rmap,
+                )
+            reflections.append(report)
+
             if not verdict.should_continue:
                 break
 
         return IterationResult(
             results=results,
             verdicts=verdicts,
+            reflections=reflections,
             final_map=prev_map,
             iterations=len(results),
             stop_reason=verdicts[-1].reason if verdicts else "empty",
+        )
+
+    def _inter_iteration_reflect(
+        self,
+        result: SessionResult,
+        goal: Optional[str],
+        rmap: ResidualTensionMap,
+    ) -> Optional[ReflectionReport]:
+        """Run reflection between iterations.
+
+        Builds a ScenarioEvaluation from the last run and calls
+        the reflection layer.  Returns ReflectionReport or None.
+        """
+        trace = result.trace
+        m = trace.metrics()
+        reached = goal in trace.path if goal else True
+
+        # Find happy path length for efficiency calculation
+        happy_len = int(m["steps"])
+        try:
+            from .graph_validation import find_happy_path
+            hp = find_happy_path(self.landscape, trace.path[0], goal)
+            if hp:
+                happy_len = len(hp) - 1
+        except Exception:
+            pass
+
+        eval_result = evaluate_run(
+            path=trace.path,
+            steps=int(m["steps"]),
+            escalation_count=int(m.get("escalation_count", 0)),
+            revisit_count=int(m["revisit_count"]),
+            success_rate=m["success_rate"],
+            avg_tension=m["avg_tension"],
+            total_tension=trace.total_tension,
+            reached_goal=reached,
+            happy_path_length=happy_len,
+        )
+
+        scenario_eval = ScenarioEvaluation(
+            scenario_id=self.session_id,
+            domain="iterate",
+            graph_score=1.0,
+            run_evaluation=eval_result,
+            semantic_evaluation=None,
+            hard_failure=None,
+            overall_score=None,
+        )
+
+        return reflect(
+            scenario_eval,
+            tuning_memory=self.tuning_memory,
+            landscape=self.landscape,
         )
 
     @property
