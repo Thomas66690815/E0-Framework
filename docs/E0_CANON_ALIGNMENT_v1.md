@@ -5,7 +5,7 @@
 > was ist neu entstanden, und was haben wir gelernt.
 >
 > **Datum:** 2026-03-28 (aktualisiert)  
-> **Basis:** 1790 Tests, 0 Failures, 0 Warnings, Claims C1–C41  
+> **Basis:** 1811 Tests, 0 Failures, 0 Warnings, Claims C1–C41  
 > **Stufe 1–3 Bridge 4:** Structural Mutation implementiert (Commits dd6e277, e94be7e, e3f922d)  
 > **Canon-Dokumente:** `e0-canonical-reference.txt`, `e0-canon-plain.txt`,
 > `ontodynamics.txt`, `e0-agi-blueprint.md`  
@@ -467,7 +467,7 @@ den Code nicht durch Code, sondern durch Designentscheidungen.
 | Blueprint-Element | Code-Status |
 |-------------------|-------------|
 | Operational Loop (§4): detect Δ → enumerate P → estimate R → select → execute → historize | ✅ `E0Controller.cycle()` |
-| Reflexivity (§5): self-modeling as admissible transition | ⚠→✅ Stufe 1–3: StructuralDiagnostic + StructuralMutation + MutationHistory + Admissibility + Session.iterate()-Integration. Offen: Identity-Invariant, Representation. Siehe `E0_BRIDGE4_STRUCTURAL_REFLEXIVITY_NOTE_v0.md` |
+| Reflexivity (§5): self-modeling as admissible transition | ⚠→✅ Stufe 1–3 + 4a: StructuralDiagnostic + StructuralMutation + MutationHistory + Admissibility + Identity-Invariant + Session.iterate()-Integration. Offen: Representation. Siehe `E0_BRIDGE4_STRUCTURAL_REFLEXIVITY_NOTE_v0.md` |
 | Alignment via resistance (§6) | ✅ Architektonisch (high R prevents destabilizing transitions) |
 | Domain invariance (§7) | ✅ Keine domain-spezifischen Primitive; Domäne nur via Landscape |
 | Architectural non-uniqueness (§8) | ✅ Three-theory stack (U(1), SU(2)-min, SU(2)-geo) zeigt: verschiedene Algebren, gleiche Kernmechanik |
@@ -513,7 +513,7 @@ Canon — aber der Canon *prognostiziert* sie auch nicht.
 
 ### 8.5 Tests sind der Kompass
 
-C1–C41 Claims, 1790 Tests. Jede Hypothese wurde falsifizierbar formuliert
+C1–C41 Claims, 1811 Tests. Jede Hypothese wurde falsifizierbar formuliert
 und dann getestet. Das hat den Unterschied zwischen „wir glauben, Interferenz
 existiert" und „C6: unter Gordian-Bedingungen fällt der A-Interferenzfaktor
 unter 0.1, und die Hybridarbitration überschreibt A1 → B1" gemacht.
@@ -549,11 +549,12 @@ Der Canon allein hätte das nicht geleistet.
    Formel steht (geometric-mean von 2-hop support legs, Range [0.2, 1.0]),
    45-Domain-Survey abgeschlossen, Code-Implementierung ausstehend.
 
-5. **Identity-Invariant (Bridge 4, Stufe 4a):**
-   Was muss unter Self-Modification invariant bleiben? Drei Kandidaten:
-   (a) topologische Konnektivität (Goal erreichbar), (b) Historisierungs-
-   Kontinuität (δ_H unberührt), (c) Axiom-Treue (A₀ bleibt gültig).
-   Konzeptioneller Vorschlag in `E0_STRUCTURAL_DEEP_REVIEW_v1.md` §6.1.
+5. **~~Identity-Invariant (Bridge 4, Stufe 4a):~~ ✅ Geschlossen.**
+   Implementiert in `structural_mutation.py` §3b: `IdentityCheck`,
+   `check_identity_invariant()`, `check_identity_after_mutation()`.
+   Drei Invarianten: (a) Goal-Erreichbarkeit, (b) A₀-Viabilität
+   (keine Dead Ends), (c) Historisierungs-Kontinuität (API-Design).
+   Integration in `structural_tuning_cycle()` Phase 4b. 21 Tests.
 
 6. **Representation (Bridge 4, Stufe 4b):**
    In welchem Raum wird die Self-Structure dargestellt? Flache Datenklassen
@@ -574,6 +575,7 @@ Der Canon allein hätte das nicht geleistet.
 |-------|----------|
 | 2026-03-26 | Erstfassung: 1254 Tests, C1–C30, 4 offene Brücken |
 | 2026-03-28 | Update: 1790 Tests, C1–C41, Bridge 4 Stufe 1–3 geschlossen, M_H retired→overlap, Rate-Analyse ergänzt, Identity/Representation als neue offene Brücken |
+| 2026-03-28 | Update: 1811 Tests, Identity-Invariant (Stufe 4a) implementiert und geschlossen, 21 neue Tests |
 
 ---
 

@@ -3,6 +3,7 @@ B4-S2 — Structural Mutation Infrastructure Tests
 ===================================================
 Tests for Bridge 4 Stufe 2: StructuralMutation, MutationHistory,
 propose_structural_mutations(), apply/revert, admissibility.
+Tests for Bridge 4 Stufe 4a: Identity Invariant.
 
 Test classes:
   1. TestStructuralMutation       — dataclass, describe() (5)
@@ -15,6 +16,10 @@ Test classes:
   8. TestMutationHistory          — bounded log + oscillation (10)
   9. TestHistorySerialization     — to_dict / from_dict (4)
   10. TestEndToEnd                — propose → apply → revert cycle (5)
+  11. TestIdentityCheck           — dataclass + bool semantics (4)
+  12. TestReachableStates         — BFS helper (5)
+  13. TestCheckIdentityInvariant  — invariant verification (7)
+  14. TestCheckIdentityAfterMutation — prospective check (5)
 """
 
 import unittest
@@ -26,10 +31,15 @@ from e0_controller.structural_mutation import (
     StructuralMutation,
     MutationRecord,
     MutationHistory,
+    IdentityViolation,
+    IdentityCheck,
     is_admissible,
     apply_structural_mutation,
     revert_structural_mutation,
     propose_structural_mutations,
+    check_identity_invariant,
+    check_identity_after_mutation,
+    _reachable_states,
     _MAX_MUTATIONS_PER_CYCLE,
 )
 
@@ -728,6 +738,221 @@ class TestEndToEnd(unittest.TestCase):
                      if p.source == p1[0].source and p.target == p1[0].target
                      and p.mutation_type == p1[0].mutation_type]
         self.assertEqual(len(same_edge), 0)
+
+
+# ══════════════════════════════════════════════════════════════════
+# Class 11: IdentityCheck dataclass
+# ══════════════════════════════════════════════════════════════════
+
+class TestIdentityCheck(unittest.TestCase):
+    """B4-S4a.11: IdentityCheck dataclass + bool semantics."""
+
+    def test_ok_is_truthy(self):
+        ic = IdentityCheck(ok=True)
+        self.assertTrue(ic)
+        self.assertTrue(ic.ok)
+
+    def test_violation_is_falsy(self):
+        ic = IdentityCheck(
+            ok=False,
+            violations=[IdentityViolation.GOAL_UNREACHABLE],
+            details=["goal not reachable"],
+        )
+        self.assertFalse(ic)
+        self.assertFalse(ic.ok)
+
+    def test_empty_violations_when_ok(self):
+        ic = IdentityCheck(ok=True)
+        self.assertEqual(len(ic.violations), 0)
+        self.assertEqual(len(ic.details), 0)
+
+    def test_multiple_violations(self):
+        ic = IdentityCheck(
+            ok=False,
+            violations=[
+                IdentityViolation.GOAL_UNREACHABLE,
+                IdentityViolation.DEAD_END_CREATED,
+            ],
+            details=["goal gone", "dead end at X"],
+        )
+        self.assertEqual(len(ic.violations), 2)
+        self.assertEqual(len(ic.details), 2)
+
+
+# ══════════════════════════════════════════════════════════════════
+# Class 12: _reachable_states BFS helper
+# ══════════════════════════════════════════════════════════════════
+
+class TestReachableStates(unittest.TestCase):
+    """B4-S4a.12: _reachable_states() BFS correctness."""
+
+    def test_diamond_all_reachable(self):
+        L = _build_diamond()  # S→A, S→B, A→G, B→G
+        r = _reachable_states(L, "S")
+        self.assertEqual(r, {"S", "A", "B", "G"})
+
+    def test_chain_from_start(self):
+        L = _build_chain()  # A→B→C
+        r = _reachable_states(L, "A")
+        self.assertEqual(r, {"A", "B", "C"})
+
+    def test_chain_from_middle(self):
+        L = _build_chain()
+        r = _reachable_states(L, "B")
+        self.assertEqual(r, {"B", "C"})  # A not reachable from B
+
+    def test_chain_from_end(self):
+        L = _build_chain()
+        r = _reachable_states(L, "C")
+        self.assertEqual(r, {"C"})  # terminal node
+
+    def test_loop_domain(self):
+        L = _build_loop_domain()  # S→A, A→S, S→G
+        r = _reachable_states(L, "S")
+        self.assertEqual(r, {"S", "A", "G"})
+
+
+# ══════════════════════════════════════════════════════════════════
+# Class 13: check_identity_invariant
+# ══════════════════════════════════════════════════════════════════
+
+class TestCheckIdentityInvariant(unittest.TestCase):
+    """B4-S4a.13: check_identity_invariant() verifies E₀ identity."""
+
+    def test_diamond_ok(self):
+        """Diamond graph: goal reachable, no dead ends."""
+        L = _build_diamond()
+        ic = check_identity_invariant(L, "S", goal="G")
+        self.assertTrue(ic.ok)
+        self.assertEqual(len(ic.violations), 0)
+
+    def test_goal_unreachable_after_edge_removal(self):
+        """Remove both paths to G → goal unreachable."""
+        L = _build_diamond()
+        L.remove_edge("A", "G")
+        L.remove_edge("B", "G")
+        ic = check_identity_invariant(L, "S", goal="G")
+        self.assertFalse(ic.ok)
+        self.assertIn(IdentityViolation.GOAL_UNREACHABLE, ic.violations)
+
+    def test_dead_end_detected(self):
+        """Chain A→B→C: C has no out-edges and is not goal → dead end."""
+        L = _build_chain()
+        ic = check_identity_invariant(L, "A", goal=None)
+        self.assertFalse(ic.ok)
+        self.assertIn(IdentityViolation.DEAD_END_CREATED, ic.violations)
+        self.assertTrue(any("C" in d for d in ic.details))
+
+    def test_dead_end_ok_if_goal(self):
+        """Chain A→B→C: C is terminal but it's the goal → allowed."""
+        L = _build_chain()
+        ic = check_identity_invariant(L, "A", goal="C")
+        self.assertTrue(ic.ok)
+
+    def test_no_goal_given_ok(self):
+        """Loop domain S→A, A→S, S→G: no dead ends (G excluded from dead-end
+        check only when it IS the goal). Without goal, G is a dead end."""
+        L = _build_loop_domain()
+        ic = check_identity_invariant(L, "S", goal=None)
+        # G has no outgoing edges and goal is None → dead end
+        self.assertFalse(ic.ok)
+        self.assertIn(IdentityViolation.DEAD_END_CREATED, ic.violations)
+
+    def test_loop_domain_with_goal(self):
+        """Loop domain with G as goal: G terminal is allowed."""
+        L = _build_loop_domain()
+        ic = check_identity_invariant(L, "S", goal="G")
+        self.assertTrue(ic.ok)
+
+    def test_both_violations_at_once(self):
+        """Isolated goal + dead end: multiple violations."""
+        L = Landscape()
+        L.add_state("S")
+        L.add_state("A")
+        L.add_state("G")
+        L.add_edge("S", "A", delta=1.0, resistance=1.0)
+        # G unreachable (no edge to G)
+        # A is a dead end (no outgoing edges)
+        ic = check_identity_invariant(L, "S", goal="G")
+        self.assertFalse(ic.ok)
+        self.assertIn(IdentityViolation.GOAL_UNREACHABLE, ic.violations)
+        self.assertIn(IdentityViolation.DEAD_END_CREATED, ic.violations)
+
+
+# ══════════════════════════════════════════════════════════════════
+# Class 14: check_identity_after_mutation (prospective)
+# ══════════════════════════════════════════════════════════════════
+
+class TestCheckIdentityAfterMutation(unittest.TestCase):
+    """B4-S4a.14: check_identity_after_mutation() speculative check."""
+
+    def test_safe_mutation_passes(self):
+        """Adjusting R₀ preserves identity."""
+        L = _build_diamond()
+        m = StructuralMutation(MutationType.ADJUST_RESISTANCE, "S", "A",
+                               new_value=2.0)
+        ic = check_identity_after_mutation(m, L, "S", goal="G")
+        self.assertTrue(ic.ok)
+        # Landscape restored
+        self.assertAlmostEqual(L.base_resistance("S", "A"), 1.0)
+
+    def test_landscape_restored_after_check(self):
+        """Landscape must be identical before and after prospective check."""
+        L = _build_diamond()
+        delta_before = L.difference("S", "A")
+        r_before = L.base_resistance("S", "A")
+
+        m = StructuralMutation(MutationType.ADJUST_DELTA, "S", "A",
+                               new_value=10.0)
+        check_identity_after_mutation(m, L, "S", goal="G")
+
+        self.assertAlmostEqual(L.difference("S", "A"), delta_before)
+        self.assertAlmostEqual(L.base_resistance("S", "A"), r_before)
+
+    def test_inadmissible_mutation_returns_not_ok(self):
+        """Non-admissible mutation → IdentityCheck with ok=False."""
+        L = _build_diamond()
+        m = StructuralMutation(MutationType.REMOVE_EDGE, "X", "Y")
+        ic = check_identity_after_mutation(m, L, "S", goal="G")
+        self.assertFalse(ic.ok)
+
+    def test_dangerous_remove_detected(self):
+        """Removing the only *reachable* path to G should fail identity check."""
+        # S→A→G, A→S (cycle), B→G (keeps G non-orphaned but B unreachable from S)
+        L = Landscape()
+        L.add_state("S")
+        L.add_state("A")
+        L.add_state("B")
+        L.add_state("G")
+        L.add_edge("S", "A", delta=2.0, resistance=1.0)
+        L.add_edge("A", "G", delta=2.0, resistance=1.0)
+        L.add_edge("A", "S", delta=1.0, resistance=1.0)
+        L.add_edge("B", "G", delta=1.0, resistance=1.0)  # non-orphan edge
+
+        m = StructuralMutation(MutationType.REMOVE_EDGE, "A", "G")
+        ic = check_identity_after_mutation(m, L, "S", goal="G")
+        self.assertFalse(ic.ok)
+        self.assertIn(IdentityViolation.GOAL_UNREACHABLE, ic.violations)
+        # Landscape restored
+        self.assertTrue(L.has_edge("A", "G"))
+
+    def test_remove_creating_dead_end_detected(self):
+        """Removing edge that creates a dead non-goal state."""
+        # S→A, S→B, A→B. Remove A→B → A becomes dead end (no goal given).
+        L = Landscape()
+        L.add_state("S")
+        L.add_state("A")
+        L.add_state("B")
+        L.add_edge("S", "A", delta=2.0, resistance=1.0)
+        L.add_edge("S", "B", delta=2.0, resistance=1.0)
+        L.add_edge("A", "B", delta=2.0, resistance=1.0)
+
+        m = StructuralMutation(MutationType.REMOVE_EDGE, "A", "B")
+        ic = check_identity_after_mutation(m, L, "S", goal=None)
+        self.assertFalse(ic.ok)
+        self.assertIn(IdentityViolation.DEAD_END_CREATED, ic.violations)
+        # Landscape restored
+        self.assertTrue(L.has_edge("A", "B"))
 
 
 if __name__ == "__main__":

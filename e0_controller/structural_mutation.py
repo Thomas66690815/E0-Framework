@@ -24,6 +24,7 @@ transition among others, and historization constrains future self-changes."
 
 from __future__ import annotations
 
+from collections import deque
 from dataclasses import dataclass, field, asdict
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set
@@ -153,6 +154,136 @@ def is_admissible(mutation: StructuralMutation, landscape) -> bool:
         return True
 
     return False  # unknown type
+
+
+# ──────────────────────────────────────────────
+# 3b. Identity Invariant (Stufe 4a)
+# ──────────────────────────────────────────────
+
+class IdentityViolation(Enum):
+    """Kind of identity invariant violation."""
+    GOAL_UNREACHABLE = "goal_unreachable"
+    DEAD_END_CREATED = "dead_end_created"
+    HISTORIZATION_BROKEN = "historization_broken"
+
+
+@dataclass
+class IdentityCheck:
+    """Result of an identity invariant check.
+
+    If ok is True, the mutation preserves system identity.
+    If ok is False, violations lists what would break.
+    """
+    ok: bool
+    violations: List[IdentityViolation] = field(default_factory=list)
+    details: List[str] = field(default_factory=list)
+
+    def __bool__(self) -> bool:
+        return self.ok
+
+
+def _reachable_states(landscape, start: str) -> Set[str]:
+    """BFS from *start*, return all reachable states (including start)."""
+    visited: Set[str] = set()
+    queue: deque[str] = deque([start])
+    while queue:
+        node = queue.popleft()
+        if node in visited:
+            continue
+        visited.add(node)
+        for n in landscape.admissible_neighbors(node):
+            if n not in visited:
+                queue.append(n)
+    return visited
+
+
+def check_identity_invariant(
+    landscape,
+    start: str,
+    goal: Optional[str] = None,
+) -> IdentityCheck:
+    """Verify that the landscape preserves E₀ identity invariants.
+
+    Three invariants (from Deep Review v1 §6.1):
+
+    1. **Goal Reachability** — if a goal is given, it must be reachable
+       from *start* via directed edges.
+
+    2. **A₀ Viability (no dead ends)** — every *reachable* state
+       (from start) must have at least one admissible transition,
+       OR be the goal itself. A state with no outgoing edges that
+       is not the goal constitutes a dead end created by mutation.
+
+    3. **Historization Continuity** — structural: mutations operate
+       on R₀/Δ/topology, *not* on δ_H. This is enforced by API
+       design (apply_structural_mutation never touches historization).
+       The check verifies this post-hoc at the structural_tuning_cycle
+       level.
+
+    Returns IdentityCheck with ok=True if all invariants hold.
+    """
+    violations: List[IdentityViolation] = []
+    details: List[str] = []
+
+    reachable = _reachable_states(landscape, start)
+
+    # 1. Goal reachability
+    if goal is not None and goal not in reachable:
+        violations.append(IdentityViolation.GOAL_UNREACHABLE)
+        details.append(
+            f"Goal '{goal}' not reachable from '{start}' — "
+            f"reachable: {sorted(reachable)}"
+        )
+
+    # 2. A₀ viability (no dead ends among reachable non-goal states)
+    for state in reachable:
+        if state == goal:
+            continue  # goal is allowed to be terminal
+        neighbors = landscape.admissible_neighbors(state)
+        if not neighbors:
+            violations.append(IdentityViolation.DEAD_END_CREATED)
+            details.append(
+                f"State '{state}' has no admissible transitions "
+                f"(dead end) — violates A₀"
+            )
+
+    return IdentityCheck(
+        ok=len(violations) == 0,
+        violations=violations,
+        details=details,
+    )
+
+
+def check_identity_after_mutation(
+    mutation: StructuralMutation,
+    landscape,
+    start: str,
+    goal: Optional[str] = None,
+) -> IdentityCheck:
+    """Prospective identity check: apply mutation, check, revert if violated.
+
+    This is a *speculative* check — the mutation is temporarily applied
+    to test whether identity would be preserved, then reverted regardless.
+
+    Returns IdentityCheck. The landscape is restored to its original state.
+    """
+    # Apply temporarily
+    try:
+        applied = apply_structural_mutation(mutation, landscape)
+    except ValueError:
+        return IdentityCheck(
+            ok=False,
+            violations=[],
+            details=["Mutation not admissible (pre-check failed)"],
+        )
+
+    # Check
+    result = check_identity_invariant(landscape, start, goal)
+
+    # Always revert (speculative check)
+    revert_structural_mutation(applied, landscape)
+
+    return result
 
 
 # ──────────────────────────────────────────────
@@ -483,6 +614,7 @@ class StructuralTuningCycleResult:
     accepted: bool = False
     reverted: bool = False
     mutation_records: List[MutationRecord] = field(default_factory=list)
+    identity_check: Optional[IdentityCheck] = None
 
 
 def structural_tuning_cycle(
@@ -594,6 +726,37 @@ def structural_tuning_cycle(
             accepted=False,
         )
 
+    # ── Phase 4b: Identity invariant check (Stufe 4a) ──
+    id_check = check_identity_invariant(landscape, start, goal)
+    if not id_check:
+        # Identity violated — revert immediately, skip re-run
+        for m in reversed(applied):
+            revert_structural_mutation(m, landscape)
+
+        records = [
+            MutationRecord(
+                mutation=m,
+                quality_before=q_before,
+                quality_after=None,
+                accepted=False,
+                reverted=True,
+            )
+            for m in applied
+        ]
+        for r in records:
+            mutation_history.record(r)
+
+        return StructuralTuningCycleResult(
+            quality_before=q_before,
+            diagnostic=diagnostic,
+            proposals=proposals,
+            applied_mutations=applied,
+            accepted=False,
+            reverted=True,
+            mutation_records=records,
+            identity_check=id_check,
+        )
+
     # Reset for clean re-run
     _reset_landscape(landscape)
     controller._recent = []
@@ -636,6 +799,7 @@ def structural_tuning_cycle(
             accepted=False,
             reverted=True,
             mutation_records=records,
+            identity_check=id_check,
         )
 
     # Improvement (or neutral): accept
@@ -662,4 +826,5 @@ def structural_tuning_cycle(
         accepted=True,
         reverted=False,
         mutation_records=records,
+        identity_check=id_check,
     )

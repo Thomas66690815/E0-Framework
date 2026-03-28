@@ -331,7 +331,20 @@ Neues Modul `structural_mutation.py`:
 
 42 Tests in 10 Klassen (`test_structural_tuning_cycle.py`). 1790 Gesamttests.
 
-### Stufe 4 (optional) — SU(2) Meta-Darstellung
+### Stufe 4a — Identity-Invariant ✅
+
+`structural_mutation.py` §3b erweitert:
+- `IdentityViolation` Enum: GOAL_UNREACHABLE, DEAD_END_CREATED, HISTORIZATION_BROKEN
+- `IdentityCheck` Datenklasse: ok, violations, details; `__bool__` → ok
+- `_reachable_states()`: BFS-Helper für Erreichbarkeitsanalyse
+- `check_identity_invariant()`: Prüft (1) Goal-Erreichbarkeit, (2) A₀-Viabilität (keine Dead Ends), (3) Historisierungs-Kontinuität (API-Design)
+- `check_identity_after_mutation()`: Prospektive Prüfung — Apply → Check → Revert
+- `StructuralTuningCycleResult.identity_check`: neues Feld
+- `structural_tuning_cycle()` Phase 4b: Identity-Check nach Apply, Revert bei Verletzung
+
+21 neue Tests in 4 Klassen (11–14 in `test_structural_mutation.py`). 1811 Gesamttests.
+
+### Stufe 4b (optional) — SU(2) Meta-Darstellung
 
 Prüfen ob Meta-Landscape von SU(2)-Transport profitiert. Separate Forschungsfrage.
 
