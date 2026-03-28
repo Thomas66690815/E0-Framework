@@ -1,6 +1,6 @@
 """
-Bridge 4 — Structural Mutation Infrastructure (Stufe 2)
-========================================================
+Bridge 4 — Structural Mutation Infrastructure (Stufe 2 + Stufe 4a)
+===================================================================
 
 Provides the data layer and mechanics for *structural* self-modification:
 adding/removing edges, adjusting Δ/R₀ at the topology level.
@@ -8,27 +8,42 @@ adding/removing edges, adjusting Δ/R₀ at the topology level.
 This sits between:
 - Stufe 1 (landscape.py mutation API — mechanical primitives)
 - Stufe 3 (tuning integration — when to trigger, Session.iterate() hook)
+- Stufe 4a (identity invariant — what must survive self-modification)
 
 Core components:
-  StructuralMutation   — typed intent ("adjust_resistance on S→A to 1.5")
-  MutationRecord       — auditable outcome (applied, quality Δ, reverted?)
-  MutationHistory      — bounded cross-run log with oscillation protection
-  propose_structural_mutations() — StructuralDiagnostic → mutations
-  apply_structural_mutation()    — execute on Landscape
-  revert_structural_mutation()   — undo via stored old value
-  is_admissible()                — E₀ admissibility gate
+  StructuralMutation        — typed intent ("adjust_resistance on S→A to 1.5")
+  MutationRecord            — auditable outcome (applied, quality Δ, reverted?)
+  MutationHistory           — bounded cross-run log with oscillation protection
+  IdentityInvariantResult   — B4-S4a: result of post-mutation identity check
+  propose_structural_mutations()  — StructuralDiagnostic → mutations
+  apply_structural_mutation()     — execute on Landscape
+  revert_structural_mutation()    — undo via stored old value
+  is_admissible()                 — E₀ admissibility gate
+  check_identity_invariant()      — B4-S4a: three-part post-mutation check
 
-Canon basis: AGI Blueprint §5 — "self-modification becomes one admissible
-transition among others, and historization constrains future self-changes."
+Canon basis:
+  AGI Blueprint §5 — "self-modification becomes one admissible transition
+  among others, and historization constrains future self-changes."
+
+  E₀ Canonical Reference §2.7 / §4 — "Non-transition is structurally
+  unstable" (A₀).  After any self-modification, A₀ must remain enforceable
+  for the reachable sub-graph — otherwise the system has modified itself
+  into a structurally dead configuration.
+
+  Structural Deep Review v1 §6.1 — Identity Invariant analysis:
+  three necessary conditions that must hold after every structural mutation.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field, asdict
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, TYPE_CHECKING
 
 from .primitives import Edge
+
+if TYPE_CHECKING:
+    from .landscape import Landscape
 
 
 # ──────────────────────────────────────────────
@@ -101,7 +116,140 @@ class MutationRecord:
 
 
 # ──────────────────────────────────────────────
-# 3. Admissibility
+# 3. Identity Invariant (Bridge 4, Stufe 4a)
+# ──────────────────────────────────────────────
+
+@dataclass(frozen=True)
+class IdentityInvariantResult:
+    """Result of the E₀ identity invariant check after structural mutation.
+
+    Canon basis: Structural Deep Review v1 §6.1 — three conditions that
+    must hold after any structural self-modification for the system to
+    remain "the same" system:
+
+    1. **goal_reachable** — If a goal is set, it must remain reachable
+       from the start state.  A mutation that severs the goal-path
+       destroys the purpose of the state space.
+
+    2. **a0_compliant** — Every state reachable from *start* must have
+       at least one admissible outgoing transition.  This ensures that
+       Axiom A₀ ("non-transition is structurally unstable") remains
+       enforceable throughout the reachable subgraph.  A mutation that
+       leaves a reachable state with no exits turns A₀ into a lie for
+       that state.
+
+    3. **historization_continuous** — Mutations touch only _delta and
+       _R0, never historization traces (δ_H, U/F-traces, τ).  This is
+       enforced by architecture (all mutation primitives are restricted
+       to the static structural dicts), so this invariant is always True
+       and recorded here as a *design guarantee* rather than a runtime
+       check.
+
+    Attributes
+    ----------
+    satisfied : bool
+        True if all three invariants hold; False otherwise.
+    violated_check : Optional[str]
+        Name of the first failing check ("goal_reachable", "a0_compliant"),
+        or None when satisfied.
+    goal_reachable : bool
+        Invariant 1 result.
+    a0_compliant : bool
+        Invariant 2 result.
+    historization_continuous : bool
+        Invariant 3 result (always True — architectural guarantee).
+    unreachable_dead_ends : List[str]
+        States reachable from *start* that have no admissible outgoing
+        transition (the witness set for a0_compliant = False).
+    """
+    satisfied: bool
+    violated_check: Optional[str]
+    goal_reachable: bool
+    a0_compliant: bool
+    historization_continuous: bool
+    unreachable_dead_ends: List[str]
+
+
+def check_identity_invariant(
+    landscape: "Landscape",
+    start: str,
+    goal: Optional[str] = None,
+) -> IdentityInvariantResult:
+    """Check the three E₀ identity invariants after structural mutation.
+
+    Should be called immediately after applying mutations and before
+    accepting them.  If the result is not satisfied, the caller must
+    revert all mutations and reject the cycle.
+
+    Parameters
+    ----------
+    landscape : Landscape
+        The (mutated) landscape to check.
+    start : str
+        Current start state (used for reachability analysis).
+    goal : str, optional
+        Target state for Invariant 1.  If None, Invariant 1 is skipped
+        (vacuously True).
+
+    Returns
+    -------
+    IdentityInvariantResult
+        Full result including per-invariant flags and witness information.
+    """
+    from collections import deque
+
+    # ── BFS: collect all states reachable from start ──
+    reachable: Set[str] = set()
+    queue: deque = deque([start])
+    while queue:
+        node = queue.popleft()
+        if node in reachable:
+            continue
+        reachable.add(node)
+        for neighbor in landscape.admissible_neighbors(node):
+            if neighbor not in reachable:
+                queue.append(neighbor)
+
+    # ── Invariant 1: goal reachable ──
+    inv1: bool
+    if goal is None:
+        inv1 = True
+    else:
+        inv1 = goal in reachable
+
+    # ── Invariant 2: A₀ compliance (no reachable dead-ends) ──
+    dead_ends: List[str] = [
+        s for s in reachable
+        if not landscape.admissible_neighbors(s)
+    ]
+    # The goal state itself may legitimately have no outgoing transitions;
+    # that is the terminal condition, not a violation.
+    if goal is not None:
+        dead_ends = [s for s in dead_ends if s != goal]
+    inv2 = len(dead_ends) == 0
+
+    # ── Invariant 3: historization continuity (architectural guarantee) ──
+    inv3 = True  # always: mutations never touch Historization object
+
+    satisfied = inv1 and inv2 and inv3
+    violated: Optional[str] = None
+    if not inv1:
+        violated = "goal_reachable"
+    elif not inv2:
+        violated = "a0_compliant"
+
+    return IdentityInvariantResult(
+        satisfied=satisfied,
+        violated_check=violated,
+        goal_reachable=inv1,
+        a0_compliant=inv2,
+        historization_continuous=inv3,
+        unreachable_dead_ends=dead_ends,
+    )
+
+
+# ──────────────────────────────────────────────
+# 4. Admissibility (renumbered from 3)
 # ──────────────────────────────────────────────
 
 _MAX_MUTATIONS_PER_CYCLE = 3
@@ -156,7 +304,7 @@ def is_admissible(mutation: StructuralMutation, landscape) -> bool:
 
 
 # ──────────────────────────────────────────────
-# 4. Apply / Revert
+# 5. Apply / Revert (renumbered from 4)
 # ──────────────────────────────────────────────
 
 def apply_structural_mutation(
@@ -231,7 +379,7 @@ def revert_structural_mutation(
 
 
 # ──────────────────────────────────────────────
-# 5. Proposal Logic
+# 6. Proposal Logic (renumbered from 5)
 # ──────────────────────────────────────────────
 
 # Resistance adjustment factor: multiply R₀ by this on chronic failure
@@ -313,7 +461,7 @@ def propose_structural_mutations(
 
 
 # ──────────────────────────────────────────────
-# 6. Mutation History
+# 7. Mutation History (renumbered from 6)
 # ──────────────────────────────────────────────
 
 @dataclass
@@ -457,7 +605,7 @@ class MutationHistory:
 
 
 # ──────────────────────────────────────────────
-# 7. Structural Tuning Cycle (Stufe 3)
+# 8. Structural Tuning Cycle (renumbered from 7)
 # ──────────────────────────────────────────────
 
 @dataclass
@@ -484,6 +632,9 @@ class StructuralTuningCycleResult:
     reverted: bool = False
     mutation_records: List[MutationRecord] = field(default_factory=list)
 
+    # B4-S4a: Identity Invariant result (None if mutations never applied)
+    identity_invariant: Optional[IdentityInvariantResult] = None
+
 
 def structural_tuning_cycle(
     controller,
@@ -502,10 +653,13 @@ def structural_tuning_cycle(
     1. Run controller from *start* (baseline).
     2. Build StructuralDiagnostic from run + tuning_memory.
     3. Propose structural mutations from diagnostic.
-    4. If proposals exist: apply, reset landscape, re-run.
-    5. Compute Q_after and Δ = Q_after − Q_before.
-    6. If Δ < 0 (regression): revert all mutations.
-    7. Record outcome in mutation_history.
+    4. If proposals exist: apply mutations.
+    4b. Check Identity Invariant (B4-S4a): goal reachable + A₀ compliant.
+        If violated: revert all mutations and return without re-running.
+    5. Reset + re-run controller.
+    6. Compute Q_after and Δ = Q_after − Q_before.
+    7. If Δ < 0 (regression): revert all mutations.
+    8. Record outcome in mutation_history.
 
     Returns StructuralTuningCycleResult with full audit trail.
     """
@@ -594,6 +748,38 @@ def structural_tuning_cycle(
             accepted=False,
         )
 
+    # ── Phase 4b: Identity Invariant check (B4-S4a) ──
+    # Before re-running, verify the mutated landscape preserves E₀ identity.
+    # If the goal is unreachable or reachable states lack exits, revert.
+    identity = check_identity_invariant(landscape, start, goal)
+    if not identity.satisfied:
+        for m in reversed(applied):
+            revert_structural_mutation(m, landscape)
+
+        records = [
+            MutationRecord(
+                mutation=m,
+                quality_before=q_before,
+                quality_after=None,
+                accepted=False,
+                reverted=True,
+            )
+            for m in applied
+        ]
+        for r in records:
+            mutation_history.record(r)
+
+        return StructuralTuningCycleResult(
+            quality_before=q_before,
+            diagnostic=diagnostic,
+            proposals=proposals,
+            applied_mutations=applied,
+            accepted=False,
+            reverted=True,
+            mutation_records=records,
+            identity_invariant=identity,
+        )
+
     # Reset for clean re-run
     _reset_landscape(landscape)
     controller._recent = []
@@ -636,6 +822,7 @@ def structural_tuning_cycle(
             accepted=False,
             reverted=True,
             mutation_records=records,
+            identity_invariant=identity,
         )
 
     # Improvement (or neutral): accept
@@ -662,4 +849,5 @@ def structural_tuning_cycle(
         accepted=True,
         reverted=False,
         mutation_records=records,
+        identity_invariant=identity,
     )

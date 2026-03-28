@@ -3,8 +3,8 @@
 > Central validation registry for the E₀ Framework.
 > **Purpose:** connect claims, tests, evidence, and status in one place.
 
-**Last updated:** 2026-03-28 — **1790 tests** (0 failures, 0 warnings)  
-**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, and active edge-case work.
+**Last updated:** 2026-03-28 — **1820 tests** (0 failures, 0 warnings)  
+**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, and active edge-case work.
 
 ---
 
@@ -569,6 +569,7 @@ Born sampling (P ∝ I, choosing actions probabilistically from the amplitude-de
 | `test_landscape_mutation.py` | B4-S1 |
 | `test_structural_mutation.py` | B4-S2 |
 | `test_structural_tuning_cycle.py` | B4-S3 |
+| `test_identity_invariant.py` | B4-S4a |
 
 ---
 
@@ -1353,7 +1354,44 @@ The E₀ Framework integrates structural self-modification into the existing tun
 
 ---
 
-## 6. Maintenance rule
+### B4-S4a — Identity Invariant (Bridge 4, Stufe 4a)
+
+**Claim**  
+After any structural self-modification, three invariants must hold for the system to remain "the same" E₀ system:
+
+1. **Goal reachability**: If a goal is set, it must remain reachable from the start state. A mutation that severs the goal-path destroys the task-topology identity.
+2. **A₀ compliance**: Every state reachable from start (except the goal itself) must have at least one admissible outgoing transition. A mutation creating a reachable dead-end makes Axiom A₀ ("non-transition is structurally unstable") unenforceable at that state.
+3. **Historization continuity**: Mutations touch only `_delta` and `_R0`, never historization traces (δ_H, U/F-traces, τ). This is an architectural guarantee, not a runtime check.
+
+These three invariants are checked post-mutation in `structural_tuning_cycle()` (Phase 4b). If any invariant is violated, all applied mutations are reverted before re-running.
+
+**Evidence**
+- `e0_controller/structural_mutation.py` — added: `IdentityInvariantResult` frozen dataclass, `check_identity_invariant()` function, integration into `structural_tuning_cycle()` Phase 4b, `identity_invariant` field in `StructuralTuningCycleResult`
+- `e0_controller/test_identity_invariant.py` — 30 tests across 6 classes:
+  - `TestIdentityInvariantResult` (5): dataclass fields, satisfied/violated flags, frozen immutability
+  - `TestGoalReachability` (6): reachable chain, no-goal vacuous True, edge-removal unreachable, alternate path, missing goal, start==goal
+  - `TestA0Compliance` (6): clean chain, dead-end detection, goal-terminal exemption, no-goal violation, diamond compliant, unreachable-not-counted
+  - `TestHistorizationContinuity` (3): always True, after mutation, traces survive removal
+  - `TestCombinedInvariants` (4): both-violated order, satisfied, only-A0-violated, empty reachable set
+  - `TestInvariantInTuningCycle` (6): clean cycle, accepted path, no-proposals None, goal-severing blocked, dead-end blocked, field exists
+
+**Result**
+- `check_identity_invariant()` correctly identifies all three invariant states
+- Goal-severing mutations are detected before re-running (avoids wasted controller runs)
+- Dead-end-creating mutations are rejected with `violated_check="a0_compliant"` and witness list
+- Historization continuity is always True (architectural invariant, documented not runtime-checked)
+- `structural_tuning_cycle()` Phase 4b: reverts mutations and records in history when invariant fails
+- `StructuralTuningCycleResult.identity_invariant` is None when no mutations applied, IdentityInvariantResult otherwise
+
+**Canon basis**
+- AGI Blueprint §5: "self-modification becomes one admissible transition among others"
+- E₀ Canonical Reference A₀: Non-transition is structurally unstable — must remain enforceable throughout reachable subgraph after mutation
+- Structural Deep Review v1 §6.1: three-part invariant analysis
+
+**Status**  
+✅ Confirmed
+
+---
 
 When a new test family is added, update both:
 
