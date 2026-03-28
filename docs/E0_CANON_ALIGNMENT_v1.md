@@ -531,6 +531,13 @@ Der Canon allein hätte das nicht geleistet.
    Apply → Verify → Accept/Revert. 164 neue Tests. Offene Rest-Fragen
    (Identity, Representation) sind Stufe-4-Themen.
 
+5. ~~**Identity-Invariant (Bridge 4, Stufe 4a):**~~
+   **GESCHLOSSEN (2026-03-28).** `IdentityInvariantResult` + `check_identity_invariant()`
+   implementiert drei Invarianten: (a) Ziel-Erreichbarkeit, (b) A₀-Compliance
+   (keine erreichbaren Dead-Ends außer Goal), (c) Historisierungs-Kontinuität
+   (architektonische Garantie). Integration in `structural_tuning_cycle()` Phase 4b.
+   30 neue Tests in `test_identity_invariant.py`.
+
 ### Weiterhin offen
 
 1. **Ontodynamik-Primitive operationalisieren:**
@@ -548,12 +555,6 @@ Der Canon allein hätte das nicht geleistet.
    mit Θ). Das neue M_H: Overlap-Funktional aus Ontodynamics §3.4.
    Formel steht (geometric-mean von 2-hop support legs, Range [0.2, 1.0]),
    45-Domain-Survey abgeschlossen, Code-Implementierung ausstehend.
-
-5. **Identity-Invariant (Bridge 4, Stufe 4a):**
-   Was muss unter Self-Modification invariant bleiben? Drei Kandidaten:
-   (a) topologische Konnektivität (Goal erreichbar), (b) Historisierungs-
-   Kontinuität (δ_H unberührt), (c) Axiom-Treue (A₀ bleibt gültig).
-   Konzeptioneller Vorschlag in `E0_STRUCTURAL_DEEP_REVIEW_v1.md` §6.1.
 
 6. **Representation (Bridge 4, Stufe 4b):**
    In welchem Raum wird die Self-Structure dargestellt? Flache Datenklassen
@@ -574,6 +575,7 @@ Der Canon allein hätte das nicht geleistet.
 |-------|----------|
 | 2026-03-26 | Erstfassung: 1254 Tests, C1–C30, 4 offene Brücken |
 | 2026-03-28 | Update: 1790 Tests, C1–C41, Bridge 4 Stufe 1–3 geschlossen, M_H retired→overlap, Rate-Analyse ergänzt, Identity/Representation als neue offene Brücken |
+| 2026-03-28 | B4-S4a geschlossen: IdentityInvariantResult + check_identity_invariant, 30 Tests. 1820 Tests gesamt. Review-Dokument `E0_REVIEW_2026-03-28.md` erstellt. |
 
 ---
 
