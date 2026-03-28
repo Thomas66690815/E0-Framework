@@ -40,6 +40,7 @@ from .self_tuning import (
     save_tuning_memory,
 )
 from .provenance import ProvenanceLog
+from .exploration_policy import ExplorationPolicy, PolicyDecision
 from .residual_tension import (
     ResidualTensionMap,
     IterationVerdict,
@@ -77,6 +78,7 @@ class IterationResult:
     final_map: Optional[ResidualTensionMap]  # last tension map
     iterations: int                        # how many runs were made
     stop_reason: str                       # "equilibrium" | "stagnation" | "budget"
+    policy_phases: List[str] = field(default_factory=list)  # C41: per-iteration phase ("warmup"/"exploit"/"converged")
 
 
 class Session:
@@ -271,6 +273,7 @@ class Session:
         *,
         max_iterations: int = 10,
         tension_threshold: float = 0.1,
+        exploration_policy: Optional[ExplorationPolicy] = None,
     ) -> "IterationResult":
         """Run the controller repeatedly until tension equilibrium.
 
@@ -296,6 +299,9 @@ class Session:
             Hard budget limit on iterations.
         tension_threshold : float
             Residual tension below this is considered resolved.
+        exploration_policy : ExplorationPolicy, optional
+            C41: controls per-iteration explore→exploit mode switching.
+            None = use controller's existing hybrid_mode throughout.
 
         Returns
         -------
@@ -305,9 +311,20 @@ class Session:
         results: List[SessionResult] = []
         verdicts: List[IterationVerdict] = []
         reflections: List[Optional[ReflectionReport]] = []
+        policy_phases: List[str] = []
         prev_map: Optional[ResidualTensionMap] = None
 
+        # C41: save original mode to restore after iterate()
+        original_mode = self.controller.hybrid_mode
+
         for i in range(1, max_iterations + 1):
+            # C41: apply exploration policy
+            if exploration_policy is not None:
+                decision = exploration_policy.decide(i, prev_map)
+                self.controller.hybrid_mode = decision.mode
+                policy_phases.append(decision.phase)
+            else:
+                policy_phases.append("fixed")
             # 1. Snapshot tensions before run
             pre = snapshot_tensions(self.landscape)
 
@@ -341,6 +358,10 @@ class Session:
             if not verdict.should_continue:
                 break
 
+        # C41: restore original mode
+        if exploration_policy is not None:
+            self.controller.hybrid_mode = original_mode
+
         return IterationResult(
             results=results,
             verdicts=verdicts,
@@ -348,6 +369,7 @@ class Session:
             final_map=prev_map,
             iterations=len(results),
             stop_reason=verdicts[-1].reason if verdicts else "empty",
+            policy_phases=policy_phases,
         )
 
     def _inter_iteration_reflect(

@@ -205,3 +205,4 @@ from .resonator import (
 from .overlap import (
     triangle_support, edge_overlap, overlap_map, OverlapInfo,
 )
+from .exploration_policy import ExplorationPolicy, PolicyDecision
