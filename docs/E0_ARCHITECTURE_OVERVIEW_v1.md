@@ -1,7 +1,7 @@
 # E₀ Architecture Overview v1
 
 **Status:** Working reference  
-**Date:** 2026-03-25  
+**Date:** 2026-03-28  
 **Purpose:** Provide a single-page overview of the current E₀ stack so new readers understand how the canonical theory, runtime layers, and demos connect.  
 **Scope:** Descriptive; see the referenced specs for details and proofs.
 
@@ -18,15 +18,21 @@ Amplitude Overlay (bounded path family Ψ, |ΣΨ|²)
   ↓
 Summation Geometry (prefix / simple / first_arrival / goal_reaching)
   ↓
+Transport Regime (U1 / SU2_MINIMAL / SU2_GEOMETRIC)
+  ↓
+Resonator Kernel + Graduated Overlap (M_H modulation)
+  ↓
 Hybrid Arbitration (3 modes: GREEDY_ONLY / AMPLITUDE_ON_DISAGREE / BORN_SAMPLING)
   ↓
-Confidence Gating (override_confidence threshold)
+E0Envelope + Confidence Gating (typed configuration, override threshold)
   ↓
 MemOS Persistence (snapshots, hybrid traces, geometry + threshold)
   ↓
-Self-Tuning B4 (meta-layer, feedback loop, cross-run memory, sensitivity)
+Self-Tuning B4 (parametric: alpha/s_max/c_min + structural: landscape mutation)
   ↓
-Session Orchestrator (controller + MemOS lifecycle, resume, persistence)
+Structural Mutation (Bridge 4: propose/apply/verify/revert topology changes)
+  ↓
+Session Orchestrator (iterate(), ExplorationPolicy, MemOS lifecycle, resume)
   ↓
 Evaluation + Reflection + Demos
 ```
@@ -49,12 +55,17 @@ Each arrow represents a dependency:
 | Deterministic controller | `e0_controller/controller.py`, `e0_controller/landscape.py` | Greedy burden minimisation, historisation, escalation |
 | Amplitude overlay | `e0_controller/amplitude_overlay.py`, `docs/E0_PHASE_DERIVATION_PROGRAM_v1.md` | Implements bounded path amplitudes `Ψ = exp(-S) exp(iΘ)` |
 | Summation geometry | `docs/E0_SUMMATION_GEOMETRY_COMPARISON_v1.md`, `docs/E0_SUMMATION_GEOMETRY_RESULTS_v1.txt` | Empirical comparison of `prefix`, `simple`, `first_arrival` |
+| Transport regime | `e0_controller/primitives.py` (`TransportRegime`) | U1 (scalar), SU2_MINIMAL, SU2_GEOMETRIC |
+| Resonator + Overlap | `e0_controller/resonator.py`, `e0_controller/landscape.py` | Resonator kernel (C39), graduated overlap M_H (C40) |
 | Hybrid arbitration | `docs/E0_HYBRID_CONTROLLER_SPEC_v1.md`, `e0_controller/controller.py` | GREEDY_ONLY / AMPLITUDE_ON_DISAGREE / BORN_SAMPLING |
+| E0Envelope | `e0_controller/envelope.py` | Typed, frozen controller configuration; `to_controller_kwargs()` |
 | Persistence | `e0_controller/memory_os.py` | Stores landscapes, historisation, hybrid overrides |
 | Evaluation | `e0_controller/evaluation.py`, `docs/E0_EVALUATION_LAYER_v0.2.md` | Run/Scenario scoring, hybrid metrics |
-| Reflection | `e0_controller/reflection.py`, `docs/E0_REFLECTION_LAYER_v0.1.md` | Structured self-observation |
-| Self-Tuning (B4) | `e0_controller/self_tuning.py` | Meta-layer, feedback loop, cross-run memory, parameter sensitivity |
-| Session Orchestrator | `e0_controller/session.py` | Controller + MemOS lifecycle wrapper, resume, disk persistence |
+| Reflection | `e0_controller/reflection.py`, `docs/E0_REFLECTION_LAYER_v0.1.md` | Structural diagnostic, 4 trigger classes, recommended actions |
+| Self-Tuning (B4 parametric) | `e0_controller/self_tuning.py` | Meta-layer, feedback loop, cross-run memory, parameter sensitivity |
+| Structural Mutation (B4 structural) | `e0_controller/structural_mutation.py` | Propose/apply/verify/revert landscape topology changes (Bridge 4) |
+| Exploration Policy | `e0_controller/exploration_policy.py` | C41: Born warmup → exploit switch, convergence threshold |
+| Session Orchestrator | `e0_controller/session.py` | `run()`, `iterate()` (multi-run tension equilibrium), `resume()` |
 | External interface | `e0_controller/llm_adapter.py`, `docs/E0_EXTERNAL_VALIDATION_AND_HANDOFF_NOTE_v1.md` | Bounded LLM context, handoff strategy |
 
 ---
@@ -71,6 +82,12 @@ All three modes share the same controller core and amplitude overlay. They diffe
 
 - `confidence_threshold` — gates overrides on `override_confidence` (Path F)
 - `hybrid_geometry` — selectable summation geometry persisted via MemOS (Path G)
+
+Additional runtime configuration:
+
+- `E0Envelope` — immutable typed configuration object; replaces loose kwargs
+- `TransportRegime` — selects interference algebra: `U1` (scalar ℂ¹), `SU2_MINIMAL` (spinor ℂ²), `SU2_GEOMETRIC` (spinor with curvature)
+- `ExplorationPolicy` — controls per-iteration mode switching in `iterate()`: Born warmup for N iterations, then exploit mode, with optional early convergence
 
 ---
 
@@ -97,6 +114,18 @@ For deeper detail:
 - Summation geometry evidence — `docs/E0_SUMMATION_GEOMETRY_COMPARISON_v1.md`
 - Reflection and inline corrections — `docs/CLAUDE_THREAD_REFLECTION_NOTES_v1.md`
 - External validation package — `docs/E0_EXTERNAL_VALIDATION_AND_HANDOFF_NOTE_v1.md`
+- Bridge 4: Structural Reflexivity — `docs/E0_BRIDGE4_STRUCTURAL_REFLEXIVITY_NOTE_v0.md`
+
+---
+
+## 6. Domain demos
+
+| Demo | Features | Notes |
+|------|----------|-------|
+| `demo_beipackzettel.py` | Envelope, iterate, ExplorationPolicy | Ibuprofen pharmacology — greedy trap, amplitude override |
+| `demo_ezb_zinsentscheidung.py` | Envelope, iterate, ExplorationPolicy | ECB monetary policy — cyclic topology, multi-goal, Gordian trap |
+| `demo_burnout_composite.py` | Session, Envelope | LLM-bootstrapped burnout landscape — composite fragments |
+| `demo_burnout_iterate.py` | Envelope, iterate, ExplorationPolicy | Burnout with emergent iteration count and Born warmup |
 
 ---
 
