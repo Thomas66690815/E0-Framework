@@ -29,6 +29,8 @@ from __future__ import annotations
 
 from e0_controller import (
     Landscape, Session, HybridMode, Outcome, CanonRef,
+    E0Envelope, TransportRegime, ExplorationPolicy,
+    format_residual_map,
 )
 
 # ── EZB Geldpolitik-Landschaft ──────────────────────────────────────────
@@ -104,7 +106,47 @@ def _always_success(source: str, target: str) -> Outcome:
     return Outcome.SUCCESS
 
 
+# ── Envelopes ────────────────────────────────────────────────────────────
+
+ENVELOPE_INFLATION = E0Envelope(
+    mode=HybridMode.AMPLITUDE_ON_DISAGREE,
+    geometry="goal_reaching",
+    horizon=5,
+    transport=TransportRegime.U1,
+    goals=frozenset({"PREISSTABILITAET"}),
+    alpha=0.5,
+)
+
+ENVELOPE_DUAL_MANDATE = E0Envelope(
+    mode=HybridMode.AMPLITUDE_ON_DISAGREE,
+    geometry="goal_reaching",
+    horizon=5,
+    transport=TransportRegime.U1,
+    goals=frozenset({"WACHSTUM", "PREISSTABILITAET"}),
+    alpha=0.5,
+)
+
+
 # ── Scenario runner ──────────────────────────────────────────────────────
+
+def _build_session(
+    name: str,
+    landscape: Landscape,
+    envelope: E0Envelope,
+) -> Session:
+    """Create a Session with Envelope-based configuration."""
+    return Session(
+        session_id=f"ezb-{name}",
+        landscape=landscape,
+        execute_fn=_always_success,
+        base_dir="memos/_ezb",
+        canon_refs=[CanonRef("e0-canon", "v1", "canon/e0-canon-plain.txt")],
+        controller_kwargs={
+            **envelope.to_controller_kwargs(),
+            "recent_k": 2,
+        },
+    )
+
 
 def run_scenario(
     name: str,
@@ -112,29 +154,31 @@ def run_scenario(
     start: str,
     goal: str | None = None,
     goals: set[str] | None = None,
+    envelope: E0Envelope = ENVELOPE_INFLATION,
     max_cycles: int = 20,
-    hybrid_mode: HybridMode = HybridMode.AMPLITUDE_ON_DISAGREE,
-    hybrid_geometry: str = "goal_reaching",
-    **extra_ctrl,
+    *,
+    hybrid_geometry: str | None = None,
 ) -> dict:
-    """Run one EZB scenario and return structured results."""
-    effective_goals = goals or ({goal} if goal else set())
-    session = Session(
-        session_id=f"ezb-{name}",
-        landscape=landscape,
-        execute_fn=_always_success,
-        base_dir="memos/_ezb",
-        canon_refs=[CanonRef("e0-canon", "v1", "canon/e0-canon-plain.txt")],
-        controller_kwargs=dict(
-            hybrid_mode=hybrid_mode,
-            hybrid_horizon=5,
-            hybrid_goals=effective_goals or None,
-            hybrid_geometry=hybrid_geometry,
-            alpha=0.5,
-            recent_k=2,
-            **extra_ctrl,
-        ),
-    )
+    """Run one EZB scenario and return structured results.
+
+    Parameters
+    ----------
+    hybrid_geometry : str, optional
+        Legacy shortcut — overrides ``envelope.geometry`` when set.
+    """
+    if hybrid_geometry is not None:
+        envelope = E0Envelope(
+            mode=envelope.mode,
+            geometry=hybrid_geometry,
+            horizon=envelope.horizon,
+            transport=envelope.transport,
+            goals=(frozenset(goals) if goals
+                   else frozenset({goal}) if goal
+                   else envelope.goals),
+            alpha=envelope.alpha,
+        )
+    effective_goals = goals or (envelope.goals if envelope.goals else set())
+    session = _build_session(name, landscape, envelope)
     result = session.run(
         start,
         goal=goal,
@@ -164,6 +208,54 @@ def run_scenario(
             for s in overrides
         ],
         "trace": trace,
+    }
+
+
+def run_iterative_scenario(
+    name: str,
+    landscape: Landscape,
+    start: str,
+    goal: str | None = None,
+    envelope: E0Envelope = ENVELOPE_INFLATION,
+    max_cycles: int = 20,
+    max_iterations: int = 5,
+    tension_threshold: float = 0.15,
+    exploration_policy: ExplorationPolicy | None = None,
+) -> dict:
+    """Run one EZB scenario through iterate() and return results."""
+    effective_goals = envelope.goals if envelope.goals else set()
+    session = _build_session(name, landscape, envelope)
+    iter_result = session.iterate(
+        start,
+        goal=goal,
+        max_cycles=max_cycles,
+        max_iterations=max_iterations,
+        tension_threshold=tension_threshold,
+        exploration_policy=exploration_policy,
+    )
+    last_trace = iter_result.results[-1].trace
+    path = last_trace.path
+    overrides = [s for s in last_trace.steps if s.hybrid_overridden]
+
+    return {
+        "name": name,
+        "path": path,
+        "steps": len(last_trace.steps),
+        "total_tension": last_trace.total_tension,
+        "goals_reached": effective_goals & set(path),
+        "goals_missed": effective_goals - set(path),
+        "visited_stagflation": "STAGFLATION" in path,
+        "hybrid_overrides": len(overrides),
+        "override_details": [
+            {
+                "at": s.source,
+                "greedy": s.overlay.deterministic_choice if s.overlay else "?",
+                "amplitude": s.target,
+            }
+            for s in overrides
+        ],
+        "trace": last_trace,
+        "iter_result": iter_result,
     }
 
 
@@ -210,20 +302,43 @@ def main() -> None:
 
     # Szenario 1: Inflationsbekämpfung → Preisstabilität
     r1 = run_scenario("inflation_bekaempfung", L,
-                      start="INFLATION_HOCH", goal="PREISSTABILITAET")
+                      start="INFLATION_HOCH", goal="PREISSTABILITAET",
+                      envelope=ENVELOPE_INFLATION)
     print_result(r1)
 
     # Szenario 2: Rezession → Multi-Goal (Wachstum + Preisstabilität)
     r2 = run_scenario("rezession_multi_goal", L,
-                      start="REZESSION",
-                      goals={"WACHSTUM", "PREISSTABILITAET"},
-                      goal="WACHSTUM")
+                      start="REZESSION", goal="WACHSTUM",
+                      envelope=ENVELOPE_DUAL_MANDATE)
     print_result(r2)
 
     # Szenario 3: Stagflation (Gordian Trap)
     r3 = run_scenario("stagflation_trap", L,
-                      start="STAGFLATION", goal="PREISSTABILITAET")
+                      start="STAGFLATION", goal="PREISSTABILITAET",
+                      envelope=ENVELOPE_INFLATION)
     print_result(r3)
+
+    # Szenario 4: Zyklische Navigation — iterate mit Born-Warmup
+    print(f"\n{'=' * 60}")
+    print("Szenario 4: Iterativ – Boom-Bust-Zyklus (C41 ExplorationPolicy)")
+    print(f"{'=' * 60}")
+    policy = ExplorationPolicy.born_warmup(warmup=2, convergence_threshold=0.15)
+    print(f"  Envelope: {ENVELOPE_DUAL_MANDATE.summary()}")
+    print(f"  Policy:   {policy.label}")
+    r4 = run_iterative_scenario(
+        "boom_bust_iterativ", L,
+        start="INFLATION_HOCH", goal="PREISSTABILITAET",
+        envelope=ENVELOPE_DUAL_MANDATE,
+        exploration_policy=policy,
+    )
+    print_result(r4)
+    ir = r4["iter_result"]
+    print(f"\n  Iterationen:   {ir.iterations} (emergent)")
+    print(f"  Stop-Grund:    {ir.stop_reason}")
+    print(f"  Policy-Phasen: {ir.policy_phases}")
+    if ir.final_map:
+        print(f"  Final max S:   {ir.final_map.max_residual:.4f}")
+        print(f"  Final mean S:  {ir.final_map.mean_residual:.4f}")
 
 
 if __name__ == "__main__":

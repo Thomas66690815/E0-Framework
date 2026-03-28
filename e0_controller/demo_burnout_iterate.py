@@ -31,6 +31,7 @@ from e0_controller import (
     HybridMode,
     E0Envelope,
     TransportRegime,
+    ExplorationPolicy,
     CanonRef,
     E0LLMAdapter,
     LLMConfig,
@@ -56,6 +57,11 @@ ENVELOPE = E0Envelope(
     transport=TransportRegime.U1,
     goals=frozenset({DEFAULT_GOAL}),
     alpha=0.5,
+)
+
+EXPLORATION_POLICY = ExplorationPolicy.born_warmup(
+    warmup=2,
+    convergence_threshold=0.15,
 )
 
 
@@ -109,7 +115,8 @@ def run_iterative_demo(use_mock: bool = False) -> None:
     # ── 3. Session.iterate() — the Continuum ────────────────────
     print(f"\n── Phase 2: Iterative Runs (max 5 iterations) ──")
     print(f"   Stopping: tension equilibrium | stagnation | budget")
-    print(f"   Iteration count is NOT prescribed — it emerges.\n")
+    print(f"   Iteration count is NOT prescribed — it emerges.")
+    print(f"   Policy: {EXPLORATION_POLICY.label}\n")
 
     session = Session(
         session_id="burnout-iterate",
@@ -126,6 +133,7 @@ def run_iterative_demo(use_mock: bool = False) -> None:
         max_cycles=20,
         max_iterations=5,
         tension_threshold=0.15,
+        exploration_policy=EXPLORATION_POLICY,
     )
 
     # ── 4. Display per-iteration results ────────────────────────
@@ -197,12 +205,14 @@ def run_iterative_demo(use_mock: bool = False) -> None:
     print(f"  Stop reason:    {iter_result.stop_reason}")
     reflections_triggered = sum(1 for r in iter_result.reflections if r is not None)
     print(f"  Reflections:    {reflections_triggered}")
+    print(f"  Policy phases:  {iter_result.policy_phases}")
     print(f"  First run goal: {'REACHED' if first_reached else 'MISSED'}")
     print(f"  Last run goal:  {'REACHED' if last_reached else 'MISSED'}")
     if iter_result.final_map:
         print(f"  Final max S:    {iter_result.final_map.max_residual:.4f}")
         print(f"  Final mean S:   {iter_result.final_map.mean_residual:.4f}")
     print(f"\n  Envelope: {ENVELOPE.summary()}")
+    print(f"  Policy:   {EXPLORATION_POLICY.label}")
 
     if not use_mock:
         print(f"\n  ⚠  Landscape was LLM-generated, not pre-designed.")

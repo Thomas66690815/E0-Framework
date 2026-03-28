@@ -23,6 +23,8 @@ from __future__ import annotations
 
 from e0_controller import (
     Landscape, Session, HybridMode, Outcome, CanonRef,
+    E0Envelope, TransportRegime, ExplorationPolicy,
+    format_residual_map,
 )
 
 # ── Beipackzettel-Rohdaten (Ibuprofen, öffentliche Fachinformation) ──────
@@ -95,52 +97,65 @@ def _always_success(source: str, target: str) -> Outcome:
     return Outcome.SUCCESS
 
 
+# ── Envelopes ────────────────────────────────────────────────────────────
+
+ENVELOPE_GOAL_REACHING = E0Envelope(
+    mode=HybridMode.AMPLITUDE_ON_DISAGREE,
+    geometry="goal_reaching",
+    horizon=4,
+    transport=TransportRegime.U1,
+    goals=frozenset({"GESUND"}),
+    alpha=0.5,
+)
+
+ENVELOPE_SIMPLE = E0Envelope(
+    mode=HybridMode.AMPLITUDE_ON_DISAGREE,
+    geometry="simple",
+    horizon=4,
+    transport=TransportRegime.U1,
+    goals=frozenset({"GESUND"}),
+    alpha=0.5,
+)
+
+
 # ── Scenario runner ──────────────────────────────────────────────────────
 
-def run_scenario(
+RISK_STATES = {
+    "MAGEN_REIZUNG", "MAGENULKUS", "NIERE_STRESS",
+    "HERZ_RISIKO", "BLUTUNGSRISIKO", "NOTFALL", "LEBER_STRESS",
+}
+
+
+def _build_session(
     name: str,
     landscape: Landscape,
-    start: str,
-    goal: str,
-    max_cycles: int = 20,
-    hybrid_mode: HybridMode = HybridMode.AMPLITUDE_ON_DISAGREE,
-    hybrid_geometry: str = "goal_reaching",
-    **extra_ctrl,
-) -> dict:
-    """Run one Beipackzettel scenario and return structured results."""
-    session = Session(
+    envelope: E0Envelope,
+) -> Session:
+    """Create a Session with Envelope-based configuration."""
+    return Session(
         session_id=f"bpz-{name}",
         landscape=landscape,
         execute_fn=_always_success,
         base_dir="memos/_beipackzettel",
         canon_refs=[CanonRef("e0-canon", "v1", "canon/e0-canon-plain.txt")],
-        controller_kwargs=dict(
-            hybrid_mode=hybrid_mode,
-            hybrid_horizon=4,
-            hybrid_goals={goal},
-            hybrid_geometry=hybrid_geometry,
-            alpha=0.5,
-            recent_k=2,
-            **extra_ctrl,
-        ),
+        controller_kwargs={
+            **envelope.to_controller_kwargs(),
+            "recent_k": 2,
+        },
     )
-    result = session.run(start, goal=goal, max_cycles=max_cycles, auto_save=True)
 
-    trace = result.trace
+
+def _extract_result(name: str, trace, goal: str) -> dict:
+    """Extract structured result dict from a trace."""
     path = trace.path
-    risk_states = {
-        "MAGEN_REIZUNG", "MAGENULKUS", "NIERE_STRESS",
-        "HERZ_RISIKO", "BLUTUNGSRISIKO", "NOTFALL", "LEBER_STRESS",
-    }
     overrides = [s for s in trace.steps if s.hybrid_overridden]
-
     return {
         "name": name,
         "path": path,
         "steps": len(trace.steps),
         "total_tension": trace.total_tension,
         "goal_reached": goal in path,
-        "visited_risks": risk_states & set(path),
+        "visited_risks": RISK_STATES & set(path),
         "hybrid_overrides": len(overrides),
         "override_details": [
             {
@@ -152,6 +167,47 @@ def run_scenario(
         ],
         "trace": trace,
     }
+
+
+def run_scenario(
+    name: str,
+    landscape: Landscape,
+    start: str,
+    goal: str,
+    envelope: E0Envelope = ENVELOPE_GOAL_REACHING,
+    max_cycles: int = 20,
+) -> dict:
+    """Run one Beipackzettel scenario (single run) and return structured results."""
+    session = _build_session(name, landscape, envelope)
+    result = session.run(start, goal=goal, max_cycles=max_cycles, auto_save=True)
+    return _extract_result(name, result.trace, goal)
+
+
+def run_iterative_scenario(
+    name: str,
+    landscape: Landscape,
+    start: str,
+    goal: str,
+    envelope: E0Envelope = ENVELOPE_GOAL_REACHING,
+    max_cycles: int = 20,
+    max_iterations: int = 5,
+    tension_threshold: float = 0.15,
+    exploration_policy: ExplorationPolicy | None = None,
+) -> dict:
+    """Run one Beipackzettel scenario through iterate() and return results."""
+    session = _build_session(name, landscape, envelope)
+    iter_result = session.iterate(
+        start,
+        goal=goal,
+        max_cycles=max_cycles,
+        max_iterations=max_iterations,
+        tension_threshold=tension_threshold,
+        exploration_policy=exploration_policy,
+    )
+    last_trace = iter_result.results[-1].trace
+    r = _extract_result(name, last_trace, goal)
+    r["iter_result"] = iter_result
+    return r
 
 
 # ── Analysis / display ───────────────────────────────────────────────────
@@ -200,21 +256,43 @@ def main() -> None:
 
     # ── Szenario 1: goal_reaching Geometrie (erwartet: findet GESUND) ──
     L1 = build_ibuprofen_landscape(include_interaction=False)
-    r1 = run_scenario("goal_reaching", L1, "KOPFSCHMERZ", "GESUND")
+    r1 = run_scenario("goal_reaching", L1, "KOPFSCHMERZ", "GESUND",
+                       envelope=ENVELOPE_GOAL_REACHING)
     print_result(r1)
 
     # ── Szenario 2: simple Geometrie (erwartet: Dosiseskalations-Falle) ──
     L2 = build_ibuprofen_landscape(include_interaction=False)
-    r2 = run_scenario(
-        "simple-geometrie", L2, "KOPFSCHMERZ", "GESUND",
-        hybrid_geometry="simple",
-    )
+    r2 = run_scenario("simple-geometrie", L2, "KOPFSCHMERZ", "GESUND",
+                       envelope=ENVELOPE_SIMPLE)
     print_result(r2)
 
     # ── Szenario 3: ASS-Wechselwirkung + goal_reaching ──
     L3 = build_ibuprofen_landscape(include_interaction=True)
-    r3 = run_scenario("ASS-wechselwirkung", L3, "ASS_PARALLEL", "GESUND")
+    r3 = run_scenario("ASS-wechselwirkung", L3, "ASS_PARALLEL", "GESUND",
+                       envelope=ENVELOPE_GOAL_REACHING)
     print_result(r3)
+
+    # ── Szenario 4: Iterativ + Born-Warmup (ExplorationPolicy) ──
+    print(f"\n{'=' * 60}")
+    print("Szenario 4: Iterativ mit Born-Warmup (C41 ExplorationPolicy)")
+    print(f"{'=' * 60}")
+    L4 = build_ibuprofen_landscape(include_interaction=False)
+    policy = ExplorationPolicy.born_warmup(warmup=2, convergence_threshold=0.15)
+    print(f"  Envelope: {ENVELOPE_GOAL_REACHING.summary()}")
+    print(f"  Policy:   {policy.label}")
+    r4 = run_iterative_scenario(
+        "iterativ-born-warmup", L4, "KOPFSCHMERZ", "GESUND",
+        envelope=ENVELOPE_GOAL_REACHING,
+        exploration_policy=policy,
+    )
+    print_result(r4)
+    ir = r4["iter_result"]
+    print(f"\n  Iterationen:   {ir.iterations} (emergent)")
+    print(f"  Stop-Grund:    {ir.stop_reason}")
+    print(f"  Policy-Phasen: {ir.policy_phases}")
+    if ir.final_map:
+        print(f"  Final max S:   {ir.final_map.max_residual:.4f}")
+        print(f"  Final mean S:  {ir.final_map.mean_residual:.4f}")
 
     # ── Vergleich ──
     print(f"\n{'=' * 60}")
