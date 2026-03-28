@@ -52,6 +52,9 @@ class Landscape:
     # Experimental: curvature modulation (B2)
     curvature_modulation: bool = False
 
+    # Experimental: overlap modulation (C40, Ontodynamics §3.4)
+    overlap_modulation: bool = False
+
     # --- Construction ---
 
     def add_state(self, name: str) -> None:
@@ -173,6 +176,8 @@ class Landscape:
         v = delta * coherence(s_eff)
         if self.curvature_modulation:
             v *= self._get_M_H(x, y)
+        if self.overlap_modulation:
+            v *= self._get_overlap_M_H(x, y)
         return v
 
     def _get_M_H(self, x: str, y: str) -> float:
@@ -210,6 +215,40 @@ class Landscape:
             # Invalidate again so downstream sees modulated v
             self._phi_cache = None
         self._M_H_cache = cache
+
+    # --- Overlap modulation (C40) ---
+
+    def _get_overlap_M_H(self, x: str, y: str) -> float:
+        """Return cached overlap-based M_H. Build cache on first call."""
+        cache = getattr(self, '_overlap_cache', None)
+        if cache is None:
+            self._build_overlap_cache()
+        key = (x, y)
+        if key in self._overlap_cache:
+            return self._overlap_cache[key].m_h
+        return 1.0
+
+    def _build_overlap_cache(self) -> None:
+        """
+        Pre-compute overlap M_H for all edges.
+
+        Uses base (unmodulated) v to avoid circular dependency:
+        transition_field → overlap → v of supporting edges → transition_field.
+        """
+        from .overlap import overlap_map
+
+        # Temporarily disable both modulations for base v
+        saved_curv = self.curvature_modulation
+        saved_over = self.overlap_modulation
+        self.curvature_modulation = False
+        self.overlap_modulation = False
+        self._phi_cache = None
+        try:
+            self._overlap_cache = overlap_map(self)
+        finally:
+            self.curvature_modulation = saved_curv
+            self.overlap_modulation = saved_over
+            self._phi_cache = None
 
     # --- Inspection ---
 

@@ -202,3 +202,6 @@ from .resonator import (
     detect_cycles, cycle_coherence, resonance_map,
     build_resonance_modifier, ResonanceInfo,
 )
+from .overlap import (
+    triangle_support, edge_overlap, overlap_map, OverlapInfo,
+)

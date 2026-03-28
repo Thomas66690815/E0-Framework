@@ -26,9 +26,17 @@ The current κ is:
 
     κ(x,y) = mean |ω(x,y) + ω(y,z) + ω(z,x)|   over all triangle-closing z
 
-This is literally `mean |Θ(face)| ` — the absolute face holonomy averaged over local triangles. It takes the same information that ω and Θ already encode, strips the phase (via |·|), and squeezes it through a damping function.
+This is literally `mean |Θ(face)|` — the absolute face holonomy averaged over local triangles. It takes the same information that ω and Θ already encode, strips the phase (via |·|), and squeezes it through a damping function.
 
 **Consequence:** The current M_H converts phase information into a scalar penalty. This is not new information — it is information loss.
+
+### 2.1 Right Geometry, Wrong Observable
+
+Importantly, the *triangle-finding* in `edge_curvature()` is correct — it identifies
+the right local neighborhood structure (directed triangles through x→y). The error is
+not in *where* to look, but in *what* to measure there. The current code measures
+|Θ(face)| (phase mismatch); it should measure structural support (transition strength
+of the bypass edges). The topology search is reusable; only the observable changes.
 
 ---
 
@@ -84,6 +92,12 @@ But rather:
 - How strongly is the transition x→y **structurally supported** by the realized transitions around it?
 - Measured through the **strength of co-realized connections** (the v-values of supporting edges), not through their count or phase.
 
+**Why "overlap" and not "realization":** In the Canon, "realization" (§3.2) IS the
+transition — that role is already filled by v itself. M_H does not realize; it modulates
+v based on the *degree of overlap* with co-realized neighbors. Calling M_H a
+"realization factor" would conflate it with Δ/R, which already determine realization
+strength. "Overlap degree" is the precise term.
+
 ---
 
 ## 6. Formal Sketch
@@ -108,6 +122,11 @@ This measures: **How well is x→y embedded in other strong transitions?**
 | ψ (path amplitude) | Yes, but at path level, not edge level |
 
 **M_H as overlap functional would be the edge-local equivalent of what ψ does globally.**
+
+This gives M_H a clear architectural role: ψ aggregates interference across all paths
+(global); M_H aggregates co-realization across the immediate neighborhood (local).
+They operate at different scales but encode the same structural principle —
+"how much does the surrounding structure support this transition?"
 
 ---
 
