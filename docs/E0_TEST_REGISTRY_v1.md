@@ -1,7 +1,7 @@
 # E₀ Test Registry v1
 
 > Central reference for all tests in the E₀ Framework.
-> **Last verified:** 2026-03-27 — **1483 tests** (1483 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures)
+> **Last verified:** 2026-03-28 — **1563 tests** (1563 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures)
 
 ---
 
@@ -50,6 +50,8 @@
 | 39 | `test_envelope.py` | 48 | unittest | E0Envelope + TransportRegime: typed config, serialization, bridge, controller integration | ✅ GREEN |
 | 40 | `test_burnout_composite.py` | 39 | unittest | Burnout Domäne 3: fragments, mock landscape, envelope presets, full demo run (greedy + hybrid), topology | ✅ GREEN |
 | 41 | `test_residual_tension.py` | 31 | unittest | C37 Residual Tension: snapshot, compute_residual_map, should_continue (4 stopping conditions), Session.iterate(), format, C37b iterate-reflection | ✅ GREEN |
+| 42 | `test_resonator_integration.py` | 37 | unittest | C39 Resonator-Controller integration: cycle detection, coherence, resonance map, intensity modifier, controller switch, backward compat | ✅ GREEN |
+| 43 | `test_overlap.py` | 43 | unittest | C40 Graduated Overlap: triangle_support, edge_overlap, overlap_map, landscape modulation, falsification domain, backward compat | ✅ GREEN |
 
 ---
 
@@ -586,6 +588,49 @@ py -3 -m unittest e0_controller.live_test_llm -v
 # Single file
 py -3 -m unittest e0_controller.test_gordian_trap -v
 ```
+
+---
+
+## Maintenance Notes
+
+### 42. test_resonator_integration.py — 37 tests
+
+**What it tests:** C39 — Integration of the resonator kernel (explore_resonator.py) into the controller's amplitude overlay via resonator.py. Seven test classes:
+- `TestCycleDetection` (8): detect_cycles() on triangle, diamond, acyclic, two-cycle domains; max_length constraints
+- `TestCycleCoherence` (5): cycle_coherence() R_coh values, broken cycle → 0, single-node degenerate, high n_cycles
+- `TestResonanceMap` (6): resonance_map() factor computation, acyclic empty, factor ∈ [1, 2], threshold filtering, ResonanceInfo fields
+- `TestIntensityModifier` (4): build_resonance_modifier() boosts cyclic action, leaves non-cyclic unchanged, linear scaling
+- `TestControllerIntegration` (6): resonator_modulation switch on E0Controller, overlay differs with resonator, full run, hybrid override, _compute_overlay injection
+- `TestBackwardCompatibility` (3): resonator_modulation=False preserves behavior, acyclic domain unaffected
+- `TestEdgeCases` (5): single edge, self-loop exclusion, probabilities sum to 1, intensities non-negative, Gordian-with-cycle probabilities valid
+
+**Key findings:**
+- Cyclic actions (B in A→B→C→A) receive intensity boost factor ∈ [1.0, 2.0]
+- Non-cyclic actions (OUT) unchanged — modifier leaves them at raw intensity
+- Acyclic domains: resonator_modulation=True has zero effect (no cycles to detect)
+- Probabilities still sum to 1.0 and intensities remain non-negative after boost
+- Hybrid mode with resonator_modulation=True works end-to-end on Gordian-with-cycle domain
+
+---
+
+### 43. test_overlap.py — 43 tests
+
+**What it tests:** C40 — Graduated overlap functional per Ontodynamics §3.4 ("Overlap is graduated, not binary"). Seven test classes covering the full M_H pipeline from triangle support → edge overlap → overlap map → landscape modulation:
+- `TestTriangleSupport` (8): T(x,y) = {z : x→z, z→y ∈ E, z ∉ {x,y}} — directed 2-hop support; linear, cycle, full triangle, nested loop, self-loop exclusion
+- `TestEdgeOverlap` (6): overlap(x→y) = Σ_z √(v(x,z)·v(z,y)) — geometric mean of support legs; zero/positive/exact, asymmetric ordering, non-negativity
+- `TestOverlapMap` (10): full M_H computation — domain-relative normalization with ε-floor; linear/cycle neutral; supported=1.0, unsupported=floor; floor parameter sensitivity; nested loop single-support
+- `TestLandscapeOverlapModulation` (7): overlap_modulation flag on Landscape — default off, on differentiates, v_mod ≤ v_base, linear/cycle no effect
+- `TestFalsificationDomain` (3): key falsification: two paths with identical Δ/R/S_eff/ω but different overlap — overlap modulation breaks the tie; v_mod/v_base = M_H verified
+- `TestBackwardCompatibility` (4): default off, curvature + overlap independent, empty landscape, single edge
+- `TestEdgeCases` (5): self-loop excluded, v=0 support leg → 0 overlap, multiple support nodes additive, floor=0 edge case
+
+**Key findings:**
+- >35 of 45 surveyed domains have zero directed triangle support → M_H trivially 1.0 (correct neutral behavior)
+- Falsification domain proves M_H is non-redundant: two edges with identical burden/phase differ only in overlap
+- Overlap normalization: M_H = (overlap + ε) / (max_overlap + ε), ε = max_overlap · floor / (1−floor)
+- If max_overlap = 0 → M_H = 1.0 everywhere (no support structure → no modulation)
+- Two independent modulation flags (curvature_modulation, overlap_modulation) coexist without interaction
+- Circular dependency resolved: cache built from base v with both modulations temporarily disabled
 
 ---
 

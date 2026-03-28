@@ -3,8 +3,8 @@
 > Central validation registry for the E₀ Framework.
 > **Purpose:** connect claims, tests, evidence, and status in one place.
 
-**Last updated:** 2026-03-27 — **1483 tests** (0 failures)  
-**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, and active edge-case work.
+**Last updated:** 2026-03-28 — **1563 tests** (0 failures)  
+**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, and active edge-case work.
 
 ---
 
@@ -563,6 +563,8 @@ Born sampling (P ∝ I, choosing actions probabilistically from the amplitude-de
 | `test_residual_tension.py` | C37, C37b |
 | `test_envelope.py` | C38 |
 | `test_burnout_composite.py` | Domäne 3 composite |
+| `test_resonator_integration.py` | C39 |
+| `test_overlap.py` | C40 |
 
 ---
 
@@ -1121,6 +1123,78 @@ The E₀ controller configuration is captured in a frozen, serializable `E0Envel
 - `controller.transport` property returns `TransportRegime` from the internal `use_su2` value
 - `E0Envelope` is frozen (`@dataclass(frozen=True)`) and hashable
 - Backward compatibility: all 1483 existing tests pass without modification
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C39 — Resonator-Controller Integration
+
+**Claim**  
+The resonator kernel (cycle detection, coherence measurement, resonance classification from explore_resonator.py) is connected to the controller’s amplitude overlay through a lightweight integration module (resonator.py). A `resonator_modulation` switch on `E0Controller` enables resonance-aware intensity modification: cyclic actions receive a bounded boost factor ∈ [1.0, 2.0] proportional to their cycle coherence R_coh, while acyclic domains and non-cyclic actions are unaffected. Probabilities remain normalized and intensities stay non-negative under the modification.
+
+**Evidence**  
+- `e0_controller/resonator.py` — `detect_cycles()`, `cycle_coherence()`, `resonance_map()`, `build_resonance_modifier()`, `ResonanceInfo`
+- `e0_controller/controller.py` — `resonator_modulation` parameter, `_compute_overlay()` modifier injection
+- `e0_controller/amplitude_overlay.py` — `intensity_modifier` parameter in `analyze_controller_state()`
+- `e0_controller/test_resonator_integration.py` — 37 tests across 7 classes:
+  - `TestCycleDetection` (8): triangle finds cycle, cycle start/end, acyclic empty, diamond no cycle, two-cycle, max_length constraints (3)
+  - `TestCycleCoherence` (5): positive R_coh on triangle, bounded, broken cycle → 0, single node → 0, high n_cycles
+  - `TestResonanceMap` (6): cyclic action mapped, non-cyclic excluded, acyclic empty, factor bounded [1,2], info fields, threshold filtering
+  - `TestIntensityModifier` (4): boost cyclic, leave non-cyclic unchanged, unknown action unchanged, linear scaling
+  - `TestControllerIntegration` (6): accepts flag, default False, overlay differs, full run, hybrid override, _compute_overlay
+  - `TestBackwardCompatibility` (3): off = no modifier, identical overlays, acyclic unaffected
+  - `TestEdgeCases` (5): single edge, self-loop, probabilities sum to 1, intensities ≥ 0, Gordian probabilities valid
+
+**Result**  
+- `detect_cycles()` finds simple cycles of length ≤ max_length through a given state via DFS
+- `cycle_coherence()` computes R_coh from multi-pass Ψ accumulation along the cycle
+- `resonance_map()` builds action → ResonanceInfo mapping with factor = 1 + min(R_coh, 1) for actions entering cycles (factor ∈ [1.0, 2.0])
+- `build_resonance_modifier()` returns a callable `(action, I) → I_modified` for overlay integration
+- Controller’s `_compute_overlay()` injects modifier when `resonator_modulation=True`
+- On acyclic domains (diamond, linear): zero cycles detected, empty resonance map, modifier is identity — overlay identical to baseline
+- Hybrid mode + resonator_modulation: end-to-end run completes correctly on Gordian-with-cycle
+- Backward compatible: `resonator_modulation=False` (default) produces identical behavior to pre-C39 code
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C40 — Graduated Overlap Functional (M_H from Ontodynamics §3.4)
+
+**Claim**  
+The topological modulation parameter M_H is implemented as a graduated overlap functional, derived from the Ontodynamics canon primitive: “Connections possess degree. Overlap is graduated, not binary. Stability requires non-zero overlap.” (§3.4). Unlike the prior holonomy-κ approach (C26, which measures the same geometry as Θ and is therefore redundant), M_H now measures directed 2-hop triangle support — how well each edge is structurally backed by bypass paths. This is a genuinely new observable, non-redundant with Θ, and produces non-trivial modulation only on domains with genuine bypass structure.
+
+The graduated overlap is computed as:
+- T(x,y) = {z : x→z ∈ E, z→y ∈ E, z ∉ {x,y}} (forward-directed 2-hop support set)
+- overlap(x→y) = Σ_{z ∈ T} √(v(x,z) · v(z,y)) (geometric mean of support leg strengths)
+- M_H = (overlap + ε) / (max_overlap + ε), with ε = max_overlap · floor/(1−floor)
+- If max_overlap = 0 → M_H = 1.0 everywhere (simple domains, correct neutral behavior)
+
+**Evidence**  
+- `e0_controller/overlap.py` — `triangle_support()`, `edge_overlap()`, `overlap_map()`, `OverlapInfo`
+- `e0_controller/landscape.py` — `overlap_modulation` flag, `_get_overlap_M_H()`, `_build_overlap_cache()`
+- `e0_controller/__init__.py` — exports: `triangle_support`, `edge_overlap`, `overlap_map`, `OverlapInfo`
+- `docs/E0_MH_ADJUDICATION_RESEARCH_NOTE_v1.md` — conceptual analysis, Q1–Q4, 45-domain survey
+- `e0_controller/test_overlap.py` — 43 tests across 7 classes:
+  - `TestTriangleSupport` (8): directed 2-hop support on 6 domain types, self-loop exclusion
+  - `TestEdgeOverlap` (6): geometric mean formula, zero/positive, asymmetric ordering, non-negativity
+  - `TestOverlapMap` (10): full M_H normalization, ε-floor, linear/cycle neutral, supported=1.0, unsupported=floor, all edges present
+  - `TestLandscapeOverlapModulation` (7): flag default, on differentiates, v_mod ≤ v_base, linear/cycle no-op
+  - `TestFalsificationDomain` (3): two paths identical in Δ/R/S_eff/ω differ only in overlap — M_H breaks the tie; v_mod/v_base = M_H
+  - `TestBackwardCompatibility` (4): default off, curvature+overlap coexist, empty landscape, single edge
+  - `TestEdgeCases` (5): self-loop excluded, v=0 support → 0 overlap, multiple supports additive, floor=0 edge case
+
+**Result**  
+- **45-domain survey**: >35 domains have zero directed triangle support → M_H trivially 1.0 (correct: overlap modulation is inactive on simple topologies)
+- **Falsification domain** (overlap differentiator): edges S→A and S→B have identical Δ, R, S_eff, ω — only structural difference is bypass S→C→B. Without modulation: v(S→A) = v(S→B). With modulation: v(S→B) > v(S→A) — supported edge wins.
+- **Non-redundancy**: Overlap measures structural support (bypass paths), not phase geometry (Θ). Domains exist where Θ is identical but overlap differs, and vice versa.
+- **Formula verification**: v_mod/v_base = M_H to 8 decimal places for all tested edges
+- **Two independent modulations**: `curvature_modulation` (C26, holonomy-κ) and `overlap_modulation` (C40, graduated overlap) can be enabled simultaneously without interaction
+- **Circular dependency resolved**: overlap cache built from base v with both modulations temporarily disabled; Helmholtz cache invalidated after cache build
+- **Label retirement**: “Topological invariant” label retired in favor of “graduated overlap functional” — the original label came from Canon Alignment, not from the Canon itself
 
 **Status**  
 ✅ Confirmed
