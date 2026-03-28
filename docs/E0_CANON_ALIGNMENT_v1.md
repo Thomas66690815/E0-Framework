@@ -5,7 +5,7 @@
 > was ist neu entstanden, und was haben wir gelernt.
 >
 > **Datum:** 2026-03-28 (aktualisiert)  
-> **Basis:** 1811 Tests, 0 Failures, 0 Warnings, Claims C1–C41  
+> **Basis:** 1815 Tests, 0 Failures, 0 Warnings, Claims C1–C41  
 > **Stufe 1–3 Bridge 4:** Structural Mutation implementiert (Commits dd6e277, e94be7e, e3f922d)  
 > **Canon-Dokumente:** `e0-canonical-reference.txt`, `e0-canon-plain.txt`,
 > `ontodynamics.txt`, `e0-agi-blueprint.md`  
@@ -513,7 +513,7 @@ Canon — aber der Canon *prognostiziert* sie auch nicht.
 
 ### 8.5 Tests sind der Kompass
 
-C1–C41 Claims, 1811 Tests. Jede Hypothese wurde falsifizierbar formuliert
+C1–C41 Claims, 1815 Tests. Jede Hypothese wurde falsifizierbar formuliert
 und dann getestet. Das hat den Unterschied zwischen „wir glauben, Interferenz
 existiert" und „C6: unter Gordian-Bedingungen fällt der A-Interferenzfaktor
 unter 0.1, und die Hybridarbitration überschreibt A1 → B1" gemacht.
@@ -575,7 +575,7 @@ Der Canon allein hätte das nicht geleistet.
 |-------|----------|
 | 2026-03-26 | Erstfassung: 1254 Tests, C1–C30, 4 offene Brücken |
 | 2026-03-28 | Update: 1790 Tests, C1–C41, Bridge 4 Stufe 1–3 geschlossen, M_H retired→overlap, Rate-Analyse ergänzt, Identity/Representation als neue offene Brücken |
-| 2026-03-28 | Update: 1811 Tests, Identity-Invariant (Stufe 4a) implementiert und geschlossen, 21 neue Tests |
+| 2026-03-28 | Update: 1815 Tests, Identity-Invariant (Stufe 4a) implementiert und geschlossen, 25 Tests. Copilot-Remote-Merge bereinigt |
 
 ---
 

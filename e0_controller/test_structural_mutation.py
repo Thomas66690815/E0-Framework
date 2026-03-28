@@ -20,6 +20,7 @@ Test classes:
   12. TestReachableStates         — BFS helper (5)
   13. TestCheckIdentityInvariant  — invariant verification (7)
   14. TestCheckIdentityAfterMutation — prospective check (5)
+  15. TestIdentityInTuningCycle     — integration with real controller (4)
 """
 
 import unittest
@@ -41,6 +42,7 @@ from e0_controller.structural_mutation import (
     check_identity_after_mutation,
     _reachable_states,
     _MAX_MUTATIONS_PER_CYCLE,
+    structural_tuning_cycle,
 )
 
 
@@ -953,6 +955,58 @@ class TestCheckIdentityAfterMutation(unittest.TestCase):
         self.assertIn(IdentityViolation.DEAD_END_CREATED, ic.violations)
         # Landscape restored
         self.assertTrue(L.has_edge("A", "B"))
+
+
+# ══════════════════════════════════════════════════════════════════
+# Class 15: Integration — Identity in structural_tuning_cycle
+# ══════════════════════════════════════════════════════════════════
+
+class TestIdentityInTuningCycle(unittest.TestCase):
+    """B4-S4a.15: Identity check in live structural_tuning_cycle runs."""
+
+    @staticmethod
+    def _exec():
+        return lambda s, t: Outcome.SUCCESS
+
+    def test_clean_cycle_identity_check_present(self):
+        """structural_tuning_cycle returns identity_check when mutations applied."""
+        from e0_controller.controller import E0Controller
+        L = _build_diamond()
+        ctrl = E0Controller(L, self._exec(), s_max=10.0)
+        result = structural_tuning_cycle(ctrl, "S", goal="G")
+        if result.applied_mutations:
+            self.assertIsNotNone(result.identity_check)
+            self.assertTrue(result.identity_check.ok)
+
+    def test_identity_check_on_loop_fix(self):
+        """Loop-fix mutations preserve identity (goal stays reachable)."""
+        from e0_controller.controller import E0Controller
+        L = _build_loop_domain()  # S→A, A→S, S→G
+        ctrl = E0Controller(L, self._exec(), s_max=10.0)
+        history = MutationHistory()
+        result = structural_tuning_cycle(
+            ctrl, "S", goal="G", mutation_history=history,
+        )
+        if result.applied_mutations and result.accepted:
+            self.assertIsNotNone(result.identity_check)
+            self.assertTrue(result.identity_check.ok)
+
+    def test_identity_check_none_when_no_proposals(self):
+        """When no proposals generated, identity_check is None."""
+        from e0_controller.controller import E0Controller
+        L = _build_diamond()
+        ctrl = E0Controller(L, self._exec(), s_max=10.0)
+        result = structural_tuning_cycle(ctrl, "S", goal="G")
+        if not result.proposals:
+            self.assertIsNone(result.identity_check)
+
+    def test_identity_check_field_exists(self):
+        """StructuralTuningCycleResult always has identity_check field."""
+        from e0_controller.controller import E0Controller
+        L = _build_diamond()
+        ctrl = E0Controller(L, self._exec(), s_max=10.0)
+        result = structural_tuning_cycle(ctrl, "S", goal="G")
+        self.assertTrue(hasattr(result, "identity_check"))
 
 
 if __name__ == "__main__":

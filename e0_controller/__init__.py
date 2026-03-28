@@ -124,6 +124,13 @@ __all__ = [
     "StructuralDiagnostic",
     "should_reflect", "reflect", "reflect_with_llm", "format_reflection_report",
     "build_structural_diagnostic",
+    # Structural Mutation (Bridge 4)
+    "MutationType", "StructuralMutation", "MutationRecord", "MutationHistory",
+    "IdentityViolation", "IdentityCheck",
+    "is_admissible", "apply_structural_mutation", "revert_structural_mutation",
+    "propose_structural_mutations", "check_identity_invariant",
+    "check_identity_after_mutation",
+    "StructuralTuningCycleResult", "structural_tuning_cycle",
     # Self-Tuning (B4)
     "RunFieldSummary", "DerivedThresholds", "ParameterSensitivity",
     "TuningProposal", "MetaTuningResult",
@@ -177,6 +184,14 @@ from .reflection import (
     StructuralDiagnostic,
     should_reflect, reflect, reflect_with_llm, format_reflection_report,
     build_structural_diagnostic,
+)
+from .structural_mutation import (
+    MutationType, StructuralMutation, MutationRecord, MutationHistory,
+    IdentityViolation, IdentityCheck,
+    is_admissible, apply_structural_mutation, revert_structural_mutation,
+    propose_structural_mutations, check_identity_invariant,
+    check_identity_after_mutation,
+    StructuralTuningCycleResult, structural_tuning_cycle,
 )
 from .self_tuning import (
     RunFieldSummary, DerivedThresholds, ParameterSensitivity,
