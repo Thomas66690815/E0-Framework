@@ -1,7 +1,7 @@
 # E₀ Test Registry v1
 
 > Central reference for all tests in the E₀ Framework.
-> **Last verified:** 2026-03-28 — **1748 tests** (1682 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures)
+> **Last verified:** 2026-03-28 — **1790 tests** (1724 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures, 0 warnings)
 
 ---
 
@@ -55,6 +55,7 @@
 | 44 | `test_exploration_policy.py` | 42 | unittest | C41 Stochastic Exploration Policy: PolicyDecision, warmup/fixed/convergence policies, Session.iterate() integration, mode restoration, backward compat | ✅ GREEN |
 | 45 | `test_landscape_mutation.py` | 56 | unittest | B4-S1 Landscape Mutation API: remove_edge, adjust_R₀/Δ, has_edge, would_orphan, historization interaction, cache invalidation, undo | ✅ GREEN |
 | 46 | `test_structural_mutation.py` | 66 | unittest | B4-S2 Structural Mutation Infrastructure: StructuralMutation, admissibility, apply/revert, propose, MutationHistory oscillation, serialization, end-to-end | ✅ GREEN |
+| 47 | `test_structural_tuning_cycle.py` | 42 | unittest | B4-S3 Structural Tuning Cycle: StructuralTuningCycleResult, cycle no-proposals/dead/loops/revert, MutationHistory integration, Session.iterate() structural hook, IterationResult fields, end-to-end | ✅ GREEN |
 
 ---
 
@@ -701,6 +702,28 @@ py -3 -m unittest e0_controller.test_gordian_trap -v
 - Proposals bounded to 3 per cycle, loop pairs deduplicated
 - Full serialization roundtrip for MemOS persistence
 - Apply fills old_value for mechanical undo; revert uses stored values
+
+---
+
+### 47. test_structural_tuning_cycle.py — 42 tests
+
+**What it tests:** B4-S3 — Structural Tuning Cycle + Session.iterate() Integration. The complete structural tuning feedback cycle and its hook into the multi-iteration orchestrator. Ten test classes:
+- `TestStructuralTuningCycleResult` (4): dataclass defaults, quality, mutation_records, revert fields
+- `TestCycleNoProposals` (4): healthy diamond produces no mutations, quality computed, diagnostic populated, no quality_after
+- `TestCycleWithDeadStates` (5): dead state D generates ADJUST_DELTA proposals, applied_mutations filled, quality computed, accept/revert outcome
+- `TestCycleWithLoops` (4): S↔A loop detected, R₀ proposals generated, quality computed, returns correct type
+- `TestCycleRevert` (4): revert restores landscape, reverted flag set, accepted on positive delta, records match applied
+- `TestCycleHistoryIntegration` (5): history updated after cycle, None creates fresh, oscillation blocked on repeat, records have quality, accept/revert consistency
+- `TestSessionStructuralHook` (6): Session has mutation_history, iterate() returns structural_results, length matches iterations, no trigger gives None, structural trigger invokes cycle, quality trigger skips
+- `TestIterationResultFields` (3): default empty, explicit, policy_phases backward compat
+- `TestSessionMutationHistory` (3): new session has empty history, attribute exists, mutable
+- `TestEndToEndStructural` (4): full loop cycle, multiple cycles accumulate, dead state modifies landscape, no-goal works
+
+**Key findings:**
+- Eskalationskette: parametrisch erschöpft → structural trigger in reflection → structural_tuning_cycle
+- structural_tuning_cycle: Run → Diagnose → Propose → Apply → Re-run → Verify Q → Accept/Revert
+- Session.iterate() Step 6: only fires on reflection_type="structural" AND should_continue
+- MutationHistory accumulates across cycles, oscillation guard filters repeats
 
 ---
 

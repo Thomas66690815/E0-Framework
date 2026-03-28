@@ -3,8 +3,8 @@
 > Central validation registry for the E₀ Framework.
 > **Purpose:** connect claims, tests, evidence, and status in one place.
 
-**Last updated:** 2026-03-28 — **1563 tests** (0 failures)  
-**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, and active edge-case work.
+**Last updated:** 2026-03-28 — **1790 tests** (0 failures, 0 warnings)  
+**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, and active edge-case work.
 
 ---
 
@@ -568,6 +568,7 @@ Born sampling (P ∝ I, choosing actions probabilistically from the amplitude-de
 | `test_exploration_policy.py` | C41 |
 | `test_landscape_mutation.py` | B4-S1 |
 | `test_structural_mutation.py` | B4-S2 |
+| `test_structural_tuning_cycle.py` | B4-S3 |
 
 ---
 
@@ -1314,6 +1315,38 @@ The E₀ Framework provides a complete data layer for structural self-modificati
 - Bounded to 3 mutations per cycle (configurable via `_MAX_MUTATIONS_PER_CYCLE`)
 - Full serialization roundtrip for MemOS persistence
 - Apply fills `old_value` for undo; revert uses stored values mechanically
+
+**Status**  
+✅ Confirmed
+
+---
+
+### B4-S3 — Structural Tuning Cycle + Session.iterate() Hook (Bridge 4, Stufe 3)
+
+**Claim**  
+The E₀ Framework integrates structural self-modification into the existing tuning and iteration infrastructure. A `structural_tuning_cycle()` executes the full feedback loop (Run → Diagnose → Propose → Apply → Re-run → Verify → Accept/Revert), and `Session.iterate()` calls it as Step 6 when structural reflection triggers. This completes the escalation chain: parametric tuning exhausted → quality plateau / chronic issues / parameter bounds → structural mutation. The cycle records outcomes in `MutationHistory` for cross-run learning and oscillation protection.
+
+**Evidence**  
+- `e0_controller/structural_mutation.py` — added: `StructuralTuningCycleResult` dataclass, `structural_tuning_cycle()` function
+- `e0_controller/session.py` — modified: `Session.__init__`/`resume` carry `MutationHistory`, `iterate()` Step 6 structural hook, `IterationResult.structural_results` field
+- `e0_controller/test_structural_tuning_cycle.py` — 42 tests across 10 classes:
+  - `TestStructuralTuningCycleResult` (4): dataclass defaults, quality, mutation_records, revert
+  - `TestCycleNoProposals` (4): healthy landscape → no mutations, quality computed
+  - `TestCycleWithDeadStates` (5): dead state D → ADJUST_DELTA proposals generated and applied
+  - `TestCycleWithLoops` (4): S↔A 2-cycle → ADJUST_RESISTANCE proposals generated
+  - `TestCycleRevert` (4): quality regression → revert restores landscape, flags set correctly
+  - `TestCycleHistoryIntegration` (5): MutationHistory updated, oscillation blocked on repeat, records have quality
+  - `TestSessionStructuralHook` (6): iterate() fires structural_tuning_cycle on structural reflection, skips on quality reflection
+  - `TestIterationResultFields` (3): structural_results default empty, explicit, backward compat
+  - `TestSessionMutationHistory` (3): fresh session carries empty history, mutable
+  - `TestEndToEndStructural` (4): full loop cycle, multi-cycle accumulation, dead state landscape modification, no-goal
+
+**Result**  
+- Escalation chain verified: structural_tuning_cycle only invoked when reflection returns type="structural"
+- Quality gating: Q_after < Q_before → all mutations reverted in reverse order
+- MutationHistory accumulates across cycles, preventing oscillation (same-type and cross-type)
+- Session.iterate() remains backward compatible (structural_results defaults to empty list)
+- Test warning cleanup: all 45 `hybrid_geometry='simple'` UserWarnings suppressed via `pyproject.toml` filterwarnings
 
 **Status**  
 ✅ Confirmed

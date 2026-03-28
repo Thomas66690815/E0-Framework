@@ -286,7 +286,7 @@ Was gebaut werden muss:
   ✅ Admissibility checks für Mutationen (lokal, bounded, topologie-safe) (Commit e94be7e)
   ✅ apply/revert Mechanismus mit Quality-Verify (Commit e94be7e)
   ✅ MutationHistory mit Oscillation-Protection (Commit e94be7e)
-  ☐ Integration in Session.iterate()
+  ✅ Integration in Session.iterate() (Commit e3f922d)
 ```
 
 ---
@@ -318,12 +318,18 @@ Neues Modul `structural_mutation.py`:
 
 66 Tests in 10 Klassen (`test_structural_mutation.py`). 1748 Gesamttests.
 
-### Stufe 3 — Tuning Integration
+### Stufe 3 — Tuning Integration ✅ (Commit e3f922d)
 
-`self_tuning.py` / `session.py` erweitern:
-- `structural_tuning_cycle()` — Run → Diagnose → Mutate → Verify → Accept/Revert
-- `Session.iterate()` um strukturelle Mutation zwischen Iterationen erweitern
-- Trigger: nur wenn parametrisches Tuning erschöpft ist (Eskalationskette)
+`structural_mutation.py` + `session.py` erweitert:
+- `StructuralTuningCycleResult` Datenklasse: Q_before/after, Diagnostic, Proposals, Accept/Revert, MutationRecords
+- `structural_tuning_cycle()`: Run → Diagnose (via `build_structural_diagnostic`) → Propose (via `propose_structural_mutations`) → Apply → Re-run → Verify Q_after → Accept/Revert
+- `Session.iterate()` Step 6: strukturelle Mutation nach Inter-Iteration-Reflection
+  - Trigger: nur wenn `ReflectionReport.reflection_type == "structural"` UND `should_continue`
+  - Eskalationskette: parametrisch erschöpft → Plateau/Chronic/Bounds → structural trigger
+- `Session.mutation_history`: `MutationHistory` in `__init__` + `resume`
+- `IterationResult.structural_results`: per-Iteration `Optional[StructuralTuningCycleResult]`
+
+42 Tests in 10 Klassen (`test_structural_tuning_cycle.py`). 1790 Gesamttests.
 
 ### Stufe 4 (optional) — SU(2) Meta-Darstellung
 
