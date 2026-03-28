@@ -4,7 +4,7 @@
 > **Purpose:** connect claims, tests, evidence, and status in one place.
 
 **Last updated:** 2026-03-28 — **1563 tests** (0 failures)  
-**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, and active edge-case work.
+**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, and active edge-case work.
 
 ---
 
@@ -567,6 +567,7 @@ Born sampling (P ∝ I, choosing actions probabilistically from the amplitude-de
 | `test_overlap.py` | C40 |
 | `test_exploration_policy.py` | C41 |
 | `test_landscape_mutation.py` | B4-S1 |
+| `test_structural_mutation.py` | B4-S2 |
 
 ---
 
@@ -1281,6 +1282,38 @@ The Landscape class supports structural self-modification through safe mutation 
 - All mutations invalidate _M_H_cache, _overlap_cache, _phi_cache
 - Historization survives mutations (traces on Historization object, independent of Landscape edges)
 - Undo via caller-saved old values + re-adjust/re-add — no rollback infrastructure needed yet
+
+**Status**  
+✅ Confirmed
+
+---
+
+### B4-S2 — Structural Mutation Infrastructure (Bridge 4, Stufe 2)
+
+**Claim**  
+The E₀ Framework provides a complete data layer for structural self-modification: typed mutation intents (`StructuralMutation`), an admissibility gate (`is_admissible`), mechanical apply/revert on the Landscape, a proposal engine that translates `StructuralDiagnostic` findings into concrete mutations, and a bounded history log with oscillation protection (`MutationHistory`). This infrastructure makes self-modification one admissible transition among others (AGI Blueprint §5), constrained by locality, topology safety, and historization.
+
+**Evidence**  
+- `e0_controller/structural_mutation.py` — full module: `MutationType`, `StructuralMutation`, `MutationRecord`, `MutationHistory`, `is_admissible()`, `apply/revert_structural_mutation()`, `propose_structural_mutations()`
+- `e0_controller/test_structural_mutation.py` — 66 tests across 10 classes:
+  - `TestStructuralMutation` (5): dataclass fields, edge property, describe() for all 4 types
+  - `TestMutationType` (4): enum values match expected strings
+  - `TestAdmissibility` (12): remove existing/nonexistent/orphan, add new/existing/negative/missing, adjust R₀/Δ existing/nonexistent/negative
+  - `TestApplyMutation` (8): apply adjust_R₀/Δ, remove, add, inadmissible raises, stores old values, preserves other edges
+  - `TestRevertMutation` (6): revert adjust_R₀/Δ, remove→re-add, add→remove, field restoration, idempotent re-add
+  - `TestProposalLogic` (8): dead→Δ boost, loop→R₀ increase, empty diagnostic, admissibility filter, bounded per cycle, motivation present, oscillation filter, loop dedup
+  - `TestMutationRecord` (4): delta_quality computed, None if no after, default not accepted, negative delta
+  - `TestMutationHistory` (10): append, bounded capacity, oscillation detection (same-type, add↔remove, remove↔add), counts, per-edge isolation
+  - `TestHistorySerialization` (4): empty roundtrip, with records, max_records preserved, add_edge fields preserved
+  - `TestEndToEnd` (5): propose→apply→accept, propose→apply→revert, loop fix, history tracking, multi-cycle oscillation protection
+
+**Result**  
+- Admissibility gate blocks: orphaning states, negative values, nonexistent edges, duplicate adds
+- Oscillation protection covers: same-type ping-pong (R₀ up/down) AND cross-type cycling (add/remove)
+- Proposals from `StructuralDiagnostic`: dead states → Δ boost on incoming edges; loop states → R₀ increase on loop-back edges (deduplicated per pair)
+- Bounded to 3 mutations per cycle (configurable via `_MAX_MUTATIONS_PER_CYCLE`)
+- Full serialization roundtrip for MemOS persistence
+- Apply fills `old_value` for undo; revert uses stored values mechanically
 
 **Status**  
 ✅ Confirmed

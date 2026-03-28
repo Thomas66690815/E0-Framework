@@ -281,11 +281,11 @@ Was schon existiert:
 
 Was gebaut werden muss:
   ✅ Landscape API erweitern: remove_edge, adjust_resistance, adjust_delta (Commit dd6e277)
-  ☐ StructuralMutation Datenklasse
-  ☐ propose_structural_mutations() aus StructuralDiagnostic
-  ☐ Admissibility checks für Mutationen (lokal, bounded, topologie-safe)
-  ☐ apply/revert Mechanismus mit Quality-Verify
-  ☐ MutationHistory mit Oscillation-Protection
+  ✅ StructuralMutation Datenklasse (Commit e94be7e)
+  ✅ propose_structural_mutations() aus StructuralDiagnostic (Commit e94be7e)
+  ✅ Admissibility checks für Mutationen (lokal, bounded, topologie-safe) (Commit e94be7e)
+  ✅ apply/revert Mechanismus mit Quality-Verify (Commit e94be7e)
+  ✅ MutationHistory mit Oscillation-Protection (Commit e94be7e)
   ☐ Integration in Session.iterate()
 ```
 
@@ -305,14 +305,18 @@ Was gebaut werden muss:
 
 56 Tests in 10 Klassen (`test_landscape_mutation.py`). 1682 Gesamttests.
 
-### Stufe 2 — Mutation Infrastructure
+### Stufe 2 — Mutation Infrastructure ✅ (Commit e94be7e)
 
 Neues Modul `structural_mutation.py`:
-- `StructuralMutation` Datenklasse
-- `MutationHistory` (analog TuningMemory)
-- `propose_structural_mutations()` — Diagnose → Vorschläge
-- `apply_structural_mutation()` / `revert_structural_mutation()`
-- Admissibility checks
+- `MutationType` Enum: REMOVE_EDGE, ADD_EDGE, ADJUST_RESISTANCE, ADJUST_DELTA
+- `StructuralMutation` Datenklasse: Typ, Edge, old/new Werte, Motivation, describe()
+- `MutationRecord`: Audit-Trail mit Quality-Delta, accept/revert Status
+- `MutationHistory`: Bounded Log (max 100), Oscillation-Protection (same-type + add↔remove), Serialisierung
+- `is_admissible()`: E₀-Gate (Lokalität, no orphans, non-negative, Edge-Existenz)
+- `apply_structural_mutation()` / `revert_structural_mutation()`: mechanisch auf Landscape
+- `propose_structural_mutations()`: Diagnostic → Vorschläge (dead→Δ↑, loop→R₀↑), max 3/Cycle
+
+66 Tests in 10 Klassen (`test_structural_mutation.py`). 1748 Gesamttests.
 
 ### Stufe 3 — Tuning Integration
 

@@ -1,7 +1,7 @@
 # E₀ Test Registry v1
 
 > Central reference for all tests in the E₀ Framework.
-> **Last verified:** 2026-03-28 — **1682 tests** (1682 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures)
+> **Last verified:** 2026-03-28 — **1748 tests** (1682 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures)
 
 ---
 
@@ -54,6 +54,7 @@
 | 43 | `test_overlap.py` | 43 | unittest | C40 Graduated Overlap: triangle_support, edge_overlap, overlap_map, landscape modulation, falsification domain, backward compat | ✅ GREEN |
 | 44 | `test_exploration_policy.py` | 42 | unittest | C41 Stochastic Exploration Policy: PolicyDecision, warmup/fixed/convergence policies, Session.iterate() integration, mode restoration, backward compat | ✅ GREEN |
 | 45 | `test_landscape_mutation.py` | 56 | unittest | B4-S1 Landscape Mutation API: remove_edge, adjust_R₀/Δ, has_edge, would_orphan, historization interaction, cache invalidation, undo | ✅ GREEN |
+| 46 | `test_structural_mutation.py` | 66 | unittest | B4-S2 Structural Mutation Infrastructure: StructuralMutation, admissibility, apply/revert, propose, MutationHistory oscillation, serialization, end-to-end | ✅ GREEN |
 
 ---
 
@@ -677,6 +678,29 @@ py -3 -m unittest e0_controller.test_gordian_trap -v
 - Historization survives mutations — δ_H traces are on Historization object, not Landscape edges
 - remove_edge does NOT delete states — states persist for potential re-add
 - Undo is manual (caller saves old value, calls adjust again) — sufficient for Stufe 2 infrastructure
+
+---
+
+### 46. test_structural_mutation.py — 66 tests
+
+**What it tests:** B4-S2 — Structural Mutation Infrastructure for Bridge 4. Complete data layer for structural self-modification: typed mutations, admissibility, apply/revert, proposal engine, history with oscillation protection. Ten test classes:
+- `TestStructuralMutation` (5): dataclass fields, edge property, describe() for remove/add/adjust_R₀/adjust_Δ
+- `TestMutationType` (4): enum values (remove_edge, add_edge, adjust_resistance, adjust_delta)
+- `TestAdmissibility` (12): remove existing/nonexistent/orphan, add new/existing/negative/missing, adjust R₀/Δ existing/nonexistent/negative
+- `TestApplyMutation` (8): apply adjust_R₀/Δ/remove/add on Landscape, inadmissible raises, stores old values, preserves other edges
+- `TestRevertMutation` (6): revert adjust_R₀/Δ, remove→re-add with original values, add→remove, field restoration, idempotent double revert
+- `TestProposalLogic` (8): dead_states→Δ boost, loop_states→R₀ increase, empty diagnostic, admissibility filter, bounded per cycle, motivation, oscillation filter, loop dedup
+- `TestMutationRecord` (4): delta_quality computed/None, default not accepted, negative delta
+- `TestMutationHistory` (10): append, bounded capacity, oscillation detection (same-type + add↔remove), counts, per-edge isolation
+- `TestHistorySerialization` (4): empty roundtrip, with records, max_records, add_edge fields
+- `TestEndToEnd` (5): propose→apply→accept, propose→apply→revert, loop fix, history tracking, multi-cycle oscillation protection
+
+**Key findings:**
+- Admissibility gate blocks orphaning, negative values, nonexistent/duplicate edges
+- Oscillation protection: same-type R₀/Δ ping-pong AND cross-type add/remove cycling
+- Proposals bounded to 3 per cycle, loop pairs deduplicated
+- Full serialization roundtrip for MemOS persistence
+- Apply fills old_value for mechanical undo; revert uses stored values
 
 ---
 
