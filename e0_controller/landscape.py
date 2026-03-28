@@ -78,6 +78,89 @@ class Landscape:
         self._delta[edge] = delta
         self._R0[edge] = resistance
 
+    # --- Structural Mutation (Bridge 4, Stufe 1) ---
+
+    def remove_edge(self, source: str, target: str) -> None:
+        """Remove a directed transition from the landscape.
+
+        Raises KeyError if the edge does not exist.
+        Does NOT remove orphaned states — they remain in the state set
+        (a state without edges is isolated, not deleted).
+        """
+        edge = Edge(source, target)
+        if edge not in self._R0:
+            raise KeyError(f"Edge {source}→{target} does not exist")
+        del self._delta[edge]
+        del self._R0[edge]
+        # Invalidate modulation caches
+        self._invalidate_caches()
+
+    def adjust_base_resistance(self, source: str, target: str,
+                               new_R0: float) -> float:
+        """Change the base resistance R₀ of an existing edge.
+
+        Returns the old R₀ value (for undo support).
+        Raises KeyError if edge does not exist.
+        Raises ValueError if new_R0 < 0.
+        """
+        edge = Edge(source, target)
+        if edge not in self._R0:
+            raise KeyError(f"Edge {source}→{target} does not exist")
+        if new_R0 < 0:
+            raise ValueError(f"R₀ must be ≥ 0, got {new_R0}")
+        old = self._R0[edge]
+        self._R0[edge] = new_R0
+        self._invalidate_caches()
+        return old
+
+    def adjust_delta(self, source: str, target: str,
+                     new_delta: float) -> float:
+        """Change the difference measure Δ of an existing edge.
+
+        Returns the old Δ value (for undo support).
+        Raises KeyError if edge does not exist.
+        Raises ValueError if new_delta < 0.
+        """
+        edge = Edge(source, target)
+        if edge not in self._delta:
+            raise KeyError(f"Edge {source}→{target} does not exist")
+        if new_delta < 0:
+            raise ValueError(f"Δ must be ≥ 0, got {new_delta}")
+        old = self._delta[edge]
+        self._delta[edge] = new_delta
+        self._invalidate_caches()
+        return old
+
+    def has_edge(self, source: str, target: str) -> bool:
+        """Check whether a directed edge exists."""
+        return Edge(source, target) in self._R0
+
+    def would_orphan(self, source: str, target: str) -> Set[str]:
+        """Return states that would become unreachable if edge is removed.
+
+        A state is 'orphaned' if removing this edge leaves it with
+        no incoming AND no outgoing edges.  Returns the empty set
+        if no states would be orphaned.
+        """
+        edge = Edge(source, target)
+        if edge not in self._R0:
+            return set()
+        orphans: Set[str] = set()
+        for state in (source, target):
+            remaining = [e for e in self._R0
+                         if e != edge and (e.source == state or e.target == state)]
+            if not remaining:
+                orphans.add(state)
+        return orphans
+
+    def _invalidate_caches(self) -> None:
+        """Clear cached modulation data after structural mutation."""
+        if hasattr(self, '_M_H_cache'):
+            del self._M_H_cache
+        if hasattr(self, '_overlap_cache'):
+            del self._overlap_cache
+        self._phi_cache = None
+
     # --- Core Functions (§2–6) ---
 
     def difference(self, x: str, y: str) -> Optional[float]:
