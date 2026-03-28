@@ -1,7 +1,7 @@
 # E₀ Test Registry v1
 
 > Central reference for all tests in the E₀ Framework.
-> **Last verified:** 2026-03-28 — **1563 tests** (1563 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures)
+> **Last verified:** 2026-03-28 — **1682 tests** (1682 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures)
 
 ---
 
@@ -52,6 +52,8 @@
 | 41 | `test_residual_tension.py` | 31 | unittest | C37 Residual Tension: snapshot, compute_residual_map, should_continue (4 stopping conditions), Session.iterate(), format, C37b iterate-reflection | ✅ GREEN |
 | 42 | `test_resonator_integration.py` | 37 | unittest | C39 Resonator-Controller integration: cycle detection, coherence, resonance map, intensity modifier, controller switch, backward compat | ✅ GREEN |
 | 43 | `test_overlap.py` | 43 | unittest | C40 Graduated Overlap: triangle_support, edge_overlap, overlap_map, landscape modulation, falsification domain, backward compat | ✅ GREEN |
+| 44 | `test_exploration_policy.py` | 42 | unittest | C41 Stochastic Exploration Policy: PolicyDecision, warmup/fixed/convergence policies, Session.iterate() integration, mode restoration, backward compat | ✅ GREEN |
+| 45 | `test_landscape_mutation.py` | 56 | unittest | B4-S1 Landscape Mutation API: remove_edge, adjust_R₀/Δ, has_edge, would_orphan, historization interaction, cache invalidation, undo | ✅ GREEN |
 
 ---
 
@@ -631,6 +633,50 @@ py -3 -m unittest e0_controller.test_gordian_trap -v
 - If max_overlap = 0 → M_H = 1.0 everywhere (no support structure → no modulation)
 - Two independent modulation flags (curvature_modulation, overlap_modulation) coexist without interaction
 - Circular dependency resolved: cache built from base v with both modulations temporarily disabled
+
+---
+
+### 44. test_exploration_policy.py — 42 tests
+
+**What it tests:** C41 — Stochastic Exploration Policy. Born warmup → argmax exploit transition via ExplorationPolicy, integrated into Session.iterate(). Ten test classes:
+- `TestPolicyDecision` (3): PolicyDecision dataclass fields
+- `TestFixedPolicy` (4): warmup=0, always exploit from step 0
+- `TestWarmupPolicy` (6): fixed warmup count, Born during warmup, argmax after
+- `TestConvergencePolicy` (5): early switch to exploit when tension drops below threshold
+- `TestConvenienceConstructors` (3): born_warmup() and fixed() factory functions
+- `TestPolicyLabel` (3): human-readable label for each policy type
+- `TestSessionPolicyIntegration` (7): iterate() with policy, mode switches, goal reaching
+- `TestModeRestoration` (3): original mode preserved after iterate() completes
+- `TestExplorationEffect` (4): warmup builds historization that helps exploit phase
+- `TestBackwardCompatibility` (4): no policy = existing behavior unchanged
+
+**Key findings:**
+- Born warmup broadens historization coverage → exploit phase benefits from richer traces
+- Mode restoration ensures Session state is clean after iterate() regardless of policy
+- Convergence policy switches early when residual tension drops below threshold
+- No policy = zero behavioral change (backward compatible)
+
+---
+
+### 45. test_landscape_mutation.py — 56 tests
+
+**What it tests:** B4-S1 — Landscape Mutation API for Bridge 4 Structural Reflexivity. Primitives for structural self-modification of the Landscape topology. Ten test classes:
+- `TestRemoveEdge` (9): removal, delta→None, R₀→∞, tension→∞, neighbors updated, nonexistent raises, states survive, preserves other edges
+- `TestAdjustBaseResistance` (8): returns old value, changes R₀, propagates to tension/field, errors for nonexistent/negative, preserves Δ
+- `TestAdjustDelta` (7): returns old value, changes Δ, propagates, Δ=0→v=0, errors, preserves R₀
+- `TestHasEdge` (5): existing, nonexistent, directed (no reverse implication), after removal, after add
+- `TestWouldOrphan` (6): diamond no orphan, leaf orphan, both endpoints, cycle no orphan, nonexistent→empty, chain middle
+- `TestHistorizationInteraction` (4): R₀ change preserves δ_H, removal preserves traces, re-add keeps traces, R_eff = new_R₀ + δ_H
+- `TestCacheInvalidation` (3): remove clears M_H cache, adjust_R clears overlap cache, adjust_Δ clears both
+- `TestMutationErrors` (6): KeyError for nonexistent, ValueError for negative, double remove
+- `TestFieldConsistency` (5): field after R↑, R↓, Δ=0, remove→v=0, re-add restores
+- `TestUndoSupport` (3): undo R₀, undo Δ, undo remove via re-add
+
+**Key findings:**
+- All mutations invalidate modulation caches (_M_H_cache, _overlap_cache, _phi_cache)
+- Historization survives mutations — δ_H traces are on Historization object, not Landscape edges
+- remove_edge does NOT delete states — states persist for potential re-add
+- Undo is manual (caller saves old value, calls adjust again) — sufficient for Stufe 2 infrastructure
 
 ---
 

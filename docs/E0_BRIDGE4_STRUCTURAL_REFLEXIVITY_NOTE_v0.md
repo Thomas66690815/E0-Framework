@@ -1,6 +1,6 @@
 # E₀ Bridge 4: Structural Reflexivity — Concept Note v0
 
-**Status:** Konzeptionelle Analyse  
+**Status:** Stufe 1 implementiert (Commit dd6e277, 56 Tests)  
 **Date:** 2026-03-28  
 **Purpose:** Klärung was Bridge 4 (Reflexivität) fordert, was bereits existiert, was fehlt, und wo SU(2) eventuell eingreift.
 
@@ -280,7 +280,7 @@ Was schon existiert:
   ✅ Session.iterate() als Orchestrierungsrahmen
 
 Was gebaut werden muss:
-  ☐ Landscape API erweitern: remove_edge, adjust_resistance, adjust_delta
+  ✅ Landscape API erweitern: remove_edge, adjust_resistance, adjust_delta (Commit dd6e277)
   ☐ StructuralMutation Datenklasse
   ☐ propose_structural_mutations() aus StructuralDiagnostic
   ☐ Admissibility checks für Mutationen (lokal, bounded, topologie-safe)
@@ -293,14 +293,17 @@ Was gebaut werden muss:
 
 ## 6. Vorgeschlagene Reihenfolge
 
-### Stufe 1 — Landscape API
+### Stufe 1 — Landscape API ✅ (Commit dd6e277)
 
-`landscape.py` um minimale Mutations-Methoden erweitern:
-- `remove_edge(x, y)` — mit Safety-Check (keine unreachable States)
-- `adjust_base_resistance(x, y, R₀_new)` — R₀ direkt ändern
-- `adjust_delta(x, y, Δ_new)` — Δ direkt ändern
+`landscape.py` um minimale Mutations-Methoden erweitert:
+- `remove_edge(x, y)` — löscht aus _delta/_R0, invalidiert Caches, KeyError wenn nicht vorhanden
+- `adjust_base_resistance(x, y, R₀_new)` — gibt alten Wert zurück, validiert ≥ 0
+- `adjust_delta(x, y, Δ_new)` — gibt alten Wert zurück, validiert ≥ 0
+- `has_edge(x, y)` — Convenience-Check (bool)
+- `would_orphan(x, y)` → Set[str] — States die isoliert würden
+- `_invalidate_caches()` — räumt _M_H_cache, _overlap_cache, _phi_cache auf
 
-Diese sind rein mechanische API-Erweiterungen, testbar ohne Meta-Logik.
+56 Tests in 10 Klassen (`test_landscape_mutation.py`). 1682 Gesamttests.
 
 ### Stufe 2 — Mutation Infrastructure
 

@@ -4,7 +4,7 @@
 > **Purpose:** connect claims, tests, evidence, and status in one place.
 
 **Last updated:** 2026-03-28 — **1563 tests** (0 failures)  
-**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, and active edge-case work.
+**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, and active edge-case work.
 
 ---
 
@@ -565,6 +565,8 @@ Born sampling (P ∝ I, choosing actions probabilistically from the amplitude-de
 | `test_burnout_composite.py` | Domäne 3 composite |
 | `test_resonator_integration.py` | C39 |
 | `test_overlap.py` | C40 |
+| `test_exploration_policy.py` | C41 |
+| `test_landscape_mutation.py` | B4-S1 |
 
 ---
 
@@ -1235,6 +1237,50 @@ The topological modulation factor M_H(x,y) = 1/(1 + κ(x,y)), where κ is the me
 
 **Design note:**  
 Alternative formula M_H = exp(−κ) provides smoother decay but same asymptotic limits. Current choice 1/(1+κ) is algebraically simpler and provides moderate damping for typical curvature values.
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C41 — Stochastic Exploration Policy (Born warmup → exploit)
+
+**Claim**  
+Born sampling (P ∝ I) provides stochastic exploration that discovers paths argmax misses. An ExplorationPolicy encodes the explore→exploit transition: Born warmup for N steps, then switch to argmax. This is integrated into Session.iterate() as an optional parameter. When no policy is provided, behavior is identical to previous versions.
+
+**Evidence**  
+- `e0_controller/exploration_policy.py` — `ExplorationPolicy`, `PolicyDecision`, `born_warmup()`, `fixed()`
+- `e0_controller/test_exploration_policy.py` — 42 tests across 10 classes
+- `e0_controller/session.py` — `Session.iterate(exploration_policy=...)` integration
+
+**Result**  
+- Born warmup builds broader historization traces → exploit phase benefits
+- Convergence policy enables early switch when residual tension is low
+- Mode restoration ensures Session state is clean after iterate()
+- Zero behavioral change without policy (backward compatible)
+
+**Status**  
+✅ Confirmed
+
+---
+
+### B4-S1 — Landscape Mutation API (Bridge 4 Structural Reflexivity, Stufe 1)
+
+**Claim**  
+The Landscape class supports structural self-modification through safe mutation primitives: `remove_edge`, `adjust_base_resistance`, `adjust_delta`, `has_edge`, and `would_orphan`. These are the mechanical foundation for Bridge 4 (Structural Reflexivity) — the system can modify its own transition structure. Mutations correctly invalidate modulation caches, preserve historization traces, and propagate to tension/transition field computations.
+
+**Evidence**  
+- `e0_controller/landscape.py` — 5 new methods + `_invalidate_caches()` helper
+- `e0_controller/test_landscape_mutation.py` — 56 tests across 10 classes
+- `docs/E0_BRIDGE4_STRUCTURAL_REFLEXIVITY_NOTE_v0.md` — concept note
+
+**Result**  
+- `remove_edge` deletes from _delta/_R0, raises KeyError if absent, does NOT delete states
+- `adjust_base_resistance`/`adjust_delta` return old value for undo, validate ≥ 0
+- `would_orphan` predicts isolation before commit — safety check for structural mutations
+- All mutations invalidate _M_H_cache, _overlap_cache, _phi_cache
+- Historization survives mutations (traces on Historization object, independent of Landscape edges)
+- Undo via caller-saved old values + re-adjust/re-add — no rollback infrastructure needed yet
 
 **Status**  
 ✅ Confirmed
