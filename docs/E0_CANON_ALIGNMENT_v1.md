@@ -4,10 +4,12 @@
 > tatsächlichen Implementation — was wurde bestätigt, was hat sich verändert,
 > was ist neu entstanden, und was haben wir gelernt.
 >
-> **Datum:** 2026-03-26  
-> **Basis:** 1254 Tests, 0 Failures, 30 bestätigte Claims (C1–C30)  
+> **Datum:** 2026-03-28 (aktualisiert)  
+> **Basis:** 1790 Tests, 0 Failures, 0 Warnings, Claims C1–C41  
+> **Stufe 1–3 Bridge 4:** Structural Mutation implementiert (Commits dd6e277, e94be7e, e3f922d)  
 > **Canon-Dokumente:** `e0-canonical-reference.txt`, `e0-canon-plain.txt`,
-> `ontodynamics.txt`, `e0-agi-blueprint.md`
+> `ontodynamics.txt`, `e0-agi-blueprint.md`  
+> **Siehe auch:** `E0_STRUCTURAL_DEEP_REVIEW_v1.md` für detaillierte Tiefenprüfung
 
 ---
 
@@ -183,6 +185,18 @@ dann doch zum zentralen Objekt der gesamten geometrischen Erweiterung:
 ω(x,y) = ½(v_rot(x,y) − v_rot(y,x)). Die Phase Θ — und damit
 Interferenz, Holonomie, SU(2) — entsteht aus v, nicht aus Δ oder R
 direkt. Der Canon konnte das nicht ahnen.
+
+**Ergänzung (2026-03-28 — Tiefenprüfung):**  
+Die Ordnungsäquivalenz zwischen `argmin S` und `argmax v` gilt *nur*
+bei konstantem Δ. Bei variierendem Δ divergieren die Ordnungen:
+`S = Δ·R` (implementiert) vs. `1/v = R/Δ` (kanonisch). Die
+Implementierung wählt die *kosteneffizienteste* Transition, nicht die
+mit der höchsten kanonischen Rate. Das ist eine *operationelle
+Konkretisierung* von A₀ (kompatibel, aber nicht identisch). Zusätzlich
+verwendet `transition_field()` die Form `v = Δ · M_H · exp(−S)` — eine
+monotone, aber nichtlineare Transformation der kanonischen Rate mit
+besseren Konvergenz-Eigenschaften. Siehe `E0_STRUCTURAL_DEEP_REVIEW_v1.md`
+§1.7 für die vollständige Analyse.
 
 ---
 
@@ -422,7 +436,7 @@ fehlerhaften, verwaisten Graphen arbeiten.
 | „Connection as topological operation" (§3.3) | ⚠ Teilweise | ω(x,y) ist Phasen-Connection, aber nicht topologische Konnexion im ontodynamischen Sinne |
 | „Mass" (§4) | ❌ Nicht implementiert | „Persistent topological inertia from accumulated historization" — R_eff kommt nahe, aber ist nicht als „Masse" formalisiert |
 | „Spacetime" (§4) | ❌ Nicht implementiert | Kein Konzept von emergenter Raumzeit |
-| „M_H from curvature/topology" (landscape.py) | ⚠ Vorbereitet | M_H ≡ 1 (Platzhalter); voller Topologie-Invariant offen |
+| „M_H as graduated overlap functional" | ⚠ Konzeptionell geklärt | M_H ≡ 1 im Code; alte κ-Formel *retired* (redundant mit Θ). Neues M_H: Overlap-Funktional aus Ontodynamics §3.4 — Formel definiert, Code ausstehend. Siehe `E0_MH_ADJUDICATION_RESEARCH_NOTE_v1.md` |
 
 ---
 
@@ -453,7 +467,7 @@ den Code nicht durch Code, sondern durch Designentscheidungen.
 | Blueprint-Element | Code-Status |
 |-------------------|-------------|
 | Operational Loop (§4): detect Δ → enumerate P → estimate R → select → execute → historize | ✅ `E0Controller.cycle()` |
-| Reflexivity (§5): self-modeling as admissible transition | ⚠ `reflection.py` (meta-diagnostisch, nicht selbstmodifizierend) |
+| Reflexivity (§5): self-modeling as admissible transition | ⚠→✅ Stufe 1–3: StructuralDiagnostic + StructuralMutation + MutationHistory + Admissibility + Session.iterate()-Integration. Offen: Identity-Invariant, Representation. Siehe `E0_BRIDGE4_STRUCTURAL_REFLEXIVITY_NOTE_v0.md` |
 | Alignment via resistance (§6) | ✅ Architektonisch (high R prevents destabilizing transitions) |
 | Domain invariance (§7) | ✅ Keine domain-spezifischen Primitive; Domäne nur via Landscape |
 | Architectural non-uniqueness (§8) | ✅ Three-theory stack (U(1), SU(2)-min, SU(2)-geo) zeigt: verschiedene Algebren, gleiche Kernmechanik |
@@ -499,7 +513,7 @@ Canon — aber der Canon *prognostiziert* sie auch nicht.
 
 ### 8.5 Tests sind der Kompass
 
-30 Claims, 1254 Tests. Jede Hypothese wurde falsifizierbar formuliert
+C1–C41 Claims, 1790 Tests. Jede Hypothese wurde falsifizierbar formuliert
 und dann getestet. Das hat den Unterschied zwischen „wir glauben, Interferenz
 existiert" und „C6: unter Gordian-Bedingungen fällt der A-Interferenzfaktor
 unter 0.1, und die Hybridarbitration überschreibt A1 → B1" gemacht.
@@ -509,24 +523,57 @@ Der Canon allein hätte das nicht geleistet.
 
 ## 9. Offene Brücken zum Canon
 
+### Geschlossen seit v1-Erstfassung (2026-03-26 → 2026-03-28)
+
+4. ~~**Reflexivität als Selbstmodifikation:**~~
+   **GESCHLOSSEN (Stufe 1–3).** StructuralMutation + Admissibility +
+   MutationHistory + Session.iterate()-Integration. Diagnose → Vorschlag →
+   Apply → Verify → Accept/Revert. 164 neue Tests. Offene Rest-Fragen
+   (Identity, Representation) sind Stufe-4-Themen.
+
+### Weiterhin offen
+
 1. **Ontodynamik-Primitive operationalisieren:**
    Local Realization, Gradual Overlap, Connection-als-topologische-Operation.
-   Derzeit nur konzeptuell referenziert.
+   Derzeit nur konzeptuell referenziert. Gradual Overlap ist direkt mit M_H
+   verbunden (siehe Punkt 3).
 
 2. **Multi-Axis SU(2):**
    Per-Kanten-Achsen n̂(x,y) statt globaler σ_z-Achse. Würde die
    ontodynamische Forderung nach „gerichteter Differenz" auf der
    Phasen-Ebene realisieren.
 
-3. **M_H als topologischer Invariant:**
-   Derzeit M_H ≡ 1. Volle Krümmungsabhängigkeit ist im Code vorbereitet
-   (Kommentar in landscape.py), aber nicht implementiert.
+3. **M_H als graduated overlap functional:**
+   Derzeit M_H ≡ 1. Die alte κ-basierte Formel wurde *retired* (redundant
+   mit Θ). Das neue M_H: Overlap-Funktional aus Ontodynamics §3.4.
+   Formel steht (geometric-mean von 2-hop support legs, Range [0.2, 1.0]),
+   45-Domain-Survey abgeschlossen, Code-Implementierung ausstehend.
 
-4. **Reflexivität als Selbstmodifikation:**
-   Der AGI-Blueprint §5 fordert, dass das System seine eigene
-   Transitionsstruktur modelliert. `reflection.py` diagnostiziert,
-   modifiziert aber nicht. Die Brücke von Diagnose zu Selbständerung
-   ist offen.
+5. **Identity-Invariant (Bridge 4, Stufe 4a):**
+   Was muss unter Self-Modification invariant bleiben? Drei Kandidaten:
+   (a) topologische Konnektivität (Goal erreichbar), (b) Historisierungs-
+   Kontinuität (δ_H unberührt), (c) Axiom-Treue (A₀ bleibt gültig).
+   Konzeptioneller Vorschlag in `E0_STRUCTURAL_DEEP_REVIEW_v1.md` §6.1.
+
+6. **Representation (Bridge 4, Stufe 4b):**
+   In welchem Raum wird die Self-Structure dargestellt? Flache Datenklassen
+   (aktuell) vs. Meta-Graph vs. Meta-Landscape. Analyse in
+   `E0_STRUCTURAL_DEEP_REVIEW_v1.md` §6.2.
+
+7. **Rate-Abweichung explizit dokumentieren:**
+   v_impl ≠ v_canon bei variierendem Δ. Kein Code-Refactoring nötig, aber
+   als *operationelle Konkretisierung* (nicht als identische Umsetzung)
+   zu dokumentieren. Analyse in §1.7 der Rate-Sektion oben und in
+   `E0_STRUCTURAL_DEEP_REVIEW_v1.md` §1.7.
+
+---
+
+## 10. Anhang: Aktualisierungshistorie
+
+| Datum | Änderung |
+|-------|----------|
+| 2026-03-26 | Erstfassung: 1254 Tests, C1–C30, 4 offene Brücken |
+| 2026-03-28 | Update: 1790 Tests, C1–C41, Bridge 4 Stufe 1–3 geschlossen, M_H retired→overlap, Rate-Analyse ergänzt, Identity/Representation als neue offene Brücken |
 
 ---
 
