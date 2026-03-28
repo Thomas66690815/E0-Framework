@@ -49,6 +49,12 @@ class Landscape:
     # Dynamic structure
     historization: Historization = field(default_factory=Historization)
 
+    # Experimental: curvature modulation (B2)
+    curvature_modulation: bool = False
+
+    # Experimental: overlap modulation (C40, Ontodynamics §3.4)
+    overlap_modulation: bool = False
+
     # --- Construction ---
 
     def add_state(self, name: str) -> None:
@@ -71,6 +77,89 @@ class Landscape:
         edge = Edge(source, target)
         self._delta[edge] = delta
         self._R0[edge] = resistance
+
+    # --- Structural Mutation (Bridge 4, Stufe 1) ---
+
+    def remove_edge(self, source: str, target: str) -> None:
+        """Remove a directed transition from the landscape.
+
+        Raises KeyError if the edge does not exist.
+        Does NOT remove orphaned states — they remain in the state set
+        (a state without edges is isolated, not deleted).
+        """
+        edge = Edge(source, target)
+        if edge not in self._R0:
+            raise KeyError(f"Edge {source}→{target} does not exist")
+        del self._delta[edge]
+        del self._R0[edge]
+        # Invalidate modulation caches
+        self._invalidate_caches()
+
+    def adjust_base_resistance(self, source: str, target: str,
+                               new_R0: float) -> float:
+        """Change the base resistance R₀ of an existing edge.
+
+        Returns the old R₀ value (for undo support).
+        Raises KeyError if edge does not exist.
+        Raises ValueError if new_R0 < 0.
+        """
+        edge = Edge(source, target)
+        if edge not in self._R0:
+            raise KeyError(f"Edge {source}→{target} does not exist")
+        if new_R0 < 0:
+            raise ValueError(f"R₀ must be ≥ 0, got {new_R0}")
+        old = self._R0[edge]
+        self._R0[edge] = new_R0
+        self._invalidate_caches()
+        return old
+
+    def adjust_delta(self, source: str, target: str,
+                     new_delta: float) -> float:
+        """Change the difference measure Δ of an existing edge.
+
+        Returns the old Δ value (for undo support).
+        Raises KeyError if edge does not exist.
+        Raises ValueError if new_delta < 0.
+        """
+        edge = Edge(source, target)
+        if edge not in self._delta:
+            raise KeyError(f"Edge {source}→{target} does not exist")
+        if new_delta < 0:
+            raise ValueError(f"Δ must be ≥ 0, got {new_delta}")
+        old = self._delta[edge]
+        self._delta[edge] = new_delta
+        self._invalidate_caches()
+        return old
+
+    def has_edge(self, source: str, target: str) -> bool:
+        """Check whether a directed edge exists."""
+        return Edge(source, target) in self._R0
+
+    def would_orphan(self, source: str, target: str) -> Set[str]:
+        """Return states that would become unreachable if edge is removed.
+
+        A state is 'orphaned' if removing this edge leaves it with
+        no incoming AND no outgoing edges.  Returns the empty set
+        if no states would be orphaned.
+        """
+        edge = Edge(source, target)
+        if edge not in self._R0:
+            return set()
+        orphans: Set[str] = set()
+        for state in (source, target):
+            remaining = [e for e in self._R0
+                         if e != edge and (e.source == state or e.target == state)]
+            if not remaining:
+                orphans.add(state)
+        return orphans
+
+    def _invalidate_caches(self) -> None:
+        """Clear cached modulation data after structural mutation."""
+        if hasattr(self, '_M_H_cache'):
+            del self._M_H_cache
+        if hasattr(self, '_overlap_cache'):
+            del self._overlap_cache
+        self._phi_cache = None
 
     # --- Core Functions (§2–6) ---
 
@@ -150,11 +239,15 @@ class Landscape:
 
     def transition_field(self, x: str, y: str) -> float:
         """
-        §2.4: v_x(y) = Δ(x,y) · exp(-S_eff(x→y))
+        §2.4: v_x(y) = Δ(x,y) · M_H(x,y) · exp(-S_eff(x→y))
 
-        Spec-aligned simplified runtime form (M_H = 1 for v0.1).
-        The full generalized form (M_H derived from curvature/topology)
-        is not yet implemented.
+        When curvature_modulation is False (default), M_H = 1 — the
+        current runtime form.
+
+        When curvature_modulation is True, M_H is derived from local
+        face holonomy (curvature). High curvature → damped transition.
+        M_H is cached and computed from the base (unmodulated) ω to
+        avoid circular dependency.
 
         Higher v = more structurally open transition.
         Returns 0.0 if edge does not exist (no transition capacity).
@@ -163,7 +256,82 @@ class Landscape:
         if delta is None:
             return 0.0
         s_eff = self.effective_tension(x, y)
-        return delta * coherence(s_eff)
+        v = delta * coherence(s_eff)
+        if self.curvature_modulation:
+            v *= self._get_M_H(x, y)
+        if self.overlap_modulation:
+            v *= self._get_overlap_M_H(x, y)
+        return v
+
+    def _get_M_H(self, x: str, y: str) -> float:
+        """Return cached M_H(x,y). Build cache on first call."""
+        cache = getattr(self, '_M_H_cache', None)
+        if cache is None:
+            self._build_M_H_cache()
+        return self._M_H_cache.get((x, y), 1.0)
+
+    def _build_M_H_cache(self) -> None:
+        """
+        Pre-compute M_H for all edges from base (unmodulated) ω.
+
+        Temporarily disables curvature_modulation to break the
+        circular dependency: transition_field → M_H → κ → ω →
+        v_rot → v_raw → transition_field.
+
+        The base ω reflects the pure geometric structure.
+        M_H then modulates it — a one-way dependency, not circular.
+        """
+        from .connection import M_H_factor
+
+        # Temporarily disable to compute base ω without M_H
+        self.curvature_modulation = False
+        # Invalidate Helmholtz cache so base v is used
+        self._phi_cache = None
+        try:
+            cache = {}
+            for edge in self._R0:
+                cache[(edge.source, edge.target)] = M_H_factor(
+                    self, edge.source, edge.target
+                )
+        finally:
+            self.curvature_modulation = True
+            # Invalidate again so downstream sees modulated v
+            self._phi_cache = None
+        self._M_H_cache = cache
+
+    # --- Overlap modulation (C40) ---
+
+    def _get_overlap_M_H(self, x: str, y: str) -> float:
+        """Return cached overlap-based M_H. Build cache on first call."""
+        cache = getattr(self, '_overlap_cache', None)
+        if cache is None:
+            self._build_overlap_cache()
+        key = (x, y)
+        if key in self._overlap_cache:
+            return self._overlap_cache[key].m_h
+        return 1.0
+
+    def _build_overlap_cache(self) -> None:
+        """
+        Pre-compute overlap M_H for all edges.
+
+        Uses base (unmodulated) v to avoid circular dependency:
+        transition_field → overlap → v of supporting edges → transition_field.
+        """
+        from .overlap import overlap_map
+
+        # Temporarily disable both modulations for base v
+        saved_curv = self.curvature_modulation
+        saved_over = self.overlap_modulation
+        self.curvature_modulation = False
+        self.overlap_modulation = False
+        self._phi_cache = None
+        try:
+            self._overlap_cache = overlap_map(self)
+        finally:
+            self.curvature_modulation = saved_curv
+            self.overlap_modulation = saved_over
+            self._phi_cache = None
 
     # --- Inspection ---
 

@@ -425,3 +425,197 @@ if __name__ == "__main__":
     all_results["C2"] = run_single_regime_full("C2 (dephased)", control_C2)
 
     run_summary(all_results)
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Multi-Loop Domain Builders (O5 — resonator scaling)
+# ═══════════════════════════════════════════════════════════════════
+
+def build_4node_loop(
+    loop_delta: float = 0.5,
+    loop_R: float = 0.1,
+    leak_delta: float = 0.3,
+    leak_R: float = 1.5,
+) -> Landscape:
+    """
+    4-node ring: A → B → C → D → A, plus leakage D → OUT.
+
+    Larger kernel than the minimal 3-node — tests whether
+    resonance survives longer phase accumulation.
+    """
+    L = Landscape()
+    for src, tgt in [("A", "B"), ("B", "C"), ("C", "D"), ("D", "A")]:
+        L.add_edge(src, tgt, delta=loop_delta, resistance=loop_R)
+    L.add_edge("D", "OUT", delta=leak_delta, resistance=leak_R)
+    return L
+
+
+def build_nested_loop(
+    outer_delta: float = 0.5,
+    outer_R: float = 0.1,
+    inner_delta: float = 0.4,
+    inner_R: float = 0.15,
+    leak_delta: float = 0.3,
+    leak_R: float = 1.5,
+) -> Landscape:
+    """
+    Nested loops: outer A → B → C → A, inner B → X → C.
+
+    Topology:
+        A → B → C → A       (outer loop)
+             ↘       ↗
+              X             (inner shortcut B→X→C)
+             ↓
+            OUT (leakage from C)
+
+    Two interfering loop families share edges B→C (outer) and B→X→C (inner).
+    """
+    L = Landscape()
+    # Outer loop
+    L.add_edge("A", "B", delta=outer_delta, resistance=outer_R)
+    L.add_edge("B", "C", delta=outer_delta, resistance=outer_R)
+    L.add_edge("C", "A", delta=outer_delta, resistance=outer_R)
+    # Inner path B→X→C
+    L.add_edge("B", "X", delta=inner_delta, resistance=inner_R)
+    L.add_edge("X", "C", delta=inner_delta, resistance=inner_R)
+    # Leakage
+    L.add_edge("C", "OUT", delta=leak_delta, resistance=leak_R)
+    return L
+
+
+def build_coupled_resonators(
+    loop_delta: float = 0.5,
+    loop_R: float = 0.1,
+    bridge_delta: float = 0.8,
+    bridge_R: float = 0.3,
+    leak_delta: float = 0.3,
+    leak_R: float = 1.5,
+) -> Landscape:
+    """
+    Two coupled resonator kernels connected by a bridge.
+
+    Topology:
+        Kernel 1: A → B → C → A   (loop 1)
+        Kernel 2: P → Q → R → P   (loop 2)
+        Bridge:   C → P            (unidirectional coupling)
+        Leakage:  R → OUT
+
+    Tests energy/phase transfer between independent resonators.
+    """
+    L = Landscape()
+    # Kernel 1: A-B-C
+    for src, tgt in [("A", "B"), ("B", "C"), ("C", "A")]:
+        L.add_edge(src, tgt, delta=loop_delta, resistance=loop_R)
+    # Kernel 2: P-Q-R
+    for src, tgt in [("P", "Q"), ("Q", "R"), ("R", "P")]:
+        L.add_edge(src, tgt, delta=loop_delta, resistance=loop_R)
+    # Bridge
+    L.add_edge("C", "P", delta=bridge_delta, resistance=bridge_R)
+    # Leakage from kernel 2
+    L.add_edge("R", "OUT", delta=leak_delta, resistance=leak_R)
+    return L
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Generalized Measurement for Multi-Loop Topologies
+# ═══════════════════════════════════════════════════════════════════
+
+def generic_loop_paths(loop_nodes: List[str], n_cycles: int) -> List[List[str]]:
+    """
+    Generate loop path family for an arbitrary node ring.
+
+    loop_nodes: ordered ring, e.g. ["A","B","C"] or ["A","B","C","D"]
+    Returns paths for 1..n_cycles repetitions.
+    """
+    paths = []
+    for k in range(1, n_cycles + 1):
+        path = [loop_nodes[0]]
+        for _ in range(k):
+            path.extend(loop_nodes[1:] + [loop_nodes[0]])
+        paths.append(path)
+    return paths
+
+
+def measure_generic_loop(
+    L: Landscape,
+    loop_nodes: List[str],
+    leak_path: List[str],
+    n_cycles: int,
+    hist_edges: Optional[List[Tuple[str, str]]] = None,
+) -> CycleMetrics:
+    """
+    Generalized measurement for any loop topology.
+
+    loop_nodes: ring nodes, e.g. ["A","B","C","D"]
+    leak_path: leakage escape, e.g. ["D","OUT"]
+    hist_edges: edges to check for historization density (default: all ring edges)
+    """
+    paths = generic_loop_paths(loop_nodes, n_cycles)
+    full_leak = [loop_nodes[0]] + loop_nodes[1:loop_nodes.index(leak_path[0]) + 1] + leak_path \
+        if leak_path[0] in loop_nodes else leak_path
+
+    # Build leak path from start through ring to leak start
+    start = loop_nodes[0]
+    leak_start = leak_path[0]
+    if leak_start in loop_nodes:
+        idx = loop_nodes.index(leak_start)
+        prefix = loop_nodes[:idx + 1]
+        full_leak = prefix + leak_path[1:]
+    else:
+        full_leak = leak_path
+
+    # I_coh
+    psi_total = sum_paths(L, paths)
+    I_coh = abs(psi_total) ** 2
+
+    # I_inc
+    I_inc = sum(abs(psi(L, p)) ** 2 for p in paths)
+
+    # R_coh
+    R_coh = I_coh / I_inc if I_inc > 1e-30 else 0.0
+
+    # H_loop
+    if hist_edges is None:
+        hist_edges = list(zip(loop_nodes, loop_nodes[1:] + [loop_nodes[0]]))
+    H_loop = sum(
+        abs(L.historization.delta_H(Edge(s, t)))
+        for s, t in hist_edges
+        if L.difference(s, t) is not None
+    )
+
+    # I_out
+    if len(full_leak) >= 2 and L.difference(full_leak[-2], full_leak[-1]) is not None:
+        I_out = abs(psi(L, full_leak)) ** 2
+    else:
+        I_out = 0.0
+
+    # theta_loop (1 cycle)
+    one_cycle = loop_nodes + [loop_nodes[0]]
+    closing_src, closing_tgt = loop_nodes[-1], loop_nodes[0]
+    if L.difference(closing_src, closing_tgt) is not None:
+        theta_loop = theta(L, one_cycle)
+    else:
+        theta_loop = 0.0
+
+    # SU(2)
+    I_coh_su2 = spinor_intensity(L, paths)
+    I_coh_geo = spinor_geometric_intensity(L, paths)
+
+    return CycleMetrics(
+        cycle=n_cycles,
+        I_coh=I_coh, I_inc=I_inc, R_coh=R_coh,
+        H_loop=H_loop, I_out=I_out, theta_loop=theta_loop,
+        I_coh_su2=I_coh_su2, I_coh_geo=I_coh_geo,
+    )
+
+
+def apply_generic_historization(
+    L: Landscape,
+    edges: List[Tuple[str, str]],
+    outcome: Outcome = Outcome.SUCCESS,
+):
+    """Apply historization to arbitrary edge list."""
+    for src, tgt in edges:
+        edge = Edge(src, tgt)
+        if L.difference(src, tgt) is not None:
+            L.historization.update(edge, outcome)

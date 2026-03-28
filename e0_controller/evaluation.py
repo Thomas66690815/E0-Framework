@@ -53,6 +53,8 @@ class RunEvaluation:
     r_coh_max: float = 1.0           # best-case coherence
     theta_consistency: float = 1.0   # phase alignment [0–1]
     amplitude_drift: float = 0.0     # 1.0 − overlay_agree_rate
+    # Mass trap detection (path_count imbalance)
+    path_count_imbalance_max: float = 1.0  # max(counts)/min(counts) across steps
 
 
 @dataclass
@@ -150,6 +152,7 @@ def evaluate_run(
     r_coh_max: float = 1.0,
     theta_consistency: float = 1.0,
     amplitude_drift: float = 0.0,
+    path_count_imbalance_max: float = 1.0,
 ) -> RunEvaluation:
     """Build a RunEvaluation from run metrics and graph info."""
     unique_states = len(set(path)) if path else 0
@@ -209,6 +212,7 @@ def evaluate_run(
         r_coh_max=round(r_coh_max, 4),
         theta_consistency=round(theta_consistency, 4),
         amplitude_drift=round(amplitude_drift, 4),
+        path_count_imbalance_max=round(path_count_imbalance_max, 4),
     )
 
 
@@ -239,7 +243,10 @@ def evaluate_semantics(
     heuristic detection of uncertainty markers and unsupported claims.
     """
     # Combine all transition result texts
-    combined_text = " ".join(r.result.lower() for r in result_log if r.result)
+    combined_text = " ".join(
+        (r.result if isinstance(r.result, str) else str(r.result)).lower()
+        for r in result_log if r.result
+    )
 
     # Required output coverage
     required = scenario.required_outputs
@@ -356,6 +363,7 @@ def evaluate_scenario(
     r_coh_max: float = 1.0,
     theta_consistency: float = 1.0,
     amplitude_drift: float = 0.0,
+    path_count_imbalance_max: float = 1.0,
 ) -> ScenarioEvaluation:
     """Full evaluation pipeline for one scenario run."""
     happy_len = gq.happy_path_length
@@ -397,6 +405,7 @@ def evaluate_scenario(
         r_coh_max=r_coh_max,
         theta_consistency=theta_consistency,
         amplitude_drift=amplitude_drift,
+        path_count_imbalance_max=path_count_imbalance_max,
     )
 
     # Overall score (None if hard failure)

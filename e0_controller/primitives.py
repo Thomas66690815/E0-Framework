@@ -23,6 +23,17 @@ class Outcome(Enum):
     PARTIAL = "partial"
 
 
+class TransportRegime(Enum):
+    """Interference transport regime for Ψ-summation.
+
+    Replaces the polymorphic use_su2 flag (False/True/"geometric")
+    with a typed enum aligned to the structural core schema.
+    """
+    U1 = "u1"                      # scalar phase interference (ℂ¹)
+    SU2_MINIMAL = "su2_minimal"    # minimal spinor interference (ℂ²)
+    SU2_GEOMETRIC = "su2_geometric"  # geometric spinor with curvature
+
+
 class Edge(NamedTuple):
     """Directed edge between two states."""
     source: str

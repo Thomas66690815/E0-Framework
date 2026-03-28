@@ -24,7 +24,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from .evaluation import ScenarioEvaluation, RunEvaluation, SemanticEvaluation
 from .graph_validation import GraphQuality
-from .llm_adapter import LLMConfig, LLMResponseError, TransitionResult
+from .llm_adapter import LLMConfig, LLMResponseError, TransitionResult, LandscapeProposal
 
 
 # ──────────────────────────────────────────────
@@ -56,6 +56,26 @@ class ReflectionReport:
 
 
 # ──────────────────────────────────────────────
+# 2b. Structural Diagnostic
+# ──────────────────────────────────────────────
+
+@dataclass
+class StructuralDiagnostic:
+    """Diagnostic package for structural reflection.
+
+    Captures what went wrong at the landscape level — not parameters
+    but topology.  Used by rebuild_landscape() to inform the LLM
+    about what to fix.
+    """
+    dead_states: List[str] = field(default_factory=list)       # in landscape but never visited
+    loop_states: List[str] = field(default_factory=list)       # states involved in repeat cycles
+    high_imbalance_states: List[str] = field(default_factory=list)  # path-count imbalance hotspots
+    chronic_issues: Dict[str, int] = field(default_factory=dict)   # {dim: count} from TuningMemory
+    plateau_evidence: str = ""                                  # quality trend summary
+    parameter_bounds_hit: List[str] = field(default_factory=list)  # params drifted to bounds
+
+
+# ──────────────────────────────────────────────
 # 3. Trigger Thresholds
 # ──────────────────────────────────────────────
 
@@ -79,19 +99,43 @@ _AMPLITUDE_DRIFT_THRESHOLD = 0.3       # > 30% greedy-vs-amplitude mismatch
 _COHERENCE_QUALITY_FLOOR = 0.3         # R_coh < 30% triggers quality
 _COHERENCE_OPPORTUNITY_FLOOR = 0.8     # R_coh > 80% is opportunity
 _THETA_OPPORTUNITY_FLOOR = 0.9         # Θ > 90% is opportunity
+_MASS_TRAP_IMBALANCE_THRESHOLD = 3.0   # path_count ratio > 3 + looping = mass trap
+
+# Structural triggers (landscape-level — requires cross-run history)
+_STRUCTURAL_PLATEAU_SLOPE = 0.01       # |trend| < this = plateau
+_STRUCTURAL_CHRONIC_RATIO = 0.5        # issue in >50% of recent runs
 
 
 # ──────────────────────────────────────────────
 # 4. Should Reflect?
 # ──────────────────────────────────────────────
 
-def should_reflect(ev: ScenarioEvaluation) -> ReflectionDecision:
+def should_reflect(
+    ev: ScenarioEvaluation,
+    field_summary: Optional[Any] = None,
+    tuning_memory: Optional[Any] = None,
+) -> ReflectionDecision:
     """Determine whether reflection should be triggered for this evaluation.
 
     Checks failure triggers first (highest priority), then quality,
-    then opportunity.  Returns the first matching trigger class.
+    then structural (if tuning_memory provided), then opportunity.
+    Returns the first matching trigger class.
+
+    If *field_summary* (a RunFieldSummary from self_tuning) is provided,
+    quality and opportunity thresholds are derived from the run's own
+    field quantities instead of the module-level constants.
+
+    If *tuning_memory* (a TuningMemory from self_tuning) is provided,
+    structural triggers are checked: quality plateau despite active tuning,
+    chronic issues, or parameters drifting toward bounds.
     """
     run = ev.run_evaluation
+
+    # B4.1: derive thresholds from field if available
+    _dt = None
+    if field_summary is not None:
+        from .self_tuning import derive_thresholds
+        _dt = derive_thresholds(field_summary)
 
     # ── Failure triggers (hard) ──
     if ev.hard_failure:
@@ -119,16 +163,22 @@ def should_reflect(ev: ScenarioEvaluation) -> ReflectionDecision:
     # ── Quality triggers (soft) ──
     quality_reasons: List[str] = []
 
-    if run.goal_reach_efficiency < _QUALITY_EFFICIENCY_CEIL:
+    # B4.1: use derived or static thresholds
+    _q_eff = _dt.quality_efficiency if _dt else _QUALITY_EFFICIENCY_CEIL
+    _q_loop = _dt.quality_loop if _dt else _QUALITY_LOOP_PENALTY_CEIL
+    _q_esc = _dt.quality_escalation if _dt else _QUALITY_ESCALATION_RATIO
+    _q_prog = _dt.quality_progress if _dt else _QUALITY_PROGRESS_FLOOR
+
+    if run.goal_reach_efficiency < _q_eff:
         quality_reasons.append(
             f"low efficiency ({run.goal_reach_efficiency:.2f})")
-    if run.loop_penalty > _QUALITY_LOOP_PENALTY_CEIL:
+    if run.loop_penalty > _q_loop:
         quality_reasons.append(
             f"non-trivial looping (penalty {run.loop_penalty:.2f})")
-    if run.steps > 0 and run.escalations / run.steps > _QUALITY_ESCALATION_RATIO:
+    if run.steps > 0 and run.escalations / run.steps > _q_esc:
         quality_reasons.append(
             f"high escalation rate ({run.escalations}/{run.steps})")
-    if run.progress_ratio < _QUALITY_PROGRESS_FLOOR:
+    if run.progress_ratio < _q_prog:
         quality_reasons.append(
             f"low progress ({run.progress_ratio:.2f})")
     if ev.semantic_evaluation:
@@ -145,6 +195,13 @@ def should_reflect(ev: ScenarioEvaluation) -> ReflectionDecision:
         quality_reasons.append(
             f"low coherence ratio (R_coh={run.r_coh_avg:.2f})")
 
+    # Mass trap detection: path count imbalance + looping
+    if (run.path_count_imbalance_max > _MASS_TRAP_IMBALANCE_THRESHOLD
+            and run.repeated_cycles > 0):
+        quality_reasons.append(
+            f"mass trap suspect (imbalance={run.path_count_imbalance_max:.1f}, "
+            f"cycles={run.repeated_cycles})")
+
     if quality_reasons:
         return ReflectionDecision(
             reflect=True,
@@ -153,15 +210,72 @@ def should_reflect(ev: ScenarioEvaluation) -> ReflectionDecision:
             reflection_type="quality",
         )
 
+    # ── Structural triggers (landscape-level, requires cross-run history) ──
+    if tuning_memory is not None:
+        from .self_tuning import TuningMemory, TUNABLE_PARAMS
+        if isinstance(tuning_memory, TuningMemory) and len(tuning_memory.entries) >= 3:
+            structural_reasons: List[str] = []
+
+            # Plateau: quality flat despite active tuning
+            trend = tuning_memory.quality_trend(5)
+            has_tuning = any(
+                e.applied_changes for e in tuning_memory.entries[-5:]
+            )
+            if abs(trend) < _STRUCTURAL_PLATEAU_SLOPE and has_tuning:
+                structural_reasons.append(
+                    f"quality plateau (trend={trend:.4f}) despite active tuning")
+
+            # Chronic issues: same τ dimension in >50% of recent runs
+            issues = tuning_memory.recurring_issues(10)
+            n_recent = min(len(tuning_memory.entries), 10)
+            for dim, count in issues.items():
+                if count > n_recent * _STRUCTURAL_CHRONIC_RATIO:
+                    structural_reasons.append(
+                        f"chronic {dim} issue ({count}/{n_recent} recent runs)")
+
+            # Parameter drift toward bounds
+            for param, (lo, hi) in TUNABLE_PARAMS.items():
+                drift = tuning_memory.parameter_drift(param, 10)
+                if abs(drift) < 1e-6:
+                    continue
+                last_values = [
+                    e.params.get(param) for e in tuning_memory.entries[-5:]
+                    if param in e.params
+                ]
+                if not last_values:
+                    continue
+                param_range = hi - lo
+                if param_range <= 0:
+                    continue
+                last_val = last_values[-1]
+                if (last_val - lo) / param_range < 0.1:
+                    structural_reasons.append(
+                        f"{param} at lower bound ({last_val:.3f}→{lo})")
+                elif (hi - last_val) / param_range < 0.1:
+                    structural_reasons.append(
+                        f"{param} at upper bound ({last_val:.3f}→{hi})")
+
+            if structural_reasons:
+                return ReflectionDecision(
+                    reflect=True,
+                    reason="; ".join(structural_reasons),
+                    priority="high",
+                    reflection_type="structural",
+                )
+
     # ── Opportunity triggers (positive) ──
     opportunity_reasons: List[str] = []
 
+    # B4.1: derived opportunity thresholds
+    _o_eff = _dt.opportunity_efficiency if _dt else _OPPORTUNITY_EFFICIENCY_FLOOR
+    _o_prog = _dt.opportunity_progress if _dt else _OPPORTUNITY_GRAPH_SCORE_FLOOR
+
     if run.rating == _OPPORTUNITY_RATING:
         opportunity_reasons.append("A-rated run")
-    if run.goal_reach_efficiency >= _OPPORTUNITY_EFFICIENCY_FLOOR:
+    if run.goal_reach_efficiency >= _o_eff:
         opportunity_reasons.append(
             f"high efficiency ({run.goal_reach_efficiency:.2f})")
-    if ev.graph_score >= _OPPORTUNITY_GRAPH_SCORE_FLOOR:
+    if ev.graph_score >= _o_prog:
         opportunity_reasons.append(
             f"strong graph ({ev.graph_score:.2f})")
 
@@ -320,6 +434,20 @@ def _reflect_quality(ev: ScenarioEvaluation) -> ReflectionReport:
         layers.append("graph_design")
         actions.append("Graph phases cause cancellation — consider simplifying parallel branches")
 
+    # Mass trap: path count imbalance drives amplitude toward high-connectivity node
+    if (run.path_count_imbalance_max > _MASS_TRAP_IMBALANCE_THRESHOLD
+            and run.repeated_cycles > 0):
+        patterns.append(
+            f"Amplitude mass trap: path count imbalance "
+            f"{run.path_count_imbalance_max:.1f}x with {run.repeated_cycles} cycles")
+        evidence.append(
+            f"path_count_imbalance_max={run.path_count_imbalance_max:.1f}, "
+            f"repeated_cycles={run.repeated_cycles}")
+        layers.append("controller")
+        actions.append(
+            "Reduce hybrid_horizon to limit path enumeration bias, "
+            "or raise confidence_threshold to resist amplitude override")
+
     layers = list(dict.fromkeys(layers))
 
     return ReflectionReport(
@@ -390,6 +518,143 @@ def _reflect_opportunity(ev: ScenarioEvaluation) -> ReflectionReport:
         likely_layers=layers,
         evidence=evidence,
         preservations=preservations,
+    )
+
+
+# ──────────────────────────────────────────────
+# 5b. Structural Reflection
+# ──────────────────────────────────────────────
+
+def build_structural_diagnostic(
+    ev: ScenarioEvaluation,
+    tuning_memory: Optional[Any] = None,
+    landscape: Optional[Any] = None,
+) -> StructuralDiagnostic:
+    """Build a diagnostic package from evaluation + cross-run history.
+
+    Examines the landscape topology and TuningMemory to identify
+    structural problems that parameter tuning cannot fix:
+    - Dead states: in landscape but never visited in the run
+    - Loop states: involved in repeated cycles
+    - Imbalance hotspots: states with extreme path-count ratio
+    - Chronic issues from TuningMemory
+    - Plateau evidence
+    - Parameters at bounds
+    """
+    diag = StructuralDiagnostic()
+    run = ev.run_evaluation
+
+    # Dead states: states in the landscape but not visited in this run
+    if landscape is not None:
+        all_states = set(landscape.states)
+        visited = set()
+        if hasattr(run, "visited_states") and run.visited_states:
+            visited = set(run.visited_states)
+        elif hasattr(run, "state_visit_counts") and run.state_visit_counts:
+            visited = set(run.state_visit_counts.keys())
+        if visited:
+            diag.dead_states = sorted(all_states - visited)
+
+        # Loop states: edges where source and target form a 2-cycle
+        if hasattr(landscape, "edges"):
+            edge_set = {(e.source, e.target) for e in landscape.edges}
+            for e in landscape.edges:
+                if (e.target, e.source) in edge_set:
+                    if e.source not in diag.loop_states:
+                        diag.loop_states.append(e.source)
+                    if e.target not in diag.loop_states:
+                        diag.loop_states.append(e.target)
+            diag.loop_states.sort()
+
+    # Chronic issues + plateau + bounds from TuningMemory
+    if tuning_memory is not None:
+        from .self_tuning import TuningMemory, TUNABLE_PARAMS
+        if isinstance(tuning_memory, TuningMemory) and len(tuning_memory.entries) >= 3:
+            diag.chronic_issues = tuning_memory.recurring_issues(10)
+
+            trend = tuning_memory.quality_trend(5)
+            has_tuning = any(
+                e.applied_changes for e in tuning_memory.entries[-5:]
+            )
+            if abs(trend) < _STRUCTURAL_PLATEAU_SLOPE and has_tuning:
+                diag.plateau_evidence = (
+                    f"Q trend={trend:.4f} over last 5 runs with active tuning"
+                )
+
+            for param, (lo, hi) in TUNABLE_PARAMS.items():
+                last_values = [
+                    e.params.get(param) for e in tuning_memory.entries[-5:]
+                    if param in e.params
+                ]
+                if not last_values:
+                    continue
+                param_range = hi - lo
+                if param_range <= 0:
+                    continue
+                last_val = last_values[-1]
+                if (last_val - lo) / param_range < 0.1:
+                    diag.parameter_bounds_hit.append(
+                        f"{param}={last_val:.3f} near lower bound {lo}")
+                elif (hi - last_val) / param_range < 0.1:
+                    diag.parameter_bounds_hit.append(
+                        f"{param}={last_val:.3f} near upper bound {hi}")
+
+    return diag
+
+
+def _reflect_structural(
+    ev: ScenarioEvaluation,
+    tuning_memory: Optional[Any] = None,
+    landscape: Optional[Any] = None,
+) -> ReflectionReport:
+    """Reflect on structural landscape problems.
+
+    Produces a ReflectionReport of type "structural" with diagnostic
+    evidence and recommended actions pointing toward landscape
+    restructuring rather than parameter adjustment.
+    """
+    diag = build_structural_diagnostic(ev, tuning_memory, landscape)
+    patterns: List[str] = []
+    layers: List[str] = ["landscape"]
+    evidence: List[str] = []
+    actions: List[str] = []
+
+    if diag.plateau_evidence:
+        patterns.append("Quality plateau despite active parameter tuning")
+        evidence.append(diag.plateau_evidence)
+        actions.append("Restructure landscape topology instead of adjusting parameters")
+
+    if diag.dead_states:
+        patterns.append(f"{len(diag.dead_states)} unreachable/unused states")
+        evidence.append(f"dead_states={diag.dead_states}")
+        actions.append(
+            f"Remove or reconnect dead states: {', '.join(diag.dead_states[:5])}")
+
+    if diag.loop_states:
+        patterns.append(f"{len(diag.loop_states)} states involved in bidirectional edges")
+        evidence.append(f"loop_states={diag.loop_states}")
+        actions.append("Break symmetric edges or add asymmetric resistance")
+
+    for dim, count in diag.chronic_issues.items():
+        patterns.append(f"Chronic {dim} issue across runs")
+        evidence.append(f"{dim} triggered in {count} recent runs")
+
+    if diag.parameter_bounds_hit:
+        patterns.append("Parameters saturated at bounds")
+        for bound_info in diag.parameter_bounds_hit:
+            evidence.append(bound_info)
+        actions.append("Parameter space exhausted — landscape change needed")
+        layers.append("self-tuning")
+
+    if not actions:
+        actions.append("Consider landscape restructuring via rebuild_landscape()")
+
+    return ReflectionReport(
+        reflection_type="structural",
+        observed_patterns=patterns,
+        likely_layers=layers,
+        evidence=evidence,
+        recommended_actions=actions,
     )
 
 
@@ -468,6 +733,8 @@ def _build_evidence_block(ev: ScenarioEvaluation) -> str:
         lines.append(f"  R_coh (avg/min/max): {run.r_coh_avg:.3f} / {run.r_coh_min:.3f} / {run.r_coh_max:.3f}")
         lines.append(f"  Θ Consistency: {run.theta_consistency:.3f}")
         lines.append(f"  Amplitude Drift: {run.amplitude_drift:.2f}")
+        if hasattr(run, 'override_count') and run.override_count > 0:
+            lines.append(f"  Overrides: {run.override_count} (amplitude disagreed with greedy)")
 
     if ev.semantic_evaluation:
         sem = ev.semantic_evaluation
@@ -567,14 +834,21 @@ def reflect(
     call_fn: Optional[ReflectionCallFn] = None,
     config: Optional[LLMConfig] = None,
     result_log: Optional[List[TransitionResult]] = None,
+    tuning_memory: Optional[Any] = None,
+    landscape: Optional[Any] = None,
 ) -> Optional[ReflectionReport]:
     """Run reflection on a scenario evaluation if triggered.
 
     If call_fn and config are provided, uses LLM-backed reflection.
     Otherwise falls back to rule-based reflection.
+
+    If *tuning_memory* (TuningMemory) is provided, structural triggers
+    are checked.  If *landscape* is also provided, structural reflection
+    includes dead-state and topology analysis.
+
     Returns a ReflectionReport if reflection was warranted, or None.
     """
-    decision = should_reflect(ev)
+    decision = should_reflect(ev, tuning_memory=tuning_memory)
     if not decision.reflect:
         return None
 
@@ -591,6 +865,8 @@ def reflect(
         return _reflect_failure(ev)
     elif decision.reflection_type == "quality":
         return _reflect_quality(ev)
+    elif decision.reflection_type == "structural":
+        return _reflect_structural(ev, tuning_memory, landscape)
     elif decision.reflection_type == "opportunity":
         return _reflect_opportunity(ev)
     return None
@@ -610,7 +886,7 @@ def format_reflection_report(reports: List[ReflectionReport], domains: Optional[
 
     for i, report in enumerate(reports):
         domain_label = domains[i] if domains and i < len(domains) else f"Run {i+1}"
-        type_icon = {"failure": "██", "quality": "▓▓", "opportunity": "░░"}.get(
+        type_icon = {"failure": "██", "quality": "▓▓", "opportunity": "░░", "structural": "▒▒"}.get(
             report.reflection_type, "  ")
 
         lines.append("")

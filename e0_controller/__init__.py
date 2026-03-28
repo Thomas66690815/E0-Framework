@@ -76,9 +76,74 @@ Phase 3o (Evaluation Layer Hybrid Extension):
 See E0_CONTROLLER_STATUS.md for full project context.
 """
 
-__version__ = "0.10.8"
+__version__ = "0.5.0"
 
-from .primitives import Edge, Outcome
+# ── Public API ──────────────────────────────────────────────
+__all__ = [
+    # Primitives
+    "Edge", "Outcome", "TransportRegime",
+    # Tension / Coherence
+    "tension", "path_tension", "coherence",
+    # Historization
+    "Historization", "TraceRecord",
+    # Landscape
+    "Landscape",
+    # Controller
+    "E0Controller", "StepResult", "RunTrace", "EscalationType", "HybridMode",
+    # Potential / Helmholtz
+    "phi", "phi_map", "v_raw", "v_grad", "v_rot", "decomposition",
+    "div_v", "graph_laplacian",
+    # Connection / Phase
+    "omega", "theta", "holonomy", "omega_map",
+    # Wave Path / Amplitude
+    "psi", "path_intensity", "sum_paths", "intensity", "interference_analysis",
+    # MemOS Persistence
+    "E0MemoryOS", "CanonRef", "MemOSContext",
+    # Session Orchestrator
+    "Session", "SessionResult", "IterationResult",
+    # Residual Tension (C37)
+    "ResidualTension", "ResidualTensionMap", "IterationVerdict",
+    "compute_residual_map", "should_continue", "snapshot_tensions",
+    "format_residual_map",
+    # Provenance
+    "ProvenanceLog",
+    # LLM Adapter
+    "E0LLMAdapter", "LLMConfig", "LLMResponseError",
+    "DeltaEstimate", "ProposedState", "TransitionResult",
+    "ResistanceEstimate", "LandscapeProposal",
+    "materialize_landscape", "task_map_from_proposal",
+    # Graph Validation
+    "goal_reachable", "find_happy_path", "find_recovery_edges",
+    "detect_traps", "detect_trivial_loops", "graph_quality", "GraphQuality",
+    # Evaluation
+    "RunEvaluation", "SemanticEvaluation", "ScenarioEvaluation",
+    "evaluate_run", "evaluate_semantics", "evaluate_scenario",
+    "detect_hard_failure", "format_evaluation_report",
+    # Reflection
+    "ReflectionDecision", "ReflectionReport", "ReflectionCallFn",
+    "StructuralDiagnostic",
+    "should_reflect", "reflect", "reflect_with_llm", "format_reflection_report",
+    "build_structural_diagnostic",
+    # Self-Tuning (B4)
+    "RunFieldSummary", "DerivedThresholds", "ParameterSensitivity",
+    "TuningProposal", "MetaTuningResult",
+    "TuningCycleResult", "MultiCycleTuningResult",
+    "TuningSnapshot", "TuningMemory",
+    "field_summary_from_run", "derive_thresholds",
+    "compute_parameter_sensitivities", "propose_tuning", "apply_tuning",
+    "quality_score", "tuning_cycle", "tune",
+    "snapshot_from_cycle", "tune_with_memory",
+    "perturbation_sensitivity", "propose_tuning_empirical",
+    "save_tuning_memory", "load_tuning_memory",
+    # Scenarios
+    "ScenarioPacket", "load_scenario", "find_scenario",
+    # Cross-Domain Validation
+    "run_validation",
+    # Envelope
+    "E0Envelope", "transport_to_use_su2", "use_su2_to_transport",
+]
+
+from .primitives import Edge, Outcome, TransportRegime
 from .historization import Historization, TraceRecord
 from .tension import tension, path_tension, coherence
 from .landscape import Landscape
@@ -109,5 +174,35 @@ from .evaluation import (
 )
 from .reflection import (
     ReflectionDecision, ReflectionReport, ReflectionCallFn,
+    StructuralDiagnostic,
     should_reflect, reflect, reflect_with_llm, format_reflection_report,
+    build_structural_diagnostic,
 )
+from .self_tuning import (
+    RunFieldSummary, DerivedThresholds, ParameterSensitivity,
+    TuningProposal, MetaTuningResult,
+    TuningCycleResult, MultiCycleTuningResult,
+    TuningSnapshot, TuningMemory,
+    field_summary_from_run, derive_thresholds,
+    compute_parameter_sensitivities, propose_tuning, apply_tuning,
+    quality_score, tuning_cycle, tune,
+    snapshot_from_cycle, tune_with_memory,
+    save_tuning_memory, load_tuning_memory,
+    perturbation_sensitivity, propose_tuning_empirical,
+)
+from .session import Session, SessionResult, IterationResult
+from .residual_tension import (
+    ResidualTension, ResidualTensionMap, IterationVerdict,
+    compute_residual_map, should_continue, snapshot_tensions,
+    format_residual_map,
+)
+from .provenance import ProvenanceLog
+from .envelope import E0Envelope, transport_to_use_su2, use_su2_to_transport
+from .resonator import (
+    detect_cycles, cycle_coherence, resonance_map,
+    build_resonance_modifier, ResonanceInfo,
+)
+from .overlap import (
+    triangle_support, edge_overlap, overlap_map, OverlapInfo,
+)
+from .exploration_policy import ExplorationPolicy, PolicyDecision

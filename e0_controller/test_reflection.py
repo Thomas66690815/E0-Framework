@@ -17,10 +17,12 @@ from e0_controller.primitives import Outcome
 from e0_controller.reflection import (
     ReflectionDecision,
     ReflectionReport,
+    StructuralDiagnostic,
     should_reflect,
     reflect,
     reflect_with_llm,
     format_reflection_report,
+    build_structural_diagnostic,
     _build_evidence_block,
     _build_result_samples,
     _parse_reflection_response,
@@ -494,6 +496,395 @@ class TestReflectWithLLMFallback(unittest.TestCase):
         ev = _make_scenario_eval(run_eval=run, sem_eval=sem, graph_score=0.75)
         report = reflect(ev, call_fn=lambda s, u, c: _mock_llm_response(), config=LLMConfig())
         self.assertIsNone(report)
+
+
+# ──────────────────────────────────────────────
+# Test: Structural Triggers
+# ──────────────────────────────────────────────
+
+def _make_tuning_memory(
+    n_entries=5,
+    quality=0.7,
+    quality_spread=0.0,
+    tau_loop=0.1,
+    tau_esc=0.1,
+    tau_efficiency=0.6,
+    tau_progress=0.7,
+    has_tuning=True,
+    params=None,
+):
+    """Build a TuningMemory with n synthetic entries."""
+    from e0_controller.self_tuning import TuningMemory, TuningSnapshot
+    mem = TuningMemory()
+    base_params = params or {"alpha": 5.0, "s_max": 500.0, "c_min": 0.5,
+                              "confidence_threshold": 0.5, "hybrid_horizon": 5}
+    for i in range(n_entries):
+        snap = TuningSnapshot(
+            timestamp=f"2025-01-{i+1:02d}T00:00:00Z",
+            quality=quality + quality_spread * (i - n_entries // 2),
+            goal_reached=True,
+            tau_eff=0.5,
+            tau_loop=tau_loop,
+            tau_esc=tau_esc,
+            tau_efficiency=tau_efficiency,
+            tau_progress=tau_progress,
+            params=dict(base_params),
+            applied_changes=["tweak_alpha"] if has_tuning else [],
+            accepted=True,
+        )
+        mem.record(snap)
+    return mem
+
+
+def _make_landscape(*state_names, edges=None):
+    """Build a minimal Landscape for testing."""
+    from e0_controller.landscape import Landscape
+    L = Landscape()
+    for s in state_names:
+        L.add_state(s)
+    if edges:
+        for src, tgt in edges:
+            L.add_edge(src, tgt, delta=0.5, resistance=1.0)
+    return L
+
+
+class TestStructuralTriggers(unittest.TestCase):
+    """Tests for the structural trigger in should_reflect()."""
+
+    def test_plateau_triggers_structural(self):
+        """Quality plateau with active tuning → structural trigger."""
+        run = _make_run_eval(rating="B", efficiency=0.6, progress_ratio=0.7)
+        sem = _make_sem_eval(coverage=0.8)
+        ev = _make_scenario_eval(run_eval=run, sem_eval=sem, graph_score=0.75)
+        mem = _make_tuning_memory(n_entries=5, quality=0.7, quality_spread=0.0)
+        decision = should_reflect(ev, tuning_memory=mem)
+        self.assertTrue(decision.reflect)
+        self.assertEqual(decision.reflection_type, "structural")
+        self.assertIn("plateau", decision.reason)
+
+    def test_chronic_loop_triggers_structural(self):
+        """Chronic loop issue across many runs → structural trigger."""
+        run = _make_run_eval(rating="B", efficiency=0.6, progress_ratio=0.7)
+        sem = _make_sem_eval(coverage=0.8)
+        ev = _make_scenario_eval(run_eval=run, sem_eval=sem, graph_score=0.75)
+        mem = _make_tuning_memory(n_entries=10, quality=0.7, quality_spread=0.02,
+                                  tau_loop=0.5, has_tuning=False)
+        decision = should_reflect(ev, tuning_memory=mem)
+        self.assertTrue(decision.reflect)
+        self.assertEqual(decision.reflection_type, "structural")
+        self.assertIn("chronic", decision.reason.lower())
+
+    def test_param_bound_triggers_structural(self):
+        """Parameter at lower bound → structural trigger."""
+        run = _make_run_eval(rating="B", efficiency=0.6, progress_ratio=0.7)
+        sem = _make_sem_eval(coverage=0.8)
+        ev = _make_scenario_eval(run_eval=run, sem_eval=sem, graph_score=0.75)
+        # alpha at lower bound: 0.55 with range (0.5, 10.0) → 0.5%
+        params_at_bound = {"alpha": 0.55, "s_max": 500.0, "c_min": 0.5,
+                           "confidence_threshold": 0.5, "hybrid_horizon": 5}
+        # Need drift: first entry has alpha=5.0, last has alpha=0.55
+        from e0_controller.self_tuning import TuningMemory, TuningSnapshot
+        mem = TuningMemory()
+        for i in range(5):
+            p = dict(params_at_bound)
+            p["alpha"] = 5.0 - i * (5.0 - 0.55) / 4
+            snap = TuningSnapshot(
+                timestamp=f"2025-01-{i+1:02d}T00:00:00Z",
+                quality=0.7 + i * 0.01,  # slight improvement to avoid plateau
+                goal_reached=True,
+                tau_eff=0.5, tau_loop=0.1, tau_esc=0.1,
+                tau_efficiency=0.6, tau_progress=0.7,
+                params=p, applied_changes=["tune"], accepted=True,
+            )
+            mem.record(snap)
+        decision = should_reflect(ev, tuning_memory=mem)
+        self.assertTrue(decision.reflect)
+        self.assertEqual(decision.reflection_type, "structural")
+        self.assertIn("alpha", decision.reason)
+
+    def test_no_tuning_memory_skips_structural(self):
+        """Without tuning_memory, structural triggers are skipped."""
+        run = _make_run_eval(rating="B", efficiency=0.6, progress_ratio=0.7)
+        sem = _make_sem_eval(coverage=0.8)
+        ev = _make_scenario_eval(run_eval=run, sem_eval=sem, graph_score=0.75)
+        decision = should_reflect(ev)
+        # Should not be structural (no memory provided)
+        self.assertNotEqual(decision.reflection_type, "structural")
+
+    def test_too_few_entries_skips_structural(self):
+        """TuningMemory with <3 entries does not trigger structural."""
+        run = _make_run_eval(rating="B", efficiency=0.6, progress_ratio=0.7)
+        sem = _make_sem_eval(coverage=0.8)
+        ev = _make_scenario_eval(run_eval=run, sem_eval=sem, graph_score=0.75)
+        mem = _make_tuning_memory(n_entries=2, quality=0.7)
+        decision = should_reflect(ev, tuning_memory=mem)
+        self.assertNotEqual(decision.reflection_type, "structural")
+
+    def test_quality_trigger_takes_precedence(self):
+        """Quality triggers fire before structural (lower efficiency)."""
+        run = _make_run_eval(rating="C", efficiency=0.3, progress_ratio=0.3)
+        ev = _make_scenario_eval(run_eval=run)
+        mem = _make_tuning_memory(n_entries=5, quality=0.7, quality_spread=0.0)
+        decision = should_reflect(ev, tuning_memory=mem)
+        self.assertTrue(decision.reflect)
+        self.assertEqual(decision.reflection_type, "quality")
+
+    def test_failure_trigger_takes_precedence(self):
+        """Failure triggers fire before structural."""
+        run = _make_run_eval(goal_reached=False, rating="F")
+        ev = _make_scenario_eval(run_eval=run)
+        mem = _make_tuning_memory(n_entries=5, quality=0.7, quality_spread=0.0)
+        decision = should_reflect(ev, tuning_memory=mem)
+        self.assertTrue(decision.reflect)
+        self.assertEqual(decision.reflection_type, "failure")
+
+
+class TestStructuralDiagnostic(unittest.TestCase):
+    """Tests for build_structural_diagnostic()."""
+
+    def test_dead_states_detected(self):
+        """States in landscape but not visited are reported as dead."""
+        run = _make_run_eval()
+        # Add visited_states attribute for testing
+        run.visited_states = ["A", "B", "C"]
+        ev = _make_scenario_eval(run_eval=run)
+        landscape = _make_landscape("A", "B", "C", "D", "E",
+                                    edges=[("A", "B"), ("B", "C")])
+        diag = build_structural_diagnostic(ev, landscape=landscape)
+        self.assertIn("D", diag.dead_states)
+        self.assertIn("E", diag.dead_states)
+        self.assertNotIn("A", diag.dead_states)
+
+    def test_loop_states_detected(self):
+        """Bidirectional edges are identified as loop states."""
+        run = _make_run_eval()
+        ev = _make_scenario_eval(run_eval=run)
+        landscape = _make_landscape("A", "B", "C",
+                                    edges=[("A", "B"), ("B", "A"), ("B", "C")])
+        diag = build_structural_diagnostic(ev, landscape=landscape)
+        self.assertIn("A", diag.loop_states)
+        self.assertIn("B", diag.loop_states)
+        self.assertNotIn("C", diag.loop_states)
+
+    def test_chronic_issues_from_memory(self):
+        """TuningMemory chronic issues flow into diagnostic."""
+        run = _make_run_eval()
+        ev = _make_scenario_eval(run_eval=run)
+        mem = _make_tuning_memory(n_entries=10, tau_loop=0.5, tau_efficiency=0.3)
+        diag = build_structural_diagnostic(ev, tuning_memory=mem)
+        self.assertIn("loop", diag.chronic_issues)
+        self.assertIn("efficiency", diag.chronic_issues)
+
+    def test_plateau_evidence(self):
+        """Plateau in quality trend is recorded."""
+        run = _make_run_eval()
+        ev = _make_scenario_eval(run_eval=run)
+        mem = _make_tuning_memory(n_entries=5, quality=0.7, quality_spread=0.0)
+        diag = build_structural_diagnostic(ev, tuning_memory=mem)
+        self.assertIn("trend=", diag.plateau_evidence)
+
+    def test_parameter_bounds_hit(self):
+        """Parameters near bounds are reported."""
+        run = _make_run_eval()
+        ev = _make_scenario_eval(run_eval=run)
+        from e0_controller.self_tuning import TuningMemory, TuningSnapshot
+        mem = TuningMemory()
+        for i in range(5):
+            snap = TuningSnapshot(
+                timestamp=f"2025-01-{i+1:02d}T00:00:00Z",
+                quality=0.7, goal_reached=True,
+                tau_eff=0.5, tau_loop=0.1, tau_esc=0.1,
+                tau_efficiency=0.6, tau_progress=0.7,
+                params={"alpha": 0.55, "s_max": 500.0, "c_min": 0.5,
+                        "confidence_threshold": 0.5, "hybrid_horizon": 5},
+                applied_changes=["tune"], accepted=True,
+            )
+            mem.record(snap)
+        diag = build_structural_diagnostic(ev, tuning_memory=mem)
+        has_alpha_bound = any("alpha" in b for b in diag.parameter_bounds_hit)
+        self.assertTrue(has_alpha_bound)
+
+    def test_empty_diagnostic_without_context(self):
+        """Without landscape or memory, diagnostic is empty but valid."""
+        run = _make_run_eval()
+        ev = _make_scenario_eval(run_eval=run)
+        diag = build_structural_diagnostic(ev)
+        self.assertEqual(diag.dead_states, [])
+        self.assertEqual(diag.loop_states, [])
+        self.assertEqual(diag.chronic_issues, {})
+        self.assertEqual(diag.plateau_evidence, "")
+        self.assertEqual(diag.parameter_bounds_hit, [])
+
+
+class TestReflectStructural(unittest.TestCase):
+    """Tests for structural reflection via reflect()."""
+
+    def test_structural_report_from_reflect(self):
+        """reflect() with tuning_memory produces structural report."""
+        run = _make_run_eval(rating="B", efficiency=0.6, progress_ratio=0.7)
+        sem = _make_sem_eval(coverage=0.8)
+        ev = _make_scenario_eval(run_eval=run, sem_eval=sem, graph_score=0.75)
+        mem = _make_tuning_memory(n_entries=5, quality=0.7, quality_spread=0.0)
+        landscape = _make_landscape("A", "B", "C", "D",
+                                    edges=[("A", "B"), ("B", "A"), ("B", "C"), ("C", "D")])
+        report = reflect(ev, tuning_memory=mem, landscape=landscape)
+        self.assertIsNotNone(report)
+        self.assertEqual(report.reflection_type, "structural")
+        self.assertIn("landscape", report.likely_layers)
+        self.assertTrue(len(report.recommended_actions) > 0)
+
+    def test_structural_report_has_plateau_pattern(self):
+        """Structural report includes plateau pattern."""
+        run = _make_run_eval(rating="B", efficiency=0.6, progress_ratio=0.7)
+        sem = _make_sem_eval(coverage=0.8)
+        ev = _make_scenario_eval(run_eval=run, sem_eval=sem, graph_score=0.75)
+        mem = _make_tuning_memory(n_entries=5, quality=0.7, quality_spread=0.0)
+        report = reflect(ev, tuning_memory=mem)
+        self.assertIsNotNone(report)
+        has_plateau = any("plateau" in p.lower() for p in report.observed_patterns)
+        self.assertTrue(has_plateau)
+
+    def test_structural_report_dead_states(self):
+        """Structural report includes dead state info when landscape given."""
+        run = _make_run_eval(rating="B", efficiency=0.6, progress_ratio=0.7)
+        run.visited_states = ["A", "B"]
+        sem = _make_sem_eval(coverage=0.8)
+        ev = _make_scenario_eval(run_eval=run, sem_eval=sem, graph_score=0.75)
+        mem = _make_tuning_memory(n_entries=5, quality=0.7, quality_spread=0.0)
+        landscape = _make_landscape("A", "B", "C", "D",
+                                    edges=[("A", "B"), ("B", "C"), ("C", "D")])
+        report = reflect(ev, tuning_memory=mem, landscape=landscape)
+        self.assertIsNotNone(report)
+        has_dead = any("unreachable" in p.lower() or "unused" in p.lower()
+                       for p in report.observed_patterns)
+        self.assertTrue(has_dead)
+
+    def test_format_report_includes_structural_icon(self):
+        """format_reflection_report() renders structural icon."""
+        report = ReflectionReport(
+            reflection_type="structural",
+            observed_patterns=["Quality plateau"],
+            likely_layers=["landscape"],
+            recommended_actions=["Restructure landscape"],
+        )
+        text = format_reflection_report([report])
+        self.assertIn("STRUCTURAL", text)
+        self.assertIn("▒▒", text)
+
+
+class TestRebuildLandscape(unittest.TestCase):
+    """Tests for E0LLMAdapter.rebuild_landscape()."""
+
+    def test_rebuild_landscape_uses_diagnostic(self):
+        """rebuild_landscape() includes diagnostic in prompt."""
+        from e0_controller.llm_adapter import E0LLMAdapter, LandscapeProposal, LLMConfig
+
+        captured_prompts = []
+
+        def mock_call(system, user, config):
+            captured_prompts.append(user)
+            return json.dumps({
+                "states": ["START", "ANALYZE", "SYNTHESIZE", "DONE"],
+                "edges": [
+                    {"source": "START", "target": "ANALYZE", "delta": 0.5, "resistance": 1.0, "description": "begin"},
+                    {"source": "ANALYZE", "target": "SYNTHESIZE", "delta": 0.4, "resistance": 0.8, "description": "process"},
+                    {"source": "SYNTHESIZE", "target": "DONE", "delta": 0.3, "resistance": 0.5, "description": "finish"},
+                ]
+            })
+
+        adapter = E0LLMAdapter(call_fn=mock_call)
+        old_proposal = LandscapeProposal(
+            states=["START", "A", "B", "DONE"],
+            edges=[
+                {"source": "START", "target": "A", "delta": 0.5, "resistance": 1.0, "description": "go"},
+                {"source": "A", "target": "B", "delta": 0.4, "resistance": 0.8, "description": "next"},
+                {"source": "B", "target": "DONE", "delta": 0.3, "resistance": 0.5, "description": "end"},
+            ]
+        )
+        diag = StructuralDiagnostic(
+            dead_states=["B"],
+            loop_states=["A"],
+            chronic_issues={"loop": 7},
+            plateau_evidence="Q trend=0.002 over last 5 runs",
+        )
+
+        result = adapter.rebuild_landscape(
+            task="Test task",
+            start="START",
+            goal="DONE",
+            old_proposal=old_proposal,
+            diagnostic=diag,
+        )
+
+        self.assertIsInstance(result, LandscapeProposal)
+        self.assertIn("START", result.states)
+        self.assertIn("DONE", result.states)
+        self.assertTrue(len(result.edges) > 0)
+
+        # Verify diagnostic was in the prompt
+        prompt = captured_prompts[0]
+        self.assertIn("Dead states", prompt)
+        self.assertIn("B", prompt)
+        self.assertIn("Loop states", prompt)
+        self.assertIn("Plateau", prompt)
+
+    def test_rebuild_landscape_normalizes_states(self):
+        """rebuild_landscape() normalizes state names like build_landscape()."""
+        from e0_controller.llm_adapter import E0LLMAdapter, LandscapeProposal
+
+        def mock_call(system, user, config):
+            return json.dumps({
+                "states": ["start", "middle-step", "done"],
+                "edges": [
+                    {"source": "start", "target": "middle-step", "delta": 0.5, "resistance": 1.0},
+                    {"source": "middle-step", "target": "done", "delta": 0.4, "resistance": 0.8},
+                ]
+            })
+
+        adapter = E0LLMAdapter(call_fn=mock_call)
+        old = LandscapeProposal(states=["START", "DONE"], edges=[])
+        diag = StructuralDiagnostic()
+
+        result = adapter.rebuild_landscape("task", "START", "DONE", old, diag)
+        for s in result.states:
+            self.assertEqual(s, s.upper())
+            self.assertNotIn("-", s)
+
+    def test_rebuild_landscape_ensures_start_goal(self):
+        """rebuild_landscape() always includes start and goal states."""
+        from e0_controller.llm_adapter import E0LLMAdapter, LandscapeProposal
+
+        def mock_call(system, user, config):
+            return json.dumps({
+                "states": ["MIDDLE"],
+                "edges": []
+            })
+
+        adapter = E0LLMAdapter(call_fn=mock_call)
+        old = LandscapeProposal(states=["BEGIN", "END"], edges=[])
+        diag = StructuralDiagnostic()
+
+        result = adapter.rebuild_landscape("task", "BEGIN", "END", old, diag)
+        self.assertIn("BEGIN", result.states)
+        self.assertIn("END", result.states)
+
+    def test_rebuild_landscape_with_scenario_block(self):
+        """rebuild_landscape() includes scenario_block in prompt."""
+        from e0_controller.llm_adapter import E0LLMAdapter, LandscapeProposal
+
+        captured = []
+
+        def mock_call(system, user, config):
+            captured.append(user)
+            return json.dumps({"states": ["START", "DONE"], "edges": []})
+
+        adapter = E0LLMAdapter(call_fn=mock_call)
+        old = LandscapeProposal(states=["START", "DONE"], edges=[])
+        diag = StructuralDiagnostic()
+
+        adapter.rebuild_landscape("task", "START", "DONE", old, diag,
+                                  scenario_block="Important context here")
+        self.assertIn("Important context here", captured[0])
 
 
 if __name__ == "__main__":

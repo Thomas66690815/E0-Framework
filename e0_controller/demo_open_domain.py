@@ -1,52 +1,51 @@
-"""
-E₀ Demo — Open Domain (Phase 3b)
-===================================
-The controller bootstraps its own Landscape from a task description.
+"""E₀ Demo — Open Domain (Phase 3b, modernized)
+===================================================
+The controller bootstraps its own Landscape from an arbitrary task
+description, then navigates it through Session.iterate() with
+ExplorationPolicy — demonstrating that the same architecture
+used for pre-designed domains (Beipackzettel, EZB, Burnout)
+works identically on LLM-generated topology.
 
-This is the key Phase 3b capability: instead of a pre-wired domain
-(like Invoice), the LLM proposes the state graph, estimates Δ and R₀,
-and then executes transitions — all under deterministic E₀ control.
+This is the universality proof: no code changes between domains.
 
 Usage:
-    # With real API:
-    python -m e0_controller.demo_open_domain
+    # Mock mode (no API key needed):
+    py -3 -m e0_controller.demo_open_domain --mock
 
-    # With mock (no API key needed):
-    python -m e0_controller.demo_open_domain --mock
-
-    # With hybrid amplitude controller (B3):
-    python -m e0_controller.demo_open_domain --mock --hybrid
+    # Live LLM (requires OPENAI_API_KEY in .env):
+    py -3 -m e0_controller.demo_open_domain
 
     # Custom task:
-    python -m e0_controller.demo_open_domain --task "Write a project proposal"
+    py -3 -m e0_controller.demo_open_domain --mock --task "Write a project proposal"
 
-Requires OPENAI_API_KEY in .env or environment (unless --mock).
+    # With scenario packet:
+    py -3 -m e0_controller.demo_open_domain --scenario scenarios/competitor_brief.json
 """
 
 from __future__ import annotations
 
 import json
-import os
 import sys
 
-from e0_controller.controller import E0Controller, HybridMode
-from e0_controller.memory_os import E0MemoryOS, CanonRef, edge_to_key
-from e0_controller.primitives import Edge
-from e0_controller.tension import coherence
-from e0_controller.llm_adapter import (
+from e0_controller import (
+    Landscape,
+    Session,
+    HybridMode,
+    E0Envelope,
+    TransportRegime,
+    ExplorationPolicy,
+    CanonRef,
     E0LLMAdapter,
     LLMConfig,
-    LandscapeProposal,
     materialize_landscape,
     task_map_from_proposal,
+    graph_quality,
+    format_residual_map,
 )
-from e0_controller.graph_validation import graph_quality
 from e0_controller.scenario_loader import ScenarioPacket, load_scenario, find_scenario
 
 
-# ──────────────────────────────────────────────
-# Default task
-# ──────────────────────────────────────────────
+# ── Default task ─────────────────────────────────────────────────────────
 
 DEFAULT_TASK = (
     "Analyze a competitor's product announcement and produce a structured "
@@ -58,16 +57,29 @@ DEFAULT_START = "RAW_ANNOUNCEMENT"
 DEFAULT_GOAL = "BRIEFING_DELIVERED"
 
 
-# ──────────────────────────────────────────────
-# Mock LLM for --mock mode
-# ──────────────────────────────────────────────
+# ── Envelope ─────────────────────────────────────────────────────────────
+
+ENVELOPE = E0Envelope(
+    mode=HybridMode.AMPLITUDE_ON_DISAGREE,
+    geometry="goal_reaching",
+    horizon=4,
+    transport=TransportRegime.U1,
+    goals=frozenset({DEFAULT_GOAL}),
+    alpha=0.5,
+)
+
+EXPLORATION_POLICY = ExplorationPolicy.born_warmup(
+    warmup=2,
+    convergence_threshold=0.15,
+)
+
+
+# ── Mock LLM ─────────────────────────────────────────────────────────────
 
 def mock_llm_call(system: str, user: str, config: LLMConfig) -> str:
     """Deterministic mock for open-domain demo."""
-    import json as _json
-
     if "design the complete state graph" in user:
-        return _json.dumps({
+        return json.dumps({
             "states": [
                 "RAW_ANNOUNCEMENT", "TEXT_PARSED", "KEY_FACTS_EXTRACTED",
                 "MARKET_CONTEXT_GATHERED", "IMPACT_ASSESSED",
@@ -103,7 +115,7 @@ def mock_llm_call(system: str, user: str, config: LLMConfig) -> str:
                 {"source": "PARSE_FAILED", "target": "TEXT_PARSED",
                  "delta": 0.4, "resistance": 1.5,
                  "description": "Retry parsing with alternative extraction strategy."},
-                # Recovery shortcut
+                # Recovery shortcut (higher burden — skip market research)
                 {"source": "KEY_FACTS_EXTRACTED", "target": "IMPACT_ASSESSED",
                  "delta": 0.7, "resistance": 1.8,
                  "description": "Skip market research, assess impact from facts alone (less accurate)."},
@@ -111,39 +123,39 @@ def mock_llm_call(system: str, user: str, config: LLMConfig) -> str:
         })
 
     if "Execute the transition" in user:
-        return _json.dumps({
+        return json.dumps({
             "outcome": "SUCCESS",
             "result": "Transition completed successfully.",
             "confidence": 0.88,
         })
 
     if "Estimate the structural resistance" in user:
-        return _json.dumps({
+        return json.dumps({
             "resistance": 0.8,
             "reasoning": "Moderate complexity transition.",
         })
 
-    # Default
-    return _json.dumps({
+    return json.dumps({
         "delta": 0.4,
         "reasoning": "Moderate structural change.",
     })
 
 
-# ──────────────────────────────────────────────
-# Main Demo
-# ──────────────────────────────────────────────
+# ── Demo runner ──────────────────────────────────────────────────────────
 
 def run_demo(
     task: str = DEFAULT_TASK,
     start: str = DEFAULT_START,
     goal: str = DEFAULT_GOAL,
     use_mock: bool = False,
-    use_hybrid: bool = False,
+    envelope: E0Envelope = ENVELOPE,
+    exploration_policy: ExplorationPolicy = EXPLORATION_POLICY,
     scenario: ScenarioPacket | None = None,
-):
-    """Run an open-domain demo with LLM-bootstrapped landscape."""
+) -> dict:
+    """Run an open-domain demo with LLM-bootstrapped landscape.
 
+    Returns dict with all results for programmatic inspection.
+    """
     # Override from scenario packet if provided
     if scenario:
         task = f"{scenario.objective}\n\nSource material:\n{scenario.source_text}"
@@ -151,165 +163,163 @@ def run_demo(
         goal = scenario.goal_state or goal
 
     print("=" * 64)
-    print("E₀ Controller — Open Domain Demo (Phase 3b)")
+    print("E₀ — Open Domain Demo (Phase 3b)")
     print("=" * 64)
     if scenario:
         print(f"\nScenario: {scenario.title} [{scenario.scenario_id}]")
     print(f"\nTask: {task[:200]}{'...' if len(task) > 200 else ''}")
     print(f"Start: {start} → Goal: {goal}")
+    print(f"Envelope: {envelope.summary()}")
+    print(f"Policy:   {exploration_policy.label}")
 
-    # 1. Setup LLM adapter
+    # ── 1. LLM generates landscape ──────────────────────────────
     if use_mock:
-        print("\nMode: MOCK (no API calls)")
+        print("\nMode: MOCK")
         adapter = E0LLMAdapter(call_fn=mock_llm_call)
     else:
-        config = LLMConfig(model="gpt-5.4-mini", temperature=0.3)
+        config = LLMConfig(model="gpt-4.1-mini", temperature=0.3, max_tokens=2048)
         adapter = E0LLMAdapter(config=config)
         print(f"\nMode: LIVE (model={config.model})")
-    if use_hybrid:
-        print("Hybrid: AMPLITUDE_ON_DISAGREE (B3)")
 
-    # 2. LLM designs the landscape
-    print("\n── Step 1: LLM designs state graph ──")
+    print("\n── Phase 1: Landscape Generation ──")
     sc_block = scenario.as_prompt_block() if scenario else ""
-    proposal = adapter.build_landscape(task, start, goal, scenario_block=sc_block)
-    print(f"   States: {len(proposal.states)}")
-    for s in proposal.states:
-        print(f"     • {s}")
-    print(f"   Edges: {len(proposal.edges)}")
-    for e in proposal.edges:
-        print(f"     {e['source']} → {e['target']}  "
-              f"(Δ={e['delta']:.1f}, R₀={e['resistance']:.1f})")
-
-    # 3. Materialize into Landscape
+    proposal = adapter.build_landscape(
+        task, start, goal,
+        goals=set(envelope.goals) if envelope.goals else None,
+        scenario_block=sc_block,
+    )
     L = materialize_landscape(proposal)
     task_map = task_map_from_proposal(proposal)
-    print(f"\n   Landscape: {len(L.states)} states, {len(L.edges)} edges")
 
-    # 3b. Graph quality validation (Phase 3c)
-    print("\n── Step 1b: Graph quality check ──")
+    print(f"   States: {len(L.states)}, Edges: {len(L.edges)}")
+    for e in proposal.edges:
+        print(f"     {e['source']:30s} → {e['target']:30s}  "
+              f"(Δ={e['delta']:.2f}, R₀={e['resistance']:.2f})")
+
     gq = graph_quality(L, start, goal)
-    print(gq.summary())
+    print(f"\n   Graph quality: {gq.score:.2f}")
     if not gq.ok():
-        print("\n*** ABORTED: graph failed critical quality checks ***")
-        return None, proposal
+        print("   ⚠ Graph quality check failed — proceeding for analysis")
 
-    # 4. Setup MemOS
-    memos_dir = os.path.join(os.getcwd(), "memos")
-    os.makedirs(memos_dir, exist_ok=True)
-    memos = E0MemoryOS(base_dir=memos_dir)
-
-    # 5. Create execute function with live summary (uses actual source state)
-    session_id = "demo-open-domain"
-    _recent: list = []  # tracks recent states during run
-    _ctrl_ref: list = [None]
-
-    def live_summary(source: str):
-        """Build LLM context from the actual source state per call."""
-        neighbors = L.admissible_neighbors(source)
-        neighbor_info = {}
-        for n in neighbors:
-            s_eff = L.effective_tension(source, n)
-            neighbor_info[n] = {
-                "s_eff": round(s_eff, 4),
-                "coherence": round(coherence(s_eff), 4),
-                "v": round(L.transition_field(source, n), 4),
-            }
-        edge_history = {}
-        for n in neighbors:
-            e = Edge(source, n)
-            ek = edge_to_key(e)
-            edge_history[ek] = {
-                "delta_H": round(L.historization.delta_H(e), 4),
-            }
-        _recent.append(source)
-        summary = {
-            "current_state": source,
-            "admissible_neighbors": neighbor_info,
-            "edge_history": edge_history,
-            "runtime": {"recent_states": _recent[-5:]},
-        }
-        if _ctrl_ref[0] is not None and _ctrl_ref[0].hybrid_mode != HybridMode.GREEDY:
-            ov = memos._build_overlay_summary(_ctrl_ref[0], source)
-            if ov:
-                summary["amplitude_overlay"] = ov
-        return summary
-
+    # ── 2. Build execute function ───────────────────────────────
+    result_log = []
     execute_fn = adapter.as_execute_fn(
-        task_map, live_summary=live_summary,
+        task_map,
         scenario_block=sc_block,
-        result_log=(result_log := []),
+        result_log=result_log,
     )
 
-    # 6. Build controller and run
-    print("\n── Step 2: Controller runs ──")
-    hybrid_mode = HybridMode.AMPLITUDE_ON_DISAGREE if use_hybrid else HybridMode.GREEDY
-    ctrl = E0Controller(L, execute_fn, alpha=2.0, recent_k=3,
-                        hybrid_mode=hybrid_mode,
-                        hybrid_goals={goal} if use_hybrid else None)
-    _ctrl_ref[0] = ctrl
-    trace = ctrl.run(start=start, goal=goal, max_cycles=20)
+    # ── 3. Session.iterate() — emergent iterations ──────────────
+    print(f"\n── Phase 2: Iterative Runs (max 5 iterations) ──")
+    print(f"   Stopping: tension equilibrium | stagnation | budget")
+    print(f"   Iteration count is NOT prescribed — it emerges.")
+    print(f"   Policy: {exploration_policy.label}\n")
 
-    # 7. Display results
+    session = Session(
+        session_id="open-domain",
+        landscape=L,
+        execute_fn=execute_fn,
+        base_dir="memos/_open_domain",
+        canon_refs=[CanonRef("e0-canon", "v1", "canon/e0-canon-plain.txt")],
+        controller_kwargs=envelope.to_controller_kwargs(),
+    )
+
+    iter_result = session.iterate(
+        start,
+        goal=goal,
+        max_cycles=20,
+        max_iterations=5,
+        tension_threshold=0.15,
+        exploration_policy=exploration_policy,
+    )
+
+    # ── 4. Display per-iteration results ────────────────────────
     print(f"\n{'=' * 64}")
-    print("Run Complete")
+    print(f"Iterations completed: {iter_result.iterations}")
+    print(f"Stop reason: {iter_result.stop_reason}")
     print(f"{'=' * 64}")
-    print(trace.summary())
 
-    metrics = trace.metrics()
-    print(f"\nMetrics:")
-    print(f"  Steps:             {int(metrics['steps'])}")
-    print(f"  Deterministic:     {metrics['deterministic_rate']:.0%}")
-    print(f"  Success rate:      {metrics['success_rate']:.0%}")
-    print(f"  Avg tension:       {metrics['avg_tension']:.4f}")
-    print(f"  Unique states:     {int(metrics['unique_states'])}")
-    print(f"  Revisits:          {int(metrics['revisit_count'])}")
-    if hybrid_mode != HybridMode.GREEDY:
-        print(f"  Hybrid overrides:  {int(metrics['hybrid_override_count'])}")
-        print(f"  Override rate:     {metrics['hybrid_override_rate']:.0%}")
+    for i, (res, verdict, refl) in enumerate(
+        zip(iter_result.results, iter_result.verdicts, iter_result.reflections), 1
+    ):
+        trace = res.trace
+        path_str = " → ".join(trace.path)
+        m = trace.metrics()
+        reached = goal in trace.path
 
-    # 7b. Display LLM results per step
-    if result_log:
-        print(f"\n── Transition Details ──")
-        for i, (step, res) in enumerate(zip(trace.steps, result_log)):
-            esc = " [ESCALATION]" if step.escalated else ""
-            print(f"\n  Step {i+1}: {step.source} → {step.target}{esc}")
-            print(f"    Outcome:    {step.outcome.name} (confidence: {res.confidence:.0%})")
-            print(f"    S_eff:      {step.s_eff:.4f}")
-            if res.result:
-                # Wrap long result text
-                text = res.result[:200] + ("..." if len(res.result) > 200 else "")
-                print(f"    LLM Result: {text}")
+        print(f"\n── Iteration {i} ──")
+        print(f"   Path: {path_str}")
+        print(f"   Steps: {int(m['steps'])}, "
+              f"Success: {m['success_rate']:.0%}, "
+              f"Revisits: {int(m['revisit_count'])}, "
+              f"Goal: {'✓' if reached else '✗'}")
+        print(f"   Avg tension: {m['avg_tension']:.4f}")
+        if envelope.mode != HybridMode.GREEDY:
+            print(f"   Hybrid overrides: {int(m['hybrid_override_count'])}")
 
-    # 8. Save to MemOS
-    ctx = memos.snapshot_from_runtime(
-        session_id, L, ctrl, trace,
-        canon_refs=[CanonRef(
-            name="ontodynamics", version="1.0",
-            path="canon/ontodynamics.txt",
-        )],
-    )
-    memos.save_context(ctx)
-    memos.save_run(session_id, trace, goal=goal)
-    print(f"\nMemOS data persisted to: {memos_dir}")
+        rmap = verdict.residual_map
+        print(f"\n   Residual Tension Map:")
+        print(f"     Max S_eff: {rmap.max_residual:.4f}")
+        print(f"     Mean S_eff: {rmap.mean_residual:.4f}")
+        print(f"     Resolved: {len(rmap.resolved)} edges")
+        print(f"     Amplified: {len(rmap.amplified)} edges")
 
-    return trace, proposal, result_log
+        print(f"\n   Verdict: {'CONTINUE' if verdict.should_continue else 'STOP'}"
+              f" ({verdict.reason})")
+
+    # ── 5. Final tension map ────────────────────────────────────
+    if iter_result.final_map:
+        print(f"\n{'=' * 64}")
+        print("Final ResidualTensionMap")
+        print(f"{'=' * 64}")
+        print(format_residual_map(iter_result.final_map))
+
+    # ── 6. Summary ──────────────────────────────────────────────
+    first_trace = iter_result.results[0].trace
+    last_trace = iter_result.results[-1].trace
+    first_reached = goal in first_trace.path
+    last_reached = goal in last_trace.path
+
+    print(f"\n{'=' * 64}")
+    print("Open Domain — Summary")
+    print(f"{'=' * 64}")
+    print(f"  Iterations:     {iter_result.iterations} (emerged, not prescribed)")
+    print(f"  Stop reason:    {iter_result.stop_reason}")
+    print(f"  Policy phases:  {iter_result.policy_phases}")
+    reflections_triggered = sum(1 for r in iter_result.reflections if r is not None)
+    print(f"  Reflections:    {reflections_triggered}")
+    print(f"  First run goal: {'REACHED' if first_reached else 'MISSED'}")
+    print(f"  Last run goal:  {'REACHED' if last_reached else 'MISSED'}")
+    if iter_result.final_map:
+        print(f"  Final max S:    {iter_result.final_map.max_residual:.4f}")
+        print(f"  Final mean S:   {iter_result.final_map.mean_residual:.4f}")
+    print(f"\n  Envelope: {envelope.summary()}")
+    print(f"  Policy:   {exploration_policy.label}")
+
+    if not use_mock:
+        print(f"\n  ⚠  Landscape was LLM-generated, not pre-designed.")
+        print(f"     Iteration count emerged from tension structure.")
+
+    return {
+        "iter_result": iter_result,
+        "proposal": proposal,
+        "landscape": L,
+        "result_log": result_log,
+        "graph_quality": gq,
+    }
 
 
 if __name__ == "__main__":
     use_mock = "--mock" in sys.argv
-    use_hybrid = "--hybrid" in sys.argv
     task = DEFAULT_TASK
     sc = None
-    # --scenario <path>
     for i, arg in enumerate(sys.argv):
         if arg == "--scenario" and i + 1 < len(sys.argv):
             sc = load_scenario(sys.argv[i + 1])
         elif arg == "--task" and i + 1 < len(sys.argv):
             task = sys.argv[i + 1]
-    # Auto-find scenario if none given and not using custom task
     if sc is None and task == DEFAULT_TASK:
         path = find_scenario("competitor_brief")
         if path:
             sc = load_scenario(path)
-    run_demo(task=task, use_mock=use_mock, use_hybrid=use_hybrid, scenario=sc)
+    run_demo(task=task, use_mock=use_mock, scenario=sc)

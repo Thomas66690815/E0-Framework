@@ -57,7 +57,7 @@ Replaced by:
 Interference replaces probability aggregation.
 
 **Result:**
-A new computational paradigm independent of probabilistic reasoning.
+An alternative computational approach that replaces probabilistic reasoning with interference-based path evaluation.
 
 ---
 
@@ -148,7 +148,7 @@ Derived from:
 Internal Difference → SU(2)
 
 **Result:**
-720° periodicity becomes structurally necessary.
+720° periodicity emerges as a consequence of the SU(2) carrier-minimality argument.
 
 ---
 
@@ -226,7 +226,7 @@ Across all layers:
 
 This work does not optimize existing systems.
 
-It redefines the computational substrate.
+It proposes a structural decision layer beneath semantic computation.
 
 ---
 

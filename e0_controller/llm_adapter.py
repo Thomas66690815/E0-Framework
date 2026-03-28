@@ -103,6 +103,28 @@ def openai_call(system: str, user: str, config: LLMConfig) -> str:
 SYSTEM_PROMPT = """\
 You are the semantic interface of the E₀ reasoning controller.
 
+E₀ is a transition framework built from three primitives:
+- Δ (difference): how structurally different two states are (0 = identical, 1 = maximal)
+- R (resistance): how difficult a transition is to execute (modified by history)
+- H (historization): success/failure traces that alter future resistance
+
+From these, E₀ derives:
+- Tension S = Δ · R_eff — the integration burden of a transition
+- Coherence C = exp(−S) — how structurally open a transition is (high = easy)
+- Transition field v = Δ · M_H · exp(−S) — directional transition capacity
+- Connection ω — antisymmetric phase from the rotational component of v
+- Path phase Θ = Σω — accumulated orientation along a path
+- Path amplitude Ψ = exp(−S) · exp(iΘ) — complex path representation
+- Intensity I = |Ψ|² — structural weight of a path family
+
+The controller selects transitions by minimizing S_eff (greedy) or by
+comparing amplitude-derived intensities across path families (hybrid mode).
+When greedy and amplitude disagree, the amplitude choice can override.
+
+M_H is the topological modulation factor: M_H = 1/(1+κ), where κ is the
+local edge curvature from face holonomies. High curvature damps transitions.
+When curvature_modulation is off (default), M_H = 1.
+
 You receive structured state information from the E₀ runtime:
 - current_state: where the system is now
 - admissible_neighbors: reachable states with tension/coherence data
@@ -212,6 +234,44 @@ Context from E₀ runtime:
 Task: {task}
 Start state: {start}
 {goal}
+
+Respond with exactly this JSON (no other text):
+{{
+  "states": ["STATE_A", "STATE_B", ...],
+  "edges": [
+    {{"source": "STATE_A", "target": "STATE_B", "delta": 0.4, "resistance": 0.8, "description": "what this transition does"}},
+    ...
+  ]
+}}"""
+
+
+REBUILD_LANDSCAPE_PROMPT = """\
+The previous E₀ landscape for this task produced structural problems.
+Redesign the state graph based on the diagnostic evidence below.
+
+An E₀ landscape consists of:
+- States: discrete milestones (UPPER_CASE identifiers)
+- Edges: directed transitions between states, each with:
+  - delta: structural difference Δ ∈ [0,1]
+  - resistance: base difficulty R₀ > 0
+
+Previous landscape:
+  States: {old_states}
+  Edges: {old_edges}
+
+Structural diagnostic:
+{diagnostic_block}
+
+Rules:
+- You MUST restructure the topology, not just tweak edge weights
+- Address every problem listed in the diagnostic
+- Keep start state "{start}" and goal state "{goal}"
+- Include error/recovery paths
+- Keep it bounded: 5–15 states, 8–25 edges
+- State names must be UPPER_CASE with underscores
+
+{scenario_block}
+Task: {task}
 
 Respond with exactly this JSON (no other text):
 {{
@@ -345,9 +405,16 @@ class E0LLMAdapter:
         self,
         config: Optional[LLMConfig] = None,
         call_fn: Optional[LLMCallFn] = None,
+        provenance: Optional["ProvenanceLog"] = None,
     ):
         self.config = config or LLMConfig()
-        self._call = call_fn or openai_call
+        base_call = call_fn or openai_call
+        if provenance is not None:
+            self._call = provenance.wrap_call_fn(base_call)
+            self._provenance = provenance
+        else:
+            self._call = base_call
+            self._provenance = None
 
     def _format_context(self, memos_summary: Dict[str, Any]) -> str:
         """Format MemOS summary as compact context string for prompts."""
@@ -641,7 +708,135 @@ class E0LLMAdapter:
                 "description": e.get("description", ""),
             })
 
-        return LandscapeProposal(states=states, edges=edges)
+        proposal = LandscapeProposal(states=states, edges=edges)
+
+        if self._provenance is not None:
+            self._provenance.record_proposal(proposal)
+
+        return proposal
+
+    # ── 6. Rebuild Landscape (Structural Reflection) ──
+
+    def rebuild_landscape(
+        self,
+        task: str,
+        start: str,
+        goal: str,
+        old_proposal: LandscapeProposal,
+        diagnostic: "StructuralDiagnostic",
+        goals: Optional[Set[str]] = None,
+        scenario_block: str = "",
+    ) -> LandscapeProposal:
+        """Ask LLM to redesign a landscape based on structural diagnostics.
+
+        Unlike build_landscape(), this provides the LLM with the old
+        topology and a diagnostic of what went wrong.  The LLM is
+        instructed to restructure — not tweak parameters.
+
+        Args:
+            task: Natural-language description of the overall task.
+            start: Name of the starting state.
+            goal: Name of the primary goal state.
+            old_proposal: The previous LandscapeProposal.
+            diagnostic: StructuralDiagnostic from reflection.
+            goals: Optional set of additional goal states.
+            scenario_block: Pre-formatted scenario context string.
+
+        Returns:
+            New LandscapeProposal with restructured topology.
+        """
+        from .reflection import StructuralDiagnostic
+
+        # Format old landscape
+        old_states_str = ", ".join(old_proposal.states)
+        old_edges_lines = []
+        for e in old_proposal.edges:
+            old_edges_lines.append(
+                f"  {e['source']} → {e['target']} "
+                f"(Δ={e.get('delta', '?')}, R₀={e.get('resistance', '?')}, "
+                f"{e.get('description', '')})"
+            )
+        old_edges_str = "\n".join(old_edges_lines) if old_edges_lines else "(none)"
+
+        # Format diagnostic
+        diag_lines = []
+        if diagnostic.dead_states:
+            diag_lines.append(f"Dead states (never visited): {', '.join(diagnostic.dead_states)}")
+        if diagnostic.loop_states:
+            diag_lines.append(f"Loop states (bidirectional edges): {', '.join(diagnostic.loop_states)}")
+        if diagnostic.chronic_issues:
+            for dim, count in diagnostic.chronic_issues.items():
+                diag_lines.append(f"Chronic {dim} issue: triggered in {count} recent runs")
+        if diagnostic.plateau_evidence:
+            diag_lines.append(f"Plateau: {diagnostic.plateau_evidence}")
+        if diagnostic.parameter_bounds_hit:
+            for bound_info in diagnostic.parameter_bounds_hit:
+                diag_lines.append(f"Parameter bound: {bound_info}")
+        if not diag_lines:
+            diag_lines.append("General structural inadequacy detected")
+        diag_block = "\n".join(f"  - {line}" for line in diag_lines)
+
+        sc_block = f"\nScenario context:\n{scenario_block}\n" if scenario_block else ""
+
+        all_goals = {goal}
+        if goals:
+            all_goals |= goals
+
+        prompt = REBUILD_LANDSCAPE_PROMPT.format(
+            old_states=old_states_str,
+            old_edges=old_edges_str,
+            diagnostic_block=diag_block,
+            start=start,
+            goal=goal,
+            scenario_block=sc_block,
+            task=task,
+        )
+
+        raw = self._call(SYSTEM_PROMPT, prompt, self.config)
+        data = _parse_json_response(raw, required_keys=["states", "edges"])
+
+        # Normalize states (same logic as build_landscape)
+        states = []
+        seen: set = set()
+        for s in data.get("states", []):
+            name = _normalize_state_name(str(s))
+            if name and _STATE_NAME_RE.match(name) and name not in seen:
+                seen.add(name)
+                states.append(name)
+
+        for required in [start] + sorted(all_goals):
+            norm = _normalize_state_name(required)
+            if norm not in seen:
+                states.append(norm)
+                seen.add(norm)
+
+        # Normalize edges
+        edges = []
+        for e in data.get("edges", []):
+            src = _normalize_state_name(str(e.get("source", "")))
+            tgt = _normalize_state_name(str(e.get("target", "")))
+            if not src or not tgt or src not in seen or tgt not in seen:
+                continue
+
+            delta = float(e.get("delta", 0.5))
+            delta = max(0.0, min(1.0, delta))
+            resistance = float(e.get("resistance", 1.0))
+            resistance = max(0.01, resistance)
+
+            edges.append({
+                "source": src,
+                "target": tgt,
+                "delta": delta,
+                "resistance": resistance,
+                "description": e.get("description", ""),
+            })
+
+        proposal = LandscapeProposal(states=states, edges=edges)
+
+        if self._provenance is not None:
+            self._provenance.record_proposal(proposal)
+
+        return proposal
 
     # ── Convenience: execute_fn for E0Controller ──
 

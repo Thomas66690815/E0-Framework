@@ -1,6 +1,6 @@
 # E₀ Controller — Status, Lücken, Lösungswege
 
-**Stand:** 2026-03-25 (v2.0 — Phase 5h: Born-Sampling Comparison)
+**Stand:** 2026-03-28 (v3.0 — Phase 6c: Session Orchestrator + Foundation)
 **Kontext:** Neuansatz nach 3 Wochen Pause. Multi-Agent-Orchestrierung (Keimzelle) verworfen.
 **Neuer Ansatz:** Einzelner deterministischer E₀ Controller als Reasoning-Engine.
 
@@ -27,8 +27,13 @@
 | **Phase 5f** — Confidence-Weighted Override (Path F) | ✅ Abgeschlossen (31 Tests, C20) | `c72bfff` |
 | **Phase 5g** — MemOS Geometry Persistence (Path G) | ✅ Abgeschlossen (34 Tests, C21) | `cd64208` |
 | **Phase 5h** — Born-Sampling Comparison (Path H) | ✅ Abgeschlossen (27 Tests, C22) | `b3ac2c3` |
+| **Phase 5i** — SU(2) Multi-Axis + Curvature (O4) | ✅ Abgeschlossen (C25–C26) | — |
+| **Phase 5j** — LLM Context + MemOS Fidelity | ✅ Abgeschlossen (C27–C28) | — |
+| **Phase 6a** — B4 Self-Tuning (Meta+Feedback+Memory+Sensitivity) | ✅ Abgeschlossen (87 Tests, C29) | `83bbbc9` |
+| **Phase 6b** — Session Orchestrator + Persistence Demo | ✅ Abgeschlossen (13 Tests, C30) | `e28b93d` |
+| **Phase 6c** — Foundation Packaging (`pip install -e .`) | ✅ Abgeschlossen | `0e0c4f8` |
 
-**Gesamt:** 936 Tests (915 unittest + 21 standalone), 22 Claims (C1–C22), 3 HybridModes.
+**Gesamt:** 1254 Tests, 30 Claims (C1–C30), 3 HybridModes, 88 public API symbols.
 
 ---
 

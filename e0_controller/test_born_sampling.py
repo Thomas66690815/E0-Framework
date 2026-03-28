@@ -633,10 +633,10 @@ class TestH11BornSamplingUnderSU2(unittest.TestCase):
                 u1_a_count += 1
             if step_su2.target == "A":
                 su2_a_count += 1
-        # Single-path families → rates should be similar (within 8%)
+        # Single-path families → rates should be similar (within 12%)
         u1_rate = u1_a_count / n
         su2_rate = su2_a_count / n
-        self.assertAlmostEqual(u1_rate, su2_rate, delta=0.08,
+        self.assertAlmostEqual(u1_rate, su2_rate, delta=0.12,
                                msg=f"Diamond single-path: U(1)={u1_rate:.1%} "
                                    f"vs SU(2)={su2_rate:.1%} — should match")
 

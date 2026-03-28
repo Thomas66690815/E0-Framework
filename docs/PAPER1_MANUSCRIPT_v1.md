@@ -1337,7 +1337,7 @@ contributions are:
    differences depend only on path-local quantities.
 
 2. **Four summation geometries** with formal definitions and empirical
-   comparison, identifying goal-reaching geometry as structurally necessary
+   comparison, identifying goal-reaching geometry as empirically required
    for trap domains (§4).
 
 3. **A hybrid controller** that uses amplitude-based interference to override

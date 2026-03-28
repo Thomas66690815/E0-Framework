@@ -110,7 +110,7 @@ def _solve_helmholtz(L: Landscape) -> Dict[str, float]:
 
     Returns dict mapping state name → Φ value.
     """
-    cache_key = (L.edge_count(), L.historization.tau)
+    cache_key = (L.edge_count(), L.historization.tau, L.curvature_modulation)
     cached = getattr(L, '_phi_cache', None)
     if cached is not None and getattr(L, '_phi_cache_key', None) == cache_key:
         return cached

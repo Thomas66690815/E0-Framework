@@ -41,13 +41,14 @@ without modifying the operational controller.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Sequence, Set
+from typing import Callable, Dict, List, Optional, Sequence, Set
 
 import numpy as np
 
 from .controller import E0Controller
 from .wavepath import psi as path_psi
 from .spinor_connection import spinor_psi as path_psi_su2
+from .spinor_connection import spinor_geometric_psi as path_psi_geo
 
 
 # Supported summation geometries (§4 of Summation Geometry Program)
@@ -83,6 +84,24 @@ class OverlayReport:
         if not self.action_infos:
             return None
         return max(self.action_infos, key=lambda a: a.intensity).action
+
+    @property
+    def path_count_imbalance(self) -> float:
+        """Ratio of max to min path counts across actions.
+
+        Detects the amplitude mass trap: when one action has far more
+        contributing paths than others, |ΣΨ|² is structurally biased
+        regardless of per-path quality.
+
+        Returns max(counts) / min(counts).  Range [1, ∞).
+        - 1.0  → balanced path families (no structural bias)
+        - >3.0 → mass trap risk (one action dominates by path count)
+        Returns 1.0 when fewer than 2 actions have paths.
+        """
+        counts = [a.path_count for a in self.action_infos if a.path_count > 0]
+        if len(counts) < 2:
+            return 1.0
+        return max(counts) / min(counts)
 
     @property
     def override_confidence(self) -> float:
@@ -188,7 +207,9 @@ def analyze_controller_state(
     horizon_edges: int = 3,
     geometry: str = "simple",
     goals: Optional[Set[str]] = None,
-    use_su2: bool = False,
+    use_su2: object = False,
+    axis_fn=None,
+    intensity_modifier: Optional[Callable[[str, float], float]] = None,
 ) -> OverlayReport:
     """
     Build an analysis-only amplitude overlay for one controller decision point.
@@ -208,6 +229,10 @@ def analyze_controller_state(
     goals:
         Required for "first_arrival" and "goal_reaching" geometries.
         Set of goal states.
+    intensity_modifier:
+        Optional callable (action, raw_intensity) → modified_intensity.
+        Applied after computing I(a) but before probability normalization.
+        Used by resonator modulation to boost actions in resonant cycles.
     """
     if horizon_edges < 1:
         raise ValueError("horizon_edges must be >= 1")
@@ -232,12 +257,19 @@ def analyze_controller_state(
             if geometry != "goal_reaching" or (goals and action in goals):
                 action_paths = [[current, action]] + action_paths
 
-        if use_su2:
+        if use_su2 == "geometric":
             psi_total_su2 = sum(
-                (path_psi_su2(controller.landscape, p) for p in action_paths),
+                (path_psi_geo(controller.landscape, p) for p in action_paths),
                 start=np.zeros(2, dtype=complex),
             )
-            psi_total = complex(psi_total_su2[0])  # store first component for report
+            psi_total = complex(psi_total_su2[0])
+            intensity = float(np.real(np.vdot(psi_total_su2, psi_total_su2)))
+        elif use_su2:
+            psi_total_su2 = sum(
+                (path_psi_su2(controller.landscape, p, axis_fn=axis_fn) for p in action_paths),
+                start=np.zeros(2, dtype=complex),
+            )
+            psi_total = complex(psi_total_su2[0])
             intensity = float(np.real(np.vdot(psi_total_su2, psi_total_su2)))
         else:
             psi_total = sum((path_psi(controller.landscape, p) for p in action_paths), start=complex(0.0, 0.0))
@@ -253,6 +285,13 @@ def analyze_controller_state(
         )
         action_infos.append(info)
         total_intensity += intensity
+
+    # Apply intensity modifier (e.g., resonator modulation) before normalization.
+    if intensity_modifier is not None:
+        total_intensity = 0.0
+        for info in action_infos:
+            info.intensity = intensity_modifier(info.action, info.intensity)
+            total_intensity += info.intensity
 
     if total_intensity > 0.0:
         for info in action_infos:

@@ -1,7 +1,7 @@
 # E₀ Test Registry v1
 
 > Central reference for all tests in the E₀ Framework.
-> **Last verified:** 2026-03-25 — **936 tests** (915 unittest + 21 standalone mini-domain + 1 pre-existing error)
+> **Last verified:** 2026-03-28 — **1790 tests** (1724 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures, 0 warnings)
 
 ---
 
@@ -14,28 +14,48 @@
 | 3 | `test_gordian_trap.py` | 44 | unittest | Holonomy, Gordian trap, multi-goal | ✅ GREEN |
 | 4 | `test_evaluation.py` | 42 | unittest | Run/semantic/scenario evaluation | ✅ GREEN |
 | 5 | `test_phase2_minidomain.py` | 38 | unittest | Φ, ω, holonomy, Ψ = e^(−S+iΘ) | ✅ GREEN |
-| 6 | `test_reflection.py` | 36 | unittest | Reflection triggers, LLM fallback | ✅ GREEN |
+| 6 | `test_reflection.py` | 57 | unittest | Reflection triggers, LLM fallback, structural reflection (C36) | ✅ GREEN |
 | 7 | `test_invoice.py` | 33 | unittest | Invoice domain end-to-end | ✅ GREEN |
-| 8 | `test_llm_integration.py` | 32 | unittest | Live LLM (requires API key) | ⚠ CONDITIONAL |
-| 9 | `test_g5_edge_cases.py` | 28 | unittest | G5 robustness, 5 families A–E | ✅ GREEN |
-| 10 | `test_memory_os.py` | 28 | unittest | Persistence, save/load round-trip | ✅ GREEN |
+| 8 | `live_test_llm.py` | 41 | explicit | Live LLM + Provenance (requires API key, separated from discover) | ⚠ LIVE |
+| 9 | `test_g5_edge_cases.py` | 55 | unittest | G5 robustness, 5 families A–E, SU(2) | ✅ GREEN |
+| 10 | `test_memory_os.py` | 38 | unittest | Persistence, save/load round-trip, SU(2)/curvature/escalation | ✅ GREEN |
 | 11 | `test_graph_validation.py` | 24 | unittest | Reachability, traps, quality score | ✅ GREEN |
-| 12 | `test_topology_classification.py` | 23 | unittest | 380-graph scan, override prediction | ✅ GREEN |
+| 12 | `test_topology_classification.py` | 30 | unittest | 380-graph scan, override prediction, SU(2) | ✅ GREEN |
 | 13 | `test_phase2_invoice.py` | 18 | unittest | Invoice phase-layer validation | ✅ GREEN |
 | 14 | `test_waypoint.py` | 17 | unittest | Goal-with-continuations, H4 | ✅ GREEN |
 | 15 | `test_scaling.py` | 14 | unittest | O(n) complexity, n ≤ 500 | ✅ GREEN |
-| 16 | `test_spinor.py` | 52 | unittest | SU(2) lift, geometric coupling, 720° | ✅ GREEN |
-| 17 | `test_greedy_trap.py` | — | unittest | Greedy-trap walkthrough | ❌ IMPORT ERROR |
-| 18 | `test_resonator.py` | 48 | unittest | Resonator kernel, R1-R4, classification | ✅ GREEN |
+| 16 | `test_spinor.py` | 71 | unittest | SU(2) lift, geometric coupling, 720° | ✅ GREEN |
+| 17 | `test_greedy_trap.py` | 4 | unittest | Greedy-trap walkthrough | ✅ GREEN |
+| 18 | `test_resonator.py` | 73 | unittest | Resonator kernel, R1-R4, multi-loop, coupled | ✅ GREEN |
 | 19 | `test_omega_uniqueness.py` | 27 | unittest | ω uniqueness, 5 alternatives falsified | ✅ GREEN |
-| 20 | `test_historization_gordian.py` | 36 | unittest | Historization × Gordian interaction | ✅ GREEN |
+| 20 | `test_historization_gordian.py` | 61 | unittest | Historization × Gordian, non-Gordian topologies | ✅ GREEN |
 | 21 | `test_born_regime.py` | 44 | unittest | Born regime B1-B5, uniqueness U1-U3 | ✅ GREEN |
 | 22 | `test_reflection_hybrid.py` | 42 | unittest | Reflection hybrid metrics R_coh, Θ, drift | ✅ GREEN |
 | 23 | `test_dynamic_horizon.py` | 45 | unittest | Dynamic horizons, topology_adaptive, capped | ✅ GREEN |
 | 24 | `test_confidence_override.py` | 31 | unittest | Confidence-weighted override gating F1-F12 | ✅ GREEN |
 | 25 | `test_memos_geometry.py` | 34 | unittest | MemOS geometry persistence G1-G10 | ✅ GREEN |
-| 26 | `test_born_sampling.py` | 27 | unittest | Born sampling vs argmax, ADR-0007 H1-H10 | ✅ GREEN |
-| 27 | `test_minidomain.py` | 21 | standalone | Core mechanics, historization, K11/K12 | ✅ GREEN |
+| 26 | `test_born_sampling.py` | 31 | unittest | Born sampling vs argmax, ADR-0007 H1-H11 | ✅ GREEN |
+| 27 | `test_minidomain.py` | 21 | standalone | Mini-Domain graph, tension, coherence, historization, K11/K12 | ✅ GREEN |
+| 28 | `test_multi_axis_su2.py` | 36 | unittest | Per-edge SU(2) axes, non-commutativity, multi-axis interference, controller integration | ✅ GREEN |
+| 29 | `test_curvature_modulation.py` | 35 | unittest | M_H topological invariant, edge curvature, curvature modulation switch, downstream effects | ✅ GREEN |
+| 30 | `test_llm_context.py` | 23 | unittest | LLM canon essence, summary enrichment, overlay fields | ✅ GREEN |
+| 31 | `test_k5_escalation.py` | 9 | unittest | K5 field-based escalation, dead-end/filtered/exhausted strategies | ✅ GREEN |
+| 32 | `test_self_tuning.py` | 87 | unittest | B4 self-tuning: field summary, derived thresholds, quality score, tuning cycle, tuning memory, perturbation sensitivity | ✅ GREEN |
+| 33 | `test_session.py` | 13 | unittest | Session orchestrator lifecycle, resume, tuning memory persistence | ✅ GREEN |
+| 34 | `test_beipackzettel.py` | 20 | unittest | Real-world Beipackzettel landscape, amplitude mass trap, goal_reaching vs simple | ✅ GREEN |
+| 35 | `test_beipackzettel_noncircular.py` | 11 | unittest | Non-circular LLM validation, geometry warning, structural amplitude trap | ✅ GREEN |
+| 36 | `test_provenance.py` | 28 | unittest | ProvenanceLog 6-stage evidence chain, serialization, adapter/session integration | ✅ GREEN |
+| 37 | `test_ezb_zinsentscheidung.py` | 33 | unittest | EZB-Zinsentscheidung real-world domain, Gordian trap, amplitude mass trap, non-circular mock LLM | ✅ GREEN |
+| 38 | `test_mass_trap_detector.py` | 25 | unittest | Mass trap detection: path_count_imbalance, reflection trigger, self-tuning horizon inversion | ✅ GREEN |
+| 39 | `test_envelope.py` | 48 | unittest | E0Envelope + TransportRegime: typed config, serialization, bridge, controller integration | ✅ GREEN |
+| 40 | `test_burnout_composite.py` | 39 | unittest | Burnout Domäne 3: fragments, mock landscape, envelope presets, full demo run (greedy + hybrid), topology | ✅ GREEN |
+| 41 | `test_residual_tension.py` | 31 | unittest | C37 Residual Tension: snapshot, compute_residual_map, should_continue (4 stopping conditions), Session.iterate(), format, C37b iterate-reflection | ✅ GREEN |
+| 42 | `test_resonator_integration.py` | 37 | unittest | C39 Resonator-Controller integration: cycle detection, coherence, resonance map, intensity modifier, controller switch, backward compat | ✅ GREEN |
+| 43 | `test_overlap.py` | 43 | unittest | C40 Graduated Overlap: triangle_support, edge_overlap, overlap_map, landscape modulation, falsification domain, backward compat | ✅ GREEN |
+| 44 | `test_exploration_policy.py` | 42 | unittest | C41 Stochastic Exploration Policy: PolicyDecision, warmup/fixed/convergence policies, Session.iterate() integration, mode restoration, backward compat | ✅ GREEN |
+| 45 | `test_landscape_mutation.py` | 56 | unittest | B4-S1 Landscape Mutation API: remove_edge, adjust_R₀/Δ, has_edge, would_orphan, historization interaction, cache invalidation, undo | ✅ GREEN |
+| 46 | `test_structural_mutation.py` | 66 | unittest | B4-S2 Structural Mutation Infrastructure: StructuralMutation, admissibility, apply/revert, propose, MutationHistory oscillation, serialization, end-to-end | ✅ GREEN |
+| 47 | `test_structural_tuning_cycle.py` | 42 | unittest | B4-S3 Structural Tuning Cycle: StructuralTuningCycleResult, cycle no-proposals/dead/loops/revert, MutationHistory integration, Session.iterate() structural hook, IterationResult fields, end-to-end | ✅ GREEN |
 
 ---
 
@@ -106,9 +126,9 @@
 
 ---
 
-### 6. test_reflection.py — 36 tests
+### 6. test_reflection.py — 57 tests
 
-**What it tests:** Reflection decision triggers (failure, quality, opportunity), evidence block construction for LLM, result sampling and truncation, JSON parsing of LLM reflection responses, multi-scenario summary formatting.
+**What it tests:** Reflection decision triggers (failure, quality, opportunity, structural), evidence block construction for LLM, result sampling and truncation, JSON parsing of LLM reflection responses, multi-scenario summary formatting. Structural reflection (C36): StructuralDiagnostic (dead states, loop states, chronic issues, plateau, parameter bounds), structural trigger from TuningMemory, rebuild_landscape() prompt integration.
 
 **Key findings:**
 - Hard failures trigger "failure" reflection with high priority
@@ -116,6 +136,9 @@
 - Repeated cycles > 3 with loop_penalty > 0.2 trigger reflection
 - Opportunity type only when rating ≥ B and coverage high
 - LLM reflection has fallback to rule-based on call failure
+- Structural trigger fires between quality and opportunity when TuningMemory shows plateau, chronic issues, or parameter bounds
+- StructuralDiagnostic identifies dead states, loop states, and chronic dimensions
+- rebuild_landscape() passes diagnostic context to LLM for topology restructuring
 
 ---
 
@@ -130,9 +153,9 @@
 
 ---
 
-### 8. test_llm_integration.py — 32 tests ⚠
+### 8. live_test_llm.py — 41 tests ⚠
 
-**What it tests:** Live LLM landscape proposal, transition execution (SUCCESS/FAILURE/PARTIAL), confidence extraction, delta/resistance estimation, full controller run, semantic evaluation, hybrid mode with real LLM, multi-goal handling.
+**What it tests:** Live LLM integration tests (requires API key, separated from unittest discover). Landscape proposal, transition execution (SUCCESS/FAILURE/PARTIAL), confidence extraction, delta/resistance estimation, full controller run, semantic evaluation, hybrid mode with real LLM, multi-goal handling, provenance chain.
 
 **Key findings:**
 - LLM proposes connected graph with ≥ 4 states, goal always reachable
@@ -141,13 +164,13 @@
 - Full runs reach goal ≥ 85% with LLM
 - Multi-goal runs path to at least one goal
 
-**Note:** Skipped when `OPENAI_API_KEY` not set. Results may vary due to LLM non-determinism.
+**Note:** Requires `OPENAI_API_KEY`. Separated from unittest discover to avoid CI failures. Run explicitly: `py -3 -m unittest e0_controller.live_test_llm -v`.
 
 ---
 
-### 9. test_g5_edge_cases.py — 28 tests
+### 9. test_g5_edge_cases.py — 55 tests
 
-**What it tests:** G5 multi-goal robustness across 5 stress families:
+**What it tests:** G5 multi-goal robustness across 5 stress families (A–E), large goal sets (|G| = 16, 32), unreachable goal stress, SU(2) winner stability/structural invariants/selectivity:
 - **Family A** — Winner stability as |G| grows from 1 → 5
 - **Family B** — Unreachable, weak, and noisy goal injection
 - **Family C** — Competing goals (generalist vs. specialist actions)
@@ -164,9 +187,9 @@
 
 ---
 
-### 10. test_memory_os.py — 28 tests
+### 10. test_memory_os.py — 38 tests
 
-**What it tests:** Edge serialization, context save/load round-trip, landscape/controller restoration from snapshot, E0MemoryOS summarize_for_llm, historization persistence across sessions, behavior change from restored memory, hybrid controller snapshots, session listing.
+**What it tests:** Edge serialization, context save/load round-trip, landscape/controller restoration from snapshot, E0MemoryOS summarize_for_llm, historization persistence across sessions, behavior change from restored memory, hybrid controller snapshots, session listing, use_su2 roundtrip, curvature_modulation roundtrip, escalation edge created_by persistence.
 
 **Key findings:**
 - Edge key format: "SOURCE→TARGET"
@@ -190,9 +213,9 @@
 
 ---
 
-### 12. test_topology_classification.py — 23 tests
+### 12. test_topology_classification.py — 30 tests
 
-**What it tests:** 380-graph parametric scan across triangle/diamond/gordian-lite topologies — override rate prediction from path family count and phase opposition.
+**What it tests:** 380-graph parametric scan across triangle/diamond/gordian-lite topologies — override rate prediction from path family count and phase opposition. SU(2) phase halving effect on topology classification.
 
 **Key findings:**
 - Triangle (1 family) → 0% overrides
@@ -243,9 +266,9 @@
 
 ---
 
-### 16. test_spinor.py — 52 tests
+### 16. test_spinor.py — 71 tests
 
-**What it tests:** SU(2) lift of the scalar U(1) phase layer — Pauli algebra (anticommutation, hermiticity, tracelessness), 720° periodicity (exp(−iπσ)=−𝕀, exp(−i2πσ)=+𝕀), single-path magnitude consistency (‖Ψ_SU2‖ = |Ψ_U1|), phase halving effect (Θ→Θ/2), winner divergence (U(1) vs SU(2) on Gordian Trap), non-commutativity (multi-axis transport), graph holonomy (loop transport, size dependence), structural invariants (empty paths, inadmissible paths, reference spinor independence), **geometric coupling** (Phase 4b: vorticity-derived axis from Helmholtz decomposition).
+**What it tests:** SU(2) lift of the scalar U(1) phase layer — Pauli algebra (anticommutation, hermiticity, tracelessness), 720° periodicity (exp(−iπσ)=−𝕀, exp(−i2πσ)=+𝕀), single-path magnitude consistency (‖Ψ_SU2‖ = |Ψ_U1|), phase halving effect (Θ→Θ/2), winner divergence (U(1) vs SU(2) on Gordian Trap), non-commutativity (multi-axis transport), graph holonomy (loop transport, size dependence), structural invariants (empty paths, inadmissible paths, reference spinor independence), **geometric coupling** (Phase 4b: vorticity-derived axis from Helmholtz decomposition), three-theory natural domain validation (Diamond, Leaf, Triangle-Dense, Gordian-lite), performance scaling.
 
 **Key findings:**
 - **Phase halving:** SU(2) uses exp(−iΘ/2·σ_z)|↑⟩, not exp(iΘ). Relative phase ΔΘ/2 ≈ π/2 (orthogonal) vs ΔΘ ≈ π (destructive in U(1))
@@ -258,9 +281,9 @@
 
 ---
 
-### 18. test_resonator.py — 48 tests
+### 18. test_resonator.py — 73 tests
 
-**What it tests:** Minimal 3-node resonator kernel (A→B→C→A + leakage C→OUT), R1–R4 stability criteria, classification (DECAY/METASTABLE/RESONATOR), loop path families, measurement protocol, historization-driven regime transitions, SU(2) holonomy on loop, three-theory separation.
+**What it tests:** Minimal 3-node resonator kernel (A→B→C→A + leakage C→OUT), R1–R4 stability criteria, classification (DECAY/METASTABLE/RESONATOR), loop path families, measurement protocol, historization-driven regime transitions, SU(2) holonomy on loop, three-theory separation. **Multi-loop extension:** 4-node ring, nested loops (constructive interference factor ≈2.0), coupled resonators (kernel isolation + bridge coupling), multi-loop SU(2).
 
 **Key findings:**
 - M2 (balanced)/H0 and M3 (reinforced)/H0: genuine RESONATOR (R_coh > 0.3, leakage non-dominant)
@@ -291,9 +314,9 @@
 
 ---
 
-### 20. test_historization_gordian.py — 36 tests
+### 20. test_historization_gordian.py — 61 tests
 
-**What it tests:** Formal verification of historization × Gordian trap interaction across 10 test classes: parametric resilience (δ_max, ρ, λ_s, λ_f), FAILURE outcomes (R_eff raise, v reduction), K2 lazy decay recovery (trace decay, R_eff recovery, ΔΘ recovery), clipping saturation (δ_H bounds, R_eff floor), alternating adversarial (A-short/A-loop interleave), recovery from adversarial, holonomy formula invariance under historization (holds for success, failure, mixed, loop), multi-goal × historization, extreme stress (100 A-short, 50 alternating), hybrid multi-cycle (greedy pollution, alternating greedy/hybrid).
+**What it tests:** Formal verification of historization × Gordian trap interaction across 14 test classes: parametric resilience (δ_max, ρ, λ_s, λ_f), FAILURE outcomes (R_eff raise, v reduction), K2 lazy decay recovery (trace decay, R_eff recovery, ΔΘ recovery), clipping saturation (δ_H bounds, R_eff floor), alternating adversarial (A-short/A-loop interleave), recovery from adversarial, holonomy formula invariance under historization (holds for success, failure, mixed, loop), multi-goal × historization, extreme stress (100 A-short, 50 alternating), hybrid multi-cycle (greedy pollution, alternating greedy/hybrid), **non-Gordian topologies** (Triangle, Diamond, Gordian-lite under U(1) and SU(2)), cross-topology invariants.
 
 **Key findings:**
 - Interference routing (B1 wins) survives under all tested parameter regimes
@@ -305,11 +328,98 @@
 
 ---
 
-### 21. test_greedy_trap.py — IMPORT ERROR ❌
+### 21. test_greedy_trap.py — 4 tests
 
-**What it tests:** Greedy controller trapped in A↔C loop, hybrid escapes via amplitude override.
+**What it tests:** Greedy-trap walkthrough demonstrating local-burden minimization pitfalls.
 
-**Status:** Pre-existing import error (missing dependency or circular import). Does not affect other tests. 4 test methods exist in source.
+**Status:** ✅ GREEN
+
+---
+
+### 30. test_llm_context.py — 23 tests
+
+**What it tests:** LLM SYSTEM_PROMPT canon essence (all 11 E₀ symbols: Δ, R, H, S, C, v, ω, Θ, Ψ, I, M_H), summarize_for_llm curvature_modulation exposure, overlay summary fields (override_confidence, psi_phase), reflection evidence block override count.
+
+**Key findings:**
+- Canon essence covers all 11 primitives with semantic descriptions
+- Curvature modulation flag conditionally exposed (token-efficient)
+- Override confidence and psi_phase present when overlay active
+- Evidence block includes override count when overrides occurred
+
+---
+
+### 31. test_k5_escalation.py — 9 tests
+
+**What it tests:** K5 field-based DEAD_END escalation (y* = argmax_y Σ_z v(y→z)), FILTERED and EXHAUSTED strategies unchanged, curvature_modulation effect on escalation target selection.
+
+**Key findings:**
+- DEAD_END target = state with strongest total transition field outflow
+- Replaces prior max-connectivity heuristic with E₀-native field computation
+- Equal-field tiebreak is deterministic
+- Curvature modulation changes escalation targets by damping high-curvature edges
+- FILTERED (cheapest raw neighbor) and EXHAUSTED (least-recently-visited) unchanged
+
+---
+
+### 32. test_self_tuning.py — 87 tests
+
+**What it tests:** Full B4 self-tuning meta-layer across 25 classes. Covers four sub-layers:
+- **B4.1 Meta-Layer:** RunFieldSummary, field_summary_from_run, DerivedThresholds, ParameterSensitivity, propose_tuning, apply_tuning, H_meta oscillation protection
+- **B4.2 Feedback Loop:** quality_score Q ∈ [0,1], tuning_cycle (run→diagnose→adjust→verify), tune() multi-cycle with improvement tracking, landscape reset between cycles
+- **B4.3 Cross-Run Memory:** TuningSnapshot, TuningMemory (trend, recurring_issues, drift, suggest), serialization round-trip, MemOS persistence bridge (save/load), tune_with_memory integration
+- **B4.4 True Sensitivity:** perturbation_sensitivity (∂Q/∂θ via finite differences), propose_tuning_empirical
+
+**Test classes (25):**
+- `TestRunFieldSummary` — field summary from landscape metrics
+- `TestFieldSummaryFromRun` — field summary from controller trace
+- `TestDerivedThresholds` — field-derived vs ad-hoc threshold comparison
+- `TestParameterSensitivity` — Q → θ sensitivity analysis
+- `TestOscillationProtection` — H_meta oscillation guard
+- `TestTuningProposals` — propose_tuning rule-based suggestions
+- `TestApplyTuning` — apply proposed changes to controller
+- `TestReflectionWithFieldThresholds` — field thresholds in reflection
+- `TestQualityScore` — Q formula with weights
+- `TestLandscapeReset` — landscape restoration between tuning cycles
+- `TestTuningCycle` — single run→diagnose→adjust→verify cycle
+- `TestMultiCycleTuning` — multi-cycle tune() convergence
+- `TestTuningImprovement` — improvement detected across cycles
+- `TestTuningSnapshot` — snapshot dataclass
+- `TestTuningMemoryCore` — memory record/retrieve
+- `TestQualityTrend` — trend calculation from history
+- `TestRecurringIssues` — repeated issue detection
+- `TestParameterDrift` — drift measurement
+- `TestEffectiveProposals` — drift-aware proposal filtering
+- `TestSuggestFromHistory` — suggest() combining all signals
+- `TestTuningMemorySerialization` — JSON round-trip
+- `TestTuningMemoryPersistence` — save/load to disk
+- `TestTuneWithMemory` — tune_with_memory integration
+- `TestPerturbationSensitivity` — ∂Q/∂θ finite differences
+- `TestProposeTuningEmpirical` — empirical gradient-based proposals
+
+**Key findings:**
+- Q = 0.4·goal + 0.25·τ_eff + 0.15·progress − 0.1·loop − 0.1·esc ∈ [0,1]
+- DerivedThresholds from field summary eliminate ad-hoc constants
+- Multi-cycle tuning converges: Q improves or stabilizes within 5 cycles
+- TuningMemory tracks trend, recurring issues, and parameter drift across runs
+- Perturbation ∂Q/∂θ correctly identifies sensitive parameters (alpha, recent_k)
+- propose_tuning_empirical selects adjustments aligned with gradient sign
+- Serialization round-trip preserves all fields exactly
+
+---
+
+### 33. test_session.py — 13 tests
+
+**What it tests:** Session orchestrator lifecycle across 3 classes:
+- `TestSessionLifecycle` (7): session creation, run returns SessionResult, context saved, run record saved, canon refs persisted, controller kwargs forwarded, multiple runs append
+- `TestSessionResume` (4): resume from disk restores controller, historization survives, run accumulation, nonexistent session raises FileNotFoundError
+- `TestSessionTuningMemory` (2): tuning memory saved to disk, tuning memory survives resume
+
+**Key findings:**
+- Session wraps controller + MemOS with zero persistence in the controller itself
+- Auto-saves context, run record, and tuning memory after each run
+- Resume restores landscape, historization, controller params, and tuning memory
+- Multiple runs within a session and across resumed sessions accumulate correctly
+- Uses tempfile for test isolation — no disk pollution
 
 ---
 
@@ -340,7 +450,7 @@
 
 ---
 
-### 26. test_born_sampling.py — 27 tests
+### 26. test_born_sampling.py — 31 tests
 
 **What it tests:** Born sampling (P ∝ I) as alternative realization regime alongside deterministic argmax. Validates ADR-0007 architecture decision: argmax stays default, Born sampling is opt-in. Compares success rates on Gordian, Diamond, and G5 domains across both geometry types. Covers distribution convergence, variance, coherence loss, multi-goal coverage, MemOS round-trip, and StepResult integration.
 
@@ -370,18 +480,250 @@
 
 ---
 
-## How to Run
+### 28. test_multi_axis_su2.py — 36 tests
+
+**Runner:** `python -m unittest e0_controller.test_multi_axis_su2 -v`
+
+**What it tests:** Per-edge SU(2) rotation axes (B1 from Canon Alignment §9). Extends the SU(2) spinor transport from global σ_z to per-edge axis assignment via `axis_fn(L, x, y) → n̂`. Tests across 11 classes: Pauli non-commutativity, tetrahedron domain with orthogonal per-edge axes, edge/path transport with custom axis_fn, holonomy orientation dependence, multi-axis interference vs single-axis, spinor structural invariants, controller/overlay integration (fan graph with multi-path actions), path-order dependence, four-theory comparison (U(1)/σ_z/geometric/multi-axis), and single-path axis-insensitivity control.
+
+**Key findings:**
+- Non-commutativity: max|AB−BA| > 0.1 for all Pauli pairs; same-axis commutes (< 1e-12)
+- Strongly asymmetric edge parameters needed for non-zero ω (symmetric edges give ω=0 via Helmholtz)
+- Multi-axis holonomy dist_to_I = 0.92 vs single-axis 0.05 on tetrahedron triangle
+- Multi-axis interference intensity 1.04 vs single-axis 0.82 (diff 0.23) on 3-path family
+- Single-path families axis-independent (magnitude-only, 10 decimal places)
+- Overlay intensity diff = 0.015 on fan graph with multi-path action
+- Four theories all produce distinct intensities on tetrahedron
+- axis_fn=None backward-compatible (identical to single-axis, 10 decimal places)
+
+---
+
+### 29. test_curvature_modulation.py — 35 tests
+
+**Runner:** `python -m unittest e0_controller.test_curvature_modulation -v`
+
+**What it tests:** M_H topological invariant (B2 from Canon Alignment §9). Edge curvature κ(x,y) from face holonomies, modulation factor M_H = 1/(1+κ), experimental curvature_modulation switch on Landscape, forward/backward compatibility, cache consistency, downstream effects on Helmholtz/ω/holonomy, and quantitative behavior. Tests across 10 classes with 4 graph topologies (triangle, line, diamond, tetrahedron).
+
+**Key findings:**
+- Line graph (no triangles): κ = 0, M_H = 1, v unchanged — correct flat behavior
+- Symmetric triangle: ω = 0 → κ = 0 → M_H = 1 → no modulation effect
+- Asymmetric triangle: κ > 0, M_H < 1, v_mod < v_base — curvature damps transitions
+- v_mod / v_base = M_H holds to 8 decimal places
+- curvature_modulation=False (default): zero change from existing behavior (1082 tests unaffected)
+- Downstream chain verified: v → Helmholtz → Φ → v_rot → ω → holonomy all change with modulation
+- Admissible neighbors unchanged — M_H only scales v, never removes edges
+- M_H cache built lazily, used for all subsequent calls
+- Circular dependency (transition_field → M_H → κ → ω → v_rot → transition_field) resolved via temporary flag disable during cache build
+
+---
+
+### 34. test_beipackzettel.py — 20 tests
+
+**What it tests:** Real-world Beipackzettel (package insert) landscape for Ibuprofen, mapped to E₀ states and edges. 23 edges, 16 states. Three scenarios: (1) goal_reaching finds GESUND in 3 steps, (2) simple geometry gets trapped in amplitude mass trap through MAGEN_REIZUNG loop, (3) ASS interaction scenario with goal_reaching finds safe path. Tests validate landscape structure, path outcomes, and geometry-dependent behavior.
+
+**Key findings:**
+- Amplitude mass trap confirmed: states with more outgoing edges accumulate more Ψ-terms under simple geometry → I(a) biased toward high-branching states
+- goal_reaching geometry reliably finds GESUND; simple geometry loops through side-effect states
+- Greedy takes dose escalation path (IBU_400→KEINE_WIRKUNG→IBU_800→BESSERUNG→GESUND) — not trapped, but via longer pharmacological route
+- Real-world domain validates E₀ geometry distinction beyond synthetic benchmarks
+
+---
+
+### 35. test_beipackzettel_noncircular.py — 11 tests
+
+**What it tests:** Non-circular validation of the amplitude mass trap. Uses mock LLM function that generates pharmacologically plausible Δ/R₀ values from Beipackzettel text without knowledge of what parameter values "work". Three test classes:
+- `TestNonCircularLandscapeBuild` (4): landscape size, edges, delta/resistance ranges from LLM-derived values
+- `TestNonCircularGeometryDifference` (4): goal_reaching finds goal, simple geometry does not, greedy succeeds (via longer path), hybrid override count ≥ 1
+- `TestSessionGeometryWarning` (3): Session.run() emits UserWarning when goal set but geometry≠goal_reaching, no warning when geometry matches, no warning when no goal
+
+**Key findings:**
+- Amplitude mass trap is structural (topology-dependent), not parameter-dependent — persists with LLM-derived values
+- Validates that the Session geometry warning fires correctly
+- Breaks circularity: parameters come from text analysis, not from knowing which values produce the desired demo outcome
+
+---
+
+### 36. test_provenance.py — 28 tests
+
+**What it tests:** Full 6-stage ProvenanceLog evidence chain (Input → LLM Call → Proposal → Landscape → Run → Evaluation). 11 test classes:
+- `TestInputRecord` (4): SHA-256 hashing, metadata storage, format validation
+- `TestLLMCallRecord` (4): prompt/response/model/timing capture, call recording
+- `TestProposalRecord` (1): state/edge proposal extraction
+- `TestLandscapeRecord` (2): S_eff matrix, reachability flags
+- `TestRunRecord` (2): path/override/controller-config recording
+- `TestEvaluationRecord` (1): findings dict capture
+- `TestSerialization` (3): JSON round-trip, save/load file I/O, empty log
+- `TestChainCompleteness` (4): chain_complete() logic, chain_summary() formatting
+- `TestAdapterProvenance` (3): transparent call wrapping in E0LLMAdapter
+- `TestSessionProvenance` (2): automatic run recording in Session
+- `TestEndToEndProvenance` (2): full pipeline mock, chain completeness verification
+
+**Key findings:**
+- ProvenanceLog provides lückenlose (gapless) evidence chain from raw input to evaluation
+- All stages independently testable and JSON-serializable
+- `wrap_call_fn()` intercepts LLM calls transparently — no adapter code changes needed
+- Session auto-records controller config (goal, geometry, hybrid_mode, alpha, etc.)
+
+---
+
+### 41. test_residual_tension.py — 31 tests
+
+**What it tests:** C37 Residual Tension Map and Iterative Session Control. 6 test classes:
+- `TestSnapshotTensions` (3): pre-run snapshot captures all edges, s_eff values, zero initial delta
+- `TestComputeResidualMap` (8): visited/unvisited edge tracking, delta_s computation, hotspot identification, resolved count, iteration tracking
+- `TestShouldContinue` (9): hotspot → CONTINUE verdict, no hotspot → EQUILIBRIUM, stagnation detection (Δ < 0.02), budget exhaustion (max_iterations), threshold sensitivity, should_reflect on stagnation
+- `TestSessionIterate` (5): single-iteration equilibrium, multi-iteration with hotspots, max_iterations budget, tension_threshold parameter, historization carries across iterations
+- `TestFormatResidualMap` (3): key info present in output, hotspot display, equilibrium message
+- `TestIterateReflection` (5; C37b): reflections list length = iterations, failure reflection on unreachable goal, clean equilibrium no reflection, failure_fn triggers reflection, _inter_iteration_reflect builds evaluation
+
+**Key findings:**
+- Iteration count is emergent (not prescribed): burnout live demo produced exactly 2 iterations
+- `should_continue()` implements 4 stopping conditions: CONTINUE, EQUILIBRIUM, STAGNATION, BUDGET
+- C37b: `_inter_iteration_reflect()` fires between iterations, producing ReflectionReport on failure/quality triggers
+- `IterationResult.reflections` list has one entry per iteration (may be None if no trigger)
 
 ```bash
-# Full unittest suite (915 tests + 1 error)
-python -m unittest discover -s e0_controller -p "test_*.py" -v
+# Standard unittest suite (1483 tests, no LLM calls, ~8s)
+py -3 -m unittest discover -s e0_controller -p "test_*.py" -t .
 
-# Standalone mini-domain (21 tests)
-python e0_controller/test_minidomain.py
+# Live LLM tests (requires API key, ~22s)
+py -3 -m unittest e0_controller.live_test_llm -v
 
 # Single file
-python -m unittest e0_controller.test_gordian_trap -v
+py -3 -m unittest e0_controller.test_gordian_trap -v
 ```
+
+---
+
+## Maintenance Notes
+
+### 42. test_resonator_integration.py — 37 tests
+
+**What it tests:** C39 — Integration of the resonator kernel (explore_resonator.py) into the controller's amplitude overlay via resonator.py. Seven test classes:
+- `TestCycleDetection` (8): detect_cycles() on triangle, diamond, acyclic, two-cycle domains; max_length constraints
+- `TestCycleCoherence` (5): cycle_coherence() R_coh values, broken cycle → 0, single-node degenerate, high n_cycles
+- `TestResonanceMap` (6): resonance_map() factor computation, acyclic empty, factor ∈ [1, 2], threshold filtering, ResonanceInfo fields
+- `TestIntensityModifier` (4): build_resonance_modifier() boosts cyclic action, leaves non-cyclic unchanged, linear scaling
+- `TestControllerIntegration` (6): resonator_modulation switch on E0Controller, overlay differs with resonator, full run, hybrid override, _compute_overlay injection
+- `TestBackwardCompatibility` (3): resonator_modulation=False preserves behavior, acyclic domain unaffected
+- `TestEdgeCases` (5): single edge, self-loop exclusion, probabilities sum to 1, intensities non-negative, Gordian-with-cycle probabilities valid
+
+**Key findings:**
+- Cyclic actions (B in A→B→C→A) receive intensity boost factor ∈ [1.0, 2.0]
+- Non-cyclic actions (OUT) unchanged — modifier leaves them at raw intensity
+- Acyclic domains: resonator_modulation=True has zero effect (no cycles to detect)
+- Probabilities still sum to 1.0 and intensities remain non-negative after boost
+- Hybrid mode with resonator_modulation=True works end-to-end on Gordian-with-cycle domain
+
+---
+
+### 43. test_overlap.py — 43 tests
+
+**What it tests:** C40 — Graduated overlap functional per Ontodynamics §3.4 ("Overlap is graduated, not binary"). Seven test classes covering the full M_H pipeline from triangle support → edge overlap → overlap map → landscape modulation:
+- `TestTriangleSupport` (8): T(x,y) = {z : x→z, z→y ∈ E, z ∉ {x,y}} — directed 2-hop support; linear, cycle, full triangle, nested loop, self-loop exclusion
+- `TestEdgeOverlap` (6): overlap(x→y) = Σ_z √(v(x,z)·v(z,y)) — geometric mean of support legs; zero/positive/exact, asymmetric ordering, non-negativity
+- `TestOverlapMap` (10): full M_H computation — domain-relative normalization with ε-floor; linear/cycle neutral; supported=1.0, unsupported=floor; floor parameter sensitivity; nested loop single-support
+- `TestLandscapeOverlapModulation` (7): overlap_modulation flag on Landscape — default off, on differentiates, v_mod ≤ v_base, linear/cycle no effect
+- `TestFalsificationDomain` (3): key falsification: two paths with identical Δ/R/S_eff/ω but different overlap — overlap modulation breaks the tie; v_mod/v_base = M_H verified
+- `TestBackwardCompatibility` (4): default off, curvature + overlap independent, empty landscape, single edge
+- `TestEdgeCases` (5): self-loop excluded, v=0 support leg → 0 overlap, multiple support nodes additive, floor=0 edge case
+
+**Key findings:**
+- >35 of 45 surveyed domains have zero directed triangle support → M_H trivially 1.0 (correct neutral behavior)
+- Falsification domain proves M_H is non-redundant: two edges with identical burden/phase differ only in overlap
+- Overlap normalization: M_H = (overlap + ε) / (max_overlap + ε), ε = max_overlap · floor / (1−floor)
+- If max_overlap = 0 → M_H = 1.0 everywhere (no support structure → no modulation)
+- Two independent modulation flags (curvature_modulation, overlap_modulation) coexist without interaction
+- Circular dependency resolved: cache built from base v with both modulations temporarily disabled
+
+---
+
+### 44. test_exploration_policy.py — 42 tests
+
+**What it tests:** C41 — Stochastic Exploration Policy. Born warmup → argmax exploit transition via ExplorationPolicy, integrated into Session.iterate(). Ten test classes:
+- `TestPolicyDecision` (3): PolicyDecision dataclass fields
+- `TestFixedPolicy` (4): warmup=0, always exploit from step 0
+- `TestWarmupPolicy` (6): fixed warmup count, Born during warmup, argmax after
+- `TestConvergencePolicy` (5): early switch to exploit when tension drops below threshold
+- `TestConvenienceConstructors` (3): born_warmup() and fixed() factory functions
+- `TestPolicyLabel` (3): human-readable label for each policy type
+- `TestSessionPolicyIntegration` (7): iterate() with policy, mode switches, goal reaching
+- `TestModeRestoration` (3): original mode preserved after iterate() completes
+- `TestExplorationEffect` (4): warmup builds historization that helps exploit phase
+- `TestBackwardCompatibility` (4): no policy = existing behavior unchanged
+
+**Key findings:**
+- Born warmup broadens historization coverage → exploit phase benefits from richer traces
+- Mode restoration ensures Session state is clean after iterate() regardless of policy
+- Convergence policy switches early when residual tension drops below threshold
+- No policy = zero behavioral change (backward compatible)
+
+---
+
+### 45. test_landscape_mutation.py — 56 tests
+
+**What it tests:** B4-S1 — Landscape Mutation API for Bridge 4 Structural Reflexivity. Primitives for structural self-modification of the Landscape topology. Ten test classes:
+- `TestRemoveEdge` (9): removal, delta→None, R₀→∞, tension→∞, neighbors updated, nonexistent raises, states survive, preserves other edges
+- `TestAdjustBaseResistance` (8): returns old value, changes R₀, propagates to tension/field, errors for nonexistent/negative, preserves Δ
+- `TestAdjustDelta` (7): returns old value, changes Δ, propagates, Δ=0→v=0, errors, preserves R₀
+- `TestHasEdge` (5): existing, nonexistent, directed (no reverse implication), after removal, after add
+- `TestWouldOrphan` (6): diamond no orphan, leaf orphan, both endpoints, cycle no orphan, nonexistent→empty, chain middle
+- `TestHistorizationInteraction` (4): R₀ change preserves δ_H, removal preserves traces, re-add keeps traces, R_eff = new_R₀ + δ_H
+- `TestCacheInvalidation` (3): remove clears M_H cache, adjust_R clears overlap cache, adjust_Δ clears both
+- `TestMutationErrors` (6): KeyError for nonexistent, ValueError for negative, double remove
+- `TestFieldConsistency` (5): field after R↑, R↓, Δ=0, remove→v=0, re-add restores
+- `TestUndoSupport` (3): undo R₀, undo Δ, undo remove via re-add
+
+**Key findings:**
+- All mutations invalidate modulation caches (_M_H_cache, _overlap_cache, _phi_cache)
+- Historization survives mutations — δ_H traces are on Historization object, not Landscape edges
+- remove_edge does NOT delete states — states persist for potential re-add
+- Undo is manual (caller saves old value, calls adjust again) — sufficient for Stufe 2 infrastructure
+
+---
+
+### 46. test_structural_mutation.py — 66 tests
+
+**What it tests:** B4-S2 — Structural Mutation Infrastructure for Bridge 4. Complete data layer for structural self-modification: typed mutations, admissibility, apply/revert, proposal engine, history with oscillation protection. Ten test classes:
+- `TestStructuralMutation` (5): dataclass fields, edge property, describe() for remove/add/adjust_R₀/adjust_Δ
+- `TestMutationType` (4): enum values (remove_edge, add_edge, adjust_resistance, adjust_delta)
+- `TestAdmissibility` (12): remove existing/nonexistent/orphan, add new/existing/negative/missing, adjust R₀/Δ existing/nonexistent/negative
+- `TestApplyMutation` (8): apply adjust_R₀/Δ/remove/add on Landscape, inadmissible raises, stores old values, preserves other edges
+- `TestRevertMutation` (6): revert adjust_R₀/Δ, remove→re-add with original values, add→remove, field restoration, idempotent double revert
+- `TestProposalLogic` (8): dead_states→Δ boost, loop_states→R₀ increase, empty diagnostic, admissibility filter, bounded per cycle, motivation, oscillation filter, loop dedup
+- `TestMutationRecord` (4): delta_quality computed/None, default not accepted, negative delta
+- `TestMutationHistory` (10): append, bounded capacity, oscillation detection (same-type + add↔remove), counts, per-edge isolation
+- `TestHistorySerialization` (4): empty roundtrip, with records, max_records, add_edge fields
+- `TestEndToEnd` (5): propose→apply→accept, propose→apply→revert, loop fix, history tracking, multi-cycle oscillation protection
+
+**Key findings:**
+- Admissibility gate blocks orphaning, negative values, nonexistent/duplicate edges
+- Oscillation protection: same-type R₀/Δ ping-pong AND cross-type add/remove cycling
+- Proposals bounded to 3 per cycle, loop pairs deduplicated
+- Full serialization roundtrip for MemOS persistence
+- Apply fills old_value for mechanical undo; revert uses stored values
+
+---
+
+### 47. test_structural_tuning_cycle.py — 42 tests
+
+**What it tests:** B4-S3 — Structural Tuning Cycle + Session.iterate() Integration. The complete structural tuning feedback cycle and its hook into the multi-iteration orchestrator. Ten test classes:
+- `TestStructuralTuningCycleResult` (4): dataclass defaults, quality, mutation_records, revert fields
+- `TestCycleNoProposals` (4): healthy diamond produces no mutations, quality computed, diagnostic populated, no quality_after
+- `TestCycleWithDeadStates` (5): dead state D generates ADJUST_DELTA proposals, applied_mutations filled, quality computed, accept/revert outcome
+- `TestCycleWithLoops` (4): S↔A loop detected, R₀ proposals generated, quality computed, returns correct type
+- `TestCycleRevert` (4): revert restores landscape, reverted flag set, accepted on positive delta, records match applied
+- `TestCycleHistoryIntegration` (5): history updated after cycle, None creates fresh, oscillation blocked on repeat, records have quality, accept/revert consistency
+- `TestSessionStructuralHook` (6): Session has mutation_history, iterate() returns structural_results, length matches iterations, no trigger gives None, structural trigger invokes cycle, quality trigger skips
+- `TestIterationResultFields` (3): default empty, explicit, policy_phases backward compat
+- `TestSessionMutationHistory` (3): new session has empty history, attribute exists, mutable
+- `TestEndToEndStructural` (4): full loop cycle, multiple cycles accumulate, dead state modifies landscape, no-goal works
+
+**Key findings:**
+- Eskalationskette: parametrisch erschöpft → structural trigger in reflection → structural_tuning_cycle
+- structural_tuning_cycle: Run → Diagnose → Propose → Apply → Re-run → Verify Q → Accept/Revert
+- Session.iterate() Step 6: only fires on reflection_type="structural" AND should_continue
+- MutationHistory accumulates across cycles, oscillation guard filters repeats
 
 ---
 
@@ -389,4 +731,6 @@ python -m unittest e0_controller.test_gordian_trap -v
 
 - When adding a new test file: add a row to the **Overview Table** and a **Per-File Details** section.
 - Update `Last verified` date and total count after full regression.
-- The 1 pre-existing error (`test_greedy_trap`) is a known import issue, not a test failure.
+- LLM integration tests (`test_llm_integration`) fail without `OPENAI_API_KEY` — not counted as regression failures.
+- `test_minidomain.py` runs standalone (21 tests, not discovered by unittest discover).
+- `test_beipackzettel_noncircular.py` uses mock LLM — no API key needed.

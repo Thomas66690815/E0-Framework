@@ -20,7 +20,7 @@ differences, and (3) non-commutativity — multi-axis transport operators do
 not commute, making path ordering structurally significant. We then derive
 the Born criterion: under bounded exclusive realization, the probability
 $P(z) = |{\Psi}(z)|^2 / \sum |{\Psi}(w)|^2$ is the unique structurally
-non-arbitrary distribution over outcomes. On the Gordian Trap domain,
+non-arbitrary distribution over outcomes under the BER axioms. On the Gordian Trap domain,
 phase halving inverts the interference pattern, changing the dominant
 action — a qualitative decision flip absent under U(1). All claims are
 classified as derived, empirical, or open.
@@ -89,7 +89,7 @@ This paper makes five contributions:
 
 3. **A derivation of the Born criterion** under bounded exclusive
    realization: the probability $P(z) = |\Psi(z)|^2 / \sum |\Psi(w)|^2$
-   is the unique structurally non-arbitrary distribution, emerging from
+   is the unique structurally non-arbitrary distribution under these axioms, emerging from
    amplitude structure rather than being assumed (§5).
 
 4. **An empirical analysis** of when SU(2) produces qualitatively different
@@ -1038,7 +1038,7 @@ benchmark domains ($|E| \leq 20$), this is negligible.
 ### 10.1 From U(1) to SU(2): Structural Necessity vs. Empirical Utility
 
 The carrier minimality argument (§3) establishes that SU(2) is
-*structurally forced* by internal difference. This is a mathematical
+*structurally forced given the presence of internal difference*. This is a mathematical
 fact, independent of whether SU(2) improves decision quality. The
 empirical question — whether the richer phase structure helps — has a
 nuanced answer:
@@ -1135,7 +1135,7 @@ amplitudes on discrete transition graphs. The main contributions are:
 3. **The Born criterion** (Theorem 2): under bounded exclusive
    realization, the probability $P(z) = \|\Psi(z)\|^2 / \sum \|\Psi(w)\|^2$
    is the unique structurally non-arbitrary distribution. Probability
-   emerges from interference, not from axioms.
+   emerges from interference, not from external probabilistic axioms.
 
 4. **An empirical decision flip** on the Gordian Trap domain: SU(2)
    phase halving neutralizes the destructive interference that made U(1)

@@ -217,7 +217,9 @@ class E0Controller:
         hybrid_geometry: str = "simple",
         horizon_strategy: Optional[Any] = None,
         confidence_threshold: float = 0.0,
-        use_su2: bool = False,
+        use_su2: object = False,
+        axis_fn=None,
+        resonator_modulation: bool = False,
     ):
         self.landscape = landscape
         self.execute_fn = execute_fn
@@ -233,10 +235,18 @@ class E0Controller:
         self.horizon_strategy = horizon_strategy  # 3i: dynamic horizon
         self.confidence_threshold = confidence_threshold  # 3f: override gating
         self.use_su2 = use_su2  # Paper 2: ℂ² spinor interference
+        self.axis_fn = axis_fn  # B1: per-edge SU(2) rotation axis
+        self.resonator_modulation = resonator_modulation  # C39: resonator intensity boost
         self._recent: List[str] = []   # sliding window of recent states
 
         # K1 fix: Escalation edges live here, NOT in the Landscape.
-        self._escalation_edges: Dict[Edge, Tuple[float, float]] = {}
+        self._escalation_edges: Dict[Edge, Tuple[float, float, str]] = {}
+
+    @property
+    def transport(self):
+        """TransportRegime derived from use_su2 (backward-compatible)."""
+        from .envelope import use_su2_to_transport
+        return use_su2_to_transport(self.use_su2)
 
     # --- Edge resolution (landscape + escalation overlay) ---
 
@@ -292,7 +302,7 @@ class E0Controller:
                 if self._passes_admissibility(s):
                     neighbors.append(edge.target)
         # Check escalation overlay
-        for edge, (_delta, _r0) in self._escalation_edges.items():
+        for edge, (_delta, _r0, _cb) in self._escalation_edges.items():
             if edge.source == x and edge.target not in neighbors:
                 s = self._effective_tension(x, edge.target)
                 if self._passes_admissibility(s):
@@ -385,22 +395,19 @@ class E0Controller:
 
         # Store escalation edge in controller buffer
         edge = Edge(current, target)
-        self._escalation_edges[edge] = (1.0, self.max_escalation_R)
+        self._escalation_edges[edge] = (1.0, self.max_escalation_R, esc_type.value)
         return target, True, esc_type
 
     def _escalation_target(self, current: str, esc_type: EscalationType) -> Optional[str]:
         """
-        K12: Different escalation strategies per type.
+        K12/K5: Different escalation strategies per type.
 
-        DEAD_END:   Jump to state with most outgoing edges (max connectivity).
+        DEAD_END:   Jump to state with strongest total transition field
+                    Σ_z v(y→z).  This is E₀-native: v integrates Δ, M_H,
+                    and exp(−S_eff), so the target is the state with the
+                    strongest coherent outflow.
         FILTERED:   Lower bar — pick from raw neighbors (bypass K11 threshold).
         EXHAUSTED:  Pick least-recently-visited viable state.
-
-        Note (K5 open): These strategies are operational heuristics, not
-        yet fully derived from E₀ principles.  In particular the DEAD_END
-        strategy ("most outgoing edges") is graph-structural, not
-        tension-field-based.  A future version should select escalation
-        targets via potential φ or transition field v.
         """
         if esc_type == EscalationType.FILTERED:
             # FILTERED: raw neighbors exist but fail K11 → pick cheapest raw
@@ -422,7 +429,9 @@ class E0Controller:
                     return min(not_recent, key=lambda y: self._effective_tension(current, y))
                 return min(neighbors, key=lambda y: self._effective_tension(current, y))
 
-        # DEAD_END (or fallback): global jump to most-connected state
+        # DEAD_END (or fallback): K5 — field-based global jump
+        # Select the state with the strongest total transition field outflow:
+        #   y* = argmax_y Σ_z v(y → z)
         all_states = self.landscape.states - {current}
         if not all_states:
             return None
@@ -431,7 +440,13 @@ class E0Controller:
         if not viable:
             return None
 
-        return max(viable, key=lambda s: len(self.landscape.admissible_neighbors(s)))
+        def _total_outflow(s: str) -> float:
+            return sum(
+                self.landscape.transition_field(s, z)
+                for z in self.landscape.admissible_neighbors(s)
+            )
+
+        return max(viable, key=_total_outflow)
 
     def select_hybrid(
         self, current: str
@@ -589,10 +604,16 @@ class E0Controller:
         if overlay_horizon <= 0:
             return None
         from .amplitude_overlay import analyze_controller_state
+        modifier = None
+        if self.resonator_modulation:
+            from .resonator import build_resonance_modifier
+            modifier = build_resonance_modifier(self.landscape, current)
         return analyze_controller_state(
             self, current, horizon_edges=overlay_horizon,
             geometry=overlay_geometry, goals=overlay_goals,
             use_su2=self.use_su2,
+            axis_fn=self.axis_fn,
+            intensity_modifier=modifier,
         )
 
     def run(
