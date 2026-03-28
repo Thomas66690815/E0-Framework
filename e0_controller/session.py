@@ -57,6 +57,11 @@ from .reflection import (
     reflect,
     should_reflect as _should_reflect,
 )
+from .structural_mutation import (
+    MutationHistory,
+    StructuralTuningCycleResult,
+    structural_tuning_cycle,
+)
 
 
 @dataclass
@@ -79,6 +84,7 @@ class IterationResult:
     iterations: int                        # how many runs were made
     stop_reason: str                       # "equilibrium" | "stagnation" | "budget"
     policy_phases: List[str] = field(default_factory=list)  # C41: per-iteration phase ("warmup"/"exploit"/"converged")
+    structural_results: List[Optional[StructuralTuningCycleResult]] = field(default_factory=list)  # B4-S3: per-iteration structural tuning
 
 
 class Session:
@@ -135,6 +141,7 @@ class Session:
         self.tuning_memory = load_tuning_memory(
             session_id, base_dir=base_dir,
         )
+        self.mutation_history = MutationHistory()
 
     @classmethod
     def resume(
@@ -181,6 +188,7 @@ class Session:
         obj.tuning_memory = load_tuning_memory(
             session_id, base_dir=base_dir,
         )
+        obj.mutation_history = MutationHistory()
         return obj
 
     def run(
@@ -311,6 +319,7 @@ class Session:
         results: List[SessionResult] = []
         verdicts: List[IterationVerdict] = []
         reflections: List[Optional[ReflectionReport]] = []
+        structural_results: List[Optional[StructuralTuningCycleResult]] = []
         policy_phases: List[str] = []
         prev_map: Optional[ResidualTensionMap] = None
 
@@ -355,6 +364,21 @@ class Session:
                 )
             reflections.append(report)
 
+            # 6. Structural mutation (B4-S3) — only on structural trigger
+            stc_result = None
+            if (report is not None
+                    and report.reflection_type == "structural"
+                    and verdict.should_continue):
+                stc_result = structural_tuning_cycle(
+                    self.controller,
+                    start,
+                    goal=goal,
+                    max_cycles=max_cycles,
+                    mutation_history=self.mutation_history,
+                    tuning_memory=self.tuning_memory,
+                )
+            structural_results.append(stc_result)
+
             if not verdict.should_continue:
                 break
 
@@ -370,6 +394,7 @@ class Session:
             iterations=len(results),
             stop_reason=verdicts[-1].reason if verdicts else "empty",
             policy_phases=policy_phases,
+            structural_results=structural_results,
         )
 
     def _inter_iteration_reflect(

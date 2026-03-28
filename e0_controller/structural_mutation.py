@@ -454,3 +454,212 @@ class MutationHistory:
             )
             h.records.append(rec)
         return h
+
+
+# ──────────────────────────────────────────────
+# 7. Structural Tuning Cycle (Stufe 3)
+# ──────────────────────────────────────────────
+
+@dataclass
+class StructuralTuningCycleResult:
+    """Complete output of one structural tuning feedback cycle.
+
+    Analogous to TuningCycleResult in self_tuning.py but for
+    topology-level changes instead of parameter adjustments.
+    """
+    # Before
+    quality_before: float
+
+    # Diagnostic + proposals
+    diagnostic: Any  # StructuralDiagnostic from reflection.py
+    proposals: List[StructuralMutation]
+    applied_mutations: List[StructuralMutation]
+
+    # After (None if no proposals)
+    quality_after: Optional[float] = None
+    delta_quality: Optional[float] = None
+
+    # Outcome
+    accepted: bool = False
+    reverted: bool = False
+    mutation_records: List[MutationRecord] = field(default_factory=list)
+
+
+def structural_tuning_cycle(
+    controller,
+    start: str,
+    goal: Optional[str] = None,
+    max_cycles: int = 50,
+    mutation_history: Optional[MutationHistory] = None,
+    tuning_memory: Optional[Any] = None,
+) -> StructuralTuningCycleResult:
+    """Execute one complete structural tuning feedback cycle.
+
+    Analogous to tuning_cycle() in self_tuning.py but operates on
+    landscape *topology* instead of controller parameters.
+
+    The cycle:
+    1. Run controller from *start* (baseline).
+    2. Build StructuralDiagnostic from run + tuning_memory.
+    3. Propose structural mutations from diagnostic.
+    4. If proposals exist: apply, reset landscape, re-run.
+    5. Compute Q_after and Δ = Q_after − Q_before.
+    6. If Δ < 0 (regression): revert all mutations.
+    7. Record outcome in mutation_history.
+
+    Returns StructuralTuningCycleResult with full audit trail.
+    """
+    from .self_tuning import (
+        quality_score,
+        field_summary_from_run,
+        _reset_landscape,
+    )
+    from .reflection import build_structural_diagnostic
+    from .evaluation import evaluate_run, ScenarioEvaluation
+
+    if mutation_history is None:
+        mutation_history = MutationHistory()
+
+    landscape = controller.landscape
+
+    # ── Phase 1: Baseline run ──
+    _reset_landscape(landscape)
+    controller._recent = []
+    controller._escalation_edges = {}
+
+    trace_before = controller.run(start, max_cycles=max_cycles, goal=goal)
+    fs_before = field_summary_from_run(landscape, trace_before)
+    goal_reached = (
+        trace_before.path[-1] == goal if (goal and trace_before.path) else False
+    )
+    q_before = quality_score(fs_before, goal_reached)
+
+    # ── Phase 2: Build diagnostic ──
+    # Construct a minimal ScenarioEvaluation for the diagnostic builder
+    metrics = trace_before.metrics()
+    happy_len = int(metrics["steps"])
+    eval_result = evaluate_run(
+        path=trace_before.path,
+        steps=int(metrics["steps"]),
+        escalation_count=int(metrics.get("escalation_count", 0)),
+        revisit_count=int(metrics["revisit_count"]),
+        success_rate=metrics["success_rate"],
+        avg_tension=metrics["avg_tension"],
+        total_tension=trace_before.total_tension,
+        reached_goal=goal_reached,
+        happy_path_length=happy_len,
+    )
+    scenario_eval = ScenarioEvaluation(
+        scenario_id="structural_tuning",
+        domain="structural",
+        graph_score=1.0,
+        run_evaluation=eval_result,
+        semantic_evaluation=None,
+        hard_failure=None,
+        overall_score=None,
+    )
+    diagnostic = build_structural_diagnostic(
+        scenario_eval, tuning_memory, landscape,
+    )
+
+    # ── Phase 3: Propose ──
+    proposals = propose_structural_mutations(
+        diagnostic, landscape, mutation_history,
+    )
+
+    if not proposals:
+        return StructuralTuningCycleResult(
+            quality_before=q_before,
+            diagnostic=diagnostic,
+            proposals=[],
+            applied_mutations=[],
+            accepted=False,
+        )
+
+    # ── Phase 4: Apply and re-run ──
+    applied: List[StructuralMutation] = []
+    for m in proposals:
+        try:
+            applied_m = apply_structural_mutation(m, landscape)
+            applied.append(applied_m)
+        except ValueError:
+            pass  # skip non-admissible (race with prior mutation)
+
+    if not applied:
+        return StructuralTuningCycleResult(
+            quality_before=q_before,
+            diagnostic=diagnostic,
+            proposals=proposals,
+            applied_mutations=[],
+            accepted=False,
+        )
+
+    # Reset for clean re-run
+    _reset_landscape(landscape)
+    controller._recent = []
+    controller._escalation_edges = {}
+
+    trace_after = controller.run(start, max_cycles=max_cycles, goal=goal)
+    fs_after = field_summary_from_run(landscape, trace_after)
+    goal_reached_after = (
+        trace_after.path[-1] == goal if (goal and trace_after.path) else False
+    )
+    q_after = quality_score(fs_after, goal_reached_after)
+    delta = q_after - q_before
+
+    # ── Phase 5: Accept or revert ──
+    if delta < 0:
+        # Regression: revert all applied mutations (reverse order)
+        for m in reversed(applied):
+            revert_structural_mutation(m, landscape)
+
+        records = [
+            MutationRecord(
+                mutation=m,
+                quality_before=q_before,
+                quality_after=q_after,
+                accepted=False,
+                reverted=True,
+            )
+            for m in applied
+        ]
+        for r in records:
+            mutation_history.record(r)
+
+        return StructuralTuningCycleResult(
+            quality_before=q_before,
+            diagnostic=diagnostic,
+            proposals=proposals,
+            applied_mutations=applied,
+            quality_after=q_after,
+            delta_quality=delta,
+            accepted=False,
+            reverted=True,
+            mutation_records=records,
+        )
+
+    # Improvement (or neutral): accept
+    records = [
+        MutationRecord(
+            mutation=m,
+            quality_before=q_before,
+            quality_after=q_after,
+            accepted=True,
+            reverted=False,
+        )
+        for m in applied
+    ]
+    for r in records:
+        mutation_history.record(r)
+
+    return StructuralTuningCycleResult(
+        quality_before=q_before,
+        diagnostic=diagnostic,
+        proposals=proposals,
+        applied_mutations=applied,
+        quality_after=q_after,
+        delta_quality=delta,
+        accepted=True,
+        reverted=False,
+        mutation_records=records,
+    )
