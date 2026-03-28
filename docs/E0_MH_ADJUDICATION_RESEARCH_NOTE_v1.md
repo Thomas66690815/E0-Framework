@@ -146,35 +146,118 @@ If no such domain exists, M_H = 1 is correct and final.
 
 ---
 
-## 8. Candidate Family (for future implementation)
+## 8. Answers — Empirically Grounded (2026-03-28)
 
-### 8.1 Jaccard / Neighborhood Overlap
+### Empirical Survey
 
-    M_H^J(x,y) = |N(x) ∩ N(y)| / |N(x) ∪ N(y)|
+45 domains across 12 test files were analyzed for directed triangle support:
 
-- Simplest possible existence test
-- Purely structural (ignores edge weights)
-- Canon connection: "graduated overlap" (§3.4) — but unweighted
+    T(x,y) = {z : x→z ∈ E and z→y ∈ E, z ∉ {x,y}}
 
-### 8.2 Forman-Ricci Curvature
+Results:
 
-    Ric_F(x→y) based on parallel transport structure
+| Domain | Edges | Edges with T≠∅ | Finding |
+|--------|-------|-----------------|---------|
+| Gordian Trap | 10 | 0 | No triangles. M_H trivially 1. |
+| Coupled Resonators | 8 | 0 | Two 3-cycles but no directed bypass. M_H trivially 1. |
+| Nested Loop | 6 | 1 (B→C via X) | First real overlap signal: B→X→C supports B→C. |
+| Custom Differentiator | 7 | 2 (S→B via C, C→GOAL via B) | **S→A→GOAL vs S→B→GOAL: identical v, S_eff — only overlap differs.** |
 
-- Directly edge-based, discrete, weight-aware
-- Positive = well-embedded (cluster), negative = bridge
-- Better structural proxy for overlap degree
+**Key finding:** On most E₀ domains (DAGs, trees, simple cycles), directed triangle support is zero everywhere. M_H is trivially neutral. This is correct behavior — M_H should ONLY activate when the graph has genuine overlapping bypass structure.
 
-### 8.3 Ollivier-Ricci Curvature
+### A1: Neighborhood Convention (Q1)
 
-    κ_OR(x,y) = 1 − W₁(μ_x, μ_y) / d(x,y)
+**Decision:** Forward-directed 2-hop support.
 
-- Conceptually strongest: measures neighborhood convergence
-- Computationally expensive (optimal transport)
-- Not a first candidate for implementation
+    T(x,y) = {z : x→z ∈ E and z→y ∈ E, z ∉ {x,y}}
 
-### Priority
+Rationale:
+- E₀ graphs are overwhelmingly unidirectional (30+ of 45 domains)
+- In-neighbors and undirected neighbors would fail on most domains
+- Forward triangles represent genuine **alternative paths**: if x→y exists
+  and x→z→y also exists, the transition x→y is "confirmed" by a bypass
+- This is the directed analog of shared neighborhood support
+- Empty T → M_H = 1 automatically (correct default for simple domains)
 
-Jaccard as existence test → Forman as operational candidate → Ollivier as theoretical target.
+### A2: Aggregation Function (Q2)
+
+**Decision:** Geometric mean of supporting leg strengths.
+
+    overlap(x→y) = Σ_{z ∈ T(x,y)} √(v(x,z) · v(z,y))
+
+Rationale:
+- Geometric mean: symmetric in both legs, zero if either leg is blocked
+- Uses v (transition field) as the weight — the E₀-native strength measure
+- Sum over T: multiple supporting paths contribute additively
+- Units: same as v (because √(v·v) = v), so directly comparable
+
+Empirical verification (nested loop):
+- B→C: overlap = √(v(B,X) · v(X,C)) = √(0.3767 · 0.3767) = 0.3767
+- All other edges: overlap = 0.0000
+- This correctly identifies B→C as the only structurally supported edge.
+
+### A3: Mapping to M_H (Q3)
+
+**Decision:** Domain-relative normalization with neutral default.
+
+    If max_overlap = 0 across all edges:  M_H(x,y) = 1  ∀(x,y)
+    Otherwise:  M_H(x,y) = (overlap(x,y) + ε) / (max_overlap + ε)
+
+where:
+- max_overlap = max over all edges of overlap(x,y)
+- ε = max_overlap / 4 (floors M_H at 0.2 for zero-support edges)
+
+Properties:
+- M_H ∈ [0.2, 1.0] when overlap structure exists
+- M_H = 1.0 for the best-supported edge
+- M_H = 0.2 for unsupported edges (in a domain with supported edges)
+- M_H = 1.0 everywhere on simple DAGs/trees (no signal → no modulation)
+- Canon: M_H > 0 always (§3.4: stability requires non-zero overlap)
+
+Why not boost M_H > 1? The canon says "stability requires non-zero overlap"
+— it defines overlap as a stability floor, not a bonus ceiling. Well-supported
+edges are the baseline (M_H = 1); poorly-supported edges are below baseline.
+
+Why ε = max_overlap/4? This ensures:
+- Minimum M_H = 0.2 (non-zero, moderate penalty, not catastrophic)
+- The ratio max_overlap:ε = 4:1 provides clear differentiation
+- A bridge edge in a domain with rich overlap gets 0.2× the strength — visible
+  in amplitude but doesn't eliminate the transition
+
+### A4: Falsification Domain (Q4)
+
+**Decision: Custom Overlap Differentiator.** Constructed domain:
+
+    S → A → GOAL      (bridge path: no triangle support)
+    S → B → GOAL      (supported path: S→C→B supports S→B)
+    S → C → B
+    C → GOAL           (C→B supports both S→B and creates C→GOAL support via B)
+
+All edges: δ=1.0, R=0.5. Both paths S→A→GOAL and S→B→GOAL have:
+- Identical sum_v = 1.2131
+- Identical sum_S_eff = 1.0000
+- Identical ω = 0 (no reverse edges, no asymmetry)
+
+**The only difference is overlap:**
+- S→A: overlap = 0 (no z with S→z and z→A)
+- S→B: overlap = 0.6065 (z=C: S→C and C→B both exist)
+
+This makes S→B→GOAL the structurally better-supported path.
+With M_H active, the amplitude for S→B→GOAL would be higher.
+Without M_H, both paths are indistinguishable.
+
+**This is a genuine falsification domain:** a path-choice problem where
+existing quantities (Δ, R, S_eff, ω, Θ) cannot differentiate, but
+graduated overlap can.
+
+Additional domains where M_H activates:
+- Nested loop (build_nested_loop): B→C is the only supported edge
+- Any domain with ≥1 directed triangle (mesh, tetrahedron, diamond)
+
+Domains where M_H is trivially 1 (correct):
+- Gordian Trap (Θ/ω solve the problem, not overlap)
+- All linear/tree DAGs
+- Simple un-bypassed cycles
 
 ---
 
@@ -182,13 +265,16 @@ Jaccard as existence test → Forman as operational candidate → Ollivier as th
 
 | File | Current state | Implication |
 |------|--------------|------------|
-| `connection.py` | `edge_curvature()` and `M_H_factor()` exist | Will need rethinking — κ from holonomy is wrong input |
-| `landscape.py` | `curvature_modulation` flag, `_M_H_cache` | Infrastructure is reusable, content changes |
-| `test_curvature_modulation.py` | 35 tests for holonomy-based M_H | Tests encode wrong semantics if M_H changes |
-| Paper 3 §5 | Documents current M_H | Needs update |
-| Canon Alignment §9.3 | Labels M_H as "topological invariant" | Label must change |
+| `connection.py` | `edge_curvature()` and `M_H_factor()` exist | κ from holonomy is wrong input; overlap logic needed |
+| `landscape.py` | `curvature_modulation` flag, `_M_H_cache` | Infrastructure reusable; cache content changes |
+| `test_curvature_modulation.py` | 35 tests for holonomy-based M_H | Tests valid as **curvature** tests; new overlap tests needed separately |
+| Paper 3 §5 | Documents current M_H | Needs update if overlap-M_H replaces holonomy-M_H |
+| Canon Alignment §9.3 | Labels M_H as "topological invariant" | Label → "graduated overlap functional" |
 
-**No code changes are proposed in this note.** This is a conceptual prerequisite.
+**Existing curvature modulation stays as-is.** The B2 curvature tests validate the
+holonomy/face-structure machinery, which has independent value. The new overlap-based
+M_H would be a **separate mechanism** — possibly a new flag like `overlap_modulation`
+— not a replacement for the curvature infrastructure.
 
 ---
 
@@ -200,5 +286,10 @@ Jaccard as existence test → Forman as operational candidate → Ollivier as th
 | 2026-03-28 | Both formulas identified as wrong question — input (holonomy-κ) is redundant with Θ |
 | 2026-03-28 | New working definition: M_H as graduated overlap functional (from Ontodynamics §3.4) |
 | 2026-03-28 | "Topological invariant" label retired |
-| pending | Q1–Q4 resolution before any code changes |
-| pending | Existence test on falsification domain |
+| 2026-03-28 | Q1 resolved: T(x,y) = forward-directed 2-hop support set |
+| 2026-03-28 | Q2 resolved: overlap = Σ √(v(x,z)·v(z,y)) geometric mean |
+| 2026-03-28 | Q3 resolved: domain-relative normalization, M_H ∈ [0.2, 1.0], neutral on simple domains |
+| 2026-03-28 | Q4 resolved: custom overlap differentiator domain as falsification test |
+| 2026-03-28 | 45 domains surveyed — overlap is non-trivial on <10, trivially 1 on >35 |
+| pending | Implementation as existence test (Jaccard-level, v-weighted) |
+| pending | Empirical validation on falsification domain |
