@@ -5,7 +5,7 @@
 > was ist neu entstanden, und was haben wir gelernt.
 >
 > **Datum:** 2026-03-28 (aktualisiert)  
-> **Basis:** 1815 Tests, 0 Failures, 0 Warnings, Claims C1–C41  
+> **Basis:** 1940 Tests, 0 Failures, 0 Warnings, Claims C1–C44  
 > **Stufe 1–3 Bridge 4:** Structural Mutation implementiert (Commits dd6e277, e94be7e, e3f922d)  
 > **Canon-Dokumente:** `e0-canonical-reference.txt`, `e0-canon-plain.txt`,
 > `ontodynamics.txt`, `e0-agi-blueprint.md`  
@@ -580,6 +580,7 @@ Der Canon allein hätte das nicht geleistet.
 | 2026-03-29 | Terminology correction: 4-layer model (Historization → Inscription → Inertia → Mass). Renamed `mass()`→`trace_load()`, `quality()`→`trace_quality()`, `mass_modulation_factor()`→`inertia_factor()`, `mass_modulation`→`inertia_modulation`. Old names kept as backward-compat aliases. 1852 Tests (37 in C42). See §7 of concept note |
 | 2026-03-29 | Architectural vision: E0 + LLM Bootstrap Architecture. Three operating modes (Learn/Execute/Combination), E0-aware LLM as exploration organ, Self-Fundierung (E0 learns E0 first). See `E0_LLM_BOOTSTRAP_ARCHITECTURE_v1.md` |
 | 2026-03-29 | C43: Self-Graph (Selbstunterscheidung). `SelfGraph` class with E0 operational cycle topology (8 nodes, 8 edges). `self_historize()` + component quality/load/inertia queries. Controller integration via `self_graph` attribute. ρ=1.0 (cumulative self-knowledge). 47 tests, 1899 total. See `self_graph.py` |
+| 2026-03-29 | C44: Bootstrapper. `bootstrap_landscape(spec)` converts structured domain specs into initialized Landscapes. `validate_spec()` checks topology, `_apply_confidence()` scales initial traces toward midpoint, `_inject_traces()` sets initial U/F values. Bootstrapped landscapes get `inertia_modulation=True` by default. 41 tests, 1940 total. See `bootstrapper.py` |
 
 ---
 
