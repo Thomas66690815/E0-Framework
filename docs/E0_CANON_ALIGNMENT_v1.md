@@ -578,6 +578,7 @@ Der Canon allein hätte das nicht geleistet.
 | 2026-03-28 | Update: 1815 Tests, Identity-Invariant (Stufe 4a) implementiert und geschlossen, 25 Tests. Copilot-Remote-Merge bereinigt |
 | 2026-03-29 | Update: 1848 Tests, Mass (§4) implemented as C42 — `mass()`, `quality()`, `mass_modulation_factor()` in Historization, `mass_modulation` flag in Landscape. M_H now dual-sourced: Overlap (C40) + Mass (C42). Concept note `E0_HISTORISIERUNG_ALS_MASSE_v1.md` |
 | 2026-03-29 | Terminology correction: 4-layer model (Historization → Inscription → Inertia → Mass). Renamed `mass()`→`trace_load()`, `quality()`→`trace_quality()`, `mass_modulation_factor()`→`inertia_factor()`, `mass_modulation`→`inertia_modulation`. Old names kept as backward-compat aliases. 1852 Tests (37 in C42). See §7 of concept note |
+| 2026-03-29 | Architectural vision: E0 + LLM Bootstrap Architecture. Three operating modes (Learn/Execute/Combination), E0-aware LLM as exploration organ, Self-Fundierung (E0 learns E0 first). See `E0_LLM_BOOTSTRAP_ARCHITECTURE_v1.md` |
 
 ---
 
