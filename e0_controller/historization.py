@@ -160,6 +160,84 @@ class Historization:
         _, f = self._effective_traces(edge)
         return f
 
+    def mass(self, edge: Edge) -> float:
+        """
+        Total accumulated experience on an edge.
+
+        m(e) = U(e) + F(e)
+
+        Ontodynamics §4: "Mass = persistent topological inertia resulting
+        from accumulated historization." This is the scalar magnitude —
+        how much structural inertia has accumulated, regardless of outcome.
+
+        m = 0 → unerfahren (no history)
+        m > 0 → erfahren (mass deposited)
+
+        K2: Uses effective (lazily decayed) traces.
+        """
+        u, f = self._effective_traces(edge)
+        return u + f
+
+    def quality(self, edge: Edge) -> float:
+        """
+        Normalized success/failure balance of accumulated experience.
+
+        q(e) = (U(e) − F(e)) / (U(e) + F(e) + ε)    ∈ (−1, +1)
+
+        The qualitative dimension of mass — not *how much* experience,
+        but *what kind*:
+          q → +1 : pure success (clearly learned)
+          q → −1 : pure failure (clearly avoided)
+          q ≈  0 : mixed signals or no experience
+
+        Together (mass, quality) decompose the historization into
+        magnitude and direction — the two dimensions that δ_H as a
+        scalar conflates.
+
+        K2: Uses effective (lazily decayed) traces.
+        """
+        u, f = self._effective_traces(edge)
+        return (u - f) / (u + f + 1e-12)
+
+    def mass_modulation_factor(self, edge: Edge,
+                               alpha: float = 0.5,
+                               mu: float = 5.0) -> float:
+        """
+        Experience-based modulation factor M_mass(e).
+
+        M_mass(e) = 1 − α · (m/(m+μ)) · (1 − |q|)
+
+        Dampens edges with high mass but low clarity (conflicting
+        experience). This captures information that the scalar δ_H
+        loses: when U ≈ F, δ_H ≈ 0 looks like "no experience", but
+        m >> 0 with q ≈ 0 means "lots of contradictory experience".
+
+        Parameters
+        ----------
+        alpha : float
+            Maximum dampening strength at full confusion.
+            Default 0.5 → conflicted edge damped to 0.5× at saturation.
+        mu : float
+            Half-mass reference. When m = μ, m_norm = 0.5.
+            Default 5.0 → ~5 events for half-mass.
+
+        Returns
+        -------
+        float in (1 − alpha, 1.0]:
+            1.0 when no experience or clear quality (|q| → 1).
+            Minimum when high mass and fully contradictory (|q| ≈ 0).
+
+        K2: Uses effective (lazily decayed) traces.
+        """
+        u, f = self._effective_traces(edge)
+        m = u + f
+        if m < 1e-12:
+            return 1.0  # no experience → neutral
+        m_norm = m / (m + mu)
+        q = (u - f) / (m + 1e-12)
+        confusion = 1.0 - abs(q)
+        return 1.0 - alpha * m_norm * confusion
+
     # --- Snapshot export/import (for MemOS) ---
 
     def to_snapshot_dict(self) -> dict:

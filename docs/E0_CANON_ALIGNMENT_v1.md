@@ -434,9 +434,9 @@ fehlerhaften, verwaisten Graphen arbeiten.
 | „Local Realization" (§3.2) | ❌ Nicht implementiert | Alle Transitionen sind global (ganzer Graph sichtbar) |
 | „Gradual Overlap" (§3.4) | ❌ Nicht implementiert | Konnexionen sind binär (existiert / existiert nicht) |
 | „Connection as topological operation" (§3.3) | ⚠ Teilweise | ω(x,y) ist Phasen-Connection, aber nicht topologische Konnexion im ontodynamischen Sinne |
-| „Mass" (§4) | ❌ Nicht implementiert | „Persistent topological inertia from accumulated historization" — R_eff kommt nahe, aber ist nicht als „Masse" formalisiert |
+| „Mass" (§4) | ✅ Implementiert (C42) | `mass(e) = U+F` (total inertia), `quality(e) = (U−F)/(U+F+ε)` (directional quality), `mass_modulation_factor()` (dampens conflicted edges). Integrated via `mass_modulation` flag in Landscape. 33 tests. See `E0_HISTORISIERUNG_ALS_MASSE_v1.md` |
 | „Spacetime" (§4) | ❌ Nicht implementiert | Kein Konzept von emergenter Raumzeit |
-| „M_H as graduated overlap functional" | ⚠ Konzeptionell geklärt | M_H ≡ 1 im Code; alte κ-Formel *retired* (redundant mit Θ). Neues M_H: Overlap-Funktional aus Ontodynamics §3.4 — Formel definiert, Code ausstehend. Siehe `E0_MH_ADJUDICATION_RESEARCH_NOTE_v1.md` |
+| „M_H as graduated overlap functional" | ✅ Implementiert (C40+C42) | Overlap-Funktional (C40, `overlap.py`) + Mass-Modulation (C42, `mass_modulation_factor()`). Two complementary M_H sources: structural embedding (overlap) + accumulated experience (mass). See `E0_MH_ADJUDICATION_RESEARCH_NOTE_v1.md`, `E0_HISTORISIERUNG_ALS_MASSE_v1.md` |
 
 ---
 
@@ -543,11 +543,11 @@ Der Canon allein hätte das nicht geleistet.
    ontodynamische Forderung nach „gerichteter Differenz" auf der
    Phasen-Ebene realisieren.
 
-3. **M_H als graduated overlap functional:**
-   Derzeit M_H ≡ 1. Die alte κ-basierte Formel wurde *retired* (redundant
-   mit Θ). Das neue M_H: Overlap-Funktional aus Ontodynamics §3.4.
-   Formel steht (geometric-mean von 2-hop support legs, Range [0.2, 1.0]),
-   45-Domain-Survey abgeschlossen, Code-Implementierung ausstehend.
+3. **~~M_H als graduated overlap functional:~~ ✅ Closed.**
+   Overlap-Funktional (C40, `overlap.py`) + Mass-Modulation (C42,
+   `mass_modulation_factor()`). Two M_H sources: structural embedding
+   (2-hop triangle support) + accumulated experience (mass quality).
+   33 tests (C42), integrated via `mass_modulation` flag in Landscape.
 
 5. **~~Identity-Invariant (Bridge 4, Stufe 4a):~~ ✅ Geschlossen.**
    Implementiert in `structural_mutation.py` §3b: `IdentityCheck`,
@@ -576,6 +576,7 @@ Der Canon allein hätte das nicht geleistet.
 | 2026-03-26 | Erstfassung: 1254 Tests, C1–C30, 4 offene Brücken |
 | 2026-03-28 | Update: 1790 Tests, C1–C41, Bridge 4 Stufe 1–3 geschlossen, M_H retired→overlap, Rate-Analyse ergänzt, Identity/Representation als neue offene Brücken |
 | 2026-03-28 | Update: 1815 Tests, Identity-Invariant (Stufe 4a) implementiert und geschlossen, 25 Tests. Copilot-Remote-Merge bereinigt |
+| 2026-03-29 | Update: 1848 Tests, Mass (§4) implemented as C42 — `mass()`, `quality()`, `mass_modulation_factor()` in Historization, `mass_modulation` flag in Landscape. M_H now dual-sourced: Overlap (C40) + Mass (C42). Concept note `E0_HISTORISIERUNG_ALS_MASSE_v1.md` |
 
 ---
 
