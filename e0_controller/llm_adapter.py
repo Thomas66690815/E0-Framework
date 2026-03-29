@@ -282,6 +282,47 @@ Respond with exactly this JSON (no other text):
   ]
 }}"""
 
+PROPOSE_DOMAIN_GRAPH_PROMPT = """\
+Given a domain description, design a complete E₀ domain graph.
+
+An E₀ domain graph defines the decision landscape for a specific domain:
+- Nodes: distinct states or milestones (UPPER_CASE identifiers)
+- Edges: directed transitions, each with structural parameters AND
+  your confidence estimate for each edge.
+
+Edge parameters:
+- delta: structural difference Δ ∈ [0,1] (how different source and target are)
+- resistance: base difficulty R₀ > 0 (how hard the transition is)
+- initial_U: expected number of successes on this edge (≥ 0)
+    High initial_U means you expect this transition to succeed often.
+- initial_F: expected number of failures on this edge (≥ 0)
+    High initial_F means you expect this transition to fail often.
+- confidence: how sure you are about your U/F estimates ∈ [0,1]
+    1.0 = certain, 0.5 = moderate guess, 0.0 = pure speculation.
+    Low confidence makes E0 cautious (high inertia) on that edge.
+
+Guidelines:
+- Use UPPER_CASE identifiers with underscores for node names
+- Keep the graph bounded: 4–12 nodes, 6–20 edges
+- Include both forward paths and recovery/fallback edges
+- For well-understood transitions: high initial_U, low initial_F, high confidence
+- For uncertain transitions: moderate initial_U and initial_F, low confidence
+- For risky transitions: low initial_U, high initial_F, moderate confidence
+- No self-loops (an edge cannot go from a node to itself)
+
+Context from E₀ runtime:
+{context}
+
+Domain description: {description}
+
+Respond with exactly this JSON (no other text):
+{{
+  "nodes": ["STATE_A", "STATE_B", ...],
+  "edges": [
+    {{"from": "STATE_A", "to": "STATE_B", "delta": 0.4, "resistance": 0.8, "initial_U": 5.0, "initial_F": 1.0, "confidence": 0.7}},
+    ...
+  ]
+}}"""
 
 # ──────────────────────────────────────────────
 # Response Parsing
@@ -837,6 +878,107 @@ class E0LLMAdapter:
             self._provenance.record_proposal(proposal)
 
         return proposal
+
+    # ── 7. Propose Domain Graph (C45) ──
+
+    def propose_domain_graph(
+        self,
+        description: str,
+        memos_summary: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Ask LLM to design a bootstrapper-compatible domain graph.
+
+        Returns a spec dict that can be passed directly to
+        ``bootstrapper.bootstrap_landscape(spec)``.
+
+        Args:
+            description: Natural-language description of the domain.
+            memos_summary: Output from E0MemoryOS.summarize_for_llm().
+
+        Returns:
+            Dict with 'nodes' (list of str) and 'edges' (list of dicts
+            with from/to/delta/resistance/initial_U/initial_F/confidence).
+
+        Raises:
+            LLMResponseError: If the LLM output is unparseable.
+        """
+        ctx = self._format_context(memos_summary) if memos_summary else "{}"
+        prompt = PROPOSE_DOMAIN_GRAPH_PROMPT.format(
+            context=ctx,
+            description=description,
+        )
+
+        raw = self._call(SYSTEM_PROMPT, prompt, self.config)
+        data = _parse_json_response(raw, required_keys=["nodes", "edges"])
+
+        # Normalize nodes
+        nodes = []
+        seen: set = set()
+        for n in data.get("nodes", []):
+            name = _normalize_state_name(str(n))
+            if name and _STATE_NAME_RE.match(name) and name not in seen:
+                seen.add(name)
+                nodes.append(name)
+
+        # Normalize edges
+        edges = []
+        for e in data.get("edges", []):
+            src = _normalize_state_name(str(e.get("from", "")))
+            tgt = _normalize_state_name(str(e.get("to", "")))
+            if not src or not tgt or src not in seen or tgt not in seen:
+                continue
+            if src == tgt:
+                continue  # skip self-loops
+
+            delta = float(e.get("delta", 0.5))
+            delta = max(0.0, min(1.0, delta))
+            resistance = float(e.get("resistance", 1.0))
+            resistance = max(0.01, resistance)
+
+            initial_U = float(e.get("initial_U", 0.0))
+            initial_U = max(0.0, initial_U)
+            initial_F = float(e.get("initial_F", 0.0))
+            initial_F = max(0.0, initial_F)
+
+            confidence = float(e.get("confidence", 1.0))
+            confidence = max(0.0, min(1.0, confidence))
+
+            edges.append({
+                "from": src,
+                "to": tgt,
+                "delta": delta,
+                "resistance": resistance,
+                "initial_U": initial_U,
+                "initial_F": initial_F,
+                "confidence": confidence,
+            })
+
+        return {"nodes": nodes, "edges": edges}
+
+    def propose_and_bootstrap(
+        self,
+        description: str,
+        memos_summary: Optional[Dict[str, Any]] = None,
+    ) -> "Landscape":
+        """Propose a domain graph and bootstrap it into a Landscape.
+
+        Convenience pipeline: propose_domain_graph() → bootstrap_landscape().
+
+        Args:
+            description: Natural-language description of the domain.
+            memos_summary: Output from E0MemoryOS.summarize_for_llm().
+
+        Returns:
+            An initialized Landscape with conservative historization.
+
+        Raises:
+            LLMResponseError: If the LLM output is unparseable.
+            BootstrapError: If the proposed spec fails validation.
+        """
+        from .bootstrapper import bootstrap_landscape
+
+        spec = self.propose_domain_graph(description, memos_summary)
+        return bootstrap_landscape(spec)
 
     # ── Convenience: execute_fn for E0Controller ──
 

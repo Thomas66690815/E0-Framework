@@ -596,5 +596,203 @@ class TestCompareRuns(unittest.TestCase):
             shutil.rmtree(tmp, ignore_errors=True)
 
 
+# ──────────────────────────────────────────────
+# C45: propose_domain_graph + propose_and_bootstrap
+# ──────────────────────────────────────────────
+
+def mock_propose_domain_graph_call(system: str, user: str, config: LLMConfig) -> str:
+    """Returns a bootstrapper-compatible domain spec."""
+    return json.dumps({
+        "nodes": ["INTAKE", "VALIDATE", "PROCESS", "DONE", "ERROR"],
+        "edges": [
+            {"from": "INTAKE", "to": "VALIDATE", "delta": 0.3, "resistance": 0.5,
+             "initial_U": 6.0, "initial_F": 1.0, "confidence": 0.8},
+            {"from": "VALIDATE", "to": "PROCESS", "delta": 0.5, "resistance": 0.7,
+             "initial_U": 4.0, "initial_F": 2.0, "confidence": 0.6},
+            {"from": "PROCESS", "to": "DONE", "delta": 0.4, "resistance": 0.3,
+             "initial_U": 7.0, "initial_F": 1.0, "confidence": 0.9},
+            {"from": "VALIDATE", "to": "ERROR", "delta": 0.2, "resistance": 1.5,
+             "initial_U": 1.0, "initial_F": 5.0, "confidence": 0.7},
+            {"from": "ERROR", "to": "INTAKE", "delta": 0.3, "resistance": 0.8,
+             "initial_U": 3.0, "initial_F": 2.0, "confidence": 0.5},
+        ],
+    })
+
+
+class TestProposeDomainGraph(unittest.TestCase):
+    """C45: LLM proposes bootstrapper-compatible domain graphs."""
+
+    def test_basic_propose(self):
+        adapter = E0LLMAdapter(call_fn=mock_propose_domain_graph_call)
+        spec = adapter.propose_domain_graph("Invoice processing domain")
+        self.assertIn("nodes", spec)
+        self.assertIn("edges", spec)
+        self.assertEqual(len(spec["nodes"]), 5)
+        self.assertEqual(len(spec["edges"]), 5)
+
+    def test_nodes_normalized(self):
+        """Node names are normalized to UPPER_SNAKE_CASE."""
+        def lowercase_fn(s, u, c):
+            return json.dumps({
+                "nodes": ["my state", "other-state"],
+                "edges": [{"from": "my state", "to": "other-state",
+                           "delta": 0.5, "resistance": 1.0,
+                           "initial_U": 3.0, "initial_F": 1.0, "confidence": 0.7}],
+            })
+        adapter = E0LLMAdapter(call_fn=lowercase_fn)
+        spec = adapter.propose_domain_graph("Test")
+        self.assertIn("MY_STATE", spec["nodes"])
+        self.assertIn("OTHER_STATE", spec["nodes"])
+        self.assertEqual(spec["edges"][0]["from"], "MY_STATE")
+        self.assertEqual(spec["edges"][0]["to"], "OTHER_STATE")
+
+    def test_edge_format_has_bootstrapper_keys(self):
+        adapter = E0LLMAdapter(call_fn=mock_propose_domain_graph_call)
+        spec = adapter.propose_domain_graph("Test domain")
+        edge = spec["edges"][0]
+        for key in ("from", "to", "delta", "resistance",
+                    "initial_U", "initial_F", "confidence"):
+            self.assertIn(key, edge)
+
+    def test_delta_clamped(self):
+        def extreme_fn(s, u, c):
+            return json.dumps({
+                "nodes": ["A", "B"],
+                "edges": [{"from": "A", "to": "B",
+                           "delta": 5.0, "resistance": -1.0,
+                           "initial_U": -3.0, "initial_F": -2.0,
+                           "confidence": 2.0}],
+            })
+        adapter = E0LLMAdapter(call_fn=extreme_fn)
+        spec = adapter.propose_domain_graph("Test")
+        edge = spec["edges"][0]
+        self.assertLessEqual(edge["delta"], 1.0)
+        self.assertGreaterEqual(edge["resistance"], 0.01)
+        self.assertGreaterEqual(edge["initial_U"], 0.0)
+        self.assertGreaterEqual(edge["initial_F"], 0.0)
+        self.assertLessEqual(edge["confidence"], 1.0)
+
+    def test_self_loops_skipped(self):
+        def loop_fn(s, u, c):
+            return json.dumps({
+                "nodes": ["A", "B"],
+                "edges": [
+                    {"from": "A", "to": "A", "delta": 0.5, "resistance": 1.0,
+                     "initial_U": 1.0, "initial_F": 1.0, "confidence": 0.5},
+                    {"from": "A", "to": "B", "delta": 0.5, "resistance": 1.0,
+                     "initial_U": 1.0, "initial_F": 1.0, "confidence": 0.5},
+                ],
+            })
+        adapter = E0LLMAdapter(call_fn=loop_fn)
+        spec = adapter.propose_domain_graph("Test")
+        self.assertEqual(len(spec["edges"]), 1)
+        self.assertEqual(spec["edges"][0]["to"], "B")
+
+    def test_unknown_nodes_skipped(self):
+        def bad_node_fn(s, u, c):
+            return json.dumps({
+                "nodes": ["A", "B"],
+                "edges": [
+                    {"from": "A", "to": "GHOST", "delta": 0.5, "resistance": 1.0,
+                     "initial_U": 1.0, "initial_F": 1.0, "confidence": 0.5},
+                    {"from": "A", "to": "B", "delta": 0.5, "resistance": 1.0,
+                     "initial_U": 1.0, "initial_F": 1.0, "confidence": 0.5},
+                ],
+            })
+        adapter = E0LLMAdapter(call_fn=bad_node_fn)
+        spec = adapter.propose_domain_graph("Test")
+        self.assertEqual(len(spec["edges"]), 1)
+
+    def test_defaults_when_optional_fields_missing(self):
+        def minimal_fn(s, u, c):
+            return json.dumps({
+                "nodes": ["A", "B"],
+                "edges": [{"from": "A", "to": "B"}],
+            })
+        adapter = E0LLMAdapter(call_fn=minimal_fn)
+        spec = adapter.propose_domain_graph("Test")
+        edge = spec["edges"][0]
+        self.assertAlmostEqual(edge["delta"], 0.5)
+        self.assertAlmostEqual(edge["resistance"], 1.0)
+        self.assertAlmostEqual(edge["initial_U"], 0.0)
+        self.assertAlmostEqual(edge["initial_F"], 0.0)
+        self.assertAlmostEqual(edge["confidence"], 1.0)
+
+    def test_with_memos_summary(self):
+        adapter = E0LLMAdapter(call_fn=mock_propose_domain_graph_call)
+        spec = adapter.propose_domain_graph(
+            "Test domain",
+            memos_summary={"current_state": "IDLE", "run_id": 1},
+        )
+        self.assertEqual(len(spec["nodes"]), 5)
+
+    def test_markdown_wrapped_json(self):
+        """LLM wraps JSON in markdown fences — should still parse."""
+        def md_fn(s, u, c):
+            return '```json\n' + json.dumps({
+                "nodes": ["X", "Y"],
+                "edges": [{"from": "X", "to": "Y", "delta": 0.5,
+                           "resistance": 1.0, "initial_U": 3.0,
+                           "initial_F": 1.0, "confidence": 0.8}],
+            }) + '\n```'
+        adapter = E0LLMAdapter(call_fn=md_fn)
+        spec = adapter.propose_domain_graph("Test")
+        self.assertEqual(len(spec["nodes"]), 2)
+
+    def test_invalid_json_raises(self):
+        def bad_fn(s, u, c):
+            return "not valid json at all"
+        adapter = E0LLMAdapter(call_fn=bad_fn)
+        with self.assertRaises(LLMResponseError):
+            adapter.propose_domain_graph("Test")
+
+    def test_missing_required_keys_raises(self):
+        def missing_fn(s, u, c):
+            return json.dumps({"nodes": ["A"]})
+        adapter = E0LLMAdapter(call_fn=missing_fn)
+        with self.assertRaises(LLMResponseError):
+            adapter.propose_domain_graph("Test")
+
+
+class TestProposeAndBootstrap(unittest.TestCase):
+    """C45: Full pipeline — propose_domain_graph → bootstrap_landscape."""
+
+    def test_pipeline_produces_landscape(self):
+        from e0_controller.bootstrapper import validate_spec
+        adapter = E0LLMAdapter(call_fn=mock_propose_domain_graph_call)
+        ls = adapter.propose_and_bootstrap("Invoice processing domain")
+        self.assertEqual(len(ls.states), 5)
+        self.assertEqual(ls.edge_count(), 5)
+
+    def test_pipeline_landscape_has_traces(self):
+        adapter = E0LLMAdapter(call_fn=mock_propose_domain_graph_call)
+        ls = adapter.propose_and_bootstrap("Invoice processing domain")
+        edge = Edge("INTAKE", "VALIDATE")
+        load = ls.historization.trace_load(edge)
+        self.assertGreater(load, 0.0)
+
+    def test_pipeline_landscape_has_inertia_modulation(self):
+        adapter = E0LLMAdapter(call_fn=mock_propose_domain_graph_call)
+        ls = adapter.propose_and_bootstrap("Test domain")
+        self.assertTrue(ls.inertia_modulation)
+
+    def test_pipeline_spec_validates(self):
+        """The spec from propose_domain_graph passes validate_spec."""
+        from e0_controller.bootstrapper import validate_spec
+        adapter = E0LLMAdapter(call_fn=mock_propose_domain_graph_call)
+        spec = adapter.propose_domain_graph("Test domain")
+        edge_specs = validate_spec(spec)
+        self.assertEqual(len(edge_specs), 5)
+
+    def test_pipeline_round_trip_with_controller(self):
+        """propose_and_bootstrap → controller runs successfully."""
+        adapter = E0LLMAdapter(call_fn=mock_propose_domain_graph_call)
+        ls = adapter.propose_and_bootstrap("Invoice processing")
+
+        ctrl = E0Controller(ls, lambda s, t: Outcome.SUCCESS)
+        trace = ctrl.run("INTAKE", goal="DONE", max_cycles=10)
+        self.assertIn("DONE", trace.path)
+
+
 if __name__ == "__main__":
     unittest.main()
