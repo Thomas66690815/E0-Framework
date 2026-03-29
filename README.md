@@ -207,7 +207,7 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 
 ## Current state
 
-*Last updated: 2026-03-26*
+*Last updated: 2026-03-29*
 
 | Component | Status | Where |
 |-----------|--------|-------|
@@ -238,8 +238,14 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 | Multi-agent network + experiments | **Archived** | `_archive/` |
 | Core reference implementation | **Archived** | `_archive/e0_core/` |
 | axis_fn Registry Pattern | **Planned** — full SU(2) axis persistence | — |
+| 4-Layer Model (C42) | **Active** (37 tests) | `e0_controller/historization.py` |
+| Self-Graph (C43) | **Active** (47 tests) | `e0_controller/self_graph.py` |
+| Bootstrapper (C44) | **Active** (41 tests) | `e0_controller/bootstrapper.py` |
+| Mode Controller (C46) | **Active** (36 tests) | `e0_controller/mode_controller.py` |
+| Dual Reflection (C47) | **Active** (36 tests) | `e0_controller/dual_reflection.py` |
+| Bootstrap Architecture (C43–C47) | **Complete** | `docs/E0_LLM_BOOTSTRAP_ARCHITECTURE_v1.md` |
 
-**Tests:** 1254 total (unittest discover), 0 non-LLM failures, 32 conditional (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
+**Tests:** 2028 total (pytest discover), 0 failures, 0 warnings, 41 conditional (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
 
 ---
 

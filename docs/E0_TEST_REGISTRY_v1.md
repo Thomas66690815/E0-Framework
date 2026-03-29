@@ -1,7 +1,7 @@
 # E₀ Test Registry v1
 
 > Central reference for all tests in the E₀ Framework.
-> **Last verified:** 2026-03-28 — **1790 tests** (1724 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures, 0 warnings)
+> **Last verified:** 2026-03-29 — **2028 tests** (1987 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures, 0 warnings)
 
 ---
 
@@ -10,7 +10,7 @@
 | # | File | Tests | Runner | Domain | Status |
 |---|------|------:|--------|--------|--------|
 | 1 | `test_amplitude_overlay.py` | 125 | unittest | Ψ-paths, interference, geometries | ✅ GREEN |
-| 2 | `test_llm_adapter.py` | 47 | unittest | LLM parsing, normalization, mocks | ✅ GREEN |
+| 2 | `test_llm_adapter.py` | 63 | unittest | LLM parsing, normalization, mocks, domain graph proposal (C45) | ✅ GREEN |
 | 3 | `test_gordian_trap.py` | 44 | unittest | Holonomy, Gordian trap, multi-goal | ✅ GREEN |
 | 4 | `test_evaluation.py` | 42 | unittest | Run/semantic/scenario evaluation | ✅ GREEN |
 | 5 | `test_phase2_minidomain.py` | 38 | unittest | Φ, ω, holonomy, Ψ = e^(−S+iΘ) | ✅ GREEN |
@@ -54,8 +54,13 @@
 | 43 | `test_overlap.py` | 43 | unittest | C40 Graduated Overlap: triangle_support, edge_overlap, overlap_map, landscape modulation, falsification domain, backward compat | ✅ GREEN |
 | 44 | `test_exploration_policy.py` | 42 | unittest | C41 Stochastic Exploration Policy: PolicyDecision, warmup/fixed/convergence policies, Session.iterate() integration, mode restoration, backward compat | ✅ GREEN |
 | 45 | `test_landscape_mutation.py` | 56 | unittest | B4-S1 Landscape Mutation API: remove_edge, adjust_R₀/Δ, has_edge, would_orphan, historization interaction, cache invalidation, undo | ✅ GREEN |
-| 46 | `test_structural_mutation.py` | 66 | unittest | B4-S2 Structural Mutation Infrastructure: StructuralMutation, admissibility, apply/revert, propose, MutationHistory oscillation, serialization, end-to-end | ✅ GREEN |
+| 46 | `test_structural_mutation.py` | 91 | unittest | B4-S2 Structural Mutation Infrastructure: StructuralMutation, admissibility, apply/revert, propose, MutationHistory oscillation, serialization, end-to-end, Identity Invariant (B4-S4a) | ✅ GREEN |
 | 47 | `test_structural_tuning_cycle.py` | 42 | unittest | B4-S3 Structural Tuning Cycle: StructuralTuningCycleResult, cycle no-proposals/dead/loops/revert, MutationHistory integration, Session.iterate() structural hook, IterationResult fields, end-to-end | ✅ GREEN |
+| 48 | `test_qualitative_mass.py` | 37 | unittest | C42 4-Layer Model: trace_load, trace_quality, inertia_factor, inertia_modulation, backward-compat aliases | ✅ GREEN |
+| 49 | `test_self_graph.py` | 47 | unittest | C43 Self-Graph: topology, self_historize, component quality/load/inertia, snapshot, controller integration | ✅ GREEN |
+| 50 | `test_bootstrapper.py` | 41 | unittest | C44 Bootstrapper: validate_spec, bootstrap_landscape, confidence scaling, trace injection, inertia_modulation | ✅ GREEN |
+| 51 | `test_mode_controller.py` | 36 | unittest | C46 Mode Controller: OperatingMode, coverage, edge_needs_llm, neighbors_needing_llm, controller integration | ✅ GREEN |
+| 52 | `test_dual_reflection.py` | 36 | unittest | C47 Dual Reflection: diagnose_self_graph, component assessment, cross-reference, reflect_dual, meta-control, formatting | ✅ GREEN |
 
 ---
 
@@ -724,6 +729,70 @@ py -3 -m unittest e0_controller.test_gordian_trap -v
 - structural_tuning_cycle: Run → Diagnose → Propose → Apply → Re-run → Verify Q → Accept/Revert
 - Session.iterate() Step 6: only fires on reflection_type="structural" AND should_continue
 - MutationHistory accumulates across cycles, oscillation guard filters repeats
+
+---
+
+### 48. test_qualitative_mass.py — 37 tests
+
+**What it tests:** C42 — 4-Layer Model (Historization → Inscription → Inertia → Mass). The core functions `trace_load()`, `trace_quality()`, `inertia_factor()` on Historization edges, the `inertia_modulation` flag on Landscape, and backward-compatibility aliases (`mass()`, `quality()`, `mass_modulation_factor()`, `mass_modulation`).
+
+**Key findings:**
+- `trace_load()` = effective trace count with ρ-decay
+- `trace_quality()` = (U−F)/(U+F), bounded in [−1, +1]
+- `inertia_factor()` = 1 − α·(m/(m+μ))·(1−|q|): high load + high quality → low inertia (confident), high load + low quality → high inertia (confused)
+- Old names still work as aliases for backward compat
+
+---
+
+### 49. test_self_graph.py — 47 tests
+
+**What it tests:** C43 — Self-Graph (Selbstunterscheidung). E0's structural self-knowledge: 8-node, 8-edge dedicated Landscape representing E0's own operational cycle. ρ=1.0 (cumulative — no decay). `self_historize()` updates traces on edges where both endpoints are active. `component_quality/load/inertia()` aggregate outgoing edge metrics. `snapshot()` for MemOS persistence. Controller integration via `self.self_graph` attribute.
+
+**Key findings:**
+- Core components (amplitude, born, realization, historization, inertia, transition_field) always active
+- Modulation components (curvature, overlap) active only when their flags are enabled
+- Only edges where both source and target are in active set get updated
+- Quality converges: all SUCCESS → positive, all FAILURE → negative, mixed → near zero
+- Controller `cycle()` hook calls `self_graph.self_historize()` after historization
+
+---
+
+### 50. test_bootstrapper.py — 41 tests
+
+**What it tests:** C44 — Bootstrapper. Converts structured domain specs into initialized Landscapes. `validate_spec()` checks structure (nodes, edges, types, ranges). `bootstrap_landscape()` builds Landscape with topology + injected initial traces. `_apply_confidence()` scales initial traces toward midpoint (low confidence → balanced U/F → low |quality| → E0 is cautious). `_inject_traces()` injects U/F values from spec.
+
+**Key findings:**
+- Validates: no empty graph, no negative weights, no self-loops, edges reference known nodes
+- Confidence=1.0 preserves exact U/F ratios; confidence=0.0 forces U=F (quality=0)
+- Bootstrapped landscapes get `inertia_modulation=True` by default
+- Unknown nodes in edges are skipped (lenient parsing for LLM output)
+
+---
+
+### 51. test_mode_controller.py — 36 tests
+
+**What it tests:** C46 — Mode Controller. `OperatingMode` enum (LEARN / EXECUTE / COMBINATION). `ModeController` monitors Landscape edge `trace_load` vs μ threshold. `current_mode()` determines aggregate mode from coverage ratio. `edge_needs_llm()` / `neighbors_needing_llm()` for COMBINATION filtering. Coverage statistics.
+
+**Key findings:**
+- Empty landscape → LEARN mode (no data to operate on)
+- All edges explored (trace_load ≥ μ) → EXECUTE mode (autonomous)
+- Mixture → COMBINATION (call LLM only for unexplored edges)
+- Uses same μ threshold as `inertia_factor()` — consistent semantics
+- Controller integration via `self.mode_controller` attribute
+
+---
+
+### 52. test_dual_reflection.py — 36 tests
+
+**What it tests:** C47 — Dual Reflection. Combines domain `ReflectionReport` with self-graph `SelfGraphDiagnosis`. `diagnose_self_graph()` classifies each component as healthy/confused/harmful/insufficient_data. Cross-referencing: domain failure layers + self-graph issues → targeted meta-actions. Meta-control: modulation components (curvature, overlap) with negative quality → deactivation candidates. `format_dual_report()` for human-readable combined output.
+
+**Key findings:**
+- Fresh self-graph: all components have insufficient_data (no traces yet)
+- After 10+ successes: all assessed components healthy
+- After failures only: harmful components, modulation → deactivation candidates
+- Mixed outcomes: confused status, investigation recommended
+- Cross-reference: domain flags "controller" + born is harmful → prioritize born investigation
+- Core components never in deactivation_candidates (only modulation can be disabled)
 
 ---
 

@@ -216,17 +216,20 @@ Using "mass" for the inner trace would confuse the self-referential loop. The in
 
 ---
 
-## §9 — Implementation Plan (C43–C47)
+## §9 — Implementation Plan (C43–C47) — ALL COMPLETE ✅
+
+> **Status (2026-03-29):** All five components implemented, tested, and committed.
+> Total: 197 dedicated tests + 16 extended tests, 2028 tests overall.
 
 ### Dependency graph
 
 ```
-C43 (Self-Graph) ─────────────────────────────► C47 (Dual Reflection)
+C43 (Self-Graph) ✅ ─────────────────────────► C47 (Dual Reflection) ✅
                                                       ▲
-C44 (Bootstrapper) ──► C45 (LLM Adapter v2) ──► C46 (Mode Controller)
+C44 (Bootstrapper) ✅ ► C45 (LLM Adapter v2) ✅ ► C46 (Mode Controller) ✅
 ```
 
-### C43 — Self-Graph (first — canonically correct: Selbstunterscheidung)
+### C43 — Self-Graph ✅ (Commit 6d9c5ce, 47 tests)
 
 A dedicated `Landscape` instance representing E0's own operational cycle.
 
@@ -236,15 +239,22 @@ A dedicated `Landscape` instance representing E0's own operational cycle.
 
 **Edges (optional modulations):** curvature→transition_field, overlap→transition_field (Δ=1.0, R₀=1.0)
 
-**Key API:**
-- `self_historize(component, outcome)` — update self-graph after each decision
-- `query_component_quality(component)` → trace_quality for that component
+**Implemented API:**
+- `self_historize(components, outcome)` — update edges where both endpoints are in active set
+- `component_quality(component)` → average trace_quality on outgoing edges
+- `component_load(component)` → average trace_load on outgoing edges
+- `component_inertia(component)` → average inertia_factor on outgoing edges
+- `snapshot()` → dict for MemOS persistence
+- `summary()` → human-readable status
+- `active_components(curvature_active, overlap_active, inertia_active)` → active component list
 
-**Builds on:** Landscape, Historization (existing). No new dependencies.
+**ρ=1.0:** Self-knowledge is cumulative (no decay). E0's operational cycle is fixed — what it learns about itself is permanent structural knowledge.
 
-### C44 — Bootstrapper (parallel with C43)
+**Controller hook:** `cycle()` calls `self_graph.self_historize()` after domain historization.
 
-`DomainBootstrap` class that converts structured dicts into initialized Landscapes.
+### C44 — Bootstrapper ✅ (Commit b71f1c7, 41 tests)
+
+`bootstrap_landscape(spec)` converts structured dicts into initialized Landscapes.
 
 **Input format:**
 ```python
@@ -252,19 +262,19 @@ A dedicated `Landscape` instance representing E0's own operational cycle.
   "resistance": 0.5, "initial_U": 5, "initial_F": 2, "confidence": 0.6}]}
 ```
 
-**Key behavior:** High `trace_load` but low `|trace_quality|` for LLM-sourced knowledge → E0 is cautious initially. Validates topology via `graph_validation.py`.
+**Key behavior:** `confidence` scales initial traces toward midpoint. High `trace_load` but low `|trace_quality|` for low-confidence edges → E0 is cautious initially. Validates topology via `graph_validation.py`. Bootstrapped landscapes have `inertia_modulation=True` by default.
 
-### C45 — LLM Adapter v2 (after C44)
+### C45 — LLM Adapter v2 ✅ (Commit e2540f3, 17 tests)
 
-New method `propose_domain_graph(description)` → structured dict matching C44 format. Prompt template teaches LLM the E0 graph semantics (Δ = structural difference, R₀ = base resistance). Parser + validation.
+`propose_domain_graph(description)` → structured dict matching C44 format. `propose_and_bootstrap(description)` → ready Landscape in one call. `PROPOSE_DOMAIN_GRAPH_PROMPT` teaches LLM the E0 graph semantics (Δ = structural difference, R₀ = base resistance, confidence per edge). Parser normalizes names, clamps values, skips self-loops.
 
-### C46 — Mode Controller (after C45)
+### C46 — Mode Controller ✅ (Commit 8f6deca, 36 tests)
 
-`OperatingMode` enum (LEARN / EXECUTE / COMBINATION / AUTO). Trigger: `trace_load(e) < μ` on any considered edge → call LLM. The `inertia_factor` formula already encodes this threshold — reuse, don't reinvent.
+`OperatingMode` enum (LEARN / EXECUTE / COMBINATION). `ModeController` monitors `trace_load` vs μ threshold on all edges. `current_mode()`: all explored → EXECUTE, ≥learn_ratio unexplored → LEARN, else COMBINATION. `edge_needs_llm()` / `neighbors_needing_llm()` for COMBINATION filtering. Uses same μ as `inertia_factor()`.
 
-### C47 — Dual Reflection (after C43 + C46)
+### C47 — Dual Reflection ✅ (Commit a225188, 36 tests)
 
-Hook in `E0Controller.step()`: after realization, update both domain graph AND self-graph. ReflectionReport extended with self-graph diagnosis. Meta-control: component with low self-graph quality → suggest deactivation.
+`diagnose_self_graph()` classifies components as healthy/confused/harmful/insufficient_data. `DualReflectionReport` combines domain `ReflectionReport` with `SelfGraphDiagnosis`. `reflect_dual()` cross-references domain failures with self-graph issues for targeted meta-actions. Meta-control: modulation components with negative quality → deactivation candidates. `format_dual_report()` for human-readable output.
 
 ---
 

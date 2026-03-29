@@ -3,8 +3,8 @@
 > Central validation registry for the E₀ Framework.
 > **Purpose:** connect claims, tests, evidence, and status in one place.
 
-**Last updated:** 2026-03-28 — **1815 tests** (0 failures, 0 warnings)  
-**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, and active edge-case work.
+**Last updated:** 2026-03-29 — **2028 tests** (0 failures, 0 warnings)  
+**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, and active edge-case work.
 
 ---
 
@@ -1386,6 +1386,169 @@ These three invariants are checked post-mutation in `structural_tuning_cycle()` 
 - AGI Blueprint §5: "self-modification becomes one admissible transition among others"
 - E₀ Canonical Reference A₀: Non-transition is structurally unstable — must remain enforceable throughout reachable subgraph after mutation
 - Structural Deep Review v1 §6.1: three-part invariant analysis
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C42 — 4-Layer Model (Historization → Inscription → Inertia → Mass)
+
+**Claim**  
+Historization accumulates traces that produce measurable quantities at four layers: (1) Historization (raw trace storage), (2) Inscription (`trace_load` = effective count with ρ-decay), (3) Inertia (`inertia_factor` = functional dampening from load + quality), (4) Mass (emergent behavioral weight). The core formula is:
+
+```
+I(e) = 1 − α · (m/(m+μ)) · (1−|q|)
+```
+
+where m = trace_load, q = trace_quality. High load + high quality → low inertia (confident). High load + contradictory quality → high inertia (confused). This is the first quantitative operationalization of "artificial mass" from Ontodynamics.
+
+**Evidence**  
+- `e0_controller/historization.py` — `trace_load()`, `trace_quality()`, `inertia_factor()`
+- `e0_controller/landscape.py` — `inertia_modulation` flag
+- `e0_controller/test_qualitative_mass.py` — 37 tests
+- `docs/E0_HISTORISIERUNG_ALS_MASSE_v1.md` — concept note
+
+**Result**  
+- `trace_load` correctly accounts for ρ-decay (ρ=0.9 default)
+- `trace_quality` bounded in [−1, +1], converges with dominant outcome
+- `inertia_factor` monotonic: I→0 as m→∞ with |q|→1 (confident); I→1 as m→∞ with q→0 (confused)
+- Backward-compat aliases preserved: `mass()`, `quality()`, `mass_modulation_factor()`, `mass_modulation`
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C43 — Self-Graph (Selbstunterscheidung)
+
+**Claim**  
+E0 can learn its own operational structure by maintaining a dedicated Landscape instance representing its decision cycle (amplitude → born → realization → historization → inertia → transition_field → amplitude, plus curvature/overlap modulations). After each controller decision, `self_historize()` records which components contributed and whether the outcome was good. Over time, `component_quality()` reveals which components are effective (high |q|) and which are confused (q ≈ 0).
+
+**Canon basis:** Ontodynamics begins with Selbstunterscheidung — a process that distinguishes itself from itself before distinguishing from anything else. The Self-Graph implements this: E0's first domain is E0.
+
+**Evidence**  
+- `e0_controller/self_graph.py` — `SelfGraph`, `active_components()`, topology constants
+- `e0_controller/test_self_graph.py` — 47 tests across 9 classes
+- `e0_controller/controller.py` — self_graph hook in `cycle()` after historization
+
+**Result**  
+- 8 nodes + 8 edges represent E0's complete operational cycle
+- ρ=1.0 (cumulative — self-knowledge does not decay, unlike domain edges)
+- Only edges where both endpoints are active get updated (attribution precision)
+- Core components always active; modulation components conditional on landscape flags
+- `snapshot()` exports for MemOS persistence; `summary()` for human diagnosis
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C44 — Bootstrapper (structured spec → Landscape)
+
+**Claim**  
+A structured domain spec (from LLM or manual input) can be converted into an initialized Landscape with pre-seeded traces. The `confidence` parameter on each edge controls how much E0 trusts the initial estimates: confidence=1.0 preserves exact U/F ratios; confidence=0.0 forces balanced U=F (quality=0, maximum caution). This solves the cold-start problem: E0 gets initial structure from LLM but remains epistemically cautious about unverified edges.
+
+**Evidence**  
+- `e0_controller/bootstrapper.py` — `bootstrap_landscape()`, `validate_spec()`, `_apply_confidence()`, `_inject_traces()`
+- `e0_controller/test_bootstrapper.py` — 41 tests across 7 classes
+
+**Result**  
+- Validates: no empty graph, no negative weights, no self-loops, edges reference known nodes
+- Confidence=1.0 preserves exact U/F ratios; confidence=0.0 forces U=F (quality=0)
+- Bootstrapped landscapes get `inertia_modulation=True` by default
+- Unknown nodes in edges are skipped (lenient parsing for LLM output)
+- End-to-end pipeline: spec → validate → bootstrap → controller runs successfully
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C45 — LLM Adapter v2 (propose_domain_graph)
+
+**Claim**  
+The LLM can be prompted to propose a complete domain graph in bootstrapper-compatible format. `propose_domain_graph(description)` sends a structured prompt that teaches the LLM E0's graph semantics (Δ = structural difference, R₀ = base resistance, confidence per edge) and returns a parsed spec dict. `propose_and_bootstrap(description)` chains proposal + bootstrapping into a ready Landscape.
+
+**Evidence**  
+- `e0_controller/llm_adapter.py` — `PROPOSE_DOMAIN_GRAPH_PROMPT`, `propose_domain_graph()`, `propose_and_bootstrap()`
+- `e0_controller/test_llm_adapter.py` — 17 new tests (12 propose + 5 pipeline), 63 total
+
+**Result**  
+- Prompt teaches LLM: nodes, edges with from/to/delta/resistance/initial_U/initial_F/confidence
+- Parser normalizes names (UPPER_SNAKE_CASE), clamps values, skips self-loops and unknown-node edges
+- `propose_and_bootstrap()` → fully initialized Landscape in one call
+- Error handling: invalid JSON → LLMResponseError with raw_response
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C46 — Mode Controller (LEARN / EXECUTE / COMBINATION)
+
+**Claim**  
+E0 can automatically determine its operating mode based on accumulated experience. If most edges have insufficient trace data (`trace_load < μ`), E0 is in LEARN mode (needs LLM). If all edges are well-explored, E0 switches to EXECUTE mode (autonomous). In between: COMBINATION mode (call LLM only for unexplored edges). The μ threshold reuses the same parameter from `inertia_factor()` — consistent semantics.
+
+**Evidence**  
+- `e0_controller/mode_controller.py` — `OperatingMode`, `ModeController`, `current_mode()`, `edge_needs_llm()`, `neighbors_needing_llm()`, `coverage()`, `summary()`
+- `e0_controller/test_mode_controller.py` — 36 tests across 9 classes
+- `e0_controller/controller.py` — `self.mode_controller` attribute
+
+**Result**  
+- Empty landscape → LEARN (no data)
+- All edges explored → EXECUTE (autonomous)
+- ≥learn_ratio fraction unexplored → LEARN; else → COMBINATION
+- `neighbors_needing_llm(state)` returns successor states that still need LLM exploration
+- Coverage ratio correctly tracks total/explored/unexplored edge counts
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C47 — Dual Reflection (self-graph diagnosis + meta-control)
+
+**Claim**  
+The reflection system can diagnose not only domain-level problems but also E0's own component health. `diagnose_self_graph()` classifies each of E0's 8 components as healthy/confused/harmful/insufficient_data based on self-graph traces. `reflect_dual()` cross-references domain failures with self-graph issues for targeted meta-actions. Modulation components (curvature, overlap) with persistently negative quality become deactivation candidates — core components are flagged but never auto-deactivated.
+
+**Architecture level:** This completes the three-level self-knowledge hierarchy from the Bootstrap Architecture (§6): Level 1 = structural self-image (C43 self-graph topology), Level 2 = operational reflection (C47 component diagnosis), Level 3 = meta-control (C47 deactivation recommendations).
+
+**Evidence**  
+- `e0_controller/dual_reflection.py` — `diagnose_self_graph()`, `ComponentAssessment`, `SelfGraphDiagnosis`, `DualReflectionReport`, `reflect_dual()`, `_cross_reference()`, `format_dual_report()`
+- `e0_controller/test_dual_reflection.py` — 36 tests across 7 classes
+
+**Result**  
+- Fresh self-graph: all components insufficient_data (no traces yet)
+- After successes: all assessed components healthy
+- After failures only: harmful components, modulation → deactivation candidates
+- Mixed outcomes: confused status, investigation meta-actions generated
+- Cross-reference: domain flags "controller" + self-graph shows born is harmful → "prioritize born investigation"
+- Restructuring recommended + deactivation candidates → "deactivate before restructuring"
+- Core components never in deactivation_candidates (only modulation can be disabled)
+- `format_dual_report()` produces complete human-readable output with mode info, domain reflection, self-graph diagnosis, and meta-actions
+
+**Status**  
+✅ Confirmed
+
+---
+
+### Bootstrap Architecture (C43–C47) — Complete
+
+**Claim**  
+The E0+LLM Bootstrap Architecture is fully implemented. The five components work together:
+1. **C43 Self-Graph**: E0 learns its own structure (Selbstunterscheidung)
+2. **C44 Bootstrapper**: Structured specs → initialized Landscapes with confidence-scaled traces
+3. **C45 LLM Adapter v2**: LLM proposes domain graphs in bootstrapper format
+4. **C46 Mode Controller**: Automatic LEARN/EXECUTE/COMBINATION switching based on trace coverage
+5. **C47 Dual Reflection**: Combined domain + self-graph diagnosis with meta-control
+
+The dependency chain `C43 → C47` and `C44 → C45 → C46 → C47` is fully resolved. E0 can now: receive domain knowledge from an LLM, initialize a cautious Landscape, run autonomously once sufficient experience accumulates, and diagnose both domain problems and its own component health.
+
+**Evidence**  
+- 5 modules: `self_graph.py`, `bootstrapper.py`, `llm_adapter.py` (extended), `mode_controller.py`, `dual_reflection.py`
+- 5 test files: 197 tests total (47 + 41 + 17 + 36 + 36, plus 16 in llm_adapter existing)
+- Architecture doc: `docs/E0_LLM_BOOTSTRAP_ARCHITECTURE_v1.md`
 
 **Status**  
 ✅ Confirmed
