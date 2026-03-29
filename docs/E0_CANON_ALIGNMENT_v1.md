@@ -434,9 +434,9 @@ fehlerhaften, verwaisten Graphen arbeiten.
 | „Local Realization" (§3.2) | ❌ Nicht implementiert | Alle Transitionen sind global (ganzer Graph sichtbar) |
 | „Gradual Overlap" (§3.4) | ❌ Nicht implementiert | Konnexionen sind binär (existiert / existiert nicht) |
 | „Connection as topological operation" (§3.3) | ⚠ Teilweise | ω(x,y) ist Phasen-Connection, aber nicht topologische Konnexion im ontodynamischen Sinne |
-| „Mass" (§4) | ✅ Implementiert (C42) | `mass(e) = U+F` (total inertia), `quality(e) = (U−F)/(U+F+ε)` (directional quality), `mass_modulation_factor()` (dampens conflicted edges). Integrated via `mass_modulation` flag in Landscape. 33 tests. See `E0_HISTORISIERUNG_ALS_MASSE_v1.md` |
+| „Mass" (§4) | ✅ Implementiert (C42) | `trace_load(e) = U+F` (structural inscription), `trace_quality(e) = (U−F)/(U+F+ε)` (directional quality), `inertia_factor()` (dampens conflicted edges). Integrated via `inertia_modulation` flag in Landscape. 37 tests. 4-layer model: Historization → Inscription → Inertia → Mass (emergent). Old names retained as aliases. See `E0_HISTORISIERUNG_ALS_MASSE_v1.md` §7 |
 | „Spacetime" (§4) | ❌ Nicht implementiert | Kein Konzept von emergenter Raumzeit |
-| „M_H as graduated overlap functional" | ✅ Implementiert (C40+C42) | Overlap-Funktional (C40, `overlap.py`) + Mass-Modulation (C42, `mass_modulation_factor()`). Two complementary M_H sources: structural embedding (overlap) + accumulated experience (mass). See `E0_MH_ADJUDICATION_RESEARCH_NOTE_v1.md`, `E0_HISTORISIERUNG_ALS_MASSE_v1.md` |
+| „M_H as graduated overlap functional" | ✅ Implementiert (C40+C42) | Overlap-Funktional (C40, `overlap.py`) + Inertia-Modulation (C42, `inertia_factor()`). Two complementary M_H sources: structural embedding (overlap) + accumulated experience (inscription/inertia). See `E0_MH_ADJUDICATION_RESEARCH_NOTE_v1.md`, `E0_HISTORISIERUNG_ALS_MASSE_v1.md` §7 |
 
 ---
 
@@ -577,6 +577,7 @@ Der Canon allein hätte das nicht geleistet.
 | 2026-03-28 | Update: 1790 Tests, C1–C41, Bridge 4 Stufe 1–3 geschlossen, M_H retired→overlap, Rate-Analyse ergänzt, Identity/Representation als neue offene Brücken |
 | 2026-03-28 | Update: 1815 Tests, Identity-Invariant (Stufe 4a) implementiert und geschlossen, 25 Tests. Copilot-Remote-Merge bereinigt |
 | 2026-03-29 | Update: 1848 Tests, Mass (§4) implemented as C42 — `mass()`, `quality()`, `mass_modulation_factor()` in Historization, `mass_modulation` flag in Landscape. M_H now dual-sourced: Overlap (C40) + Mass (C42). Concept note `E0_HISTORISIERUNG_ALS_MASSE_v1.md` |
+| 2026-03-29 | Terminology correction: 4-layer model (Historization → Inscription → Inertia → Mass). Renamed `mass()`→`trace_load()`, `quality()`→`trace_quality()`, `mass_modulation_factor()`→`inertia_factor()`, `mass_modulation`→`inertia_modulation`. Old names kept as backward-compat aliases. 1852 Tests (37 in C42). See §7 of concept note |
 
 ---
 

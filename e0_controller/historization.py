@@ -160,57 +160,71 @@ class Historization:
         _, f = self._effective_traces(edge)
         return f
 
-    def mass(self, edge: Edge) -> float:
+    def trace_load(self, edge: Edge) -> float:
         """
-        Total accumulated experience on an edge.
+        Total accumulated structural inscription on an edge (Layer 2).
 
-        m(e) = U(e) + F(e)
+        trace_load(e) = U(e) + F(e)
 
-        Ontodynamics §4: "Mass = persistent topological inertia resulting
-        from accumulated historization." This is the scalar magnitude —
-        how much structural inertia has accumulated, regardless of outcome.
+        Layer model (Ontodynamics §4):
+          1. Historization — the process (update/decay)
+          2. Structural inscription — what remains (trace_load, trace_quality)
+          3. Inertia — functional effect (inertia_factor)
+          4. Mass — outward appearance (emergent, not computed here)
 
-        m = 0 → unerfahren (no history)
-        m > 0 → erfahren (mass deposited)
+        trace_load = 0 → no inscription (virgin edge)
+        trace_load > 0 → accumulated structural trace
 
         K2: Uses effective (lazily decayed) traces.
         """
         u, f = self._effective_traces(edge)
         return u + f
 
-    def quality(self, edge: Edge) -> float:
+    # Backward-compatible alias
+    mass = trace_load
+
+    def trace_quality(self, edge: Edge) -> float:
         """
-        Normalized success/failure balance of accumulated experience.
+        Directional balance of accumulated structural inscription (Layer 2).
 
         q(e) = (U(e) − F(e)) / (U(e) + F(e) + ε)    ∈ (−1, +1)
 
-        The qualitative dimension of mass — not *how much* experience,
-        but *what kind*:
-          q → +1 : pure success (clearly learned)
+        Not *how much* inscription, but *what kind*:
+          q → +1 : pure success (clearly reinforced)
           q → −1 : pure failure (clearly avoided)
-          q ≈  0 : mixed signals or no experience
+          q ≈  0 : mixed signals or no inscription
 
-        Together (mass, quality) decompose the historization into
-        magnitude and direction — the two dimensions that δ_H as a
-        scalar conflates.
+        Together (trace_load, trace_quality) decompose the structural
+        inscription into magnitude and direction — the two dimensions
+        that scalar δ_H conflates.
 
         K2: Uses effective (lazily decayed) traces.
         """
         u, f = self._effective_traces(edge)
         return (u - f) / (u + f + 1e-12)
 
-    def mass_modulation_factor(self, edge: Edge,
-                               alpha: float = 0.5,
-                               mu: float = 5.0) -> float:
+    # Backward-compatible alias
+    quality = trace_quality
+
+    def inertia_factor(self, edge: Edge,
+                       alpha: float = 0.5,
+                       mu: float = 5.0) -> float:
         """
-        Experience-based modulation factor M_mass(e).
+        Inertia modulation factor from structural inscription (Layer 3).
 
-        M_mass(e) = 1 − α · (m/(m+μ)) · (1 − |q|)
+        I(e) = 1 − α · (m/(m+μ)) · (1 − |q|)
 
-        Dampens edges with high mass but low clarity (conflicting
+        where m = trace_load(e), q = trace_quality(e).
+
+        Layer model:
+          Layer 2 (inscription) → m and q exist
+          Layer 3 (inertia) → this function: how inscription resists change
+          Layer 4 (mass) → emergent behavior visible from outside
+
+        Dampens edges with high inscription but low clarity (conflicting
         experience). This captures information that the scalar δ_H
-        loses: when U ≈ F, δ_H ≈ 0 looks like "no experience", but
-        m >> 0 with q ≈ 0 means "lots of contradictory experience".
+        loses: when U ≈ F, δ_H ≈ 0 looks like "no inscription", but
+        m >> 0 with q ≈ 0 means "lots of contradictory inscription".
 
         Parameters
         ----------
@@ -218,25 +232,28 @@ class Historization:
             Maximum dampening strength at full confusion.
             Default 0.5 → conflicted edge damped to 0.5× at saturation.
         mu : float
-            Half-mass reference. When m = μ, m_norm = 0.5.
-            Default 5.0 → ~5 events for half-mass.
+            Half-load reference. When m = μ, m_norm = 0.5.
+            Default 5.0 → ~5 events for half-load.
 
         Returns
         -------
         float in (1 − alpha, 1.0]:
-            1.0 when no experience or clear quality (|q| → 1).
-            Minimum when high mass and fully contradictory (|q| ≈ 0).
+            1.0 when no inscription or clear quality (|q| → 1).
+            Minimum when high inscription and fully contradictory (|q| ≈ 0).
 
         K2: Uses effective (lazily decayed) traces.
         """
         u, f = self._effective_traces(edge)
         m = u + f
         if m < 1e-12:
-            return 1.0  # no experience → neutral
+            return 1.0  # no inscription → neutral
         m_norm = m / (m + mu)
         q = (u - f) / (m + 1e-12)
         confusion = 1.0 - abs(q)
         return 1.0 - alpha * m_norm * confusion
+
+    # Backward-compatible alias
+    mass_modulation_factor = inertia_factor
 
     # --- Snapshot export/import (for MemOS) ---
 

@@ -55,8 +55,17 @@ class Landscape:
     # Experimental: overlap modulation (C40, Ontodynamics §3.4)
     overlap_modulation: bool = False
 
-    # Experimental: mass-quality modulation (Ontodynamics §4)
-    mass_modulation: bool = False
+    # Experimental: inertia modulation (C42, Ontodynamics §4, Layer 3)
+    inertia_modulation: bool = False
+
+    @property
+    def mass_modulation(self) -> bool:
+        """Backward-compatible alias for inertia_modulation."""
+        return self.inertia_modulation
+
+    @mass_modulation.setter
+    def mass_modulation(self, value: bool) -> None:
+        self.inertia_modulation = value
 
     # --- Construction ---
 
@@ -252,10 +261,10 @@ class Landscape:
         M_H is cached and computed from the base (unmodulated) ω to
         avoid circular dependency.
 
-        When mass_modulation is True, edges with high accumulated
-        experience but contradictory outcomes (low quality |q|) are
-        dampened. Ontodynamics §4: mass = persistent topological
-        inertia from historization.
+        When inertia_modulation is True, edges with high accumulated
+        inscription but contradictory outcomes (low trace quality)
+        are dampened. Ontodynamics §4, Layer 3: structural inertia
+        from accumulated inscription.
 
         Higher v = more structurally open transition.
         Returns 0.0 if edge does not exist (no transition capacity).
@@ -269,8 +278,8 @@ class Landscape:
             v *= self._get_M_H(x, y)
         if self.overlap_modulation:
             v *= self._get_overlap_M_H(x, y)
-        if self.mass_modulation:
-            v *= self.historization.mass_modulation_factor(Edge(x, y))
+        if self.inertia_modulation:
+            v *= self.historization.inertia_factor(Edge(x, y))
         return v
 
     def _get_M_H(self, x: str, y: str) -> float:
@@ -295,8 +304,8 @@ class Landscape:
 
         # Temporarily disable to compute base ω without M_H
         self.curvature_modulation = False
-        saved_mass = self.mass_modulation
-        self.mass_modulation = False
+        saved_inertia = self.inertia_modulation
+        self.inertia_modulation = False
         # Invalidate Helmholtz cache so base v is used
         self._phi_cache = None
         try:
@@ -307,7 +316,7 @@ class Landscape:
                 )
         finally:
             self.curvature_modulation = True
-            self.mass_modulation = saved_mass
+            self.inertia_modulation = saved_inertia
             # Invalidate again so downstream sees modulated v
             self._phi_cache = None
         self._M_H_cache = cache
@@ -336,17 +345,17 @@ class Landscape:
         # Temporarily disable all modulations for base v
         saved_curv = self.curvature_modulation
         saved_over = self.overlap_modulation
-        saved_mass = self.mass_modulation
+        saved_inertia = self.inertia_modulation
         self.curvature_modulation = False
         self.overlap_modulation = False
-        self.mass_modulation = False
+        self.inertia_modulation = False
         self._phi_cache = None
         try:
             self._overlap_cache = overlap_map(self)
         finally:
             self.curvature_modulation = saved_curv
             self.overlap_modulation = saved_over
-            self.mass_modulation = saved_mass
+            self.inertia_modulation = saved_inertia
             self._phi_cache = None
 
     # --- Inspection ---

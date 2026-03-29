@@ -116,31 +116,77 @@ Architektur muss kompatibel bleiben.
 
 ## 5. Implementierungsplan (dieser Commit)
 
-### Phase A: Qualitative Observablen in `historization.py`
-- `mass(edge) → float` — Gesamt-Masse m = U + F
-- `quality(edge) → float` — Qualität q = (U−F)/(U+F+ε)
+### Phase A: Structural Inscription observables in `historization.py`
+- `trace_load(edge) → float` — total inscription m = U + F
+- `trace_quality(edge) → float` — quality q = (U−F)/(U+F+ε)
+- Backward-compatible aliases: `mass = trace_load`, `quality = trace_quality`
 
-### Phase B: Integration — Erfahrungsmodulation
-- Neues Modul oder Erweiterung: Massebasierte Modulation, die komplementär
-  zu Overlap M_H wirkt
-- Nicht-Ersetzung von C40, sondern Ergänzung: Overlap = strukturelle
-  Einbettung, Masse = akkumulierte Erfahrung
+### Phase B: Inertia modulation — Layer 3
+- `inertia_factor(edge) → float` — dampens conflicted edges
+- `Landscape.inertia_modulation` flag integrates into `transition_field()`
+- Backward-compatible aliases: `mass_modulation_factor`, `mass_modulation`
+- Complementary to Overlap M_H (C40): Overlap = structural embedding,
+  Inertia = accumulated inscription quality
 
-### Phase C (Zukunft): SU(2)-Spinor-Masse
-- δ_H als Spinor statt Skalar
-- Interferenz zwischen Masse-Spinoren benachbarter Kanten
-- Vollständige Bloch-Sphären-Darstellung
+### Phase C (future): SU(2) spinor inscription
+- δ_H as spinor instead of scalar
+- Interference between inscription spinors of neighboring edges
+- Full Bloch sphere representation
 
 ---
 
-## 6. Basis: Das ist Lernen
+## 6. This is learning
 
-> „Historisierung, das sind eigentlich keine gegangenen Pfade, sondern das
+> "Historisierung, das sind eigentlich keine gegangenen Pfade, sondern das
 > ist wie künstliche Masse. Das ist die Basis von Lernen."
 
-Lernen = Masseakkumulation. Jede Erfahrung deponiert Masse an einer
-Kante. Diese Masse deformiert das Amplitudenfeld permanent (mit Decay ρ
-als „Vergessen"). Die Qualität bestimmt die *Art* der Deformation:
-Erfolgslernen öffnet, Fehlschlaglernen schließt.
+Learning = inscription accumulation. Every experience deposits structural
+trace on an edge. This trace deforms the amplitude field permanently
+(with decay ρ as "forgetting"). The quality determines the *kind*
+of deformation: success opens, failure closes.
 
-Das ist keine Metapher. Es ist die operative Geometrie des Systems.
+This is not a metaphor. It is the operative geometry of the system.
+
+---
+
+## 7. Terminological correction — the layered model
+
+**Observation (2026-03-29):** Within the structure, what we first have is
+not yet "mass" in the fully presented sense. Mass is the *outwardly effective,
+behavior-shaping appearance* of accumulated structural inscription.
+
+The Canon itself implies this layering:
+
+> "Mass = persistent topological inertia **resulting from** accumulated historization."
+
+"Resulting from" implies: historization is not mass — mass *results from* it.
+
+### The four layers
+
+| Layer | Canon term | Code | What it is |
+|-------|-----------|------|------------|
+| 1. Process | Historization | `update(e, outcome)` | Real transitions leaving trace |
+| 2. Inscription | Structural trace | `trace_load(e)`, `trace_quality(e)` | What remains: changed relations, sediment |
+| 3. Inertia | Reconfiguration cost | `inertia_factor(e)` | Functional effect: preference, resistance |
+| 4. Mass | Emergent appearance | Controller behavior | Outwardly visible stability / inertia |
+
+### Consequences for naming
+
+- **Layer 2** functions are named `trace_*` (not `mass_*`) because they
+  describe the *inner structural inscription*, not the outward mass effect
+- **Layer 3** is named `inertia_*` because it is the functional consequence
+  of inscription — how inscription resists or permits reconfiguration
+- **Layer 4** ("mass") is emergent and not directly computed — it *appears*
+  in the controller's behavior, in path preferences, in long-term stability
+
+Old names (`mass`, `quality`, `mass_modulation_factor`, `mass_modulation`)
+remain as backward-compatible aliases.
+
+### Why this matters
+
+This is not purely semantic. The layered model:
+1. Prevents premature reification (calling internal traces "mass")
+2. Clarifies that mass is *emergent*, not computed
+3. Opens space for the SU(2) extension — the spinor lives at Layer 2
+   (inscription orientation), not Layer 4 (mass appearance)
+4. Aligns with the Canon's own ontological ordering
