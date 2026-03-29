@@ -238,6 +238,7 @@ class E0Controller:
         self.axis_fn = axis_fn  # B1: per-edge SU(2) rotation axis
         self.resonator_modulation = resonator_modulation  # C39: resonator intensity boost
         self.self_graph = None  # C43: optional structural self-knowledge
+        self.mode_controller = None  # C46: optional operating mode monitor
         self._recent: List[str] = []   # sliding window of recent states
 
         # K1 fix: Escalation edges live here, NOT in the Landscape.
