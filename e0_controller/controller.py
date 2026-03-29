@@ -237,6 +237,7 @@ class E0Controller:
         self.use_su2 = use_su2  # Paper 2: ℂ² spinor interference
         self.axis_fn = axis_fn  # B1: per-edge SU(2) rotation axis
         self.resonator_modulation = resonator_modulation  # C39: resonator intensity boost
+        self.self_graph = None  # C43: optional structural self-knowledge
         self._recent: List[str] = []   # sliding window of recent states
 
         # K1 fix: Escalation edges live here, NOT in the Landscape.
@@ -565,6 +566,16 @@ class E0Controller:
             edge, outcome, r_eff_before,
             self._effective_resistance(current, target)
         )
+
+        # Self-Graph update (C43): record which components contributed
+        if self.self_graph is not None:
+            from .self_graph import active_components
+            components = active_components(
+                curvature_active=self.landscape.curvature_modulation,
+                overlap_active=self.landscape.overlap_modulation,
+                inertia_active=self.landscape.inertia_modulation,
+            )
+            self.self_graph.self_historize(components, outcome)
 
         # Capture R_eff after
         r_eff_after = self._effective_resistance(current, target)
