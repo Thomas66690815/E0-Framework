@@ -148,6 +148,9 @@ __all__ = [
     "run_validation",
     # Envelope
     "E0Envelope", "transport_to_use_su2", "use_su2_to_transport",
+    # Canon Loader (C48)
+    "CanonInfo", "CanonLandscape",
+    "load_canon", "list_canons", "format_canon_summary",
 ]
 
 from .primitives import Edge, Outcome, TransportRegime
@@ -221,3 +224,7 @@ from .overlap import (
     triangle_support, edge_overlap, overlap_map, OverlapInfo,
 )
 from .exploration_policy import ExplorationPolicy, PolicyDecision
+from .canon_loader import (
+    CanonInfo, CanonLandscape,
+    load_canon, list_canons, format_canon_summary,
+)

@@ -5,7 +5,7 @@
 > was ist neu entstanden, und was haben wir gelernt.
 >
 > **Datum:** 2026-03-28 (aktualisiert)  
-> **Basis:** 2028 Tests, 0 Failures, 0 Warnings, Claims C1–C47  
+> **Basis:** 2089 Tests, 0 Failures, 0 Warnings, Claims C1–C48  
 > **Stufe 1–3 Bridge 4:** Structural Mutation implementiert (Commits dd6e277, e94be7e, e3f922d)  
 > **Canon-Dokumente:** `e0-canonical-reference.txt`, `e0-canon-plain.txt`,
 > `ontodynamics.txt`, `e0-agi-blueprint.md`  
@@ -584,6 +584,7 @@ Der Canon allein hätte das nicht geleistet.
 | 2026-03-29 | C45: LLM Adapter v2. `propose_domain_graph(description)` → bootstrapper-compatible spec (nodes + edges with initial_U/F/confidence). `propose_and_bootstrap()` convenience pipeline. New `PROPOSE_DOMAIN_GRAPH_PROMPT` teaches LLM the E0 graph format. Parser normalizes names, clamps values, skips self-loops. 17 tests (12 propose + 5 pipeline), 1956 total. See `llm_adapter.py` |
 | 2026-03-29 | C46: Mode Controller. `OperatingMode` enum (LEARN/EXECUTE/COMBINATION), `ModeController` class monitors Landscape edge `trace_load` vs μ threshold. `current_mode()` determines aggregate mode from coverage ratio. `edge_needs_llm()`, `neighbors_needing_llm()` for COMBINATION filtering. Controller integration via `mode_controller` attribute. 36 tests, 1992 total. See `mode_controller.py` |
 | 2026-03-29 | C47: Dual Reflection. `diagnose_self_graph()` classifies components as healthy/confused/harmful/insufficient_data. `DualReflectionReport` combines domain `ReflectionReport` with `SelfGraphDiagnosis`. `reflect_dual()` cross-references domain failures with self-graph component issues for targeted meta-actions. Meta-control: modulation components (curvature, overlap) with negative quality → deactivation candidates. `format_dual_report()` for human-readable output. 36 tests, 2028 total. See `dual_reflection.py`. Bootstrap Architecture C43–C47 complete. |
+| 2026-03-30 | C48: Canon Loader. Ontodynamics canon materialized as JSON landscape spec (`canons/ontodynamics.json`): 5 primitives (Differenz, Lokale Realisierung, Verbindung, Gradueller Overlap, Historisierung) + 6 derived concepts (Zustand, Widerstand, Zeit, Rate, Raumzeit, Masse) = 11 nodes, 13 edges. Derivation order encoded in Δ-topology (rises with derivation level). Cycle closure: historisierung→differenz. `canon_loader.py`: `load_canon()`, `list_canons()`, `format_canon_summary()`, `CanonInfo`, `CanonLandscape`. Persistent but exchangeable (add JSON → new canon). 61 tests, 2089 total. See `canon_loader.py`, `canons/ontodynamics.json`. |
 
 ---
 
