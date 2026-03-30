@@ -29,6 +29,7 @@ from typing import Dict, List, Optional, Set
 
 from .canon_loader import CanonLandscape, format_canon_summary
 from .self_graph import SelfGraph, ALL_COMPONENTS
+from .reflexive_action import ReflexiveJournal
 
 
 # ──────────────────────────────────────────────
@@ -113,6 +114,7 @@ def format_process_status(sg: SelfGraph) -> str:
 def build_self_exposition(
     cl: CanonLandscape,
     sg: Optional[SelfGraph] = None,
+    reflexive_journal: Optional[ReflexiveJournal] = None,
 ) -> str:
     """Build a complete self-exposition for LLM context.
 
@@ -121,8 +123,10 @@ def build_self_exposition(
       2. Process status (how well E0's components are performing)
       3. Canon coverage (which beliefs are operationally active)
       4. Structural insight (what the mapping reveals)
+      5. Reflexive history (what E0 has done to itself) — Stufe 4b
 
     If sg is None, sections 2 and 4 are marked as "no operational data".
+    If reflexive_journal is None or empty, section 5 notes no actions taken.
     """
     sections = []
 
@@ -209,5 +213,51 @@ def build_self_exposition(
                 node = next((n for n in cl.info.nodes if n.id == node_id), None)
                 if node:
                     sections.append(f"    - {node.label} (L{node.derivation_level})")
+
+    # Section 5: Reflexive action history (Stufe 4b)
+    sections.append("")
+    sections.append("=== WHAT I HAVE DONE TO MYSELF (Reflexive History) ===")
+    if reflexive_journal is not None and reflexive_journal.total_actions > 0:
+        sections.append(reflexive_journal.format())
+        active = reflexive_journal.active_deactivations
+        if active:
+            components = sorted({e.action.component for e in active})
+            sections.append("")
+            sections.append(
+                f"  Currently {len(active)} modulation(s) deactivated "
+                f"by self-diagnosis: {', '.join(components)}"
+            )
+            sections.append(
+                "  This demonstrates operational reflexivity (canon L7): I have"
+            )
+            sections.append(
+                "  modified my own transition structure based on self-assessment"
+            )
+            sections.append(
+                "  of component health. These changes are reversible."
+            )
+        else:
+            sections.append("")
+            sections.append(
+                "  All prior reflexive actions have been restored."
+            )
+            sections.append(
+                "  Self-modification occurred but was subsequently reverted."
+            )
+        # Current modulation state
+        state = reflexive_journal.current_state()
+        if state:
+            sections.append("")
+            sections.append("  Current modulation state (from self-diagnosis):")
+            for comp, is_active in state:
+                status = "ACTIVE" if is_active else "DEACTIVATED"
+                sections.append(f"    {comp}: {status}")
+    else:
+        sections.append(
+            "  No reflexive self-modifications taken. All modulation"
+        )
+        sections.append(
+            "  components operate at their initial configuration."
+        )
 
     return "\n".join(sections)

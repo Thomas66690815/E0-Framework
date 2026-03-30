@@ -35,7 +35,7 @@ Usage:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from .dual_reflection import DualReflectionReport, SelfGraphDiagnosis
 from .landscape import Landscape
@@ -181,3 +181,106 @@ def apply_reflexive_actions(
         result.actions_taken.append(action)
 
     return result
+
+
+# ──────────────────────────────────────────────
+# 4. Reflexive Journal — Stufe 4b Representation
+# ──────────────────────────────────────────────
+
+@dataclass
+class ReflexiveJournalEntry:
+    """One recorded reflexive action with iteration context."""
+    iteration: int
+    action: ReflexiveAction
+    restored: bool = False
+
+
+class ReflexiveJournal:
+    """Persistent chronological record of all reflexive self-modifications.
+
+    This is the Stufe 4b representation: the system's self-modification
+    history, available for exposition to external observers (LLM, user).
+
+    Canon basis (Bridge 4, Stufe 4b): "In welchem Raum wird die
+    Self-Structure dargestellt?" Answer: as a chronological journal
+    of concrete, reversible actions with rationale.
+    """
+
+    def __init__(self) -> None:
+        self._entries: List[ReflexiveJournalEntry] = []
+
+    def record(self, result: ReflexiveActionResult, iteration: int) -> int:
+        """Record all actions from a ReflexiveActionResult.
+
+        Returns the number of entries recorded.
+        """
+        count = 0
+        for action in result.actions_taken:
+            self._entries.append(ReflexiveJournalEntry(
+                iteration=iteration,
+                action=action,
+            ))
+            count += 1
+        return count
+
+    def mark_restored(self, iteration: int) -> int:
+        """Mark all actions from a given iteration as restored.
+
+        Returns the number of entries marked.
+        """
+        count = 0
+        for e in self._entries:
+            if e.iteration == iteration and not e.restored:
+                e.restored = True
+                count += 1
+        return count
+
+    @property
+    def entries(self) -> List[ReflexiveJournalEntry]:
+        """All recorded entries (copy)."""
+        return list(self._entries)
+
+    @property
+    def active_deactivations(self) -> List[ReflexiveJournalEntry]:
+        """Deactivation actions still in effect (not restored)."""
+        return [
+            e for e in self._entries
+            if not e.restored and e.action.is_deactivation
+        ]
+
+    @property
+    def total_actions(self) -> int:
+        return len(self._entries)
+
+    @property
+    def active_count(self) -> int:
+        return len(self.active_deactivations)
+
+    def current_state(self) -> List[Tuple[str, bool]]:
+        """Current modulation state implied by journal.
+
+        Returns list of (component, is_active) tuples for components
+        that have been acted on. Tracks net effect: if deactivated
+        then restored, it's active again.
+        """
+        state: Dict[str, bool] = {}
+        for e in self._entries:
+            if e.restored:
+                state[e.action.component] = e.action.old_value
+            else:
+                state[e.action.component] = e.action.new_value
+        return sorted(state.items())
+
+    def format(self) -> str:
+        """Human-readable chronological history."""
+        if not self._entries:
+            return "  No reflexive actions taken."
+        lines = []
+        for e in self._entries:
+            status = "[restored]" if e.restored else "[active]"
+            verb = "Deactivated" if e.action.is_deactivation else "Modified"
+            lines.append(
+                f"  Iteration {e.iteration}: {verb} {e.action.component} "
+                f"({e.action.reason}) {status}"
+            )
+        return "\n".join(lines)

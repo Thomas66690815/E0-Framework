@@ -69,6 +69,7 @@ from .dual_reflection import (
 )
 from .reflexive_action import (
     ReflexiveActionResult,
+    ReflexiveJournal,
     apply_reflexive_actions,
 )
 
@@ -156,6 +157,8 @@ class Session:
         # C49: Self-Graph for reflexive self-modification
         self.self_graph = SelfGraph()
         self.controller.self_graph = self.self_graph
+        # C50: Reflexive journal — Stufe 4b representation
+        self.reflexive_journal = ReflexiveJournal()
 
     @classmethod
     def resume(
@@ -206,6 +209,8 @@ class Session:
         # C49: Self-Graph for reflexive self-modification
         obj.self_graph = SelfGraph()
         obj.controller.self_graph = obj.self_graph
+        # C50: Reflexive journal — Stufe 4b representation
+        obj.reflexive_journal = ReflexiveJournal()
         return obj
 
     def run(
@@ -407,6 +412,11 @@ class Session:
                     reflex_result = apply_reflexive_actions(
                         dual_report, self.landscape,
                     )
+                    # C50: record in journal for Stufe 4b exposition
+                    if reflex_result.any_changes:
+                        self.reflexive_journal.record(
+                            reflex_result, len(results),
+                        )
             reflexive_results.append(reflex_result)
 
             if not verdict.should_continue:
