@@ -4,7 +4,7 @@
 > **Purpose:** connect claims, tests, evidence, and status in one place.
 
 **Last updated:** 2026-03-30 — **2278 tests** (0 failures, 0 warnings)  
-**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, **C52 Honest Self-Knowledge (CANON_PROCESS_MAP correction)**, **C53 Domain-Invariance Benchmark (10 domains, 1 controller)**, and active edge-case work.
+**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, **C52 Honest Self-Knowledge (CANON_PROCESS_MAP correction)**, **C53 Domain-Invariance Benchmark (10 domains, 1 controller)**, **C54 Raumzeit Coupling (closed vs coupled systems)**, and active edge-case work.
 
 ---
 
@@ -1716,6 +1716,33 @@ E₀’s controller is domain-invariant. The same algorithm with identical param
 - Domain-invariant: YES (all goals, worst rating B)
 - No domain-specific primitives in the controller
 - Same code path for invoice processing and abstract graph traversal
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C54 — Raumzeit Coupling: emergent spacetime requires external coupling
+
+**Claim**  
+A closed E₀ system (all outcomes SUCCESS) reinforces traversed edges through historization and cannot escape deep traps. Only coupling to an environment that delivers FAILURE outcomes creates the R_eff asymmetry necessary for trap escape. Emergent spacetime (irreversible temporal ordering + asymmetric spatial structure) requires coupling.
+
+**Evidence**  
+- `e0_controller/raumzeit_coupling.py` — closed vs coupled experiment
+- `e0_controller/test_raumzeit_coupling.py` (23 tests, 5 classes)
+- All 10 benchmark domains run under both regimes
+- Closed: 7/10 goals, 3 domains loop forever (F rating)
+- Coupled: 10/10 goals, worst rating B
+- Deep traps: D3 (Gordian), D6 (Multi-Goal), D10 (Bottleneck)
+- Shallow traps: D7, D8 (coupling not necessary)
+- Three-class taxonomy: none / shallow / deep
+- Structural properties: SUCCESS decreases R_eff, FAILURE increases R_eff, λ_f > λ_s (caution asymmetry)
+
+**Result**  
+- Theorem holds: every domain requiring coupling has failure edges
+- Sterile friction (all SUCCESS) → trivial spacetime
+- Fertile friction (unpredictable outcomes) → emergent spacetime
+- Connection to Ontodynamics: gradual overlap (§3.4) = degree of coupling
 
 **Status**  
 ✅ Confirmed

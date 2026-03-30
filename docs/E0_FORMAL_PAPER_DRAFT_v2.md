@@ -442,22 +442,101 @@ This paper presents E₀ as currently stabilized. It does **not** claim:
 
 Open questions include:
 
-- **Raumzeit (emergent spacetime):** The Ontodynamics canon predicts emergent spacetime from historized topology. E₀ currently operates as a closed system with no external coupling. Emergent spacetime would require coupling to an environment.
 - **Reactivation policy:** The controller can deactivate failing components but lacks a protocol for re-enabling them. This is a structural gap, not a bug.
 - **Amplitude mode benchmark:** The current benchmark uses only GREEDY mode. Future work should benchmark AMPLITUDE_ON_DISAGREE and BORN_SAMPLING modes across the same 10 domains.
 - **Scalability:** The current benchmark domains range from 4 to 22 nodes. Behavior on large-scale landscapes (n > 1000) is tested separately (see scaling tests) but not benchmarked for domain-invariance.
 
 ---
 
-## 15. Conclusion
+## 15. Emergent Spacetime: The Coupling Theorem
+
+### 15.1 Motivation
+
+The Ontodynamics canon (§4) defines:
+
+- **Time** — the ordering of realized transitions
+- **Spacetime** — the globally historized topology of realized connections
+
+If historization is the mechanism that produces temporal ordering and spatial structure, the question becomes: under what conditions does historization produce non-trivial structure?
+
+### 15.2 The Coupling Experiment
+
+We run all 10 benchmark domains (§11) under two regimes:
+
+- **Closed system:** execute_fn always returns SUCCESS (no environmental coupling)
+- **Coupled system:** execute_fn returns domain-specific outcomes including FAILURE
+
+All other parameters remain identical.
+
+### 15.3 Results
+
+| Domain | Closed | Coupled | Trap Class | Coupling Required? |
+|--------|--------|---------|------------|--------------------| 
+| D1 Linear Chain | ✓ A | ✓ A | none | no |
+| D2 Diamond | ✓ A | ✓ A | none | no |
+| D3 Gordian Trap | ✗ F | ✓ B | **deep** | **YES** |
+| D4 Greedy Trap | ✓ B | ✓ B | none | no |
+| D5 Grid Detour | ✓ A | ✓ A | none | no |
+| D6 Multi-Goal Star | ✗ F | ✓ B | **deep** | **YES** |
+| D7 Invoice Process | ✓ A | ✓ A | shallow | no |
+| D8 Nested Cycles | ✓ A | ✓ A | shallow | no |
+| D9 Wide DAG | ✓ A | ✓ A | none | no |
+| D10 Bottleneck | ✗ F | ✓ B | **deep** | **YES** |
+
+Closed system: 7/10 goals. Coupled system: 10/10 goals.
+
+### 15.4 Theorem (Coupling Necessity for Trap Escape)
+
+Let L be a landscape containing a trap cycle γ where all edges in γ have lower initial tension than the exit edge, and the tension gap exceeds the revisit penalty threshold. Then:
+
+- In a **closed system** (all SUCCESS), historization monotonically reinforces γ. The controller never exits. Time is cyclic — no irreversible ordering emerges.
+- In a **coupled system** (FAILURE on a cycle edge), historization increases R_eff on the failing edge. The exit edge becomes relatively cheaper. The controller escapes. Irreversible temporal ordering emerges.
+
+The theorem holds across all 10 domains (23 tests).
+
+### 15.5 Three Trap Classes
+
+1. **No trap** (D1, D2, D4, D5, D9): Greedy selection with revisit penalty is sufficient. No coupling needed.
+2. **Shallow trap** (D7, D8): FAILURE edges exist but the revisit penalty alone is sufficient for escape. Coupling helps but is not structurally necessary.
+3. **Deep trap** (D3, D6, D10): Closed system loops indefinitely. Only FAILURE signals create the R_eff asymmetry that opens the exit. **Coupling is structurally necessary.**
+
+### 15.6 Sterile vs. Fertile Friction
+
+Friction (R > 0) always exists — it is unresolved difference under resistance. But not all friction produces structure:
+
+- **Sterile friction:** All outcomes identical (SUCCESS). Historization reinforces monotonically. No new information enters the system. Spacetime is trivial — cyclic, without irreversible ordering.
+- **Fertile friction:** Outcomes unpredictable (SUCCESS/FAILURE). Historization produces asymmetric traces. The system acquires information it could not derive from its internal structure. This is *Erkenntnis* (structural insight). Spacetime emerges.
+
+The complete chain:
+
+> **Coupling → unpredictable outcomes → Erkenntnis → asymmetric historization → emergent spacetime**
+
+### 15.7 Connection to Ontodynamics
+
+**Gradual overlap** (Ontodynamics §3.4) states that connections possess degree and stability requires non-zero overlap. The coupling to an environment IS the operational expression of gradual overlap:
+
+- Overlap degree 0: closed system, no real outcomes, trivial spacetime
+- Overlap degree > 0: coupled system, FAILURE possible, emergent spacetime
+
+**Time** (§4): In a closed system, transitions repeat identically — the ordering is cyclic, not genuinely temporal. Only FAILURE breaks the symmetry and creates irreversible ordering.
+
+**Spacetime** (§4): In a closed system, the historized topology is monotone (all edges uniformly reinforced). Only through coupling do asymmetric traces emerge — some edges reinforced, others weakened. This asymmetry IS the emergent spatial structure.
+
+Spacetime is not a module to be implemented. It **emerges** as a structural consequence of Axiom A₀ when the system is coupled to an environment that delivers outcomes.
+
+---
+
+## 16. Conclusion
 
 E₀ offers a formal alternative to probability-first and energy-first reasoning systems. By treating transitions under difference and resistance as primitive, it derives tension, coherence, local transition fields, non-integrable connection, and complex path amplitude without additional assumptions.
 
 The empirical benchmark demonstrates that this is not merely a formal exercise: a single controller with fixed parameters navigates 10 structurally diverse domains — from linear chains to real-world invoice processing — with all goals reached and no domain-specific tuning.
 
+The coupling experiment demonstrates something further: emergent spacetime — irreversible temporal ordering and asymmetric spatial structure — arises not as an additional assumption, but as a structural consequence of Axiom A₀ when the system is coupled to an environment. Closed systems cannot escape deep traps; coupled systems can. The difference is not mechanism — it is information.
+
 The central insight is:
 
-> The structural instability of unresolved difference under finite resistance — Axiom A₀ — is sufficient to produce effective, adaptive navigation without goals, probabilities, or reward functions.
+> The structural instability of unresolved difference under finite resistance — Axiom A₀ — is sufficient to produce effective, adaptive navigation without goals, probabilities, or reward functions. Emergent spacetime requires one additional condition: coupling to an environment that delivers unpredictable outcomes.
 
 The framework is publicly available at https://github.com/Thomas66690815/E0-Framework and archived on Zenodo.
 
@@ -503,7 +582,10 @@ python -m e0_controller.benchmark_domain_invariance
 # Run benchmark (JSON)
 python -m e0_controller.benchmark_domain_invariance --json
 
-# Run all tests (2278 tests)
+# Run coupling experiment
+python -m e0_controller.raumzeit_coupling
+
+# Run all tests (2301 tests)
 python -m pytest e0_controller/ -q
 ```
 
