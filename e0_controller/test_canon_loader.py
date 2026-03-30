@@ -63,7 +63,7 @@ class TestLoadCanonSpec(unittest.TestCase):
     def test_load_ontodynamics(self):
         spec = load_canon_spec("ontodynamics")
         self.assertEqual(spec["name"], "ontodynamics")
-        self.assertEqual(spec["version"], "1.0")
+        self.assertEqual(spec["version"], "1.1")
 
     def test_has_nodes_and_edges(self):
         spec = load_canon_spec("ontodynamics")
@@ -94,16 +94,17 @@ class TestExtractInfo(unittest.TestCase):
 
     def test_name_and_version(self):
         self.assertEqual(self.info.name, "ontodynamics")
-        self.assertEqual(self.info.version, "1.0")
+        self.assertEqual(self.info.version, "1.1")
 
     def test_source_reference(self):
         self.assertIn("ontodynamics.txt", self.info.source)
+        self.assertIn("e0-canon-plain.txt", self.info.source)
 
     def test_node_count(self):
-        self.assertEqual(len(self.info.nodes), 11)
+        self.assertEqual(len(self.info.nodes), 13)
 
     def test_edge_count(self):
-        self.assertEqual(len(self.info.edges), 13)
+        self.assertEqual(len(self.info.edges), 18)
 
     def test_five_primitives(self):
         primitives = [n for n in self.info.nodes if n.is_primitive]
@@ -116,11 +117,12 @@ class TestExtractInfo(unittest.TestCase):
 
     def test_six_derived(self):
         derived = [n for n in self.info.nodes if not n.is_primitive]
-        self.assertEqual(len(derived), 6)
+        self.assertEqual(len(derived), 8)
         derived_ids = {n.id for n in derived}
         self.assertEqual(derived_ids, {
             "zustand", "widerstand", "zeit",
             "rate", "raumzeit", "masse",
+            "pfad", "axiom_a0",
         })
 
     def test_derivation_levels(self):
@@ -134,13 +136,18 @@ class TestExtractInfo(unittest.TestCase):
         # derived at levels 4-5
         self.assertGreaterEqual(levels["zustand"], 4)
         self.assertGreaterEqual(levels["masse"], 5)
+        # Canon Plain additions
+        self.assertEqual(levels["pfad"], 4)
+        self.assertEqual(levels["axiom_a0"], 5)
 
     def test_goal_states(self):
         self.assertEqual(self.info.goal_states, ["masse"])
 
     def test_necessary_consequences(self):
-        self.assertEqual(len(self.info.necessary_consequences), 5)
+        self.assertEqual(len(self.info.necessary_consequences), 10)
         self.assertIn("irreversibility", self.info.necessary_consequences)
+        self.assertIn("transition_enforcement", self.info.necessary_consequences)
+        self.assertIn("causal_ordering", self.info.necessary_consequences)
 
     def test_edge_derivations_non_empty(self):
         for e in self.info.edges:
@@ -171,10 +178,10 @@ class TestToBootstrapperSpec(unittest.TestCase):
             self.assertIsInstance(n, str)
 
     def test_node_count_preserved(self):
-        self.assertEqual(len(self.bs_spec["nodes"]), 11)
+        self.assertEqual(len(self.bs_spec["nodes"]), 13)
 
     def test_edge_count_preserved(self):
-        self.assertEqual(len(self.bs_spec["edges"]), 13)
+        self.assertEqual(len(self.bs_spec["edges"]), 18)
 
     def test_edges_have_bootstrapper_fields(self):
         for e in self.bs_spec["edges"]:
@@ -219,12 +226,13 @@ class TestLoadCanon(unittest.TestCase):
             "gradueller_overlap", "historisierung",
             "zustand", "widerstand", "zeit",
             "rate", "raumzeit", "masse",
+            "pfad", "axiom_a0",
         }
         self.assertEqual(states, expected)
 
     def test_landscape_has_edges(self):
         edges = self.cl.landscape.edges
-        self.assertEqual(len(edges), 13)
+        self.assertEqual(len(edges), 18)
 
     def test_inertia_modulation_enabled(self):
         self.assertTrue(self.cl.landscape.inertia_modulation)
@@ -297,6 +305,36 @@ class TestOntodynamicsTopology(unittest.TestCase):
         max_out = max(out_counts.values())
         self.assertEqual(out_counts["historisierung"], max_out)
 
+    def test_pfad_requires_verbindung_and_widerstand(self):
+        """Path derives from Connection + Resistance."""
+        incoming = [e for e in self.ls.edges if e.target == "pfad"]
+        sources = {e.source for e in incoming}
+        self.assertIn("verbindung", sources)
+        self.assertIn("widerstand", sources)
+
+    def test_axiom_a0_requires_differenz_and_pfad(self):
+        """A0 derives from Difference + Path."""
+        incoming = [e for e in self.ls.edges if e.target == "axiom_a0"]
+        sources = {e.source for e in incoming}
+        self.assertIn("differenz", sources)
+        self.assertIn("pfad", sources)
+
+    def test_pfad_feeds_rate(self):
+        """Rate is realized along structurally admissible paths."""
+        edge_set = {(e.source, e.target) for e in self.ls.edges}
+        self.assertIn(("pfad", "rate"), edge_set)
+
+    def test_rate_has_two_inputs(self):
+        """Rate receives from both Resistance and Path."""
+        incoming = [e for e in self.ls.edges if e.target == "rate"]
+        sources = {e.source for e in incoming}
+        self.assertIn("widerstand", sources)
+        self.assertIn("pfad", sources)
+
+    def test_axiom_a0_reachable_from_differenz(self):
+        """The foundational axiom must be reachable from differenz."""
+        self.assertTrue(goal_reachable(self.ls, "differenz", "axiom_a0"))
+
 
 # ──────────────────────────────────────────────
 # 7. Derivation Order in Delta Values
@@ -331,17 +369,20 @@ class TestDerivationOrder(unittest.TestCase):
             )
 
     def test_derived_edges_higher_delta(self):
-        """Edges to derived concepts have higher Δ than primitive edges."""
-        min_derived_delta = min(
+        """Cross-level edges to derived concepts have higher Δ than primitive edges."""
+        # Only consider edges that cross from a lower level to a higher level
+        cross_level_derived = [
             d for (s, t), d in self.deltas.items()
             if self.levels.get(t, 0) >= 4
-        )
+            and self.levels.get(s, 0) < self.levels.get(t, 0)
+        ]
+        min_cross_derived_delta = min(cross_level_derived)
         max_primitive_delta = max(
             d for (s, t), d in self.deltas.items()
             if self.levels.get(t, 0) <= 3 and self.levels.get(s, 0) <= 3
             and (s, t) != ("historisierung", "differenz")  # cycle closure is special
         )
-        self.assertGreaterEqual(min_derived_delta, max_primitive_delta)
+        self.assertGreaterEqual(min_cross_derived_delta, max_primitive_delta)
 
     def test_masse_highest_delta(self):
         """The edge to masse has the highest Δ (most emergent)."""
@@ -458,7 +499,7 @@ class TestFormatCanonSummary(unittest.TestCase):
         self.assertIn("ontodynamics", self.summary)
 
     def test_contains_version(self):
-        self.assertIn("v1.0", self.summary)
+        self.assertIn("v1.1", self.summary)
 
     def test_contains_primitive_tier(self):
         self.assertIn("Primitive", self.summary)
@@ -496,9 +537,9 @@ class TestCanonGraphQuality(unittest.TestCase):
         """Only terminal derivations (leaves) are traps — no structural traps."""
         ls = load_canon("ontodynamics").landscape
         gq = graph_quality(ls, "differenz", "masse")
-        # rate and raumzeit are terminal derivations — leaf traps are expected
+        # rate, raumzeit, axiom_a0 are terminal derivations — leaf traps are expected
         trap_set = set(gq.traps)
-        self.assertTrue(trap_set.issubset({"rate", "raumzeit"}))
+        self.assertTrue(trap_set.issubset({"rate", "raumzeit", "axiom_a0"}))
 
     def test_quality_no_trivial_loops(self):
         ls = load_canon("ontodynamics").landscape

@@ -1,8 +1,8 @@
 {
   "name": "ontodynamics",
-  "version": "1.0",
-  "source": "canon/ontodynamics.txt",
-  "description": "Ontodynamics — A Minimal Pre-Physical Canon. The 5 primitives and 6 derived concepts form the foundational landscape of the E0 framework. Derivation order is encoded in edge topology: delta rises with each derivation level.",
+  "version": "1.1",
+  "source": "canon/ontodynamics.txt + canon/e0-canon-plain.txt",
+  "description": "Ontodynamics (pre-physical foundation) + E0 Canon Plain (operative structure). 5 primitives, 8 derived concepts including Path (structural admissibility) and Axiom A0 (difference minimization). Derivation order encoded in delta topology.",
   "nodes": [
     {
       "id": "differenz",
@@ -80,6 +80,20 @@
       "derivation_level": 5,
       "is_primitive": false,
       "description": "Persistent topological inertia from accumulated historization."
+    },
+    {
+      "id": "pfad",
+      "label": "Path",
+      "derivation_level": 4,
+      "is_primitive": false,
+      "description": "Structural admissibility condition for transitions. Not an object, not a dynamic. A path exists iff total resistance is finite. Primitive in Canon Plain, derived in Ontodynamics."
+    },
+    {
+      "id": "axiom_a0",
+      "label": "Axiom A0 — Difference Minimization",
+      "derivation_level": 5,
+      "is_primitive": false,
+      "description": "If difference exists and a structurally admissible path with finite resistance is available, then transition is structurally more stable than non-transition. The foundational law of E0."
     }
   ],
   "edges": [
@@ -212,6 +226,56 @@
       "initial_F": 2.0,
       "confidence": 0.6,
       "derivation": "Structural fixation creates new effective difference (cycle closure)."
+    },
+    {
+      "from": "verbindung",
+      "to": "pfad",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 7.0,
+      "initial_F": 1.0,
+      "confidence": 0.9,
+      "derivation": "Path requires topological connection as substrate."
+    },
+    {
+      "from": "widerstand",
+      "to": "pfad",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 7.0,
+      "initial_F": 1.0,
+      "confidence": 0.9,
+      "derivation": "Path exists iff total resistance is finite."
+    },
+    {
+      "from": "pfad",
+      "to": "rate",
+      "delta": 0.5,
+      "resistance": 0.3,
+      "initial_U": 5.0,
+      "initial_F": 1.0,
+      "confidence": 0.8,
+      "derivation": "Rate is realized along structurally admissible paths."
+    },
+    {
+      "from": "differenz",
+      "to": "axiom_a0",
+      "delta": 0.7,
+      "resistance": 0.5,
+      "initial_U": 5.0,
+      "initial_F": 2.0,
+      "confidence": 0.7,
+      "derivation": "A0: If difference exists..."
+    },
+    {
+      "from": "pfad",
+      "to": "axiom_a0",
+      "delta": 0.7,
+      "resistance": 0.5,
+      "initial_U": 5.0,
+      "initial_F": 2.0,
+      "confidence": 0.7,
+      "derivation": "A0: ...and admissible path exists, then non-transition is structurally unstable."
     }
   ],
   "goal_states": ["masse"],
@@ -220,6 +284,11 @@
     "locality",
     "emergent_stability",
     "finite_maximal_realization_rate",
-    "lawfulness_as_stabilized_history"
+    "lawfulness_as_stabilized_history",
+    "transition_enforcement",
+    "directionality_of_time",
+    "structural_memory",
+    "learning_and_path_dependence",
+    "causal_ordering"
   ]
 }

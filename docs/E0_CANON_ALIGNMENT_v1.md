@@ -5,7 +5,7 @@
 > was ist neu entstanden, und was haben wir gelernt.
 >
 > **Datum:** 2026-03-28 (aktualisiert)  
-> **Basis:** 2089 Tests, 0 Failures, 0 Warnings, Claims C1–C48  
+> **Basis:** 2094 Tests, 0 Failures, 0 Warnings, Claims C1–C48  
 > **Stufe 1–3 Bridge 4:** Structural Mutation implementiert (Commits dd6e277, e94be7e, e3f922d)  
 > **Canon-Dokumente:** `e0-canonical-reference.txt`, `e0-canon-plain.txt`,
 > `ontodynamics.txt`, `e0-agi-blueprint.md`  
@@ -585,6 +585,7 @@ Der Canon allein hätte das nicht geleistet.
 | 2026-03-29 | C46: Mode Controller. `OperatingMode` enum (LEARN/EXECUTE/COMBINATION), `ModeController` class monitors Landscape edge `trace_load` vs μ threshold. `current_mode()` determines aggregate mode from coverage ratio. `edge_needs_llm()`, `neighbors_needing_llm()` for COMBINATION filtering. Controller integration via `mode_controller` attribute. 36 tests, 1992 total. See `mode_controller.py` |
 | 2026-03-29 | C47: Dual Reflection. `diagnose_self_graph()` classifies components as healthy/confused/harmful/insufficient_data. `DualReflectionReport` combines domain `ReflectionReport` with `SelfGraphDiagnosis`. `reflect_dual()` cross-references domain failures with self-graph component issues for targeted meta-actions. Meta-control: modulation components (curvature, overlap) with negative quality → deactivation candidates. `format_dual_report()` for human-readable output. 36 tests, 2028 total. See `dual_reflection.py`. Bootstrap Architecture C43–C47 complete. |
 | 2026-03-30 | C48: Canon Loader. Ontodynamics canon materialized as JSON landscape spec (`canons/ontodynamics.json`): 5 primitives (Differenz, Lokale Realisierung, Verbindung, Gradueller Overlap, Historisierung) + 6 derived concepts (Zustand, Widerstand, Zeit, Rate, Raumzeit, Masse) = 11 nodes, 13 edges. Derivation order encoded in Δ-topology (rises with derivation level). Cycle closure: historisierung→differenz. `canon_loader.py`: `load_canon()`, `list_canons()`, `format_canon_summary()`, `CanonInfo`, `CanonLandscape`. Persistent but exchangeable (add JSON → new canon). 61 tests, 2089 total. See `canon_loader.py`, `canons/ontodynamics.json`. |
+| 2026-03-30 | C48 enriched: Canon Plain (§2.1–§4) integrated into same JSON (v1.1). Two new concepts: Pfad (Path — structural admissibility, §2.3) and Axiom A0 (Differenzminimierung — §3). 13 nodes, 18 edges. New edges: verbindung→pfad, widerstand→pfad, pfad→rate, differenz→axiom_a0, pfad→axiom_a0. 5 additional necessary consequences from Canon Plain (transition_enforcement, directionality_of_time, structural_memory, learning_and_path_dependence, causal_ordering). 66 tests, 2094 total. |
 
 ---
 
