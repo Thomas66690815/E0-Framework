@@ -1555,6 +1555,51 @@ The dependency chain `C43 → C47` and `C44 → C45 → C46 → C47` is fully re
 
 ---
 
+### C48 — Canon Materialization (Loader + Bridge + Exposition)
+
+**Claim**  
+The Ontodynamics canon can be materialized as a machine-readable JSON landscape specification that E₀ navigates using the same Bootstrapper (C44) pipeline as any domain. The canon landscape (v1.2: 19 nodes, 31 edges, L0–L8 derivation levels) encodes the structural content of Ontodynamics, Canon Plain, and AGI Blueprint. A Canon ↔ Self-Graph Bridge makes the identity between canon beliefs and operational components explicit: each self-graph component instantiates specific canon concepts. The materialized canon, exposed as LLM context, is sufficient for a fresh LLM to reconstruct core Ontodynamics insights.
+
+**Evidence**  
+- `e0_controller/canons/ontodynamics.json` — canon spec v1.2: 19 nodes (5 primitives L0–L3, 14 derived L4–L8), 31 edges, 10 necessary_consequences, goal=negative_notwendigkeit
+- `e0_controller/canon_loader.py` — `load_canon()`, `list_canons()`, `format_canon_summary()`, `CanonInfo`, `CanonLandscape`, `load_canon_spec()`
+- `e0_controller/canon_self_bridge.py` — `CANON_PROCESS_MAP`, `PROCESS_CANON_MAP`, `canon_coverage()`, `build_self_exposition()`, `format_process_status()`
+- `e0_controller/demo_canon_exposition.py` — empirical LLM exposition tests (dry-run + live, basic + enriched)
+- `e0_controller/test_canon_loader.py` — 72 tests across 11 classes:
+  - `TestListCanons` (3): canon discovery
+  - `TestLoadCanonSpec` (4): JSON loading and error handling
+  - `TestExtractInfo` (12): node/edge/consequence extraction
+  - `TestToBootstrapperSpec` (6): Bootstrapper-compatible conversion
+  - `TestLoadCanon` (6): full pipeline JSON → CanonLandscape
+  - `TestOntodynamicsTopology` (17): v1.2 structural properties — 19 nodes, 31 edges, derivation levels, cycle closure, axiom convergence, negative_notwendigkeit 3-input convergence, happy path, reachability
+  - `TestDerivationOrder` (4): topological sort
+  - `TestCanonTraces` (4): confidence → initial trace values
+  - `TestCanonNavigation` (4): controller traversal differenz→masse, differenz→negative_notwendigkeit
+  - `TestFormatCanonSummary` (9): human-readable output
+  - `TestCanonGraphQuality` (3): graph_quality checks
+- `e0_controller/test_canon_self_bridge.py` — 32 tests across 5 classes:
+  - `TestCanonProcessMap` (7): component→canon mapping completeness
+  - `TestCanonCoverage` (9): coverage ratio, instantiated/frontier sets
+  - `TestFormatProcessStatus` (3): output format
+  - `TestBuildSelfExposition` (9): 4-section LLM context
+  - `TestStructuralCorrectness` (4): invariants
+
+**Result**  
+- **Canon materialization**: same Bootstrapper pipeline as LLM-proposed domains — the canon is not special infrastructure
+- **v1.2 topology**: 19 nodes across L0–L8, 31 edges, confidence gradient 0.9→0.4, Δ gradient 0.2→1.2
+- **Cycle closure**: historisierung→differenz — accumulated structure regenerates new differences
+- **Navigation**: differenz→negative_notwendigkeit navigable in ≥5 steps, no traps on path to masse
+- **Bridge identity**: self-graph "historization" = canon "historisierung" — same mechanism, different perspectives
+- **Canon coverage**: 58% (11/19 nodes operationally instantiated), 8 nodes on epistemic frontier
+- **Exposition Test A** (canon only, GPT-4o): 4/6 questions correctly answered — thesis, domain invariance, epistemic gradient, historization (partial)
+- **Exposition Test B** (canon + bridge, GPT-4o): 6/6 questions correctly answered — structural identity, epistemic frontier, historization identity ("not merely an analogy"), coverage as feature, ρ-asymmetry
+- **Test A→B improvement**: 32% score gain from 32% more context — the bridge transforms structural information into self-interpreting knowledge
+
+**Status**  
+✅ Confirmed
+
+---
+
 When a new test family is added, update both:
 
 1. the inventory-level registry (`E0_TEST_REGISTRY_v1.md`)

@@ -1,7 +1,7 @@
 # E₀ Test Registry v1
 
 > Central reference for all tests in the E₀ Framework.
-> **Last verified:** 2026-03-29 — **2028 tests** (1987 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures, 0 warnings)
+> **Last verified:** 2026-03-30 — **2132 tests** (2091 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures, 0 warnings)
 
 ---
 
@@ -61,6 +61,8 @@
 | 50 | `test_bootstrapper.py` | 41 | unittest | C44 Bootstrapper: validate_spec, bootstrap_landscape, confidence scaling, trace injection, inertia_modulation | ✅ GREEN |
 | 51 | `test_mode_controller.py` | 36 | unittest | C46 Mode Controller: OperatingMode, coverage, edge_needs_llm, neighbors_needing_llm, controller integration | ✅ GREEN |
 | 52 | `test_dual_reflection.py` | 36 | unittest | C47 Dual Reflection: diagnose_self_graph, component assessment, cross-reference, reflect_dual, meta-control, formatting | ✅ GREEN |
+| 53 | `test_canon_loader.py` | 72 | unittest | C48 Canon Loader: canon discovery, JSON loading, node/edge extraction, Bootstrapper conversion, Ontodynamics v1.2 topology, navigation, graph quality | ✅ GREEN |
+| 54 | `test_canon_self_bridge.py` | 32 | unittest | C48 Canon ↔ Self-Graph Bridge: process mapping, canon coverage, process status, self-exposition, structural correctness | ✅ GREEN |
 
 ---
 
@@ -793,6 +795,51 @@ py -3 -m unittest e0_controller.test_gordian_trap -v
 - Mixed outcomes: confused status, investigation recommended
 - Cross-reference: domain flags "controller" + born is harmful → prioritize born investigation
 - Core components never in deactivation_candidates (only modulation can be disabled)
+
+---
+
+### 53. test_canon_loader.py — 72 tests
+
+**What it tests:** C48 — Canon Loader. Discovery of canon JSON files via `list_canons()`. Raw spec loading and error handling. Extraction of `CanonInfo` (nodes, edges, necessary_consequences). Conversion to Bootstrapper-compatible spec. Full `load_canon()` pipeline (JSON → CanonLandscape). Ontodynamics v1.2 topology: derivation levels L0–L8, axiom convergence, reflexivity inputs, negative_notwendigkeit 3-input convergence, happy path length, full reachability. Navigation: controller can traverse differenz→masse and differenz→negative_notwendigkeit. Graph quality: no traps on masse path, no trivial loops, quality to negative_notwendigkeit.
+
+**Test classes:**
+- `TestListCanons` (3): discovery logic, returns list, ontodynamics present
+- `TestLoadCanonSpec` (4): valid load, missing file, invalid JSON, required fields
+- `TestExtractInfo` (12): node count, edge count, consequence count, field presence, derivation levels, confidence values
+- `TestToBootstrapperSpec` (6): spec format, node presence, edge mapping, delta/resistance transfer, confidence passthrough, invalid spec
+- `TestLoadCanon` (6): returns CanonLandscape, landscape states, info nodes, info summary, error propagation, bootstrapper integration
+- `TestOntodynamicsTopology` (17): 19 nodes, 31 edges, primitive levels, derived levels, cycle closure, axiom requires differenz+pfad, reflexivity requires 2 inputs, negative_notwendigkeit requires 3 inputs, happy path ≥5, full journey reachable, blueprint convergence, level distribution
+- `TestDerivationOrder` (4): order exists, differenz first, all nodes present, topological consistency
+- `TestCanonTraces` (4): U/F values from confidence, high confidence ratio, low confidence near 0.5, trace load
+- `TestCanonNavigation` (4): differenz→masse reachable, differenz→negative_notwendigkeit reachable, step results valid, s_eff positive
+- `TestFormatCanonSummary` (9): contains canon_id, contains nodes, contains edges, contains consequences, level markers, level labels, description included, edge format, multiline
+- `TestCanonGraphQuality` (3): no traps on masse path, no trivial loops, quality to negative_notwendigkeit
+
+**Key findings:**
+- Ontodynamics v1.2 has 19 nodes (5 primitives L0–L3, 14 derived L4–L8) and 31 edges
+- Cycle closure historisierung→differenz verified
+- Full journey differenz→negative_notwendigkeit navigable in ≥5 steps
+- Graph quality uses `graph_quality(landscape, start, goal)` — no traps on masse path, quality score positive for full journey
+- Canon loads through the same Bootstrapper (C44) pipeline as LLM-proposed domains
+
+---
+
+### 54. test_canon_self_bridge.py — 32 tests
+
+**What it tests:** C48 — Canon ↔ Self-Graph Bridge. Structural mapping between self-graph components and canon concepts. Coverage analysis (which canon nodes have operational counterparts). Canon-aligned process status formatting. Combined self-exposition for LLM context (4 sections). Structural correctness invariants.
+
+**Test classes:**
+- `TestCanonProcessMap` (7): all 8 self-graph components present, all values are non-empty lists, all mapped canon nodes exist in PROCESS_CANON_MAP, reverse map completeness, historisierung maps to historization, no duplicate entries, gradueller_overlap shared by curvature+overlap
+- `TestCanonCoverage` (9): coverage ratio, instantiated set, not-instantiated set, union equals all nodes, empty canon edge case, full-coverage synthetic canon, ratio bounds, specific frontier nodes, no overlap between sets
+- `TestFormatProcessStatus` (3): all 8 components in output, quality/load/inertia fields present, canon concept labels in output
+- `TestBuildSelfExposition` (9): 4 sections present (BELIEVE/OPERATE/COVERAGE/INSIGHT), with self-graph includes operational data, without self-graph shows placeholder, epistemic frontier section present, historization quality assessment, key identity statement, coverage percentage, node labels in frontier, section ordering
+- `TestStructuralCorrectness` (4): historisierung→historization bidirectional, PROCESS_CANON_MAP consistent with CANON_PROCESS_MAP, gradueller_overlap shared by both modulation components, all v1.2 nodes either instantiated or explicitly frontier
+
+**Key findings:**
+- 11/19 canon nodes (58%) have operational self-graph counterparts
+- 8 frontier nodes: zeit, zustand, raumzeit, strukturelle_zulaessigkeit, reflexivitaet, strukturelle_ausrichtung, domaeneninvarianz, negative_notwendigkeit
+- Central identity: self-graph "historization" = canon "historisierung" — same mechanism, different perspectives
+- Coverage gap is a feature (epistemic honesty), not a deficiency
 
 ---
 
