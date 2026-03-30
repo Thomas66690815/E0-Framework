@@ -3,8 +3,8 @@
 > Central validation registry for the E₀ Framework.
 > **Purpose:** connect claims, tests, evidence, and status in one place.
 
-**Last updated:** 2026-03-30 — **2173 tests** (0 failures, 0 warnings)  
-**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, and active edge-case work.
+**Last updated:** 2026-03-30 — **2210 tests** (0 failures, 0 warnings)  
+**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, and active edge-case work.
 
 ---
 
@@ -1616,6 +1616,30 @@ When the C47 Dual Reflection diagnosis identifies a modulation component as harm
 - Full reversibility via `ReflexiveActionResult.restore()` — all mutations undone in reverse order
 - End-to-end: SelfGraph records failures → diagnose_self_graph classifies harmful → apply_reflexive_actions deactivates → landscape flag toggled → restore reverts
 - Canon alignment: operationalizes `reflexivitaet` (L7) frontier node — E₀ now acts on its own self-diagnosis
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C50 — Stufe 4b Representation: reflexive journal + self-exposition
+
+**Claim**  
+When E₀ modifies its own landscape through reflexive action (C49), those modifications are represented in a persistent journal and rendered in the self-exposition — allowing external observers (LLM, user) to see what E₀ has done to itself, why, and whether those changes are still active. This closes Bridge 4 Stufe 4b (Representation).
+
+**Evidence**  
+- `e0_controller/test_reflexive_journal.py` (37 tests, 6 classes)
+- `e0_controller/reflexive_action.py` `ReflexiveJournal` + `ReflexiveJournalEntry` classes
+- `e0_controller/canon_self_bridge.py` `build_self_exposition()` Section 5
+- `e0_controller/session.py` journal wiring in `__init__`/`resume`/Step 7
+
+**Result**  
+- `ReflexiveJournal` records all actions with iteration context, supports `mark_restored()`, `current_state()`, `format()`
+- Section 5 "WHAT I HAVE DONE TO MYSELF" shows chronological history, active deactivation count, current modulation state
+- Active deactivations reference canon L7 (Reflexivity Emergence)
+- Restored actions shown with `[restored]` status
+- End-to-end verified: SelfGraph → diagnose → apply → journal → exposition renders correctly
+- Bridge 4 now complete: Stufe 1–3 (Structural Mutation) + 4a (Identity Invariant) + 4b (Representation) + 4c (Reflexive Action)
 
 **Status**  
 ✅ Confirmed

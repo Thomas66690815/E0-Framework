@@ -467,7 +467,7 @@ den Code nicht durch Code, sondern durch Designentscheidungen.
 | Blueprint-Element | Code-Status |
 |-------------------|-------------|
 | Operational Loop (§4): detect Δ → enumerate P → estimate R → select → execute → historize | ✅ `E0Controller.cycle()` |
-| Reflexivity (§5): self-modeling as admissible transition | ✅ Stufe 1–3 + 4a + 4c: StructuralDiagnostic + StructuralMutation + MutationHistory + Admissibility + Identity-Invariant + Session.iterate()-Integration + C49 Reflexive Action (diagnosis → concrete mutation). Offen: Representation. Siehe `E0_BRIDGE4_STRUCTURAL_REFLEXIVITY_NOTE_v0.md` |
+| Reflexivity (§5): self-modeling as admissible transition | ✅ Stufe 1–3 + 4a + 4b + 4c: StructuralDiagnostic + StructuralMutation + MutationHistory + Admissibility + Identity-Invariant + Session.iterate()-Integration + C49 Reflexive Action (diagnosis → concrete mutation) + C50 Reflexive Journal + Self-Exposition Section 5 (Representation). Siehe `E0_BRIDGE4_STRUCTURAL_REFLEXIVITY_NOTE_v0.md` |
 | Alignment via resistance (§6) | ✅ Architektonisch (high R prevents destabilizing transitions) |
 | Domain invariance (§7) | ✅ Keine domain-spezifischen Primitive; Domäne nur via Landscape |
 | Architectural non-uniqueness (§8) | ✅ Three-theory stack (U(1), SU(2)-min, SU(2)-geo) zeigt: verschiedene Algebren, gleiche Kernmechanik |
@@ -591,6 +591,7 @@ Der Canon allein hätte das nicht geleistet.
 | 2026-03-30 | C48 Canon ↔ Self-Graph Bridge: `canon_self_bridge.py` connects canon beliefs to self-graph operations. CANON_PROCESS_MAP: 8 components → 11 canon nodes. Key identity: historization = historisierung. Coverage: 58% (11/19 nodes). Epistemic frontier: 8 nodes (zeit, zustand, raumzeit, strukturelle_zulaessigkeit, reflexivitaet, strukturelle_ausrichtung, domaeneninvarianz, negative_notwendigkeit). 32 tests, 5 classes. 2132 total. |
 | 2026-03-30 | C48 Exposition Test B (canon + bridge): Enriched prompt (11964 chars) + 6 deeper questions. Result: 6/6 hits — structural identity confirmed ("not merely an analogy"), epistemic frontier enumerated, coverage recognized as feature, ρ-asymmetry explained. 32% score improvement from 32% more context. See `E0_CANON_MATERIALIZATION_v1.md`. |
 | 2026-03-30 | C49: Reflexive Action. Closes the reflexive loop: C47 diagnosis → concrete landscape mutation. `reflexive_action.py` (183 lines): `plan_reflexive_actions()`, `apply_reflexive_actions()`, `ReflexiveActionResult.restore()`. Only modulation flags toggled (curvature, overlap); core components structurally protected. Session.iterate() Step 7 integration. Operationalizes canon frontier node `reflexivitaet` (L7). 41 tests, 2173 total. |
+| 2026-03-30 | C50: Stufe 4b Representation. Closes Bridge 4 last open stage. `ReflexiveJournal` + `ReflexiveJournalEntry` in `reflexive_action.py`: chronological record of all self-modifications with restore tracking. `build_self_exposition()` Section 5 “WHAT I HAVE DONE TO MYSELF”: renders journal entries, active deactivations, current modulation state, canon L7 reference. Session wires journal in __init__/resume + Step 7. E₀ can now explain what it has done to itself. 37 tests, 2210 total. Bridge 4 complete: Stufe 1–3 + 4a + 4b + 4c. |
 
 ---
 

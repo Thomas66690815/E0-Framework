@@ -1,7 +1,7 @@
 # E₀ Test Registry v1
 
 > Central reference for all tests in the E₀ Framework.
-> **Last verified:** 2026-03-30 — **2173 tests** (2132 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures, 0 warnings)
+> **Last verified:** 2026-03-30 — **2210 tests** (2128 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures, 0 warnings)
 
 ---
 
@@ -64,6 +64,7 @@
 | 53 | `test_canon_loader.py` | 72 | unittest | C48 Canon Loader: canon discovery, JSON loading, node/edge extraction, Bootstrapper conversion, Ontodynamics v1.2 topology, navigation, graph quality | ✅ GREEN |
 | 54 | `test_canon_self_bridge.py` | 32 | unittest | C48 Canon ↔ Self-Graph Bridge: process mapping, canon coverage, process status, self-exposition, structural correctness | ✅ GREEN |
 | 55 | `test_reflexive_action.py` | 41 | unittest | C49 Reflexive Action: plan/apply, core protection, undo, Session integration, end-to-end with SelfGraph | ✅ GREEN |
+| 56 | `test_reflexive_journal.py` | 37 | unittest | C50 Reflexive Journal: record/restore, exposition Section 5, Session integration, end-to-end chain | ✅ GREEN |
 
 ---
 
@@ -864,6 +865,27 @@ py -3 -m unittest e0_controller.test_gordian_trap -v
 - Full reversibility: `restore()` undoes all mutations in reverse order
 - Session integration: Step 7 in iterate() — after structural tuning, dual reflection triggers reflexive action
 - End-to-end chain verified: SelfGraph → diagnose_self_graph → apply_reflexive_actions → landscape mutation → restore
+
+---
+
+### 56. test_reflexive_journal.py — 37 tests
+
+**What it tests:** C50 — Stufe 4b Representation. Reflexive Journal persistence + Section 5 of self-exposition. After C49 mutates the landscape, C50 ensures those mutations are recorded chronologically and rendered in `build_self_exposition()`. Closes Bridge 4 Stufe 4b.
+
+**Test classes:**
+- `TestReflexiveJournalEntry` (3): dataclass fields, restored default false, restored settable
+- `TestReflexiveJournal` (16): empty state, record returns count, entries returns copy, active_deactivations filter, mark_restored (single, already restored, wrong iteration), current_state (empty, active, restored), multi_iteration ordering, format (empty, active, mixed), non-deactivation not tracked
+- `TestExpositionSection5` (10): without journal, with empty journal, populated journal, active count, current state, restored shown, all 5 sections present, with self_graph, canon L7 reference, empty journal message
+- `TestSessionJournal` (3): session has journal attribute, starts empty, survives iterate
+- `TestEndToEnd` (3): harmful component appears in exposition, restore reflected in exposition, length grows with entries
+- `TestEdgeCases` (3): multiple iterations same component, many entries (100), None journal handled
+
+**Key findings:**
+- `ReflexiveJournal` records `ReflexiveJournalEntry` per reflexive action, supports `mark_restored()` for undo tracking
+- Section 5 "WHAT I HAVE DONE TO MYSELF" renders: chronological history, active deactivation count, canon L7 reference, current modulation state
+- Active vs restored distinction visible: `[active]` vs `[restored]` in format output
+- End-to-end chain: SelfGraph failures → diagnose → apply → journal.record → build_self_exposition → Section 5 verifiable
+- Session wiring: journal created in `__init__`/`resume`, recorded in Step 7 after reflexive action
 
 ---
 
