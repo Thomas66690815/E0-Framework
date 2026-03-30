@@ -1,7 +1,7 @@
 # E₀ Test Registry v1
 
 > Central reference for all tests in the E₀ Framework.
-> **Last verified:** 2026-03-30 — **2132 tests** (2091 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures, 0 warnings)
+> **Last verified:** 2026-03-30 — **2173 tests** (2132 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures, 0 warnings)
 
 ---
 
@@ -63,6 +63,7 @@
 | 52 | `test_dual_reflection.py` | 36 | unittest | C47 Dual Reflection: diagnose_self_graph, component assessment, cross-reference, reflect_dual, meta-control, formatting | ✅ GREEN |
 | 53 | `test_canon_loader.py` | 72 | unittest | C48 Canon Loader: canon discovery, JSON loading, node/edge extraction, Bootstrapper conversion, Ontodynamics v1.2 topology, navigation, graph quality | ✅ GREEN |
 | 54 | `test_canon_self_bridge.py` | 32 | unittest | C48 Canon ↔ Self-Graph Bridge: process mapping, canon coverage, process status, self-exposition, structural correctness | ✅ GREEN |
+| 55 | `test_reflexive_action.py` | 41 | unittest | C49 Reflexive Action: plan/apply, core protection, undo, Session integration, end-to-end with SelfGraph | ✅ GREEN |
 
 ---
 
@@ -840,6 +841,29 @@ py -3 -m unittest e0_controller.test_gordian_trap -v
 - 8 frontier nodes: zeit, zustand, raumzeit, strukturelle_zulaessigkeit, reflexivitaet, strukturelle_ausrichtung, domaeneninvarianz, negative_notwendigkeit
 - Central identity: self-graph "historization" = canon "historisierung" — same mechanism, different perspectives
 - Coverage gap is a feature (epistemic honesty), not a deficiency
+
+---
+
+### 55. test_reflexive_action.py — 41 tests
+
+**What it tests:** C49 — Reflexive Action. Closes the reflexive loop: C47 Dual Reflection diagnosis → concrete, reversible landscape mutations. Only modulation components (curvature, overlap) can be toggled; core components are structurally protected. Full undo via `ReflexiveActionResult.restore()`. Session.iterate() Step 7 integration.
+
+**Test classes:**
+- `TestReflexiveAction` (4): dataclass fields, is_deactivation true/false/noop
+- `TestReflexiveActionResult` (7): empty result, any_changes, restore reverses, restore order, summary variants
+- `TestPlanReflexiveActions` (8): no candidates, curvature active/inactive, overlap, both, core ignored, unknown ignored, reason has quality
+- `TestApplyReflexiveActions` (7): deactivates curvature/overlap/both, skips inactive, mixed, no candidates, undo
+- `TestCoreProtection` (3): modulation flags only modulations, contains known modulations, core never applied
+- `TestEndToEnd` (4): harmful curvature deactivated via live SelfGraph, healthy stays, confused not deactivated, restore after end-to-end
+- `TestSessionIntegration` (5): IterationResult has reflexive_results, Session has self_graph, iterate produces results, results are Optional, backward compat default empty
+- `TestEdgeCases` (3): empty diagnosis, repeated apply idempotent, summary format no crash
+
+**Key findings:**
+- Only `_MODULATION_FLAGS` (curvature→curvature_modulation, overlap→overlap_modulation) are ever toggled
+- Core components (amplitude, born, realization, historization, inertia, transition_field) are structurally protected
+- Full reversibility: `restore()` undoes all mutations in reverse order
+- Session integration: Step 7 in iterate() — after structural tuning, dual reflection triggers reflexive action
+- End-to-end chain verified: SelfGraph → diagnose_self_graph → apply_reflexive_actions → landscape mutation → restore
 
 ---
 

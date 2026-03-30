@@ -3,8 +3,8 @@
 > Central validation registry for the E₀ Framework.
 > **Purpose:** connect claims, tests, evidence, and status in one place.
 
-**Last updated:** 2026-03-29 — **2028 tests** (0 failures, 0 warnings)  
-**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, and active edge-case work.
+**Last updated:** 2026-03-30 — **2173 tests** (0 failures, 0 warnings)  
+**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, and active edge-case work.
 
 ---
 
@@ -1594,6 +1594,28 @@ The Ontodynamics canon can be materialized as a machine-readable JSON landscape 
 - **Exposition Test A** (canon only, GPT-4o): 4/6 questions correctly answered — thesis, domain invariance, epistemic gradient, historization (partial)
 - **Exposition Test B** (canon + bridge, GPT-4o): 6/6 questions correctly answered — structural identity, epistemic frontier, historization identity ("not merely an analogy"), coverage as feature, ρ-asymmetry
 - **Test A→B improvement**: 32% score gain from 32% more context — the bridge transforms structural information into self-interpreting knowledge
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C49 — Reflexive Action: diagnosis → concrete landscape mutation
+
+**Claim**  
+When the C47 Dual Reflection diagnosis identifies a modulation component as harmful, C49 translates that diagnosis into a concrete, reversible landscape mutation (toggling the modulation flag). Core components are structurally protected and never touched. The full chain SelfGraph → diagnose → plan → apply → undo is verified end-to-end.
+
+**Evidence**  
+- `e0_controller/test_reflexive_action.py` (41 tests, 8 classes)
+- `e0_controller/reflexive_action.py` (183 lines — `plan_reflexive_actions`, `apply_reflexive_actions`, `ReflexiveAction`, `ReflexiveActionResult`)
+- `e0_controller/session.py` Step 7 integration (+92 lines)
+
+**Result**  
+- Only modulation flags (curvature_modulation, overlap_modulation) are toggled — core never touched
+- Session.iterate() Step 7: after structural tuning, dual reflection → reflexive action
+- Full reversibility via `ReflexiveActionResult.restore()` — all mutations undone in reverse order
+- End-to-end: SelfGraph records failures → diagnose_self_graph classifies harmful → apply_reflexive_actions deactivates → landscape flag toggled → restore reverts
+- Canon alignment: operationalizes `reflexivitaet` (L7) frontier node — E₀ now acts on its own self-diagnosis
 
 **Status**  
 ✅ Confirmed
