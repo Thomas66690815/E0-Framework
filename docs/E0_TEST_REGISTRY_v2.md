@@ -1844,6 +1844,35 @@ Das ist der Schritt BEVOR ich in eine Falle tappe."
 
 ---
 
+### C58 — Reflexion Benchmark: 10 Domains × 3 Stufen
+
+**Claim**  
+Reflexive edge proposal (C56/C57) is tested against all 10 C53 domains to
+determine which real topologies benefit from reflexion.
+
+**Evidence**  
+- `e0_controller/benchmark_reflexion.py` — benchmark runner
+- `e0_controller/test_benchmark_reflexion.py` (20 tests, 6 classes)
+- All 10 domains × 3 Stufen (S1_standard, S1R_reactive, S2_proactive)
+- S1: 10/10 goals, S1R: 10/10 goals, S2: 10/10 goals
+- Reactive (S1R): 0 proposals total — C53 domains are connected, no stuckness
+- Proactive (S2): D6 improved B(5)→B(3), D10 improved B(6)→A(2)
+- 8/10 domains neutral (no proposals, same rating, same steps)
+- D10: proactive shortcut bypasses bottleneck entirely (rating upgrade B→A)
+- D6: proactive shortcut reduces steps by 2
+
+**Result**  
+- All C53 domains are connected graphs — no frontier gaps
+- Reactive reflexion is provably neutral on connected domains (0 proposals)
+- Proactive reflexion improves efficiency via topology enrichment (shortcuts)
+- Proactive is not frontier-bridging here — it's constructive shortcutting
+- 2/10 domains benefit, 8/10 neutral, 0/10 harmed (reflexion is monotonic)
+
+**Status**  
+✅ Confirmed
+
+---
+
 When a new test family is added, update both:
 
 1. the inventory-level registry (`E0_TEST_REGISTRY_v1.md`)

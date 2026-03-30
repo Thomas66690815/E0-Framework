@@ -257,9 +257,10 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 | Amplitude Benchmark (C55) | **Active** (23 tests) | `e0_controller/benchmark_amplitude.py` |
 | Reflexive Edge Proposal (C56) | **Active** (23 tests) | `e0_controller/reflexive_edge_proposal.py` |
 | Proactive Reflexion / Stufe 2 (C57) | **Active** (20 tests) | `e0_controller/reflexive_edge_proposal.py` |
+| Reflexion Benchmark (C58) | **Active** (20 tests) | `e0_controller/benchmark_reflexion.py` |
 | Bootstrap Architecture (C43–C47) | **Complete** | `docs/E0_LLM_BOOTSTRAP_ARCHITECTURE_v1.md` |
 
-**Tests:** 2367 total (pytest discover), 0 failures, 0 warnings, 41 conditional (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
+**Tests:** 2387 total (pytest discover), 0 failures, 0 warnings, 41 conditional (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
 
 ---
 
