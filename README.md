@@ -233,7 +233,8 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 | Cross-domain validation | **Active** (3 domains, hybrid) | `e0_controller/validate_cross_domain.py` |
 | Graph validation | **Active** | `e0_controller/graph_validation.py` |
 | Scenario packets | **Active** (3 domains) | `scenarios/` |
-| Formal Paper (E₀ mathematics) | **Draft** | `docs/E0_FORMAL_PAPER_DRAFT_v1.md` |
+| Formal Paper (E₀ mathematics) | **Draft v1** | `docs/E0_FORMAL_PAPER_DRAFT_v1.md` |
+| Formal Paper v2 (+ benchmark) | **Draft v2** | `docs/E0_FORMAL_PAPER_DRAFT_v2.md` |
 | Paper 3 (Non-Abelian Structure) | **Draft** | `docs/E0_PAPER3_NON_ABELIAN_STRUCTURE_v1.md` |
 | Multi-agent network + experiments | **Archived** | `_archive/` |
 | Core reference implementation | **Archived** | `_archive/e0_core/` |
@@ -373,7 +374,8 @@ E0-Framework/
 │   └── research_brief/                 Domain-specific scenario data
 │
 ├── docs/                             Working documents and analysis
-│   ├── E0_FORMAL_PAPER_DRAFT_v1.md     Formal E₀ mathematics paper
+│   ├── E0_FORMAL_PAPER_DRAFT_v1.md     Formal E₀ mathematics paper (v1)
+│   ├── E0_FORMAL_PAPER_DRAFT_v2.md     Formal paper v2 with benchmark evidence
 │   ├── E0_MATH_IMPL_MAPPING_v1.md      Math ↔ Code mapping
 │   ├── E0_SUMMATION_GEOMETRY_COMPARISON_v1.md  Geometry comparison results
 │   ├── E0_EXTERNAL_VALIDATION_AND_HANDOFF_NOTE_v1.md  Handoff strategy
