@@ -62,6 +62,15 @@ from .structural_mutation import (
     StructuralTuningCycleResult,
     structural_tuning_cycle,
 )
+from .self_graph import SelfGraph
+from .dual_reflection import (
+    DualReflectionReport,
+    reflect_dual,
+)
+from .reflexive_action import (
+    ReflexiveActionResult,
+    apply_reflexive_actions,
+)
 
 
 @dataclass
@@ -85,6 +94,7 @@ class IterationResult:
     stop_reason: str                       # "equilibrium" | "stagnation" | "budget"
     policy_phases: List[str] = field(default_factory=list)  # C41: per-iteration phase ("warmup"/"exploit"/"converged")
     structural_results: List[Optional[StructuralTuningCycleResult]] = field(default_factory=list)  # B4-S3: per-iteration structural tuning
+    reflexive_results: List[Optional[ReflexiveActionResult]] = field(default_factory=list)  # C49: per-iteration reflexive actions
 
 
 class Session:
@@ -143,6 +153,10 @@ class Session:
         )
         self.mutation_history = MutationHistory()
 
+        # C49: Self-Graph for reflexive self-modification
+        self.self_graph = SelfGraph()
+        self.controller.self_graph = self.self_graph
+
     @classmethod
     def resume(
         cls,
@@ -189,6 +203,9 @@ class Session:
             session_id, base_dir=base_dir,
         )
         obj.mutation_history = MutationHistory()
+        # C49: Self-Graph for reflexive self-modification
+        obj.self_graph = SelfGraph()
+        obj.controller.self_graph = obj.self_graph
         return obj
 
     def run(
@@ -320,6 +337,7 @@ class Session:
         verdicts: List[IterationVerdict] = []
         reflections: List[Optional[ReflectionReport]] = []
         structural_results: List[Optional[StructuralTuningCycleResult]] = []
+        reflexive_results: List[Optional[ReflexiveActionResult]] = []
         policy_phases: List[str] = []
         prev_map: Optional[ResidualTensionMap] = None
 
@@ -379,6 +397,18 @@ class Session:
                 )
             structural_results.append(stc_result)
 
+            # 7. Reflexive self-modification (C49) — dual reflection
+            reflex_result = None
+            if (report is not None
+                    and self.controller.self_graph is not None
+                    and verdict.should_continue):
+                dual_report = self._dual_reflect(result, rmap)
+                if dual_report is not None:
+                    reflex_result = apply_reflexive_actions(
+                        dual_report, self.landscape,
+                    )
+            reflexive_results.append(reflex_result)
+
             if not verdict.should_continue:
                 break
 
@@ -395,6 +425,7 @@ class Session:
             stop_reason=verdicts[-1].reason if verdicts else "empty",
             policy_phases=policy_phases,
             structural_results=structural_results,
+            reflexive_results=reflexive_results,
         )
 
     def _inter_iteration_reflect(
@@ -448,6 +479,67 @@ class Session:
             scenario_eval,
             tuning_memory=self.tuning_memory,
             landscape=self.landscape,
+        )
+
+    def _dual_reflect(
+        self,
+        result: SessionResult,
+        rmap: ResidualTensionMap,
+    ) -> Optional[DualReflectionReport]:
+        """Run dual reflection (domain + self-graph) for C49.
+
+        Returns DualReflectionReport if self_graph is available,
+        None otherwise.
+        """
+        sg = self.controller.self_graph
+        if sg is None:
+            return None
+
+        trace = result.trace
+        m = trace.metrics()
+        reached = rmap.goal_reached if hasattr(rmap, "goal_reached") else True
+
+        happy_len = int(m["steps"])
+        try:
+            from .graph_validation import find_happy_path
+            hp = find_happy_path(self.landscape, trace.path[0], None)
+            if hp:
+                happy_len = len(hp) - 1
+        except Exception:
+            pass
+
+        eval_result = evaluate_run(
+            path=trace.path,
+            steps=int(m["steps"]),
+            escalation_count=int(m.get("escalation_count", 0)),
+            revisit_count=int(m["revisit_count"]),
+            success_rate=m["success_rate"],
+            avg_tension=m["avg_tension"],
+            total_tension=trace.total_tension,
+            reached_goal=reached,
+            happy_path_length=happy_len,
+        )
+
+        scenario_eval = ScenarioEvaluation(
+            scenario_id=self.session_id,
+            domain="iterate",
+            graph_score=1.0,
+            run_evaluation=eval_result,
+            semantic_evaluation=None,
+            hard_failure=None,
+            overall_score=None,
+        )
+
+        mode_summary = None
+        if self.controller.mode_controller is not None:
+            mode_summary = self.controller.mode_controller.summary()
+
+        return reflect_dual(
+            scenario_eval,
+            sg,
+            tuning_memory=self.tuning_memory,
+            landscape=self.landscape,
+            mode_summary=mode_summary,
         )
 
     @property
