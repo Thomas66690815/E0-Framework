@@ -1,7 +1,7 @@
 # E₀ Test Registry v1
 
 > Central reference for all tests in the E₀ Framework.
-> **Last verified:** 2026-03-30 — **2210 tests** (2128 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures, 0 warnings)
+> **Last verified:** 2026-03-30 — **2229 tests** (2147 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures, 0 warnings)
 
 ---
 
@@ -65,6 +65,7 @@
 | 54 | `test_canon_self_bridge.py` | 32 | unittest | C48 Canon ↔ Self-Graph Bridge: process mapping, canon coverage, process status, self-exposition, structural correctness | ✅ GREEN |
 | 55 | `test_reflexive_action.py` | 41 | unittest | C49 Reflexive Action: plan/apply, core protection, undo, Session integration, end-to-end with SelfGraph | ✅ GREEN |
 | 56 | `test_reflexive_journal.py` | 37 | unittest | C50 Reflexive Journal: record/restore, exposition Section 5, Session integration, end-to-end chain | ✅ GREEN |
+| 57 | `test_system_integration.py` | 19 | unittest | C51 System Integration: full pipeline convergence, Selbst-Fundierung, reflexive convergence, direct assembly, edge cases | ✅ GREEN |
 
 ---
 
@@ -886,6 +887,27 @@ py -3 -m unittest e0_controller.test_gordian_trap -v
 - Active vs restored distinction visible: `[active]` vs `[restored]` in format output
 - End-to-end chain: SelfGraph failures → diagnose → apply → journal.record → build_self_exposition → Section 5 verifiable
 - Session wiring: journal created in `__init__`/`resume`, recorded in Step 7 after reflexive action
+
+---
+
+### 57. test_system_integration.py — 19 tests
+
+**What it tests:** C51 — System-Level Integration (E₀ lernt E₀). Proves that all components from C43–C50 work together as one system. Full pipeline: Session(canon_landscape) → iterate() → controller.cycle() → self_graph.self_historize() → dual_reflect → apply_reflexive_actions → journal.record → build_self_exposition(). Uses the materialized Ontodynamics canon as domain — E₀ operates on its own ontology (Selbst-Fundierung).
+
+**Test classes:**
+- `TestPipelineWiring` (5): Session creates all components, iterate returns complete result, self_graph accumulates, exposition has 5 sections, result lists aligned
+- `TestSelfFundierung` (5): canon navigable, process map covers core, coverage partial with frontier, self-knowledge accumulates over iterations, full exposition substantial
+- `TestReflexiveConvergence` (3): pre-poisoned curvature deactivated in iterate Step 7, journal populated + visible in exposition, flag stays off
+- `TestDirectPipelineAssembly` (3): manual walk all 5 steps, component→canon mapping shown, epistemic frontier identified
+- `TestEdgeCases` (3): minimal 2-node landscape, all-failure negative quality, fresh vs operated exposition differs
+
+**Key findings:**
+- Full pipeline fires end-to-end within Session.iterate() — not just component-by-component
+- Step 7 reflexive action fires with pre-poisoned curvature + amplifying tension (mostly-failing execute_fn)
+- Canon landscape (19 nodes, 31 edges) is a valid, navigable domain for the controller
+- Self-knowledge accumulates significantly across iterations (total_load > 5)
+- Exposition grows from ~500 chars (canon only) to ~2000+ chars (fully operated)
+- Coverage ratio ~58% — honest epistemic frontier with 8 not-yet-instantiated concepts
 
 ---
 

@@ -247,9 +247,10 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 | Canon ↔ Self-Graph Bridge (C48) | **Active** (32 tests) | `e0_controller/canon_self_bridge.py` |
 | Reflexive Action (C49) | **Active** (41 tests) | `e0_controller/reflexive_action.py` |
 | Reflexive Journal (C50) | **Active** (37 tests) | `e0_controller/reflexive_action.py`, `canon_self_bridge.py` |
+| System Integration (C51) | **Active** (19 tests) | `e0_controller/test_system_integration.py` |
 | Bootstrap Architecture (C43–C47) | **Complete** | `docs/E0_LLM_BOOTSTRAP_ARCHITECTURE_v1.md` |
 
-**Tests:** 2210 total (pytest discover), 0 failures, 0 warnings, 41 conditional (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
+**Tests:** 2229 total (pytest discover), 0 failures, 0 warnings, 41 conditional (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
 
 ---
 

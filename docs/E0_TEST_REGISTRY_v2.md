@@ -3,8 +3,8 @@
 > Central validation registry for the E₀ Framework.
 > **Purpose:** connect claims, tests, evidence, and status in one place.
 
-**Last updated:** 2026-03-30 — **2210 tests** (0 failures, 0 warnings)  
-**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, and active edge-case work.
+**Last updated:** 2026-03-30 — **2229 tests** (0 failures, 0 warnings)  
+**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, and active edge-case work.
 
 ---
 
@@ -1640,6 +1640,30 @@ When E₀ modifies its own landscape through reflexive action (C49), those modif
 - Restored actions shown with `[restored]` status
 - End-to-end verified: SelfGraph → diagnose → apply → journal → exposition renders correctly
 - Bridge 4 now complete: Stufe 1–3 (Structural Mutation) + 4a (Identity Invariant) + 4b (Representation) + 4c (Reflexive Action)
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C51 — System-Level Integration: E₀ lernt E₀
+
+**Claim**  
+All components from C43–C50 work together as one system. The framework can operate on its own canon landscape (Selbst-Fundierung), accumulate self-knowledge through iterate(), trigger reflexive action within the full Session pipeline, and produce a 5-section self-exposition that coherently reflects what it believes, how it operates, what it covers, what remains open, and what it has done to itself.
+
+**Evidence**  
+- `e0_controller/test_system_integration.py` (19 tests, 5 classes)
+- Full pipeline: Session → iterate → controller.cycle → self_graph.self_historize → dual_reflect → apply_reflexive_actions → journal.record → build_self_exposition
+- Canon landscape (19 nodes, 31 edges) used as domain — E₀ navigates its own ontology
+- Pre-poisoned curvature deactivated within iterate() Step 7 (not manually)
+- All 5 exposition sections verified after real operation
+
+**Result**  
+- Pipeline wiring: Session creates SelfGraph + ReflexiveJournal, wires to controller, iterate returns aligned IterationResult
+- Selbst-Fundierung: canon landscape navigable, self-knowledge accumulates, coverage 58% with honest epistemic frontier
+- Reflexive convergence: Step 7 fires within iterate(), curvature deactivated, journal populated, visible in exposition
+- Direct assembly: manual walk through all 5 pipeline steps proves connectivity
+- Edge cases: 2-node landscape, all-failure execution, fresh vs operated exposition
 
 **Status**  
 ✅ Confirmed
