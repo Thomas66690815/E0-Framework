@@ -34,8 +34,10 @@ class TestCanonProcessMap(unittest.TestCase):
             self.assertGreater(len(CANON_PROCESS_MAP[comp]), 0)
 
     def test_historization_maps_to_historisierung(self):
-        """The central identity: historization IS historisierung."""
-        self.assertEqual(CANON_PROCESS_MAP["historization"], ["historisierung"])
+        """The central identity: historization IS historisierung + zeit."""
+        mapped = CANON_PROCESS_MAP["historization"]
+        self.assertIn("historisierung", mapped)
+        self.assertIn("zeit", mapped)
 
     def test_amplitude_maps_to_differenz(self):
         """Δ-detection maps to the root primitive."""
@@ -105,13 +107,13 @@ class TestCanonCoverage(unittest.TestCase):
     def test_historisierung_instantiated(self):
         self.assertIn("historisierung", self.cov["instantiated"])
 
-    def test_negative_notwendigkeit_not_instantiated(self):
-        """The thesis is theoretical — no operational counterpart yet."""
-        self.assertIn("negative_notwendigkeit", self.cov["not_instantiated"])
+    def test_negative_notwendigkeit_instantiated(self):
+        """A₀ (born) IS negative necessity — non-transition is unstable."""
+        self.assertIn("negative_notwendigkeit", self.cov["instantiated"])
 
-    def test_reflexivitaet_not_instantiated(self):
-        """Reflexivity emerges — it's not directly operationalized."""
-        self.assertIn("reflexivitaet", self.cov["not_instantiated"])
+    def test_reflexivitaet_instantiated(self):
+        """C49+C50+C51: operational cycle includes reflexive Step 7."""
+        self.assertIn("reflexivitaet", self.cov["instantiated"])
 
     def test_coverage_ratio_between_0_and_1(self):
         self.assertGreater(self.cov["coverage_ratio"], 0.0)

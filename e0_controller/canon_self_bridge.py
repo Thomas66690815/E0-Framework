@@ -41,16 +41,38 @@ from .reflexive_action import ReflexiveJournal
 CANON_PROCESS_MAP: Dict[str, List[str]] = {
     # Δ-detection: the amplitude module finds differences
     "amplitude": ["differenz"],
-    # State selection via A0 + realizability rate
-    "born": ["axiom_a0", "rate"],
-    # Execution: local realization along structurally admissible paths
-    "realization": ["lokale_realisierung", "pfad"],
-    # THE central connection — operational historization IS the canon primitive
-    "historization": ["historisierung"],
-    # Resistance from accumulated structure + topological inertia
-    "inertia": ["widerstand", "masse"],
-    # The transition field: connecting differences via the operational cycle
-    "transition_field": ["verbindung", "operationaler_zyklus"],
+    # State selection via A0 + realizability rate.
+    # negative_notwendigkeit: A₀ IS negative necessity —
+    # "if Δ>0 and path exists, non-transition is unstable" is a
+    # structural prohibition, not a positive prescription.
+    "born": ["axiom_a0", "rate", "negative_notwendigkeit"],
+    # Execution: local realization along structurally admissible paths.
+    # zustand: realization acts on distinguishable configurations
+    #   (Landscape._states: Set[str] — minimal, exactly canonical).
+    # domaeneninvarianz: the realization component works identically
+    #   on ANY Landscape — no domain-specific primitives exist.
+    "realization": [
+        "lokale_realisierung", "pfad", "zustand", "domaeneninvarianz",
+    ],
+    # THE central connection — operational historization IS the canon
+    # primitive. zeit: τ is DEFINED as "ordering of historizations" —
+    # historization._tau increments on every update(). Canon §1.6: ✅
+    "historization": ["historisierung", "zeit"],
+    # Resistance from accumulated structure + topological inertia.
+    # strukturelle_ausrichtung: alignment via resistance (AGI Blueprint
+    # §6) — high R on destabilizing transitions prevents them. The
+    # inertia system (trace_load, trace_quality, inertia_factor) IS
+    # the alignment mechanism.
+    "inertia": ["widerstand", "masse", "strukturelle_ausrichtung"],
+    # The transition field: connecting differences via the operational
+    # cycle. reflexivitaet: the operational cycle now includes Step 7
+    # (reflexive self-modification via SelfGraph + dual_reflect +
+    # reflexive_action). strukturelle_zulaessigkeit: _admissible_neighbors()
+    # enforces Δ>0, R<∞, K11 Tier-2 at every cycle. §9 AGI-Blueprint.
+    "transition_field": [
+        "verbindung", "operationaler_zyklus",
+        "reflexivitaet", "strukturelle_zulaessigkeit",
+    ],
     # Curvature modulation → degree of overlap (topological quality)
     "curvature": ["gradueller_overlap"],
     # Overlap modulation → also degree-based
