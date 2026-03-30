@@ -1,8 +1,8 @@
 {
   "name": "ontodynamics",
-  "version": "1.1",
-  "source": "canon/ontodynamics.txt + canon/e0-canon-plain.txt",
-  "description": "Ontodynamics (pre-physical foundation) + E0 Canon Plain (operative structure). 5 primitives, 8 derived concepts including Path (structural admissibility) and Axiom A0 (difference minimization). Derivation order encoded in delta topology.",
+  "version": "1.2",
+  "source": "canon/ontodynamics.txt + canon/e0-canon-plain.txt + canon/e0-agi-blueprint.md",
+  "description": "Complete E0 canonical landscape. Layer 1: Ontodynamics (pre-physical primitives). Layer 2: Canon Plain (operative structure, Axiom A0). Layer 3: AGI Blueprint (operational cycle, reflexivity emergence, structural alignment, domain invariance, negative necessity thesis). Derivation order encoded in delta topology.",
   "nodes": [
     {
       "id": "differenz",
@@ -93,8 +93,48 @@
       "label": "Axiom A0 — Difference Minimization",
       "derivation_level": 5,
       "is_primitive": false,
-      "description": "If difference exists and a structurally admissible path with finite resistance is available, then transition is structurally more stable than non-transition. The foundational law of E0."
-    }
+      "description": "If difference exists and a structurally admissible path with finite resistance is available, then transition is structurally more stable than non-transition. The foundational law of E0."    },
+    {
+      "id": "operationaler_zyklus",
+      "label": "Core Operational Cycle",
+      "derivation_level": 6,
+      "is_primitive": false,
+      "description": "\u00a74: Detection of local differences, enumeration of admissible paths, estimation of resistance, selection by realizability, execution, structural historization. Learning is not optional. Blueprint instantiation of the primitives as continuous process."
+    },
+    {
+      "id": "strukturelle_zulaessigkeit",
+      "label": "Structural Admissibility",
+      "derivation_level": 6,
+      "is_primitive": false,
+      "description": "\u00a79: Must reject transitions that collapse partial into global, cannot integrate into structure, simulate irreversibility without trace, or bypass resistance via global optimization. Implicit, non-negotiable."
+    },
+    {
+      "id": "reflexivitaet",
+      "label": "Reflexivity Emergence",
+      "derivation_level": 7,
+      "is_primitive": false,
+      "description": "\u00a75: Emerges when system models own transition structure, self-modification becomes admissible transition, historization constrains future self-changes. Structurally induced, not architecturally imposed."
+    },
+    {
+      "id": "strukturelle_ausrichtung",
+      "label": "Structural Alignment",
+      "derivation_level": 7,
+      "is_primitive": false,
+      "description": "\u00a76: Arises mechanically, not normatively. High-impact transitions incur high resistance. Global resets destroy historized structure. Constrains classes of failure, not outcomes."
+    },
+    {
+      "id": "domaeneninvarianz",
+      "label": "Domain Invariance",
+      "derivation_level": 7,
+      "is_primitive": false,
+      "description": "\u00a77: Does not depend on sensory modality, symbol systems, embodiment, or task environment. Domain specificity enters only through embedding, not through mechanism."
+    },
+    {
+      "id": "negative_notwendigkeit",
+      "label": "Negative Necessity",
+      "derivation_level": 8,
+      "is_primitive": false,
+      "description": "\u00a72: Conditions under which avoiding intelligence becomes structurally unstable. Not a positive construction claim. Persistent non-intelligent behavior cannot be maintained without structural degeneration."    }
   ],
   "edges": [
     {
@@ -276,9 +316,139 @@
       "initial_F": 2.0,
       "confidence": 0.7,
       "derivation": "A0: ...and admissible path exists, then non-transition is structurally unstable."
+    },
+    {
+      "from": "axiom_a0",
+      "to": "operationaler_zyklus",
+      "delta": 0.8,
+      "resistance": 0.6,
+      "initial_U": 4.0,
+      "initial_F": 1.0,
+      "confidence": 0.7,
+      "derivation": "A0 instantiated as continuous operational process."
+    },
+    {
+      "from": "rate",
+      "to": "operationaler_zyklus",
+      "delta": 0.7,
+      "resistance": 0.5,
+      "initial_U": 4.0,
+      "initial_F": 1.0,
+      "confidence": 0.7,
+      "derivation": "Selection by realizability preference within the cycle."
+    },
+    {
+      "from": "historisierung",
+      "to": "operationaler_zyklus",
+      "delta": 0.8,
+      "resistance": 0.6,
+      "initial_U": 4.0,
+      "initial_F": 1.0,
+      "confidence": 0.7,
+      "derivation": "Structural historization as final step. Learning is not optional."
+    },
+    {
+      "from": "widerstand",
+      "to": "strukturelle_zulaessigkeit",
+      "delta": 0.7,
+      "resistance": 0.5,
+      "initial_U": 4.0,
+      "initial_F": 1.0,
+      "confidence": 0.8,
+      "derivation": "Resistance-based rejection of inadmissible transitions."
+    },
+    {
+      "from": "historisierung",
+      "to": "strukturelle_zulaessigkeit",
+      "delta": 0.7,
+      "resistance": 0.5,
+      "initial_U": 4.0,
+      "initial_F": 1.0,
+      "confidence": 0.8,
+      "derivation": "Must integrate into existing historized structure."
+    },
+    {
+      "from": "operationaler_zyklus",
+      "to": "reflexivitaet",
+      "delta": 1.0,
+      "resistance": 0.8,
+      "initial_U": 3.0,
+      "initial_F": 2.0,
+      "confidence": 0.5,
+      "derivation": "Emerges when the cycle operates on its own transition structure."
+    },
+    {
+      "from": "historisierung",
+      "to": "reflexivitaet",
+      "delta": 1.0,
+      "resistance": 0.8,
+      "initial_U": 3.0,
+      "initial_F": 2.0,
+      "confidence": 0.5,
+      "derivation": "Historization constrains future self-changes."
+    },
+    {
+      "from": "widerstand",
+      "to": "strukturelle_ausrichtung",
+      "delta": 0.9,
+      "resistance": 0.7,
+      "initial_U": 3.0,
+      "initial_F": 2.0,
+      "confidence": 0.5,
+      "derivation": "High-impact transitions incur high resistance."
+    },
+    {
+      "from": "historisierung",
+      "to": "strukturelle_ausrichtung",
+      "delta": 0.9,
+      "resistance": 0.7,
+      "initial_U": 3.0,
+      "initial_F": 2.0,
+      "confidence": 0.5,
+      "derivation": "Global resets destroy historized structure."
+    },
+    {
+      "from": "operationaler_zyklus",
+      "to": "domaeneninvarianz",
+      "delta": 0.9,
+      "resistance": 0.7,
+      "initial_U": 3.0,
+      "initial_F": 2.0,
+      "confidence": 0.5,
+      "derivation": "Same transition logic over different state spaces."
+    },
+    {
+      "from": "reflexivitaet",
+      "to": "negative_notwendigkeit",
+      "delta": 1.2,
+      "resistance": 1.0,
+      "initial_U": 2.0,
+      "initial_F": 2.0,
+      "confidence": 0.4,
+      "derivation": "Self-modeling makes avoidance of intelligence structurally unstable."
+    },
+    {
+      "from": "strukturelle_ausrichtung",
+      "to": "negative_notwendigkeit",
+      "delta": 1.2,
+      "resistance": 1.0,
+      "initial_U": 2.0,
+      "initial_F": 2.0,
+      "confidence": 0.4,
+      "derivation": "Mechanical constraints rule out persistent degeneration."
+    },
+    {
+      "from": "domaeneninvarianz",
+      "to": "negative_notwendigkeit",
+      "delta": 1.2,
+      "resistance": 1.0,
+      "initial_U": 2.0,
+      "initial_F": 2.0,
+      "confidence": 0.4,
+      "derivation": "Domain independence makes the claim universal."
     }
   ],
-  "goal_states": ["masse"],
+  "goal_states": ["negative_notwendigkeit"],
   "necessary_consequences": [
     "irreversibility",
     "locality",

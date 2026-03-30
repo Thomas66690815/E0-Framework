@@ -63,7 +63,7 @@ class TestLoadCanonSpec(unittest.TestCase):
     def test_load_ontodynamics(self):
         spec = load_canon_spec("ontodynamics")
         self.assertEqual(spec["name"], "ontodynamics")
-        self.assertEqual(spec["version"], "1.1")
+        self.assertEqual(spec["version"], "1.2")
 
     def test_has_nodes_and_edges(self):
         spec = load_canon_spec("ontodynamics")
@@ -94,17 +94,18 @@ class TestExtractInfo(unittest.TestCase):
 
     def test_name_and_version(self):
         self.assertEqual(self.info.name, "ontodynamics")
-        self.assertEqual(self.info.version, "1.1")
+        self.assertEqual(self.info.version, "1.2")
 
     def test_source_reference(self):
         self.assertIn("ontodynamics.txt", self.info.source)
         self.assertIn("e0-canon-plain.txt", self.info.source)
+        self.assertIn("e0-agi-blueprint.md", self.info.source)
 
     def test_node_count(self):
-        self.assertEqual(len(self.info.nodes), 13)
+        self.assertEqual(len(self.info.nodes), 19)
 
     def test_edge_count(self):
-        self.assertEqual(len(self.info.edges), 18)
+        self.assertEqual(len(self.info.edges), 31)
 
     def test_five_primitives(self):
         primitives = [n for n in self.info.nodes if n.is_primitive]
@@ -115,14 +116,17 @@ class TestExtractInfo(unittest.TestCase):
             "gradueller_overlap", "historisierung",
         })
 
-    def test_six_derived(self):
+    def test_derived_concepts(self):
         derived = [n for n in self.info.nodes if not n.is_primitive]
-        self.assertEqual(len(derived), 8)
+        self.assertEqual(len(derived), 14)
         derived_ids = {n.id for n in derived}
         self.assertEqual(derived_ids, {
             "zustand", "widerstand", "zeit",
             "rate", "raumzeit", "masse",
             "pfad", "axiom_a0",
+            "operationaler_zyklus", "strukturelle_zulaessigkeit",
+            "reflexivitaet", "strukturelle_ausrichtung",
+            "domaeneninvarianz", "negative_notwendigkeit",
         })
 
     def test_derivation_levels(self):
@@ -139,9 +143,16 @@ class TestExtractInfo(unittest.TestCase):
         # Canon Plain additions
         self.assertEqual(levels["pfad"], 4)
         self.assertEqual(levels["axiom_a0"], 5)
+        # Blueprint additions
+        self.assertEqual(levels["operationaler_zyklus"], 6)
+        self.assertEqual(levels["strukturelle_zulaessigkeit"], 6)
+        self.assertEqual(levels["reflexivitaet"], 7)
+        self.assertEqual(levels["strukturelle_ausrichtung"], 7)
+        self.assertEqual(levels["domaeneninvarianz"], 7)
+        self.assertEqual(levels["negative_notwendigkeit"], 8)
 
     def test_goal_states(self):
-        self.assertEqual(self.info.goal_states, ["masse"])
+        self.assertEqual(self.info.goal_states, ["negative_notwendigkeit"])
 
     def test_necessary_consequences(self):
         self.assertEqual(len(self.info.necessary_consequences), 10)
@@ -178,10 +189,10 @@ class TestToBootstrapperSpec(unittest.TestCase):
             self.assertIsInstance(n, str)
 
     def test_node_count_preserved(self):
-        self.assertEqual(len(self.bs_spec["nodes"]), 13)
+        self.assertEqual(len(self.bs_spec["nodes"]), 19)
 
     def test_edge_count_preserved(self):
-        self.assertEqual(len(self.bs_spec["edges"]), 18)
+        self.assertEqual(len(self.bs_spec["edges"]), 31)
 
     def test_edges_have_bootstrapper_fields(self):
         for e in self.bs_spec["edges"]:
@@ -227,12 +238,15 @@ class TestLoadCanon(unittest.TestCase):
             "zustand", "widerstand", "zeit",
             "rate", "raumzeit", "masse",
             "pfad", "axiom_a0",
+            "operationaler_zyklus", "strukturelle_zulaessigkeit",
+            "reflexivitaet", "strukturelle_ausrichtung",
+            "domaeneninvarianz", "negative_notwendigkeit",
         }
         self.assertEqual(states, expected)
 
     def test_landscape_has_edges(self):
         edges = self.cl.landscape.edges
-        self.assertEqual(len(edges), 18)
+        self.assertEqual(len(edges), 31)
 
     def test_inertia_modulation_enabled(self):
         self.assertTrue(self.cl.landscape.inertia_modulation)
@@ -334,6 +348,38 @@ class TestOntodynamicsTopology(unittest.TestCase):
     def test_axiom_a0_reachable_from_differenz(self):
         """The foundational axiom must be reachable from differenz."""
         self.assertTrue(goal_reachable(self.ls, "differenz", "axiom_a0"))
+
+    # ── Blueprint topology ──
+
+    def test_operationaler_zyklus_requires_axiom_and_historisierung(self):
+        """The cycle instantiates A0 with historization."""
+        incoming = [e for e in self.ls.edges if e.target == "operationaler_zyklus"]
+        sources = {e.source for e in incoming}
+        self.assertIn("axiom_a0", sources)
+        self.assertIn("historisierung", sources)
+
+    def test_reflexivitaet_requires_cycle_and_historisierung(self):
+        """Reflexivity emerges from the cycle operating on itself + historization."""
+        incoming = [e for e in self.ls.edges if e.target == "reflexivitaet"]
+        sources = {e.source for e in incoming}
+        self.assertIn("operationaler_zyklus", sources)
+        self.assertIn("historisierung", sources)
+
+    def test_negative_notwendigkeit_has_three_inputs(self):
+        """The thesis derives from reflexivity, alignment, and domain invariance."""
+        incoming = [e for e in self.ls.edges if e.target == "negative_notwendigkeit"]
+        sources = {e.source for e in incoming}
+        self.assertEqual(sources, {"reflexivitaet", "strukturelle_ausrichtung", "domaeneninvarianz"})
+
+    def test_full_journey_differenz_to_negative_notwendigkeit(self):
+        """The full derivation path from differenz to negative_notwendigkeit must exist."""
+        self.assertTrue(goal_reachable(self.ls, "differenz", "negative_notwendigkeit"))
+
+    def test_happy_path_to_negative_notwendigkeit(self):
+        """A happy path from differenz to the thesis must exist."""
+        path = find_happy_path(self.ls, "differenz", "negative_notwendigkeit")
+        self.assertIsNotNone(path)
+        self.assertGreaterEqual(len(path), 5)  # must cross multiple derivation levels
 
 
 # ──────────────────────────────────────────────
@@ -499,7 +545,7 @@ class TestFormatCanonSummary(unittest.TestCase):
         self.assertIn("ontodynamics", self.summary)
 
     def test_contains_version(self):
-        self.assertIn("v1.1", self.summary)
+        self.assertIn("v1.2", self.summary)
 
     def test_contains_primitive_tier(self):
         self.assertIn("Primitive", self.summary)
@@ -516,7 +562,7 @@ class TestFormatCanonSummary(unittest.TestCase):
         self.assertIn("differenz -> lokale_realisierung", self.summary)
 
     def test_contains_goal_states(self):
-        self.assertIn("masse", self.summary)
+        self.assertIn("negative_notwendigkeit", self.summary)
 
     def test_contains_consequences(self):
         self.assertIn("irreversibility", self.summary)
@@ -533,17 +579,26 @@ class TestFormatCanonSummary(unittest.TestCase):
 class TestCanonGraphQuality(unittest.TestCase):
     """The ontodynamics landscape passes graph quality checks."""
 
-    def test_quality_no_traps(self):
+    def test_quality_no_traps_masse(self):
         """Only terminal derivations (leaves) are traps — no structural traps."""
         ls = load_canon("ontodynamics").landscape
         gq = graph_quality(ls, "differenz", "masse")
-        # rate, raumzeit, axiom_a0 are terminal derivations — leaf traps are expected
         trap_set = set(gq.traps)
-        self.assertTrue(trap_set.issubset({"rate", "raumzeit", "axiom_a0"}))
+        # raumzeit, strukturelle_zulaessigkeit are terminal; negative_notwendigkeit is goal but also leaf
+        expected_traps = {"raumzeit", "strukturelle_zulaessigkeit", "negative_notwendigkeit"}
+        self.assertTrue(trap_set.issubset(expected_traps), f"Unexpected traps: {trap_set - expected_traps}")
+
+    def test_quality_to_negative_notwendigkeit(self):
+        """The full journey from differenz to negative_notwendigkeit."""
+        ls = load_canon("ontodynamics").landscape
+        gq = graph_quality(ls, "differenz", "negative_notwendigkeit")
+        trap_set = set(gq.traps)
+        expected_traps = {"raumzeit", "masse", "strukturelle_zulaessigkeit"}
+        self.assertTrue(trap_set.issubset(expected_traps), f"Unexpected traps: {trap_set - expected_traps}")
 
     def test_quality_no_trivial_loops(self):
         ls = load_canon("ontodynamics").landscape
-        gq = graph_quality(ls, "differenz", "masse")
+        gq = graph_quality(ls, "differenz", "negative_notwendigkeit")
         self.assertEqual(len(gq.trivial_loops), 0)
 
 
