@@ -3,8 +3,8 @@
 > Central validation registry for the E₀ Framework.
 > **Purpose:** connect claims, tests, evidence, and status in one place.
 
-**Last updated:** 2026-03-30 — **2229 tests** (0 failures, 0 warnings)  
-**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, and active edge-case work.
+**Last updated:** 2026-03-30 — **2248 tests** (0 failures, 0 warnings)  
+**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, **C52 Honest Self-Knowledge (CANON_PROCESS_MAP correction)**, and active edge-case work.
 
 ---
 
@@ -1660,10 +1660,38 @@ All components from C43–C50 work together as one system. The framework can ope
 
 **Result**  
 - Pipeline wiring: Session creates SelfGraph + ReflexiveJournal, wires to controller, iterate returns aligned IterationResult
-- Selbst-Fundierung: canon landscape navigable, self-knowledge accumulates, coverage 58% with honest epistemic frontier
+- Selbst-Fundierung: canon landscape navigable, self-knowledge accumulates, coverage ~95% with honest epistemic frontier
 - Reflexive convergence: Step 7 fires within iterate(), curvature deactivated, journal populated, visible in exposition
 - Direct assembly: manual walk through all 5 pipeline steps proves connectivity
 - Edge cases: 2-node landscape, all-failure execution, fresh vs operated exposition
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C52 — Honest Self-Knowledge: CANON_PROCESS_MAP correction
+
+**Claim**  
+E₀’s self-observation was inaccurate: it reported 58% canon coverage when 7 concepts were already operationally implemented but missing from the map. Correcting the `CANON_PROCESS_MAP` raises coverage from 58% to 95%. The only genuinely unimplemented concept is `raumzeit` (emergent spacetime). The system now knows itself honestly.
+
+**Evidence**  
+- `e0_controller/test_honest_self_knowledge.py` (19 tests, 4 classes)
+- 7 new mappings, each justified by existing code:
+  - `zeit` → historization (`_tau` increments on every `update()`)
+  - `zustand` → realization (`Landscape._states: Set[str]`)
+  - `negative_notwendigkeit` → born (A₀ = non-transition is unstable)
+  - `reflexivitaet` → transition_field (Step 7 in operational cycle)
+  - `strukturelle_zulaessigkeit` → transition_field (`_admissible_neighbors()` + §9)
+  - `strukturelle_ausrichtung` → inertia (alignment via resistance, §6)
+  - `domaeneninvarianz` → realization (no domain-specific primitives)
+- Coverage: 18/19 nodes → 94.7%. Remaining frontier: `raumzeit` only.
+
+**Result**  
+- Self-exposition Section 4 now shows 1 frontier node instead of 8
+- Reverse map (PROCESS_CANON_MAP) correctly reflects all new mappings
+- Partition invariant maintained: instantiated ∪ not_instantiated = all nodes
+- Existing tests updated: `reflexivitaet` and `negative_notwendigkeit` now correctly assert instantiated
 
 **Status**  
 ✅ Confirmed

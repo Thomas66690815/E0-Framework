@@ -1,7 +1,7 @@
 # E₀ Test Registry v1
 
 > Central reference for all tests in the E₀ Framework.
-> **Last verified:** 2026-03-30 — **2229 tests** (2147 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures, 0 warnings)
+> **Last verified:** 2026-03-30 — **2248 tests** (2166 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures, 0 warnings)
 
 ---
 
@@ -66,6 +66,7 @@
 | 55 | `test_reflexive_action.py` | 41 | unittest | C49 Reflexive Action: plan/apply, core protection, undo, Session integration, end-to-end with SelfGraph | ✅ GREEN |
 | 56 | `test_reflexive_journal.py` | 37 | unittest | C50 Reflexive Journal: record/restore, exposition Section 5, Session integration, end-to-end chain | ✅ GREEN |
 | 57 | `test_system_integration.py` | 19 | unittest | C51 System Integration: full pipeline convergence, Selbst-Fundierung, reflexive convergence, direct assembly, edge cases | ✅ GREEN |
+| 58 | `test_honest_self_knowledge.py` | 19 | unittest | C52 Honest Self-Knowledge: new mappings justified, coverage correction 58→95%, exposition accuracy, reverse map | ✅ GREEN |
 
 ---
 
@@ -907,7 +908,25 @@ py -3 -m unittest e0_controller.test_gordian_trap -v
 - Canon landscape (19 nodes, 31 edges) is a valid, navigable domain for the controller
 - Self-knowledge accumulates significantly across iterations (total_load > 5)
 - Exposition grows from ~500 chars (canon only) to ~2000+ chars (fully operated)
-- Coverage ratio ~58% — honest epistemic frontier with 8 not-yet-instantiated concepts
+- Coverage ratio ~58% — honest epistemic frontier with 8 not-yet-instantiated concepts (corrected to ~95% in C52)
+
+---
+
+### 58. test_honest_self_knowledge.py — 19 tests
+
+**What it tests:** C52 — Honest Self-Knowledge. Proves that the CANON_PROCESS_MAP was inaccurate (58% coverage when 7 concepts were already operationally implemented) and that the corrected map (95%) is justified by actual code. Verifies each new mapping against real infrastructure, checks coverage arithmetic, exposition accuracy, and reverse-map consistency.
+
+**Test classes:**
+- `TestNewMappings` (7): each new mapping justified — zeit via historization._tau, zustand via Landscape._states, negative_notwendigkeit via born/A₀, reflexivitaet via reflexive loop, strukturelle_zulaessigkeit via admissibility, strukturelle_ausrichtung via inertia/resistance, domaeneninvarianz via domain-free realization
+- `TestCoverageCorrection` (5): coverage > 90%, not_instantiated == {raumzeit}, 18/19 instantiated, instantiated ∪ not_instantiated = all nodes, partition invariant
+- `TestExpositionAccuracy` (4): frontier shows only raumzeit, reflexivitaet is operational, zeit mapped to historization, frontier length ≤ 2
+- `TestReverseMap` (3): PROCESS_CANON_MAP keys ⊆ canon nodes, every mapped canon node traceable to component, bidirectional consistency
+
+**Key findings:**
+- 7 canon concepts were implemented but unmapped — structural lie in self-observation
+- Only `raumzeit` (emergent spacetime, L5) is genuinely unimplemented
+- coverage: 18/19 = 94.7%
+- Each mapping has code-level justification (not just semantic similarity)
 
 ---
 
