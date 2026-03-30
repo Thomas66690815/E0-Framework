@@ -22,16 +22,16 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: pip install numpy
+        run: pip install numpy pytest
 
       - name: Run test suite
-        run: python -m unittest discover -s e0_controller -p "test_*.py" -v
+        run: python -m pytest e0_controller/ --tb=short -q
 
       - name: Verify test count
         run: |
-          count=$(python -m unittest discover -s e0_controller -p "test_*.py" 2>&1 | grep -oP 'Ran \K[0-9]+')
+          count=$(python -m pytest e0_controller/ --tb=short -q 2>&1 | grep -oP '[0-9]+(?= passed)')
           echo "Tests run: $count"
-          if [ "$count" -lt 1000 ]; then
-            echo "::error::Test count $count is below minimum threshold (1000). Possible test discovery failure."
+          if [ "$count" -lt 2000 ]; then
+            echo "::error::Test count $count is below minimum threshold (2000). Possible test discovery failure."
             exit 1
           fi
