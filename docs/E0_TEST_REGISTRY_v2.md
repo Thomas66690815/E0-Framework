@@ -3,8 +3,8 @@
 > Central validation registry for the E₀ Framework.
 > **Purpose:** connect claims, tests, evidence, and status in one place.
 
-**Last updated:** 2026-03-30 — **2278 tests** (0 failures, 0 warnings)  
-**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, **C52 Honest Self-Knowledge (CANON_PROCESS_MAP correction)**, **C53 Domain-Invariance Benchmark (10 domains, 1 controller)**, **C54 Raumzeit Coupling (closed vs coupled systems)**, and active edge-case work.
+**Last updated:** 2026-03-30 — **2324 tests** (0 failures, 0 warnings)  
+**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, **C52 Honest Self-Knowledge (CANON_PROCESS_MAP correction)**, **C53 Domain-Invariance Benchmark (10 domains, 1 controller)**, **C54 Raumzeit Coupling (closed vs coupled systems)**, **C55 Amplitude Benchmark (10 domains × 3 modes)**, and active edge-case work.
 
 ---
 
@@ -1743,6 +1743,31 @@ A closed E₀ system (all outcomes SUCCESS) reinforces traversed edges through h
 - Sterile friction (all SUCCESS) → trivial spacetime
 - Fertile friction (unpredictable outcomes) → emergent spacetime
 - Connection to Ontodynamics: gradual overlap (§3.4) = degree of coupling
+
+**Status**  
+✅ Confirmed
+
+### C55 — Amplitude Benchmark: 3 controller modes × 10 domains
+
+**Claim**  
+Amplitude-aware modes (AMPLITUDE_ON_DISAGREE, BORN_SAMPLING) are **not** domain-invariant. GREEDY remains the only mode reaching all 10 goals. However, amplitude mode improves trap-escape domains (D3, D4, D10) — fewer steps, better ratings.
+
+**Evidence**  
+- `e0_controller/benchmark_amplitude.py` — full 3-mode benchmark
+- `e0_controller/test_amplitude_benchmark.py` (23 tests, 5 classes)
+- GREEDY: 10/10 goals, worst=B (confirms C53)
+- AMPLITUDE_ON_DISAGREE: 8/10 goals, D5 (grid) and D8 (nested cycles) fail
+- BORN_SAMPLING (20 trials): D5 only 15% reach, D8 85% reach
+- Amplitude improves D3, D4, D10 (A rating vs B under greedy)
+- D5 failure: amplitude overrides grid navigation into dead ends
+- D8 failure: amplitude persistently overrides toward cycle (16+ overrides)
+- Born sampling shows rating variance across trials
+
+**Result**  
+- GREEDY dominates on goal-reach (10 vs 8)
+- AMPLITUDE dominates on step-efficiency where it succeeds (≤ steps in 6/8 domains)
+- Trade-off: amplitude override exchanges completeness for efficiency on trap domains
+- Grid topologies and cycle-heavy domains are amplitude-hostile
 
 **Status**  
 ✅ Confirmed
