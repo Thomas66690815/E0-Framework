@@ -6,7 +6,7 @@
 **Scope:** Formal framework + operational realization + empirical validation  
 **Language:** English  
 **Repository:** https://github.com/Thomas66690815/E0-Framework  
-**DOI (Zenodo):** https://doi.org/10.5281/zenodo.15007953
+**DOI (Zenodo):** https://doi.org/10.5281/zenodo.19333487
 
 ---
 

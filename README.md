@@ -1,5 +1,7 @@
 # E₀ Framework
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19333487.svg)](https://doi.org/10.5281/zenodo.19333487)
+
 **A structural transition framework with an executable hybrid controller — developed through human–AI collaboration.**
 
 E₀ begins as a pre-domain structural theory of transitions.
