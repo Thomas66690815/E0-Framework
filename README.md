@@ -18,6 +18,7 @@ In practical terms, this means the repository is no longer only about a determin
 - self-tuning meta-layer with cross-run memory (B4),
 - a session orchestrator with automatic MemOS persistence,
 - persistent runtime support via MemOS,
+- multiverse architecture with cross-universe reflexion (C59–C63),
 - an LLM adapter with embedded E₀ semantic context,
 - and live integration into multiple LLM-driven demos.
 
@@ -57,7 +58,7 @@ The full canon: [canon/e0-canon-plain.txt](canon/e0-canon-plain.txt) — 155 lin
 
 ## What exists in this repository now
 
-This repository currently contains five connected layers.
+This repository currently contains eleven connected layers.
 
 ### 1. Canonical E₀ core
 
@@ -150,11 +151,31 @@ Key theoretical result: the holonomy ΔΘ between two paths is **independent of 
 
 See `e0_controller/test_gordian_trap.py` for 44 formal tests (17 interference routing + 12 historization stability + 15 multi-goal G5) and `docs/E0_PHASE3Q_INTERFERENCE_REPORT_v1.md` for the full scientific report.
 
+### 10. Multiverse architecture (C59–C61)
+
+Multiple E₀ controller instances (Universes) run in parallel on cloned landscapes and exchange structural knowledge:
+
+- **NoveltyGate** — prevents universes from collapsing onto the same path by rejecting edge proposals that are too similar to existing knowledge.
+- **Divergence pressure** — injects structural perturbation when universes begin to converge, maintaining exploratory diversity.
+- **Knowledge exchange** — universes share historization patterns and discovered edges after each turn cycle.
+- **Overload escalation (C63)** — when a universe faces too many unexplored paths with insufficient experience, it can escalate to a peer callback for guidance. The Overload Index `OI = N × (1 − mean|trace_quality|)` triggers when exceeding a configurable threshold.
+
+The multiverse resolves a fundamental tension: a single controller's historization narrows its future options (Δ-Kollaps). Multiple coupled controllers maintain structural diversity while sharing useful discoveries.
+
+### 11. Cross-universe reflexive edge discovery (C62)
+
+A reflexion layer that operates *across* universes rather than within a single run:
+
+- **Pattern blending** — merges a universe's own edge-pattern history with a foreign donor's patterns, weighted by a coupling discount (default 0.5).
+- **Cross-proposal engine** — generates hypothesis edges from blended patterns, subject to confidence caps (0.7) that are deliberately lower than self-reflexion (0.8) to reflect epistemic humility about foreign experience.
+- **Integration** — `cross_reflexion_turn()` plugs directly into `MultiverseController` as a `TurnFn`, enabling cross-reflexive edge discovery as part of the standard multiverse cycle.
+
 ---
 
 ## Documentation quick links
 
-- [Architecture overview](docs/E0_ARCHITECTURE_OVERVIEW_v1.md) — how the layers connect end-to-end
+- [Architecture overview v2](docs/E0_ARCHITECTURE_OVERVIEW_v2.md) — 7-layer model with all 67 modules
+- [Multiverse design](docs/E0_MULTIVERSE_DESIGN_v1.md) — C54–C63 architecture, coupling theorem, benchmarks
 - [Hybrid controller spec](docs/E0_HYBRID_CONTROLLER_SPEC_v1.md) — exact runtime behaviour and metrics
 - [Derived / Empirical / Heuristic map](docs/E0_DERIVED_EMPIRICAL_HEURISTIC_MAP_v1.md) — classification of each subsystem
 - [Evidence & falsification status](docs/E0_EVIDENCE_AND_FALSIFICATION_STATUS_v1.md) — what is demonstrated vs open
@@ -209,7 +230,7 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 
 ## Current state
 
-*Last updated: 2026-03-30*
+*Last updated: 2026-04-01*
 
 | Component | Status | Where |
 |-----------|--------|-------|
@@ -258,9 +279,12 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 | Reflexive Edge Proposal (C56) | **Active** (23 tests) | `e0_controller/reflexive_edge_proposal.py` |
 | Proactive Reflexion / Stufe 2 (C57) | **Active** (20 tests) | `e0_controller/reflexive_edge_proposal.py` |
 | Reflexion Benchmark (C58) | **Active** (20 tests) | `e0_controller/benchmark_reflexion.py` |
+| Multiverse Controller (C59–C61) | **Active** (23+ tests) | `e0_controller/multiverse.py` |
+| Cross-Reflexion (C62) | **Active** (19 tests) | `e0_controller/cross_reflexion.py` |
+| Overload Escalation (C63) | **Active** (15 tests) | `e0_controller/controller.py` |
 | Bootstrap Architecture (C43–C47) | **Complete** | `docs/E0_LLM_BOOTSTRAP_ARCHITECTURE_v1.md` |
 
-**Tests:** 2387 total (pytest discover), 0 failures, 0 warnings, 41 conditional (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
+**Tests:** 2511 total (pytest discover), 0 failures, 0 warnings, 41 conditional (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
 
 ---
 
@@ -373,7 +397,9 @@ E0-Framework/
 │   ├── demo_session_persist.py         Session persistence demo (save + resume from disk)
 │   ├── explore_amplitude.py            Amplitude exploration tool
 │   ├── explore_gordian.py              Gordian Trap discovery script
-│   └── test_*.py                       1254 tests (see docs/E0_TEST_REGISTRY_v2.md)
+│   ├── multiverse.py                   MultiverseController, NoveltyGate, Universe (C59–C61)
+│   ├── cross_reflexion.py              Cross-universe reflexive edge discovery (C62)
+│   └── test_*.py                       2511 tests (see docs/E0_TEST_REGISTRY_v2.md)
 │
 ├── scenarios/                        Scenario Packets for grounded LLM demos
 │   ├── competitor_brief/               Domain-specific scenario data

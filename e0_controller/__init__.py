@@ -76,7 +76,7 @@ Phase 3o (Evaluation Layer Hybrid Extension):
 See E0_CONTROLLER_STATUS.md for full project context.
 """
 
-__version__ = "0.5.0"
+__version__ = "0.7.0"
 
 # ── Public API ──────────────────────────────────────────────
 __all__ = [
@@ -151,6 +151,13 @@ __all__ = [
     # Canon Loader (C48)
     "CanonInfo", "CanonLandscape",
     "load_canon", "list_canons", "format_canon_summary",
+    # Multiverse (C59–C61)
+    "Universe", "MultiverseController", "MultiverseResult", "MultiverseTurn",
+    "NoveltyGate", "LandscapeSnapshot", "TurnFn",
+    # Cross-Reflexion (C62)
+    "CrossReflexionResult", "CrossReflexionRunResult",
+    "blend_patterns", "cross_propose_edges", "apply_cross_proposals",
+    "cross_reflexion_turn", "run_with_cross_reflexion",
 ]
 
 from .primitives import Edge, Outcome, TransportRegime
@@ -227,4 +234,13 @@ from .exploration_policy import ExplorationPolicy, PolicyDecision
 from .canon_loader import (
     CanonInfo, CanonLandscape,
     load_canon, list_canons, format_canon_summary,
+)
+from .multiverse import (
+    Universe, MultiverseController, MultiverseResult, MultiverseTurn,
+    NoveltyGate, LandscapeSnapshot, TurnFn,
+)
+from .cross_reflexion import (
+    CrossReflexionResult, CrossReflexionRunResult,
+    blend_patterns, cross_propose_edges, apply_cross_proposals,
+    cross_reflexion_turn, run_with_cross_reflexion,
 )

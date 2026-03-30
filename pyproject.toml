@@ -4,11 +4,51 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "e0-framework"
-version = "0.6.0"
-description = "E₀ Controller — Ontodynamic Action Selection via Amplitude Interference"
+version = "0.7.0"
+description = "E₀ Controller — Ontodynamic Action Selection via Amplitude Interference. A structural transition framework with deterministic controller, path-phase interference, SU(2) spinor transport, and multiverse architecture for reflexive decision systems."
 requires-python = ">=3.11"
 license = {text = "MIT"}
 readme = "README.md"
+authors = [
+    {name = "Thomas Wehner"},
+]
+keywords = [
+    "transition-systems",
+    "graph-theory",
+    "interference",
+    "amplitude",
+    "structural-dynamics",
+    "decision-framework",
+    "controller",
+    "ontodynamics",
+    "spinor-transport",
+    "path-integral",
+    "multiverse",
+    "reflexion",
+    "holonomy",
+    "action-selection",
+    "hybrid-controller",
+    "human-ai-collaboration",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://github.com/Thomas66690815/E0-Framework"
+Repository = "https://github.com/Thomas66690815/E0-Framework"
+Documentation = "https://github.com/Thomas66690815/E0-Framework/tree/main/docs"
+Issues = "https://github.com/Thomas66690815/E0-Framework/issues"
 
 dependencies = [
     "numpy",
