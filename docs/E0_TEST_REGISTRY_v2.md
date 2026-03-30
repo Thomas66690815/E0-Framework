@@ -1774,6 +1774,41 @@ Amplitude-aware modes (AMPLITUDE_ON_DISAGREE, BORN_SAMPLING) are **not** domain-
 
 ---
 
+### C56 — Reflexive Edge Proposal: Historisierung informiert Topologie
+
+**Claim**  
+When the controller is stuck at a frontier (no path to goal), reflexive edge
+proposal uses accumulated historization patterns (median Δ/R₀ of successful
+edges) to construct hypothesis edges.  This enables navigation through
+structural gaps that are unsolvable without topology extension.
+
+Core insight: "Reflexion ist kein Spezialfall — sie ist der Normalfall für
+alles Neue."  Historization informs topology, not just resistance.
+
+**Evidence**  
+- `e0_controller/reflexive_edge_proposal.py` — proposal pipeline
+- `e0_controller/test_reflexive_edge_proposal.py` (23 tests, 6 classes)
+- Test domain "Frontier Gap": cycle S→A→B→FRONTIER→S + disconnected BRIDGE→D→GOAL
+- Without reflexion: controller loops forever, GOAL unreachable (confirmed)
+- With reflexion: controller proposes FRONTIER→BRIDGE, navigates to GOAL
+- Pattern extraction: median Δ=0.3, R₀=0.5 from 4 historized edges
+- Confidence scaling: low confidence → inflated R₀ (cautious hypothesis)
+- Goal-proximity sorting: BRIDGE/D/GOAL prioritized over A/B
+- Failure resilience: dead-end proposals fail but valid proposals succeed
+- Stuckness detection: 4-node cycle detected via ⌊window·⅔⌋ threshold
+
+**Result**  
+- Frontier detection (BFS reachability) correctly identifies structural gaps
+- Pattern extraction produces reasonable parameter estimates from history
+- Proposals sorted by goal proximity improve navigation efficiency
+- Reflexive edge proposal is the first topology-extending module in E₀
+- Stufe-2 reflexion (proactive edge construction) demonstrated
+
+**Status**  
+✅ Confirmed
+
+---
+
 When a new test family is added, update both:
 
 1. the inventory-level registry (`E0_TEST_REGISTRY_v1.md`)

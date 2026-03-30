@@ -255,9 +255,10 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 | Domain-Invariance Benchmark (C53) | **Active** (30 tests) | `e0_controller/benchmark_domain_invariance.py` |
 | Raumzeit Coupling (C54) | **Active** (23 tests) | `e0_controller/raumzeit_coupling.py` |
 | Amplitude Benchmark (C55) | **Active** (23 tests) | `e0_controller/benchmark_amplitude.py` |
+| Reflexive Edge Proposal (C56) | **Active** (23 tests) | `e0_controller/reflexive_edge_proposal.py` |
 | Bootstrap Architecture (C43–C47) | **Complete** | `docs/E0_LLM_BOOTSTRAP_ARCHITECTURE_v1.md` |
 
-**Tests:** 2324 total (pytest discover), 0 failures, 0 warnings, 41 conditional (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
+**Tests:** 2347 total (pytest discover), 0 failures, 0 warnings, 41 conditional (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
 
 ---
 
