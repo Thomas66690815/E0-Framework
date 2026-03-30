@@ -36,6 +36,7 @@ class EscalationType(Enum):
     DEAD_END = "dead_end"     # no outgoing edges at all
     FILTERED = "filtered"     # edges exist but none pass admissibility
     EXHAUSTED = "exhausted"   # all admissible heavily penalized (revisit-dominant)
+    OVERLOADED = "overloaded" # C63: many paths, too little experience to prioritize
 
 
 class HybridMode(Enum):
@@ -200,6 +201,12 @@ class E0Controller:
         hybrid_geometry: Summation geometry for overlay (default "simple")
         horizon_strategy: Optional callable(controller, current) → int.
             When set, overrides hybrid_horizon with a per-decision dynamic value.
+        peer_fn: Optional callable(landscape, current, neighbors) → Optional[str].
+            C63: Called when overload is detected — consults an external
+            system to help prioritize among too many low-experience paths.
+        overload_threshold: float (default 3.0).
+            C63: Overload index threshold. OI = N_admissible × (1 − mean_quality).
+            When OI exceeds this, peer_fn is consulted (if provided).
     """
 
     def __init__(
@@ -220,6 +227,8 @@ class E0Controller:
         use_su2: object = False,
         axis_fn=None,
         resonator_modulation: bool = False,
+        peer_fn: Optional[Callable] = None,
+        overload_threshold: float = 3.0,
     ):
         self.landscape = landscape
         self.execute_fn = execute_fn
@@ -239,6 +248,8 @@ class E0Controller:
         self.resonator_modulation = resonator_modulation  # C39: resonator intensity boost
         self.self_graph = None  # C43: optional structural self-knowledge
         self.mode_controller = None  # C46: optional operating mode monitor
+        self.peer_fn = peer_fn  # C63: external peer consultation
+        self.overload_threshold = overload_threshold  # C63: OI threshold
         self._recent: List[str] = []   # sliding window of recent states
 
         # K1 fix: Escalation edges live here, NOT in the Landscape.
@@ -357,6 +368,31 @@ class E0Controller:
             s_eff *= (1 + self.alpha)
         return s_eff
 
+    def _overload_index(self, current: str, neighbors: List[str]) -> float:
+        """C63: Overload Index — many paths × little experience.
+
+        OI = N_admissible × (1 − mean_trace_quality_abs)
+
+        High OI = many neighbors with unknown quality.
+        Low OI  = few neighbors, or well-understood ones.
+
+        trace_quality is in [-1, +1]; we use |q| so both strong
+        success and strong failure count as 'understood'.
+        """
+        if not neighbors:
+            return 0.0
+        hist = self.landscape.historization
+        qualities = []
+        for n in neighbors:
+            edge = Edge(current, n)
+            load = hist.trace_load(edge)
+            if load > 0:
+                qualities.append(abs(hist.trace_quality(edge)))
+            else:
+                qualities.append(0.0)  # no experience = unknown
+        mean_q = sum(qualities) / len(qualities)
+        return len(neighbors) * (1 - mean_q)
+
     def select_next(self, current: str) -> Tuple[Optional[str], bool, EscalationType]:
         """
         Function 6: select_next(x) → (next_state, escalated?, escalation_type)
@@ -365,8 +401,9 @@ class E0Controller:
 
         Strategy: Greedy + Revisit-Penalty + Typed Escalation.
         1. Get admissible neighbors (K11 filtered).
-        2. Pick argmin of penalized tension.
-        3. If empty → classify WHY and escalate accordingly (K12).
+        2. Check for OVERLOADED (C63): many paths, little experience.
+        3. Pick argmin of penalized tension.
+        4. If empty → classify WHY and escalate accordingly (K12).
 
         This is always the pure greedy decision. Hybrid logic wraps this
         via select_hybrid().
@@ -374,6 +411,16 @@ class E0Controller:
         neighbors = self._admissible_neighbors(current)
 
         if neighbors:
+            # C63: Check OVERLOADED before normal selection
+            if self.peer_fn is not None:
+                oi = self._overload_index(current, neighbors)
+                if oi > self.overload_threshold:
+                    peer_choice = self.peer_fn(
+                        self.landscape, current, neighbors,
+                    )
+                    if peer_choice is not None and peer_choice in neighbors:
+                        return peer_choice, True, EscalationType.OVERLOADED
+
             # Check EXHAUSTED: all admissible neighbors recently visited
             all_recent = all(y in self._recent for y in neighbors)
             if not all_recent:
