@@ -249,9 +249,10 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 | Reflexive Journal (C50) | **Active** (37 tests) | `e0_controller/reflexive_action.py`, `canon_self_bridge.py` |
 | System Integration (C51) | **Active** (19 tests) | `e0_controller/test_system_integration.py` |
 | Honest Self-Knowledge (C52) | **Active** (19 tests) | `e0_controller/canon_self_bridge.py` |
+| Domain-Invariance Benchmark (C53) | **Active** (30 tests) | `e0_controller/benchmark_domain_invariance.py` |
 | Bootstrap Architecture (C43–C47) | **Complete** | `docs/E0_LLM_BOOTSTRAP_ARCHITECTURE_v1.md` |
 
-**Tests:** 2248 total (pytest discover), 0 failures, 0 warnings, 41 conditional (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
+**Tests:** 2278 total (pytest discover), 0 failures, 0 warnings, 41 conditional (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
 
 ---
 

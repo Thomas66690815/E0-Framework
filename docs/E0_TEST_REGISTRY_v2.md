@@ -3,8 +3,8 @@
 > Central validation registry for the E₀ Framework.
 > **Purpose:** connect claims, tests, evidence, and status in one place.
 
-**Last updated:** 2026-03-30 — **2248 tests** (0 failures, 0 warnings)  
-**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, **C52 Honest Self-Knowledge (CANON_PROCESS_MAP correction)**, and active edge-case work.
+**Last updated:** 2026-03-30 — **2278 tests** (0 failures, 0 warnings)  
+**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, **C52 Honest Self-Knowledge (CANON_PROCESS_MAP correction)**, **C53 Domain-Invariance Benchmark (10 domains, 1 controller)**, and active edge-case work.
 
 ---
 
@@ -1692,6 +1692,30 @@ E₀’s self-observation was inaccurate: it reported 58% canon coverage when 7 
 - Reverse map (PROCESS_CANON_MAP) correctly reflects all new mappings
 - Partition invariant maintained: instantiated ∪ not_instantiated = all nodes
 - Existing tests updated: `reflexivitaet` and `negative_notwendigkeit` now correctly assert instantiated
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C53 — Domain-Invariance Benchmark: 10 domains, 1 controller
+
+**Claim**  
+E₀’s controller is domain-invariant. The same algorithm with identical parameters (alpha=2.0, recent_k=3, HybridMode.GREEDY) navigates 10 structurally diverse domains. No domain-specific tuning, no per-domain parameter adjustment. The controller derives its behavior entirely from the landscape’s tension structure.
+
+**Evidence**  
+- `e0_controller/benchmark_domain_invariance.py` — 10 domain builders + runner
+- `e0_controller/test_domain_invariance.py` (30 tests, 5 classes)
+- 10 domains: linear chain, diamond, Gordian trap, greedy trap, grid detour, multi-goal star, invoice process, nested cycles, wide DAG, bottleneck funnel
+- 10 distinct topology classes: linear, diamond, gordian, cycle_trap, grid, star, process, cyclic, dag, bottleneck
+- Scale range: 4–22 nodes, 4–56+ edges
+- Results: all 10 goals reached, ratings = 6×A + 4×B, worst = B
+- Key insight: trap escape requires FAILURE outcomes (historization reinforces successful loops; this is correct behavior, not a defect)
+
+**Result**  
+- Domain-invariant: YES (all goals, worst rating B)
+- No domain-specific primitives in the controller
+- Same code path for invoice processing and abstract graph traversal
 
 **Status**  
 ✅ Confirmed

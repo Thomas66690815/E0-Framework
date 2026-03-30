@@ -1,7 +1,7 @@
 # E₀ Test Registry v1
 
 > Central reference for all tests in the E₀ Framework.
-> **Last verified:** 2026-03-30 — **2248 tests** (2166 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures, 0 warnings)
+> **Last verified:** 2026-03-30 — **2278 tests** (2196 unittest via discover; 41 live LLM in `live_test_llm.py`; 0 failures, 0 warnings)
 
 ---
 
@@ -67,6 +67,7 @@
 | 56 | `test_reflexive_journal.py` | 37 | unittest | C50 Reflexive Journal: record/restore, exposition Section 5, Session integration, end-to-end chain | ✅ GREEN |
 | 57 | `test_system_integration.py` | 19 | unittest | C51 System Integration: full pipeline convergence, Selbst-Fundierung, reflexive convergence, direct assembly, edge cases | ✅ GREEN |
 | 58 | `test_honest_self_knowledge.py` | 19 | unittest | C52 Honest Self-Knowledge: new mappings justified, coverage correction 58→95%, exposition accuracy, reverse map | ✅ GREEN |
+| 59 | `test_domain_invariance.py` | 30 | unittest | C53 Domain-Invariance Benchmark: 10 domains, spec integrity, all goals reached, cross-domain invariance, per-domain behavior, runner infra | ✅ GREEN |
 
 ---
 
@@ -927,6 +928,25 @@ py -3 -m unittest e0_controller.test_gordian_trap -v
 - Only `raumzeit` (emergent spacetime, L5) is genuinely unimplemented
 - coverage: 18/19 = 94.7%
 - Each mapping has code-level justification (not just semantic similarity)
+
+---
+
+### 59. test_domain_invariance.py — 30 tests
+
+**What it tests:** C53 — Domain-Invariance Benchmark. Proves E₀’s controller is domain-invariant: 10 structurally diverse domains, identical controller parameters (alpha=2.0, recent_k=3, HybridMode.GREEDY), all goals reached, worst rating B.
+
+**Test classes:**
+- `TestDomainSpecIntegrity` (10): 10 domains, unique names, start/goal in states, node/edge counts match, ≥6 topology classes
+- `TestAllDomainsReachGoal` (1): all 10 goals reached with default params
+- `TestDomainInvariance` (6): no tuning, worst rating ≤C, success rate ≥60%, ≥6 topology classes, scale range, mixed difficulty
+- `TestIndividualDomains` (10): per-domain behavioral expectations (optimal paths, trap escape, failure recovery, dead-end escalation)
+- `TestBenchmarkRunner` (3): 10 results, dict structure, required fields
+
+**Key findings:**
+- 10 topology classes: linear, diamond, gordian, cycle_trap, grid, star, process, cyclic, dag, bottleneck
+- Ratings: 6×A, 4×B — no C or F
+- Trap domains require FAILURE outcomes for greedy escape (historization reinforces successful loops)
+- Domain-specific data (execute_fn outcomes) is NOT controller tuning — it’s the domain’s physics
 
 ---
 
