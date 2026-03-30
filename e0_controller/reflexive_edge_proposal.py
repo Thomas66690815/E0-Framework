@@ -188,14 +188,19 @@ def propose_edges(
     current: str,
     goal: str,
     max_proposals: int = 5,
+    proactive: bool = False,
 ) -> List[ProposedEdge]:
     """Propose hypothesis edges from current based on experience.
 
     Pipeline:
       1. Find candidate targets (known states not directly reachable)
       2. Extract parameter pattern from successful edges
-      3. Scale resistance by confidence (low confidence → high R₀)
+      3. Scale resistance by confidence (reactive) or use median (proactive)
       4. Sort by goal proximity (prefer targets closer to goal)
+
+    proactive: if True, use median R₀ directly (best guess, competitive
+      with existing edges).  Reactive mode inflates R₀ by confidence
+      (low confidence → cautious hypothesis).
     """
     candidates = find_candidate_targets(landscape, current)
     if not candidates:
@@ -204,8 +209,13 @@ def propose_edges(
     pattern = experienced_pattern(landscape)
     confidence = min(pattern.coverage, 0.8)  # cap: never fully certain
 
-    # Low confidence → inflate R₀ (more cautious hypothesis)
-    r0_scaled = pattern.median_r0 / max(confidence, 0.1)
+    if proactive:
+        # Proactive: median R₀ is the best-guess estimate —
+        # "ich ordne es ein mit dem was ich habe"
+        r0_scaled = pattern.median_r0
+    else:
+        # Reactive: low confidence → inflate R₀ (more cautious)
+        r0_scaled = pattern.median_r0 / max(confidence, 0.1)
 
     proposals = []
     for target in candidates:
@@ -311,6 +321,68 @@ def run_with_reflexion(
                 apply_proposals(landscape, proposals)
                 all_proposals.extend(proposals)
                 proposal_applied = True
+                # Rebuild controller to pick up new edges
+                ctrl = E0Controller(
+                    landscape, execute_fn, alpha=2.0, recent_k=3,
+                )
+
+        step = ctrl.cycle(current)
+        if step is None:
+            break
+        trace.steps.append(step)
+        current = step.target
+
+    return trace, all_proposals
+
+
+def run_with_proactive_reflexion(
+    landscape: Landscape,
+    execute_fn: ExecuteFn,
+    start: str,
+    goal: str,
+    max_cycles: int = 50,
+    max_proposals: int = 5,
+) -> Tuple[RunTrace, List[ProposedEdge]]:
+    """Run with proactive reflexion: reflect BEFORE navigation, not after.
+
+    Stufe-2 insight: "Wenn ich ein neues Thema habe, reflektiere ich dieses
+    zuerst mit dem was ich habe und leite daraus erst meine möglichen
+    Kanten ab.  Das ist der Schritt BEVOR ich in eine Falle tappe."
+
+    At EVERY step, before choosing an edge:
+      - Is current a frontier (no path to goal)?  → Propose immediately.
+      - No stuckness detection needed, no warmup.
+      - Can propose at MULTIPLE frontier nodes (cascading gaps).
+
+    Key structural differences from run_with_reflexion (C56 reactive):
+      - No proposal_trigger delay
+      - No stuckness_window
+      - Proposes at every new frontier, not just once
+      - proposed_from set prevents infinite re-proposal at same node
+
+    Returns (trace, all_proposals_applied).
+    """
+    all_proposals: List[ProposedEdge] = []
+    proposed_from: Set[str] = set()
+
+    ctrl = E0Controller(landscape, execute_fn, alpha=2.0, recent_k=3)
+    trace = RunTrace()
+    current = start
+
+    for cycle in range(max_cycles):
+        if current == goal:
+            break
+
+        # PROACTIVE: at every arrival, check if this is new terrain
+        if current not in proposed_from and is_frontier(landscape, current, goal):
+            proposals = propose_edges(
+                landscape, current, goal, max_proposals,
+                proactive=True,
+            )
+            proposed_from.add(current)
+            if proposals:
+                apply_proposals(landscape, proposals)
+                all_proposals.extend(proposals)
                 # Rebuild controller to pick up new edges
                 ctrl = E0Controller(
                     landscape, execute_fn, alpha=2.0, recent_k=3,

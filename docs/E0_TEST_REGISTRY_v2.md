@@ -1809,6 +1809,41 @@ alles Neue."  Historization informs topology, not just resistance.
 
 ---
 
+### C57 — Proactive Reflexion (Stufe 2): Reflect BEFORE navigation
+
+**Claim**  
+Proactive reflexion constructs hypothesis edges BEFORE navigation, not after
+stuckness.  This is structurally superior to reactive reflexion (C56):
+fewer steps, no warmup delay, no stuckness detection needed, multiple
+frontier proposals possible.
+
+Core insight: "Wenn ich ein neues Thema habe, reflektiere ich dieses zuerst
+mit dem was ich habe und leite daraus erst meine möglichen Kanten ab.
+Das ist der Schritt BEVOR ich in eine Falle tappe."
+
+**Evidence**  
+- `e0_controller/reflexive_edge_proposal.py` — `run_with_proactive_reflexion()`
+- `e0_controller/test_proactive_reflexion.py` (20 tests, 5 classes)
+- Frontier Gap domain: proactive reaches GOAL in fewer steps than reactive
+- Cascading Gaps domain: proactive finds optimal shortcut (S→GOAL)
+- Proactive R₀ = landscape median (competitive), not confidence-inflated
+- Proposed-from set prevents re-proposal at same node (idempotent)
+- Stufen comparison: Stufe 0 (loops) < Stufe 1 (loops at frontier) < Stufe 2 (solves)
+- Three innovations over C56: (1) no warmup, (2) no stuckness detection,
+  (3) multi-frontier proposals via proposed_from set
+
+**Result**  
+- Proactive reaches GOAL before reactive's warmup phase even starts
+- Goal-proximity sorting causes optimal shortcuts (S→GOAL directly)
+- Both reactive and proactive solve single-gap domains; proactive is faster
+- Stufe-2 is strictly more capable than Stufe-1 (proven empirically)
+- `proactive=True` flag in `propose_edges` uses median R₀ (best guess)
+
+**Status**  
+✅ Confirmed
+
+---
+
 When a new test family is added, update both:
 
 1. the inventory-level registry (`E0_TEST_REGISTRY_v1.md`)
