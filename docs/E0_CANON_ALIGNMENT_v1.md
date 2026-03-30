@@ -431,7 +431,7 @@ fehlerhaften, verwaisten Graphen arbeiten.
 
 | Ontodynamik-Aussage | Status | Kommentar |
 |---------------|--------|-----------|
-| „Local Realization" (§3.2) | ❌ Nicht implementiert | Alle Transitionen sind global (ganzer Graph sichtbar) |
+| „Local Realization" (§3.2) | ✅ Bereits implementiert (erkannt C54-Nachgang) | Controller sieht global (ganzer Graph), handelt aber lokal (eine Kante pro Zyklus). Historisierung erzeugt implizite globale Rückkopplung ohne explizite Kopplungsterme. Folgt strukturell aus Gradual Overlap: lokale Aktion auf globaler Realisation. |
 | „Gradual Overlap" (§3.4) | ✅ Operationalisiert (C54) | Kopplungsgrad an ein Außen = Overlap-Grad. Overlap 0 = geschlossenes System (triviale Raumzeit). Overlap > 0 = gekoppeltes System (emergente Raumzeit). Siehe `raumzeit_coupling.py` |
 | „Connection as topological operation" (§3.3) | ⚠ Teilweise | ω(x,y) ist Phasen-Connection, aber nicht topologische Konnexion im ontodynamischen Sinne |
 | „Mass" (§4) | ✅ Implementiert (C42) | `trace_load(e) = U+F` (structural inscription), `trace_quality(e) = (U−F)/(U+F+ε)` (directional quality), `inertia_factor()` (dampens conflicted edges). Integrated via `inertia_modulation` flag in Landscape. 37 tests. 4-layer model: Historization → Inscription → Inertia → Mass (emergent). Old names retained as aliases. See `E0_HISTORISIERUNG_ALS_MASSE_v1.md` §7 |
@@ -596,6 +596,7 @@ Der Canon allein hätte das nicht geleistet.
 | 2026-03-30 | C52: Honest Self-Knowledge. CANON_PROCESS_MAP corrected: 7 missing mappings added (zeit→historization, zustand→realization, negative_notwendigkeit→born, reflexivitaet→transition_field, strukturelle_zulaessigkeit→transition_field, strukturelle_ausrichtung→inertia, domaeneninvarianz→realization). Coverage 58%→95%. Only `raumzeit` genuinely unimplemented. E₀ now knows itself honestly. 19 tests, 2248 total. |
 | 2026-03-30 | C53: Domain-Invariance Benchmark. 10 structurally diverse domains (linear, diamond, gordian, cycle_trap, grid, star, process, cyclic, dag, bottleneck), same controller (alpha=2.0, greedy), all goals reached, ratings 6×A + 4×B. First empirical evidence for domain-invariance claim. Key insight: trap escape requires failure outcomes — historization correctly reinforces successful loops. 30 tests, 2278 total. |
 | 2026-03-30 | C54: Raumzeit Coupling Theorem. Alle 10 Domains geschlossen (all-SUCCESS) vs gekoppelt (domain-execute_fn). Geschlossen: 7/10 Ziele, 3 tiefe Traps (D3, D6, D10) loopen ewig. Gekoppelt: 10/10, worst B. Theorem: Emergente Raumzeit braucht Kopplung an ein Außen (FAILURE-Signale). Drei-Klassen-Taxonomie: keine/flach/tief. Gradual Overlap (§3.4) = Kopplungsgrad. Sterile vs fruchtbare Reibung. Erkenntnis als Kriterium. 23 Tests, 2301 total. Spacetime und Gradual Overlap von ❌ auf ✅. |
+| 2026-03-30 | C54 Nachgang: Local Realization (§3.2) von ❌ auf ✅. Controller sieht global, handelt lokal (eine Kante pro Zyklus). Historisierung erzeugt implizite Rückkopplung: global wirkt auf lokal, lokal wird lokal — ohne explizite Rückkopplungsterme. Folgt strukturell aus Gradual Overlap. Drei Erkenntnisstufen identifiziert: Stufe 0 (steril, all-SUCCESS), Stufe 1 (mechanisch, F+=1 genügt für alle 10 Domains), Stufe 2 (reflexiv, Warum-Frage, C47/C49-Architektur). |
 
 ---
 
