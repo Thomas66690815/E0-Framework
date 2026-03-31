@@ -2,7 +2,7 @@
 E₀ G5 Edge Case Tests — Families A–E
 =====================================
 Formal tests encoding the findings from the G5 Edge Case Suite exploration.
-Reference: docs/E0_G5_EDGE_CASE_SUITE_v1.md
+Reference: docs/research/E0_G5_EDGE_CASE_SUITE_v1.md
 
 Test families:
   A — Goal-count expansion: winner stability as |G| grows

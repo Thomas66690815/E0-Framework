@@ -1,31 +1,15 @@
 # E₀ Framework — Python Dependencies
 #
-# e0_core/ requires NO external dependencies.
-# It runs on any Python >= 3.8.
+# The canonical dependency specification is in pyproject.toml.
+# This file lists the minimal runtime dependencies.
 #
-# e0_middleware/ has three tiers:
-#
-#   Tier 1 — Simulation mode (no API key, no GPU):
-#     No dependencies needed. Works out of the box.
-#
-#   Tier 2 — API mode (recommended, Together AI / OpenAI):
-#     pip install openai
-#
-#   Tier 3 — Local models (CPU, no GPU required):
-#     pip install -r requirements.txt
-
-# API mode (recommended)
-openai
-
-# Potential & Helmholtz decomposition (graph Laplacian solver)
+# Core (required):
 numpy
 
-# Keimzelle — config parsing
-pyyaml
+# Optional — LLM integration:
+# openai
 
-# v4 Network — dialog persistence
-duckdb
-
-# Local model mode (optional)
-torch --index-url https://download.pytorch.org/whl/cpu
+# Optional — full feature set:
+# pyyaml
+# duckdb
 transformers

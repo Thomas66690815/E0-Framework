@@ -8,7 +8,7 @@ Tests how G5 (goal_reaching geometry) behaves under stress:
   D — Rescue threshold (parametric)
   E — Ranking sharpness (entropy, top-gap)
 
-Reference: docs/E0_G5_EDGE_CASE_SUITE_v1.md
+Reference: docs/research/E0_G5_EDGE_CASE_SUITE_v1.md
 """
 import math
 import cmath
@@ -491,7 +491,7 @@ def run_family_e():
 if __name__ == "__main__":
     print("=" * 60)
     print("  G5 EDGE CASE SUITE — Exploration")
-    print("  ref: docs/E0_G5_EDGE_CASE_SUITE_v1.md")
+    print("  ref: docs/research/E0_G5_EDGE_CASE_SUITE_v1.md")
     print("=" * 60)
 
     results_a = run_family_a()

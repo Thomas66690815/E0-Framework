@@ -181,8 +181,8 @@ A reflexion layer that operates *across* universes rather than within a single r
 - [Evidence & falsification status](docs/E0_EVIDENCE_AND_FALSIFICATION_STATUS_v1.md) — what is demonstrated vs open
 - [External validation / handoff note](docs/E0_EXTERNAL_VALIDATION_AND_HANDOFF_NOTE_v1.md) — package for reviewers or AI systems
 - [Phase 3q interference report](docs/E0_PHASE3Q_INTERFERENCE_REPORT_v1.md) — holonomy formula, goal_reaching geometry, Gordian Trap
-- [Paper 3: Non-Abelian Structure](docs/E0_PAPER3_NON_ABELIAN_STRUCTURE_v1.md) — SU(2) transport, curvature modulation, topological invariants
-- [Test Registry v2](docs/E0_TEST_REGISTRY_v2.md) — complete per-file test inventory (1254 tests)
+- [Paper 3: Non-Abelian Structure](docs/papers/E0_PAPER3_NON_ABELIAN_STRUCTURE_v1.md) — SU(2) transport, curvature modulation, topological invariants
+- [Test Registry v2](docs/E0_TEST_REGISTRY_v2.md) — complete per-file test inventory (2511 tests)
 
 ---
 
@@ -256,12 +256,12 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 | Cross-domain validation | **Active** (3 domains, hybrid) | `e0_controller/validate_cross_domain.py` |
 | Graph validation | **Active** | `e0_controller/graph_validation.py` |
 | Scenario packets | **Active** (3 domains) | `scenarios/` |
-| Formal Paper (E₀ mathematics) | **Draft v1** | `docs/E0_FORMAL_PAPER_DRAFT_v1.md` |
-| Formal Paper v2 (+ benchmark) | **Draft v2** | `docs/E0_FORMAL_PAPER_DRAFT_v2.md` |
-| Paper 3 (Non-Abelian Structure) | **Draft** | `docs/E0_PAPER3_NON_ABELIAN_STRUCTURE_v1.md` |
+| Formal Paper (E₀ mathematics) | **Draft v1** | `docs/papers/E0_FORMAL_PAPER_DRAFT_v1.md` |
+| Formal Paper v2 (+ benchmark) | **Draft v2** | `docs/papers/E0_FORMAL_PAPER_DRAFT_v2.md` |
+| Paper 3 (Non-Abelian Structure) | **Draft** | `docs/papers/E0_PAPER3_NON_ABELIAN_STRUCTURE_v1.md` |
 | Multi-agent network + experiments | **Archived** | `_archive/` |
 | Core reference implementation | **Archived** | `_archive/e0_core/` |
-| axis_fn Registry Pattern | **Planned** — full SU(2) axis persistence | — |
+
 | 4-Layer Model (C42) | **Active** (37 tests) | `e0_controller/historization.py` |
 | Self-Graph (C43) | **Active** (47 tests) | `e0_controller/self_graph.py` |
 | Bootstrapper (C44) | **Active** (41 tests) | `e0_controller/bootstrapper.py` |
@@ -406,14 +406,15 @@ E0-Framework/
 │   ├── incident_postmortem/            Domain-specific scenario data
 │   └── research_brief/                 Domain-specific scenario data
 │
-├── docs/                             Working documents and analysis
-│   ├── E0_FORMAL_PAPER_DRAFT_v1.md     Formal E₀ mathematics paper (v1)
-│   ├── E0_FORMAL_PAPER_DRAFT_v2.md     Formal paper v2 with benchmark evidence
-│   ├── E0_MATH_IMPL_MAPPING_v1.md      Math ↔ Code mapping
-│   ├── E0_SUMMATION_GEOMETRY_COMPARISON_v1.md  Geometry comparison results
-│   ├── E0_EXTERNAL_VALIDATION_AND_HANDOFF_NOTE_v1.md  Handoff strategy
-│   ├── E0_CONTROLLER_STATUS.md         Detailed project status
-│   └── ...                             Additional analysis and derivation notes
+├── docs/                             Current essential documentation
+│   ├── E0_ARCHITECTURE_OVERVIEW_v2.md    7-layer module map (67 modules)
+│   ├── E0_MULTIVERSE_DESIGN_v1.md        Multiverse architecture (C54–C63)
+│   ├── E0_HYBRID_CONTROLLER_SPEC_v1.md   Exact runtime behaviour and metrics
+│   ├── E0_TEST_REGISTRY_v2.md            Complete test inventory (2511 tests)
+│   ├── E0_MATH_IMPL_MAPPING_v1.md        Math ↔ Code mapping
+│   ├── papers/                           Manuscripts and formal paper drafts
+│   ├── research/                         Scientific investigations and derivations
+│   └── history/                          Session logs, superseded versions
 │
 ├── _archive/                         Preserved earlier work
 │   ├── ARCHIVE_README.md                What is here and why

@@ -19,7 +19,7 @@ Key concepts:
 - overlap(x→y) = Σ_{z ∈ T} √(v(x,z) · v(z,y))
 - M_H = domain-relative normalization of overlap → [floor, 1.0]
 
-See: docs/E0_MH_ADJUDICATION_RESEARCH_NOTE_v1.md
+See: docs/research/E0_MH_ADJUDICATION_RESEARCH_NOTE_v1.md
 """
 
 from __future__ import annotations
