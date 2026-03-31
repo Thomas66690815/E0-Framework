@@ -29,6 +29,22 @@ The selection pressure depends on the coupling reason:
 These are dual selection pressures: RECOVERY exploits coupling history,
 EXPLORATION exploits structural diversity.  They are the coupling-level
 analogues of GREEDY (low-R_eff) vs AMPLITUDE (high-Δ override).
+
+C67 — Asymmetric Coupling
+--------------------------
+Each universe carries a coupling_weight (default 1.0).  Edges are now
+fully directed: Edge(A→B) and Edge(B→A) have DIFFERENT base resistances:
+
+  R₀(requester → donor) = base_resistance / donor.weight
+
+High-weight donor → low R₀ → cheap to receive from (domain expert).
+Low-weight donor  → high R₀ → expensive (generalist / weak partner).
+
+Historization is directional: SUCCESS on Edge(A→B) does NOT affect
+Edge(B→A).  Each coupling direction has its own track record.
+
+The donor's weight also modulates the coupling_discount passed to
+cross_propose_edges:  discount = min(0.5 · donor_weight, 1.0).
 """
 
 from __future__ import annotations
@@ -97,24 +113,41 @@ class CouplingRouter:
         universes: List[Universe],
         base_resistance: float = 1.0,
         min_delta: float = 0.1,
+        coupling_weights: Optional[Dict[str, float]] = None,
     ):
         if len(universes) < 2:
             raise ValueError("CouplingRouter requires at least 2 universes")
         self.universes: Dict[str, Universe] = {u.name: u for u in universes}
         self.base_resistance = base_resistance
         self.min_delta = min_delta
+        self._weights: Dict[str, float] = {
+            u.name: (coupling_weights or {}).get(u.name, 1.0)
+            for u in universes
+        }
         self.landscape = self._build_routing_landscape(universes)
 
     # ── Construction ──
 
+    def _donor_resistance(self, donor_name: str) -> float:
+        """R₀ for edges where donor_name is the donor (target of request)."""
+        return self.base_resistance / self._weights[donor_name]
+
     def _build_routing_landscape(self, universes: List[Universe]) -> Landscape:
-        """Build complete graph: every pair of universes gets a bidirectional edge."""
+        """Build directed complete graph: every pair gets TWO directed edges.
+
+        Edge(A→B): A requests from B.  R₀ = base_resistance / weight(B).
+        Edge(B→A): B requests from A.  R₀ = base_resistance / weight(A).
+        """
         L = Landscape()
-        names = [u.name for u in universes]
         for i, ua in enumerate(universes):
             for ub in universes[i + 1:]:
                 delta = max(structural_distance(ua, ub), self.min_delta)
-                L.add_edge(ua.name, ub.name, delta=delta, resistance=self.base_resistance)
+                # A→B: B is donor
+                L.add_edge(ua.name, ub.name, delta=delta,
+                           resistance=self._donor_resistance(ub.name))
+                # B→A: A is donor
+                L.add_edge(ub.name, ua.name, delta=delta,
+                           resistance=self._donor_resistance(ua.name))
         return L
 
     # ── Partner Selection ──
@@ -160,38 +193,71 @@ class CouplingRouter:
         scored.sort(key=lambda s: s.score, reverse=True)
         return scored[:max_partners]
 
-    def _edge_metrics(self, a: str, b: str) -> tuple:
-        """Get (delta, trace_quality) for a coupling edge, checking both directions."""
-        for src, tgt in [(a, b), (b, a)]:
-            delta = self.landscape.difference(src, tgt)
-            if delta is not None:
-                quality = self.landscape.historization.trace_quality(Edge(src, tgt))
-                return delta, quality
+    def _edge_metrics(self, requester: str, candidate: str) -> tuple:
+        """Get (delta, trace_quality) for the directed Edge(requester→candidate)."""
+        delta = self.landscape.difference(requester, candidate)
+        if delta is not None:
+            quality = self.landscape.historization.trace_quality(
+                Edge(requester, candidate))
+            return delta, quality
         return None, 0.0
 
     # ── Historization ──
 
     def historize(self, source: str, target: str, outcome: Outcome) -> None:
-        """Record the outcome of a coupling interaction."""
-        for src, tgt in [(source, target), (target, source)]:
-            if self.landscape.has_edge(src, tgt):
-                self.landscape.historization.update(Edge(src, tgt), outcome)
-                return
+        """Record the outcome of a directed coupling: source requested from target.
+
+        Only Edge(source→target) is updated.  The reverse direction has
+        its own independent history (C67 asymmetric coupling).
+        """
+        if self.landscape.has_edge(source, target):
+            self.landscape.historization.update(
+                Edge(source, target), outcome)
+
+    # ── Weight Management (C67) ──
+
+    def get_weight(self, name: str) -> float:
+        """Get the coupling weight of a universe."""
+        return self._weights[name]
+
+    def set_weight(self, name: str, weight: float) -> None:
+        """Set the coupling weight of a universe.
+
+        Updates R₀ on all edges where this universe is the donor:
+          R₀(x→name) = base_resistance / weight   for all x.
+        """
+        if weight <= 0:
+            raise ValueError(f"Coupling weight must be > 0, got {weight}")
+        self._weights[name] = weight
+        new_r0 = self.base_resistance / weight
+        for other in self.universes:
+            if other != name and self.landscape.has_edge(other, name):
+                self.landscape.adjust_base_resistance(other, name, new_r0)
 
     # ── Dynamic Membership ──
 
-    def add_universe(self, universe: Universe) -> None:
+    def add_universe(self, universe: Universe, weight: float = 1.0) -> None:
         """Add a new universe and connect it to all existing ones."""
         if universe.name in self.universes:
             return
         self.universes[universe.name] = universe
+        self._weights[universe.name] = weight
         for name, u in self.universes.items():
             if name != universe.name:
                 delta = max(structural_distance(universe, u), self.min_delta)
+                # new→existing: existing is donor
                 if not self.landscape.has_edge(universe.name, name):
                     self.landscape.add_edge(
                         universe.name, name,
-                        delta=delta, resistance=self.base_resistance,
+                        delta=delta,
+                        resistance=self._donor_resistance(name),
+                    )
+                # existing→new: new universe is donor
+                if not self.landscape.has_edge(name, universe.name):
+                    self.landscape.add_edge(
+                        name, universe.name,
+                        delta=delta,
+                        resistance=self._donor_resistance(universe.name),
                     )
 
     def remove_universe(self, name: str) -> Optional[Universe]:
@@ -227,29 +293,32 @@ class CouplingRouter:
     def universe_count(self) -> int:
         return len(self.universes)
 
-    def coupling_history(self, a: str, b: str) -> dict:
-        """Get coupling history between two universes."""
-        for src, tgt in [(a, b), (b, a)]:
-            edge = Edge(src, tgt)
-            if self.landscape.has_edge(src, tgt):
-                return {
-                    "delta": self.landscape.difference(src, tgt),
-                    "r_eff": self.landscape.effective_resistance(src, tgt),
-                    "trace_quality": self.landscape.historization.trace_quality(edge),
-                    "trace_load": self.landscape.historization.trace_load(edge),
-                }
-        return {}
+    def coupling_history(self, requester: str, donor: str) -> dict:
+        """Get directed coupling history: requester's experience with donor."""
+        if not self.landscape.has_edge(requester, donor):
+            return {}
+        edge = Edge(requester, donor)
+        return {
+            "delta": self.landscape.difference(requester, donor),
+            "r_eff": self.landscape.effective_resistance(requester, donor),
+            "trace_quality": self.landscape.historization.trace_quality(edge),
+            "trace_load": self.landscape.historization.trace_load(edge),
+            "donor_weight": self._weights.get(donor, 1.0),
+        }
 
     def summary(self) -> str:
         """Human-readable routing status."""
         lines = [f"CouplingRouter: {len(self.universes)} universes"]
         for name in sorted(self.universes):
             u = self.universes[name]
+            w = self._weights[name]
             rec = self.select_partner(u, CouplingReason.RECOVERY)
             exp = self.select_partner(u, CouplingReason.EXPLORATION)
             rec_str = rec[0].partner.name if rec else "—"
             exp_str = exp[0].partner.name if exp else "—"
-            lines.append(f"  {name}: recovery→{rec_str}, exploration→{exp_str}")
+            lines.append(
+                f"  {name} (w={w:.2f}): recovery→{rec_str}, "
+                f"exploration→{exp_str}")
         return "\n".join(lines)
 
 
@@ -281,9 +350,12 @@ def make_routed_peer_fn(
             return None
 
         partner = selections[0].partner
+        donor_weight = router.get_weight(partner.name)
+        discount = min(0.5 * donor_weight, 1.0)
         result = cross_propose_edges(
             landscape, partner.landscape, current, goal,
             donor_name=partner.name,
+            coupling_discount=discount,
         )
         if result.proposals:
             # Historize the successful coupling

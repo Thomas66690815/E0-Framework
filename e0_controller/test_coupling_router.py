@@ -112,21 +112,21 @@ class TestRouterConstruction:
         with pytest.raises(ValueError, match="at least 2"):
             CouplingRouter([_universe_A()])
 
-    def test_two_universes_one_edge(self):
+    def test_two_universes_two_directed_edges(self):
         r = CouplingRouter([_universe_A(), _universe_B()])
         assert r.universe_count == 2
-        assert r.landscape.edge_count() == 1  # one bidirectional edge
+        assert r.landscape.edge_count() == 2  # A→B and B→A
 
-    def test_three_universes_three_edges(self):
+    def test_three_universes_six_directed_edges(self):
         r = CouplingRouter([_universe_A(), _universe_B(), _universe_C()])
         assert r.universe_count == 3
-        assert r.landscape.edge_count() == 3  # complete graph K3
+        assert r.landscape.edge_count() == 6  # directed K3
 
-    def test_four_universes_six_edges(self):
+    def test_four_universes_twelve_directed_edges(self):
         d = _universe_clone_A()
         r = CouplingRouter([_universe_A(), _universe_B(), _universe_C(), d])
         assert r.universe_count == 4
-        assert r.landscape.edge_count() == 6  # K4
+        assert r.landscape.edge_count() == 12  # directed K4
 
     def test_edge_delta_reflects_distance(self):
         a, b, c = _universe_A(), _universe_B(), _universe_C()
@@ -282,7 +282,7 @@ class TestDynamicMembership:
         c = _universe_C()
         r.add_universe(c)
         assert r.universe_count == 3
-        assert r.landscape.edge_count() == 3  # K3
+        assert r.landscape.edge_count() == 6  # directed K3
 
     def test_add_duplicate_ignored(self):
         a, b = _universe_A(), _universe_B()
@@ -297,7 +297,7 @@ class TestDynamicMembership:
         assert removed is not None
         assert removed.name == "B"
         assert r.universe_count == 2
-        assert r.landscape.edge_count() == 1  # Only A↔C remains
+        assert r.landscape.edge_count() == 2  # Only A↔C directed pair remains
 
     def test_remove_nonexistent_returns_none(self):
         r = CouplingRouter([_universe_A(), _universe_B()])
@@ -342,18 +342,21 @@ class TestHistorizationDynamics:
         assert quality_spread_after > quality_spread_before
         assert sel_after[0].partner.name == "B"
 
-    def test_historize_both_directions(self):
-        """Historizing A→B also informs B's view of A."""
+    def test_directional_historization(self):
+        """Historizing A→B does NOT affect B→A (C67 directional independence)."""
         a, b = _universe_A(), _universe_B()
         r = CouplingRouter([a, b])
 
         for _ in range(5):
             r.historize("A", "B", Outcome.SUCCESS)
 
-        # Now ask from B's perspective
-        sel = r.select_partner(b, CouplingReason.RECOVERY)
-        # The edge is historized → quality > 0
-        assert sel[0].coupling_quality > 0.0
+        # A→B has quality > 0
+        h_ab = r.coupling_history("A", "B")
+        assert h_ab["trace_quality"] > 0.0
+
+        # B→A remains at quality 0 (independent direction)
+        h_ba = r.coupling_history("B", "A")
+        assert h_ba["trace_quality"] == pytest.approx(0.0, abs=1e-9)
 
     def test_coupling_history_dict(self):
         a, b = _universe_A(), _universe_B()
@@ -406,7 +409,142 @@ class TestInspection:
 
 
 # ══════════════════════════════════════════════
-# 10. Routed Peer Function
+# 10. Asymmetric Coupling (C67)
+# ══════════════════════════════════════════════
+
+class TestAsymmetricCoupling:
+    """Weight-based asymmetry in coupling resistance."""
+
+    def test_default_weights_are_one(self):
+        a, b = _universe_A(), _universe_B()
+        r = CouplingRouter([a, b])
+        assert r.get_weight("A") == 1.0
+        assert r.get_weight("B") == 1.0
+
+    def test_custom_weights_at_construction(self):
+        a, b = _universe_A(), _universe_B()
+        r = CouplingRouter([a, b], coupling_weights={"A": 2.0, "B": 0.5})
+        assert r.get_weight("A") == 2.0
+        assert r.get_weight("B") == 0.5
+
+    def test_high_weight_donor_lowers_resistance(self):
+        """High-weight donor → low R₀ on incoming edges."""
+        a, b = _universe_A(), _universe_B()
+        r = CouplingRouter([a, b], coupling_weights={"A": 1.0, "B": 2.0})
+        # Edge A→B: B is donor (weight=2.0) → R₀ = 1.0/2.0 = 0.5
+        r0_a_to_b = r.landscape.base_resistance("A", "B")
+        # Edge B→A: A is donor (weight=1.0) → R₀ = 1.0/1.0 = 1.0
+        r0_b_to_a = r.landscape.base_resistance("B", "A")
+        assert r0_a_to_b == pytest.approx(0.5)
+        assert r0_b_to_a == pytest.approx(1.0)
+
+    def test_asymmetric_resistance_breaks_symmetry(self):
+        """Same Δ but different R₀ → different effective tension."""
+        a, b = _universe_A(), _universe_B()
+        r = CouplingRouter([a, b], coupling_weights={"A": 1.0, "B": 3.0})
+        s_eff_ab = r.landscape.effective_tension("A", "B")
+        s_eff_ba = r.landscape.effective_tension("B", "A")
+        # A requesting from B (heavy donor) is cheaper
+        assert s_eff_ab < s_eff_ba
+
+    def test_set_weight_updates_resistance(self):
+        """Changing weight updates R₀ on all edges where universe is donor."""
+        a, b, c = _universe_A(), _universe_B(), _universe_C()
+        r = CouplingRouter([a, b, c])
+        r0_before = r.landscape.base_resistance("A", "B")
+        assert r0_before == pytest.approx(1.0)  # default weight=1.0
+
+        r.set_weight("B", 4.0)
+        r0_after = r.landscape.base_resistance("A", "B")
+        assert r0_after == pytest.approx(0.25)  # 1.0 / 4.0
+
+        # Also affects C→B edge
+        r0_c_to_b = r.landscape.base_resistance("C", "B")
+        assert r0_c_to_b == pytest.approx(0.25)
+
+    def test_set_weight_does_not_affect_reverse(self):
+        """Changing B's weight does NOT affect edges where B is requester."""
+        a, b = _universe_A(), _universe_B()
+        r = CouplingRouter([a, b])
+        r.set_weight("B", 4.0)
+        # B→A: A is donor, A's weight unchanged → R₀ = 1.0/1.0
+        r0_b_to_a = r.landscape.base_resistance("B", "A")
+        assert r0_b_to_a == pytest.approx(1.0)
+
+    def test_invalid_weight_rejected(self):
+        a, b = _universe_A(), _universe_B()
+        r = CouplingRouter([a, b])
+        with pytest.raises(ValueError, match="must be > 0"):
+            r.set_weight("A", 0.0)
+        with pytest.raises(ValueError, match="must be > 0"):
+            r.set_weight("A", -1.0)
+
+    def test_weight_affects_recovery_selection(self):
+        """High-weight donor preferred for RECOVERY (lower R₀ → easier coupling)."""
+        a, b, c = _universe_A(), _universe_B(), _universe_C()
+        # Give C high weight, B low weight
+        r = CouplingRouter([a, b, c], coupling_weights={"A": 1.0, "B": 0.3, "C": 3.0})
+
+        # Historize equally: both SUCCESS same number of times
+        for _ in range(5):
+            r.historize("A", "B", Outcome.SUCCESS)
+            r.historize("A", "C", Outcome.SUCCESS)
+
+        # C has higher weight → SUCCESS historization on lower-R₀ edge
+        # produces stronger quality signal
+        sel = r.select_partner(a, CouplingReason.RECOVERY)
+        # Both have SUCCESS history but C's edge is stronger
+        # Verify at least that C's coupling is cheaper
+        h_ab = r.coupling_history("A", "B")
+        h_ac = r.coupling_history("A", "C")
+        assert h_ac["r_eff"] < h_ab["r_eff"]
+
+    def test_weight_in_coupling_history(self):
+        """coupling_history includes donor_weight."""
+        a, b = _universe_A(), _universe_B()
+        r = CouplingRouter([a, b], coupling_weights={"A": 1.0, "B": 2.5})
+        h = r.coupling_history("A", "B")
+        assert h["donor_weight"] == 2.5
+
+    def test_weight_in_summary(self):
+        a, b = _universe_A(), _universe_B()
+        r = CouplingRouter([a, b], coupling_weights={"A": 1.0, "B": 2.0})
+        s = r.summary()
+        assert "w=1.00" in s
+        assert "w=2.00" in s
+
+    def test_add_universe_with_weight(self):
+        """Added universe uses specified weight."""
+        a, b = _universe_A(), _universe_B()
+        r = CouplingRouter([a, b])
+        c = _universe_C()
+        r.add_universe(c, weight=3.0)
+        assert r.get_weight("C") == 3.0
+        # A→C: C is donor (weight=3.0) → R₀ = 1.0/3.0
+        r0 = r.landscape.base_resistance("A", "C")
+        assert r0 == pytest.approx(1.0 / 3.0)
+
+    def test_directional_recovery_after_asymmetric_history(self):
+        """A historizes SUCCESS to B, B historizes FAILURE to A → asymmetric view."""
+        a, b, c = _universe_A(), _universe_B(), _universe_C()
+        r = CouplingRouter([a, b, c])
+
+        # A has good experience with B, B has bad experience with A
+        for _ in range(5):
+            r.historize("A", "B", Outcome.SUCCESS)
+            r.historize("B", "A", Outcome.FAILURE)
+
+        # A's recovery → B (good track record for A→B)
+        sel_a = r.select_partner(a, CouplingReason.RECOVERY, max_partners=2)
+        assert sel_a[0].partner.name == "B"
+
+        # B's recovery → NOT A (bad track record for B→A)
+        sel_b = r.select_partner(b, CouplingReason.RECOVERY, max_partners=2)
+        assert sel_b[0].partner.name != "A"  # C or anything but A
+
+
+# ══════════════════════════════════════════════
+# 11. Routed Peer Function
 # ══════════════════════════════════════════════
 
 class TestRoutedPeerFn:

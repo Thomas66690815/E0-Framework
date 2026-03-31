@@ -2,8 +2,8 @@
 
 **Status:** Working reference  
 **Date:** 2026-03-31  
-**Modules:** C54 (`raumzeit_coupling`), C60 (`multiverse`), C61 (`benchmark_multiverse`), C62 (`cross_reflexion`), C63 (`controller.py` — OVERLOADED escalation), C66 (`coupling_router`)  
-**Tests:** 121+ dedicated tests across 5 test files  
+**Modules:** C54 (`raumzeit_coupling`), C60 (`multiverse`), C61 (`benchmark_multiverse`), C62 (`cross_reflexion`), C63 (`controller.py` — OVERLOADED escalation), C66/C67 (`coupling_router`)  
+**Tests:** 133+ dedicated tests across 5 test files  
 **Paper coverage:** None yet — candidate for Paper 5
 
 ---
@@ -210,7 +210,7 @@ The self-graph (C43) could observe coupling quality: which coupling modes produc
 
 1. **N > 2 Universes**: ✅ **RESOLVED (C66)**. `CouplingRouter` maintains a complete-graph routing landscape over N universes. Partner selection uses dual pressure: RECOVERY → argmax(trace_quality) (proven partner), EXPLORATION → argmax(Δ) (most structurally different). Dynamic membership via `add_universe()` / `remove_universe()`. 33 tests in `test_coupling_router.py`. The key insight: partner selection IS E₀ navigation — the same primitives that navigate domains also navigate the space of coupling partners.
 
-2. **Asymmetric Coupling**: Currently both universes have equal standing. In practice, a domain expert and a generalist might need different coupling weights.
+2. **Asymmetric Coupling**: ✅ **RESOLVED (C67)**. Each universe carries a `coupling_weight` (default 1.0). Edges are fully directed: `R₀(requester→donor) = base_resistance / donor.weight`. High-weight donor → low R₀ → cheap to receive from (domain expert). Historization is directional: `SUCCESS` on Edge(A→B) does NOT affect Edge(B→A). The donor's weight modulates `coupling_discount` in `cross_propose_edges`. 12 asymmetric tests in `test_coupling_router.py`. Weight management via `set_weight()` / `get_weight()` with automatic R₀ propagation.
 
 3. **Coupling Self-Graph**: The coupling landscape itself could have a self-graph — tracking which coupling modes work. This would be Stufe-3 reflexion at the multi-system level.
 
@@ -252,6 +252,6 @@ multiverse.py       │
 | `benchmark_multiverse.py` | `test_benchmark_multiverse.py` | 19 | 5 classes |
 | `cross_reflexion.py` | `test_cross_reflexion.py` | 19 | 5 classes |
 | C63 (controller) | `test_overload_escalation.py` | 15 | 4 classes |
-| `coupling_router.py` | `test_coupling_router.py` | 33 | 10 classes |
+| `coupling_router.py` | `test_coupling_router.py` | 45 | 11 classes |
 | `raumzeit_coupling.py` | `test_raumzeit_coupling.py` | varies | — |
-| **Total** | | **121+** | |
+| **Total** | | **133+** | |
