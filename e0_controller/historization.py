@@ -6,8 +6,13 @@ Success/Failure trace management with separated learning rates.
 Spec coverage: §17.1 (U/F Traces), §17.2 (δ_H correction), §17.3 (Clipping).
 
 Core equations:
-    U_t(e) = ρ · U_{t-1}(e) + 𝟙_success
-    F_t(e) = ρ · F_{t-1}(e) + 𝟙_failure
+    U_t(e) = ρ_S · U_{t-1}(e) + 𝟙_success
+    F_t(e) = ρ_F · F_{t-1}(e) + 𝟙_failure
+
+Asymmetric decay (C79): ρ_S and ρ_F can differ. When ρ_F > ρ_S,
+failures are remembered longer than successes — reflecting that errors
+are asymmetrically informative (they reveal multiple blocked paths,
+not just one). Default: ρ_S = ρ_F = ρ (symmetric, backward-compatible).
     δ_H(e) = λ_f · F_t(e) − λ_s · U_t(e)
     δ_H_clipped = clip(δ_H, -δ_max, δ_max)
     R_eff(e) = R₀(e) + δ_H_clipped(e)
@@ -53,10 +58,12 @@ class Historization:
     """
 
     # Learning parameters
-    rho: float = 0.9          # decay rate (forgetting)
+    rho: float = 0.9          # decay rate (forgetting) — default for both traces
     lambda_s: float = 0.15    # success learning rate
     lambda_f: float = 0.20    # failure learning rate
     delta_max: float = 3.0    # resistance clipping bound
+    rho_s: Optional[float] = None  # success-trace decay (None → rho)
+    rho_f: Optional[float] = None  # failure-trace decay (None → rho)
 
     # Internal state
     _U: Dict[Edge, float] = field(default_factory=dict)  # success traces
@@ -83,9 +90,10 @@ class Historization:
         tau_last = self._tau_last.get(edge, self._tau)
         gap = self._tau - tau_last
         if gap > 0:
-            decay = self.rho ** gap
-            u *= decay
-            f *= decay
+            rs = self.rho_s if self.rho_s is not None else self.rho
+            rf = self.rho_f if self.rho_f is not None else self.rho
+            u *= rs ** gap
+            f *= rf ** gap
         return u, f
 
     # --- Public API ---
@@ -103,16 +111,18 @@ class Historization:
         """
         # Catch up missed decay steps (K2)
         u_prev, f_prev = self._effective_traces(edge)
+        rs = self.rho_s if self.rho_s is not None else self.rho
+        rf = self.rho_f if self.rho_f is not None else self.rho
 
         if outcome == Outcome.SUCCESS:
-            self._U[edge] = self.rho * u_prev + 1.0
-            self._F[edge] = self.rho * f_prev
+            self._U[edge] = rs * u_prev + 1.0
+            self._F[edge] = rf * f_prev
         elif outcome == Outcome.FAILURE:
-            self._U[edge] = self.rho * u_prev
-            self._F[edge] = self.rho * f_prev + 1.0
+            self._U[edge] = rs * u_prev
+            self._F[edge] = rf * f_prev + 1.0
         else:  # PARTIAL (runtime extension, not canonical)
-            self._U[edge] = self.rho * u_prev + 0.5
-            self._F[edge] = self.rho * f_prev + 0.3
+            self._U[edge] = rs * u_prev + 0.5
+            self._F[edge] = rf * f_prev + 0.3
 
         self._tau += 1
         self._tau_last[edge] = self._tau
@@ -265,6 +275,8 @@ class Historization:
             "lambda_s": self.lambda_s,
             "lambda_f": self.lambda_f,
             "delta_max": self.delta_max,
+            "rho_s": self.rho_s,
+            "rho_f": self.rho_f,
             "U": {e: v for e, v in self._U.items()},
             "F": {e: v for e, v in self._F.items()},
             "tau_last": {e: v for e, v in self._tau_last.items()},
@@ -281,6 +293,8 @@ class Historization:
             lambda_s=d["lambda_s"],
             lambda_f=d["lambda_f"],
             delta_max=d["delta_max"],
+            rho_s=d.get("rho_s"),
+            rho_f=d.get("rho_f"),
         )
         H._tau = d["tau"]
         H._U = {edge_parser(k): v for k, v in d["U"].items()}
