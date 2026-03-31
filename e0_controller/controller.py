@@ -207,6 +207,12 @@ class E0Controller:
         overload_threshold: float (default 3.0).
             C63: Overload index threshold. OI = N_admissible × (1 − mean_quality).
             When OI exceeds this, peer_fn is consulted (if provided).
+        focus_k: Optional[int] (default None = no focus narrowing).
+            C82: When OI exceeds overload_threshold and focus_k is set,
+            narrow the candidate set to focus_k random neighbors before
+            selection.  Peer suggestions bypass the focus filter and are
+            added as the (k+1)th candidate — the controller decides via
+            normal penalized-tension ranking whether to follow the peer.
     """
 
     def __init__(
@@ -229,6 +235,7 @@ class E0Controller:
         resonator_modulation: bool = False,
         peer_fn: Optional[Callable] = None,
         overload_threshold: float = 3.0,
+        focus_k: Optional[int] = None,
     ):
         self.landscape = landscape
         self.execute_fn = execute_fn
@@ -250,6 +257,8 @@ class E0Controller:
         self.mode_controller = None  # C46: optional operating mode monitor
         self.peer_fn = peer_fn  # C63: external peer consultation
         self.overload_threshold = overload_threshold  # C63: OI threshold
+        self.focus_k = focus_k  # C82: focus narrowing limit
+        self._focus_rng = random.Random(42)  # C82: deterministic but varied
         self._recent: List[str] = []   # sliding window of recent states
 
         # K1 fix: Escalation edges live here, NOT in the Landscape.
@@ -399,11 +408,15 @@ class E0Controller:
 
         §18: p* = argmin S_eff(p)
 
-        Strategy: Greedy + Revisit-Penalty + Typed Escalation.
+        Strategy: Greedy + Focus Narrowing + Peer Integration + Typed Escalation.
         1. Get admissible neighbors (K11 filtered).
-        2. Check for OVERLOADED (C63): many paths, little experience.
-        3. Pick argmin of penalized tension.
-        4. If empty → classify WHY and escalate accordingly (K12).
+        2. Compute OI on FULL neighbor set (raw complexity measure).
+        3. If OI > threshold and focus_k set: narrow to k random neighbors (C82).
+        4. If OI > threshold and peer_fn set: get peer suggestion, add to
+           focused set (peer bypasses focus filter, controller decides via
+           normal tension ranking).
+        5. Pick argmin of penalized tension on the (possibly narrowed) set.
+        6. If empty → classify WHY and escalate accordingly (K12).
 
         This is always the pure greedy decision. Hybrid logic wraps this
         via select_hybrid().
@@ -411,15 +424,36 @@ class E0Controller:
         neighbors = self._admissible_neighbors(current)
 
         if neighbors:
-            # C63: Check OVERLOADED before normal selection
-            if self.peer_fn is not None:
-                oi = self._overload_index(current, neighbors)
-                if oi > self.overload_threshold:
+            # Compute OI on FULL neighbor set (true complexity)
+            oi = self._overload_index(current, neighbors)
+            overloaded = oi > self.overload_threshold
+
+            if overloaded and self.focus_k is not None and len(neighbors) > self.focus_k:
+                # ── C82: Focus + Peer Integration ──
+                # 1. Get peer suggestion BEFORE narrowing (peer sees full graph)
+                peer_choice = None
+                if self.peer_fn is not None:
                     peer_choice = self.peer_fn(
                         self.landscape, current, neighbors,
                     )
-                    if peer_choice is not None and peer_choice in neighbors:
-                        return peer_choice, True, EscalationType.OVERLOADED
+                    if peer_choice is not None and peer_choice not in neighbors:
+                        peer_choice = None
+
+                # 2. Narrow to k random neighbors
+                self._focus_rng.shuffle(neighbors)
+                neighbors = neighbors[:self.focus_k]
+
+                # 3. Peer suggestion bypasses focus filter (k+1th candidate)
+                if peer_choice is not None and peer_choice not in neighbors:
+                    neighbors.append(peer_choice)
+
+            elif overloaded and self.peer_fn is not None:
+                # ── C63: Classic peer override (no focus narrowing) ──
+                peer_choice = self.peer_fn(
+                    self.landscape, current, neighbors,
+                )
+                if peer_choice is not None and peer_choice in neighbors:
+                    return peer_choice, True, EscalationType.OVERLOADED
 
             # Check EXHAUSTED: all admissible neighbors recently visited
             all_recent = all(y in self._recent for y in neighbors)
