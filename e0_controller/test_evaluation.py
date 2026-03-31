@@ -508,5 +508,93 @@ class TestHybridScenarioEvaluation(unittest.TestCase):
         self.assertNotIn("Hybrid Overrides", report)
 
 
+class TestFailedHybridEvaluation(unittest.TestCase):
+    """F5: Failed hybrid runs are caught by evaluation — never rated A/B.
+
+    Closes falsification target #5 (Evaluation blind spots).
+    Constructs scenarios where amplitude override causes failure
+    and verifies the evaluation layer catches it correctly.
+    """
+
+    def test_hybrid_failure_not_rated_high(self):
+        """A run that doesn't reach goal despite overrides gets F."""
+        gq = _make_gq()
+        ev = evaluate_scenario(
+            scenario_id="hybrid_fail_001", domain="failed_hybrid",
+            gq=gq, path=["A", "B", "A", "B", "A"],  # cycling, no goal
+            steps=4, escalation_count=0, revisit_count=3,
+            success_rate=0.5, avg_tension=0.6, total_tension=2.4,
+            reached_goal=False, result_log=[],
+            hybrid_override_count=3, hybrid_override_rate=0.75,
+            overlay_agree_rate=0.25, overlay_count=4,
+        )
+        self.assertIsNotNone(ev.hard_failure)
+        self.assertEqual(ev.run_evaluation.rating, "F")
+
+    def test_high_override_rate_with_failure_is_not_A(self):
+        """Many overrides that don't reach goal → never A or B."""
+        gq = _make_gq()
+        ev = evaluate_scenario(
+            scenario_id="hybrid_fail_002", domain="amplitude_hostile",
+            gq=gq, path=["A", "B", "C", "B", "C", "B"],
+            steps=5, escalation_count=2, revisit_count=4,
+            success_rate=0.4, avg_tension=0.7, total_tension=3.5,
+            reached_goal=False, result_log=[],
+            hybrid_override_count=4, hybrid_override_rate=0.8,
+            overlay_agree_rate=0.2, overlay_count=5,
+        )
+        self.assertIn(ev.run_evaluation.rating, ["D", "E", "F"])
+        self.assertNotIn(ev.run_evaluation.rating, ["A", "B"])
+
+    def test_goal_reached_with_high_overrides_gets_warning(self):
+        """Goal reached but >50% override rate → warning fired."""
+        gq = _make_gq()
+        ev = evaluate_scenario(
+            scenario_id="hybrid_warn_001", domain="override_heavy",
+            gq=gq, path=["A", "B", "C", "D"],
+            steps=3, escalation_count=0, revisit_count=0,
+            success_rate=1.0, avg_tension=0.3, total_tension=0.9,
+            reached_goal=True, result_log=[],
+            hybrid_override_count=2, hybrid_override_rate=0.667,
+            overlay_agree_rate=0.333, overlay_count=3,
+        )
+        # Goal reached → not F, but warnings should fire
+        self.assertNotEqual(ev.run_evaluation.rating, "F")
+        warnings = ev.run_evaluation.warnings
+        self.assertTrue(any("override" in w.lower() for w in warnings),
+                        f"Expected override warning in {warnings}")
+
+    def test_low_agree_rate_triggers_warning(self):
+        """Low overlay agree rate (<50%) triggers warning."""
+        gq = _make_gq()
+        ev = evaluate_scenario(
+            scenario_id="hybrid_warn_002", domain="disagree_heavy",
+            gq=gq, path=["A", "B", "C", "D"],
+            steps=3, escalation_count=0, revisit_count=0,
+            success_rate=1.0, avg_tension=0.3, total_tension=0.9,
+            reached_goal=True, result_log=[],
+            hybrid_override_count=1, hybrid_override_rate=0.333,
+            overlay_agree_rate=0.333, overlay_count=3,
+        )
+        warnings = ev.run_evaluation.warnings
+        self.assertTrue(any("agree" in w.lower() for w in warnings),
+                        f"Expected agree-rate warning in {warnings}")
+
+    def test_trivial_loops_detected_as_hard_failure(self):
+        """A hybrid run that degenerates into trivial loops → F."""
+        gq = _make_gq()
+        ev = evaluate_scenario(
+            scenario_id="hybrid_loop_001", domain="loop_degenerate",
+            gq=gq, path=["A", "B", "A", "B", "A", "B", "A", "B", "A", "B"],
+            steps=9, escalation_count=0, revisit_count=8,
+            success_rate=0.5, avg_tension=0.5, total_tension=4.5,
+            reached_goal=False,
+            result_log=[],
+            hybrid_override_count=5, hybrid_override_rate=0.556,
+            overlay_agree_rate=0.444, overlay_count=9,
+        )
+        self.assertEqual(ev.run_evaluation.rating, "F")
+
+
 if __name__ == "__main__":
     unittest.main()

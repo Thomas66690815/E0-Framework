@@ -770,5 +770,167 @@ class TestEscalationEdgeCreatedBy(unittest.TestCase):
             self.assertIn("created_by", ee)
 
 
+class TestOverlayPersistenceRoundtrip(unittest.TestCase):
+    """F4: Amplitude overlay is reproducible after MemOS save→load→restore.
+
+    The overlay report is computed live from landscape + historization state.
+    If those inputs are correctly persisted, recomputing the overlay after
+    restore must produce identical results.  This closes falsification
+    target #4 (MemOS persistence gap).
+    """
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.memos = E0MemoryOS(base_dir=self.tmpdir)
+
+    def tearDown(self):
+        shutil.rmtree(self.tmpdir)
+
+    def _build_gordian(self):
+        """Build a Gordian-like trap where overlay is non-trivial."""
+        L = Landscape()
+        L.add_edge("START", "A1", delta=0.3, resistance=0.5)
+        L.add_edge("A1", "A2", delta=0.4, resistance=0.6)
+        L.add_edge("A2", "GOAL", delta=0.3, resistance=0.5)
+        L.add_edge("A1", "LOOP", delta=0.2, resistance=0.3)
+        L.add_edge("LOOP", "A1", delta=0.2, resistance=0.3)
+        L.add_edge("START", "B1", delta=0.5, resistance=0.8)
+        L.add_edge("B1", "B2", delta=0.3, resistance=0.5)
+        L.add_edge("B2", "GOAL", delta=0.2, resistance=0.4)
+        return L
+
+    def test_overlay_identical_after_restore(self):
+        """Overlay report matches before save and after restore."""
+        from e0_controller.amplitude_overlay import analyze_controller_state
+
+        L = self._build_gordian()
+        ctrl = E0Controller(L, all_success, hybrid_mode=HybridMode.GREEDY,
+                            hybrid_goals={"GOAL"}, hybrid_horizon=3)
+        trace = ctrl.run("START", max_cycles=5, goal="GOAL")
+
+        # Compute overlay BEFORE save
+        report_before = analyze_controller_state(
+            ctrl, "START", horizon_edges=3, geometry="simple", goals={"GOAL"})
+
+        # Save → load → restore
+        ctx = self.memos.snapshot_from_runtime("test-overlay", L, ctrl, trace)
+        self.memos.save_context(ctx)
+        ctx2 = self.memos.load_context("test-overlay")
+        L2 = self.memos.restore_landscape(ctx2)
+        ctrl2 = self.memos.restore_controller(ctx2, L2, all_success)
+
+        # Compute overlay AFTER restore
+        report_after = analyze_controller_state(
+            ctrl2, "START", horizon_edges=3, geometry="simple", goals={"GOAL"})
+
+        # Key overlay properties must match
+        self.assertEqual(report_before.current, report_after.current)
+        self.assertEqual(report_before.horizon_edges, report_after.horizon_edges)
+        self.assertEqual(report_before.geometry, report_after.geometry)
+        self.assertEqual(len(report_before.action_infos),
+                         len(report_after.action_infos))
+        for a_before, a_after in zip(
+            sorted(report_before.action_infos, key=lambda a: a.action),
+            sorted(report_after.action_infos, key=lambda a: a.action),
+        ):
+            self.assertEqual(a_before.action, a_after.action)
+            self.assertAlmostEqual(a_before.intensity, a_after.intensity, places=6)
+            self.assertAlmostEqual(a_before.probability, a_after.probability, places=6)
+            self.assertEqual(a_before.path_count, a_after.path_count)
+
+    def test_overlay_choice_stable_after_restore(self):
+        """Amplitude choice (best action) unchanged after restore."""
+        from e0_controller.amplitude_overlay import analyze_controller_state
+
+        L = self._build_gordian()
+        ctrl = E0Controller(L, all_success, hybrid_mode=HybridMode.GREEDY,
+                            hybrid_goals={"GOAL"}, hybrid_horizon=3)
+        trace = ctrl.run("START", max_cycles=5, goal="GOAL")
+
+        report_before = analyze_controller_state(
+            ctrl, "START", horizon_edges=3, geometry="goal_reaching",
+            goals={"GOAL"})
+
+        ctx = self.memos.snapshot_from_runtime("test-choice", L, ctrl, trace)
+        self.memos.save_context(ctx)
+        ctx2 = self.memos.load_context("test-choice")
+        L2 = self.memos.restore_landscape(ctx2)
+        ctrl2 = self.memos.restore_controller(ctx2, L2, all_success)
+
+        report_after = analyze_controller_state(
+            ctrl2, "START", horizon_edges=3, geometry="goal_reaching",
+            goals={"GOAL"})
+
+        self.assertEqual(report_before.amplitude_choice,
+                         report_after.amplitude_choice)
+        self.assertAlmostEqual(report_before.override_confidence,
+                               report_after.override_confidence, places=6)
+
+    def test_historized_overlay_survives_roundtrip(self):
+        """After historization changes R_eff, overlay after restore reflects this."""
+        from e0_controller.amplitude_overlay import analyze_controller_state
+
+        L = self._build_gordian()
+        ctrl = E0Controller(L, sometimes_fail, hybrid_mode=HybridMode.GREEDY,
+                            hybrid_goals={"GOAL"}, hybrid_horizon=3)
+        # Run with failures to build non-trivial historization
+        ctrl.run("START", max_cycles=10, goal="GOAL")
+        trace = ctrl.run("START", max_cycles=5, goal="GOAL")
+
+        # Compute overlay AFTER all runs (historization accumulated)
+        report_before = analyze_controller_state(
+            ctrl, "START", horizon_edges=3, geometry="simple", goals={"GOAL"})
+
+        ctx = self.memos.snapshot_from_runtime("test-hist-overlay", L, ctrl, trace)
+        self.memos.save_context(ctx)
+        ctx2 = self.memos.load_context("test-hist-overlay")
+        L2 = self.memos.restore_landscape(ctx2)
+        ctrl2 = self.memos.restore_controller(ctx2, L2, sometimes_fail)
+
+        report_after = analyze_controller_state(
+            ctrl2, "START", horizon_edges=3, geometry="simple", goals={"GOAL"})
+
+        # Same number of actions and paths
+        self.assertEqual(len(report_before.action_infos),
+                         len(report_after.action_infos))
+        for a_before, a_after in zip(
+            sorted(report_before.action_infos, key=lambda a: a.action),
+            sorted(report_after.action_infos, key=lambda a: a.action),
+        ):
+            self.assertAlmostEqual(a_before.intensity, a_after.intensity, places=6)
+
+    def test_su2_flag_preserved_in_overlay(self):
+        """SU(2) mode flag survives roundtrip and produces SU(2) overlay."""
+        from e0_controller.amplitude_overlay import analyze_controller_state
+
+        L = self._build_gordian()
+        ctrl = E0Controller(L, all_success, hybrid_mode=HybridMode.GREEDY,
+                            hybrid_goals={"GOAL"}, hybrid_horizon=3, use_su2=True)
+        trace = ctrl.run("START", max_cycles=5, goal="GOAL")
+
+        report_su2_before = analyze_controller_state(
+            ctrl, "START", horizon_edges=3, geometry="simple",
+            goals={"GOAL"}, use_su2=True)
+
+        ctx = self.memos.snapshot_from_runtime("test-su2-ov", L, ctrl, trace)
+        self.memos.save_context(ctx)
+        ctx2 = self.memos.load_context("test-su2-ov")
+        L2 = self.memos.restore_landscape(ctx2)
+        ctrl2 = self.memos.restore_controller(ctx2, L2, all_success)
+
+        # Verify SU(2) flag persisted
+        self.assertTrue(ctrl2.use_su2)
+
+        report_su2_after = analyze_controller_state(
+            ctrl2, "START", horizon_edges=3, geometry="simple",
+            goals={"GOAL"}, use_su2=True)
+
+        for a_before, a_after in zip(
+            sorted(report_su2_before.action_infos, key=lambda a: a.action),
+            sorted(report_su2_after.action_infos, key=lambda a: a.action),
+        ):
+            self.assertAlmostEqual(a_before.intensity, a_after.intensity, places=6)
+
+
 if __name__ == "__main__":
     unittest.main()
