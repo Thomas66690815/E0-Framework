@@ -90,6 +90,42 @@ class Landscape:
         self._delta[edge] = delta
         self._R0[edge] = resistance
 
+    @classmethod
+    def fully_connected(
+        cls,
+        states: List[str],
+        delta: float = 0.5,
+        resistance: float = 1.0,
+    ) -> "Landscape":
+        """Create a landscape where every state connects to every other.
+
+        Useful when E₀ should discover structure from scratch —
+        uniform Δ and R₀ mean zero prior knowledge.  All
+        differentiation comes from historization during use.
+
+        Parameters
+        ----------
+        states : list of str
+            State names.
+        delta : float
+            Uniform Δ for all edges (default 0.5).
+        resistance : float
+            Uniform R₀ for all edges (default 1.0).
+
+        Returns
+        -------
+        Landscape
+            n states, n·(n−1) directed edges.
+        """
+        la = cls()
+        for s in states:
+            la.add_state(s)
+        for a in states:
+            for b in states:
+                if a != b:
+                    la.add_edge(a, b, delta=delta, resistance=resistance)
+        return la
+
     # --- Structural Mutation (Bridge 4, Stufe 1) ---
 
     def remove_edge(self, source: str, target: str) -> None:

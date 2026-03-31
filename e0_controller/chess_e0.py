@@ -303,14 +303,7 @@ class ChessE0Player:
     @staticmethod
     def _build_landscape() -> Landscape:
         """Fully connected landscape over strategic dimensions."""
-        la = Landscape()
-        for dim in DIMENSIONS:
-            la.add_state(dim)
-        for a in DIMENSIONS:
-            for b in DIMENSIONS:
-                if a != b:
-                    la.add_edge(a, b, delta=0.5, resistance=1.0)
-        return la
+        return Landscape.fully_connected(DIMENSIONS)
 
     def _execute_fn(self, source: str, target: str) -> Outcome:
         """Can we improve dimension *target* with available moves?"""
@@ -365,6 +358,19 @@ class ChessE0Player:
             return "(no moves)"
         parts = [f"{dim}: {c}/{total}" for dim, c in counts.most_common()]
         return ", ".join(parts)
+
+    def learned_transitions(self, top_n: int = 5) -> str:
+        """Show top productive transitions discovered through play."""
+        profile = self.landscape.historization.strategy_profile(top_n=top_n)
+        if not profile:
+            return "(no transitions observed)"
+        parts = []
+        for edge, quality, load in profile:
+            parts.append(
+                f"{edge.source}\u2192{edge.target}: "
+                f"q={quality:+.2f} (load={load:.1f})"
+            )
+        return "\n".join(parts)
 
 
 # ══════════════════════════════════════════════

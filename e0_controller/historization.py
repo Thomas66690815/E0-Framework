@@ -309,3 +309,41 @@ class Historization:
             "total_U": total_u,
             "total_F": total_f,
         }
+
+    def strategy_profile(
+        self,
+        edges: Optional[List[Edge]] = None,
+        *,
+        top_n: int = 0,
+    ) -> List[Tuple[Edge, float, float]]:
+        """Extract learned strategy as ranked (edge, quality, load) triples.
+
+        Returns edges sorted by trace_quality (descending), filtered to
+        those with trace_load > 0 (at least one observation).
+
+        This answers: "What did E₀ learn?"
+
+        Parameters
+        ----------
+        edges : list of Edge, optional
+            Edges to inspect.  If None, uses all edges that have
+            been touched (non-zero U or F).
+        top_n : int
+            If > 0, return only the top N entries.  0 = all.
+
+        Returns
+        -------
+        list of (Edge, trace_quality, trace_load) sorted by quality desc.
+        """
+        if edges is None:
+            edges = list(set(self._U.keys()) | set(self._F.keys()))
+        ranked = []
+        for e in edges:
+            load = self.trace_load(e)
+            if load < 1e-12:
+                continue
+            ranked.append((e, self.trace_quality(e), load))
+        ranked.sort(key=lambda x: x[1], reverse=True)
+        if top_n > 0:
+            ranked = ranked[:top_n]
+        return ranked
