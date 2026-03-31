@@ -1,8 +1,8 @@
 # E₀ Empirical Insights — What Chess Reveals About the Framework
 
 **Date:** 2026-03-31  
-**Trigger:** C72–C76 Chess Engine + Team Chess + Attractor Universality + Multi-Attractor  
-**Status:** Validated through self-play, team-vs-solo, 10-domain benchmark, multi-cluster dynamics
+**Trigger:** C72–C77 Chess Engine + Team Chess + Attractor Universality + Multi-Attractor + Transfer Learning  
+**Status:** Validated through self-play, team-vs-solo, 10-domain benchmark, multi-cluster dynamics, transfer experiments
 
 ---
 
@@ -12,7 +12,7 @@ C72 applied E₀ to chess — not as a competitive engine, but as a stress test.
 The question: can E₀ navigate an adversarial, real-time domain where the
 "right" strategy is non-obvious and must be discovered, not specified?
 
-Result: yes, and the experiment reveals six insights about the framework
+Result: yes, and the experiment reveals seven insights about the framework
 as a whole that go beyond the chess domain.
 
 ---
@@ -354,14 +354,106 @@ own Historization with its own decay.
 
 ---
 
+## Insight 7: Transfer Learning is Conditional — Effective Only in Stochastic Domains with Exploration Cost
+
+**Observation:**
+Open Question #3 asked whether a strategy_profile from one domain can seed
+a new landscape for faster convergence.  C77 tests this across two experiment
+classes: deterministic C53 domains and stochastic branching corridors.
+
+**Experiment (C77):**
+
+*Part 1 — Deterministic C53 Domains (6 domains, 20 episodes cold vs warm):*
+
+| Domain | Happy Path | Transferred | Cold μ | Warm μ | Speedup |
+|---|---|---|---|---|---|
+| D3 Gordian | 3 | 6 edges | 6.0 | 5.8 | 1.03× |
+| D4 Greedy | 4 | 3 edges | 47.8 | 50.0 | 0.96× |
+| D7 Invoice | 7 | 7 edges | 7.0 | 7.0 | 1.00× |
+| D8 Cycles | 3 | 3 edges | 3.0 | 3.0 | 1.00× |
+| D10 Bottleneck | 4 | 6 edges | 6.0 | 5.9 | 1.02× |
+
+Result: **Transfer is neutral in all deterministic domains.**  The controller
+follows the same path every episode — there is no learning curve to accelerate.
+Revisit penalty (K7) and DEAD_END escalation (K12) already provide efficient
+exploration.  Injected traces cannot improve on a deterministic outcome.
+
+*Part 2 — Stochastic Branching Corridors (30 trials, 30 episodes each):*
+
+Domain structure: N_LEVELS nodes on the correct path, N_DEAD_ENDS dead-end
+branches at each level.  Stochastic execute_fn: correct edges P(SUCCESS)=0.85,
+wrong edges P(SUCCESS)=0.30.  Dead-end exploration costs 2+ steps per wrong
+choice (move to dead end + DEAD_END escalation jump back).
+
+| Corridor | Cold μ | Warm μ | Speedup | Warm Wins |
+|---|---|---|---|---|
+| 5L×4D (25 edges) | 14.8 | 12.8 | 1.16× | 17/30 |
+| 8L×3D (32 edges) | 24.5 | 16.3 | **1.50×** | **27/30** |
+
+Result: **Transfer is clearly positive in stochastic domains with dead ends.**
+
+The 8L×3D corridor shows the strongest signal: 1.50× overall speedup, warm
+faster in 27 of 30 episodes.  Transfer benefit persists across ALL episodes
+(first 5: 1.54×, last 5: 1.42×) — it does not fade.
+
+**Why transfer works here but not in Part 1:**
+
+1. **Dead ends create real step costs.**  Each wrong choice costs 2+ steps
+   (explore dead end + DEAD_END escalation).  Transfer avoids these costs by
+   injecting negative quality on dead-end edges → controller avoids them.
+
+2. **Stochastic outcomes prevent cold convergence.**  With P(SUCCESS)≠1.0
+   and ρ=0.9 decay, a cold controller never permanently learns the correct
+   path.  Traces decay faster than they accumulate.  Transfer provides a
+   persistent bias that survives decay cycles because the virtual experiences
+   (SEED_STRENGTH=3.0) compound the initial trace advantage.
+
+3. **Deterministic domains have no exploration gap.**  The controller's
+   built-in mechanisms (revisit penalty, escalation) already handle
+   deterministic navigation efficiently.  Transfer adds no value.
+
+**Why transfer benefit PERSISTS (does not fade):**
+
+This was the most surprising finding.  In classical ML, transfer typically
+helps early and fades as the target system learns on its own.  In E₀,
+the ρ=0.9 decay actively erases accumulated traces (~50 steps to lose 99.5%
+of information: ρ^50 ≈ 0.005).  This means:
+
+- The cold controller keeps "forgetting" what it learned → re-explores dead ends
+- The warm controller's injected traces also decay, BUT they were injected
+  at t=0 with SEED_STRENGTH bonus, giving them a head start in each episode
+- The cold controller's real-time exploration competes with decay and never
+  fully converges; the warm controller's pre-seeded bias partially compensates
+
+**Formal implication:**
+
+Transfer learning in E₀ is a **conditional mechanism**, effective only when:
+1. The domain has stochastic outcomes (deterministic domains need no transfer)
+2. The domain has costly exploration choices (dead ends, traps)
+3. The ρ-decay is high enough to prevent cold convergence
+
+The revisit penalty (K7) and DEAD_END escalation (K12) are sufficient for
+deterministic domains — transfer is redundant.  For stochastic domains,
+these mechanisms reduce but do not eliminate exploration cost.  Transfer
+fills the remaining gap.
+
+This has architectural implications for the LLM Bootstrap (C43–C47):
+- LLM-generated initial traces are most valuable for stochastic/uncertain domains
+- For well-defined deterministic workflows, E₀'s self-exploration is sufficient
+- The LLM should focus bootstrapping effort on domains where the E₀ controller
+  would otherwise face extended stochastic exploration
+
+---
+
 ## Open Questions for Future Work
 
 1. **Convergence speed:** How many interactions until the strategy profile stabilizes?
    (Chess: ~60 moves.  Generalizable?)
 2. **Landscape size scaling:** Does uniform initialization work for 50+ states,
    or does the fully-connected edge count (N²) create noise?
-3. **Transfer:** Can a strategy_profile from one game seed a new landscape?
-   (Pre-load historization from learned transitions → faster convergence.)
+3. ~~Transfer~~ → **Resolved in C77.** Conditional: neutral in deterministic
+   domains (revisit penalty + escalation suffice), but 1.50× speedup in
+   stochastic domains with dead-end exploration cost.  See Insight 7.
 4. ~~Adversarial multiverse~~ → **Resolved in C74.** Team wins by checkmate.
    Diversity + knowledge exchange breaks the repetition trap.
 5. ~~Attractor universality~~ → **Resolved in C75.** Conditional on two factors.
@@ -383,6 +475,7 @@ own Historization with its own decay.
 - **C73 Primitive Extensions:** `landscape.py` (fully_connected), `historization.py` (strategy_profile)
 - **C75 Attractor Universality:** `e0_controller/explore_attractor_universality.py` — 10 domains × 2 topologies
 - **C76 Multi-Attractor:** `e0_controller/explore_multi_attractor.py` — 25-state clustered topology × 5 variants
+- **C77 Transfer Learning:** `e0_controller/explore_transfer_learning.py` — 6 deterministic + 2 stochastic corridors
 - **Ontodynamics §4:** 4-Layer Model — trace_load, trace_quality, inertia_factor, mass
 - **Ontodynamics §7:** Landscape definition — X_t unconstrained
 - **Ontodynamics §17:** Historization — U/F traces, δ_H correction
