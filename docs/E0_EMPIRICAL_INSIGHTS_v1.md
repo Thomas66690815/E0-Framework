@@ -1,8 +1,8 @@
 # E₀ Empirical Insights — What Chess Reveals About the Framework
 
 **Date:** 2026-03-31  
-**Trigger:** C72–C75 Chess Engine + Team Chess + Attractor Universality  
-**Status:** Validated through self-play, team-vs-solo, and 10-domain benchmark
+**Trigger:** C72–C76 Chess Engine + Team Chess + Attractor Universality + Multi-Attractor  
+**Status:** Validated through self-play, team-vs-solo, 10-domain benchmark, multi-cluster dynamics
 
 ---
 
@@ -12,7 +12,7 @@ C72 applied E₀ to chess — not as a competitive engine, but as a stress test.
 The question: can E₀ navigate an adversarial, real-time domain where the
 "right" strategy is non-obvious and must be discovered, not specified?
 
-Result: yes, and the experiment reveals five insights about the framework
+Result: yes, and the experiment reveals six insights about the framework
 as a whole that go beyond the chess domain.
 
 ---
@@ -279,6 +279,81 @@ topology should NOT produce an attractor.  This can be tested.
 
 ---
 
+## Insight 6: Multi-Attractor Requires Independent Historization
+
+**Observation:**
+Insight 4 showed that historization creates gravitational attractors.
+Insight 5 showed this requires differential feedback + topological choice.
+The natural next question: in a large landscape with multiple natural
+"clusters," do multiple attractors form simultaneously?
+
+**Experiment (C76):**
+25 states in 5 clusters (A1–A5 through E1–E5).  Clustered topology:
+fully connected within each cluster, sparse bridges between adjacent clusters.
+Differential execute_fn: intra-cluster = SUCCESS, inter-cluster = FAILURE
+with probability P_FAIL.
+
+Tested 5 variants:
+
+| Variant | Setup | # Attractors | Dominant | Gini |
+|---|---|---|---|---|
+| V1 | Shared H, P_fail=0.7 | 1 | E (99.5%) | 0.80 |
+| V2 | Shared H, P_fail=0.3 | 1 | E (99.5%) | 0.80 |
+| V3 | Shared H, P_fail=1.0 | 1 | E (99.5%) | 0.80 |
+| V4 | Shared H, asymmetric | 1 | E (99.5%) | 0.80 |
+| V5 | Independent H (1 per cluster) | **5** | Equal (20% each) | **0.00** |
+
+**Key finding: Shared Historization → Attractor Monopoly.**
+
+A single E₀ system with shared Historization can only develop ONE attractor,
+regardless of topological clustering or feedback strength.  The mechanism:
+
+1. The greedy controller settles into whichever region it explores most recently
+2. ρ=0.9 decay erases traces from earlier explorations (ρ^50 ≈ 0.005)
+3. The surviving basin absorbs all subsequent navigation
+
+In V1–V4, the start rotation (A→B→C→D→E) means E gets the freshest traces.
+This is "last-mover advantage": the most recently explored region wins because
+its historization has decayed least.
+
+**Key finding: Independent Historization → Multi-Attractor Coexistence.**
+
+When each cluster gets its own controller with separate Historization (V5),
+all 5 develop equal-strength attractors (Gini=0.000).  Perfect "galaxy
+formation" — independent gravitational wells coexisting.
+
+**The structural parallel to physics is now complete:**
+
+| Physical spacetime | E₀ shared Historization | E₀ multiverse |
+|---|---|---|
+| Speed of light limits communication | No limit — shared H is global | Separate H per universe |
+| Multiple galaxies form independently | Impossible — monopoly | 5 independent attractors |
+| Galaxies separated by distance | No distance in shared H | Coupling Router provides distance |
+| Galaxy mergers when they meet | Not applicable | Cross-reflexion = knowledge exchange |
+
+**Why this matters for E₀:**
+
+This empirically validates the multiverse architecture (C54–C71).  A single
+E₀ system is structurally incapable of maintaining multiple attractor basins
+simultaneously.  For structural diversity — multiple perspectives, strategies,
+areas of expertise — you NEED the multiverse: separate Landscapes with
+independent Historizations, coupled via CouplingRouter.
+
+The Chess Team result (C74) demonstrated this operationally: 3×E₀ with
+separate histories beat 1×E₀ with shared history.  C76 now explains WHY:
+shared historization creates monopoly, independent historization preserves
+diversity.
+
+**Formal implication:**
+The multiverse architecture is not a convenience — it is structurally
+necessary for multi-attractor dynamics.  This is the E₀ equivalent of the
+cosmological horizon: shared historization has no "speed of light" to limit
+information propagation, so gravitational monopoly is inevitable.  The
+multiverse introduces the missing separation by giving each system its
+own Historization with its own decay.
+
+---
+
 ## Open Questions for Future Work
 
 1. **Convergence speed:** How many interactions until the strategy profile stabilizes?
@@ -294,8 +369,9 @@ topology should NOT produce an attractor.  This can be tested.
 6. **Attractor prediction:** Can we predict WHICH state will become the
    attractor from domain structure alone, before historization runs?
    Partially answered by C75: attractor = goal when differential feedback exists.
-7. **Multi-attractor dynamics:** In larger landscapes (50+ states), do multiple
-   attractors compete?  Does that correspond to galaxy formation?
+7. ~~Multi-attractor dynamics~~ → **Resolved in C76.** Shared Historization
+   creates monopoly (1 attractor). Independent Historization (multiverse)
+   enables coexistence (5 attractors). See Insight 6.
 
 ---
 
@@ -305,6 +381,8 @@ topology should NOT produce an attractor.  This can be tested.
 - **C74 Team Chess:** `e0_controller/chess_team.py` — team beats solo, diversity breaks repetition
 - **C53 Domain-Invariance Benchmark:** 10 domains, 1 controller — prior invariance evidence
 - **C73 Primitive Extensions:** `landscape.py` (fully_connected), `historization.py` (strategy_profile)
+- **C75 Attractor Universality:** `e0_controller/explore_attractor_universality.py` — 10 domains × 2 topologies
+- **C76 Multi-Attractor:** `e0_controller/explore_multi_attractor.py` — 25-state clustered topology × 5 variants
 - **Ontodynamics §4:** 4-Layer Model — trace_load, trace_quality, inertia_factor, mass
 - **Ontodynamics §7:** Landscape definition — X_t unconstrained
 - **Ontodynamics §17:** Historization — U/F traces, δ_H correction
