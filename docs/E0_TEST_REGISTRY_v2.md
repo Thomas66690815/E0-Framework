@@ -3,8 +3,8 @@
 > Central validation registry for the E₀ Framework.
 > **Purpose:** connect claims, tests, evidence, and status in one place.
 
-**Last updated:** 2026-03-30 — **2324 tests** (0 failures, 0 warnings)  
-**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, **C52 Honest Self-Knowledge (CANON_PROCESS_MAP correction)**, **C53 Domain-Invariance Benchmark (10 domains, 1 controller)**, **C54 Raumzeit Coupling (closed vs coupled systems)**, **C55 Amplitude Benchmark (10 domains × 3 modes)**, and active edge-case work.
+**Last updated:** 2026-03-31 — **2560 tests** (0 failures, 0 warnings)  
+**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, **C52 Honest Self-Knowledge (CANON_PROCESS_MAP correction)**, **C53 Domain-Invariance Benchmark (10 domains, 1 controller)**, **C54 Raumzeit Coupling (closed vs coupled systems)**, **C55 Amplitude Benchmark (10 domains × 3 modes)**, **C64 Gridworld Baseline Benchmark (E₀ vs A* vs Naive-Greedy)**, and active edge-case work.
 
 ---
 
@@ -569,6 +569,7 @@ Born sampling (P ∝ I, choosing actions probabilistically from the amplitude-de
 | `test_landscape_mutation.py` | B4-S1 |
 | `test_structural_mutation.py` | B4-S2, B4-S4a |
 | `test_structural_tuning_cycle.py` | B4-S3 |
+| `test_benchmark_gridworld.py` | C64 |
 
 ---
 
@@ -1867,6 +1868,43 @@ determine which real topologies benefit from reflexion.
 - Proactive reflexion improves efficiency via topology enrichment (shortcuts)
 - Proactive is not frontier-bridging here — it's constructive shortcutting
 - 2/10 domains benefit, 8/10 neutral, 0/10 harmed (reflexion is monotonic)
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C64 — Gridworld Baseline Benchmark: E₀ vs A* vs Naive-Greedy
+
+**Claim**  
+E₀'s historization-based navigation outperforms memoryless greedy on trap
+topologies and matches A* optimal path length on cycle-dominated grids.
+Three 5×5 grid variants systematically test this against baselines:
+V1 (detour wall), V2 (dead-end lure), V3 (trap loop).
+
+This is the first formal baseline comparison: same topology, same start/goal,
+three algorithms. Naive-Greedy (no memory) fails 100% on all variants.
+E₀ (historization + revisit penalty + escalation) succeeds 100%.
+On V3, E₀ matches A* optimal (8 steps).
+
+**Evidence**  
+- `e0_controller/benchmark_gridworld.py` — 3 grid variants, A*, Naive-Greedy, E₀ runners
+- `e0_controller/test_benchmark_gridworld.py` — 49 tests across 6 classes:
+  - `TestGridConstruction` (10): cell naming, grid validity, wall placement, lure/trap deltas
+  - `TestAStarBaseline` (7): A* finds optimal paths (8 steps all variants), disconnected graph → None
+  - `TestNaiveGreedyFailure` (9): 0% success on all 3 variants, cycling confirmed
+  - `TestE0Success` (6): 100% success all variants, step bounds ≤2×A*, V3=A*-optimal
+  - `TestComparativeInvariants` (12): 5-trial runs, method-level success/fail/bound invariants
+  - `TestBenchmarkRunner` (5): runner completeness, determinism, dataclass validity
+
+**Result**  
+- V1 (detour wall): A*=8, Naive=0%, E₀=100%/16 steps (2× optimal — detour cost)
+- V2 (dead-end lure): A*=8, Naive=0%, E₀=100%/10 steps (1.25× optimal)
+- V3 (trap loop): A*=8, Naive=0%, E₀=100%/8 steps (A*-optimal — historization breaks cycle immediately)
+- E₀ is deterministic: min_steps == max_steps across all trials
+- Naive-Greedy revisits states (confirmed cycling on all 3 variants)
+- E₀ step count bounded by 2× A* optimal on all variants
+- Amplitude overlay intentionally excluded (horizon too short for 5×5 grids)
 
 **Status**  
 ✅ Confirmed
