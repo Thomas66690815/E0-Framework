@@ -45,6 +45,25 @@ Edge(B→A).  Each coupling direction has its own track record.
 
 The donor's weight also modulates the coupling_discount passed to
 cross_propose_edges:  discount = min(0.5 · donor_weight, 1.0).
+
+C68 — Coupling Self-Graph
+---------------------------
+The coupling process has its own self-graph — a meta-landscape that
+tracks which coupling components produce good outcomes.  Same pattern
+as the domain SelfGraph (C43), but with coupling-specific nodes:
+
+  Core cycle:
+    trigger → selection → exchange → evaluation → recording → trigger
+
+  Modulation:
+    weight_mod → selection     (asymmetric weights affect partner choice)
+    distance_mod → selection   (structural distances affect partner choice)
+
+After each coupling interaction, coupling_self_historize() records
+which components participated and the outcome.  Diagnosis reveals:
+  - selection "confused" → partner choice inconsistent
+  - exchange "harmful"   → cross-reflexion hurting more than helping
+  - weight_mod "harmful" → asymmetric weights counterproductive
 """
 
 from __future__ import annotations
@@ -125,6 +144,7 @@ class CouplingRouter:
             for u in universes
         }
         self.landscape = self._build_routing_landscape(universes)
+        self.self_graph: Optional[CouplingSelfGraph] = None
 
     # ── Construction ──
 
@@ -204,15 +224,27 @@ class CouplingRouter:
 
     # ── Historization ──
 
-    def historize(self, source: str, target: str, outcome: Outcome) -> None:
+    def historize(self, source: str, target: str, outcome: Outcome,
+                  *, weight_mod_active: bool = False,
+                  distance_mod_active: bool = False) -> None:
         """Record the outcome of a directed coupling: source requested from target.
 
         Only Edge(source→target) is updated.  The reverse direction has
         its own independent history (C67 asymmetric coupling).
+
+        If self_graph is enabled (C68), also self-historizes the coupling
+        components that participated.
         """
         if self.landscape.has_edge(source, target):
             self.landscape.historization.update(
                 Edge(source, target), outcome)
+
+        if self.self_graph is not None:
+            components = coupling_active_components(
+                weight_mod_active=weight_mod_active,
+                distance_mod_active=distance_mod_active,
+            )
+            self.self_graph.self_historize(components, outcome)
 
     # ── Weight Management (C67) ──
 
@@ -352,18 +384,275 @@ def make_routed_peer_fn(
         partner = selections[0].partner
         donor_weight = router.get_weight(partner.name)
         discount = min(0.5 * donor_weight, 1.0)
+        has_weight_mod = any(w != 1.0 for w in router._weights.values())
         result = cross_propose_edges(
             landscape, partner.landscape, current, goal,
             donor_name=partner.name,
             coupling_discount=discount,
         )
         if result.proposals:
-            # Historize the successful coupling
-            router.historize(requester_name, partner.name, Outcome.SUCCESS)
+            router.historize(requester_name, partner.name, Outcome.SUCCESS,
+                             weight_mod_active=has_weight_mod)
             return result.proposals[0].target
 
-        # No proposals → coupling didn't help
-        router.historize(requester_name, partner.name, Outcome.FAILURE)
+        router.historize(requester_name, partner.name, Outcome.FAILURE,
+                         weight_mod_active=has_weight_mod)
         return None
 
     return routed_peer_fn
+
+
+# ──────────────────────────────────────────────
+# Coupling Self-Graph (C68)
+# ──────────────────────────────────────────────
+
+# Core coupling cycle: always active
+COUPLING_CORE = [
+    "trigger",       # Coupling request (RECOVERY or EXPLORATION)
+    "selection",     # Partner choice by CouplingRouter
+    "exchange",      # Cross-reflexion / knowledge transfer
+    "evaluation",    # Did the coupling produce progress?
+    "recording",     # Historize outcome on routing landscape
+]
+
+# Optional modulations: active when features are enabled
+COUPLING_MODULATION = ["weight_mod", "distance_mod"]
+
+ALL_COUPLING_COMPONENTS = COUPLING_CORE + COUPLING_MODULATION
+
+# Core cycle edges (tight coupling)
+COUPLING_CORE_EDGES = [
+    ("trigger", "selection"),
+    ("selection", "exchange"),
+    ("exchange", "evaluation"),
+    ("evaluation", "recording"),
+    ("recording", "trigger"),
+]
+
+# Modulation edges: feed into selection
+COUPLING_MOD_EDGES = [
+    ("weight_mod", "selection"),
+    ("distance_mod", "selection"),
+]
+
+ALL_COUPLING_EDGES = COUPLING_CORE_EDGES + COUPLING_MOD_EDGES
+
+# Parameters (same scale as domain SelfGraph)
+_COUPLING_CORE_DELTA = 0.5
+_COUPLING_CORE_R0 = 0.3
+_COUPLING_MOD_DELTA = 1.0
+_COUPLING_MOD_R0 = 1.0
+
+
+def coupling_active_components(
+    *,
+    weight_mod_active: bool = False,
+    distance_mod_active: bool = False,
+) -> List[str]:
+    """Return components active in a coupling cycle.
+
+    Core components are always active.  Modulations are active
+    when asymmetric weights or dynamic distance updates are in use.
+    """
+    result = list(COUPLING_CORE)
+    if weight_mod_active:
+        result.append("weight_mod")
+    if distance_mod_active:
+        result.append("distance_mod")
+    return result
+
+
+class CouplingSelfGraph:
+    """Self-knowledge about the coupling process (C68).
+
+    Same architecture as domain SelfGraph (C43) but with coupling-specific
+    components.  Tracks which parts of the coupling pipeline produce good
+    outcomes (SUCCESS) and which don't (FAILURE).
+
+    Usage:
+        csg = CouplingSelfGraph()
+        # After each coupling:
+        csg.self_historize(
+            coupling_active_components(weight_mod_active=True),
+            Outcome.SUCCESS)
+        # Query:
+        q = csg.component_quality("exchange")  # How well does cross-reflexion work?
+    """
+
+    def __init__(self) -> None:
+        self._landscape = Landscape()
+        self._landscape.historization.rho = 1.0  # Cumulative, no decay
+        self._build_topology()
+
+    def _build_topology(self) -> None:
+        for src, tgt in COUPLING_CORE_EDGES:
+            self._landscape.add_edge(
+                src, tgt, _COUPLING_CORE_DELTA, _COUPLING_CORE_R0)
+        for src, tgt in COUPLING_MOD_EDGES:
+            self._landscape.add_edge(
+                src, tgt, _COUPLING_MOD_DELTA, _COUPLING_MOD_R0)
+
+    @property
+    def landscape(self) -> Landscape:
+        return self._landscape
+
+    def self_historize(self, components: List[str],
+                       outcome: Outcome) -> None:
+        """Record coupling outcome on edges where both endpoints participated."""
+        component_set = set(components)
+        for src, tgt in ALL_COUPLING_EDGES:
+            if src in component_set and tgt in component_set:
+                self._landscape.historization.update(
+                    Edge(src, tgt), outcome)
+
+    def component_quality(self, component: str) -> float:
+        """Average trace_quality across outgoing edges from component."""
+        outgoing = [Edge(s, t) for s, t in ALL_COUPLING_EDGES
+                    if s == component]
+        if not outgoing:
+            return 0.0
+        return sum(self._landscape.historization.trace_quality(e)
+                   for e in outgoing) / len(outgoing)
+
+    def component_load(self, component: str) -> float:
+        """Average trace_load across outgoing edges from component."""
+        outgoing = [Edge(s, t) for s, t in ALL_COUPLING_EDGES
+                    if s == component]
+        if not outgoing:
+            return 0.0
+        return sum(self._landscape.historization.trace_load(e)
+                   for e in outgoing) / len(outgoing)
+
+    def component_inertia(self, component: str,
+                          alpha: float = 0.5,
+                          mu: float = 5.0) -> float:
+        """Average inertia_factor across outgoing edges from component."""
+        outgoing = [Edge(s, t) for s, t in ALL_COUPLING_EDGES
+                    if s == component]
+        if not outgoing:
+            return 1.0
+        return sum(
+            self._landscape.historization.inertia_factor(e, alpha, mu)
+            for e in outgoing
+        ) / len(outgoing)
+
+    def snapshot(self) -> Dict[str, Dict[str, float]]:
+        """Export component metrics for persistence."""
+        return {
+            c: {
+                "load": self.component_load(c),
+                "quality": self.component_quality(c),
+                "inertia": self.component_inertia(c),
+            }
+            for c in ALL_COUPLING_COMPONENTS
+        }
+
+    def summary(self) -> str:
+        """Human-readable coupling self-graph status."""
+        lines = ["CouplingSelfGraph:"]
+        for c in ALL_COUPLING_COMPONENTS:
+            q = self.component_quality(c)
+            m = self.component_load(c)
+            tag = "mod" if c in COUPLING_MODULATION else "core"
+            lines.append(f"  {c} ({tag}): quality={q:+.3f}, load={m:.2f}")
+        return "\n".join(lines)
+
+
+# ──────────────────────────────────────────────
+# Coupling Diagnosis (C68)
+# ──────────────────────────────────────────────
+
+_LOAD_MIN = 3.0
+_QUALITY_CONFUSED = 0.1
+_QUALITY_HARMFUL = -0.2
+
+
+@dataclass
+class CouplingComponentAssessment:
+    """Assessment of one coupling component."""
+    name: str
+    load: float
+    quality: float
+    inertia: float
+    status: str   # "healthy" | "confused" | "harmful" | "insufficient_data"
+    is_modulation: bool
+
+
+@dataclass
+class CouplingDiagnosis:
+    """Diagnosis of the entire coupling self-graph."""
+    components: List[CouplingComponentAssessment]
+    healthy: List[str]
+    confused: List[str]
+    harmful: List[str]
+    insufficient_data: List[str]
+    deactivation_candidates: List[str]
+    meta_actions: List[str]
+
+
+def _assess_coupling_component(
+    name: str, csg: CouplingSelfGraph,
+) -> CouplingComponentAssessment:
+    load = csg.component_load(name)
+    quality = csg.component_quality(name)
+    inertia = csg.component_inertia(name)
+    is_mod = name in COUPLING_MODULATION
+
+    if load < _LOAD_MIN:
+        status = "insufficient_data"
+    elif quality < _QUALITY_HARMFUL:
+        status = "harmful"
+    elif abs(quality) < _QUALITY_CONFUSED:
+        status = "confused"
+    else:
+        status = "healthy"
+
+    return CouplingComponentAssessment(
+        name=name, load=load, quality=quality, inertia=inertia,
+        status=status, is_modulation=is_mod)
+
+
+def diagnose_coupling(csg: CouplingSelfGraph) -> CouplingDiagnosis:
+    """Diagnose the coupling self-graph.
+
+    Same algorithm as diagnose_self_graph (C47) but for coupling components.
+    Returns component assessments and actionable meta-actions.
+    """
+    assessments = [_assess_coupling_component(c, csg)
+                   for c in ALL_COUPLING_COMPONENTS]
+
+    healthy = [a.name for a in assessments if a.status == "healthy"]
+    confused = [a.name for a in assessments if a.status == "confused"]
+    harmful = [a.name for a in assessments if a.status == "harmful"]
+    insufficient = [a.name for a in assessments
+                    if a.status == "insufficient_data"]
+
+    deactivation = [a.name for a in assessments
+                    if a.status == "harmful" and a.is_modulation]
+
+    meta_actions: List[str] = []
+    for a in assessments:
+        if a.status == "harmful" and a.is_modulation:
+            meta_actions.append(
+                f"Disable {a.name} (quality={a.quality:+.3f}, "
+                f"load={a.load:.1f})")
+        elif a.status == "harmful":
+            meta_actions.append(
+                f"Investigate {a.name}: predominantly negative outcomes "
+                f"(quality={a.quality:+.3f})")
+        elif a.status == "confused":
+            meta_actions.append(
+                f"Investigate {a.name}: contradictory outcomes "
+                f"(quality={a.quality:+.3f}, load={a.load:.1f})")
+    if not meta_actions and not insufficient:
+        meta_actions.append("All coupling components healthy")
+
+    return CouplingDiagnosis(
+        components=assessments,
+        healthy=healthy,
+        confused=confused,
+        harmful=harmful,
+        insufficient_data=insufficient,
+        deactivation_candidates=deactivation,
+        meta_actions=meta_actions,
+    )

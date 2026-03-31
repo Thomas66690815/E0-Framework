@@ -200,9 +200,19 @@ Custom turn functions implement different coupling strategies:
 
 All are `TurnFn = Callable[[Universe, Universe], None]` — the interface is stable.
 
-### 7.3 Self-Graph Integration (future)
+### 7.3 Self-Graph Integration (C68)
 
-The self-graph (C43) could observe coupling quality: which coupling modes produce novelty? Which don't? This would enable **reflexive coupling** — the system reflects on the quality of its interaction, not just on its own navigation.
+The self-graph (C43) observes coupling quality via `CouplingSelfGraph`. A 7-node directed graph mirrors the coupling pipeline:
+
+**Core cycle** (5 nodes): `trigger → selection → exchange → evaluation → recording → trigger`
+**Modulation** (2 nodes): `weight_mod → selection`, `distance_mod → selection`
+
+`coupling_active_components()` determines which components participated (modulations only when their feature is active). After each coupling interaction, `csg.self_historize(components, outcome)` records which edges worked. `diagnose_coupling(csg)` classifies each component as healthy / confused / harmful / insufficient_data and generates meta-actions:
+- Harmful modulation → "Disable weight_mod" (deactivation candidate)
+- Harmful core → "Investigate exchange" (cannot deactivate core)
+- Confused → "Investigate: contradictory outcomes"
+
+This enables **reflexive coupling** — the system reflects on the quality of its interaction, not just on its own navigation. Integration: `CouplingRouter.self_graph = CouplingSelfGraph()` enables auto-recording in `historize()`.
 
 ---
 
@@ -212,7 +222,7 @@ The self-graph (C43) could observe coupling quality: which coupling modes produc
 
 2. **Asymmetric Coupling**: ✅ **RESOLVED (C67)**. Each universe carries a `coupling_weight` (default 1.0). Edges are fully directed: `R₀(requester→donor) = base_resistance / donor.weight`. High-weight donor → low R₀ → cheap to receive from (domain expert). Historization is directional: `SUCCESS` on Edge(A→B) does NOT affect Edge(B→A). The donor's weight modulates `coupling_discount` in `cross_propose_edges`. 12 asymmetric tests in `test_coupling_router.py`. Weight management via `set_weight()` / `get_weight()` with automatic R₀ propagation.
 
-3. **Coupling Self-Graph**: The coupling landscape itself could have a self-graph — tracking which coupling modes work. This would be Stufe-3 reflexion at the multi-system level.
+3. **Coupling Self-Graph**: ✅ **RESOLVED (C68)**. `CouplingSelfGraph` tracks coupling pipeline quality with 7 nodes (5 core cycle + 2 modulation), ρ=1.0 (cumulative). `diagnose_coupling()` classifies components and generates meta-actions. Only modulation components can be deactivation candidates. CouplingRouter integration via optional `self_graph` attribute with auto-recording in `historize()`. 29 tests across 5 test classes in `test_coupling_router.py`.
 
 4. **Multiverse Benchmark with Cross-Reflexion**: C61 uses knowledge_exchange_turn. A benchmark with `cross_reflexion_turn` would test whether foreign-experience proposals outperform simple edge copying.
 

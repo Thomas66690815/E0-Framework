@@ -20,6 +20,14 @@ from e0_controller.coupling_router import (
     CouplingReason,
     CouplingRouter,
     CouplingSelection,
+    CouplingSelfGraph,
+    CouplingDiagnosis,
+    ALL_COUPLING_COMPONENTS,
+    ALL_COUPLING_EDGES,
+    COUPLING_CORE,
+    COUPLING_MODULATION,
+    coupling_active_components,
+    diagnose_coupling,
     make_routed_peer_fn,
     structural_distance,
 )
@@ -572,3 +580,284 @@ class TestRoutedPeerFn:
         # Should pick C (most different) as donor
         result = fn(a.landscape, "S", ["M"])
         assert result is None or isinstance(result, str)
+
+
+# ══════════════════════════════════════════════
+# 12. Coupling Self-Graph Construction (C68)
+# ══════════════════════════════════════════════
+
+class TestCouplingSelfGraphConstruction:
+    """CouplingSelfGraph topology mirrors domain SelfGraph."""
+
+    def test_has_all_components_as_states(self):
+        csg = CouplingSelfGraph()
+        states = csg.landscape.states
+        for c in ALL_COUPLING_COMPONENTS:
+            assert c in states
+
+    def test_has_correct_edge_count(self):
+        """5 core cycle + 2 modulation = 7 edges."""
+        csg = CouplingSelfGraph()
+        assert csg.landscape.edge_count() == 7
+
+    def test_core_cycle_is_closed(self):
+        """trigger→selection→exchange→evaluation→recording→trigger."""
+        csg = CouplingSelfGraph()
+        cycle = ["trigger", "selection", "exchange",
+                 "evaluation", "recording", "trigger"]
+        for i in range(len(cycle) - 1):
+            assert csg.landscape.has_edge(cycle[i], cycle[i + 1])
+
+    def test_modulation_edges_feed_into_selection(self):
+        csg = CouplingSelfGraph()
+        assert csg.landscape.has_edge("weight_mod", "selection")
+        assert csg.landscape.has_edge("distance_mod", "selection")
+
+    def test_rho_is_cumulative(self):
+        csg = CouplingSelfGraph()
+        assert csg.landscape.historization.rho == 1.0
+
+
+# ══════════════════════════════════════════════
+# 13. Coupling Self-Historization (C68)
+# ══════════════════════════════════════════════
+
+class TestCouplingSelfHistorization:
+    """self_historize records coupling outcomes correctly."""
+
+    def test_core_only_historization(self):
+        csg = CouplingSelfGraph()
+        components = coupling_active_components()  # core only
+        csg.self_historize(components, Outcome.SUCCESS)
+
+        # All core edges should have load > 0
+        for src, tgt in ALL_COUPLING_EDGES:
+            if src in COUPLING_CORE and tgt in COUPLING_CORE:
+                load = csg.landscape.historization.trace_load(
+                    Edge(src, tgt))
+                assert load > 0
+
+    def test_modulation_not_historized_when_inactive(self):
+        csg = CouplingSelfGraph()
+        components = coupling_active_components()  # core only
+        csg.self_historize(components, Outcome.SUCCESS)
+
+        # Modulation edges should have load = 0
+        mod_load = csg.landscape.historization.trace_load(
+            Edge("weight_mod", "selection"))
+        assert mod_load == 0.0
+
+    def test_modulation_historized_when_active(self):
+        csg = CouplingSelfGraph()
+        components = coupling_active_components(weight_mod_active=True)
+        csg.self_historize(components, Outcome.SUCCESS)
+
+        mod_load = csg.landscape.historization.trace_load(
+            Edge("weight_mod", "selection"))
+        assert mod_load > 0
+
+    def test_success_raises_quality(self):
+        csg = CouplingSelfGraph()
+        components = coupling_active_components()
+        for _ in range(5):
+            csg.self_historize(components, Outcome.SUCCESS)
+        assert csg.component_quality("exchange") > 0.0
+
+    def test_failure_lowers_quality(self):
+        csg = CouplingSelfGraph()
+        components = coupling_active_components()
+        for _ in range(5):
+            csg.self_historize(components, Outcome.FAILURE)
+        assert csg.component_quality("exchange") < 0.0
+
+    def test_mixed_outcomes_near_zero(self):
+        csg = CouplingSelfGraph()
+        components = coupling_active_components()
+        for _ in range(10):
+            csg.self_historize(components, Outcome.SUCCESS)
+            csg.self_historize(components, Outcome.FAILURE)
+        q = csg.component_quality("exchange")
+        assert abs(q) < 0.15  # roughly confused
+
+
+# ══════════════════════════════════════════════
+# 14. Component Queries (C68)
+# ══════════════════════════════════════════════
+
+class TestCouplingComponentQueries:
+    """Quality, load, and inertia queries work correctly."""
+
+    def test_quality_all_components(self):
+        csg = CouplingSelfGraph()
+        for c in ALL_COUPLING_COMPONENTS:
+            q = csg.component_quality(c)
+            assert isinstance(q, float)
+
+    def test_load_increases_with_use(self):
+        csg = CouplingSelfGraph()
+        load_before = csg.component_load("trigger")
+        components = coupling_active_components()
+        for _ in range(5):
+            csg.self_historize(components, Outcome.SUCCESS)
+        load_after = csg.component_load("trigger")
+        assert load_after > load_before
+
+    def test_inertia_default_is_one(self):
+        """No outgoing edges for unknown → 1.0."""
+        csg = CouplingSelfGraph()
+        # "selection" has outgoing edge but no historization → inertia=1.0
+        assert csg.component_inertia("selection") == pytest.approx(1.0)
+
+    def test_snapshot_has_all_components(self):
+        csg = CouplingSelfGraph()
+        snap = csg.snapshot()
+        for c in ALL_COUPLING_COMPONENTS:
+            assert c in snap
+            assert "load" in snap[c]
+            assert "quality" in snap[c]
+            assert "inertia" in snap[c]
+
+    def test_summary_format(self):
+        csg = CouplingSelfGraph()
+        s = csg.summary()
+        assert "CouplingSelfGraph:" in s
+        assert "exchange" in s
+        assert "core" in s
+
+
+# ══════════════════════════════════════════════
+# 15. Coupling Diagnosis (C68)
+# ══════════════════════════════════════════════
+
+class TestCouplingDiagnosis:
+    """diagnose_coupling produces correct assessments."""
+
+    def test_insufficient_data_initially(self):
+        csg = CouplingSelfGraph()
+        d = diagnose_coupling(csg)
+        # All components should be insufficient (no history)
+        assert len(d.insufficient_data) == len(ALL_COUPLING_COMPONENTS)
+        assert len(d.harmful) == 0
+
+    def test_healthy_after_success(self):
+        csg = CouplingSelfGraph()
+        components = coupling_active_components()
+        for _ in range(10):
+            csg.self_historize(components, Outcome.SUCCESS)
+
+        d = diagnose_coupling(csg)
+        # Core components should be healthy
+        for c in COUPLING_CORE:
+            assert c in d.healthy
+
+    def test_harmful_after_failure(self):
+        csg = CouplingSelfGraph()
+        components = coupling_active_components()
+        for _ in range(10):
+            csg.self_historize(components, Outcome.FAILURE)
+
+        d = diagnose_coupling(csg)
+        assert len(d.harmful) > 0
+
+    def test_confused_after_mixed(self):
+        csg = CouplingSelfGraph()
+        components = coupling_active_components()
+        for _ in range(10):
+            csg.self_historize(components, Outcome.SUCCESS)
+            csg.self_historize(components, Outcome.FAILURE)
+
+        d = diagnose_coupling(csg)
+        assert len(d.confused) > 0
+
+    def test_deactivation_candidates_only_modulation(self):
+        """Only modulation components can be deactivation candidates."""
+        csg = CouplingSelfGraph()
+        components = coupling_active_components(weight_mod_active=True)
+        for _ in range(10):
+            csg.self_historize(components, Outcome.FAILURE)
+
+        d = diagnose_coupling(csg)
+        for name in d.deactivation_candidates:
+            assert name in COUPLING_MODULATION
+
+    def test_meta_actions_for_harmful(self):
+        csg = CouplingSelfGraph()
+        components = coupling_active_components(weight_mod_active=True)
+        for _ in range(10):
+            csg.self_historize(components, Outcome.FAILURE)
+
+        d = diagnose_coupling(csg)
+        assert any("Disable" in a or "Investigate" in a
+                    for a in d.meta_actions)
+
+    def test_all_healthy_message(self):
+        csg = CouplingSelfGraph()
+        # Activate ALL components so nothing is insufficient
+        components = coupling_active_components(
+            weight_mod_active=True, distance_mod_active=True)
+        for _ in range(10):
+            csg.self_historize(components, Outcome.SUCCESS)
+
+        d = diagnose_coupling(csg)
+        assert any("healthy" in a for a in d.meta_actions)
+
+
+# ══════════════════════════════════════════════
+# 16. Router Self-Graph Integration (C68)
+# ══════════════════════════════════════════════
+
+class TestRouterSelfGraphIntegration:
+    """CouplingRouter integrates with CouplingSelfGraph."""
+
+    def test_self_graph_default_none(self):
+        r = CouplingRouter([_universe_A(), _universe_B()])
+        assert r.self_graph is None
+
+    def test_self_graph_enabled(self):
+        r = CouplingRouter([_universe_A(), _universe_B()])
+        r.self_graph = CouplingSelfGraph()
+        assert r.self_graph is not None
+
+    def test_historize_updates_self_graph(self):
+        a, b = _universe_A(), _universe_B()
+        r = CouplingRouter([a, b])
+        r.self_graph = CouplingSelfGraph()
+
+        for _ in range(5):
+            r.historize("A", "B", Outcome.SUCCESS)
+
+        # Self-graph should have accumulated load
+        assert r.self_graph.component_load("exchange") > 0
+
+    def test_historize_with_weight_mod(self):
+        a, b = _universe_A(), _universe_B()
+        r = CouplingRouter([a, b], coupling_weights={"A": 1.0, "B": 2.0})
+        r.self_graph = CouplingSelfGraph()
+
+        for _ in range(5):
+            r.historize("A", "B", Outcome.SUCCESS, weight_mod_active=True)
+
+        # weight_mod should have load > 0
+        mod_load = r.self_graph.landscape.historization.trace_load(
+            Edge("weight_mod", "selection"))
+        assert mod_load > 0
+
+    def test_historize_without_self_graph_no_error(self):
+        """historize works fine even when self_graph is None."""
+        r = CouplingRouter([_universe_A(), _universe_B()])
+        r.historize("A", "B", Outcome.SUCCESS)  # no error
+
+    def test_diagnosis_after_mixed_coupling(self):
+        a, b, c = _universe_A(), _universe_B(), _universe_C()
+        r = CouplingRouter([a, b, c])
+        r.self_graph = CouplingSelfGraph()
+
+        # Some coupling succeeds, some fails
+        for _ in range(5):
+            r.historize("A", "B", Outcome.SUCCESS)
+            r.historize("A", "C", Outcome.FAILURE)
+
+        d = diagnose_coupling(r.self_graph)
+        # Should have enough data + reveal mixed component status
+        assert isinstance(d, CouplingDiagnosis)
+        assert len(d.components) == len(ALL_COUPLING_COMPONENTS)

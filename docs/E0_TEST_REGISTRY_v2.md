@@ -3,8 +3,8 @@
 > Central validation registry for the E₀ Framework.
 > **Purpose:** connect claims, tests, evidence, and status in one place.
 
-**Last updated:** 2026-03-31 — **2614 tests** (0 failures, 0 warnings)  
-**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, **C52 Honest Self-Knowledge (CANON_PROCESS_MAP correction)**, **C53 Domain-Invariance Benchmark (10 domains, 1 controller)**, **C54 Raumzeit Coupling (closed vs coupled systems)**, **C55 Amplitude Benchmark (10 domains × 3 modes)**, **C64 Gridworld Baseline Benchmark (E₀ vs A* vs Naive-Greedy)**, **C66 CouplingRouter (N>2 dynamic partner selection)**, **C67 Asymmetric Coupling (weight-based directional R₀)**, and active edge-case work.
+**Last updated:** 2026-03-31 — **2643 tests** (0 failures, 0 warnings)  
+**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, **C52 Honest Self-Knowledge (CANON_PROCESS_MAP correction)**, **C53 Domain-Invariance Benchmark (10 domains, 1 controller)**, **C54 Raumzeit Coupling (closed vs coupled systems)**, **C55 Amplitude Benchmark (10 domains × 3 modes)**, **C64 Gridworld Baseline Benchmark (E₀ vs A* vs Naive-Greedy)**, **C66 CouplingRouter (N>2 dynamic partner selection)**, **C67 Asymmetric Coupling (weight-based directional R₀)**, **C68 Coupling Self-Graph (Stufe-3 reflexion for coupling pipeline)**, and active edge-case work.
 
 ---
 
@@ -1905,6 +1905,38 @@ On V3, E₀ matches A* optimal (8 steps).
 - Naive-Greedy revisits states (confirmed cycling on all 3 variants)
 - E₀ step count bounded by 2× A* optimal on all variants
 - Amplitude overlay intentionally excluded (horizon too short for 5×5 grids)
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C68 — Coupling Self-Graph: Stufe-3 reflexion for multi-system coupling
+
+**Claim**  
+The coupling pipeline itself can be observed via a self-graph — the same
+Stufe-3 reflexion pattern (C43/C47) applied at the multi-system level.
+A 7-node directed graph tracks which coupling phases produce positive
+outcomes. `diagnose_coupling()` classifies each component and generates
+meta-actions; only modulation components are deactivation candidates.
+
+**Evidence**  
+- `e0_controller/coupling_router.py` — `CouplingSelfGraph`, `CouplingDiagnosis`, `diagnose_coupling()`
+- `e0_controller/test_coupling_router.py` — 29 new tests across 5 classes:
+  - `TestCouplingSelfGraphConstruction` (5): 7 nodes, 7 edges (5 core cycle + 2 mod), ρ=1.0
+  - `TestCouplingSelfHistorization` (6): core-only vs modulation recording, quality direction
+  - `TestCouplingComponentQueries` (5): quality/load/inertia/snapshot/summary
+  - `TestCouplingDiagnosis` (7): insufficient→harmful→confused→healthy classification, deactivation
+  - `TestRouterSelfGraphIntegration` (6): CouplingRouter.self_graph auto-recording, weight_mod flag
+
+**Result**  
+- Core cycle: trigger→selection→exchange→evaluation→recording→trigger (closed)
+- Modulation: weight_mod→selection, distance_mod→selection (feature-gated)
+- `coupling_active_components()` returns core always, modulations only when active
+- Diagnosis thresholds: load<3.0 → insufficient, quality<-0.2 → harmful, |quality|<0.1 → confused
+- Deactivation candidates: only modulation components (core cannot be disabled)
+- Meta-actions: "Disable weight_mod", "Investigate exchange", "All coupling components healthy"
+- CouplingRouter integration: `self_graph = CouplingSelfGraph()` enables auto-recording in `historize()`
 
 **Status**  
 ✅ Confirmed
