@@ -3,8 +3,8 @@
 > Central validation registry for the E₀ Framework.
 > **Purpose:** connect claims, tests, evidence, and status in one place.
 
-**Last updated:** 2026-03-31 — **2668 tests** (0 failures, 0 warnings)  
-**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, **C52 Honest Self-Knowledge (CANON_PROCESS_MAP correction)**, **C53 Domain-Invariance Benchmark (10 domains, 1 controller)**, **C54 Raumzeit Coupling (closed vs coupled systems)**, **C55 Amplitude Benchmark (10 domains × 3 modes)**, **C64 Gridworld Baseline Benchmark (E₀ vs A* vs Naive-Greedy)**, **C66 CouplingRouter (N>2 dynamic partner selection)**, **C67 Asymmetric Coupling (weight-based directional R₀)**, **C68 Coupling Self-Graph (Stufe-3 reflexion for coupling pipeline)**, **C69 Cross-Reflexion Benchmark (edge copying vs edge creation)**, and active edge-case work.
+**Last updated:** 2026-03-31 — **2694 tests** (0 failures, 0 warnings)  
+**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, **C52 Honest Self-Knowledge (CANON_PROCESS_MAP correction)**, **C53 Domain-Invariance Benchmark (10 domains, 1 controller)**, **C54 Raumzeit Coupling (closed vs coupled systems)**, **C55 Amplitude Benchmark (10 domains × 3 modes)**, **C64 Gridworld Baseline Benchmark (E₀ vs A* vs Naive-Greedy)**, **C66 CouplingRouter (N>2 dynamic partner selection)**, **C67 Asymmetric Coupling (weight-based directional R₀)**, **C68 Coupling Self-Graph (Stufe-3 reflexion for coupling pipeline)**, **C69 Cross-Reflexion Benchmark (edge copying vs edge creation)**, **C70 OVERLOADED Benchmark (peer consultation × 10 domains)**, and active edge-case work.
 
 ---
 
@@ -1968,6 +1968,36 @@ pairings reveals whether foreign-experience-based edge CREATION
 - Exchange fires every turn (unconditional); reflexion fires only at frontiers (stuck)
 - Architecture implication: frontier-gated coupling trades precision for frequency
 - A hybrid strategy (copy + create) may be needed for C62 to compete
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C70 — OVERLOADED Benchmark: Peer Consultation × 10 Domains
+
+**Claim**  
+Domain-scale benchmark of the OVERLOADED escalation (C63) reveals how
+peer consultation affects controller performance across all 10 C53
+domains, and identifies OI threshold calibration as the critical parameter.
+
+**Evidence**  
+- `e0_controller/benchmark_overloaded.py` — `OverloadBenchmarkResult`, `make_experienced_peer()`, `run_overloaded_benchmark()`
+- `e0_controller/test_benchmark_overloaded.py` — 26 tests across 6 classes:
+  - `TestOverloadBenchmarkDefault` (5): 10 domains, all goals reached, baseline no overloads, D9 only above threshold
+  - `TestOverloadBenchmarkSensitive` (6): peer has overloads, peer improves ≥2 domains, peer_avg ≤ baseline_avg, D3/D10 improve, D1 unchanged
+  - `TestExperiencedPeerConstruction` (4): callable, returns None for unknown, recommends known neighbor, deterministic
+  - `TestDomainComparison` (4): returns result, modes correct, name consistent, step_delta computed
+  - `TestOverloadBenchmarkResult` (4): summary content, goal rates 100%, avg steps positive
+  - `TestOverloadIndex` (3): D1 OI=1.0, D9 OI=5.0, D6 OI=3.0
+
+**Result**  
+- At default threshold (3.0): **no impact** — 9/10 domains have OI ≤ 3.0, OVERLOADED never fires
+- At sensitive threshold (1.5): **peer improves 4/10 domains** (D3: 6→3, D4: 6→4, D6: 5→3, D10: 6→4)
+- Average steps drop from 5.3 → 4.4 with peer consultation at sensitive threshold
+- `make_experienced_peer()` pre-runs controller for 30 cycles, recommends by trace_quality
+- OI at start per domain: D1=1.0, D2=2.0, D3=2.0, D4=1.0, D5=2.0, D6=3.0, D7=1.0, D8=1.0, D9=5.0, D10=2.0
+- Design insight: OVERLOADED fires correctly — threshold must match domain branching factor
 
 **Status**  
 ✅ Confirmed

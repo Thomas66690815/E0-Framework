@@ -182,7 +182,7 @@ A reflexion layer that operates *across* universes rather than within a single r
 - [External validation / handoff note](docs/E0_EXTERNAL_VALIDATION_AND_HANDOFF_NOTE_v1.md) — package for reviewers or AI systems
 - [Phase 3q interference report](docs/E0_PHASE3Q_INTERFERENCE_REPORT_v1.md) — holonomy formula, goal_reaching geometry, Gordian Trap
 - [Paper 3: Non-Abelian Structure](docs/papers/E0_PAPER3_NON_ABELIAN_STRUCTURE_v1.md) — SU(2) transport, curvature modulation, topological invariants
-- [Test Registry v2](docs/E0_TEST_REGISTRY_v2.md) — complete per-file test inventory (2668 tests)
+- [Test Registry v2](docs/E0_TEST_REGISTRY_v2.md) — complete per-file test inventory (2694 tests)
 
 ---
 
@@ -282,9 +282,10 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 | Multiverse Controller (C59–C61) | **Active** (23+ tests) | `e0_controller/multiverse.py` |
 | Cross-Reflexion (C62) | **Active** (19 tests) | `e0_controller/cross_reflexion.py` |
 | Overload Escalation (C63) | **Active** (15 tests) | `e0_controller/controller.py` |
+| OVERLOADED Benchmark (C70) | **Active** (26 tests) | `e0_controller/benchmark_overloaded.py` |
 | Bootstrap Architecture (C43–C47) | **Complete** | `docs/E0_LLM_BOOTSTRAP_ARCHITECTURE_v1.md` |
 
-**Tests:** 2668 total (pytest discover), 0 failures, 0 warnings, 41 conditional (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
+**Tests:** 2694 total (pytest discover), 0 failures, 0 warnings, 41 conditional (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
 
 ---
 
@@ -399,7 +400,8 @@ E0-Framework/
 │   ├── explore_gordian.py              Gordian Trap discovery script
 │   ├── multiverse.py                   MultiverseController, NoveltyGate, Universe (C59–C61)
 │   ├── cross_reflexion.py              Cross-universe reflexive edge discovery (C62)
-│   └── test_*.py                       2668 tests (see docs/E0_TEST_REGISTRY_v2.md)
+│   ├── benchmark_overloaded.py         OVERLOADED peer-consultation benchmark (C70)
+│   └── test_*.py                       2694 tests (see docs/E0_TEST_REGISTRY_v2.md)
 │
 ├── scenarios/                        Scenario Packets for grounded LLM demos
 │   ├── competitor_brief/               Domain-specific scenario data
@@ -410,7 +412,7 @@ E0-Framework/
 │   ├── E0_ARCHITECTURE_OVERVIEW_v2.md    7-layer module map (67 modules)
 │   ├── E0_MULTIVERSE_DESIGN_v1.md        Multiverse architecture (C54–C63)
 │   ├── E0_HYBRID_CONTROLLER_SPEC_v1.md   Exact runtime behaviour and metrics
-│   ├── E0_TEST_REGISTRY_v2.md            Complete test inventory (2668 tests)
+│   ├── E0_TEST_REGISTRY_v2.md            Complete test inventory (2694 tests)
 │   ├── E0_MATH_IMPL_MAPPING_v1.md        Math ↔ Code mapping
 │   ├── papers/                           Manuscripts and formal paper drafts
 │   ├── research/                         Scientific investigations and derivations

@@ -2,8 +2,8 @@
 
 **Status:** Working reference  
 **Date:** 2026-03-31  
-**Modules:** C54 (`raumzeit_coupling`), C60 (`multiverse`), C61 (`benchmark_multiverse`), C62 (`cross_reflexion`), C63 (`controller.py` — OVERLOADED escalation), C66/C67 (`coupling_router`)  
-**Tests:** 133+ dedicated tests across 5 test files  
+**Modules:** C54 (`raumzeit_coupling`), C60 (`multiverse`), C61 (`benchmark_multiverse`), C62 (`cross_reflexion`), C63 (`controller.py` — OVERLOADED escalation), C66/C67 (`coupling_router`), C70 (`benchmark_overloaded`)  
+**Tests:** 159+ dedicated tests across 8 test files  
 **Paper coverage:** None yet — candidate for Paper 5
 
 ---
@@ -226,7 +226,7 @@ This enables **reflexive coupling** — the system reflects on the quality of it
 
 4. **Multiverse Benchmark with Cross-Reflexion**: ✅ **RESOLVED (C69)**. Side-by-side benchmark of `knowledge_exchange_turn` (C61) vs `cross_reflexion_turn` (C62) on all 5 domain pairings. Empirical finding: **edge copying wins all 5 pairings**. Reason: knowledge exchange fires every turn (unconditional), while cross-reflexion only fires at frontiers (stuck, no path to goal). Early turns produce no frontier → no structural change → fast convergence (T2). Exchange avg novelty ~67%, reflexion ~25%. Architecture implication: frontier-gated coupling trades precision for frequency — a hybrid strategy may be needed. 25 tests in `test_benchmark_cross_reflexion.py`.
 
-5. **OVERLOADED Benchmark**: C63 has unit tests but no domain-scale benchmark. How does peer consultation affect 10-domain performance?
+5. **OVERLOADED Benchmark**: ✅ **RESOLVED (C70)**. `benchmark_overloaded.py` runs all 10 C53 domains in two modes: baseline (no peer) vs peer-consulted (experienced controller as advisor). `make_experienced_peer()` pre-runs a controller for 30 cycles and recommends neighbors by trace_quality. At default threshold (3.0): no impact — domains too small (OI ≤ 3.0 for 9/10). At sensitive threshold (1.5): **peer improves 4/10 domains** (D3: 6→3, D4: 6→4, D6: 5→3, D10: 6→4), avg steps 5.3→4.4. The benchmark exposes that OI calibration is the critical parameter — the OVERLOADED mechanism works correctly but fires only when the threshold matches the domain's branching factor. 26 tests in `test_benchmark_overloaded.py`.
 
 6. **LLM Co-Cognition**: The original motivation. Two LLMs with E₀ controllers, coupled via multiverse, with NoveltyGate preventing premature consensus. The infrastructure exists — the integration test doesn't yet.
 
@@ -250,6 +250,11 @@ multiverse.py       │
          (C63)           N>2 dynamic partner selection
          OVERLOADED      RECOVERY vs EXPLORATION
          + peer_fn       + make_routed_peer_fn
+                  │
+                  ▼
+         benchmark_overloaded.py (C70)
+         10 domains × 2 modes
+         OI calibration benchmark
 ```
 
 ---
@@ -263,5 +268,6 @@ multiverse.py       │
 | `cross_reflexion.py` | `test_cross_reflexion.py` | 19 | 5 classes |
 | C63 (controller) | `test_overload_escalation.py` | 15 | 4 classes |
 | `coupling_router.py` | `test_coupling_router.py` | 45 | 11 classes |
+| `benchmark_overloaded.py` | `test_benchmark_overloaded.py` | 26 | 6 classes |
 | `raumzeit_coupling.py` | `test_raumzeit_coupling.py` | varies | — |
-| **Total** | | **133+** | |
+| **Total** | | **159+** | |
