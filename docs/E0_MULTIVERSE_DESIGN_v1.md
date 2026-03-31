@@ -2,8 +2,8 @@
 
 **Status:** Working reference  
 **Date:** 2026-03-31  
-**Modules:** C54 (`raumzeit_coupling`), C60 (`multiverse`), C61 (`benchmark_multiverse`), C62 (`cross_reflexion`), C63 (`controller.py` — OVERLOADED escalation), C66/C67 (`coupling_router`), C70 (`benchmark_overloaded`)  
-**Tests:** 159+ dedicated tests across 8 test files  
+**Modules:** C54 (`raumzeit_coupling`), C60 (`multiverse`), C61 (`benchmark_multiverse`), C62 (`cross_reflexion`), C63 (`controller.py` — OVERLOADED escalation), C66/C67 (`coupling_router`), C70 (`benchmark_overloaded`), C71 (`llm_cocognition`)  
+**Tests:** 187+ dedicated tests across 9 test files  
 **Paper coverage:** None yet — candidate for Paper 5
 
 ---
@@ -228,7 +228,7 @@ This enables **reflexive coupling** — the system reflects on the quality of it
 
 5. **OVERLOADED Benchmark**: ✅ **RESOLVED (C70)**. `benchmark_overloaded.py` runs all 10 C53 domains in two modes: baseline (no peer) vs peer-consulted (experienced controller as advisor). `make_experienced_peer()` pre-runs a controller for 30 cycles and recommends neighbors by trace_quality. At default threshold (3.0): no impact — domains too small (OI ≤ 3.0 for 9/10). At sensitive threshold (1.5): **peer improves 4/10 domains** (D3: 6→3, D4: 6→4, D6: 5→3, D10: 6→4), avg steps 5.3→4.4. The benchmark exposes that OI calibration is the critical parameter — the OVERLOADED mechanism works correctly but fires only when the threshold matches the domain's branching factor. 26 tests in `test_benchmark_overloaded.py`.
 
-6. **LLM Co-Cognition**: The original motivation. Two LLMs with E₀ controllers, coupled via multiverse, with NoveltyGate preventing premature consensus. The infrastructure exists — the integration test doesn't yet.
+6. **LLM Co-Cognition**: ✅ **RESOLVED (C71)**. `llm_cocognition.py` implements the capstone integration: two LLMs independently bootstrap landscapes for the same task (temp=0.2 vs temp=0.6), then exchange structural knowledge via `MultiverseController` with `knowledge_exchange_turn` (C69 winner). Empirical result: structural distance 0.462→0.000, **80% novelty rate** (8/10 turns novel), **15 edges** transferred, both controllers reach goal. `bootstrap_llm_universe()` wraps LLM adapter into Universe with execute_fn. `run_cocognition_from_universes()` works with any universes (mock or LLM). 28 deterministic tests in `test_llm_cocognition.py`, 12 live tests in `live_test_cocognition.py`.
 
 ---
 
@@ -255,6 +255,11 @@ multiverse.py       │
          benchmark_overloaded.py (C70)
          10 domains × 2 modes
          OI calibration benchmark
+                  │
+                  ▼
+         llm_cocognition.py (C71)
+         2 LLMs × multiverse coupling
+         bootstrap + exchange + navigate
 ```
 
 ---
@@ -269,5 +274,6 @@ multiverse.py       │
 | C63 (controller) | `test_overload_escalation.py` | 15 | 4 classes |
 | `coupling_router.py` | `test_coupling_router.py` | 45 | 11 classes |
 | `benchmark_overloaded.py` | `test_benchmark_overloaded.py` | 26 | 6 classes |
+| `llm_cocognition.py` | `test_llm_cocognition.py` | 28 | 6 classes |
 | `raumzeit_coupling.py` | `test_raumzeit_coupling.py` | varies | — |
-| **Total** | | **159+** | |
+| **Total** | | **187+** | |
