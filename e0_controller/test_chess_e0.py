@@ -10,7 +10,8 @@ from __future__ import annotations
 
 import unittest
 
-import chess
+import pytest
+chess = pytest.importorskip("chess", reason="python-chess not installed")
 
 from e0_controller.primitives import Edge
 from e0_controller.chess_e0 import (

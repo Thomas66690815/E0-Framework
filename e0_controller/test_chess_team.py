@@ -10,7 +10,8 @@ repeated game computation (~3 seconds per game).
 
 import unittest
 
-import chess
+import pytest
+chess = pytest.importorskip("chess", reason="python-chess not installed")
 
 from e0_controller.chess_team import (
     ChessTeam,
