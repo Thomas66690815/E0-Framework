@@ -1,8 +1,8 @@
 # E₀ Empirical Insights — What Chess Reveals About the Framework
 
 **Date:** 2026-03-31  
-**Trigger:** C72 Chess Engine — an E₀ system plays chess using 6 strategic dimensions  
-**Status:** Validated through self-play (60 full moves, threefold repetition draw)
+**Trigger:** C72–C74 Chess Engine + Team Chess  
+**Status:** Validated through self-play and team-vs-solo comparison
 
 ---
 
@@ -12,7 +12,7 @@ C72 applied E₀ to chess — not as a competitive engine, but as a stress test.
 The question: can E₀ navigate an adversarial, real-time domain where the
 "right" strategy is non-obvious and must be discovered, not specified?
 
-Result: yes, and the experiment reveals three insights about the framework
+Result: yes, and the experiment reveals four insights about the framework
 as a whole that go beyond the chess domain.
 
 ---
@@ -105,6 +105,79 @@ Both are small (< 20 lines each), require no new dependencies, and make the
 
 ---
 
+## Insight 4: Emergent Gravity — Historization Creates Attractors
+
+**Observation:**  
+In both C72 (solo) and C74 (team), CENTER_CONTROL becomes the dominant
+attractor — all dimension transitions converge toward it.  This happens
+from a uniform initial landscape (all Δ=0.5, R₀=1.0, zero prior knowledge).
+No state was designated as "central" or "important."
+
+The mechanism is self-reinforcing:
+- CENTER_CONTROL moves succeed more often (central squares offer more options)
+- More SUCCESS → higher trace_quality → lower R_eff
+- Lower R_eff → lower S_eff → E₀ gravitates toward it more
+- More visits → more historical mass (trace_load) → stronger attractor
+
+**Structural parallel to physical gravity:**
+
+| Physical gravity | E₀ historization |
+|---|---|
+| Mass curves spacetime | trace_load curves the landscape metric |
+| Curvature creates preferred paths | R_eff reduction creates preferred transitions |
+| Objects fall toward mass concentrations | Navigation converges toward high-quality states |
+| The center isn't pre-designated — it emerges from mass accumulation | The attractor isn't pre-designated — it emerges from success accumulation |
+| Self-reinforcing: more mass → more curvature → more accumulation | Self-reinforcing: more success → less resistance → more visits |
+
+**The critical difference — gravity of the future:**  
+Physical gravity pulls toward *past* mass accumulation.  E₀ pulls toward
+*future optionality*.  The historization looks backward (U/F traces record
+what happened), but the attractor points forward: the state with the highest
+optionality — the most reachable successor states — becomes the gravitational
+center.  This is not a metaphor; it is the same structural dynamic
+(self-reinforcing metric deformation from accumulated inscription) operating
+on a different substrate.
+
+**Formal mapping to Ontodynamics:**
+- trace_load = m(e) = U+F → structural inscription (Layer 2, §4)
+- trace_quality = q(e) → directional balance of inscription
+- R_eff = R₀ + δ_H → effective metric (deformed by inscription, like g_μν deformed by T_μν)
+- S_eff = Δ · R_eff → effective tension (the "force" that guides navigation)
+- Attractor emergence = metric deformation from initially flat space
+
+The Einstein field equation says: mass-energy tells spacetime how to curve.
+The E₀ historization says: accumulated outcomes tell the landscape how to resist.
+In both cases, the geometry is not given — it emerges from what passes through it.
+
+**Why this matters for E₀:**  
+This is the first empirical evidence that E₀'s dynamics produce gravitational
+attractor behavior from first principles — without any explicit gravity mechanism.
+It suggests that the Ontodynamics formalism captures something structural about
+how accumulation creates preferred paths, whether in physical spacetime or in
+abstract decision landscapes.
+
+---
+
+## Derived Results (C74)
+
+C74 (Team Chess) resolved Open Question #4 and added a new finding:
+
+**Team (3×E₀) beats Solo (1×E₀) by checkmate in 17 moves.**
+
+| Metric | Team (3×E₀) | Solo (1×E₀) |
+|---|---|---|
+| Result vs Solo opponent | **1-0 checkmate (17 moves)** | 1/2-1/2 draw (60 moves) |
+| Max dimension concentration | 5 | 12 |
+| Unanimity | 24% | n/a |
+| Repetition trap | Broken | Threefold repetition |
+
+The key mechanism: **diversity of starting perspectives** (MATERIAL, KING_SAFETY,
+CENTER_CONTROL) prevents the repetition trap that Solo falls into.  Three
+players seeing different things → richer historization → decisiveness instead
+of oscillation.
+
+---
+
 ## Open Questions for Future Work
 
 1. **Convergence speed:** How many interactions until the strategy profile stabilizes?
@@ -113,16 +186,25 @@ Both are small (< 20 lines each), require no new dependencies, and make the
    or does the fully-connected edge count (N²) create noise?
 3. **Transfer:** Can a strategy_profile from one game seed a new landscape?
    (Pre-load historization from learned transitions → faster convergence.)
-4. **Adversarial multiverse:** Two teams of E₀ systems with opposite objectives
-   playing through the same board — does knowledge_exchange within a team
-   improve play quality?
+4. ~~Adversarial multiverse~~ → **Resolved in C74.** Team wins by checkmate.
+   Diversity + knowledge exchange breaks the repetition trap.
+5. **Attractor universality:** Does every uniformly-initialized landscape develop
+   a gravitational center?  Or is this specific to domains with inherent
+   optionality gradients (like chess's central squares)?
+6. **Attractor prediction:** Can we predict WHICH state will become the
+   attractor from domain structure alone, before historization runs?
+7. **Multi-attractor dynamics:** In larger landscapes (50+ states), do multiple
+   attractors compete?  Does that correspond to galaxy formation?
 
 ---
 
 ## Cross-References
 
-- **C72 Chess Engine:** `e0_controller/chess_e0.py` — implementation
+- **C72 Chess Engine:** `e0_controller/chess_e0.py` — solo self-play, DEVELOPMENT→CENTER_CONTROL emergence
+- **C74 Team Chess:** `e0_controller/chess_team.py` — team beats solo, diversity breaks repetition
 - **C53 Domain-Invariance Benchmark:** 10 domains, 1 controller — prior invariance evidence
 - **C73 Primitive Extensions:** `landscape.py` (fully_connected), `historization.py` (strategy_profile)
+- **Ontodynamics §4:** 4-Layer Model — trace_load, trace_quality, inertia_factor, mass
 - **Ontodynamics §7:** Landscape definition — X_t unconstrained
 - **Ontodynamics §17:** Historization — U/F traces, δ_H correction
+- **General Relativity analogy:** G_μν = 8πT_μν ↔ R_eff = R₀ + δ_H(U,F)
