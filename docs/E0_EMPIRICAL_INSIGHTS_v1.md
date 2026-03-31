@@ -1,8 +1,8 @@
 # E₀ Empirical Insights — What Chess Reveals About the Framework
 
 **Date:** 2026-03-31  
-**Trigger:** C72–C77 Chess Engine + Team Chess + Attractor Universality + Multi-Attractor + Transfer Learning  
-**Status:** Validated through self-play, team-vs-solo, 10-domain benchmark, multi-cluster dynamics, transfer experiments
+**Trigger:** C72–C78 Chess Engine + Team Chess + Attractor Universality + Multi-Attractor + Transfer Learning + Convergence Speed  
+**Status:** Validated through self-play, team-vs-solo, 10-domain benchmark, multi-cluster dynamics, transfer experiments, convergence analysis
 
 ---
 
@@ -12,7 +12,7 @@ C72 applied E₀ to chess — not as a competitive engine, but as a stress test.
 The question: can E₀ navigate an adversarial, real-time domain where the
 "right" strategy is non-obvious and must be discovered, not specified?
 
-Result: yes, and the experiment reveals seven insights about the framework
+Result: yes, and the experiment reveals eight insights about the framework
 as a whole that go beyond the chess domain.
 
 ---
@@ -445,10 +445,105 @@ This has architectural implications for the LLM Bootstrap (C43–C47):
 
 ---
 
+## Insight 8: Convergence Speed is Domain-Class Dependent — ρ Controls the Tradeoff
+
+**Observation:**
+Open Question #1 asked how many interactions until the strategy profile
+stabilizes.  C78 measures this precisely using two metrics:
+  - **Quality drift**: mean |Δq(e)| between consecutive episode snapshots
+  - **Rank stability**: Kendall τ correlation of edge quality ordering
+
+**Experiment (C78):**
+
+*Part 1 — Deterministic C53 Domains (D3, D7, D8, D10, 60 episodes each):*
+
+| Domain | Nodes | Edges | Stabilization (drift<0.01) | Steady-State Load |
+|---|---|---|---|---|
+| D3 Gordian | 6 | 6 | Episode 1 | 10.00 |
+| D7 Invoice | 10 | 16 | Episode 1 | 9.65 |
+| D8 Cycles | 6 | 7 | Episode 1 | 10.00 |
+| D10 Bottleneck | 6 | 5 | Episode 1 | 10.00 |
+
+Result: **Deterministic domains stabilize in 1 episode.**  The controller
+follows the exact same path every episode, updating the exact same edges.
+Trace quality is constant from episode 1 onward (drift = 0.0000).  The
+only change is trace_load accumulating toward the steady-state limit
+1/(1−ρ) = 10.0, but quality is fixed immediately.
+
+*Part 2 — Stochastic Corridor (8L×3D, 10 trials, 60 episodes):*
+
+| Metric | First 5 eps | Last 5 eps | Ratio |
+|---|---|---|---|
+| Quality drift | 0.3525 | 0.0922 | 3.82× reduction |
+| Kendall τ | 0.952 | 0.937 | Near-constant |
+
+Result: **Stochastic domains NEVER fully converge.**  Drift decreases
+3.82× from early to late episodes but plateaus around 0.09 — well above
+the 0.01 convergence threshold.  The rank ordering fluctuates at τ≈0.94,
+never reaching 1.0.  This is consistent with C77's finding: ρ=0.9 decay
+erases traces faster than stochastic experience can consolidate them.
+
+*Part 3 — ρ Sensitivity Analysis:*
+
+| ρ | Theoretical t_95 | Deterministic Stab | Stochastic Drift@50 | Converges? |
+|---|---|---|---|---|
+| 0.80 | 13.4 visits | Episode 1 | 0.2342 | No |
+| 0.90 | 28.4 visits | Episode 1 | 0.1357 | No |
+| 0.95 | 58.4 visits | Episode 1 | 0.0403 | Partial |
+| 0.99 | 298.1 visits | Episode 5 | 0.0158 | Partial |
+
+**The most surprising finding: higher ρ (slower decay) improves stochastic
+convergence.**  This contradicts the naive expectation that faster forgetting
+(lower ρ) helps adapt.  In stochastic domains:
+- Low ρ (0.80): Traces decay too fast → quality oscillates wildly (drift=0.23)
+- High ρ (0.99): Traces accumulate enough → noise averages out (drift=0.016)
+- The cost: high ρ means slow adaptation to CHANGES in the environment.
+  Good for stationary domains, bad for non-stationary ones.
+
+**For deterministic domains, ρ has NO effect on convergence speed.**  The
+controller takes the same path regardless, so traces are perfectly reinforced.
+Only ρ=0.99 shows delayed stabilization (episode 5 instead of 1), because
+the high trace_load (96.6 vs 9.65) causes tiny numerical drift between
+episodes before the geometric series converges.
+
+**The ρ dilemma for LLM Bootstrap:**
+- ρ=0.90 (default): Good balance — fast adaptation, but never converges
+  in stochastic domains.  LLM should be available as a permanent fallback.
+- ρ=0.95–0.99: Would allow stochastic convergence, but sacrifices
+  adaptability.  The LLM could safely disengage after convergence.
+- Adaptive ρ: Start with ρ=0.90 for exploration, increase to ρ=0.99
+  once the profile has stabilized.  This is a natural extension.
+
+**Formal implication:**
+
+The convergence speed of strategy_profile has a closed-form lower bound:
+for a single edge visited every step with constant outcome, trace reaches
+95% of steady state after t_95 = log(0.05) / log(ρ) visits.  But this is
+only relevant for deterministic domains.  In stochastic domains, the
+convergence speed depends on:
+  1. The ratio of correct visits to total visits (signal-to-noise)
+  2. The ρ value (determines whether noise averages out)
+  3. The number of edges competing for visits (more edges = slower)
+
+The key insight: **ρ is not just a decay rate — it is a convergence/
+adaptability tradeoff.**  High ρ = converges but can't adapt.  Low ρ =
+adapts but never converges.  The default ρ=0.90 is on the non-convergent
+side, which explains why Transfer Learning (C77) shows persistent benefit:
+the warm system maintains an advantage because cold systems never fully
+learn.
+
+This connects Insights 7 and 8 into a unified picture:
+- Transfer helps because ρ=0.9 prevents cold convergence (Insight 8)
+- Transfer benefit persists because even the warm system's traces decay (Insight 7)
+- The ρ parameter controls both effects simultaneously
+
+---
+
 ## Open Questions for Future Work
 
-1. **Convergence speed:** How many interactions until the strategy profile stabilizes?
-   (Chess: ~60 moves.  Generalizable?)
+1. ~~Convergence speed~~ → **Resolved in C78.** Deterministic: 1 episode.
+   Stochastic: never fully converges at ρ=0.90, partially at ρ≥0.95.
+   ρ controls convergence/adaptability tradeoff.  See Insight 8.
 2. **Landscape size scaling:** Does uniform initialization work for 50+ states,
    or does the fully-connected edge count (N²) create noise?
 3. ~~Transfer~~ → **Resolved in C77.** Conditional: neutral in deterministic
@@ -476,6 +571,7 @@ This has architectural implications for the LLM Bootstrap (C43–C47):
 - **C75 Attractor Universality:** `e0_controller/explore_attractor_universality.py` — 10 domains × 2 topologies
 - **C76 Multi-Attractor:** `e0_controller/explore_multi_attractor.py` — 25-state clustered topology × 5 variants
 - **C77 Transfer Learning:** `e0_controller/explore_transfer_learning.py` — 6 deterministic + 2 stochastic corridors
+- **C78 Convergence Speed:** `e0_controller/explore_convergence_speed.py` — 4 deterministic + stochastic corridor + ρ sensitivity
 - **Ontodynamics §4:** 4-Layer Model — trace_load, trace_quality, inertia_factor, mass
 - **Ontodynamics §7:** Landscape definition — X_t unconstrained
 - **Ontodynamics §17:** Historization — U/F traces, δ_H correction
