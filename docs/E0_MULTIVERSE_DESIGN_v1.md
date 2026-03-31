@@ -224,7 +224,7 @@ This enables **reflexive coupling** — the system reflects on the quality of it
 
 3. **Coupling Self-Graph**: ✅ **RESOLVED (C68)**. `CouplingSelfGraph` tracks coupling pipeline quality with 7 nodes (5 core cycle + 2 modulation), ρ=1.0 (cumulative). `diagnose_coupling()` classifies components and generates meta-actions. Only modulation components can be deactivation candidates. CouplingRouter integration via optional `self_graph` attribute with auto-recording in `historize()`. 29 tests across 5 test classes in `test_coupling_router.py`.
 
-4. **Multiverse Benchmark with Cross-Reflexion**: C61 uses knowledge_exchange_turn. A benchmark with `cross_reflexion_turn` would test whether foreign-experience proposals outperform simple edge copying.
+4. **Multiverse Benchmark with Cross-Reflexion**: ✅ **RESOLVED (C69)**. Side-by-side benchmark of `knowledge_exchange_turn` (C61) vs `cross_reflexion_turn` (C62) on all 5 domain pairings. Empirical finding: **edge copying wins all 5 pairings**. Reason: knowledge exchange fires every turn (unconditional), while cross-reflexion only fires at frontiers (stuck, no path to goal). Early turns produce no frontier → no structural change → fast convergence (T2). Exchange avg novelty ~67%, reflexion ~25%. Architecture implication: frontier-gated coupling trades precision for frequency — a hybrid strategy may be needed. 25 tests in `test_benchmark_cross_reflexion.py`.
 
 5. **OVERLOADED Benchmark**: C63 has unit tests but no domain-scale benchmark. How does peer consultation affect 10-domain performance?
 

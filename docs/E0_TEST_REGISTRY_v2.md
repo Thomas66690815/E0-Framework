@@ -3,8 +3,8 @@
 > Central validation registry for the E₀ Framework.
 > **Purpose:** connect claims, tests, evidence, and status in one place.
 
-**Last updated:** 2026-03-31 — **2643 tests** (0 failures, 0 warnings)  
-**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, **C52 Honest Self-Knowledge (CANON_PROCESS_MAP correction)**, **C53 Domain-Invariance Benchmark (10 domains, 1 controller)**, **C54 Raumzeit Coupling (closed vs coupled systems)**, **C55 Amplitude Benchmark (10 domains × 3 modes)**, **C64 Gridworld Baseline Benchmark (E₀ vs A* vs Naive-Greedy)**, **C66 CouplingRouter (N>2 dynamic partner selection)**, **C67 Asymmetric Coupling (weight-based directional R₀)**, **C68 Coupling Self-Graph (Stufe-3 reflexion for coupling pipeline)**, and active edge-case work.
+**Last updated:** 2026-03-31 — **2668 tests** (0 failures, 0 warnings)  
+**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, **C52 Honest Self-Knowledge (CANON_PROCESS_MAP correction)**, **C53 Domain-Invariance Benchmark (10 domains, 1 controller)**, **C54 Raumzeit Coupling (closed vs coupled systems)**, **C55 Amplitude Benchmark (10 domains × 3 modes)**, **C64 Gridworld Baseline Benchmark (E₀ vs A* vs Naive-Greedy)**, **C66 CouplingRouter (N>2 dynamic partner selection)**, **C67 Asymmetric Coupling (weight-based directional R₀)**, **C68 Coupling Self-Graph (Stufe-3 reflexion for coupling pipeline)**, **C69 Cross-Reflexion Benchmark (edge copying vs edge creation)**, and active edge-case work.
 
 ---
 
@@ -1937,6 +1937,37 @@ meta-actions; only modulation components are deactivation candidates.
 - Deactivation candidates: only modulation components (core cannot be disabled)
 - Meta-actions: "Disable weight_mod", "Investigate exchange", "All coupling components healthy"
 - CouplingRouter integration: `self_graph = CouplingSelfGraph()` enables auto-recording in `historize()`
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C69 — Cross-Reflexion Benchmark: Edge Copying vs Edge Creation
+
+**Claim**  
+Side-by-side comparison of two coupling strategies on the same 5 domain
+pairings reveals whether foreign-experience-based edge CREATION
+(`cross_reflexion_turn`, C62) outperforms simple edge COPYING
+(`knowledge_exchange_turn`, C61).
+
+**Evidence**  
+- `e0_controller/benchmark_cross_reflexion.py` — `ComparisonBenchmarkResult`, `run_comparison_benchmark()`
+- `e0_controller/test_benchmark_cross_reflexion.py` — 25 tests across 6 classes:
+  - `TestComparisonPairingExecution` (5): both strategies run same turns, valid results
+  - `TestExchangeBeatsReflexion` (5): empirical finding — exchange wins all 5
+  - `TestReflexionConvergesEarly` (3): cross-reflexion converges at T2, more divergence events
+  - `TestComparisonBenchmarkResult` (4): summary, header, winner, delta computation
+  - `TestCrossReflexionTurnFunction` (4): turn function mechanics, coupling growth
+  - `TestComparisonMetrics` (4): avg novelty, wins, delta correctness
+
+**Result**  
+- **Knowledge exchange wins all 5 pairings** (exchange avg ~67%, reflexion avg ~25%)
+- Cross-reflexion converges early (T2) because frontier gate rarely fires in early turns
+- Cross-reflexion triggers 3× more divergence events (converge → diverge → repeat cycle)
+- Exchange fires every turn (unconditional); reflexion fires only at frontiers (stuck)
+- Architecture implication: frontier-gated coupling trades precision for frequency
+- A hybrid strategy (copy + create) may be needed for C62 to compete
 
 **Status**  
 ✅ Confirmed
