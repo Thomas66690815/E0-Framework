@@ -1,8 +1,8 @@
 # E₀ Empirical Insights — What Chess Reveals About the Framework
 
 **Date:** 2026-03-31  
-**Trigger:** C72–C80 Chess Engine + Team Chess + Attractor Universality + Multi-Attractor + Transfer Learning + Convergence Speed + Asymmetric ρ + Attractor Prediction  
-**Status:** Validated through self-play, team-vs-solo, 10-domain benchmark, multi-cluster dynamics, transfer experiments, convergence analysis, asymmetric decay experiments, structural prediction analysis
+**Trigger:** C72–C81 Chess Engine + Team Chess + Attractor Universality + Multi-Attractor + Transfer Learning + Convergence Speed + Asymmetric ρ + Attractor Prediction + Focus Narrowing  
+**Status:** Validated through self-play, team-vs-solo, 10-domain benchmark, multi-cluster dynamics, transfer experiments, convergence analysis, asymmetric decay experiments, structural prediction analysis, scaling + focus narrowing experiments
 
 ---
 
@@ -12,7 +12,7 @@ C72 applied E₀ to chess — not as a competitive engine, but as a stress test.
 The question: can E₀ navigate an adversarial, real-time domain where the
 "right" strategy is non-obvious and must be discovered, not specified?
 
-Result: yes, and the experiment reveals ten insights about the framework
+Result: yes, and the experiment reveals eleven insights about the framework
 as a whole that go beyond the chess domain.
 
 ---
@@ -707,13 +707,85 @@ potential (d=0) is where "mass" (inscription) accumulates.
 
 ---
 
+## Insight 11: Focus Narrowing Rescues Complexity — Random Pruning Beats Quality Selection
+
+**Observation:**  
+E₀ performs perfectly at N=10 (OI=2.3, 100% goal) but fails completely
+at N=50+ (OI=37+, 0% goal).  The fully-connected graph drowns the
+controller in options: N*(N-1) edges with signal ratio 1/(N-1).
+
+The rescue is not more information (peer oracle) but *fewer options*.
+When OI exceeds a threshold, narrowing the candidate set from N-1 to
+k≪N before selection restores performance:
+
+| Condition           | N=100 Goal% | Mean Steps |
+|---------------------|-------------|------------|
+| Solo (no focus)     | 0%          | 200 (max)  |
+| Focus k=8, quality  | 23%         | 170.6      |
+| Focus k=8, load     | 0%          | 200        |
+| Focus k=8, tension  | 0%          | 200        |
+| **Focus k=8, random** | **82%**   | **93.8**   |
+| Peer-only (perfect) | 100%        | 99.0       |
+
+**The surprise:** Random pruning wins overwhelmingly.  Selecting the
+"best" k candidates by trace_quality (23%) is far worse than selecting
+k random candidates (82%).
+
+**Why random beats quality:**
+- Early in training, no edge has trace data → quality-based selection
+  deterministically picks the same k neighbors by list order (lock-in)
+- If the happy-path edge falls outside this fixed subset, the agent
+  *never* discovers it
+- Random pruning tries a different subset each episode → across 30
+  episodes, the happy-path edge appears in *some* subsets and gets
+  reinforced
+
+**k is not critical:** k=5 (81%), k=8 (82%), k=12 (79%), k=20 (79%)
+— the act of reducing matters more than how much.
+
+**Why this matters for E₀:**
+The result formalizes a human problem-solving heuristic: "When a problem
+is too complex, push everything aside and pick a few paths that seem
+realistic."  The E₀-native interpretation: complexity is not an inherent
+property of the problem, but of the *option space*.  Reducing the option
+space until OI drops below the effective threshold (~3.0) maps any
+large problem back to E₀-tractable territory.
+
+**Connection to the "Zentrale" model:**
+The user's observation was: "I narrow my focus to a few realistic paths,
+navigate from there, and when a colleague brings an idea, I integrate it
+as the central coordinator."  The experiment confirms the first part
+(focus narrowing works) but reveals a tension with the second part:
+focus+peer (24%) is worse than peer-only (100%) because the focus filter
+may exclude the peer's suggestion.  This means the "Zentrale" must
+keep the peer's channel OUTSIDE the focus filter — the peer bypasses
+the narrowing, and the Zentrale decides whether to integrate.
+
+**Formal scaling law (C81):**
+
+> E₀ operates effectively when OI ≤ ~3.0 (N_admissible ≤ ~10).
+> For larger graphs, reduce N_admissible to k ≤ 10 via random pruning.
+> Quality-biased pruning creates lock-in; unbiased pruning enables
+> exploration across episodes.
+> Peer consultation should bypass the focus filter, not be constrained by it.
+
+**Experiment:** `e0_controller/explore_focus_narrowing.py` (C81).
+  Part 1: Baseline solo scaling (N=10..100).
+  Part 2: 4 focus strategies × N=50,100 with k=8.
+  Part 3: k-sweep {5,8,12,20} on N=100 with best strategy.
+  Part 4: Solo vs focus vs peer vs focus+peer on N=100.
+
+---
+
 ## Open Questions for Future Work
 
 1. ~~Convergence speed~~ → **Resolved in C78.** Deterministic: 1 episode.
    Stochastic: never fully converges at ρ=0.90, partially at ρ≥0.95.
    ρ controls convergence/adaptability tradeoff.  See Insight 8.
-2. **Landscape size scaling:** Does uniform initialization work for 50+ states,
-   or does the fully-connected edge count (N²) create noise?
+2. ~~Landscape size scaling~~ → **Resolved in C81.** N=50+ fails at 0%
+   (OI=37+), but random focus narrowing to k=8 rescues N=100 to 82%.
+   Quality-biased pruning creates lock-in (23%); random pruning avoids it.
+   The scaling limit is the option space, not the problem size.  See Insight 11.
 3. ~~Transfer~~ → **Resolved in C77.** Conditional: neutral in deterministic
    domains (revisit penalty + escalation suffice), but 1.50× speedup in
    stochastic domains with dead-end exploration cost.  See Insight 7.
@@ -743,6 +815,7 @@ potential (d=0) is where "mass" (inscription) accumulates.
 - **C78 Convergence Speed:** `e0_controller/explore_convergence_speed.py` — 4 deterministic + stochastic corridor + ρ sensitivity
 - **C79 Asymmetric ρ:** `e0_controller/explore_asymmetric_rho.py` — sym vs asym cold, 4-way transfer comparison, ρ_F sweep
 - **C80 Attractor Prediction:** `e0_controller/explore_attractor_prediction.py` — 7 structural predictors × 23 domains, goal-distance wins 83%
+- **C81 Focus Narrowing:** `e0_controller/explore_focus_narrowing.py` — random pruning to k=8 rescues N=100 from 0% to 82%, scaling limit is option space
 - **Ontodynamics §4:** 4-Layer Model — trace_load, trace_quality, inertia_factor, mass
 - **Ontodynamics §7:** Landscape definition — X_t unconstrained
 - **Ontodynamics §17:** Historization — U/F traces, δ_H correction
