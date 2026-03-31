@@ -35,6 +35,20 @@ def _parse_edge(key: str) -> Edge:
     return Edge(parts[0], parts[1])
 
 
+def _encode_historization_dict(hist: dict) -> dict:
+    """Convert Edge-keyed dicts inside historization snapshot to string keys."""
+    result = {}
+    for k, v in hist.items():
+        if k in ("U", "F", "tau_last") and isinstance(v, dict):
+            result[k] = {
+                _edge_key(e) if isinstance(e, tuple) else str(e): val
+                for e, val in v.items()
+            }
+        else:
+            result[k] = v
+    return result
+
+
 # ── Landscape ────────────────────────────────────────────
 
 def encode_landscape(landscape: Landscape) -> dict:
@@ -65,7 +79,9 @@ def encode_landscape(landscape: Landscape) -> dict:
             "overlap": landscape.overlap_modulation,
             "inertia": landscape.inertia_modulation,
         },
-        "historization": landscape.historization.to_snapshot_dict(),
+        "historization": _encode_historization_dict(
+            landscape.historization.to_snapshot_dict()
+        ),
         "summary": landscape.historization.summary(),
     }
 
