@@ -1,8 +1,8 @@
 # E₀ Empirical Insights — What Chess Reveals About the Framework
 
 **Date:** 2026-03-31  
-**Trigger:** C72–C79 Chess Engine + Team Chess + Attractor Universality + Multi-Attractor + Transfer Learning + Convergence Speed + Asymmetric ρ  
-**Status:** Validated through self-play, team-vs-solo, 10-domain benchmark, multi-cluster dynamics, transfer experiments, convergence analysis, asymmetric decay experiments
+**Trigger:** C72–C80 Chess Engine + Team Chess + Attractor Universality + Multi-Attractor + Transfer Learning + Convergence Speed + Asymmetric ρ + Attractor Prediction  
+**Status:** Validated through self-play, team-vs-solo, 10-domain benchmark, multi-cluster dynamics, transfer experiments, convergence analysis, asymmetric decay experiments, structural prediction analysis
 
 ---
 
@@ -12,7 +12,7 @@ C72 applied E₀ to chess — not as a competitive engine, but as a stress test.
 The question: can E₀ navigate an adversarial, real-time domain where the
 "right" strategy is non-obvious and must be discovered, not specified?
 
-Result: yes, and the experiment reveals nine insights about the framework
+Result: yes, and the experiment reveals ten insights about the framework
 as a whole that go beyond the chess domain.
 
 ---
@@ -623,6 +623,90 @@ controlled experiments rather than arbitrary default.
 
 ---
 
+## Insight 10: Goal-Distance Is the Best Structural Predictor of Attractor Identity
+
+**Observation:**
+C75 showed that attractor formation requires topological choice + differential
+feedback.  But it did not answer: given a domain that WILL form an attractor,
+WHICH state will it be?  Can we predict the attractor from structure alone,
+before any navigation?
+
+**Experiment (C80):**
+Computed 7 structural predictors per state BEFORE navigation: in-degree,
+out-degree, goal-distance (BFS hops to goal), start-distance, PageRank,
+betweenness centrality, harmonic closeness.  Then ran 20 navigation episodes
+and measured actual attractor (highest incoming trace_load concentration).
+
+Tested across 23 domain configurations:
+- Part 1: 10 C53 domains, original topology, uniform Δ/R₀
+- Part 2: 10 C53 domains, fully connected topology
+- Part 3: 3 synthetic stress-test domains (Hub-Spoke, Diamond-Chain, Bypass-Trap)
+
+**Results — Predictor accuracy on 12 attractor-forming domains:**
+
+| Predictor | Correct | Accuracy |
+|---|---|---|
+| Goal-Distance (BFS hops to goal) | 10/12 | **83%** |
+| PageRank | 4/12 | 33% |
+| In-Degree | 3/12 | 25% |
+| Betweenness | 1/12 | 8% |
+| Closeness | 1/12 | 8% |
+| Out-Degree | 1/12 | 8% |
+| Start-Distance | 1/12 | 8% |
+
+**Goal-distance dominates all other predictors by a wide margin.**
+
+Split by feedback type:
+- **Differential feedback** (7 domains): GoalD = 86%, all others ≤ 14%
+- **All-success** (5 domains): GoalD = 80%, PageRank = 60%, InDeg = 40%
+
+**Why goal-distance works:**
+The E₀ controller minimizes S_eff = Δ · R_eff, navigating toward the goal.
+Successful goal-reaching concentrates success traces on edges LEADING TO
+the goal, which reduces their R_eff, which attracts more traffic — a
+self-reinforcing loop.  The state closest to the goal (distance=0, i.e.
+the goal itself) is the terminal accumulator of this flow.
+
+**Why other predictors fail:**
+In fully-connected topologies, ALL states have identical in-degree,
+out-degree, PageRank, betweenness, and closeness.  These structural
+metrics become degenerate.  Only goal-distance breaks the symmetry
+because it encodes the NAVIGATIONAL objective, not graph structure.
+
+**The two failure cases (2/12):**
+1. **D5 Fully Connected (R0C0 instead of R4C4):** 22 states, 462 edges,
+   all-success feedback, 0/20 goal reached.  The controller drowns in
+   options — random exploration concentrates on START, not GOAL.
+2. **Bypass-Trap (DEAD2 instead of GOAL):** High-degree trap node
+   generates massive failure traces on dead-end edges.  The dead-end
+   nodes become inscription magnets through FAILURE accumulation,
+   not success flow.
+
+**Failure case 2 reveals a deeper truth:** Goal-distance predicts the
+*success-flow* attractor.  When failure-traces dominate (because the
+controller repeatedly explores failing edges), a *failure-attractor*
+can form at dead-end nodes instead.  This is consistent with the
+asymmetric ρ insight (C79): failure traces are structurally heavy
+and can outweigh success flow.
+
+**Formal prediction rule (C80):**
+
+> Given a domain with (1) topological choice and (2) differential feedback,
+> the attractor is the state with goal-distance = 0 (i.e., the goal itself)
+> with 83% accuracy.  The two failure modes are:
+> (a) oversaturated topology (N² edges prevent goal-reaching), and
+> (b) failure-dominated inscription (dead-end traps accumulate more
+> trace than the goal path).
+
+**Connection to the gravity analogy:**
+In physical gravity, mass concentrates at the center of a potential well.
+In E₀, inscription concentrates at the goal — the "bottom" of the
+navigational potential landscape.  Goal-distance is the E₀ equivalent
+of gravitational potential: the state at the minimum of the navigational
+potential (d=0) is where "mass" (inscription) accumulates.
+
+---
+
 ## Open Questions for Future Work
 
 1. ~~Convergence speed~~ → **Resolved in C78.** Deterministic: 1 episode.
@@ -637,9 +721,10 @@ controlled experiments rather than arbitrary default.
    Diversity + knowledge exchange breaks the repetition trap.
 5. ~~Attractor universality~~ → **Resolved in C75.** Conditional on two factors.
    See Insight 5.
-6. **Attractor prediction:** Can we predict WHICH state will become the
-   attractor from domain structure alone, before historization runs?
-   Partially answered by C75: attractor = goal when differential feedback exists.
+6. ~~Attractor prediction~~ → **Resolved in C80.** Goal-distance (BFS hops
+   to goal) predicts the attractor with 83% accuracy (10/12 domains).
+   Failure modes: oversaturated topology and failure-dominated inscription.
+   See Insight 10.
 7. ~~Multi-attractor dynamics~~ → **Resolved in C76.** Shared Historization
    creates monopoly (1 attractor). Independent Historization (multiverse)
    enables coexistence (5 attractors). See Insight 6.
@@ -657,6 +742,7 @@ controlled experiments rather than arbitrary default.
 - **C77 Transfer Learning:** `e0_controller/explore_transfer_learning.py` — 6 deterministic + 2 stochastic corridors
 - **C78 Convergence Speed:** `e0_controller/explore_convergence_speed.py` — 4 deterministic + stochastic corridor + ρ sensitivity
 - **C79 Asymmetric ρ:** `e0_controller/explore_asymmetric_rho.py` — sym vs asym cold, 4-way transfer comparison, ρ_F sweep
+- **C80 Attractor Prediction:** `e0_controller/explore_attractor_prediction.py` — 7 structural predictors × 23 domains, goal-distance wins 83%
 - **Ontodynamics §4:** 4-Layer Model — trace_load, trace_quality, inertia_factor, mass
 - **Ontodynamics §7:** Landscape definition — X_t unconstrained
 - **Ontodynamics §17:** Historization — U/F traces, δ_H correction
