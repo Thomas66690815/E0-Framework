@@ -1,9 +1,9 @@
 # E₀ Multiverse Design Document v1
 
 **Status:** Working reference  
-**Date:** 2026-03-30  
-**Modules:** C54 (`raumzeit_coupling`), C60 (`multiverse`), C61 (`benchmark_multiverse`), C62 (`cross_reflexion`), C63 (`controller.py` — OVERLOADED escalation)  
-**Tests:** 69 dedicated tests across 4 test files  
+**Date:** 2026-03-31  
+**Modules:** C54 (`raumzeit_coupling`), C60 (`multiverse`), C61 (`benchmark_multiverse`), C62 (`cross_reflexion`), C63 (`controller.py` — OVERLOADED escalation), C66 (`coupling_router`)  
+**Tests:** 121+ dedicated tests across 5 test files  
 **Paper coverage:** None yet — candidate for Paper 5
 
 ---
@@ -208,7 +208,7 @@ The self-graph (C43) could observe coupling quality: which coupling modes produc
 
 ## 8. Open Questions (for later)
 
-1. **N > 2 Universes**: Current architecture couples exactly two. A three-system coupling would require a more complex coupling topology — potentially a coupling landscape with N poles instead of 2.
+1. **N > 2 Universes**: ✅ **RESOLVED (C66)**. `CouplingRouter` maintains a complete-graph routing landscape over N universes. Partner selection uses dual pressure: RECOVERY → argmax(trace_quality) (proven partner), EXPLORATION → argmax(Δ) (most structurally different). Dynamic membership via `add_universe()` / `remove_universe()`. 33 tests in `test_coupling_router.py`. The key insight: partner selection IS E₀ navigation — the same primitives that navigate domains also navigate the space of coupling partners.
 
 2. **Asymmetric Coupling**: Currently both universes have equal standing. In practice, a domain expert and a generalist might need different coupling weights.
 
@@ -234,8 +234,12 @@ multiverse.py (C60) ────────── Core: NoveltyGate, divergence
     ▼         ▼
 benchmark_    cross_reflexion.py (C62) ─── Foreign experience → new edges
 multiverse.py       │
-(C61)               ▼
-              controller.py (C63) ──────── OVERLOADED + peer_fn
+(C61)          ┌────┴────┐
+               ▼         ▼
+         controller.py   coupling_router.py (C66)
+         (C63)           N>2 dynamic partner selection
+         OVERLOADED      RECOVERY vs EXPLORATION
+         + peer_fn       + make_routed_peer_fn
 ```
 
 ---
@@ -248,5 +252,6 @@ multiverse.py       │
 | `benchmark_multiverse.py` | `test_benchmark_multiverse.py` | 19 | 5 classes |
 | `cross_reflexion.py` | `test_cross_reflexion.py` | 19 | 5 classes |
 | C63 (controller) | `test_overload_escalation.py` | 15 | 4 classes |
+| `coupling_router.py` | `test_coupling_router.py` | 33 | 10 classes |
 | `raumzeit_coupling.py` | `test_raumzeit_coupling.py` | varies | — |
-| **Total** | | **88+** | |
+| **Total** | | **121+** | |
