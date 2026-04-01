@@ -168,7 +168,7 @@ class TestOverlaySummaryFields(unittest.TestCase):
         ctrl = E0Controller(
             landscape=L,
             execute_fn=lambda x, y: Outcome.SUCCESS,
-            hybrid_mode="amplitude",
+            hybrid_mode="amplitude_on_disagree",
             hybrid_horizon=2,
             hybrid_goals={"C"},
         )

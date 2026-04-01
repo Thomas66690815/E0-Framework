@@ -244,8 +244,12 @@ class E0Controller:
         self.max_escalation_R = max_escalation_R
         self.s_max = s_max      # K11: tension ceiling
         self.c_min = c_min      # K11: coherence floor
+        if isinstance(hybrid_mode, str):
+            hybrid_mode = HybridMode(hybrid_mode.lower())
         self.hybrid_mode = hybrid_mode    # 3l: hybrid selection mode
         self.hybrid_horizon = hybrid_horizon  # 3l: overlay horizon
+        if isinstance(hybrid_goals, list):
+            hybrid_goals = set(hybrid_goals)
         self.hybrid_goals = hybrid_goals  # 3l: goal states for overlay
         self.hybrid_geometry = hybrid_geometry  # 3l: summation geometry
         self.horizon_strategy = horizon_strategy  # 3i: dynamic horizon
