@@ -237,6 +237,49 @@ body {
 .profile-table td.positive { color: var(--success); }
 .profile-table td.negative { color: var(--danger); }
 
+/* ── Color Legend ────────────────────────── */
+
+.color-legend {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 11px;
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  min-width: 160px;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.legend-title {
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.legend-bar {
+  height: 10px;
+  border-radius: 3px;
+  margin-bottom: 2px;
+}
+
+.legend-labels {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-dim);
+  font-size: 10px;
+}
+
+.legend-desc {
+  color: var(--text-dim);
+  font-size: 10px;
+  margin-top: 4px;
+  font-style: italic;
+}
+
 /* ── Status Line ─────────────────────────── */
 
 .status-line {
@@ -257,6 +300,7 @@ body {
 .status-outcome.success { color: var(--success); }
 .status-outcome.failure { color: var(--danger); }
 .status-count { color: var(--text-dim); margin-left: auto; }
+.status-metrics { color: var(--text-dim); }
 
 /* ── Scrollbar ───────────────────────────── */
 

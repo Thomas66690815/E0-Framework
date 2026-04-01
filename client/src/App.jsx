@@ -72,6 +72,12 @@ export default function App() {
   const canStep = session?.state === 'running' && !running;
   const canAuto = session?.state === 'running';
 
+  // ── Compute metrics from history ──────────
+  const successes = history.filter((h) => h.outcome === 'SUCCESS').length;
+  const failures = history.filter((h) => h.outcome === 'FAILURE').length;
+  const escalations = history.filter((h) => h.escalated).length;
+  const successRate = history.length > 0 ? (successes / history.length * 100).toFixed(0) : null;
+
   return (
     <div className="app">
       {/* ── Toolbar ──────────────────────── */}
@@ -146,8 +152,11 @@ export default function App() {
           <span className={`status-outcome ${lastStep.outcome?.toLowerCase()}`}>
             {lastStep.outcome}
           </span>
-          {history.length > 0 && (
-            <span className="status-count">{history.length} steps</span>
+          <span className="status-count">{history.length} steps</span>
+          {successRate !== null && (
+            <span className="status-metrics">
+              {successRate}% ok · {failures} fail · {escalations} esc
+            </span>
           )}
         </div>
       )}

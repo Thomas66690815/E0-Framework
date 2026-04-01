@@ -72,6 +72,14 @@ export default function GraphView({ snapshot, session, history, field, onNodeCli
             'target-arrow-shape': 'triangle',
             'curve-style': 'bezier',
             opacity: 'data(opacity)',
+            label: 'data(valueLabel)',
+            'font-size': '10px',
+            'font-family': "'Cascadia Code', 'Consolas', monospace",
+            color: '#ccc',
+            'text-outline-width': 2,
+            'text-outline-color': '#0f0f1a',
+            'text-rotation': 'autorotate',
+            'text-margin-y': -8,
           },
         },
         {
@@ -195,6 +203,19 @@ export default function GraphView({ snapshot, session, history, field, onNodeCli
         </div>
       )}
 
+      {/* Color legend */}
+      {snapshot?.landscape && (
+        <div className="color-legend">
+          <div className="legend-title">{FIELD_META[field]?.label || field}</div>
+          <div className="legend-bar" style={{ background: FIELD_META[field]?.gradient }} />
+          <div className="legend-labels">
+            <span>{FIELD_META[field]?.min}</span>
+            <span>{FIELD_META[field]?.max}</span>
+          </div>
+          <div className="legend-desc">{FIELD_META[field]?.desc}</div>
+        </div>
+      )}
+
       {/* Empty state */}
       {!snapshot && (
         <div className="graph-empty">
@@ -204,6 +225,61 @@ export default function GraphView({ snapshot, session, history, field, onNodeCli
     </div>
   );
 }
+
+
+// ── Field metadata (for legend + edge labels) ──────────
+
+const FIELD_META = {
+  trace_quality: {
+    label: 'trace_quality (q)',
+    min: '-1', max: '+1',
+    desc: 'Learned quality: red = failure, green = success',
+    gradient: 'linear-gradient(to right, rgb(220,60,60), rgb(140,120,120), rgb(40,200,70))',
+    fmt: (v) => v.toFixed(2),
+  },
+  trace_load: {
+    label: 'trace_load (m)',
+    min: '0', max: 'max',
+    desc: 'Traversal count — thickness shows load',
+    gradient: 'linear-gradient(to right, rgb(30,60,120), rgb(70,220,240))',
+    fmt: (v) => v.toFixed(1),
+  },
+  S_eff: {
+    label: 'S_eff (effective tension)',
+    min: '0', max: '3+',
+    desc: 'Drive — thick = low resistance path',
+    gradient: 'linear-gradient(to right, rgb(30,60,120), rgb(70,220,240))',
+    fmt: (v) => v.toFixed(2),
+  },
+  R_eff: {
+    label: 'R_eff (effective resistance)',
+    min: '0', max: '3+',
+    desc: 'How hard to traverse this edge',
+    gradient: 'linear-gradient(to right, rgb(30,60,120), rgb(70,220,240))',
+    fmt: (v) => v.toFixed(2),
+  },
+  delta_H: {
+    label: 'δ_H (historization change)',
+    min: '-0.5', max: '+0.5',
+    desc: 'Red = decaying, green = growing inscription',
+    gradient: 'linear-gradient(to right, rgb(220,60,60), rgb(140,120,120), rgb(40,200,70))',
+    fmt: (v) => (v > 0 ? '+' : '') + v.toFixed(3),
+  },
+  coherence: {
+    label: 'coherence (U/(U+F))',
+    min: '0', max: '1',
+    desc: 'Ratio of success to total traces',
+    gradient: 'linear-gradient(to right, rgb(30,60,120), rgb(70,220,240))',
+    fmt: (v) => v.toFixed(2),
+  },
+  inertia: {
+    label: 'inertia_factor (ι)',
+    min: '0', max: '1',
+    desc: 'High = stale edge, low = actively used',
+    gradient: 'linear-gradient(to right, rgb(30,60,120), rgb(70,220,240))',
+    fmt: (v) => v.toFixed(3),
+  },
+};
 
 
 // ── Field mapping ───────────────────────────────────────
@@ -311,6 +387,7 @@ function buildElements(snapshot, field) {
         thickness: Math.round(config.edgeThickness(e, maxVal) * 10) / 10,
         color: config.edgeColor(e, maxVal),
         opacity: config.edgeOpacity(e),
+        valueLabel: (FIELD_META[field]?.fmt || ((v) => v.toFixed(2)))(e[field] || 0),
         profile: e,  // full numeric data for inspection
       },
     });
