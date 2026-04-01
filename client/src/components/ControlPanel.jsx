@@ -7,6 +7,7 @@ import * as api from '../api';
 export default function ControlPanel({
   session,
   running,
+  snapshot,
   onCreateSession,
   onStart,
   onStep,
@@ -28,6 +29,14 @@ export default function ControlPanel({
   useEffect(() => {
     api.listCanons().then(setCanons).catch(() => {});
   }, []);
+
+  // Auto-populate start node from landscape states
+  const landscapeStates = snapshot?.landscape?.states || [];
+  useEffect(() => {
+    if (landscapeStates.length > 0 && !startNode) {
+      setStartNode(landscapeStates[0]);
+    }
+  }, [landscapeStates.length]);
 
   const handleCreate = async () => {
     const opts = {};
@@ -124,11 +133,28 @@ export default function ControlPanel({
           <legend>Start Run</legend>
           <div className="control-row">
             <label>Start:</label>
-            <input value={startNode} onChange={(e) => setStartNode(e.target.value)} placeholder="state name" />
+            {landscapeStates.length > 0 ? (
+              <select value={startNode} onChange={(e) => setStartNode(e.target.value)}>
+                {landscapeStates.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            ) : (
+              <input value={startNode} onChange={(e) => setStartNode(e.target.value)} placeholder="state name" />
+            )}
           </div>
           <div className="control-row">
             <label>Goal:</label>
-            <input value={goalNode} onChange={(e) => setGoalNode(e.target.value)} placeholder="(optional)" />
+            {landscapeStates.length > 0 ? (
+              <select value={goalNode} onChange={(e) => setGoalNode(e.target.value)}>
+                <option value="">(none)</option>
+                {landscapeStates.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            ) : (
+              <input value={goalNode} onChange={(e) => setGoalNode(e.target.value)} placeholder="(optional)" />
+            )}
           </div>
           <div className="control-row">
             <label>Max cycles:</label>

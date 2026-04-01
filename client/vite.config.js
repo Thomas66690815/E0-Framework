@@ -6,7 +6,10 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/sessions': 'http://localhost:8000',
+      '/sessions': {
+        target: 'http://localhost:8000',
+        ws: true,
+      },
       '/canons': 'http://localhost:8000',
       '/health': 'http://localhost:8000',
       '/tests': 'http://localhost:8000',

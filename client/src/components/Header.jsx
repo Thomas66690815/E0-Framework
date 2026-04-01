@@ -1,12 +1,17 @@
 /**
  * Header — session info, mode indicator, tau counter.
  */
-export default function Header({ session }) {
+export default function Header({ session, backendOk }) {
+  const statusDot = backendOk === true ? '🟢' : backendOk === false ? '🔴' : '⏳';
+
   if (!session) {
     return (
       <header className="header">
         <h1>E₀ Framework</h1>
         <span className="header-sub">No active session</span>
+        <span className="header-backend" title={backendOk ? 'Backend connected' : 'Backend offline'}>
+          {statusDot}
+        </span>
       </header>
     );
   }

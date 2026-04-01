@@ -34,9 +34,17 @@ export default function App() {
 
   const [snapshot, setSnapshot] = useState(null);
   const [tab, setTab] = useState('oszilloskop');   // 'oszilloskop' | 'tests'
+  const [backendOk, setBackendOk] = useState(null); // null=checking, true/false
 
   // WebSocket connection
   const ws = useWebSocket(session?.session_id, handleWsEvent);
+
+  // Health check on mount
+  useEffect(() => {
+    api.getHealth()
+      .then(() => setBackendOk(true))
+      .catch(() => setBackendOk(false));
+  }, []);
 
   // Fetch snapshot after session changes or after each step
   useEffect(() => {
@@ -55,7 +63,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <Header session={session} />
+      <Header session={session} backendOk={backendOk} />
 
       <div className="tab-bar">
         <button className={`tab-btn ${tab === 'oszilloskop' ? 'active' : ''}`} onClick={() => setTab('oszilloskop')}>
@@ -73,12 +81,19 @@ export default function App() {
         </div>
       )}
 
+      {backendOk === false && !error && (
+        <div className="error-bar">
+          Backend not reachable — start with: py -3 -m uvicorn server.main:app --reload
+        </div>
+      )}
+
       {tab === 'oszilloskop' && (
         <div className="main-layout">
           <aside className="sidebar">
             <ControlPanel
               session={session}
               running={running}
+              snapshot={snapshot}
               onCreateSession={create}
               onStart={start}
               onStep={step}
