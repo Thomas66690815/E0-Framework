@@ -9,6 +9,7 @@ export default defineConfig({
       '/sessions': 'http://localhost:8000',
       '/canons': 'http://localhost:8000',
       '/health': 'http://localhost:8000',
+      '/tests': 'http://localhost:8000',
     },
   },
 });

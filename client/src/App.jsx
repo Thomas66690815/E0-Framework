@@ -5,6 +5,7 @@ import GraphView from './components/GraphView';
 import HistoryTimeline from './components/HistoryTimeline';
 import PeerDialog from './components/PeerDialog';
 import MetricsPanel from './components/MetricsPanel';
+import TestRunner from './components/TestRunner';
 import { useSession } from './hooks/useSession';
 import { useWebSocket } from './hooks/useWebSocket';
 import * as api from './api';
@@ -32,6 +33,7 @@ export default function App() {
   } = useSession();
 
   const [snapshot, setSnapshot] = useState(null);
+  const [tab, setTab] = useState('oszilloskop');   // 'oszilloskop' | 'tests'
 
   // WebSocket connection
   const ws = useWebSocket(session?.session_id, handleWsEvent);
@@ -55,6 +57,15 @@ export default function App() {
     <div className="app">
       <Header session={session} />
 
+      <div className="tab-bar">
+        <button className={`tab-btn ${tab === 'oszilloskop' ? 'active' : ''}`} onClick={() => setTab('oszilloskop')}>
+          Oszilloskop
+        </button>
+        <button className={`tab-btn ${tab === 'tests' ? 'active' : ''}`} onClick={() => setTab('tests')}>
+          Test Runner
+        </button>
+      </div>
+
       {error && (
         <div className="error-bar" onClick={() => setError(null)}>
           {error}
@@ -62,39 +73,47 @@ export default function App() {
         </div>
       )}
 
-      <div className="main-layout">
-        <aside className="sidebar">
-          <ControlPanel
-            session={session}
-            running={running}
-            onCreateSession={create}
-            onStart={start}
-            onStep={step}
-            onPause={pause}
-            onResume={resume}
-            onAutoRun={autoRun}
-            onStopAutoRun={stopAutoRun}
-            onSetSpeed={setSpeed}
-          />
-        </aside>
+      {tab === 'oszilloskop' && (
+        <div className="main-layout">
+          <aside className="sidebar">
+            <ControlPanel
+              session={session}
+              running={running}
+              onCreateSession={create}
+              onStart={start}
+              onStep={step}
+              onPause={pause}
+              onResume={resume}
+              onAutoRun={autoRun}
+              onStopAutoRun={stopAutoRun}
+              onSetSpeed={setSpeed}
+            />
+          </aside>
 
-        <main className="center">
-          <GraphView
-            snapshot={snapshot}
-            session={session}
-            history={history}
-          />
-        </main>
+          <main className="center">
+            <GraphView
+              snapshot={snapshot}
+              session={session}
+              history={history}
+            />
+          </main>
 
-        <aside className="right-sidebar">
-          <PeerDialog
-            peerRequest={peerRequest}
-            onRespond={handlePeerResponse}
-          />
-          <HistoryTimeline history={history} />
-          <MetricsPanel history={history} />
-        </aside>
-      </div>
+          <aside className="right-sidebar">
+            <PeerDialog
+              peerRequest={peerRequest}
+              onRespond={handlePeerResponse}
+            />
+            <HistoryTimeline history={history} />
+            <MetricsPanel history={history} />
+          </aside>
+        </div>
+      )}
+
+      {tab === 'tests' && (
+        <div className="main-layout">
+          <TestRunner visible={tab === 'tests'} />
+        </div>
+      )}
     </div>
   );
 }

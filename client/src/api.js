@@ -100,6 +100,16 @@ export async function getHealth() {
   return request('GET', '/health');
 }
 
+// ── Tests ───────────────────────────────────────────────
+
+export async function listTests() {
+  return request('GET', '/tests');
+}
+
+export async function runTest(name) {
+  return request('POST', `/tests/${encodeURIComponent(name)}/run`);
+}
+
 // ── WebSocket ───────────────────────────────────────────
 
 export function connectWebSocket(sessionId, { onEvent, onError, onClose }) {
