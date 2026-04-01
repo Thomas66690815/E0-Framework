@@ -44,6 +44,9 @@ export default function GraphView({ snapshot, session, history, field, onNodeCli
             'border-width': 4,
             'border-color': '#FFD700',
             'border-style': 'solid',
+            'overlay-color': '#FFD700',
+            'overlay-opacity': 0.25,
+            'overlay-padding': 8,
           },
         },
         {
@@ -83,12 +86,48 @@ export default function GraphView({ snapshot, session, history, field, onNodeCli
           },
         },
         {
-          selector: 'edge.recent',
+          selector: 'edge.trail-1',
           style: {
             opacity: 1.0,
             width: 5,
             'line-color': '#FFD700',
             'target-arrow-color': '#FFD700',
+          },
+        },
+        {
+          selector: 'edge.trail-2',
+          style: {
+            opacity: 0.75,
+            width: 4,
+            'line-color': '#FFD700',
+            'target-arrow-color': '#FFD700',
+          },
+        },
+        {
+          selector: 'edge.trail-3',
+          style: {
+            opacity: 0.55,
+            width: 3,
+            'line-color': '#ccaa22',
+            'target-arrow-color': '#ccaa22',
+          },
+        },
+        {
+          selector: 'edge.trail-4',
+          style: {
+            opacity: 0.4,
+            width: 2.5,
+            'line-color': '#997711',
+            'target-arrow-color': '#997711',
+          },
+        },
+        {
+          selector: 'edge.trail-5',
+          style: {
+            opacity: 0.25,
+            width: 2,
+            'line-color': '#665500',
+            'target-arrow-color': '#665500',
           },
         },
         {
@@ -162,7 +201,7 @@ export default function GraphView({ snapshot, session, history, field, onNodeCli
     if (!cy) return;
 
     cy.nodes().removeClass('current goal clickable');
-    cy.edges().removeClass('recent');
+    cy.edges().removeClass('trail-1 trail-2 trail-3 trail-4 trail-5');
 
     if (session?.state === 'created') {
       cy.nodes().addClass('clickable');
@@ -173,9 +212,13 @@ export default function GraphView({ snapshot, session, history, field, onNodeCli
     if (session?.goal) {
       cy.getElementById(session.goal).addClass('goal');
     }
-    if (history.length > 0) {
-      const last = history[history.length - 1];
-      cy.getElementById(`${last.source}-${last.target}`).addClass('recent');
+
+    // Path trail — last 5 edges with decreasing intensity
+    const trailLen = Math.min(history.length, 5);
+    for (let i = 0; i < trailLen; i++) {
+      const h = history[history.length - 1 - i];
+      const edgeId = `${h.source}-${h.target}`;
+      cy.getElementById(edgeId).addClass(`trail-${i + 1}`);
     }
   }, [session, history]);
 

@@ -23,6 +23,7 @@ export default function App() {
     step,
     autoRun,
     stopAutoRun,
+    setSpeed,
     handleWsEvent,
     setError,
   } = useSession();
@@ -30,6 +31,7 @@ export default function App() {
   const [snapshot, setSnapshot] = useState(null);
   const [backendOk, setBackendOk] = useState(null);
   const [field, setField] = useState('trace_quality');
+  const [speedMs, setSpeedMs] = useState(400);
 
   useWebSocket(session?.session_id, handleWsEvent);
 
@@ -65,7 +67,12 @@ export default function App() {
   };
 
   const handleStep = () => step();
-  const handleAuto = () => running ? stopAutoRun() : autoRun(200);
+  const handleAuto = () => running ? stopAutoRun() : autoRun(speedMs);
+  const handleSpeedChange = (e) => {
+    const ms = Number(e.target.value);
+    setSpeedMs(ms);
+    setSpeed(ms);
+  };
 
   // ── Derive state labels ───────────────────
   const lastStep = history.length > 0 ? history[history.length - 1] : null;
@@ -107,6 +114,19 @@ export default function App() {
               <button className="btn btn-primary" onClick={handleAuto}>
                 {running ? '⏸ Stop' : '▶ Auto'}
               </button>
+            )}
+            {canAuto && (
+              <label className="toolbar-speed">
+                <input
+                  type="range"
+                  min="50"
+                  max="2000"
+                  step="50"
+                  value={speedMs}
+                  onChange={handleSpeedChange}
+                />
+                <span>{speedMs}ms</span>
+              </label>
             )}
           </>
         )}

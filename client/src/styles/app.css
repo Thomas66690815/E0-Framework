@@ -102,6 +102,25 @@ body {
   font-family: 'Cascadia Code', 'Consolas', monospace;
 }
 
+.toolbar-speed {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.toolbar-speed input[type="range"] {
+  width: 80px;
+  accent-color: var(--gold);
+}
+
+.toolbar-speed span {
+  width: 48px;
+  text-align: right;
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+}
+
 /* ── Buttons ─────────────────────────────── */
 
 .btn {
