@@ -33,6 +33,7 @@ from server.models import (
     CanonSummary,
     StrategyEntry,
     HealthResponse,
+    ObservationNavigateRequest,
 )
 
 router = APIRouter()
@@ -250,6 +251,33 @@ def get_canon(name: str):
         edge_count=len(info.edges),
         goal_states=info.goal_states,
     )
+
+
+# ── Observation ──────────────────────────────────────────
+
+@router.get("/sessions/{session_id}/observation")
+def get_observation(session_id: str):
+    """Current observation snapshot (domain through observer lens)."""
+    s = _get_session(session_id)
+    return s.observation_snapshot()
+
+
+@router.get("/sessions/{session_id}/observation/meta")
+def get_observation_meta(session_id: str):
+    """O-Landscape itself (meta-view: observation state space)."""
+    s = _get_session(session_id)
+    return s.observation_meta_snapshot()
+
+
+@router.post("/sessions/{session_id}/observation/navigate")
+def navigate_observation(session_id: str, req: ObservationNavigateRequest):
+    """Execute an observation navigation step."""
+    s = _get_session(session_id)
+    try:
+        result = s.observation_navigate(req.action, req.node_id)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc))
+    return result
 
 
 # ── Health ───────────────────────────────────────────────

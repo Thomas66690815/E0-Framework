@@ -140,3 +140,17 @@ class HealthResponse(BaseModel):
     status: str = "ok"
     active_sessions: int
     version: str = "0.8.0"
+
+
+# ── Observation ──────────────────────────────────────────
+
+class ObservationNavigateRequest(BaseModel):
+    """Navigate observation: focus/defocus/deepen/retreat/move."""
+    action: str = Field(
+        ...,
+        description="Navigation action: focus, defocus, deepen, retreat, move",
+        pattern="^(focus|defocus|deepen|retreat|move)$",
+    )
+    node_id: Optional[str] = Field(
+        None, description="Target node ID (required for focus and move)"
+    )

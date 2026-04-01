@@ -392,6 +392,55 @@ body {
   text-align: center;
 }
 
+/* ── Observation Panel ───────────────────── */
+
+.obs-panel {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 4px 16px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.obs-header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.obs-scope {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gold);
+}
+
+.obs-depth {
+  font-size: 11px;
+  color: var(--accent);
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  padding: 1px 6px;
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+}
+
+.obs-controls {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-sm {
+  padding: 2px 8px;
+  font-size: 11px;
+}
+
+.btn-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
 /* ── Mechanism Panel ─────────────────────── */
 
 .mechanism-panel {

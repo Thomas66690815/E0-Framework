@@ -84,6 +84,23 @@ export async function getSnapshot(id) {
   return request('GET', `/sessions/${encodeURIComponent(id)}/snapshot`);
 }
 
+// ── Observation ─────────────────────────────────────────
+
+export async function getObservation(id) {
+  return request('GET', `/sessions/${encodeURIComponent(id)}/observation`);
+}
+
+export async function getObservationMeta(id) {
+  return request('GET', `/sessions/${encodeURIComponent(id)}/observation/meta`);
+}
+
+export async function navigateObservation(id, action, nodeId = null) {
+  return request('POST', `/sessions/${encodeURIComponent(id)}/observation/navigate`, {
+    action,
+    node_id: nodeId,
+  });
+}
+
 // ── Canons ──────────────────────────────────────────────
 
 export async function listCanons() {

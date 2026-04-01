@@ -48,6 +48,8 @@ from e0_controller.snapshot_codec import (
 )
 from e0_controller.peer_bridge import PeerBridge
 from e0_controller.input_pipeline import InputPipeline, PipelineResult
+from e0_controller.observation_controller import ObservationController
+from e0_controller.rendering_adapter import render_observation, render_observation_landscape
 
 
 # ── Session State ────────────────────────────────────────
@@ -183,6 +185,9 @@ class ServiceSession:
 
         # Event subscribers
         self._listeners: List[Callable[[str, dict], None]] = []
+
+        # Observation (lazy)
+        self._observation_ctrl: Optional[ObservationController] = None
 
     def add_listener(self, callback: Callable[[str, dict], None]) -> None:
         """Register an event listener: callback(event_type, data)."""
@@ -325,6 +330,79 @@ class ServiceSession:
         return encode_strategy_profile(
             self.landscape.historization, top_n=top_n,
         )
+
+    # ── Observation ──────────────────────────────────────
+
+    @property
+    def observation_ctrl(self) -> ObservationController:
+        """Lazy-init ObservationController for this session's landscape."""
+        if self._observation_ctrl is None:
+            self._observation_ctrl = ObservationController(self.landscape)
+        return self._observation_ctrl
+
+    def observation_snapshot(self) -> dict:
+        """Current observation view as a snapshot compatible with GraphView.
+
+        Wraps render_observation output so landscape key holds states/edges.
+        """
+        raw = render_observation(self.observation_ctrl)
+        return {
+            "session_id": self.id,
+            "state": self.state.value,
+            "current_position": self._current,
+            "landscape": {
+                "states": raw["states"],
+                "edges": raw["edges"],
+            },
+            "modulation": raw.get("modulation", {}),
+            "observation": raw.get("observation", {}),
+        }
+
+    def observation_meta_snapshot(self) -> dict:
+        """O-Landscape itself (meta-view) as a GraphView-compatible snapshot."""
+        raw = render_observation_landscape(self.observation_ctrl)
+        return {
+            "session_id": self.id,
+            "state": self.state.value,
+            "current_position": self.observation_ctrl.current,
+            "landscape": {
+                "states": raw["states"],
+                "edges": raw["edges"],
+            },
+            "modulation": raw.get("modulation", {}),
+            "observation": raw.get("observation", {}),
+        }
+
+    def observation_navigate(self, action: str, node_id: Optional[str] = None) -> dict:
+        """Execute an observation navigation action.
+
+        Returns the StepResult as a dict.
+        """
+        ctrl = self.observation_ctrl
+        if action == "focus":
+            if node_id is None:
+                raise ValueError("focus requires node_id")
+            result = ctrl.focus(node_id)
+        elif action == "defocus":
+            result = ctrl.defocus()
+        elif action == "deepen":
+            result = ctrl.deepen()
+        elif action == "retreat":
+            result = ctrl.retreat()
+        elif action == "move":
+            if node_id is None:
+                raise ValueError("move requires node_id")
+            result = ctrl.move(node_id)
+        else:
+            raise ValueError(f"Unknown observation action: {action!r}")
+
+        return {
+            "success": result.success,
+            "previous": result.previous,
+            "current": result.current,
+            "r_eff": result.r_eff,
+            "s_eff": result.s_eff,
+        }
 
 
 # ── Session Manager ──────────────────────────────────────

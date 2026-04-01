@@ -36,6 +36,8 @@ export default function App() {
   const [speedMs, setSpeedMs] = useState(400);
   const [scenario, setScenario] = useState('greedy_trap');
   const [goalNode, setGoalNode] = useState(null);
+  const [observing, setObserving] = useState(false);
+  const [obsInfo, setObsInfo] = useState(null);
 
   const ws = useWebSocket(session?.session_id, handleWsEvent);
 
@@ -48,11 +50,18 @@ export default function App() {
 
   // Fetch snapshot after session or history changes
   useEffect(() => {
-    if (!session?.session_id) { setSnapshot(null); return; }
-    api.getSnapshot(session.session_id)
-      .then(setSnapshot)
-      .catch(() => {});
-  }, [session?.session_id, history.length]);
+    if (!session?.session_id) { setSnapshot(null); setObsInfo(null); return; }
+    if (observing) {
+      api.getObservation(session.session_id)
+        .then((data) => { setSnapshot(data); setObsInfo(data.observation || null); })
+        .catch(() => {});
+    } else {
+      api.getSnapshot(session.session_id)
+        .then(setSnapshot)
+        .catch(() => {});
+      setObsInfo(null);
+    }
+  }, [session?.session_id, history.length, observing]);
 
   // Landscape states for node selection
   const states = snapshot?.landscape?.states || [];
@@ -78,6 +87,21 @@ export default function App() {
 
   const handleNodeClick = async (nodeId) => {
     if (!session) return;
+    if (observing) {
+      // In observation mode: click a node to focus on it
+      const obs = obsInfo;
+      if (obs?.focused_node === nodeId) {
+        // Already focused → defocus
+        await obsNavigate('defocus');
+      } else if (obs?.focused_node) {
+        // Focused on another node → move
+        await obsNavigate('move', nodeId);
+      } else {
+        // Global scope → focus
+        await obsNavigate('focus', nodeId);
+      }
+      return;
+    }
     if (peerRequest) {
       // Zentrale: human chooses a candidate
       if (peerRequest.neighbors?.includes(nodeId)) {
@@ -91,6 +115,19 @@ export default function App() {
       const sc = SCENARIOS[scenario];
       const goal = goalNode || sc?.goal || null;
       await start(nodeId, goal, 50);
+    }
+  };
+
+  const obsNavigate = async (action, nodeId = null) => {
+    if (!session?.session_id) return;
+    try {
+      await api.navigateObservation(session.session_id, action, nodeId);
+      // Refresh observation snapshot
+      const data = await api.getObservation(session.session_id);
+      setSnapshot(data);
+      setObsInfo(data.observation || null);
+    } catch (e) {
+      setError(e.message);
     }
   };
 
@@ -190,6 +227,16 @@ export default function App() {
             <option value="inertia">inertia</option>
           </select>
         </label>
+
+        {session && (
+          <button
+            className={`btn ${observing ? 'btn-active' : ''}`}
+            onClick={() => setObserving((o) => !o)}
+            title="Toggle observation mode"
+          >
+            {observing ? '🔍 Observing' : '👁 Observe'}
+          </button>
+        )}
       </div>
 
       {/* ── Error ────────────────────────── */}
@@ -197,6 +244,23 @@ export default function App() {
         <div className="error-bar" onClick={() => setError(null)}>
           {error}
           <span className="error-dismiss">✕</span>
+        </div>
+      )}
+
+      {/* ── Observation controls ────────── */}
+      {observing && obsInfo && (
+        <div className="obs-panel">
+          <div className="obs-header">
+            <span className="obs-scope">{obsInfo.scope === 'g' ? 'Global' : `Node: ${obsInfo.focused_node}`}</span>
+            <span className="obs-depth">{obsInfo.depth}</span>
+          </div>
+          <div className="obs-controls">
+            <button className="btn btn-sm" onClick={() => obsNavigate('retreat')} disabled={obsInfo.depth_index <= 0}>▲ Retreat</button>
+            <button className="btn btn-sm" onClick={() => obsNavigate('deepen')} disabled={obsInfo.depth_index >= 4}>▼ Deepen</button>
+            {obsInfo.focused_node && (
+              <button className="btn btn-sm" onClick={() => obsNavigate('defocus')}>⊕ Defocus</button>
+            )}
+          </div>
         </div>
       )}
 
