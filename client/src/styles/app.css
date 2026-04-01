@@ -383,6 +383,47 @@ body {
   text-align: center;
 }
 
+/* ── Mechanism Panel ─────────────────────── */
+
+.mechanism-panel {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 11px;
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  min-width: 180px;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.mech-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  line-height: 1.6;
+}
+
+.mech-label {
+  color: var(--text-dim);
+}
+
+.mech-value {
+  color: var(--text);
+  font-weight: 600;
+  text-align: right;
+}
+
+.mode-learn { color: var(--accent); }
+.mode-execute { color: var(--success); }
+.mode-combo { color: var(--warn); }
+.mech-override { color: var(--warn); }
+.esc-active { color: var(--danger); }
+.esc-none { color: var(--text-dim); font-weight: 400; }
+
 /* ── Status Line ─────────────────────────── */
 
 .status-line {

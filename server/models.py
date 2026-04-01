@@ -91,6 +91,12 @@ class StepEventModel(BaseModel):
     mode: str
     overload_index: Optional[float]
     timestamp: float
+    # Overlay summary (C92)
+    override_confidence: float = 0.0
+    geometry: Optional[str] = None
+    horizon: Optional[int] = None
+    amplitude_choice: Optional[str] = None
+    total_paths: Optional[int] = None
 
 
 # ── WebSocket Protocol ───────────────────────────────────

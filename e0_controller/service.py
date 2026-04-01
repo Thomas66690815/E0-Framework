@@ -83,6 +83,12 @@ class StepEvent:
     mode: str                             # OperatingMode.value
     overload_index: Optional[float]
     timestamp: float
+    # Overlay summary (C92)
+    override_confidence: float
+    geometry: Optional[str]               # amplitude geometry used
+    horizon: Optional[int]                # lookahead depth
+    amplitude_choice: Optional[str]       # what amplitude would pick
+    total_paths: Optional[int]            # sum of path counts across actions
 
     @staticmethod
     def from_step(
@@ -105,6 +111,11 @@ class StepEvent:
             mode=mode.value,
             overload_index=oi,
             timestamp=time.time(),
+            override_confidence=step.override_confidence,
+            geometry=step.overlay.geometry if step.overlay else None,
+            horizon=step.overlay.horizon_edges if step.overlay else None,
+            amplitude_choice=step.overlay.amplitude_choice if step.overlay else None,
+            total_paths=sum(ai.path_count for ai in step.overlay.action_infos) if step.overlay else None,
         )
 
     def to_dict(self) -> dict:
@@ -123,6 +134,11 @@ class StepEvent:
             "mode": self.mode,
             "overload_index": self.overload_index,
             "timestamp": self.timestamp,
+            "override_confidence": self.override_confidence,
+            "geometry": self.geometry,
+            "horizon": self.horizon,
+            "amplitude_choice": self.amplitude_choice,
+            "total_paths": self.total_paths,
         }
 
 

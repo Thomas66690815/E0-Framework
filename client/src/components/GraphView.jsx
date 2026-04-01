@@ -311,6 +311,44 @@ export default function GraphView({ snapshot, session, history, field, peerReque
         </div>
       )}
 
+      {/* Mechanism indicator — what E₀ is doing and why */}
+      {history.length > 0 && (() => {
+        const last = history[history.length - 1];
+        const modeClass = last.mode === 'learn' ? 'mode-learn' : last.mode === 'execute' ? 'mode-execute' : 'mode-combo';
+        const escClass = last.escalated ? 'esc-active' : 'esc-none';
+        const overrideLabel = last.hybrid_overridden
+          ? `amplitude → ${last.amplitude_choice || '?'} (${(last.override_confidence * 100).toFixed(0)}%)`
+          : 'greedy';
+        return (
+          <div className="mechanism-panel">
+            <div className="mech-row">
+              <span className="mech-label">mode</span>
+              <span className={`mech-value ${modeClass}`}>{last.mode?.toUpperCase()}</span>
+            </div>
+            {last.geometry && (
+              <div className="mech-row">
+                <span className="mech-label">geometry</span>
+                <span className="mech-value">{last.geometry} h={last.horizon}</span>
+              </div>
+            )}
+            <div className="mech-row">
+              <span className="mech-label">decision</span>
+              <span className={`mech-value ${last.hybrid_overridden ? 'mech-override' : ''}`}>{overrideLabel}</span>
+            </div>
+            {last.total_paths != null && (
+              <div className="mech-row">
+                <span className="mech-label">paths</span>
+                <span className="mech-value">{last.total_paths}</span>
+              </div>
+            )}
+            <div className="mech-row">
+              <span className="mech-label">escalation</span>
+              <span className={`mech-value ${escClass}`}>{last.escalation_type}</span>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Empty state */}
       {!snapshot && (
         <div className="graph-empty">
