@@ -80,6 +80,15 @@ body {
   font-weight: 600;
 }
 
+.toolbar-scenario {
+  padding: 3px 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 12px;
+}
+
 .toolbar-spacer {
   flex: 1;
 }

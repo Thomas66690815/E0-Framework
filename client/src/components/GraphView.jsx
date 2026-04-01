@@ -8,7 +8,7 @@ import cytoscape from 'cytoscape';
  * is projected onto edge color/thickness. Click edges to inspect
  * the full numeric profile. Click nodes to interact.
  */
-export default function GraphView({ snapshot, session, history, field, peerRequest, onNodeClick, onPeerRespond }) {
+export default function GraphView({ snapshot, session, history, field, goalNode, peerRequest, onNodeClick, onPeerRespond }) {
   const containerRef = useRef(null);
   const cyRef = useRef(null);
   const [inspected, setInspected] = useState(null); // edge data or null
@@ -223,6 +223,8 @@ export default function GraphView({ snapshot, session, history, field, peerReque
     }
     if (session?.goal) {
       cy.getElementById(session.goal).addClass('goal');
+    } else if (goalNode) {
+      cy.getElementById(goalNode).addClass('goal');
     }
 
     // Peer candidates — highlight when waiting
@@ -239,7 +241,7 @@ export default function GraphView({ snapshot, session, history, field, peerReque
       const edgeId = `${h.source}-${h.target}`;
       cy.getElementById(edgeId).addClass(`trail-${i + 1}`);
     }
-  }, [session, history, peerRequest]);
+  }, [session, history, peerRequest, goalNode]);
 
   return (
     <div className="graph-container">
