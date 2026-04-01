@@ -120,11 +120,7 @@ export default function App() {
       <div className="toolbar">
         <span className="toolbar-title">E₀</span>
 
-        {backendOk === false && (
-          <span className="toolbar-warn">Backend offline</span>
-        )}
-
-        {!session && backendOk && (
+        {!session && (
           <>
             <select
               className="toolbar-scenario"
@@ -135,9 +131,16 @@ export default function App() {
                 <option key={key} value={key}>{sc.label}</option>
               ))}
             </select>
-            <button className="btn btn-primary" onClick={handleLoad}>
+            <button
+              className="btn btn-primary"
+              onClick={handleLoad}
+              disabled={backendOk === false}
+            >
               Load
             </button>
+            {backendOk === false && (
+              <span className="toolbar-warn">Backend offline</span>
+            )}
           </>
         )}
 
