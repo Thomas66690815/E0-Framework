@@ -70,6 +70,7 @@ def encode_landscape(landscape: Landscape) -> dict:
             "F": info["F"],
             "trace_quality": landscape.historization.trace_quality(e),
             "trace_load": landscape.historization.trace_load(e),
+            "inertia": landscape.historization.inertia_factor(e),
         }
     return {
         "states": sorted(landscape.states),

@@ -1,52 +1,46 @@
-import { useState, useEffect, useCallback } from 'react';
-import Header from './components/Header';
-import ControlPanel from './components/ControlPanel';
+import { useState, useEffect } from 'react';
 import GraphView from './components/GraphView';
-import HistoryTimeline from './components/HistoryTimeline';
-import PeerDialog from './components/PeerDialog';
-import MetricsPanel from './components/MetricsPanel';
-import TestRunner from './components/TestRunner';
 import { useSession } from './hooks/useSession';
 import { useWebSocket } from './hooks/useWebSocket';
 import * as api from './api';
 import './styles/app.css';
 
+/**
+ * E₀ UI — Keimzelle.
+ *
+ * The graph IS the interface.
+ * One screen: toolbar → graph → status line.
+ * Everything else emerges from here.
+ */
 export default function App() {
   const {
     session,
     history,
-    peerRequest,
     error,
     running,
     create,
     start,
     step,
-    pause,
-    resume,
     autoRun,
     stopAutoRun,
-    setSpeed,
-    refreshSession,
     handleWsEvent,
-    clearPeerRequest,
     setError,
   } = useSession();
 
   const [snapshot, setSnapshot] = useState(null);
-  const [tab, setTab] = useState('oszilloskop');   // 'oszilloskop' | 'tests'
-  const [backendOk, setBackendOk] = useState(null); // null=checking, true/false
+  const [backendOk, setBackendOk] = useState(null);
+  const [field, setField] = useState('trace_quality');
 
-  // WebSocket connection
-  const ws = useWebSocket(session?.session_id, handleWsEvent);
+  useWebSocket(session?.session_id, handleWsEvent);
 
-  // Health check on mount
+  // Health check
   useEffect(() => {
     api.getHealth()
       .then(() => setBackendOk(true))
       .catch(() => setBackendOk(false));
   }, []);
 
-  // Fetch snapshot after session changes or after each step
+  // Fetch snapshot after session or history changes
   useEffect(() => {
     if (!session?.session_id) { setSnapshot(null); return; }
     api.getSnapshot(session.session_id)
@@ -54,26 +48,80 @@ export default function App() {
       .catch(() => {});
   }, [session?.session_id, history.length]);
 
-  // Handle peer response
-  const handlePeerResponse = useCallback((target) => {
-    ws.sendPeerResponse(target);
-    clearPeerRequest();
-    if (session) refreshSession(session.session_id);
-  }, [ws, clearPeerRequest, session, refreshSession]);
+  // Landscape states for node selection
+  const states = snapshot?.landscape?.states || [];
+
+  // ── Handlers ──────────────────────────────
+  const handleLoad = async () => {
+    await create('json', { spec: DEFAULT_SPEC });
+  };
+
+  const handleNodeClick = async (nodeId) => {
+    if (!session) return;
+    if (session.state === 'created') {
+      // First click → start from that node
+      await start(nodeId, null, 50);
+    }
+  };
+
+  const handleStep = () => step();
+  const handleAuto = () => running ? stopAutoRun() : autoRun(200);
+
+  // ── Derive state labels ───────────────────
+  const lastStep = history.length > 0 ? history[history.length - 1] : null;
+  const canStep = session?.state === 'running' && !running;
+  const canAuto = session?.state === 'running';
 
   return (
     <div className="app">
-      <Header session={session} backendOk={backendOk} />
+      {/* ── Toolbar ──────────────────────── */}
+      <div className="toolbar">
+        <span className="toolbar-title">E₀</span>
 
-      <div className="tab-bar">
-        <button className={`tab-btn ${tab === 'oszilloskop' ? 'active' : ''}`} onClick={() => setTab('oszilloskop')}>
-          Oszilloskop
-        </button>
-        <button className={`tab-btn ${tab === 'tests' ? 'active' : ''}`} onClick={() => setTab('tests')}>
-          Test Runner
-        </button>
+        {backendOk === false && (
+          <span className="toolbar-warn">Backend offline</span>
+        )}
+
+        {!session && backendOk && (
+          <button className="btn btn-primary" onClick={handleLoad}>
+            Load Landscape
+          </button>
+        )}
+
+        {session && (
+          <>
+            <span className="toolbar-state">{session.state}</span>
+            {session.state === 'created' && (
+              <span className="toolbar-hint">Click a node to start</span>
+            )}
+            {canStep && (
+              <button className="btn" onClick={handleStep}>Step</button>
+            )}
+            {canAuto && (
+              <button className="btn btn-primary" onClick={handleAuto}>
+                {running ? '⏸ Stop' : '▶ Auto'}
+              </button>
+            )}
+          </>
+        )}
+
+        <span className="toolbar-spacer" />
+
+        <label className="toolbar-field">
+          Field:
+          <select value={field} onChange={(e) => setField(e.target.value)}>
+            <option value="trace_quality">trace_quality (q)</option>
+            <option value="trace_load">trace_load (m)</option>
+            <option value="S_eff">S_eff</option>
+            <option value="R_eff">R_eff</option>
+            <option value="delta_H">δ_H</option>
+            <option value="coherence">coherence</option>
+            <option value="inertia">inertia</option>
+          </select>
+        </label>
       </div>
 
+      {/* ── Error ────────────────────────── */}
       {error && (
         <div className="error-bar" onClick={() => setError(null)}>
           {error}
@@ -81,54 +129,39 @@ export default function App() {
         </div>
       )}
 
-      {backendOk === false && !error && (
-        <div className="error-bar">
-          Backend not reachable — start with: py -3 -m uvicorn server.main:app --reload
-        </div>
-      )}
+      {/* ── Graph (the entire interface) ── */}
+      <GraphView
+        snapshot={snapshot}
+        session={session}
+        history={history}
+        field={field}
+        onNodeClick={handleNodeClick}
+      />
 
-      {tab === 'oszilloskop' && (
-        <div className="main-layout">
-          <aside className="sidebar">
-            <ControlPanel
-              session={session}
-              running={running}
-              snapshot={snapshot}
-              onCreateSession={create}
-              onStart={start}
-              onStep={step}
-              onPause={pause}
-              onResume={resume}
-              onAutoRun={autoRun}
-              onStopAutoRun={stopAutoRun}
-              onSetSpeed={setSpeed}
-            />
-          </aside>
-
-          <main className="center">
-            <GraphView
-              snapshot={snapshot}
-              session={session}
-              history={history}
-            />
-          </main>
-
-          <aside className="right-sidebar">
-            <PeerDialog
-              peerRequest={peerRequest}
-              onRespond={handlePeerResponse}
-            />
-            <HistoryTimeline history={history} />
-            <MetricsPanel history={history} />
-          </aside>
-        </div>
-      )}
-
-      {tab === 'tests' && (
-        <div className="main-layout">
-          <TestRunner visible={tab === 'tests'} />
+      {/* ── Status line ──────────────────── */}
+      {lastStep && (
+        <div className="status-line">
+          <span className="status-tau">τ={lastStep.tau}</span>
+          <span className="status-edge">{lastStep.source} → {lastStep.target}</span>
+          <span className={`status-outcome ${lastStep.outcome?.toLowerCase()}`}>
+            {lastStep.outcome}
+          </span>
+          {history.length > 0 && (
+            <span className="status-count">{history.length} steps</span>
+          )}
         </div>
       )}
     </div>
   );
 }
+
+const DEFAULT_SPEC = {
+  nodes: ['A', 'B', 'C', 'D', 'E'],
+  edges: [
+    { from: 'A', to: 'B', delta: 0.5, resistance: 1.0 },
+    { from: 'A', to: 'C', delta: 0.3, resistance: 1.5 },
+    { from: 'B', to: 'D', delta: 0.4, resistance: 1.0 },
+    { from: 'C', to: 'D', delta: 0.6, resistance: 0.8 },
+    { from: 'D', to: 'E', delta: 0.5, resistance: 1.0 },
+  ],
+};

@@ -1,17 +1,20 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import cytoscape from 'cytoscape';
 
 /**
- * GraphView — Cytoscape.js graph visualization.
+ * GraphView — the entire E₀ interface surface.
  *
- * Nodes: color = trace_quality(q), size = trace_load(m), glow = current position.
- * Edges: thickness ∝ 1/S_eff, color = δ_H (green/red/gray).
+ * The graph fills the screen. Field selector controls what dimension
+ * is projected onto edge color/thickness. Click edges to inspect
+ * the full numeric profile. Click nodes to interact.
  */
-export default function GraphView({ snapshot, session, history }) {
+export default function GraphView({ snapshot, session, history, field, onNodeClick }) {
   const containerRef = useRef(null);
   const cyRef = useRef(null);
+  const [inspected, setInspected] = useState(null); // edge data or null
+  const prevCountRef = useRef(0);
 
-  // Initialize Cytoscape
+  // Initialize Cytoscape once
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -24,11 +27,11 @@ export default function GraphView({ snapshot, session, history }) {
             label: 'data(label)',
             'text-valign': 'center',
             'text-halign': 'center',
-            'font-size': '11px',
+            'font-size': '12px',
             'font-weight': 'bold',
-            color: '#fff',
-            'text-outline-width': 1.5,
-            'text-outline-color': '#333',
+            color: '#e0e0e0',
+            'text-outline-width': 2,
+            'text-outline-color': '#1a1a2e',
             width: 'data(size)',
             height: 'data(size)',
             'background-color': 'data(color)',
@@ -52,9 +55,12 @@ export default function GraphView({ snapshot, session, history }) {
           },
         },
         {
-          selector: 'node.visited',
+          selector: 'node.clickable',
           style: {
-            'text-outline-color': '#555',
+            'border-width': 2,
+            'border-color': '#3B82F6',
+            'border-style': 'dotted',
+            cursor: 'pointer',
           },
         },
         {
@@ -65,137 +71,247 @@ export default function GraphView({ snapshot, session, history }) {
             'target-arrow-color': 'data(color)',
             'target-arrow-shape': 'triangle',
             'curve-style': 'bezier',
-            opacity: 0.8,
-            'font-size': '9px',
+            opacity: 'data(opacity)',
           },
         },
         {
           selector: 'edge.recent',
           style: {
-            'line-style': 'solid',
             opacity: 1.0,
-            width: 4,
+            width: 5,
             'line-color': '#FFD700',
             'target-arrow-color': '#FFD700',
           },
         },
+        {
+          selector: 'edge.inspected',
+          style: {
+            'line-color': '#3B82F6',
+            'target-arrow-color': '#3B82F6',
+            opacity: 1.0,
+          },
+        },
       ],
-      layout: { name: 'cose', animate: false, padding: 30, nodeRepulsion: 8000 },
+      layout: { name: 'cose', animate: false, padding: 50, nodeRepulsion: 10000 },
       minZoom: 0.3,
       maxZoom: 3,
     });
 
-    cyRef.current = cy;
+    // Edge click → inspect
+    cy.on('tap', 'edge', (evt) => {
+      const data = evt.target.data();
+      setInspected(data.profile || null);
+      cy.edges().removeClass('inspected');
+      evt.target.addClass('inspected');
+    });
 
-    return () => {
-      cy.destroy();
-      cyRef.current = null;
-    };
+    // Node click → handler
+    cy.on('tap', 'node', (evt) => {
+      onNodeClick?.(evt.target.id());
+    });
+
+    // Background click → dismiss inspection
+    cy.on('tap', (evt) => {
+      if (evt.target === cy) {
+        setInspected(null);
+        cy.edges().removeClass('inspected');
+      }
+    });
+
+    cyRef.current = cy;
+    return () => { cy.destroy(); cyRef.current = null; };
   }, []);
 
-  // Update graph data when snapshot changes
+  // Update onNodeClick ref without recreating cy
   useEffect(() => {
     const cy = cyRef.current;
-    if (!cy || !snapshot) return;
+    if (!cy) return;
+    cy.removeListener('tap', 'node');
+    cy.on('tap', 'node', (evt) => onNodeClick?.(evt.target.id()));
+  }, [onNodeClick]);
 
-    const elements = buildElements(snapshot, session, history);
+  // Update graph when snapshot or field changes
+  useEffect(() => {
+    const cy = cyRef.current;
+    if (!cy || !snapshot?.landscape) return;
+
+    const elements = buildElements(snapshot, field);
+    const prevCount = prevCountRef.current;
+    const newCount = (elements.nodes?.length || 0) + (elements.edges?.length || 0);
 
     cy.json({ elements });
-    // Only run layout if element count changed
-    cy.layout({ name: 'cose', animate: true, animationDuration: 300, padding: 30, nodeRepulsion: 8000 }).run();
-  }, [snapshot]);
 
-  // Update classes when session/history updates (position, visited)
+    // Only re-layout when element count changes (new landscape)
+    if (newCount !== prevCount) {
+      cy.layout({ name: 'cose', animate: true, animationDuration: 400, padding: 50, nodeRepulsion: 10000 }).run();
+      prevCountRef.current = newCount;
+    }
+  }, [snapshot, field]);
+
+  // Update classes for position/visited/recent
   useEffect(() => {
     const cy = cyRef.current;
-    if (!cy || !session) return;
+    if (!cy) return;
 
-    // Update current position
-    cy.nodes().removeClass('current goal visited');
-    if (session.current_position) {
+    cy.nodes().removeClass('current goal clickable');
+    cy.edges().removeClass('recent');
+
+    if (session?.state === 'created') {
+      cy.nodes().addClass('clickable');
+    }
+    if (session?.current_position) {
       cy.getElementById(session.current_position).addClass('current');
     }
-    if (session.goal) {
+    if (session?.goal) {
       cy.getElementById(session.goal).addClass('goal');
     }
-
-    // Mark visited nodes
-    const visited = new Set(history.map((e) => e.source));
-    if (history.length > 0) visited.add(history[history.length - 1].target);
-    visited.forEach((v) => cy.getElementById(v).addClass('visited'));
-
-    // Highlight recent edge
-    cy.edges().removeClass('recent');
     if (history.length > 0) {
       const last = history[history.length - 1];
-      const edgeId = `${last.source}-${last.target}`;
-      cy.getElementById(edgeId).addClass('recent');
+      cy.getElementById(`${last.source}-${last.target}`).addClass('recent');
     }
   }, [session, history]);
 
-  return <div ref={containerRef} className="graph-view" />;
+  return (
+    <div className="graph-container">
+      <div ref={containerRef} className="graph-canvas" />
+
+      {/* Edge inspection panel */}
+      {inspected && (
+        <div className="edge-profile">
+          <div className="profile-header">
+            {inspected.source} → {inspected.target}
+            <button className="profile-close" onClick={() => { setInspected(null); cyRef.current?.edges().removeClass('inspected'); }}>✕</button>
+          </div>
+          <table className="profile-table">
+            <tbody>
+              <tr><td>U</td><td>{fmt(inspected.U)}</td><td>F</td><td>{fmt(inspected.F)}</td></tr>
+              <tr><td>q</td><td>{fmt(inspected.trace_quality)}</td><td>m</td><td>{fmt(inspected.trace_load)}</td></tr>
+              <tr><td>S_eff</td><td>{fmt(inspected.S_eff)}</td><td>R_eff</td><td>{fmt(inspected.R_eff)}</td></tr>
+              <tr><td>δ_H</td><td className={inspected.delta_H > 0 ? 'positive' : inspected.delta_H < 0 ? 'negative' : ''}>{fmt(inspected.delta_H, true)}</td>
+                  <td>coh</td><td>{fmt(inspected.coherence)}</td></tr>
+              <tr><td>δ</td><td>{fmt(inspected.delta)}</td><td>R₀</td><td>{fmt(inspected.R0)}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Empty state */}
+      {!snapshot && (
+        <div className="graph-empty">
+          Load a landscape to begin
+        </div>
+      )}
+    </div>
+  );
 }
 
 
-// ── Helpers ─────────────────────────────────────────────
+// ── Field mapping ───────────────────────────────────────
 
-function buildElements(snapshot, session, history) {
+const FIELD_CONFIG = {
+  trace_quality: {
+    edgeColor: (e) => divergentColor(e.trace_quality, -1, 1),
+    edgeThickness: () => 2.5,
+    edgeOpacity: () => 0.85,
+    nodeColor: (avgVal) => divergentColor(avgVal, -1, 1),
+    nodeSize: () => 35,
+  },
+  trace_load: {
+    edgeColor: () => '#5588cc',
+    edgeThickness: (e, max) => 1 + (e.trace_load / Math.max(1, max)) * 6,
+    edgeOpacity: () => 0.8,
+    nodeColor: () => '#4477aa',
+    nodeSize: (avgVal, max) => 25 + (avgVal / Math.max(1, max)) * 35,
+  },
+  S_eff: {
+    edgeColor: (e) => sequentialColor(e.S_eff, 0, 3),
+    edgeThickness: (e) => Math.max(1, Math.min(6, 4 / Math.max(0.1, e.S_eff))),
+    edgeOpacity: () => 0.85,
+    nodeColor: () => '#5577aa',
+    nodeSize: () => 35,
+  },
+  R_eff: {
+    edgeColor: (e) => sequentialColor(e.R_eff, 0, 3),
+    edgeThickness: (e) => Math.max(1, Math.min(6, e.R_eff * 2)),
+    edgeOpacity: () => 0.85,
+    nodeColor: () => '#5577aa',
+    nodeSize: () => 35,
+  },
+  delta_H: {
+    edgeColor: (e) => divergentColor(e.delta_H, -0.5, 0.5),
+    edgeThickness: (e) => 1 + Math.abs(e.delta_H) * 8,
+    edgeOpacity: (e) => 0.4 + Math.min(Math.abs(e.delta_H) * 3, 0.6),
+    nodeColor: () => '#5577aa',
+    nodeSize: () => 35,
+  },
+  coherence: {
+    edgeColor: (e) => sequentialColor(e.coherence, 0, 1),
+    edgeThickness: () => 2.5,
+    edgeOpacity: (e) => 0.3 + (e.coherence || 0) * 0.7,
+    nodeColor: () => '#5577aa',
+    nodeSize: () => 35,
+  },
+  inertia: {
+    edgeColor: (e) => sequentialColor(e.inertia || 0, 0, 1),
+    edgeThickness: () => 2.5,
+    edgeOpacity: (e) => 1.0 - (e.inertia || 0) * 0.6,
+    nodeColor: () => '#5577aa',
+    nodeSize: () => 35,
+  },
+};
+
+
+// ── Build elements ──────────────────────────────────────
+
+function buildElements(snapshot, field) {
   const nodes = [];
   const edges = [];
   const landscape = snapshot?.landscape;
   if (!landscape) return { nodes, edges };
 
-  const states = landscape.states || [];
+  const stateList = landscape.states || [];
   const edgeMap = landscape.edges || {};
+  const config = FIELD_CONFIG[field] || FIELD_CONFIG.trace_quality;
 
-  // Gather trace_load range for size mapping
-  let maxLoad = 1;
-  for (const edata of Object.values(edgeMap)) {
-    const load = (edata.trace_load || 0);
-    if (load > maxLoad) maxLoad = load;
+  // Compute max for normalization
+  let maxVal = 1;
+  for (const e of Object.values(edgeMap)) {
+    const v = e[field] || 0;
+    if (Math.abs(v) > maxVal) maxVal = Math.abs(v);
   }
 
-  // Per-node: accumulate trace_quality from incident edges
-  const nodeQ = {};
-  const nodeLoad = {};
-  for (const s of states) {
-    nodeQ[s] = 0;
-    nodeLoad[s] = 0;
-  }
-  for (const edata of Object.values(edgeMap)) {
-    const src = edata.source;
-    const tgt = edata.target;
-    const q = edata.trace_quality || 0;
-    const ld = edata.trace_load || 0;
-    if (nodeQ[src] !== undefined) { nodeQ[src] += q; nodeLoad[src] += ld; }
-    if (nodeQ[tgt] !== undefined) { nodeQ[tgt] += q; nodeLoad[tgt] += ld; }
+  // Per-node: average the chosen field from incident edges
+  const nodeAcc = {};
+  const nodeCount = {};
+  for (const s of stateList) { nodeAcc[s] = 0; nodeCount[s] = 0; }
+  for (const e of Object.values(edgeMap)) {
+    const v = e[field] || 0;
+    if (nodeAcc[e.source] !== undefined) { nodeAcc[e.source] += v; nodeCount[e.source]++; }
+    if (nodeAcc[e.target] !== undefined) { nodeAcc[e.target] += v; nodeCount[e.target]++; }
   }
 
-  for (const s of states) {
-    const avgQ = nodeQ[s] / Math.max(1, Object.values(edgeMap).filter((e) => e.source === s || e.target === s).length);
-    const size = 25 + Math.min(nodeLoad[s] / Math.max(1, maxLoad), 1) * 35;
+  for (const s of stateList) {
+    const avg = nodeCount[s] > 0 ? nodeAcc[s] / nodeCount[s] : 0;
     nodes.push({
       data: {
         id: s,
         label: s,
-        color: qualityColor(avgQ),
-        size: Math.round(size),
+        color: config.nodeColor(avg, maxVal),
+        size: Math.round(config.nodeSize(avg, maxVal)),
       },
     });
   }
 
-  for (const [key, edata] of Object.entries(edgeMap)) {
-    const sEff = edata.S_eff || 1;
-    const deltaH = edata.delta_H || 0;
-    const thickness = Math.max(1, Math.min(6, 4 / sEff));
-
+  for (const [, e] of Object.entries(edgeMap)) {
     edges.push({
       data: {
-        id: `${edata.source}-${edata.target}`,
-        source: edata.source,
-        target: edata.target,
-        thickness: Math.round(thickness * 10) / 10,
-        color: deltaHColor(deltaH),
+        id: `${e.source}-${e.target}`,
+        source: e.source,
+        target: e.target,
+        thickness: Math.round(config.edgeThickness(e, maxVal) * 10) / 10,
+        color: config.edgeColor(e, maxVal),
+        opacity: config.edgeOpacity(e),
+        profile: e,  // full numeric data for inspection
       },
     });
   }
@@ -203,27 +319,43 @@ function buildElements(snapshot, session, history) {
   return { nodes, edges };
 }
 
-function qualityColor(q) {
-  // q ∈ [-1, +1] → red → yellow → green
-  const clamped = Math.max(-1, Math.min(1, q));
-  if (clamped >= 0) {
-    // 0 = yellow (#EAB308), 1 = green (#22C55E)
-    const r = Math.round(234 - clamped * (234 - 34));
-    const g = Math.round(179 + clamped * (197 - 179));
-    const b = Math.round(8 + clamped * (94 - 8));
+
+// ── Color scales ────────────────────────────────────────
+
+function divergentColor(value, min, max) {
+  // min..0..max → red → gray → green
+  const range = max - min;
+  const t = range > 0 ? (value - min) / range : 0.5;
+  const clamped = Math.max(0, Math.min(1, t));
+
+  if (clamped < 0.5) {
+    // red to gray
+    const s = clamped * 2;
+    const r = Math.round(220 - s * 80);
+    const g = Math.round(60 + s * 60);
+    const b = Math.round(60 + s * 60);
     return `rgb(${r},${g},${b})`;
   } else {
-    // -1 = red (#EF4444), 0 = yellow (#EAB308)
-    const t = clamped + 1; // 0..1
-    const r = Math.round(239 - t * (239 - 234));
-    const g = Math.round(68 + t * (179 - 68));
-    const b = Math.round(68 - t * (68 - 8));
+    // gray to green
+    const s = (clamped - 0.5) * 2;
+    const r = Math.round(140 - s * 100);
+    const g = Math.round(120 + s * 80);
+    const b = Math.round(120 - s * 50);
     return `rgb(${r},${g},${b})`;
   }
 }
 
-function deltaHColor(dH) {
-  if (Math.abs(dH) < 0.01) return '#888';    // untouched: gray
-  if (dH > 0) return '#22C55E';               // positive history: green
-  return '#EF4444';                            // negative history: red
+function sequentialColor(value, min, max) {
+  // min..max → dark blue → bright cyan
+  const t = max > min ? Math.max(0, Math.min(1, (value - min) / (max - min))) : 0;
+  const r = Math.round(30 + t * 40);
+  const g = Math.round(60 + t * 160);
+  const b = Math.round(120 + t * 120);
+  return `rgb(${r},${g},${b})`;
+}
+
+function fmt(v, sign = false) {
+  if (v === undefined || v === null) return '—';
+  const s = typeof v === 'number' ? v.toFixed(3) : String(v);
+  return sign && v > 0 ? `+${s}` : s;
 }
