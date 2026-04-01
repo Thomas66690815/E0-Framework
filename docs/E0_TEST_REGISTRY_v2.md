@@ -3,8 +3,8 @@
 > Central validation registry for the E₀ Framework.
 > **Purpose:** connect claims, tests, evidence, and status in one place.
 
-**Last updated:** 2026-03-31 — **2788 tests** (0 failures, 0 warnings)  
-**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, **C52 Honest Self-Knowledge (CANON_PROCESS_MAP correction)**, **C53 Domain-Invariance Benchmark (10 domains, 1 controller)**, **C54 Raumzeit Coupling (closed vs coupled systems)**, **C55 Amplitude Benchmark (10 domains × 3 modes)**, **C64 Gridworld Baseline Benchmark (E₀ vs A* vs Naive-Greedy)**, **C66 CouplingRouter (N>2 dynamic partner selection)**, **C67 Asymmetric Coupling (weight-based directional R₀)**, **C68 Coupling Self-Graph (Stufe-3 reflexion for coupling pipeline)**, **C69 Cross-Reflexion Benchmark (edge copying vs edge creation)**, **C70 OVERLOADED Benchmark (peer consultation × 10 domains)**, **C71 LLM Co-Cognition (2 LLMs coupled via multiverse)**, **C72 Chess Engine (strategic dimension navigation)**, **C73 Primitive Extensions (fully_connected + strategy_profile)**, **C74 Team Chess (multiverse team play)**, and active edge-case work.
+**Last updated:** 2026-04-01 — **2874 tests** (0 failures, 0 warnings) across **79 test files**  
+**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, **C52 Honest Self-Knowledge (CANON_PROCESS_MAP correction)**, **C53 Domain-Invariance Benchmark (10 domains, 1 controller)**, **C54 Raumzeit Coupling (closed vs coupled systems)**, **C55 Amplitude Benchmark (10 domains × 3 modes)**, **C56 Reflexive Edge Proposal (Historisierung informiert Topologie)**, **C57 Proactive Reflexion (Stufe 2)**, **C58 Reflexion Benchmark (10 domains × 3 Stufen)**, **C59 Integrated Reflexion (C49 + C57 unified)**, **C60 Multiverse (coupled systems, NoveltyGate, convergence/divergence)**, **C61 Cross-Domain Multiverse Benchmark**, **C62 Cross-Universe Reflexive Edge Discovery**, **C63 OVERLOADED Escalation (OI-triggered peer consultation)**, **C64 Gridworld Baseline Benchmark (E₀ vs A* vs Naive-Greedy)**, **C66 CouplingRouter (N>2 dynamic partner selection)**, **C67 Asymmetric Coupling (weight-based directional R₀)**, **C68 Coupling Self-Graph (Stufe-3 reflexion for coupling pipeline)**, **C69 Cross-Reflexion Benchmark (edge copying vs edge creation)**, **C70 OVERLOADED Benchmark (peer consultation × 10 domains)**, **C71 LLM Co-Cognition (2 LLMs coupled via multiverse)**, **C72 Chess Engine (strategic dimension navigation)**, **C73 Primitive Extensions (fully_connected + strategy_profile)**, **C74 Team Chess (multiverse team play)**, **C75–C81 Empirical Validation Phase (attractor universality, multi-attractor dynamics, transfer learning, convergence speed, asymmetric ρ, attractor prediction, focus narrowing — explore scripts)**, **C82 Focus Narrowing in Controller (focus_k + peer bypass)**, **C83 Service Layer (SnapshotCodec, InputPipeline, PeerBridge, ServiceSession, SessionManager)**, **C84 API Gateway (FastAPI REST + WebSocket, 13 endpoints)**, **C85 Client (React + Cytoscape.js)**, **C86 Test Runner UI**.
 
 ---
 
@@ -531,13 +531,13 @@ Born sampling (P ∝ I, choosing actions probabilistically from the amplitude-de
 | `test_g5_edge_cases.py` | C9, C10, C23 (families A–E, O2, SU(2)) |
 | `test_topology_classification.py` | C11, C23 (SU(2) classes) |
 | `test_scaling.py` | C12 |
-| `test_llm_adapter.py` | C13 |
-| `live_test_llm.py` | C13 (live, requires API key) |
+| `test_llm_adapter.py` | C13, C45 |
+| `live_test_llm.py` | C13, C34 (live, requires API key) |
 | `test_invoice.py` | C7, C13 |
-| `test_memory_os.py` | persistence support for hybrid workflows, C28 |
+| `test_memory_os.py` | C21, C28 |
 | `test_graph_validation.py` | graph-quality support layer |
 | `test_evaluation.py` | evaluation/rating support layer |
-| `test_reflection.py` | reflection support layer, C36 |
+| `test_reflection.py` | C36 |
 | `test_reflection_hybrid.py` | C18 |
 | `test_dynamic_horizon.py` | C19 |
 | `test_confidence_override.py` | C20 |
@@ -569,7 +569,39 @@ Born sampling (P ∝ I, choosing actions probabilistically from the amplitude-de
 | `test_landscape_mutation.py` | B4-S1 |
 | `test_structural_mutation.py` | B4-S2, B4-S4a |
 | `test_structural_tuning_cycle.py` | B4-S3 |
+| `test_qualitative_mass.py` | C42 |
+| `test_self_graph.py` | C43 |
+| `test_bootstrapper.py` | C44 |
+| `test_canon_loader.py` | C48 |
+| `test_canon_self_bridge.py` | C48 |
+| `test_mode_controller.py` | C46 |
+| `test_dual_reflection.py` | C47 |
+| `test_reflexive_action.py` | C49 |
+| `test_reflexive_journal.py` | C50 |
+| `test_system_integration.py` | C51 |
+| `test_honest_self_knowledge.py` | C52 |
+| `test_domain_invariance.py` | C53 |
+| `test_raumzeit_coupling.py` | C54 |
+| `test_amplitude_benchmark.py` | C55 |
+| `test_reflexive_edge_proposal.py` | C56 |
+| `test_proactive_reflexion.py` | C57 |
+| `test_benchmark_reflexion.py` | C58 |
+| `test_integrated_reflexion.py` | C59 |
+| `test_multiverse.py` | C60 |
+| `test_benchmark_multiverse.py` | C61 |
+| `test_cross_reflexion.py` | C62 |
+| `test_overload_escalation.py` | C63 |
 | `test_benchmark_gridworld.py` | C64 |
+| `test_coupling_router.py` | C66, C67, C68 |
+| `test_benchmark_cross_reflexion.py` | C69 |
+| `test_benchmark_overloaded.py` | C70 |
+| `test_llm_cocognition.py` | C71 |
+| `test_chess_e0.py` | C72 |
+| `test_c73_primitives.py` | C73 |
+| `test_chess_team.py` | C74 |
+| `test_focus_narrowing.py` | C82 |
+| `test_service_layer.py` | C83 |
+| `server/test_api.py` | C84 |
 
 ---
 
@@ -2124,16 +2156,414 @@ than a single E₀ player.
 
 ---
 
-When a new test family is added, update both:
+### C59 — Integrated Reflexion: C49 + C57 Unified Pipeline
 
-1. the inventory-level registry (`E0_TEST_REGISTRY_v1.md`)
-2. this claim-level registry (`E0_TEST_REGISTRY_v2.md`)
+**Claim**  
+C49 (flag toggling via reflexive action) and C57 (proactive edge proposal) can be unified into a single integrated reflexion pipeline. Both topology extension (hypothesis edges) and modulation flag toggling fire from the same dual-reflection diagnosis, with a single undo mechanism that reverts all changes.
 
-The v1 file answers:
-> *What tests exist?*
+**Evidence**  
+- `e0_controller/integrated_reflexion.py` — `integrated_reflexion()`, `run_with_integrated_reflexion()`, `IntegratedReflexionResult`
+- `e0_controller/test_integrated_reflexion.py` — 36 tests across 6 classes
 
-The v2 file answers:
-> *What do those tests establish?*
+**Result**  
+- IntegratedReflexionResult tracks both flag changes and topology additions
+- `undo()` reverts all mutations in reverse order
+- run_with_integrated_reflexion() chains diagnosis → plan → apply → run → verify
+- Journal records both flag toggle and topology events
+- C49 + C57 cooperation verified: flag deactivation + edge proposal in same iteration
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C60 — Multiverse: Coupled E₀ Systems
+
+**Claim**  
+Two or more E₀ systems can be coupled via a shared coupling landscape with novelty-gated historization. The NoveltyGate evaluates whether a coupling turn produced genuine structural novelty. Convergence is detected after N stale turns. Divergence pressure re-injects exploration territory when systems converge prematurely.
+
+**Evidence**  
+- `e0_controller/multiverse.py` — `MultiverseController`, `LandscapeSnapshot`, `NoveltyGate`, coupling landscape
+- `e0_controller/test_multiverse.py` — 35 tests across 7 classes:
+  - `TestLandscapeSnapshot` (5): structural metrics capture
+  - `TestNoveltyGate` (5): novelty vs stagnation distinction
+  - `TestCouplingLandscape` (4): construction + historization
+  - `TestMultiverseTurn` (4): single turn execution
+  - `TestConvergenceDetection` (4): window-based convergence
+  - `TestDivergencePressure` (5): pressure injection
+  - `TestFullRunConvergenceDivergence` (8): complete coupled lifecycle
+
+**Result**  
+- NoveltyGate correctly distinguishes novel (new states/edges) from stale turns
+- Convergence detected after configurable window of stale turns
+- Divergence pressure adds edges to exploration territory, breaking stagnation
+- Coupling landscape R_eff rises on stale edges (FAILURE historization)
+- Full lifecycle: convergence → divergence → continued exploration
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C61 — Cross-Domain Multiverse Benchmark
+
+**Claim**  
+Two E₀ systems operating on structurally different domains can be coupled via MultiverseController, and the coupling produces measurable knowledge transfer via structural distance decrease.
+
+**Evidence**  
+- `e0_controller/benchmark_multiverse.py` — `run_multiverse_benchmark()`
+- `e0_controller/test_benchmark_multiverse.py` — 19 tests across 5 classes
+
+**Result**  
+- 5 domain pairings tested (e.g., linear×diamond, gordian×grid)
+- Structural distance decreases across coupling turns
+- Both systems reach their respective goals after coupling
+- Knowledge exchange is the dominant coupling mechanism
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C62 — Cross-Universe Reflexive Edge Discovery
+
+**Claim**  
+Instead of copying edges directly (knowledge exchange), a coupled system can use the foreign universe's experience to *create* new hypothesis edges at its own frontier. This is reflexion informed by foreign historization patterns.
+
+**Evidence**  
+- `e0_controller/cross_reflexion.py` — `cross_reflexion_turn()`
+- `e0_controller/test_cross_reflexion.py` — 19 tests across 5 classes
+
+**Result**  
+- Foreign historization patterns (median Δ/R₀) inform local edge proposals
+- Frontier-gated: only fires when local system is stuck at a frontier
+- Created edges are genuine hypotheses (not direct copies)
+- Produces divergence events more frequently than exchange (see C69)
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C63 — OVERLOADED Escalation: OI-Triggered Peer Consultation
+
+**Claim**  
+When the Overload Index (OI = N_admissible × (1 − mean|trace_quality|)) exceeds a threshold, the controller detects an OVERLOADED condition and optionally consults an external peer system via `peer_fn`. The peer receives the full landscape context and suggests a neighbor to visit.
+
+**Evidence**  
+- `e0_controller/controller.py` — OVERLOADED escalation in `select_next()`
+- `e0_controller/test_overload_escalation.py` — 15 tests across 4 classes
+
+**Result**  
+- OI correctly computed from admissible neighbor count × mean quality deficit
+- OVERLOADED fires when OI > threshold (default 3.0)
+- peer_fn receives full landscape, current state, and all admissible neighbors
+- peer_fn suggestion is adopted directly (trusted external advice)
+- Without peer_fn, OVERLOADED falls back to random selection
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C66 — CouplingRouter: Dynamic Partner Selection for N>2 Universes
+
+**Claim**  
+When N>2 E₀ systems are coupled, a CouplingRouter dynamically selects which universe pairs should exchange knowledge each turn, based on structural distance and exchange potential.
+
+**Evidence**  
+- `e0_controller/coupling_router.py` — `CouplingRouter`, `CouplingEdge`, `select_partner()`
+- `e0_controller/test_coupling_router.py` — 74 tests total (covers C66 + C67 + C68)
+
+**Result**  
+- Distance-based partner selection: most structurally different universe preferred
+- Coupling history tracked per pair (avoids over-coupling same pair)
+- N=3 verified: all pair combinations explored across turns
+- Deterministic tiebreak for equal-distance universes
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C67 — Asymmetric Coupling: Weight-Based Directional Resistance
+
+**Claim**  
+Coupled universes can have asymmetric coupling weights. A donor with higher weight contributes edges with lower R₀ (more trusted), while a requester's R₀ depends on the donor's weight. This models expertise asymmetry: an experienced system's edges should face less resistance when transferred to a novice.
+
+**Evidence**  
+- `e0_controller/coupling_router.py` — `CouplingRouter(weights=...)`, weight-based R₀ calculation
+- `e0_controller/test_coupling_router.py` — asymmetric coupling tests within the 74 total
+
+**Result**  
+- R₀(requester→donor) = base_resistance / donor.weight
+- Higher donor weight → lower transferred R₀ → faster adoption
+- Symmetric weights (all 1.0) reproduce pre-C67 behavior
+- Weight updates possible after coupling turns (experience accumulation)
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C75–C81 — Empirical Validation Phase (Explore Scripts)
+
+**Claim**  
+Seven empirical investigations validate E₀ properties through systematic exploration. These commits produced explore scripts with structured experiments and documented findings, but no formal pytest test suites.
+
+**Evidence & Findings**
+
+| Commit | Topic | Script | Key Finding |
+|--------|-------|--------|-------------|
+| C75 | Attractor Universality | `explore_attractor_universality.py` | Asymmetric topology + differential feedback are both necessary conditions for attractor emergence |
+| C76 | Multi-Attractor Dynamics | `explore_multi_attractor.py` | Shared H produces monopoly attractor; independent H allows 5 coexisting attractors |
+| C77 | Transfer Learning | `explore_transfer_learning.py` | 1.50× speedup in stochastic corridors; neutral in deterministic domains |
+| C78 | Convergence Speed | `explore_convergence_speed.py` | Deterministic: 1 episode; stochastic: never at ρ=0.90; ρ is convergence/adaptability tradeoff |
+| C79 | Asymmetric ρ | `explore_asymmetric_rho.py` | ρ_S=0.85 / ρ_F=0.97 gives 1.20× speedup; makes transfer redundant in 8L×3D corridor |
+| C80 | Attractor Prediction | `explore_attractor_prediction.py` | Goal-distance predicts attractor with 83% accuracy; betweenness/PageRank fail on fully-connected |
+| C81 | Focus Narrowing | `explore_focus_narrowing.py` | Random pruning to k=8 rescues N=100 from 0% to 82%; quality-biased pruning locks in at 23% |
+
+**Status**  
+⚠ Partial — empirically validated via explore scripts; no formal pytest tests
+
+**Note**  
+These findings informed subsequent formal implementations: C79 → asymmetric ρ support in Historization, C81 → C82 focus_k parameter in Controller.
+
+---
+
+### C82 — Focus Narrowing in Controller
+
+**Claim**  
+When the Overload Index exceeds the threshold and `focus_k` is set, the controller narrows the candidate set to k random neighbors before selection. Peer suggestions bypass the focus filter: the peer receives ALL admissible neighbors (full graph view) and its recommendation is injected as the (k+1)th candidate. This combines local randomization (C81 findings) with informed external advice (C63 peer mechanism).
+
+**Evidence**  
+- `e0_controller/controller.py` — `focus_k` parameter in `E0Controller.__init__()`, narrowing in `select_next()`
+- `e0_controller/test_focus_narrowing.py` — 12 tests across 3 classes:
+  - `TestFocusNarrowingBasics` (5): focus_k accepted, reduces candidates, threshold gating, few-neighbor bypass, None default
+  - `TestFocusPeerIntegration` (4): peer added to focused set, peer sees full graph (all 19 neighbors not 3), peer + focus reaches goal, peer=None still works
+  - `TestFocusBackwardCompat` (3): without focus_k old C63 peer-override preserved
+
+**Result**  
+- focus_k=5 on 30-node FC landscape: at most 5 candidates considered (+ peer suggestion)
+- Peer called with ALL admissible neighbors (29 on 30-node graph), not the narrowed subset
+- OI < threshold → focus_k ignored (no unnecessary narrowing)
+- Backward compatible: focus_k=None produces identical behavior to pre-C82
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C83 — Service Layer (Layer B)
+
+**Claim**  
+A service layer provides the bridge between the E₀ core (primitives, controller, session) and external consumers (API, UI). Five components: SnapshotCodec (encode/decode all E₀ types to JSON), InputPipeline (create landscapes from JSON specs or canon), PeerBridge (synchronous or async peer consultation), ServiceSession (stateful session wrapper with events), and SessionManager (multi-session lifecycle).
+
+**Evidence**  
+- `e0_controller/snapshot_codec.py` — `encode_landscape()`, `encode_step()`, `encode_runtrace()`, `encode_strategy()`, `encode_edge_info()`
+- `e0_controller/input_pipeline.py` — `InputPipeline.from_json()`, `.from_canon()`, `.available_canons()`
+- `e0_controller/peer_bridge.py` — `PeerBridge`, sync fallback, `is_waiting`, `pending_request`
+- `e0_controller/service.py` — `ServiceSession`, `SessionManager`
+- `e0_controller/test_service_layer.py` — 43 tests across 16 classes:
+  - `TestSnapshotCodecLandscape` (6): encode/decode roundtrip
+  - `TestSnapshotCodecStep` (2): StepResult encoding
+  - `TestSnapshotCodecRunTrace` (1): RunTrace encoding
+  - `TestSnapshotCodecStrategy` (1): strategy profile encoding
+  - `TestSnapshotCodecEdgeInfo` (1): edge info for peer dialog
+  - `TestInputPipelineJSON` (2): from_json landscape creation + validation
+  - `TestInputPipelineCanon` (3): available_canons, from_canon, unknown raises
+  - `TestPeerBridgeSync` (4): sync fallback, deterministic seed, is_waiting, pending_request
+  - `TestPeerBridgeOnRequest` (1): on_request not called in sync mode
+  - `TestServiceSessionLifecycle` (8): create → start → step → complete, run_sync
+  - `TestServiceSessionEvents` (3): step/completion event emission
+  - `TestServiceSessionPauseResume` (1): pause/resume cycle
+  - `TestServiceSessionSnapshot` (2): required fields, strategy profile
+  - `TestServiceSessionHistory` (1): history accumulates
+  - `TestServiceSessionWithPeer` (1): PeerBridge integration
+  - `TestSessionManager` (6): create_from_json, create_from_landscape, remove, list, independence
+
+**Result**  
+- JSON roundtrip preserves all E₀ types (Landscape, StepResult, RunTrace, strategy profile)
+- InputPipeline accepts both raw JSON specs and canon names
+- ServiceSession emits typed events for each step/completion (UI consumption)
+- SessionManager supports multiple concurrent sessions with independent state
+- PeerBridge in sync mode provides deterministic fallback (no async required)
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C84 — API Gateway (Layer C)
+
+**Claim**  
+A FastAPI-based API Gateway exposes the E₀ service layer (C83) via 13 REST endpoints and a WebSocket handler. Full session lifecycle is controllable via HTTP: create (from JSON or canon), start, step, pause, resume, delete. Data retrieval: snapshot, history, strategy profile. Canon browsing: list, get. WebSocket provides real-time step events and peer-dialog interaction.
+
+**Evidence**  
+- `server/main.py` — FastAPI app, CORS, WebSocket handler
+- `server/routes_sessions.py` — session CRUD + lifecycle endpoints
+- `server/routes_canons.py` — canon listing and retrieval
+- `server/models.py` — 12 Pydantic request/response models
+- `server/test_api.py` — 31 tests across 7 classes:
+  - `TestHealth` (2): health endpoint, session count
+  - `TestSessionCreate` (7): from_json, missing spec, invalid spec, from_canon, missing name, unknown canon, controller_kwargs
+  - `TestSessionGet` (3): get session, nonexistent 404, list sessions
+  - `TestSessionDelete` (2): delete, nonexistent 404
+  - `TestSessionLifecycle` (7): start, invalid state, step before start, step event, full run (start→step→complete), pause/resume
+  - `TestDataRetrieval` (3): history, strategy, snapshot
+  - `TestCanons` (3): list, get, unknown 404
+  - `TestWebSocket` (4): invalid session, unknown event, invalid JSON, pause/resume via WS
+
+**Result**  
+- All 13 REST endpoints tested with proper HTTP status codes (200, 201, 404, 422)
+- Session lifecycle: create → start → step (repeat) → complete
+- WebSocket: bidirectional communication for real-time events + peer dialog
+- Controller kwargs (hybrid_mode, focus_k, etc.) passed through from API to ServiceSession
+- Canon browsing: list available canons, get specific canon spec
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C85 — Client (Layer D): React + Cytoscape.js
+
+**Claim**  
+A browser-based client provides real-time visualization and control of E₀ sessions. Built with React 19, Cytoscape.js 3.30 (graph visualization), and Recharts 2.15 (metrics charts). Six components cover the full interaction surface: Header, ControlPanel (session lifecycle), GraphView (landscape visualization), HistoryTimeline (step history), PeerDialog (Zentrale — peer consultation UI), and MetricsPanel (tension/quality charts).
+
+**Evidence**  
+- `client/src/components/` — Header, ControlPanel, GraphView, HistoryTimeline, PeerDialog, MetricsPanel
+- `client/src/hooks/` — useSession (lifecycle), useWebSocket (persistent connection with auto-reconnect)
+- `client/src/api.js` — REST + WebSocket client for all endpoints
+- Build: `npm run build` → 1056KB bundle (successful)
+
+**Result**  
+- Full session lifecycle controllable from browser
+- Cytoscape.js renders landscape graph with edge weights and state highlighting
+- WebSocket provides real-time step events (auto-reconnect on disconnect)
+- Dark theme CSS, responsive layout (sidebar + center + right sidebar)
+
+**Status**  
+✅ Confirmed (no automated tests — React component testing is a future enhancement)
+
+---
+
+### C86 — Test Runner UI
+
+**Claim**  
+All test and explore Python files are discoverable and runnable from the browser UI. A tab navigation switches between the Oszilloskop (graph view) and Test Runner views. The backend discovers ~93 test/explore files and executes them via pytest subprocess, parsing results (passed/failed/errors/skipped/individual items).
+
+**Evidence**  
+- `server/routes_tests.py` — `GET /tests` (discovery), `POST /tests/{name}/run` (execution)
+- `client/src/components/TestRunner.jsx` — file list, filter, click-to-run, results panel
+- `client/src/App.jsx` — tab navigation (Oszilloskop | Test Runner)
+
+**Result**  
+- Discovers 93 files (test_*.py + explore_*.py) across e0_controller/ and server/
+- Executes via pytest subprocess with timeout support
+- Results include pass/fail counts, duration, individual test items
+- UI supports filter by category (test/explore), Run All, expandable detail view
+
+**Status**  
+✅ Confirmed (no automated tests — API test coverage for /tests endpoints is a future enhancement)
+
+---
+
+## 6. Test file inventory
+
+| Test file | Tests | Commit |
+|-----------|------:|--------|
+| `test_amplitude_benchmark.py` | 23 | C55 |
+| `test_amplitude_overlay.py` | 125 | C2/C3 |
+| `test_beipackzettel.py` | 20 | C31 |
+| `test_beipackzettel_noncircular.py` | 11 | C32 |
+| `test_benchmark_cross_reflexion.py` | 25 | C69 |
+| `test_benchmark_gridworld.py` | 49 | C64 |
+| `test_benchmark_multiverse.py` | 19 | C61 |
+| `test_benchmark_overloaded.py` | 26 | C70 |
+| `test_benchmark_reflexion.py` | 20 | C58 |
+| `test_bootstrapper.py` | 41 | C44 |
+| `test_born_regime.py` | 44 | C17 |
+| `test_born_sampling.py` | 31 | C22 |
+| `test_burnout_composite.py` | 39 | — |
+| `test_c73_primitives.py` | 18 | C73 |
+| `test_canon_loader.py` | 72 | C48 |
+| `test_canon_self_bridge.py` | 32 | C48 |
+| `test_chess_e0.py` | 26 | C72 |
+| `test_chess_team.py` | 22 | C74 |
+| `test_confidence_override.py` | 31 | C20 |
+| `test_coupling_router.py` | 74 | C66/C67/C68 |
+| `test_cross_reflexion.py` | 19 | C62 |
+| `test_curvature_modulation.py` | 35 | C26 |
+| `test_domain_invariance.py` | 30 | C53 |
+| `test_dual_reflection.py` | 36 | C47 |
+| `test_dynamic_horizon.py` | 45 | C19 |
+| `test_envelope.py` | 48 | C38 |
+| `test_evaluation.py` | 47 | — |
+| `test_exploration_policy.py` | 42 | C41 |
+| `test_ezb_zinsentscheidung.py` | 33 | C35 |
+| `test_focus_narrowing.py` | 12 | C82 |
+| `test_g5_edge_cases.py` | 55 | C10/C23 |
+| `test_gordian_trap.py` | 44 | C4–C9 |
+| `test_graph_validation.py` | 24 | — |
+| `test_greedy_trap.py` | 4 | C1 |
+| `test_historization_gordian.py` | 61 | C8/O1 |
+| `test_honest_self_knowledge.py` | 19 | C52 |
+| `test_integrated_reflexion.py` | 36 | C59 |
+| `test_invoice.py` | 33 | C13 |
+| `test_k5_escalation.py` | 9 | C27 |
+| `test_landscape_mutation.py` | 56 | B4-S1 |
+| `test_llm_adapter.py` | 63 | C13/C45 |
+| `test_llm_cocognition.py` | 28 | C71 |
+| `test_llm_context.py` | 23 | C27 |
+| `test_mass_trap_detector.py` | 25 | C34 |
+| `test_memory_os.py` | 42 | C28 |
+| `test_memos_geometry.py` | 34 | C21 |
+| `test_minidomain.py` | 21 | — |
+| `test_mode_controller.py` | 36 | C46 |
+| `test_multi_axis_su2.py` | 36 | C25 |
+| `test_multiverse.py` | 35 | C60 |
+| `test_omega_uniqueness.py` | 27 | C14 |
+| `test_overlap.py` | 43 | C40 |
+| `test_overload_escalation.py` | 15 | C63 |
+| `test_phase2_invoice.py` | 18 | — |
+| `test_phase2_minidomain.py` | 38 | — |
+| `test_proactive_reflexion.py` | 20 | C57 |
+| `test_provenance.py` | 28 | C33 |
+| `test_qualitative_mass.py` | 37 | C42 |
+| `test_raumzeit_coupling.py` | 23 | C54 |
+| `test_reflection.py` | 57 | C36 |
+| `test_reflection_hybrid.py` | 42 | C18 |
+| `test_reflexive_action.py` | 41 | C49 |
+| `test_reflexive_edge_proposal.py` | 23 | C56 |
+| `test_reflexive_journal.py` | 37 | C50 |
+| `test_residual_tension.py` | 31 | C37 |
+| `test_resonator.py` | 73 | C16/C24 |
+| `test_resonator_integration.py` | 37 | C39 |
+| `test_scaling.py` | 14 | C12 |
+| `test_self_graph.py` | 47 | C43 |
+| `test_self_tuning.py` | 87 | C29 |
+| `test_service_layer.py` | 43 | C83 |
+| `test_session.py` | 13 | C30 |
+| `test_spinor.py` | 71 | C15/C23 |
+| `test_structural_mutation.py` | 91 | B4-S2/S4a |
+| `test_structural_tuning_cycle.py` | 42 | B4-S3 |
+| `test_system_integration.py` | 19 | C51 |
+| `test_topology_classification.py` | 30 | C11/C23 |
+| `test_waypoint.py` | 17 | C3/C4 |
+| `server/test_api.py` | 31 | C84 |
+| **Total** | **2874** | |
+
+---
+
+## 7. Maintenance
+
+When a new test family is added, update:
+
+1. Section 4 (file → claim map)
+2. The relevant claim section (or add a new one)
+3. Section 6 (test file inventory)
+4. The header (test count + scope line)
 
 ---
 
