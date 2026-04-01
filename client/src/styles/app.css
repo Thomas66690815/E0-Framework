@@ -299,6 +299,90 @@ body {
   font-style: italic;
 }
 
+/* ── Peer Panel (Zentrale) ───────────────── */
+
+.peer-panel {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: var(--surface);
+  border: 2px solid var(--warn);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 12px;
+  min-width: 220px;
+  max-width: 320px;
+  z-index: 30;
+  box-shadow: 0 4px 20px rgba(234, 179, 8, 0.15);
+}
+
+.peer-header {
+  font-weight: 700;
+  color: var(--warn);
+  font-size: 13px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.peer-icon {
+  font-size: 16px;
+}
+
+.peer-context {
+  color: var(--text-dim);
+  margin-bottom: 8px;
+  font-size: 11px;
+}
+
+.peer-context strong {
+  color: var(--text);
+}
+
+.peer-candidates {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.peer-candidate-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.peer-candidate-btn:hover {
+  background: var(--border);
+  border-color: var(--warn);
+}
+
+.candidate-name {
+  font-weight: 600;
+}
+
+.candidate-stats {
+  color: var(--text-dim);
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  font-size: 10px;
+}
+
+.peer-hint {
+  margin-top: 8px;
+  color: var(--text-dim);
+  font-size: 10px;
+  font-style: italic;
+  text-align: center;
+}
+
 /* ── Status Line ─────────────────────────── */
 
 .status-line {

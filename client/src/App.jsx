@@ -16,6 +16,7 @@ export default function App() {
   const {
     session,
     history,
+    peerRequest,
     error,
     running,
     create,
@@ -24,6 +25,7 @@ export default function App() {
     autoRun,
     stopAutoRun,
     setSpeed,
+    clearPeerRequest,
     handleWsEvent,
     setError,
   } = useSession();
@@ -33,7 +35,7 @@ export default function App() {
   const [field, setField] = useState('trace_quality');
   const [speedMs, setSpeedMs] = useState(400);
 
-  useWebSocket(session?.session_id, handleWsEvent);
+  const ws = useWebSocket(session?.session_id, handleWsEvent);
 
   // Health check
   useEffect(() => {
@@ -60,6 +62,14 @@ export default function App() {
 
   const handleNodeClick = async (nodeId) => {
     if (!session) return;
+    if (peerRequest) {
+      // Zentrale: human chooses a candidate
+      if (peerRequest.neighbors?.includes(nodeId)) {
+        ws.sendPeerResponse(nodeId);
+        clearPeerRequest();
+      }
+      return;
+    }
     if (session.state === 'created') {
       // First click → start from that node
       await start(nodeId, null, 50);
@@ -76,8 +86,9 @@ export default function App() {
 
   // ── Derive state labels ───────────────────
   const lastStep = history.length > 0 ? history[history.length - 1] : null;
-  const canStep = session?.state === 'running' && !running;
-  const canAuto = session?.state === 'running';
+  const isWaiting = !!peerRequest;
+  const canStep = session?.state === 'running' && !running && !isWaiting;
+  const canAuto = session?.state === 'running' && !isWaiting;
 
   // ── Compute metrics from history ──────────
   const successes = history.filter((h) => h.outcome === 'SUCCESS').length;
@@ -103,7 +114,7 @@ export default function App() {
 
         {session && (
           <>
-            <span className="toolbar-state">{session.state}</span>
+            <span className="toolbar-state">{isWaiting ? 'WAITING PEER' : session.state}</span>
             {session.state === 'created' && (
               <span className="toolbar-hint">Click a node to start</span>
             )}
@@ -161,7 +172,12 @@ export default function App() {
         session={session}
         history={history}
         field={field}
+        peerRequest={peerRequest}
         onNodeClick={handleNodeClick}
+        onPeerRespond={(target) => {
+          ws.sendPeerResponse(target);
+          clearPeerRequest();
+        }}
       />
 
       {/* ── Status line ──────────────────── */}

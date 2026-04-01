@@ -8,7 +8,7 @@ import cytoscape from 'cytoscape';
  * is projected onto edge color/thickness. Click edges to inspect
  * the full numeric profile. Click nodes to interact.
  */
-export default function GraphView({ snapshot, session, history, field, onNodeClick }) {
+export default function GraphView({ snapshot, session, history, field, peerRequest, onNodeClick, onPeerRespond }) {
   const containerRef = useRef(null);
   const cyRef = useRef(null);
   const [inspected, setInspected] = useState(null); // edge data or null
@@ -63,6 +63,18 @@ export default function GraphView({ snapshot, session, history, field, onNodeCli
             'border-width': 2,
             'border-color': '#3B82F6',
             'border-style': 'dotted',
+            cursor: 'pointer',
+          },
+        },
+        {
+          selector: 'node.peer-candidate',
+          style: {
+            'border-width': 3,
+            'border-color': '#EAB308',
+            'border-style': 'solid',
+            'overlay-color': '#EAB308',
+            'overlay-opacity': 0.15,
+            'overlay-padding': 6,
             cursor: 'pointer',
           },
         },
@@ -200,7 +212,7 @@ export default function GraphView({ snapshot, session, history, field, onNodeCli
     const cy = cyRef.current;
     if (!cy) return;
 
-    cy.nodes().removeClass('current goal clickable');
+    cy.nodes().removeClass('current goal clickable peer-candidate');
     cy.edges().removeClass('trail-1 trail-2 trail-3 trail-4 trail-5');
 
     if (session?.state === 'created') {
@@ -213,6 +225,13 @@ export default function GraphView({ snapshot, session, history, field, onNodeCli
       cy.getElementById(session.goal).addClass('goal');
     }
 
+    // Peer candidates — highlight when waiting
+    if (peerRequest?.neighbors) {
+      for (const n of peerRequest.neighbors) {
+        cy.getElementById(n).addClass('peer-candidate');
+      }
+    }
+
     // Path trail — last 5 edges with decreasing intensity
     const trailLen = Math.min(history.length, 5);
     for (let i = 0; i < trailLen; i++) {
@@ -220,7 +239,7 @@ export default function GraphView({ snapshot, session, history, field, onNodeCli
       const edgeId = `${h.source}-${h.target}`;
       cy.getElementById(edgeId).addClass(`trail-${i + 1}`);
     }
-  }, [session, history]);
+  }, [session, history, peerRequest]);
 
   return (
     <div className="graph-container">
@@ -243,6 +262,39 @@ export default function GraphView({ snapshot, session, history, field, onNodeCli
               <tr><td>δ</td><td>{fmt(inspected.delta)}</td><td>R₀</td><td>{fmt(inspected.R0)}</td></tr>
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Peer dialog — Zentrale */}
+      {peerRequest && (
+        <div className="peer-panel">
+          <div className="peer-header">
+            <span className="peer-icon">⚡</span>
+            Peer Decision — OI={peerRequest.overload_index?.toFixed(2) ?? '?'}
+          </div>
+          <div className="peer-context">
+            At <strong>{peerRequest.current}</strong> — choose next target:
+          </div>
+          <div className="peer-candidates">
+            {peerRequest.neighbors?.map((n) => {
+              const info = peerRequest.edge_info?.[n];
+              return (
+                <button
+                  key={n}
+                  className="peer-candidate-btn"
+                  onClick={() => onPeerRespond?.(n)}
+                >
+                  <span className="candidate-name">{n}</span>
+                  {info && (
+                    <span className="candidate-stats">
+                      S={info.S_eff?.toFixed(2)} · q={info.trace_quality?.toFixed(2)} · m={info.trace_load?.toFixed(1)}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          <div className="peer-hint">or click a highlighted node in the graph</div>
         </div>
       )}
 
