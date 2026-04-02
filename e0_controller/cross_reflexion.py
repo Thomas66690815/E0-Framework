@@ -1,6 +1,6 @@
 """
-Cross-Universe Reflexive Edge Discovery (C62)
-================================================
+Cross-Universe Reflexive Edge Discovery (C62, C107)
+=====================================================
 When Universe A is stuck at a frontier, Universe B's accumulated
 experience informs hypothesis edges in A's topology.
 
@@ -12,27 +12,34 @@ Key distinction from existing mechanisms:
   - C62 Cross Reflexion:     B's experience pattern (Δ/R₀ medians)
                               parameterizes NEW edges in A that never
                               existed in either universe.
+  - C107 Scoped Cross Reflexion: Like C62, but donor pattern extraction
+                              respects the donor's historization-derived
+                              locality.  Discount scales with donor ℓ.
 
 Core insight: "Die Erfahrung des Anderen ist nicht meine eigene,
 aber sie kann meine Hypothesen informieren."
 
 The coupling discount (default 0.5) inflates R₀ for cross-proposed
 edges — the structural recognition that foreign experience carries
-more uncertainty than self-experience.
+more uncertainty than self-experience.  With scoped=True (C107), the
+effective discount is further modulated by donor locality:
+  effective = discount × (γ_min + (1 − γ_min) × ℓ_donor)
 
 Usage:
   from e0_controller.cross_reflexion import (
       cross_propose_edges, apply_cross_proposals,
-      cross_reflexion_turn,
+      cross_reflexion_turn, scoped_cross_reflexion_turn,
   )
 
-  # Standalone:
+  # Standalone (global):
   result = cross_propose_edges(stuck_landscape, donor_landscape, "X", "GOAL")
-  apply_cross_proposals(stuck_landscape, result.proposals)
+
+  # Standalone (scoped / C107):
+  result = cross_propose_edges(stuck, donor, "X", "GOAL", scoped=True)
 
   # As MultiverseController turn function:
   ctrl = MultiverseController(universe_a, universe_b)
-  result = ctrl.run(max_turns=20, turn_fn=cross_reflexion_turn)
+  result = ctrl.run(max_turns=20, turn_fn=scoped_cross_reflexion_turn)
 """
 
 from __future__ import annotations
@@ -53,6 +60,11 @@ from e0_controller.reflexive_edge_proposal import (
     _goal_proximity,
 )
 from e0_controller.multiverse import Universe
+from e0_controller.scoped_reflexion import (
+    compute_reflexion_scope,
+    scoped_experienced_pattern,
+    ReflexionScope,
+)
 
 
 # ══════════════════════════════════════════════
@@ -121,6 +133,53 @@ def blend_patterns(
 
 
 # ══════════════════════════════════════════════
+# Donor scope helpers (C107)
+# ══════════════════════════════════════════════
+
+# Minimum discount floor: even a fresh donor contributes γ_min weight.
+_GAMMA_MIN = 0.3
+
+
+def _donor_scope_center(donor: Landscape, current: str) -> str:
+    """Choose scope center in donor landscape.
+
+    If `current` exists in donor, use it directly.
+    Otherwise, pick the node with the highest total trace_load
+    (the donor's expertise center).  Falls back to the first
+    state alphabetically if all loads are zero.
+    """
+    if current in donor.states:
+        return current
+    best, best_load = None, -1.0
+    hist = donor.historization
+    for edge in donor._delta:
+        load = hist.trace_load(edge)
+        if load > best_load:
+            best_load = load
+            best = edge.source
+        # also consider target side
+        if load > best_load:
+            best = edge.target
+    if best is not None:
+        return best
+    return min(donor.states) if donor.states else current
+
+
+def _locality_modulated_discount(
+    base_discount: float,
+    donor_locality: float,
+) -> float:
+    """Scale coupling discount by donor locality (C107).
+
+    effective = base × (γ_min + (1 − γ_min) × ℓ_donor)
+
+    Fresh donor (ℓ ≈ 0):  effective ≈ base × 0.3  (little trust)
+    Expert donor (ℓ → 1): effective → base          (full trust)
+    """
+    return base_discount * (_GAMMA_MIN + (1.0 - _GAMMA_MIN) * donor_locality)
+
+
+# ══════════════════════════════════════════════
 # Cross proposal engine
 # ══════════════════════════════════════════════
 
@@ -133,6 +192,7 @@ def cross_propose_edges(
     max_proposals: int = 5,
     coupling_discount: float = 0.5,
     donor_name: str = "donor",
+    scoped: bool = False,
 ) -> CrossReflexionResult:
     """Propose hypothesis edges using blended self + donor experience.
 
@@ -146,11 +206,27 @@ def cross_propose_edges(
 
     The coupling_discount (0–1) controls how much donor experience
     contributes. 1.0 = full trust, 0.0 = ignore donor entirely.
+
+    If scoped=True (C107), the donor pattern is extracted from the
+    donor's historization-derived scope rather than globally, and the
+    coupling discount is modulated by donor locality:
+      effective_discount = discount × (γ_min + (1 − γ_min) × ℓ_donor)
+    Fresh donors contribute less; experienced donors contribute more.
     """
     self_pattern = experienced_pattern(landscape)
-    donor_pattern = experienced_pattern(donor)
 
-    blended = blend_patterns(self_pattern, donor_pattern, coupling_discount)
+    if scoped:
+        center = _donor_scope_center(donor, current)
+        donor_scope = compute_reflexion_scope(donor, center, goal=goal)
+        donor_pattern = scoped_experienced_pattern(donor, donor_scope)
+        effective_discount = _locality_modulated_discount(
+            coupling_discount, donor_scope.locality,
+        )
+    else:
+        donor_pattern = experienced_pattern(donor)
+        effective_discount = coupling_discount
+
+    blended = blend_patterns(self_pattern, donor_pattern, effective_discount)
 
     candidates = find_candidate_targets(landscape, current)
     if not candidates:
@@ -171,20 +247,26 @@ def cross_propose_edges(
 
     proposals = []
     for target in candidates:
+        rationale_parts = [
+            f"Cross-reflexion from {donor_name}: ",
+            f"self({self_pattern.sample_size} samples) + ",
+            f"donor({donor_pattern.sample_size} samples), ",
+            f"blended Δ={blended.median_delta:.2f}, ",
+            f"R₀={blended.median_r0:.2f}, ",
+            f"discount={effective_discount:.3f}",
+        ]
+        if scoped:
+            rationale_parts.append(
+                f" [scoped: ℓ_donor={donor_scope.locality:.2f}, "
+                f"{donor_scope.scope_size} states]"
+            )
         proposals.append(ProposedEdge(
             source=current,
             target=target,
             delta=blended.median_delta,
             resistance=round(r0_scaled, 4),
             confidence=round(confidence, 3),
-            rationale=(
-                f"Cross-reflexion from {donor_name}: "
-                f"self({self_pattern.sample_size} samples) + "
-                f"donor({donor_pattern.sample_size} samples), "
-                f"blended Δ={blended.median_delta:.2f}, "
-                f"R₀={blended.median_r0:.2f}, "
-                f"discount={coupling_discount}"
-            ),
+            rationale="".join(rationale_parts),
         ))
 
     # Prioritize targets closer to goal
@@ -215,12 +297,17 @@ def apply_cross_proposals(
 # MultiverseController turn function
 # ══════════════════════════════════════════════
 
-def cross_reflexion_turn(active: Universe, passive: Universe) -> None:
+def cross_reflexion_turn(
+    active: Universe, passive: Universe, *, scoped: bool = False,
+) -> None:
     """Turn function for MultiverseController: navigate + cross-propose.
 
     1. Run controller in active universe (up to 5 cycles)
     2. Check if active is at a frontier
     3. If stuck, use passive's experience to propose edges in active
+
+    If scoped=True (C107), donor pattern extraction respects the
+    donor's historization-derived locality.
 
     This is a TurnFn compatible with MultiverseController.run().
     """
@@ -245,7 +332,13 @@ def cross_reflexion_turn(active: Universe, passive: Universe) -> None:
             active.goal,
             max_proposals=3,
             donor_name=passive.name,
+            scoped=scoped,
         )
+
+
+def scoped_cross_reflexion_turn(active: Universe, passive: Universe) -> None:
+    """Convenience wrapper: cross_reflexion_turn with scoped=True (C107)."""
+    cross_reflexion_turn(active, passive, scoped=True)
 
 
 # ══════════════════════════════════════════════
@@ -257,11 +350,16 @@ def run_with_cross_reflexion(
     universe_b: Universe,
     max_cycles: int = 50,
     coupling_discount: float = 0.5,
+    scoped: bool = False,
 ) -> CrossReflexionRunResult:
     """Run Universe A with cross-reflexive proposals from Universe B.
 
     Phase 1: Run B for max_cycles/2 to build donor experience.
     Phase 2: Run A, using B's experience at every frontier.
+
+    If scoped=True (C107), donor experience is extracted from the
+    donor's historization-derived locality, and coupling discount is
+    modulated by donor locality.
 
     Returns aggregate result tracking all proposals.
     """
@@ -301,6 +399,7 @@ def run_with_cross_reflexion(
                 universe_a.goal,
                 coupling_discount=coupling_discount,
                 donor_name=universe_b.name,
+                scoped=scoped,
             )
             if result.edges_added > 0:
                 all_results.append(result)

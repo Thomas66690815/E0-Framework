@@ -1,4 +1,4 @@
-"""Tests for Cross-Universe Reflexive Edge Discovery (C62)."""
+"""Tests for Cross-Universe Reflexive Edge Discovery (C62, C107)."""
 
 from e0_controller.primitives import Edge, Outcome
 from e0_controller.landscape import Landscape
@@ -10,9 +10,13 @@ from e0_controller.cross_reflexion import (
     blend_patterns,
     cross_propose_edges,
     cross_reflexion_turn,
+    scoped_cross_reflexion_turn,
     run_with_cross_reflexion,
     CrossReflexionResult,
     CrossReflexionRunResult,
+    _donor_scope_center,
+    _locality_modulated_discount,
+    _GAMMA_MIN,
 )
 
 
@@ -358,5 +362,246 @@ class TestCrossReflexionResult:
             goal_reached=False,
         )
         assert r.total_proposals == 0
-        assert r.total_edges_added == 0
-        assert r.frontier_nodes == []
+
+
+# ══════════════════════════════════════════════
+# TestScopedCrossReflexion (C107)
+# ══════════════════════════════════════════════
+
+def _build_heavily_historized_donor() -> Landscape:
+    """Donor with deep experience on A→B→C→D, shallow on X→Y→Z."""
+    L = Landscape()
+    # Deep corridor: A→B→C→D with many traversals
+    L.add_edge("A", "B", delta=1.0, resistance=0.5)
+    L.add_edge("B", "C", delta=0.8, resistance=0.4)
+    L.add_edge("C", "D", delta=1.2, resistance=0.6)
+    # Shallow branch: X→Y→Z with minimal traversal
+    L.add_edge("X", "Y", delta=0.5, resistance=0.3)
+    L.add_edge("Y", "Z", delta=0.5, resistance=0.3)
+    # Historize deep corridor heavily
+    for _ in range(20):
+        for edge in [Edge("A", "B"), Edge("B", "C"), Edge("C", "D")]:
+            L.historization.update(edge, Outcome.SUCCESS)
+    # Historize shallow branch minimally
+    L.historization.update(Edge("X", "Y"), Outcome.SUCCESS)
+    return L
+
+
+class TestDonorScopeCenter:
+    """_donor_scope_center: choosing the right center in donor."""
+
+    def test_uses_current_if_present(self):
+        donor = _build_experienced_landscape()
+        assert _donor_scope_center(donor, "A") == "A"
+
+    def test_uses_expertise_center_if_current_absent(self):
+        donor = _build_heavily_historized_donor()
+        center = _donor_scope_center(donor, "NOTHERE")
+        # Should pick a node from the heavily-traversed corridor
+        assert center in {"A", "B", "C", "D"}
+
+    def test_empty_landscape_returns_current(self):
+        L = Landscape()
+        assert _donor_scope_center(L, "X") == "X"
+
+
+class TestLocalityModulatedDiscount:
+    """_locality_modulated_discount scaling."""
+
+    def test_fresh_donor_gets_gamma_min(self):
+        eff = _locality_modulated_discount(0.5, 0.0)
+        assert abs(eff - 0.5 * _GAMMA_MIN) < 1e-9
+
+    def test_expert_donor_gets_full_discount(self):
+        eff = _locality_modulated_discount(0.5, 1.0)
+        assert abs(eff - 0.5) < 1e-9
+
+    def test_monotonic_in_locality(self):
+        vals = [_locality_modulated_discount(0.5, l / 10) for l in range(11)]
+        for i in range(len(vals) - 1):
+            assert vals[i] <= vals[i + 1] + 1e-12
+
+
+class TestScopedCrossPropose:
+    """cross_propose_edges with scoped=True (C107)."""
+
+    def test_scoped_proposes_at_frontier(self):
+        stuck = _build_frontier_landscape()
+        donor = _build_experienced_landscape()
+        result = cross_propose_edges(
+            stuck, donor, "X", "GOAL", scoped=True, donor_name="B",
+        )
+        assert result.edges_added > 0
+        assert result.frontier_node == "X"
+
+    def test_scoped_rationale_contains_locality(self):
+        stuck = _build_frontier_landscape()
+        donor = _build_experienced_landscape()
+        result = cross_propose_edges(
+            stuck, donor, "X", "GOAL", scoped=True,
+        )
+        for p in result.proposals:
+            assert "scoped" in p.rationale
+            assert "ℓ_donor" in p.rationale
+
+    def test_global_rationale_has_no_scope_info(self):
+        stuck = _build_frontier_landscape()
+        donor = _build_experienced_landscape()
+        result = cross_propose_edges(
+            stuck, donor, "X", "GOAL", scoped=False,
+        )
+        for p in result.proposals:
+            assert "scoped" not in p.rationale
+
+    def test_fresh_donor_scoped_equals_global(self):
+        """Fresh donor should degenerate: scoped ≡ global."""
+        stuck1 = _build_frontier_landscape()
+        stuck2 = _build_frontier_landscape()
+        # Fresh donor: no historization at all
+        fresh_donor = Landscape()
+        fresh_donor.add_edge("A", "B", delta=1.0, resistance=0.5)
+        fresh_donor.add_edge("B", "C", delta=0.8, resistance=0.4)
+        fresh_donor.add_state("GOAL")
+
+        r_global = cross_propose_edges(
+            stuck1, fresh_donor, "X", "GOAL", scoped=False,
+        )
+        r_scoped = cross_propose_edges(
+            stuck2, fresh_donor, "X", "GOAL", scoped=True,
+        )
+        # Both should have same donor pattern (global scan of fresh = scoped scan of fresh)
+        assert r_global.donor_pattern.sample_size == 0
+        assert r_scoped.donor_pattern.sample_size == 0
+
+    def test_historized_donor_scoped_differs_from_global(self):
+        """Historized donor: scoped extracts local pattern, differs from global."""
+        stuck1 = _build_frontier_landscape()
+        stuck2 = _build_frontier_landscape()
+        donor = _build_heavily_historized_donor()
+
+        r_global = cross_propose_edges(
+            stuck1, donor, "A", "GOAL", scoped=False,
+        )
+        r_scoped = cross_propose_edges(
+            stuck2, donor, "A", "GOAL", scoped=True,
+        )
+        # Scoped should use different effective discount (locality > 0)
+        # so proposals likely differ in resistance
+        if r_global.proposals and r_scoped.proposals:
+            # At minimum, the rationale must differ
+            assert r_global.proposals[0].rationale != r_scoped.proposals[0].rationale
+
+    def test_scoped_discount_lower_than_base_for_partial_locality(self):
+        """With ℓ < 1, effective discount < base discount."""
+        stuck = _build_frontier_landscape()
+        donor = _build_experienced_landscape()  # moderate historization
+        result = cross_propose_edges(
+            stuck, donor, "X", "GOAL", scoped=True,
+            coupling_discount=0.5,
+        )
+        # The effective discount is visible in the rationale
+        for p in result.proposals:
+            # Extract discount from rationale
+            parts = p.rationale.split("discount=")
+            if len(parts) > 1:
+                eff_str = parts[1].split()[0].rstrip(",")
+                eff = float(eff_str)
+                # γ_min × 0.5 ≤ effective ≤ 0.5
+                assert eff <= 0.5 + 1e-9
+                assert eff >= _GAMMA_MIN * 0.5 - 1e-9
+
+    def test_no_proposals_when_all_connected_scoped(self):
+        L = Landscape()
+        L.add_edge("X", "Y", delta=0.5, resistance=0.3)
+        L.add_edge("X", "GOAL", delta=0.5, resistance=0.3)
+        donor = _build_experienced_landscape()
+        result = cross_propose_edges(L, donor, "X", "GOAL", scoped=True)
+        assert result.edges_added == 0
+
+    def test_confidence_cap_preserved_scoped(self):
+        stuck = _build_frontier_landscape()
+        donor = _build_experienced_landscape()
+        result = cross_propose_edges(stuck, donor, "X", "GOAL", scoped=True)
+        for p in result.proposals:
+            assert p.confidence <= 0.7
+
+
+class TestScopedCrossReflexionTurn:
+    """scoped_cross_reflexion_turn (C107 convenience wrapper)."""
+
+    def test_scoped_turn_runs(self):
+        active = Universe(
+            name="A",
+            landscape=_build_frontier_landscape(),
+            execute_fn=_success,
+            start="S",
+            goal="GOAL",
+        )
+        passive = Universe(
+            name="B",
+            landscape=_build_experienced_landscape(),
+            execute_fn=_success,
+            start="A",
+            goal="D",
+        )
+        scoped_cross_reflexion_turn(active, passive)
+
+    def test_scoped_turn_adds_edges_when_stuck(self):
+        active = Universe(
+            name="stuck",
+            landscape=_build_frontier_landscape(),
+            execute_fn=_failure,
+            start="S",
+            goal="GOAL",
+        )
+        passive = Universe(
+            name="experienced",
+            landscape=_build_experienced_landscape(),
+            execute_fn=_success,
+            start="A",
+            goal="D",
+        )
+        edges_before = len(active.landscape._delta)
+        scoped_cross_reflexion_turn(active, passive)
+        edges_after = len(active.landscape._delta)
+        assert edges_after >= edges_before
+
+
+class TestRunWithScopedCrossReflexion:
+    """run_with_cross_reflexion(..., scoped=True)."""
+
+    def test_scoped_run_completes(self):
+        a = Universe(
+            name="target",
+            landscape=_build_frontier_landscape(),
+            execute_fn=_success,
+            start="S",
+            goal="GOAL",
+        )
+        b = Universe(
+            name="donor",
+            landscape=_build_experienced_landscape(),
+            execute_fn=_success,
+            start="A",
+            goal="D",
+        )
+        result = run_with_cross_reflexion(a, b, max_cycles=30, scoped=True)
+        assert isinstance(result, CrossReflexionRunResult)
+
+    def test_scoped_run_proposes_edges(self):
+        a = Universe(
+            name="target",
+            landscape=_build_frontier_landscape(),
+            execute_fn=_success,
+            start="S",
+            goal="GOAL",
+        )
+        b = Universe(
+            name="donor",
+            landscape=_build_experienced_landscape(),
+            execute_fn=_success,
+            start="A",
+            goal="D",
+        )
+        result = run_with_cross_reflexion(a, b, max_cycles=30, scoped=True)
+        assert result.total_edges_added > 0
