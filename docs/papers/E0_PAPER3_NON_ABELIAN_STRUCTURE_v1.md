@@ -1,15 +1,14 @@
-# Non-Abelian Structure in E₀: Per-Edge SU(2) Transport and Curvature Modulation
+# E₀-III: Non-Abelian Structure in Discrete Transition Systems
 
-**Paper 3 — Draft v1.0**
-**Date:** 2026-03-26
-**Status:** Draft
-**Prerequisite:** E₀ Formal Paper (v1.0), §1–§9
+**Thomas Wehner**
+
+---
 
 ---
 
 ## Abstract
 
-The E₀ framework derives, from three primitives (difference Δ, resistance R, historization H), a complex path amplitude Ψ(p) = exp(−S) · exp(iΘ) whose phase Θ is accumulated from an antisymmetric U(1) connection ω. This paper extends the phase structure from Abelian U(1) to non-Abelian SU(2). The extension is carried out in three stages. First, the scalar connection ω is promoted to an SU(2) edge transport U(x,y) = exp(−iω/2 · n̂ · σ⃗), where the rotation axis n̂ may vary per edge (§3). Second, the rotation axis is derived from the local Helmholtz geometry of the transition field, yielding a three-component su(2) connection A⃗ = (A₁, A₂, A₃) whose components encode vorticity gradient, face holonomy, and direct connection (§4). Third, the face holonomy is used to define an edge curvature κ and a topological modulation factor M_H = 1/(1+κ) that feeds back into the transition field v = Δ · M_H · exp(−S_eff) (§5). The resulting structure is non-commutative, path-order-dependent, and produces interference patterns in ℂ² that are strictly richer than U(1). All claims are verified numerically against 71 tests across four graph topologies. An experimental switch (curvature_modulation) allows runtime comparison of the modulated and unmodulated regimes. When disabled (default), all prior behavior is exactly preserved.
+The E₀ framework derives, from three primitives (difference Δ, resistance R, historization H), a complex path amplitude Ψ(p) = exp(−S) · exp(iΘ) whose phase Θ is accumulated from an antisymmetric U(1) connection ω. This paper extends the phase structure from Abelian U(1) to non-Abelian SU(2). The extension is carried out in three stages. First, the scalar connection ω is promoted to an SU(2) edge transport U(x,y) = exp(−iω/2 · n̂ · σ⃗), where the rotation axis n̂ may vary per edge (§3). Second, the rotation axis is derived from the local Helmholtz geometry of the transition field, yielding a three-component su(2) connection A⃗ = (A₁, A₂, A₃) whose components encode vorticity gradient, face holonomy, and direct connection (§4). Third, the face holonomy is used to define an edge curvature κ and a topological modulation factor M_H^{(κ)} = 1/(1+κ) that feeds back into the transition field v = Δ · M_H^{(κ)} · exp(−S_eff) (§5). The resulting structure is non-commutative, path-order-dependent, and produces interference patterns in ℂ² that are strictly richer than U(1). All claims are verified numerically against 161 tests across four graph topologies. An experimental switch (curvature_modulation) allows runtime comparison of the modulated and unmodulated regimes. When disabled (default), all prior behavior is exactly preserved.
 
 ---
 
@@ -17,7 +16,7 @@ The E₀ framework derives, from three primitives (difference Δ, resistance R, 
 
 ### 1.1 Context
 
-The E₀ formal framework [Paper 1] establishes a transition-centered system built from difference, resistance, and historization. Its mathematical core derives a dependency chain
+The E₀ framework (Paper 1, E₀-I) establishes a transition-centered system built from difference, resistance, and historization. Its mathematical core derives a dependency chain
 
 $$
 \Delta \to R_0 \to H \to \delta_H \to R_{\text{eff}} \to S \to C \to \Phi \to v_{\text{rot}} \to \omega \to \Theta \to \Psi
@@ -31,7 +30,7 @@ $$
 \omega(x,y) = \tfrac{1}{2}\bigl(v_{\text{rot}}(x,y) - v_{\text{rot}}(y,x)\bigr)
 $$
 
-It generates a U(1) phase $\Theta(p) = \sum_{e \in p} \omega(e)$ and yields scalar holonomy $\text{Hol}(\gamma) = \Theta(\gamma) \in \mathbb{R}$. This is sufficient to produce constructive and destructive interference in ℂ, and has been shown to enable topology-dependent override behavior in hybrid controllers [Paper 2, §5–6].
+It generates a U(1) phase $\Theta(p) = \sum_{e \in p} \omega(e)$ and yields scalar holonomy $\text{Hol}(\gamma) = \Theta(\gamma) \in \mathbb{R}$. This is sufficient to produce constructive and destructive interference in ℂ, and has been shown to enable topology-dependent override behavior in hybrid controllers (Paper 2, E₀-II, §5–6).
 
 However, the U(1) structure has a fundamental limitation: all edge transports commute. The phase accumulated along a path $A \to B \to C$ is identical to $A \to C \to B$ as long as the same edges are traversed. Path *order* does not matter — only the edge *set*.
 
@@ -41,21 +40,21 @@ In gauge theory, the step from Abelian U(1) to non-Abelian SU(2) is the step fro
 
 For E₀, the question is whether such non-Abelian structure can emerge from the existing transition framework without importing external assumptions. This paper shows that it can, in three stages:
 
-1. **Per-edge rotation axes** (§3): The scalar ω already exists on every edge. By coupling it to a per-edge unit vector n̂(x,y) ∈ ℝ³ via SU(2) generators σ⃗, the transport becomes matrix-valued. Different axes on different edges produce non-commutativity.
+1. **Per-edge rotation axes** (§4): The scalar ω already exists on every edge. By coupling it to a per-edge unit vector n̂(x,y) ∈ ℝ³ via SU(2) generators σ⃗, the transport becomes matrix-valued. Different axes on different edges produce non-commutativity.
 
-2. **Geometry-derived axes** (§4): The axis n̂ need not be externally assigned. It can be derived from the local Helmholtz decomposition of the transition field, producing a three-component su(2) connection whose components have intrinsic geometric meaning.
+2. **Geometry-derived axes** (§5): The axis n̂ need not be externally assigned. It can be derived from the local Helmholtz decomposition of the transition field, producing a three-component su(2) connection whose components have intrinsic geometric meaning.
 
-3. **Curvature feedback** (§5): The face holonomy of triangles through an edge defines a local curvature κ, which modulates the transition field via M_H = 1/(1+κ). This closes a feedback loop: geometry → curvature → transition field → geometry.
+3. **Curvature feedback** (§6): The face holonomy of triangles through an edge defines a local curvature κ, which modulates the transition field via $M_H^{(\kappa)} = 1/(1+\kappa)$. This closes a feedback loop: geometry → curvature → transition field → geometry.
 
 ### 1.3 Contributions
 
 This paper makes the following contributions:
 
-- **C1:** Extension of the E₀ path amplitude from ℂ to ℂ² via SU(2) spinor transport, with per-edge rotation axes (§3).
-- **C2:** Derivation of a three-component su(2) connection from the Helmholtz structure of the transition field, without external parameters (§4).
-- **C3:** Definition of edge curvature κ from face holonomy and a topological modulation factor M_H that feeds back into the transition field (§5).
-- **C4:** Numerical verification across 71 tests on four graph topologies, with complete backward compatibility (§6).
-- **C5:** Runtime experimental switch allowing comparison of modulated and unmodulated regimes (§5.4).
+- **C1:** Extension of the E₀ path amplitude from ℂ to ℂ² via SU(2) spinor transport, with per-edge rotation axes (§4).
+- **C2:** Derivation of a three-component su(2) connection from the Helmholtz structure of the transition field, without external parameters (§5).
+- **C3:** Definition of edge curvature κ from face holonomy and a curvature-based modulation factor $M_H^{(\kappa)}$ that feeds back into the transition field (§6).
+- **C4:** Numerical verification across 161 tests on four graph topologies, with complete backward compatibility (§7).
+- **C5:** Runtime experimental switch allowing comparison of modulated and unmodulated regimes (§6.6).
 
 ### 1.4 Scope and Honesty Statement
 
@@ -63,11 +62,47 @@ The SU(2) extension is mathematically well-defined and operationally realized. I
 
 The extension is introduced behind an experimental switch (`curvature_modulation=False` by default). The default runtime of E₀ is unchanged.
 
+**Note on M_H naming.** This paper’s curvature-based modulation factor $M_H^{(\kappa)} = 1/(1+\kappa)$ is distinct from the overlap-based modulation factor $M_H^{(\text{overlap})}$ introduced in Paper 5 (E₀-V). Both enter the transition field multiplicatively and both use the symbol $M_H$ in the codebase, but they measure different properties: curvature $\kappa$ measures non-integrability of the gauge connection (face holonomy); overlap measures 2-hop bypass support (triangle neighborhood). The curvature modulation is controlled by `curvature_modulation`, the overlap modulation by `overlap_modulation`. Both default to False.
+
 ---
 
-## 2. Preliminaries
+## 2. Related Work
 
-We assume familiarity with the E₀ formal framework [Paper 1]. The following objects are used throughout:
+The extension from Abelian to non-Abelian gauge structure on discrete
+spaces has a substantial mathematical literature. We organize related
+work along three axes.
+
+**Lattice gauge theory.** Wilson (1974) introduced gauge fields on
+discrete lattices using $\text{SU}(N)$-valued link variables and
+plaquette actions, establishing the foundation for non-perturbative QCD.
+E₀’s per-edge SU(2) transport (§3) occupies an analogous position:
+edge transports are group-valued, and face holonomy (§4.2) corresponds
+to the Wilson plaquette. The critical difference is that E₀’s connection
+is *derived* from the transition field’s Helmholtz decomposition, not
+imported as an independent dynamical variable.
+
+**Discrete differential geometry.** Regge calculus, discrete exterior
+calculus (Desbrun et al., 2005), and finite element exterior calculus
+(Arnold et al., 2006) provide frameworks for differential geometry on
+simplicial complexes. E₀’s discrete Helmholtz decomposition (§4.1) is
+most closely related to discrete exterior calculus; the three-component
+su(2) connection (§4.2) can be viewed as a discrete Yang–Mills
+connection derived from graph-theoretic primitives rather than smooth
+manifold structure.
+
+**Graph connections and non-Abelian transport.** Kenyon (2011) and
+Singer & Wu (2012) study vector bundles and connections on graphs for
+synchronization problems (angular synchronization, rotation averaging).
+Bandeira et al. (2017) analyze the computational complexity of such
+problems. E₀’s contribution is that the rotation axes are not free
+parameters but are derived from the transition field’s geometry (§4),
+closing the system against external input.
+
+---
+
+## 3. Preliminaries
+
+We assume familiarity with the E₀ framework (Paper 1, E₀-I). The following objects are used throughout:
 
 | Symbol | Definition | Domain |
 |--------|-----------|--------|
@@ -93,9 +128,9 @@ They satisfy $[\sigma_i, \sigma_j] = 2i\epsilon_{ijk}\sigma_k$ and generate the 
 
 ---
 
-## 3. SU(2) Spinor Transport
+## 4. SU(2) Spinor Transport
 
-### 3.1 Edge Transport Matrix
+### 4.1 Edge Transport Matrix
 
 For a directed edge $(x \to y)$ with connection $\omega(x,y)$ and rotation axis $\hat{n}(x,y) \in \mathbb{R}^3$, $\|\hat{n}\| = 1$, define the SU(2) edge transport:
 
@@ -114,7 +149,7 @@ $$
 - $U(x,y)^{-1} = U(x,y)^\dagger$
 - When $\hat{n} = \hat{z}$ for all edges: $U$ is diagonal, and SU(2) reduces to U(1)
 
-### 3.2 Path Transport
+### 4.2 Path Transport
 
 For a path $p = (x_0, x_1, \ldots, x_n)$, define the ordered path transport:
 
@@ -138,7 +173,7 @@ $$
 
 This is the fundamental difference from U(1): path order matters.
 
-### 3.3 Spinor Amplitude
+### 4.3 Spinor Amplitude
 
 Define the spinor path amplitude:
 
@@ -158,7 +193,7 @@ $$
 
 This means the coherence factor is independent of the non-Abelian structure. The SU(2) phase affects only the *direction* of the spinor, not its magnitude. Individual path weights are unchanged; interference patterns are where the difference appears.
 
-### 3.4 Spinor Superposition and Intensity
+### 4.4 Spinor Superposition and Intensity
 
 For a target state $z$ with bounded path set $\{p_1, \ldots, p_k\}$:
 
@@ -172,7 +207,7 @@ $$
 
 Interference now occurs **component-wise** in ℂ². Two paths that destructively interfere in U(1) may constructively interfere in one spinor component while destructively interfering in the other, producing strictly richer interference patterns.
 
-### 3.5 720° Periodicity
+### 4.5 720° Periodicity
 
 A fundamental property of SU(2) is double-covering of SO(3):
 
@@ -187,15 +222,15 @@ A full $2\pi$ rotation of the connection phase does *not* return the spinor to i
 
 ---
 
-## 4. Geometry-Derived su(2) Connection
+## 5. Geometry-Derived su(2) Connection
 
-### 4.1 From External to Emergent Axes
+### 5.1 From External to Emergent Axes
 
-Section 3 introduced the rotation axis $\hat{n}(x,y)$ as a parameter. This section shows that $\hat{n}$ can be *derived* from the local Helmholtz structure of the transition field.
+Section 4 introduced the rotation axis $\hat{n}(x,y)$ as a parameter. This section shows that $\hat{n}$ can be *derived* from the local Helmholtz structure of the transition field.
 
 The key insight: the Helmholtz decomposition of $v$ into $v_{\text{grad}}$ and $v_{\text{rot}}$ already contains three distinguishable geometric quantities on each edge, corresponding naturally to three su(2) generators.
 
-### 4.2 Three-Component Connection
+### 5.2 Three-Component Connection
 
 For a directed edge $(x \to y)$, define the su(2) connection vector:
 
@@ -226,7 +261,7 @@ $$
 
 where $T$ is the set of vertices $z$ forming directed triangles $x \to y \to z \to x$ (i.e., edges $y \to z$ and $z \to x$ both exist). Non-zero when local faces carry gauge curvature — the discrete analog of the Yang-Mills field strength $F_{\mu\nu}$.
 
-### 4.3 Geometric Transport
+### 5.3 Geometric Transport
 
 The total connection angle and emergent axis are:
 
@@ -248,7 +283,7 @@ $$
 
 which is diagonal and equivalent to U(1).
 
-### 4.4 Antisymmetry
+### 5.4 Antisymmetry
 
 Each component $A_i$ is antisymmetric:
 
@@ -267,7 +302,7 @@ $$
 U_{\text{geo}}(y,x) = U_{\text{geo}}(x,y)^\dagger
 $$
 
-### 4.5 Four Theories
+### 5.5 Four Theories
 
 The E₀ framework now supports four distinct phase theories, forming a hierarchy:
 
@@ -278,57 +313,65 @@ The E₀ framework now supports four distinct phase theories, forming a hierarch
 | SU(2)-geometric | $e^{-i\vec{A}\cdot\vec{\sigma}/2}$ | $\Psi \in \mathbb{C}^2$ | Non-Abelian |
 | SU(2)-multi-axis | $e^{-i\omega/2\,\hat{n}(e)\cdot\vec{\sigma}}$ | $\Psi \in \mathbb{C}^2$ | Non-Abelian |
 
-The first is the baseline from Papers 1–2. The second lifts it to spinors without changing interference (phase halving). The third and fourth introduce genuine non-commutativity. Numerical tests confirm all four produce distinct intensities on the same graph (§6.2).
+The first is the baseline from Papers 1–2. The second lifts it to spinors without changing interference (phase halving). The third and fourth introduce genuine non-commutativity. Numerical tests confirm all four produce distinct intensities on the same graph (§7.2).
 
 ---
 
-## 5. Curvature and Topological Modulation
+## 6. Curvature and Topological Modulation
 
-### 5.1 Edge Curvature
+### 6.1 Edge Curvature
 
-The $A_2$ component of the geometric connection (§4.2) measures face holonomy — the net phase around triangles through an edge. This motivates a scalar curvature measure.
+The $A_2$ component of the geometric connection (§5.2) measures face holonomy — the net phase around triangles through an edge. This motivates a scalar curvature measure.
 
-**Definition 5.1** (Edge curvature). For a directed edge $(x \to y)$, define:
+**Definition 6.1** (Edge curvature). For a directed edge $(x \to y)$, define:
 
 $$
 \kappa(x,y) = \frac{1}{|T|}\sum_{z \in T} \bigl|\omega(x,y) + \omega(y,z) + \omega(z,x)\bigr|
 $$
 
-where $T$ is the set of triangle-closing vertices (as in §4.2). If $T = \emptyset$, then $\kappa = 0$.
+where $T$ is the set of triangle-closing vertices (as in §5.2). If $T = \emptyset$, then $\kappa = 0$.
 
 Properties:
 - $\kappa \geq 0$ (absolute value of holonomy)
 - $\kappa = 0$ when all face holonomies vanish (flat geometry)
 - $\kappa = 0$ when no triangles exist through the edge
 
-### 5.2 Topological Modulation Factor
+### 6.2 Curvature Modulation Factor
 
-**Definition 5.2** (M_H). For a directed edge $(x \to y)$:
+**Definition 6.2** ($M_H^{(\kappa)}$). For a directed edge $(x \to y)$:
 
 $$
-M_H(x,y) = \frac{1}{1 + \kappa(x,y)}
+M_H^{(\kappa)}(x,y) = \frac{1}{1 + \kappa(x,y)}
 $$
 
 Properties:
-- $M_H \in (0, 1]$
-- $\kappa = 0 \implies M_H = 1$ (no modulation)
-- $\kappa \to \infty \implies M_H \to 0$ (complete suppression)
+- $M_H^{(\kappa)} \in (0, 1]$
+- $\kappa = 0 \implies M_H^{(\kappa)} = 1$ (no modulation)
+- $\kappa \to \infty \implies M_H^{(\kappa)} \to 0$ (complete suppression)
 
-**Alternative.** The formula $M_H = e^{-\kappa}$ has the same asymptotic limits (1 at $\kappa = 0$, 0 at $\kappa \to \infty$) but decays faster for moderate curvature. The choice between algebraic and exponential damping is an open parameter.
+**Alternative.** The formula $M_H^{(\kappa)} = e^{-\kappa}$ has the same asymptotic limits (1 at $\kappa = 0$, 0 at $\kappa \to \infty$) but decays faster for moderate curvature. The choice between algebraic and exponential damping is an open parameter.
 
-### 5.3 Modulated Transition Field
+### 6.3 Modulated Transition Field
 
 The transition field with curvature modulation is:
 
 $$
-v(x,y) = \Delta(x,y) \cdot M_H(x,y) \cdot \exp\!\bigl(-S_{\text{eff}}(x \to y)\bigr)
+v(x,y) = \Delta(x,y) \cdot M_H^{(\kappa)}(x,y) \cdot \exp\!\bigl(-S_{\text{eff}}(x \to y)\bigr)
 $$
 
-This is the full form specified in [Paper 1, §5.1], where M_H was previously set to 1.
+This is the full form specified in Paper 1 (E₀-I, §5.1), where $M_H^{(\kappa)}$ was previously set to 1.
+
+**Relationship to overlap modulation.** Paper 5 (E₀-V) introduces a second modulation factor $M_H^{(\text{overlap})}$ based on triangle neighborhood support. The full transition field, when both are active, is:
+
+$$
+v(x,y) = \Delta(x,y) \cdot M_H^{(\kappa)}(x,y) \cdot M_H^{(\text{overlap})}(x,y) \cdot I(x,y) \cdot \exp\!\bigl(-S_{\text{eff}}(x \to y)\bigr)
+$$
+
+where $I$ is the inertia factor from the 4-layer model (C42). When both modulation flags are off (the default), $v$ reduces to $\Delta \cdot \exp(-S_{\text{eff}})$.
 
 **Operational interpretation:** High-curvature edges — those surrounded by non-integrable face structure — have their transition capacity reduced. The system preferentially routes through flat (integrable) regions of the landscape.
 
-### 5.4 Circular Dependency and Resolution
+### 6.4 Circular Dependency and Resolution
 
 A subtlety arises: the modulated $v$ changes the Helmholtz decomposition, which changes $v_{\text{rot}}$, which changes $\omega$, which changes $\kappa$, which changes $M_H$, which changes $v$. This is a circular dependency:
 
@@ -336,13 +379,13 @@ $$
 v \to \Phi \to v_{\text{rot}} \to \omega \to \kappa \to M_H \to v
 $$
 
-**Resolution:** M_H is computed from the *base* (unmodulated) $\omega$. The curvature $\kappa$ reflects the pure geometric structure of the landscape. M_H then modulates the transition field as a one-way correction, not an iterative fixed point.
+**Resolution:** $M_H^{(\kappa)}$ is computed from the *base* (unmodulated) $\omega$. The curvature $\kappa$ reflects the pure geometric structure of the landscape. $M_H^{(\kappa)}$ then modulates the transition field as a one-way correction, not an iterative fixed point.
 
-Implementation: the `curvature_modulation` flag is temporarily disabled during M_H cache construction, ensuring that $\kappa$ is computed from the unmodulated transition field. The Helmholtz cache is invalidated before and after.
+Implementation: the `curvature_modulation` flag is temporarily disabled during $M_H^{(\kappa)}$ cache construction, ensuring that $\kappa$ is computed from the unmodulated transition field. The Helmholtz cache is invalidated before and after.
 
-### 5.5 Curvature Feedback Loop
+### 6.5 Curvature Feedback Loop
 
-Although M_H is computed from base $\omega$, the modulated $v$ changes the landscape for *subsequent* controller cycles. Through historization, the feedback becomes temporal:
+Although $M_H^{(\kappa)}$ is computed from base $\omega$, the modulated $v$ changes the landscape for *subsequent* controller cycles. Through historization, the feedback becomes temporal:
 
 $$
 \text{Cycle } t: \quad \kappa_t \to M_{H,t} \to v_t \to \text{transition} \to H_{t+1}
@@ -351,9 +394,9 @@ $$
 \text{Cycle } t{+}1: \quad R_{\text{eff},t+1} \to S_{t+1} \to v_{t+1} \to \kappa_{t+1} \to M_{H,t+1}
 $$
 
-Historization provides the temporal coupling. At any given cycle, M_H is a static modulation; across cycles, it participates in the dynamic evolution of the landscape.
+Historization provides the temporal coupling. At any given cycle, $M_H^{(\kappa)}$ is a static modulation; across cycles, it participates in the dynamic evolution of the landscape.
 
-### 5.6 Experimental Switch
+### 6.6 Experimental Switch
 
 Curvature modulation is controlled by a boolean parameter on the Landscape:
 
@@ -362,13 +405,13 @@ Landscape(curvature_modulation=False)  # default: M_H ≡ 1
 Landscape(curvature_modulation=True)   # experimental: M_H from κ
 ```
 
-When disabled, all existing behavior is exactly preserved. The 1082 tests from prior work pass without modification. When enabled, 35 additional tests verify the modulation behavior across four graph topologies.
+When disabled, all existing behavior is exactly preserved. The 3173 tests from the full framework pass without modification. When enabled, 35 additional tests verify the modulation behavior across four graph topologies.
 
 ---
 
-## 6. Numerical Verification
+## 7. Numerical Verification
 
-### 6.1 Test Domains
+### 7.1 Test Domains
 
 Four graph topologies are used for systematic testing:
 
@@ -381,7 +424,7 @@ Four graph topologies are used for systematic testing:
 
 All domains use strongly asymmetric edge parameters (forward: $\Delta = 5.0$, $R_0 = 0.1$; reverse: $\Delta = 0.1$, $R_0 = 0.9$) to produce non-zero $\omega$ via the Helmholtz decomposition. Symmetric edges yield $\omega = 0$ (the rotational component vanishes when forward and reverse have identical parameters), making all gauge structure trivially zero.
 
-### 6.2 B1 Results: Per-Edge SU(2) Axes (36 Tests)
+### 7.2 B1 Results: Per-Edge SU(2) Axes (36 Tests)
 
 **Non-commutativity (4 tests).** All three Pauli pairs $(\sigma_x, \sigma_y)$, $(\sigma_y, \sigma_z)$, $(\sigma_x, \sigma_z)$ produce $\|AB - BA\| > 0.1$ for typical E₀ connection angles. Same-axis products commute to machine precision ($< 10^{-12}$).
 
@@ -395,7 +438,7 @@ All domains use strongly asymmetric edge parameters (forward: $\Delta = 5.0$, $R
 
 **Controller integration (5 tests).** The `axis_fn` parameter threads through `E0Controller → _compute_overlay → analyze_controller_state → spinor_psi`. On a fan graph (action M has 2 paths), multi-axis produces overlay intensity differing from single-axis by 0.015. With `axis_fn=None`, results are identical to prior behavior (10 decimal places).
 
-### 6.3 B2 Results: Curvature Modulation (35 Tests)
+### 7.3 B2 Results: Curvature Modulation (35 Tests)
 
 **Flat geometry (5 tests).** Line graph: $\kappa = 0$ for all edges, $M_H = 1$, $v$ unchanged by modulation. Symmetric triangle: $\omega = 0$, same result. These are negative controls confirming that modulation is a no-op on flat topologies.
 
@@ -409,7 +452,7 @@ All domains use strongly asymmetric edge parameters (forward: $\Delta = 5.0$, $R
 
 **Cache consistency (3 tests).** M_H cache is built once and reused. Entries exist for all edges. Helmholtz cache key includes the modulation flag.
 
-### 6.4 Topology Reclassification Under SU(2)
+### 7.4 Topology Reclassification Under SU(2)
 
 A significant operational consequence of SU(2) transport is topology reclassification. On Gordian-lite graphs (multi-path families with near-destructive interference under U(1)):
 
@@ -425,9 +468,9 @@ On G5 multi-goal domains, the winner flips: U(1) selects goal B (A-family destru
 
 ---
 
-## 7. Discussion
+## 8. Discussion
 
-### 7.1 What is Derived vs. Assumed
+### 8.1 What is Derived vs. Assumed
 
 The SU(2) structure rests on two assumptions beyond the E₀ core:
 
@@ -437,7 +480,7 @@ The SU(2) structure rests on two assumptions beyond the E₀ core:
 
 Everything else follows from the existing E₀ chain. The three-component connection $\vec{A}$ is derived from the Helmholtz decomposition. The edge curvature $\kappa$ is computed from face holonomies already present in the framework. No new primitives are introduced.
 
-### 7.2 Relation to Gauge Theory
+### 8.2 Relation to Gauge Theory
 
 The geometric connection $\vec{A}(x,y)$ has structural parallels to Yang-Mills theory:
 
@@ -447,20 +490,24 @@ The geometric connection $\vec{A}(x,y)$ has structural parallels to Yang-Mills t
 
 These are *analogs*, not identifications. E₀ operates on discrete directed graphs, not smooth manifolds. The Helmholtz decomposition replaces the de Rham decomposition; the graph Laplacian replaces the Hodge Laplacian. The correspondence is structural, not physical.
 
-### 7.3 Backward Compatibility
+### 8.3 Backward Compatibility
 
 The design is strictly backward-compatible:
 
 - `axis_fn=None` reduces to $\hat{n} = \hat{z}$, which reduces SU(2) to U(1) phase structure
-- `curvature_modulation=False` (default) gives $M_H = 1$, recovering the existing transition field
-- All 1082 prior tests pass without modification
-- The 71 new tests cover the extended regime
+- `curvature_modulation=False` (default) gives $M_H^{(\kappa)} = 1$, recovering the existing transition field
+- All 3173 framework tests pass without modification
+- 161 SU(2)-specific tests cover the extended regime
 
 The experimental switch approach allows the modulated and unmodulated regimes to coexist and be compared on identical domains.
 
-### 7.4 Open Questions
+### 8.4 Born Sampling in ℂ²
 
-1. **Self-consistency of iterated M_H.** The current implementation computes $\kappa$ from base $\omega$, not from modulated $\omega$. A fixed-point iteration $\kappa_{n+1} = \kappa(\omega_{\text{mod},n})$ could be studied for convergence.
+The Born distribution $P(z) \propto I(z) = \|\Psi(z)\|^2$ extends naturally to spinor amplitudes. Since $I(z) = |\Psi_1(z)|^2 + |\Psi_2(z)|^2$ under SU(2), the Born sampling mechanism (Paper 1, §6; Paper 2, §3) operates identically — the controller samples from $P \propto I$ regardless of whether $I$ was computed from U(1) or SU(2) amplitudes. No separate spinor-specific Born function is needed.
+
+### 8.5 Open Questions
+
+1. **Self-consistency of iterated $M_H^{(\kappa)}$.** The current implementation computes $\kappa$ from base $\omega$, not from modulated $\omega$. A fixed-point iteration $\kappa_{n+1} = \kappa(\omega_{\text{mod},n})$ could be studied for convergence.
 
 2. **Physical interpretation.** Does the curvature feedback have a natural interpretation in terms of "structural learning difficulty"? High-curvature regions might correspond to areas of the landscape where historization produces inconsistent signals.
 
@@ -470,7 +517,7 @@ The experimental switch approach allows the modulated and unmodulated regimes to
 
 ---
 
-## 8. Conclusion
+## 9. Conclusion
 
 Starting from the E₀ transition framework and its Abelian U(1) connection, we have shown that non-Abelian SU(2) structure emerges naturally at three levels:
 
@@ -480,7 +527,7 @@ Starting from the E₀ transition framework and its Abelian U(1) connection, we 
 
 3. **Topological:** Face holonomy defines an edge curvature that modulates the transition field, closing a feedback loop between geometry and dynamics.
 
-The resulting framework preserves all prior E₀ behavior when the extensions are disabled, produces measurably different interference patterns when enabled, and is verified by 71 tests across four graph topologies. No new primitives are introduced: the non-Abelian structure is latent in the existing dependency chain
+The resulting framework preserves all prior E₀ behavior when the extensions are disabled, produces measurably different interference patterns when enabled, and is verified by 161 tests across four graph topologies. No new primitives are introduced: the non-Abelian structure is latent in the existing dependency chain
 
 $$
 \Delta \to R_0 \to H \to R_{\text{eff}} \to S \to v \to v_{\text{rot}} \to \omega \to \vec{A} \to U \to \Psi \in \mathbb{C}^2
@@ -512,23 +559,26 @@ and is revealed by lifting the representation from scalars to spinors.
 
 | Suite | Tests | Module |
 |-------|------:|--------|
+| SU(2) Core | 60 | `test_spinor.py` |
 | B1: Multi-Axis SU(2) | 36 | `test_multi_axis_su2.py` |
 | B2: Curvature Modulation | 35 | `test_curvature_modulation.py` |
-| SU(2) Reclassification | 21 | `test_topology_classification.py`, `test_g5_edge_cases.py`, `test_born_sampling.py` |
-| SU(2) Core | 52 | `test_spinor.py` |
-| **Total SU(2)-related** | **144** | |
+| Topology Classification (incl. SU(2)) | 30 | `test_topology_classification.py` |
+| **Total SU(2)-related** | **161** | |
 
 ### A.3 Reproducibility
 
 ```bash
-# Full regression (1117 tests, 0 failures, 32 skipped)
-python -m unittest discover -s e0_controller -p "test_*.py" -v
+# Full regression (3173 tests, 0 failures)
+py -3 -m pytest e0_controller/ -q
 
 # B1 only (36 tests)
-python -m unittest e0_controller.test_multi_axis_su2 -v
+py -3 -m pytest e0_controller/test_multi_axis_su2.py -v
 
 # B2 only (35 tests)
-python -m unittest e0_controller.test_curvature_modulation -v
+py -3 -m pytest e0_controller/test_curvature_modulation.py -v
+
+# All SU(2) tests (161 tests)
+py -3 -m pytest e0_controller/test_spinor.py e0_controller/test_multi_axis_su2.py e0_controller/test_curvature_modulation.py e0_controller/test_topology_classification.py -v
 ```
 
 ---
@@ -542,11 +592,18 @@ python -m unittest e0_controller.test_curvature_modulation -v
 | $\|\Psi(p)\| = e^{-S(p)}$ | **Derived** | Unitarity of SU(2) |
 | $\vec{A} = (A_1, A_2, A_3)$ | **Derived** | Helmholtz decomposition applied to graph |
 | $\kappa(x,y)$ | **Derived** | Defined from existing holonomy |
-| $M_H = 1/(1+\kappa)$ | **Heuristic** | Candidate satisfying boundary conditions |
+| $M_H^{(\kappa)} = 1/(1+\kappa)$ | **Heuristic** | Candidate satisfying boundary conditions |
 | $\hat{n} = \hat{z}$ default | **Convention** | Simplest embedding; backward-compatible |
 | Per-edge axis_fn | **Extension** | Degree of freedom; not uniquely determined |
 | 720° periodicity | **Derived** | Consequence of $\text{SU}(2) \to \text{SO}(3)$ double cover |
 
 ---
 
-_End of Paper 3 Draft v1.0_
+## Appendix C: Relationship to Other Papers
+
+| Paper | Contribution | Relation to This Paper |
+|-------|-------------|------------------------|
+| P1 (E₀-I) | Path amplitudes, interference, U(1) phase | Extended from U(1) to SU(2) (§4–5) |
+| P2 (E₀-II) | Internal difference, Born criterion | Born rule extends to ℂ² (§8.4) |
+| P4 (E₀-IV) | Reflexive self-modification | Self-graph can observe curvature components |
+| P5 (E₀-V) | Emergent locality, overlap M_H | Distinct overlap M_H complements curvature M_H (§6.3) |
