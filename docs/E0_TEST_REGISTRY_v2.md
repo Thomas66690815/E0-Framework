@@ -3,8 +3,8 @@
 > Central validation registry for the E₀ Framework.
 > **Purpose:** connect claims, tests, evidence, and status in one place.
 
-**Last updated:** 2026-04-02 — **3065 tests** (0 failures, 0 warnings) across **85 test files**  
-**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, **C52 Honest Self-Knowledge (CANON_PROCESS_MAP correction)**, **C53 Domain-Invariance Benchmark (10 domains, 1 controller)**, **C54 Raumzeit Coupling (closed vs coupled systems)**, **C55 Amplitude Benchmark (10 domains × 3 modes)**, **C56 Reflexive Edge Proposal (Historisierung informiert Topologie)**, **C57 Proactive Reflexion (Stufe 2)**, **C58 Reflexion Benchmark (10 domains × 3 Stufen)**, **C59 Integrated Reflexion (C49 + C57 unified)**, **C60 Multiverse (coupled systems, NoveltyGate, convergence/divergence)**, **C61 Cross-Domain Multiverse Benchmark**, **C62 Cross-Universe Reflexive Edge Discovery**, **C63 OVERLOADED Escalation (OI-triggered peer consultation)**, **C64 Gridworld Baseline Benchmark (E₀ vs A* vs Naive-Greedy)**, **C66 CouplingRouter (N>2 dynamic partner selection)**, **C67 Asymmetric Coupling (weight-based directional R₀)**, **C68 Coupling Self-Graph (Stufe-3 reflexion for coupling pipeline)**, **C69 Cross-Reflexion Benchmark (edge copying vs edge creation)**, **C70 OVERLOADED Benchmark (peer consultation × 10 domains)**, **C71 LLM Co-Cognition (2 LLMs coupled via multiverse)**, **C72 Chess Engine (strategic dimension navigation)**, **C73 Primitive Extensions (fully_connected + strategy_profile)**, **C74 Team Chess (multiverse team play)**, **C75–C81 Empirical Validation Phase (attractor universality, multi-attractor dynamics, transfer learning, convergence speed, asymmetric ρ, attractor prediction, focus narrowing — explore scripts)**, **C82 Focus Narrowing in Controller (focus_k + peer bypass)**, **C83 Service Layer (SnapshotCodec, InputPipeline, PeerBridge, ServiceSession, SessionManager)**, **C84 API Gateway (FastAPI REST + WebSocket, 13 endpoints)**, **C85 Client (React + Cytoscape.js)**, **C86 Test Runner UI**, **C88 Keimzelle (graph-centric UI rebuild)**, **C89–C93 UI iteration (edge labels, path trail, peer interaction, mechanism indicator, scenarios)**, **C94 Observation Landscape (O-Landscape)**, **C95 Observation Controller (navigation + projection)**, **C96 Rendering Adapter (observation → wire format)**, **C97 Observation UI Integration (server + client wiring)**, **C98 Graduated Overlap in Greedy Loop (M_H closes last research question)**, **C99 Inertia Dampening in Greedy Loop (confused edges penalized)**.
+**Last updated:** 2026-04-02 — **3094 tests** (0 failures, 0 warnings) across **86 test files**  
+**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, **C52 Honest Self-Knowledge (CANON_PROCESS_MAP correction)**, **C53 Domain-Invariance Benchmark (10 domains, 1 controller)**, **C54 Raumzeit Coupling (closed vs coupled systems)**, **C55 Amplitude Benchmark (10 domains × 3 modes)**, **C56 Reflexive Edge Proposal (Historisierung informiert Topologie)**, **C57 Proactive Reflexion (Stufe 2)**, **C58 Reflexion Benchmark (10 domains × 3 Stufen)**, **C59 Integrated Reflexion (C49 + C57 unified)**, **C60 Multiverse (coupled systems, NoveltyGate, convergence/divergence)**, **C61 Cross-Domain Multiverse Benchmark**, **C62 Cross-Universe Reflexive Edge Discovery**, **C63 OVERLOADED Escalation (OI-triggered peer consultation)**, **C64 Gridworld Baseline Benchmark (E₀ vs A* vs Naive-Greedy)**, **C66 CouplingRouter (N>2 dynamic partner selection)**, **C67 Asymmetric Coupling (weight-based directional R₀)**, **C68 Coupling Self-Graph (Stufe-3 reflexion for coupling pipeline)**, **C69 Cross-Reflexion Benchmark (edge copying vs edge creation)**, **C70 OVERLOADED Benchmark (peer consultation × 10 domains)**, **C71 LLM Co-Cognition (2 LLMs coupled via multiverse)**, **C72 Chess Engine (strategic dimension navigation)**, **C73 Primitive Extensions (fully_connected + strategy_profile)**, **C74 Team Chess (multiverse team play)**, **C75–C81 Empirical Validation Phase (attractor universality, multi-attractor dynamics, transfer learning, convergence speed, asymmetric ρ, attractor prediction, focus narrowing — explore scripts)**, **C82 Focus Narrowing in Controller (focus_k + peer bypass)**, **C83 Service Layer (SnapshotCodec, InputPipeline, PeerBridge, ServiceSession, SessionManager)**, **C84 API Gateway (FastAPI REST + WebSocket, 13 endpoints)**, **C85 Client (React + Cytoscape.js)**, **C86 Test Runner UI**, **C88 Keimzelle (graph-centric UI rebuild)**, **C89–C93 UI iteration (edge labels, path trail, peer interaction, mechanism indicator, scenarios)**, **C94 Observation Landscape (O-Landscape)**, **C95 Observation Controller (navigation + projection)**, **C96 Rendering Adapter (observation → wire format)**, **C97 Observation UI Integration (server + client wiring)**, **C98 Graduated Overlap in Greedy Loop (M_H closes last research question)**, **C99 Inertia Dampening in Greedy Loop (confused edges penalized)**, **C100 Modulation Benchmark (14 domains × 3 modes, overlap + inertia validated)**.
 
 ---
 
@@ -2629,6 +2629,36 @@ M_H as graduated overlap functional (Ontodynamics §3.4) is integrated into the 
 
 ---
 
+### C100 — Modulation Benchmark (14 domains × 3 modes)
+
+**Claim**  
+The greedy formula `argmin S_eff/(M_H·I)` with overlap modulation (C98) and inertia dampening (C99) preserves domain-invariance across all 10 standard domains (C53) while demonstrably improving navigation in 4 dedicated stress domains. Modulation never costs extra steps on any domain.
+
+**Evidence**  
+- `e0_controller/benchmark_modulation.py` — 14 domains × 3 modes (BASELINE, OVERLAP, FULL)
+- `e0_controller/test_benchmark_modulation.py` — 29 tests across 8 classes:
+  - `TestStressDomainIntegrity` (4): D11-D14 topologies well-formed, goals reachable
+  - `TestAllDomainsReachGoal` (3): all 14 domains reach goal in BASELINE, OVERLAP, FULL
+  - `TestDomainInvariance` (5): 10 standard domains unchanged by modulation, no extra steps
+  - `TestOverlapEffect` (4): D6 saves steps, D12 path changes with overlap
+  - `TestInertiaEffect` (4): D11 inertia flips confused→clean, D13 inertia routes around confused path
+  - `TestModulationNeutrality` (3): neutral on fresh domains, overlap+inertia compose
+  - `TestModulationComposition` (3): FULL includes all OVERLAP changes, never worse than either alone
+  - `TestBenchmarkInfrastructure` (3): ModulationComparison dataclass, JSON serialization, pretty-print
+
+**Result**  
+- All 14 goals reached in all 3 modes (domain-invariance preserved)
+- D6: overlap saves 3 steps (avoids failing G2 path)
+- D11: inertia flips choice (confused edge with lower R₀ avoided)
+- D12: overlap prefers bypass-supported path (triangle structure)
+- D13: inertia routes around confused direct path
+- 10 standard domains: zero path changes (neutrality confirmed)
+
+**Status**  
+✅ Confirmed
+
+---
+
 ## 6. Test file inventory
 
 | Test file | Tests | Commit |
@@ -2718,7 +2748,8 @@ M_H as graduated overlap functional (Ontodynamics §3.4) is integrated into the 
 | `test_observation_integration.py` | 28 | C97 |
 | `test_graduated_overlap.py` | 24 | C98 |
 | `test_inertia_greedy.py` | 21 | C99 |
-| **Total** | **3065** | |
+| `test_benchmark_modulation.py` | 29 | C100 |
+| **Total** | **3094** | |
 
 ---
 
