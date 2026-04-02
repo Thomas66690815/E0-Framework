@@ -26,6 +26,7 @@ from e0_controller.scoped_reflexion import (
     scoped_propose_edges,
     run_with_scoped_reflexion,
     _bfs_neighborhood,
+    _corridor_neighborhood,
     _graph_diameter_estimate,
 )
 from e0_controller.reflexive_edge_proposal import (
@@ -745,3 +746,152 @@ class TestAdaptiveMu:
         L = Landscape()
         L.add_edge("A", "B", delta=1.0, resistance=1.0)
         assert landscape_mu(L) == pytest.approx(0.5)
+
+
+# ══════════════════════════════════════════════
+# TestCorridorScope (C106)
+# ══════════════════════════════════════════════
+
+def _make_forked_chain() -> Landscape:
+    """Forked topology for corridor tests.
+
+    S → A → B → C → G   (main path)
+    S → X → Y → Z        (side branch, no goal)
+    """
+    L = Landscape()
+    for src, tgt in [("S", "A"), ("A", "B"), ("B", "C"), ("C", "G")]:
+        L.add_edge(src, tgt, delta=0.5, resistance=1.0)
+    for src, tgt in [("S", "X"), ("X", "Y"), ("Y", "Z")]:
+        L.add_edge(src, tgt, delta=0.5, resistance=1.0)
+    return L
+
+
+class TestCorridorScope:
+    """Validate non-spherical (corridor) scopes.
+
+    C106 resolves P5 §10.4 open question 2: corridors follow inscription
+    patterns rather than treating all graph directions equally.
+    """
+
+    def test_corridor_on_fresh_equals_spherical(self):
+        """Fresh landscape: corridor=True degrades to spherical (no trace_load)."""
+        L = _make_forked_chain()
+        scope_s = compute_reflexion_scope(L, "S", goal="G")
+        scope_c = compute_reflexion_scope(L, "S", goal="G", corridor=True)
+        assert scope_s.included_states == scope_c.included_states
+        assert scope_c.mode == "spherical"
+
+    def test_corridor_follows_inscribed_path(self):
+        """Corridor scope follows only the inscribed direction."""
+        L = _make_forked_chain()
+        # Inscribe ONLY the main path S→A→B→C→G
+        for src, tgt in [("S", "A"), ("A", "B"), ("B", "C"), ("C", "G")]:
+            for _ in range(5):
+                L.historization.update(Edge(src, tgt), Outcome.SUCCESS)
+        scope = compute_reflexion_scope(L, "S", goal="G", corridor=True)
+        assert scope.mode == "corridor"
+        # Main path included
+        assert {"S", "A", "B", "C", "G"} <= scope.included_states
+        # Side branch excluded
+        assert "X" not in scope.included_states
+        assert "Y" not in scope.included_states
+        assert "Z" not in scope.included_states
+
+    def test_corridor_excludes_uninscribed(self):
+        """States reachable only via uninscribed edges are excluded."""
+        L = _make_forked_chain()
+        # Inscribe only side branch
+        for src, tgt in [("S", "X"), ("X", "Y"), ("Y", "Z")]:
+            for _ in range(5):
+                L.historization.update(Edge(src, tgt), Outcome.SUCCESS)
+        scope = compute_reflexion_scope(L, "S", corridor=True)
+        assert scope.mode == "corridor"
+        assert {"S", "X", "Y", "Z"} <= scope.included_states
+        # Main path beyond S excluded (S→A not inscribed)
+        assert "A" not in scope.included_states
+
+    def test_corridor_subset_of_spherical(self):
+        """Corridor scope ⊆ spherical scope on asymmetrically inscribed graph."""
+        L = _make_forked_chain()
+        for src, tgt in [("S", "A"), ("A", "B"), ("B", "C"), ("C", "G")]:
+            for _ in range(5):
+                L.historization.update(Edge(src, tgt), Outcome.SUCCESS)
+        scope_s = compute_reflexion_scope(L, "S", goal="G")
+        scope_c = compute_reflexion_scope(L, "S", goal="G", corridor=True)
+        assert scope_c.included_states <= scope_s.included_states
+
+    def test_corridor_fallback_when_too_small(self):
+        """If corridor produces < 2 states, falls back to spherical."""
+        L = _make_forked_chain()
+        # Inscribe only one edge far from center — corridor from S has no neighbors
+        L.historization.update(Edge("Y", "Z"), Outcome.SUCCESS)
+        scope = compute_reflexion_scope(L, "S", corridor=True)
+        # mean_load > 0 BUT corridor from S has no experienced neighbors
+        assert scope.mode == "spherical"
+
+    def test_corridor_mode_in_rationale(self):
+        """Rationale contains mode=corridor when corridor is active."""
+        L = _make_forked_chain()
+        for src, tgt in [("S", "A"), ("A", "B")]:
+            for _ in range(3):
+                L.historization.update(Edge(src, tgt), Outcome.SUCCESS)
+        scope = compute_reflexion_scope(L, "S", corridor=True)
+        assert "mode=corridor" in scope.rationale
+
+    def test_corridor_mode_default_spherical_in_rationale(self):
+        """Rationale contains mode=spherical when corridor not used."""
+        L = _make_chain(6)
+        scope = compute_reflexion_scope(L, "S")
+        assert "mode=spherical" in scope.rationale
+
+    def test_corridor_bfs_on_fresh(self):
+        """_corridor_neighborhood returns only center on fresh landscape."""
+        L = _make_forked_chain()
+        result = _corridor_neighborhood(L, "S", 10)
+        assert result == {"S"}
+
+    def test_corridor_bfs_follows_experience(self):
+        """_corridor_neighborhood expands along inscribed edges only."""
+        L = _make_forked_chain()
+        for src, tgt in [("S", "A"), ("A", "B")]:
+            L.historization.update(Edge(src, tgt), Outcome.SUCCESS)
+        result = _corridor_neighborhood(L, "S", 5)
+        assert result == {"S", "A", "B"}
+
+    def test_corridor_runner_reaches_goal(self):
+        """Runner with corridor=True reaches goal on broken chain."""
+        L = _make_chain(6)
+        L.remove_edge("B", "C")  # force reflexion at B
+        fn = lambda s, t: Outcome.SUCCESS
+        trace, proposals, scopes = run_with_scoped_reflexion(
+            L, fn, "S", "G", max_cycles=30, corridor=True,
+        )
+        assert trace.steps[-1].target == "G"
+        assert len(proposals) > 0
+
+    def test_corridor_proposals_use_local_pattern(self):
+        """Corridor proposals are based on corridor-local pattern extraction."""
+        L = _make_forked_chain()
+        L.remove_edge("B", "C")  # frontier at B
+        # Inscribe main path up to B
+        for src, tgt in [("S", "A"), ("A", "B")]:
+            for _ in range(5):
+                L.historization.update(Edge(src, tgt), Outcome.SUCCESS)
+        proposals = scoped_propose_edges(
+            L, "B", "G", corridor=True, max_proposals=5,
+        )
+        # Proposals exist (B is a frontier)
+        assert len(proposals) > 0
+        # All proposals originate from B
+        assert all(p.source == "B" for p in proposals)
+
+    def test_corridor_with_both_branches_inscribed(self):
+        """When both branches inscribed, corridor includes both."""
+        L = _make_forked_chain()
+        for src, tgt in [("S", "A"), ("A", "B"), ("B", "C"), ("C", "G"),
+                         ("S", "X"), ("X", "Y"), ("Y", "Z")]:
+            for _ in range(3):
+                L.historization.update(Edge(src, tgt), Outcome.SUCCESS)
+        scope = compute_reflexion_scope(L, "S", goal="G", corridor=True)
+        # Both branches should be included
+        assert scope.included_states == set(L.states)

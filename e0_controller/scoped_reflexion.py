@@ -80,6 +80,7 @@ class ReflexionScope:
         locality: Degree of localization [0, 1). 0 = global, →1 = fully local.
         mean_load: Mean trace_load across all edges (diagnostic).
         rationale: Human-readable explanation.
+        mode: "spherical" (BFS ball) or "corridor" (inscription-weighted).
     """
     center: str
     radius: int
@@ -87,6 +88,7 @@ class ReflexionScope:
     locality: float = 0.0
     mean_load: float = 0.0
     rationale: str = ""
+    mode: str = "spherical"
 
     @property
     def is_global(self) -> bool:
@@ -152,6 +154,37 @@ def _bfs_neighborhood(
     return visited
 
 
+def _corridor_neighborhood(
+    landscape: Landscape,
+    center: str,
+    radius: int,
+) -> Set[str]:
+    """BFS neighborhood restricted to edges with trace_load > 0 (undirected).
+
+    Creates an anisotropic scope that follows inscription corridors —
+    regions where the system has actual traversal experience.  On
+    fresh landscapes (all trace_load = 0), returns {center} only.
+    """
+    visited: Set[str] = {center}
+    frontier: Set[str] = {center}
+    hist = landscape.historization
+    for _ in range(radius):
+        next_frontier: Set[str] = set()
+        for node in frontier:
+            for edge in landscape._delta:
+                if edge.source == node and edge.target not in visited:
+                    if hist.trace_load(edge) > 0:
+                        next_frontier.add(edge.target)
+                elif edge.target == node and edge.source not in visited:
+                    if hist.trace_load(edge) > 0:
+                        next_frontier.add(edge.source)
+        visited.update(next_frontier)
+        frontier = next_frontier
+        if not frontier:
+            break
+    return visited
+
+
 def _graph_diameter_estimate(landscape: Landscape) -> int:
     """Estimate graph diameter via BFS from a sample of nodes.
 
@@ -193,6 +226,7 @@ def compute_reflexion_scope(
     *,
     goal: Optional[str] = None,
     mu: Optional[float] = None,
+    corridor: bool = False,
 ) -> ReflexionScope:
     """Compute reflexion scope from historization state.
 
@@ -209,6 +243,10 @@ def compute_reflexion_scope(
         mu: Half-load parameter.  When mean_load == mu, locality = 0.5.
             If None (default), derived from landscape topology as
             |E|/|V| (mean out-degree).  See landscape_mu().
+        corridor: If True and the landscape has historization, restrict
+            scope to states reachable via experienced edges (trace_load > 0).
+            Falls back to spherical BFS if corridor produces < 2 states.
+            On fresh landscapes, corridor ≡ spherical (degeneration).
 
     Returns:
         ReflexionScope with included_states, locality, and radius.
@@ -251,16 +289,29 @@ def compute_reflexion_scope(
     if goal is not None and goal in landscape.states:
         included |= _bfs_neighborhood(landscape, goal, radius)
 
+    # Corridor mode: restrict to inscription corridors
+    mode = "spherical"
+    if corridor and mean_load > 0:
+        corr = _corridor_neighborhood(landscape, current, radius)
+        if goal is not None and goal in landscape.states:
+            corr |= _corridor_neighborhood(landscape, goal, radius)
+        if len(corr) >= 2:
+            included = corr
+            mode = "corridor"
+        # else: keep spherical (corridor too small)
+
     return ReflexionScope(
         center=current,
         radius=radius,
         included_states=included,
         locality=round(locality, 4),
         mean_load=round(mean_load, 4),
+        mode=mode,
         rationale=(
             f"mean_load={mean_load:.2f}, μ={mu}, "
             f"locality={locality:.3f}, "
             f"diameter={diameter}, radius={radius}, "
+            f"mode={mode}, "
             f"scope={len(included)}/{len(landscape.states)} states"
         ),
     )
@@ -347,6 +398,7 @@ def scoped_propose_edges(
     max_proposals: int = 5,
     proactive: bool = True,
     mu: Optional[float] = None,
+    corridor: bool = False,
 ) -> List[ProposedEdge]:
     """Propose edges within historization-derived scope.
 
@@ -364,7 +416,9 @@ def scoped_propose_edges(
         mu: Half-load parameter for scope computation
     """
     if scope is None:
-        scope = compute_reflexion_scope(landscape, current, goal=goal, mu=mu)
+        scope = compute_reflexion_scope(
+            landscape, current, goal=goal, mu=mu, corridor=corridor,
+        )
 
     candidates = _find_scoped_candidates(landscape, current, scope)
     if not candidates:
@@ -418,6 +472,7 @@ def run_with_scoped_reflexion(
     max_cycles: int = 50,
     max_proposals: int = 5,
     mu: Optional[float] = None,
+    corridor: bool = False,
 ) -> Tuple[RunTrace, List[ProposedEdge], List[ReflexionScope]]:
     """Run with historization-scoped proactive reflexion.
 
@@ -443,7 +498,9 @@ def run_with_scoped_reflexion(
 
         # Proactive: at every frontier, propose with scope
         if current not in proposed_from and is_frontier(landscape, current, goal):
-            scope = compute_reflexion_scope(landscape, current, goal=goal, mu=mu)
+            scope = compute_reflexion_scope(
+                landscape, current, goal=goal, mu=mu, corridor=corridor,
+            )
             all_scopes.append(scope)
 
             proposals = scoped_propose_edges(
@@ -451,6 +508,7 @@ def run_with_scoped_reflexion(
                 max_proposals=max_proposals,
                 proactive=True,
                 mu=mu,
+                corridor=corridor,
             )
             proposed_from.add(current)
             if proposals:
