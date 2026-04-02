@@ -3,8 +3,8 @@
 > Central validation registry for the E₀ Framework.
 > **Purpose:** connect claims, tests, evidence, and status in one place.
 
-**Last updated:** 2026-04-02 — **3094 tests** (0 failures, 0 warnings) across **86 test files**  
-**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, **C52 Honest Self-Knowledge (CANON_PROCESS_MAP correction)**, **C53 Domain-Invariance Benchmark (10 domains, 1 controller)**, **C54 Raumzeit Coupling (closed vs coupled systems)**, **C55 Amplitude Benchmark (10 domains × 3 modes)**, **C56 Reflexive Edge Proposal (Historisierung informiert Topologie)**, **C57 Proactive Reflexion (Stufe 2)**, **C58 Reflexion Benchmark (10 domains × 3 Stufen)**, **C59 Integrated Reflexion (C49 + C57 unified)**, **C60 Multiverse (coupled systems, NoveltyGate, convergence/divergence)**, **C61 Cross-Domain Multiverse Benchmark**, **C62 Cross-Universe Reflexive Edge Discovery**, **C63 OVERLOADED Escalation (OI-triggered peer consultation)**, **C64 Gridworld Baseline Benchmark (E₀ vs A* vs Naive-Greedy)**, **C66 CouplingRouter (N>2 dynamic partner selection)**, **C67 Asymmetric Coupling (weight-based directional R₀)**, **C68 Coupling Self-Graph (Stufe-3 reflexion for coupling pipeline)**, **C69 Cross-Reflexion Benchmark (edge copying vs edge creation)**, **C70 OVERLOADED Benchmark (peer consultation × 10 domains)**, **C71 LLM Co-Cognition (2 LLMs coupled via multiverse)**, **C72 Chess Engine (strategic dimension navigation)**, **C73 Primitive Extensions (fully_connected + strategy_profile)**, **C74 Team Chess (multiverse team play)**, **C75–C81 Empirical Validation Phase (attractor universality, multi-attractor dynamics, transfer learning, convergence speed, asymmetric ρ, attractor prediction, focus narrowing — explore scripts)**, **C82 Focus Narrowing in Controller (focus_k + peer bypass)**, **C83 Service Layer (SnapshotCodec, InputPipeline, PeerBridge, ServiceSession, SessionManager)**, **C84 API Gateway (FastAPI REST + WebSocket, 13 endpoints)**, **C85 Client (React + Cytoscape.js)**, **C86 Test Runner UI**, **C88 Keimzelle (graph-centric UI rebuild)**, **C89–C93 UI iteration (edge labels, path trail, peer interaction, mechanism indicator, scenarios)**, **C94 Observation Landscape (O-Landscape)**, **C95 Observation Controller (navigation + projection)**, **C96 Rendering Adapter (observation → wire format)**, **C97 Observation UI Integration (server + client wiring)**, **C98 Graduated Overlap in Greedy Loop (M_H closes last research question)**, **C99 Inertia Dampening in Greedy Loop (confused edges penalized)**, **C100 Modulation Benchmark (14 domains × 3 modes, overlap + inertia validated)**.
+**Last updated:** 2026-04-02 — **3098 tests** (0 failures, 0 warnings) across **87 test files**  
+**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, **C52 Honest Self-Knowledge (CANON_PROCESS_MAP correction)**, **C53 Domain-Invariance Benchmark (10 domains, 1 controller)**, **C54 Raumzeit Coupling (closed vs coupled systems)**, **C55 Amplitude Benchmark (10 domains × 3 modes)**, **C56 Reflexive Edge Proposal (Historisierung informiert Topologie)**, **C57 Proactive Reflexion (Stufe 2)**, **C58 Reflexion Benchmark (10 domains × 3 Stufen)**, **C59 Integrated Reflexion (C49 + C57 unified)**, **C60 Multiverse (coupled systems, NoveltyGate, convergence/divergence)**, **C61 Cross-Domain Multiverse Benchmark**, **C62 Cross-Universe Reflexive Edge Discovery**, **C63 OVERLOADED Escalation (OI-triggered peer consultation)**, **C64 Gridworld Baseline Benchmark (E₀ vs A* vs Naive-Greedy)**, **C66 CouplingRouter (N>2 dynamic partner selection)**, **C67 Asymmetric Coupling (weight-based directional R₀)**, **C68 Coupling Self-Graph (Stufe-3 reflexion for coupling pipeline)**, **C69 Cross-Reflexion Benchmark (edge copying vs edge creation)**, **C70 OVERLOADED Benchmark (peer consultation × 10 domains)**, **C71 LLM Co-Cognition (2 LLMs coupled via multiverse)**, **C72 Chess Engine (strategic dimension navigation)**, **C73 Primitive Extensions (fully_connected + strategy_profile)**, **C74 Team Chess (multiverse team play)**, **C75–C81 Empirical Validation Phase (attractor universality, multi-attractor dynamics, transfer learning, convergence speed, asymmetric ρ, attractor prediction, focus narrowing — explore scripts)**, **C82 Focus Narrowing in Controller (focus_k + peer bypass)**, **C83 Service Layer (SnapshotCodec, InputPipeline, PeerBridge, ServiceSession, SessionManager)**, **C84 API Gateway (FastAPI REST + WebSocket, 13 endpoints)**, **C85 Client (React + Cytoscape.js)**, **C86 Test Runner UI**, **C88 Keimzelle (graph-centric UI rebuild)**, **C89–C93 UI iteration (edge labels, path trail, peer interaction, mechanism indicator, scenarios)**, **C94 Observation Landscape (O-Landscape)**, **C95 Observation Controller (navigation + projection)**, **C96 Rendering Adapter (observation → wire format)**, **C97 Observation UI Integration (server + client wiring)**, **C98 Graduated Overlap in Greedy Loop (M_H closes last research question)**, **C99 Inertia Dampening in Greedy Loop (confused edges penalized)**, **C100 Modulation Benchmark (14 domains × 3 modes, overlap + inertia validated)**, **C101 Scoped Reflexion (historization-driven locality for edge proposals)**.
 
 ---
 
@@ -2659,6 +2659,36 @@ The greedy formula `argmin S_eff/(M_H·I)` with overlap modulation (C98) and ine
 
 ---
 
+### C101 — Scoped Reflexion (Historization-Driven Locality)
+
+**Claim**  
+As historization accumulates, reflexion should become local. Global reflexion is the degenerate case of a fresh system. Accumulated trace_load defines a natural scope via `locality = mean_load / (mean_load + μ)`. Scope radius decreases monotonically with inscription depth: fresh systems get global proposals (radius = diameter), historized systems get local proposals (radius → 1). Scoped reflexion restricts both candidate selection and pattern extraction to the scope boundary. Fresh landscape: scoped reflexion ≡ global (no regression). Historized: fewer, locally-informed proposals.
+
+**Evidence**  
+- `e0_controller/scoped_reflexion.py` — ReflexionScope, compute_reflexion_scope, scoped_propose_edges, run_with_scoped_reflexion
+- `e0_controller/test_scoped_reflexion.py` — 35 tests across 8 classes:
+  - `TestScopeComputation` (7): fresh=global, historized=local, monotonic, center included, radius≥1, μ sensitivity, empty
+  - `TestBfsNeighborhood` (4): radius 0/1/full, grid neighborhood
+  - `TestGraphDiameter` (3): chain=5, single=1, fully-connected=1
+  - `TestScopedPattern` (3): local edges only, global scope=global pattern, no-experience fallback
+  - `TestScopedProposals` (5): within scope only, fresh=global, historized=local, rationale, no candidates
+  - `TestFreshDegeneracy` (2): chain+grid fresh same results as global
+  - `TestHistorizedLocality` (3): inscription narrows scope, fewer proposals, local pattern differs
+  - `TestRunner` (4): reaches goal, diamond topology, records scopes, inscription narrows
+  - `TestMathematicalProperties` (4): locality ∈ [0,1), radius ∈ [1,D], scope ⊆ landscape, dataclass consistency
+
+**Result**  
+- Fresh landscape: locality=0, radius=diameter, scope=all states — equivalent to global reflexion
+- Historized landscape: locality>0.5 (at μ=1), radius<diameter, proposals confined to local region
+- Locality monotonically increases with inscription
+- Scoped pattern extraction uses only local edges (different from global average)
+- Runner reaches goal on chain and diamond topologies
+
+**Status**  
+✅ Confirmed
+
+---
+
 ## 6. Test file inventory
 
 | Test file | Tests | Commit |
@@ -2749,7 +2779,8 @@ The greedy formula `argmin S_eff/(M_H·I)` with overlap modulation (C98) and ine
 | `test_graduated_overlap.py` | 24 | C98 |
 | `test_inertia_greedy.py` | 21 | C99 |
 | `test_benchmark_modulation.py` | 29 | C100 |
-| **Total** | **3094** | |
+| `test_scoped_reflexion.py` | 35 | C101 |
+| **Total** | **3098** | |
 
 ---
 
