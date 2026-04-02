@@ -683,9 +683,14 @@ important and may itself be investigable.
    degenerates to spherical. Corridor $\subseteq$ spherical by
    construction.
 
-3. **Multi-agent locality.** In coupled multiverse systems (C60–C71),
+3. **Multi-agent locality.** ~~In coupled multiverse systems (C60–C71),
    each universe develops its own locality. How do locality boundaries
-   interact across coupled systems?
+   interact across coupled systems?~~ **Resolved (C107):** Donor-side
+   locality via `scoped_cross_propose_edges`. Donor pattern extracted
+   from donor's historization-derived scope; coupling discount modulated
+   by donor locality: $d_{\text{eff}} = d \times (\gamma_{\min} + (1 -
+   \gamma_{\min}) \times \ell_{\text{donor}})$ with $\gamma_{\min} = 0.3$.
+   Fresh donor degeneration preserved.
 
 4. **Asymptotic tightness.** Under non-uniform inscription, is the
    convergence rate of $\ell$ bounded by a function of graph topology?
