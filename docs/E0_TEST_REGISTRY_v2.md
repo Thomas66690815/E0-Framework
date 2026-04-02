@@ -3,8 +3,8 @@
 > Central validation registry for the E₀ Framework.
 > **Purpose:** connect claims, tests, evidence, and status in one place.
 
-**Last updated:** 2026-04-02 — **3044 tests** (0 failures, 0 warnings) across **84 test files**  
-**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, **C52 Honest Self-Knowledge (CANON_PROCESS_MAP correction)**, **C53 Domain-Invariance Benchmark (10 domains, 1 controller)**, **C54 Raumzeit Coupling (closed vs coupled systems)**, **C55 Amplitude Benchmark (10 domains × 3 modes)**, **C56 Reflexive Edge Proposal (Historisierung informiert Topologie)**, **C57 Proactive Reflexion (Stufe 2)**, **C58 Reflexion Benchmark (10 domains × 3 Stufen)**, **C59 Integrated Reflexion (C49 + C57 unified)**, **C60 Multiverse (coupled systems, NoveltyGate, convergence/divergence)**, **C61 Cross-Domain Multiverse Benchmark**, **C62 Cross-Universe Reflexive Edge Discovery**, **C63 OVERLOADED Escalation (OI-triggered peer consultation)**, **C64 Gridworld Baseline Benchmark (E₀ vs A* vs Naive-Greedy)**, **C66 CouplingRouter (N>2 dynamic partner selection)**, **C67 Asymmetric Coupling (weight-based directional R₀)**, **C68 Coupling Self-Graph (Stufe-3 reflexion for coupling pipeline)**, **C69 Cross-Reflexion Benchmark (edge copying vs edge creation)**, **C70 OVERLOADED Benchmark (peer consultation × 10 domains)**, **C71 LLM Co-Cognition (2 LLMs coupled via multiverse)**, **C72 Chess Engine (strategic dimension navigation)**, **C73 Primitive Extensions (fully_connected + strategy_profile)**, **C74 Team Chess (multiverse team play)**, **C75–C81 Empirical Validation Phase (attractor universality, multi-attractor dynamics, transfer learning, convergence speed, asymmetric ρ, attractor prediction, focus narrowing — explore scripts)**, **C82 Focus Narrowing in Controller (focus_k + peer bypass)**, **C83 Service Layer (SnapshotCodec, InputPipeline, PeerBridge, ServiceSession, SessionManager)**, **C84 API Gateway (FastAPI REST + WebSocket, 13 endpoints)**, **C85 Client (React + Cytoscape.js)**, **C86 Test Runner UI**, **C88 Keimzelle (graph-centric UI rebuild)**, **C89–C93 UI iteration (edge labels, path trail, peer interaction, mechanism indicator, scenarios)**, **C94 Observation Landscape (O-Landscape)**, **C95 Observation Controller (navigation + projection)**, **C96 Rendering Adapter (observation → wire format)**, **C97 Observation UI Integration (server + client wiring)**, **C98 Graduated Overlap in Greedy Loop (M_H closes last research question)**.
+**Last updated:** 2026-04-02 — **3065 tests** (0 failures, 0 warnings) across **85 test files**  
+**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, **C52 Honest Self-Knowledge (CANON_PROCESS_MAP correction)**, **C53 Domain-Invariance Benchmark (10 domains, 1 controller)**, **C54 Raumzeit Coupling (closed vs coupled systems)**, **C55 Amplitude Benchmark (10 domains × 3 modes)**, **C56 Reflexive Edge Proposal (Historisierung informiert Topologie)**, **C57 Proactive Reflexion (Stufe 2)**, **C58 Reflexion Benchmark (10 domains × 3 Stufen)**, **C59 Integrated Reflexion (C49 + C57 unified)**, **C60 Multiverse (coupled systems, NoveltyGate, convergence/divergence)**, **C61 Cross-Domain Multiverse Benchmark**, **C62 Cross-Universe Reflexive Edge Discovery**, **C63 OVERLOADED Escalation (OI-triggered peer consultation)**, **C64 Gridworld Baseline Benchmark (E₀ vs A* vs Naive-Greedy)**, **C66 CouplingRouter (N>2 dynamic partner selection)**, **C67 Asymmetric Coupling (weight-based directional R₀)**, **C68 Coupling Self-Graph (Stufe-3 reflexion for coupling pipeline)**, **C69 Cross-Reflexion Benchmark (edge copying vs edge creation)**, **C70 OVERLOADED Benchmark (peer consultation × 10 domains)**, **C71 LLM Co-Cognition (2 LLMs coupled via multiverse)**, **C72 Chess Engine (strategic dimension navigation)**, **C73 Primitive Extensions (fully_connected + strategy_profile)**, **C74 Team Chess (multiverse team play)**, **C75–C81 Empirical Validation Phase (attractor universality, multi-attractor dynamics, transfer learning, convergence speed, asymmetric ρ, attractor prediction, focus narrowing — explore scripts)**, **C82 Focus Narrowing in Controller (focus_k + peer bypass)**, **C83 Service Layer (SnapshotCodec, InputPipeline, PeerBridge, ServiceSession, SessionManager)**, **C84 API Gateway (FastAPI REST + WebSocket, 13 endpoints)**, **C85 Client (React + Cytoscape.js)**, **C86 Test Runner UI**, **C88 Keimzelle (graph-centric UI rebuild)**, **C89–C93 UI iteration (edge labels, path trail, peer interaction, mechanism indicator, scenarios)**, **C94 Observation Landscape (O-Landscape)**, **C95 Observation Controller (navigation + projection)**, **C96 Rendering Adapter (observation → wire format)**, **C97 Observation UI Integration (server + client wiring)**, **C98 Graduated Overlap in Greedy Loop (M_H closes last research question)**, **C99 Inertia Dampening in Greedy Loop (confused edges penalized)**.
 
 ---
 
@@ -607,6 +607,7 @@ Born sampling (P ∝ I, choosing actions probabilistically from the amplitude-de
 | `test_rendering_adapter.py` | C96 |
 | `test_observation_integration.py` | C97 |
 | `test_graduated_overlap.py` | C98 |
+| `test_inertia_greedy.py` | C99 |
 
 ---
 
@@ -2601,6 +2602,33 @@ M_H as graduated overlap functional (Ontodynamics §3.4) is integrated into the 
 
 ---
 
+### C99 — Inertia Dampening in Controller Greedy Loop
+
+**Claim**  
+`inertia_factor()` (Layer 3: structural inertia from accumulated inscription) is integrated into the controller's greedy decision loop, not just `transition_field()` in escalation. `_penalized_tension()` divides S_eff by I(x,y) when `inertia_modulation=True`. I = 1 − α·(m/(m+μ))·(1−|q|): edges with high trace_load but contradictory trace_quality (U ≈ F → |q| ≈ 0) get I < 1.0, inflating their effective tension. This captures what δ_H ≈ 0 misses: "no net correction" ≠ "no experience". On uninscribed or clearly directional edges, I = 1.0 and behavior is unchanged.
+
+**Evidence**  
+- `e0_controller/controller.py` — `_penalized_tension()` extended with inertia dampening
+- `e0_controller/test_inertia_greedy.py` — 21 tests across 7 classes:
+  - `TestGreedyInertiaIntegration` (6): fresh preferred over confused, no change without flag, inflates tension, run avoids confused path, δ_H small but I active, deeper confusion = stronger penalty
+  - `TestNeutralityOnFreshDomains` (3): fresh landscape unchanged, clear success not penalized, clear failure not penalized (δ_H handles that)
+  - `TestThreeWayClarity` (2): confused ranked worse than clear-success, greedy avoids confused
+  - `TestInertiaModulationFlag` (3): off by default, backward-compat alias, toggle mid-run changes behavior
+  - `TestInertiaWithOverlap` (1): C98 + C99 compose cleanly (both flags active)
+  - `TestMathematicalProperties` (4): I bounded in (0.5, 1.0], uninscribed returns 1.0, monotonic with confusion, division never zero
+  - `TestSelfGraphTracking` (2): inertia always in CORE_COMPONENTS, active_components reports it
+
+**Result**  
+- Falsification domain validated: S→A (confused, 20× alternating U/F) vs S→B (fresh) — δ_H ≈ 0 for both but I(S→A) < 0.85, controller avoids A
+- Neutral on uninscribed and clearly directional edges (I = 1.0)
+- Clear-failure edges NOT penalized by inertia (δ_H already handles them via R_eff inflation)
+- Composes with C98 overlap modulation without interference
+
+**Status**  
+✅ Confirmed
+
+---
+
 ## 6. Test file inventory
 
 | Test file | Tests | Commit |
@@ -2689,7 +2717,8 @@ M_H as graduated overlap functional (Ontodynamics §3.4) is integrated into the 
 | `test_rendering_adapter.py` | 32 | C96 |
 | `test_observation_integration.py` | 28 | C97 |
 | `test_graduated_overlap.py` | 24 | C98 |
-| **Total** | **3044** | |
+| `test_inertia_greedy.py` | 21 | C99 |
+| **Total** | **3065** | |
 
 ---
 
