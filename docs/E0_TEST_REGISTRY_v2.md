@@ -3,7 +3,7 @@
 > Central validation registry for the E₀ Framework.
 > **Purpose:** connect claims, tests, evidence, and status in one place.
 
-**Last updated:** 2026-04-02 — **3173 tests** (0 failures, 0 warnings) across **92 test files**  
+**Last updated:** 2026-04-02 — **3200 tests** (0 failures, 0 warnings) across **92 test files**  
 **Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, **C52 Honest Self-Knowledge (CANON_PROCESS_MAP correction)**, **C53 Domain-Invariance Benchmark (10 domains, 1 controller)**, **C54 Raumzeit Coupling (closed vs coupled systems)**, **C55 Amplitude Benchmark (10 domains × 3 modes)**, **C56 Reflexive Edge Proposal (Historisierung informiert Topologie)**, **C57 Proactive Reflexion (Stufe 2)**, **C58 Reflexion Benchmark (10 domains × 3 Stufen)**, **C59 Integrated Reflexion (C49 + C57 unified)**, **C60 Multiverse (coupled systems, NoveltyGate, convergence/divergence)**, **C61 Cross-Domain Multiverse Benchmark**, **C62 Cross-Universe Reflexive Edge Discovery**, **C63 OVERLOADED Escalation (OI-triggered peer consultation)**, **C64 Gridworld Baseline Benchmark (E₀ vs A* vs Naive-Greedy)**, **C66 CouplingRouter (N>2 dynamic partner selection)**, **C67 Asymmetric Coupling (weight-based directional R₀)**, **C68 Coupling Self-Graph (Stufe-3 reflexion for coupling pipeline)**, **C69 Cross-Reflexion Benchmark (edge copying vs edge creation)**, **C70 OVERLOADED Benchmark (peer consultation × 10 domains)**, **C71 LLM Co-Cognition (2 LLMs coupled via multiverse)**, **C72 Chess Engine (strategic dimension navigation)**, **C73 Primitive Extensions (fully_connected + strategy_profile)**, **C74 Team Chess (multiverse team play)**, **C75–C81 Empirical Validation Phase (attractor universality, multi-attractor dynamics, transfer learning, convergence speed, asymmetric ρ, attractor prediction, focus narrowing — explore scripts)**, **C82 Focus Narrowing in Controller (focus_k + peer bypass)**, **C83 Service Layer (SnapshotCodec, InputPipeline, PeerBridge, ServiceSession, SessionManager)**, **C84 API Gateway (FastAPI REST + WebSocket, 13 endpoints)**, **C85 Client (React + Cytoscape.js)**, **C86 Test Runner UI**, **C88 Keimzelle (graph-centric UI rebuild)**, **C89–C93 UI iteration (edge labels, path trail, peer interaction, mechanism indicator, scenarios)**, **C94 Observation Landscape (O-Landscape)**, **C95 Observation Controller (navigation + projection)**, **C96 Rendering Adapter (observation → wire format)**, **C97 Observation UI Integration (server + client wiring)**, **C98 Graduated Overlap in Greedy Loop (M_H closes last research question)**, **C99 Inertia Dampening in Greedy Loop (confused edges penalized)**, **C100 Modulation Benchmark (14 domains × 3 modes, overlap + inertia validated)**, **C101 Scoped Reflexion (historization-driven locality for edge proposals)**, **C102 Scoped Reflexion Controller Integration (scoped=True wired into integrated_reflexion pipeline)**, **C103 Scoped Reflexion Benchmark (10 domains × GLOBAL vs SCOPED, fresh degeneration validated)**, **C104 Emergent Locality (historization creates locality as emergent property)**.
 
 ---
@@ -2774,6 +2774,63 @@ Locality is an emergent property of historization, not an imposed parameter. The
 
 ---
 
+### C105 — Adaptive μ (Derive Sensitivity from Landscape Topology)
+
+**Claim**  
+The sensitivity threshold μ in the locality formula ℓ = m̄/(m̄+μ) is not a free parameter but a structural property of the landscape: μ = |E|/|V| (mean out-degree). Sparse graphs (chain, μ < 1) localize fast — one traversal suffices to characterize a non-branching path. Dense graphs (grid, μ > 2) require more experience to discriminate among options. Fresh degeneration (ℓ(m̄=0) = 0) is preserved for any μ > 0. Explicit mu=5.0 still works for backward compatibility. This resolves P5 §10.4 Q1.
+
+**Evidence**  
+- `e0_controller/scoped_reflexion.py` — `landscape_mu(landscape) -> float`: returns |E|/|V|, min 1e-6, safe default 1.0 for degenerate landscapes
+- `mu: Optional[float] = None` in `compute_reflexion_scope`, `scoped_propose_edges`, `run_with_scoped_reflexion`
+- `e0_controller/benchmark_scoped_reflexion.py` — `mu: Optional[float] = None` in `run_scoped_benchmark`
+- `e0_controller/test_scoped_reflexion.py` — 15 tests in `TestAdaptiveMu`:
+  - `test_landscape_mu_formula` (chain: 5/6)
+  - `test_landscape_mu_star` (|E|/|V|)
+  - `test_landscape_mu_grid` (24/9)
+  - `test_sparse_graph_low_mu` (μ < 1)
+  - `test_dense_graph_high_mu` (μ > 2)
+  - `test_mu_scales_with_density` (chain < grid)
+  - `test_adaptive_mu_default` (mu=None uses landscape_mu)
+  - `test_explicit_mu_overrides` (backward compat)
+  - `test_adaptive_fresh_still_global` (ℓ=0)
+  - `test_adaptive_historized_localizes` (ℓ > 0.5)
+  - `test_adaptive_chain_localizes_faster_than_fixed` (auto vs μ=5)
+  - `test_adaptive_runner_reaches_goal` (chain)
+  - `test_adaptive_runner_reaches_goal_diamond` (diamond with frontier)
+  - `test_degenerate_empty_landscape` (μ=1.0)
+  - `test_single_edge_landscape` (μ=0.5)
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C106 — Corridor Scope (Non-Spherical Reflexion)
+
+**Claim**  
+Reflexion scope can follow inscription patterns rather than expanding uniformly (BFS ball). Corridor mode (`corridor=True`) restricts BFS expansion to edges with trace_load > 0, creating anisotropic scopes that track actual traversal experience. On fresh landscapes, corridor degenerates to spherical (no experienced edges). Corridor scope is a subset of spherical scope on asymmetrically inscribed graphs. Falls back to spherical if corridor produces < 2 states. This resolves P5 §10.4 Q2.
+
+**Evidence**  
+- `e0_controller/scoped_reflexion.py` — `_corridor_neighborhood()`: BFS along experienced edges only. `corridor: bool = False` in `compute_reflexion_scope`, `scoped_propose_edges`, `run_with_scoped_reflexion`. `mode` field in `ReflexionScope` ("spherical" or "corridor").
+- `e0_controller/test_scoped_reflexion.py` — 12 tests in `TestCorridorScope`:
+  - `test_corridor_on_fresh_equals_spherical` (degeneration)
+  - `test_corridor_follows_inscribed_path` (main path yes, side branch no)
+  - `test_corridor_excludes_uninscribed` (uninscribed edges excluded)
+  - `test_corridor_subset_of_spherical` (corridor ⊆ spherical)
+  - `test_corridor_fallback_when_too_small` (< 2 states → spherical)
+  - `test_corridor_mode_in_rationale` (mode=corridor in string)
+  - `test_corridor_mode_default_spherical_in_rationale` (mode=spherical)
+  - `test_corridor_bfs_on_fresh` ({center} only)
+  - `test_corridor_bfs_follows_experience` (expands along inscribed)
+  - `test_corridor_runner_reaches_goal` (broken chain)
+  - `test_corridor_proposals_use_local_pattern` (proposals from B)
+  - `test_corridor_with_both_branches_inscribed` (both branches included)
+
+**Status**  
+✅ Confirmed
+
+---
+
 ## 6. Test file inventory
 
 | Test file | Tests | Commit |
@@ -2864,11 +2921,11 @@ Locality is an emergent property of historization, not an imposed parameter. The
 | `test_graduated_overlap.py` | 24 | C98 |
 | `test_inertia_greedy.py` | 21 | C99 |
 | `test_benchmark_modulation.py` | 29 | C100 |
-| `test_scoped_reflexion.py` | 35 | C101 |
+| `test_scoped_reflexion.py` | 62 | C101/C105/C106 |
 | `test_integrated_scoped_reflexion.py` | 18 | C102 |
 | `test_benchmark_scoped_reflexion.py` | 22 | C103 |
 | `test_emergent_locality.py` | 35 | C104 |
-| **Total** | **3173** | |
+| **Total** | **3200** | |
 
 ---
 
