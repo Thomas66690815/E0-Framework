@@ -668,13 +668,20 @@ important and may itself be investigable.
 
 ### 10.4 Open Questions
 
-1. **Optimal $\mu$.** The sensitivity threshold $\mu$ is currently a
+1. **Optimal $\mu$.** ~~The sensitivity threshold $\mu$ is currently a
    user parameter. Can it be derived from landscape properties (e.g.,
-   diameter, edge density)?
+   diameter, edge density)?~~ **Resolved (C105):** $\mu = |E|/|V|$
+   (mean out-degree). Sparse graphs localize fast ($\mu < 1$); dense
+   graphs require more experience ($\mu > 2$). Fresh degeneration
+   preserved for any $\mu > 0$.
 
-2. **Adaptive scope.** The current scope is spherical (BFS). Could
+2. **Adaptive scope.** ~~The current scope is spherical (BFS). Could
    non-spherical scopes (e.g., along high-trace-load corridors) improve
-   proposal quality?
+   proposal quality?~~ **Resolved (C106):** Corridor scope restricts
+   BFS to edges with $m(e) > 0$, creating anisotropic scopes that
+   follow inscription patterns. On fresh landscapes, corridor
+   degenerates to spherical. Corridor $\subseteq$ spherical by
+   construction.
 
 3. **Multi-agent locality.** In coupled multiverse systems (C60–C71),
    each universe develops its own locality. How do locality boundaries
@@ -715,8 +722,8 @@ important and may itself be investigable.
 
 | Claim | Section | Status |
 |-------|---------|--------|
-| $\mu = 5.0$ default is adequate for typical domains | §4.1 | Works on all 14 tested; not derived |
-| BFS-spherical scope is sufficient | §4.2 | Not compared to alternatives |
+| ~~$\mu = 5.0$ default is adequate for typical domains~~ | §4.1 | **Resolved (C105):** $\mu = |E|/|V|$ derived from topology |
+| ~~BFS-spherical scope is sufficient~~ | §4.2 | **Resolved (C106):** corridor scope follows inscription corridors |
 | Composition independence (overlap × inertia) | §3.3 | Empirically verified, not formally proven |
 
 ---

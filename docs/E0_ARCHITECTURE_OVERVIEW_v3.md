@@ -3,7 +3,7 @@
 **Status:** Canonical reference  
 **Date:** 2026-04-02  
 **Supersedes:** E0_ARCHITECTURE_OVERVIEW_v2.md (2026-03-30)  
-**Scope:** All 75+ production modules, ~21,000 lines of code, 3173 tests  
+**Scope:** All 75+ production modules, ~21,000 lines of code, 3200 tests  
 **Papers:** P1 (Structural Interference), P2 (Spinor/Born), P3 (Non-Abelian), P4 (Reflexivity), P5 (Emergent Locality)
 
 ---
@@ -95,7 +95,7 @@ E₀ is organized in seven layers. Each layer depends only on layers above it.
 | `reflexive_edge_proposal.py` | 322 | Hypothesis edges at frontier — reactive (C56) + proactive (C57) | P4 |
 | `reflexive_action.py` | 232 | Diagnosis → concrete landscape mutation (C49) | P4 |
 | `integrated_reflexion.py` | 245 | Unified C49 + C57 reflexion pipeline (C59). Scoped mode (C102): scoped=True delegates to scoped_propose_edges | P4, P5 |
-| `scoped_reflexion.py` | ~200 | Locality-driven scope: ℓ = m̄/(m̄+μ), radius = max(1,⌈(1-ℓ)·D⌉). Fresh → global, historized → local (C101) | P5 |
+| `scoped_reflexion.py` | ~250 | Locality-driven scope: ℓ = m̄/(m̄+μ), radius = max(1,⌈(1-ℓ)·D⌉). μ = |E|/|V| auto-derived (C105). Corridor mode follows inscription (C106). Fresh → global, historized → local (C101) | P5 |
 | `emergent_locality.py` | ~200 | Emergence proof tooling: track locality evolution, phase transition, regional profile, convergence (C104) | P5 |
 | `reflection.py` | 791 | Reflection layer — bounded self-reference, 4 triggers (Phase 3g) | P4 |
 | `structural_mutation.py` | 693 | Bridge 4 — propose/apply/verify/revert topology (Stufe 2) | — |
@@ -273,7 +273,7 @@ All three share the same controller core. They differ only in the final action s
 | M_H | triangle_support · edge_overlap | `overlap.py` |
 | I(e) | 1 − α · m/(m+μ) · (1−\|q\|) | `historization.py` (C42/C99) |
 | S_pen | S_eff / (M_H · I) · (1 + α·𝟙[revisit]) | `controller.py` (C98/C99) |
-| ℓ | m̄ / (m̄ + μ) | `scoped_reflexion.py` (C101) |
+| ℓ | m̄ / (m̄ + μ), μ = |E|/|V| | `scoped_reflexion.py` (C101, C105) |
 | r | max(1, ⌈(1−ℓ)·D⌉) | `scoped_reflexion.py` (C101) |
 | OI(x) | N_admissible × (1 − mean\|q\|) | `controller.py` (C63) |
 
@@ -281,7 +281,7 @@ All three share the same controller core. They differ only in the final action s
 
 ## 8. Test Infrastructure
 
-**3173 tests**, 0 failures (2026-04-02) across **92 test files**.
+**3200 tests**, 0 failures (2026-04-02) across **92 test files**.
 
 | Category | Test Files | Tests |
 |----------|-----------|-------|
