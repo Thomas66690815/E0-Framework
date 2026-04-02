@@ -1,16 +1,16 @@
-# E₀ Architecture Overview v3
+# E₀ Architecture Overview v4
 
 **Status:** Canonical reference  
-**Date:** 2026-04-02  
-**Supersedes:** E0_ARCHITECTURE_OVERVIEW_v2.md (2026-03-30)  
-**Scope:** All 75+ production modules, ~21,000 lines of code, 3200 tests  
-**Papers:** P1 (Structural Interference), P2 (Spinor/Born), P3 (Non-Abelian), P4 (Reflexivity), P5 (Emergent Locality)
+**Date:** 2026-04-03  
+**Supersedes:** E0_ARCHITECTURE_OVERVIEW_v3.md (2026-04-02)  
+**Scope:** 56 production modules, 9 benchmarks, 11 demos, 18 explorations, 92 test files — ~18,000 production lines, 3385 tests  
+**Papers:** P1 (Structural Interference), P2 (Spinor/Born), P3 (Non-Abelian), P4 (Reflexivity), P5 (Emergent Locality), P6 (Dream Mode)
 
 ---
 
 ## 1. Structural Layer Model
 
-E₀ is organized in seven layers. Each layer depends only on layers above it.
+E₀ is organized in nine layers. Each layer depends only on layers above it.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -36,7 +36,8 @@ E₀ is organized in seven layers. Each layer depends only on layers above it.
 ├─────────────────────────────────────────────────────────┤
 │  Layer 6 — MULTI-SYSTEM                                 │
 │  Multiverse (Novelty Gate, Coupling), Cross-Reflexion,   │
-│  Overload Escalation (peer_fn), Raumzeit Coupling        │
+│  Overload Escalation (peer_fn), Raumzeit Coupling,       │
+│  Coupling Router (N>2 dynamic partner selection)         │
 ├─────────────────────────────────────────────────────────┤
 │  Layer 7 — INFRASTRUCTURE                               │
 │  Session, MemOS, LLM Adapter, Bootstrapper, Provenance,  │
@@ -44,7 +45,11 @@ E₀ is organized in seven layers. Each layer depends only on layers above it.
 ├─────────────────────────────────────────────────────────┤
 │  Layer 8 — OBSERVATION                                  │
 │  O-Landscape, Observation Controller, Rendering Adapter, │
-│  Service Layer, Input Pipeline                           │
+│  Service Layer, Input Pipeline, Snapshot Codec            │
+├─────────────────────────────────────────────────────────┤
+│  Layer 9 — DREAM MODE                                   │
+│  EdgeFingerprint, Equivalence Detection, DreamObserver,  │
+│  Bridge Hypothesis, Dream Peer Integration               │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -95,20 +100,21 @@ E₀ is organized in seven layers. Each layer depends only on layers above it.
 | `reflexive_edge_proposal.py` | 322 | Hypothesis edges at frontier — reactive (C56) + proactive (C57) | P4 |
 | `reflexive_action.py` | 232 | Diagnosis → concrete landscape mutation (C49) | P4 |
 | `integrated_reflexion.py` | 245 | Unified C49 + C57 reflexion pipeline (C59). Scoped mode (C102): scoped=True delegates to scoped_propose_edges | P4, P5 |
-| `scoped_reflexion.py` | ~250 | Locality-driven scope: ℓ = m̄/(m̄+μ), radius = max(1,⌈(1-ℓ)·D⌉). μ = |E|/|V| auto-derived (C105). Corridor mode follows inscription (C106). Fresh → global, historized → local (C101) | P5 |
-| `emergent_locality.py` | ~200 | Emergence proof tooling: track locality evolution, phase transition, regional profile, convergence (C104) | P5 |
+| `scoped_reflexion.py` | 445 | Locality-driven scope: ℓ = m̄/(m̄+μ), radius = max(1,⌈(1-ℓ)·D⌉). μ = |E|/|V| auto-derived (C105). Corridor mode follows inscription (C106). Fresh → global, historized → local (C101) | P5 |
+| `emergent_locality.py` | 406 | Emergence proof tooling: track locality evolution, phase transition, regional profile, convergence (C104) | P5 |
 | `reflection.py` | 791 | Reflection layer — bounded self-reference, 4 triggers (Phase 3g) | P4 |
 | `structural_mutation.py` | 693 | Bridge 4 — propose/apply/verify/revert topology (Stufe 2) | — |
 | `self_tuning.py` | 1,164 | Meta-landscape over parameters, tuning memory (B4) | — |
 
-### Layer 6 — Multi-System (4 modules, 891+ lines)
+### Layer 6 — Multi-System (5 modules, 1,720 lines)
 
 | Module | Lines | Purpose | Paper |
 |--------|------:|---------|-------|
 | `multiverse.py` | 363 | Coupled systems: NoveltyGate, divergence pressure, coupling landscape (C60) | — |
 | `cross_reflexion.py` | 284 | Cross-universe reflexive edge discovery: blend_patterns, cross_propose (C62) | — |
 | `raumzeit_coupling.py` | 244 | Coupling necessity theorem proof (C54) | — |
-| `coupling_router.py` | ~100 | N>2 dynamic partner selection (C66/C67) | — |
+| `coupling_router.py` | 545 | N>2 dynamic partner selection, coupling metrics, partner scoring (C66/C67) | — |
+| `peer_bridge.py` | 133 | Peer function bridge: adapter between multiverse coupling and controller peer_fn | — |
 | C63 in `controller.py` | ~30 | OVERLOADED escalation, peer_fn, overload_index | — |
 
 ### Layer 7 — Infrastructure (14 modules, 3,548+ lines)
@@ -131,7 +137,7 @@ E₀ is organized in seven layers. Each layer depends only on layers above it.
 | `envelope.py` | 154 | Typed, frozen controller config: E0Envelope | — |
 | `domain_invoice.py` | 197 | Invoice processing domain model (Phase 1b) | — |
 
-### Benchmarks (6 modules, 1,809 lines)
+### Benchmarks (10 modules, ~3,600 lines)
 
 | Module | Lines | Purpose | Paper |
 |--------|------:|---------|-------|
@@ -140,27 +146,42 @@ E₀ is organized in seven layers. Each layer depends only on layers above it.
 | `benchmark_gridworld.py` | 359 | E₀ vs Naive-Greedy vs A* | P1 |
 | `benchmark_reflexion.py` | 179 | 10 domains × 3 reflexion regimes (C58) | P4 |
 | `benchmark_multiverse.py` | 223 | 5 cross-domain pairings (C61) | — |
-| `benchmark_overloaded.py` | — | Peer consultation × 10 domains (C70) | — |
-| `benchmark_cross_reflexion.py` | — | Cross-universe edge discovery (C69) | — |
-| `benchmark_modulation.py` | ~220 | 14 domains × 3 modes: BASELINE/OVERLAP/FULL (C100) | P5 |
-| `benchmark_scoped_reflexion.py` | ~180 | 10 domains × GLOBAL vs SCOPED (C103) | P5 |
+| `benchmark_overloaded.py` | 271 | Peer consultation × 10 domains (C70) | — |
+| `benchmark_cross_reflexion.py` | 184 | Cross-universe edge discovery (C69) | — |
+| `benchmark_modulation.py` | 387 | 14 domains × 3 modes: BASELINE/OVERLAP/FULL (C100) | P5 |
+| `benchmark_scoped_reflexion.py` | 212 | 10 domains × GLOBAL vs SCOPED (C103) | P5 |
 | `validate_cross_domain.py` | 295 | Systematic demo comparison (Phase 3d) | — |
 
-### Demos (11) and Explorations (9): 6,237 lines
+### Demos (11) and Explorations (18)
 
 Not listed individually — these are experimental tooling for interactive analysis.
 Demos: `demo_beipackzettel`, `demo_ezb_zinsentscheidung`, `demo_burnout_*`, `demo_invoice_llm`, `demo_greedy_trap`, `demo_open_domain`, `demo_research_brief`, `demo_incident_postmortem`, `demo_session_persist`, `demo_canon_exposition`.
-Explorations: `explore_gordian`, `explore_amplitude`, `explore_resonator`, `explore_spinor`, `explore_topology_scan`, `explore_omega_uniqueness`, `explore_g5_edge_cases`, `explore_multigoal`, `explore_historization_gordian`.
+Explorations: `explore_gordian`, `explore_amplitude`, `explore_resonator`, `explore_spinor`, `explore_topology_scan`, `explore_omega_uniqueness`, `explore_g5_edge_cases`, `explore_multigoal`, `explore_historization_gordian`, `explore_asymmetric_rho`, `explore_attractor_prediction`, `explore_attractor_universality`, `explore_convergence_speed`, `explore_dream_mode`, `explore_focus_narrowing`, `explore_landscape_scaling`, `explore_multi_attractor`, `explore_transfer_learning`.
 
-### Layer 8 — Observation (5 modules, ~700 lines)
+### Layer 8 — Observation & Service (6 modules, 1,387 lines)
 
 | Module | Lines | Purpose | Paper |
 |--------|------:|---------|-------|
-| `observation.py` | ~160 | O-Landscape: observation as E₀ domain (scope×depth states) (C94) | — |
-| `observation_controller.py` | ~200 | Navigation (focus/defocus/move/deepen/retreat) + domain projection (C95) | — |
-| `rendering_adapter.py` | ~120 | Observation → wire format: edge data at each depth level (C96) | — |
-| `service.py` | ~200 | FastAPI service layer: 13 REST + WebSocket endpoints (C83/C84) | — |
-| `input_pipeline.py` | ~100 | Input processing, snapshot codec (C83) | — |
+| `observation.py` | 214 | O-Landscape: observation as E₀ domain (scope×depth states) (C94) | — |
+| `observation_controller.py` | 310 | Navigation (focus/defocus/move/deepen/retreat) + domain projection (C95) | — |
+| `rendering_adapter.py` | 178 | Observation → wire format: edge data at each depth level (C96) | — |
+| `service.py` | 437 | FastAPI service layer: REST + WebSocket endpoints (C83/C84) | — |
+| `input_pipeline.py` | 67 | Input processing pipeline (C83) | — |
+| `snapshot_codec.py` | 181 | Snapshot encoding/decoding for persistence and wire format (C83) | — |
+
+### Layer 9 — Dream Mode (1 module, 624 lines)
+
+| Module | Lines | Purpose | Paper |
+|--------|------:|---------|-------|
+| `dream_mode.py` | 624 | Cross-domain pattern recognition: EdgeFingerprint, fingerprint_distance, find_equivalences, DreamObserver (register/unregister/dream_cycle/feedback), BridgeHypothesis, propose_bridges, make_dream_peer_fn (C109–C111) | P6 |
+
+### Applications (3 modules, 1,047 lines)
+
+| Module | Lines | Purpose | Paper |
+|--------|------:|---------|-------|
+| `chess_e0.py` | 399 | E₀ Chess Engine: strategic dimension navigation via landscape (C72) | — |
+| `chess_team.py` | 348 | E₀ Team Chess: multiverse team play with coupling (C74) | — |
+| `llm_cocognition.py` | 300 | LLM Co-Cognition: 2 LLMs coupled via multiverse peer protocol (C71) | — |
 
 ---
 
@@ -215,7 +236,15 @@ Three stages of self-modification, corresponding to increasing structural depth:
   C63)             │  experience informs own         │
   "The other's     │  hypotheses (multiverse)       │
    experience      │                                │
-   informs mine"   └───────────────────────────────┘
+   informs mine"   └───────────┬───────────────────────────┘
+                               │
+                    ┌──────────▼────────────────────┐
+  Stufe 4 (C109–   │  Dream Mode — passive cross-   │
+  C112)            │  domain pattern recognition     │
+  "I dream of      │  via EdgeFingerprints,           │
+   structural      │  equivalences, and bridge        │
+   bridges"        │  hypothesis generation           │
+                    └───────────────────────────────┘
 ```
 
 ---
@@ -281,17 +310,18 @@ All three share the same controller core. They differ only in the final action s
 
 ## 8. Test Infrastructure
 
-**3200 tests**, 0 failures (2026-04-02) across **92 test files**.
+**3385 tests**, 0 failures (2026-04-03) across **92 test files**.
 
 | Category | Test Files | Tests |
 |----------|-----------|-------|
 | Core (L1–L4) | ~25 files | ~1400 |
 | Reflexion (L5) | ~12 files | ~500 |
 | Multi-System (L6) | 3 files (multiverse, cross_reflexion, overload) | 69 |
-| Benchmarks | 8 files | ~350 |
+| Benchmarks | 9 files | ~400 |
 | Infrastructure (L7) | ~12 files | ~550 |
 | Observation (L8) | 4 files | ~160 |
-| Modulation & Locality (C98–C104) | 5 files | ~140 |
+| Modulation & Locality (C98–C108) | 5 files | ~140 |
+| Dream Mode (L9, C109–C112) | 1 file | 79 |
 
 ---
 
@@ -319,6 +349,8 @@ All three share the same controller core. They differ only in the final action s
 | L6 Multi-System | — | Multiverse coupling (paper candidate) |
 | L7 Infrastructure | Partial | bootstrapper, provenance, canon_*, residual_tension |
 | L8 Observation | — | O-Landscape, controller, rendering (architectural doc exists) |
+| L9 Dream Mode | P6 | — |
+| Applications | — | Chess, LLM Co-Cognition (architectural docs exist) |
 | Benchmarks | P1, P4, P5 | C53, C61 uncovered |
 
 ---
@@ -348,6 +380,11 @@ primitives ← tension ← landscape ← historization
     llm_adapter ←──┘ ← bootstrapper ← canon_loader
                        ← provenance
                        ← graph_validation
+                   │
+    dream_mode ←───┤ ← cross_reflexion (equivalences, bridges)
+                   │
+    chess_e0 ←─────┤ ← landscape, controller
+    chess_team ←───┘ ← multiverse
 ```
 
 ---
@@ -368,3 +405,5 @@ primitives ← tension ← landscape ← historization
 | Controller Status | `docs/E0_CONTROLLER_STATUS.md` |
 | Test Registry | `docs/E0_TEST_REGISTRY_v2.md` |
 | Hybrid Spec | `docs/E0_HYBRID_CONTROLLER_SPEC_v1.md` |
+| Dream Mode Concept | `docs/E0_DREAM_MODE_CONCEPT_v1.md` |
+| Paper 6 (Dream Mode) | `docs/papers/PAPER6_MANUSCRIPT_v1.md` (planned) |

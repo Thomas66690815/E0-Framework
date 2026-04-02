@@ -1,6 +1,6 @@
 # E₀ Dream Mode — Cross-Domain Pattern Recognition through Passive Observation
 
-**Status**: Concept Note (pre-implementation)  
+**Status**: Implemented (C109–C112)  
 **Date**: 2026-04-02  
 **Depends on**: C94–C97 (Observation Layer), C62/C107 (Cross-Reflexion), C66–C67 (CouplingRouter)  
 **Canon alignment**: §5 Reflexivity Emergence, §9 Structural Admissibility

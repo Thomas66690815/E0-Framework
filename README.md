@@ -174,7 +174,7 @@ A reflexion layer that operates *across* universes rather than within a single r
 
 ## Documentation quick links
 
-- [Architecture overview v2](docs/E0_ARCHITECTURE_OVERVIEW_v2.md) — 7-layer model with all 67 modules
+- [Architecture overview v4](docs/E0_ARCHITECTURE_OVERVIEW_v4.md) — 9-layer model with all 56+ production modules
 - [Multiverse design](docs/E0_MULTIVERSE_DESIGN_v1.md) — C54–C63 architecture, coupling theorem, benchmarks
 - [Hybrid controller spec](docs/E0_HYBRID_CONTROLLER_SPEC_v1.md) — exact runtime behaviour and metrics
 - [Derived / Empirical / Heuristic map](docs/E0_DERIVED_EMPIRICAL_HEURISTIC_MAP_v1.md) — classification of each subsystem
@@ -182,8 +182,9 @@ A reflexion layer that operates *across* universes rather than within a single r
 - [External validation / handoff note](docs/E0_EXTERNAL_VALIDATION_AND_HANDOFF_NOTE_v1.md) — package for reviewers or AI systems
 - [Phase 3q interference report](docs/E0_PHASE3Q_INTERFERENCE_REPORT_v1.md) — holonomy formula, goal_reaching geometry, Gordian Trap
 - [Paper 3: Non-Abelian Structure](docs/papers/E0_PAPER3_NON_ABELIAN_STRUCTURE_v1.md) — SU(2) transport, curvature modulation, topological invariants
-- [Test Registry v2](docs/E0_TEST_REGISTRY_v2.md) — complete per-file test inventory (3173 tests)
+- [Test Registry v2](docs/E0_TEST_REGISTRY_v2.md) — complete per-file test inventory (3385 tests)
 - [Empirical Insights](docs/E0_EMPIRICAL_INSIGHTS_v1.md) — what Chess (C72) reveals about E₀ as a whole
+- [Dream Mode Concept](docs/E0_DREAM_MODE_CONCEPT_v1.md) — cross-domain pattern recognition through passive observation (C109–C112)
 
 ---
 
@@ -197,7 +198,9 @@ What is unusual here is the combination of:
 - path-phase structure,
 - bounded amplitude superposition,
 - empirically tested summation geometry,
-- and hybrid correction of local greedy decisions.
+- hybrid correction of local greedy decisions,
+- emergent locality (scope narrows with experience),
+- and dream mode (cross-domain pattern recognition through passive observation).
 
 In plain language:
 
@@ -289,8 +292,14 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 | Primitive Extensions (C73) | **Active** (18 tests) | `landscape.py`, `historization.py` |
 | Team Chess (C74) | **Active** (22 tests) | `e0_controller/chess_team.py` |
 | Bootstrap Architecture (C43–C47) | **Complete** | `docs/E0_LLM_BOOTSTRAP_ARCHITECTURE_v1.md` |
+| Overlap Modulation (C98) | **Active** (26 tests) | `e0_controller/overlap.py`, `controller.py` |
+| Inertia Dampening (C99) | **Active** | `e0_controller/historization.py`, `controller.py` |
+| Modulation Benchmark (C100) | **Active** (32 tests) | `e0_controller/benchmark_modulation.py` |
+| Scoped Reflexion (C101–C106) | **Active** (42 tests) | `e0_controller/scoped_reflexion.py` |
+| Emergent Locality (C104) | **Active** (29 tests) | `e0_controller/emergent_locality.py` |
+| Dream Mode (C109–C112) | **Active** (79 tests) | `e0_controller/dream_mode.py` |
 
-**Tests:** 3173 total (pytest discover), 0 failures, 0 warnings, 41 conditional (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
+**Tests:** 3385 total (pytest discover), 0 failures, 0 warnings, 41 conditional (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
 
 ---
 
@@ -409,7 +418,9 @@ E0-Framework/
 │   ├── llm_cocognition.py              LLM Co-Cognition: 2 LLMs coupled via multiverse (C71)
 │   ├── chess_e0.py                     E₀ Chess Engine: strategic dimension navigation (C72)
 │   ├── chess_team.py                   E₀ Team Chess: multiverse team play (C74)
-│   └── test_*.py                       3173 tests (see docs/E0_TEST_REGISTRY_v2.md)
+│   ├── dream_mode.py                   Dream Mode: cross-domain pattern recognition (C109–C112)
+│   ├── explore_dream_mode.py            Dream Mode end-to-end exploration (C112)
+│   └── test_*.py                       3385 tests (see docs/E0_TEST_REGISTRY_v2.md)
 │
 ├── scenarios/                        Scenario Packets for grounded LLM demos
 │   ├── competitor_brief/               Domain-specific scenario data
@@ -417,10 +428,10 @@ E0-Framework/
 │   └── research_brief/                 Domain-specific scenario data
 │
 ├── docs/                             Current essential documentation
-│   ├── E0_ARCHITECTURE_OVERVIEW_v2.md    7-layer module map (67 modules)
+│   ├── E0_ARCHITECTURE_OVERVIEW_v4.md    9-layer module map (56+ modules)
 │   ├── E0_MULTIVERSE_DESIGN_v1.md        Multiverse architecture (C54–C63)
 │   ├── E0_HYBRID_CONTROLLER_SPEC_v1.md   Exact runtime behaviour and metrics
-│   ├── E0_TEST_REGISTRY_v2.md            Complete test inventory (3173 tests)
+│   ├── E0_TEST_REGISTRY_v2.md            Complete test inventory (3385 tests)
 │   ├── E0_MATH_IMPL_MAPPING_v1.md        Math ↔ Code mapping
 │   ├── papers/                           Manuscripts and formal paper drafts
 │   ├── research/                         Scientific investigations and derivations
