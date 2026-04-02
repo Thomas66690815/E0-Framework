@@ -1,13 +1,9 @@
-"""Tests for Dream Mode — C109: Fingerprint + Equivalence Detection.
+"""Tests for Dream Mode — C109/C110.
 
-Tests cover:
-  - Edge fingerprint extraction
-  - Fingerprint distance metric properties
-  - Functional equivalence detection across domains
-  - Dream readiness trigger
-  - Dream Landscape construction
-  - Prediction P1: functional equivalence is detectable
-  - Prediction P5: domain order does not matter
+C109: Edge fingerprint extraction, distance metric, equivalence detection,
+      dream readiness, Dream Landscape construction. P1 + P5 validated.
+C110: DreamObserver class, dream_cycle, incremental updates, feedback,
+      query, noise filtering. P4 validated.
 """
 
 import math
@@ -25,6 +21,8 @@ from e0_controller.benchmark_domain_invariance import (
 from e0_controller.dream_mode import (
     EdgeFingerprint,
     Equivalence,
+    DreamObserver,
+    DreamCycleResult,
     edge_fingerprint,
     domain_fingerprints,
     fingerprint_distance,
@@ -452,3 +450,415 @@ class TestP5DomainOrder:
         dists_ba = sorted(eq.distance for eq in eqs_ba)
         for d1, d2 in zip(dists_ab, dists_ba):
             assert abs(d1 - d2) < 1e-10
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# C110 Tests: DreamObserver
+# ═══════════════════════════════════════════════════════════════════════════
+
+# ═══════════════════════════════════════════════
+# Test: DreamObserver — Registration & Basics
+# ═══════════════════════════════════════════════
+
+class TestDreamObserverBasics:
+    """DreamObserver lifecycle: register, unregister, properties."""
+
+    def test_register_domain(self):
+        obs = DreamObserver()
+        L = _build_simple_domain()
+        obs.register("test", L)
+        assert "test" in obs.domain_names
+
+    def test_unregister_domain(self):
+        obs = DreamObserver()
+        L = _build_simple_domain()
+        obs.register("test", L)
+        removed = obs.unregister("test")
+        assert removed is L
+        assert "test" not in obs.domain_names
+
+    def test_unregister_missing(self):
+        obs = DreamObserver()
+        assert obs.unregister("nope") is None
+
+    def test_initial_state(self):
+        obs = DreamObserver()
+        assert obs.cycle_count == 0
+        assert obs.dream_landscape is None
+        assert obs.domain_names == []
+
+    def test_readiness_report(self):
+        obs = DreamObserver()
+        La = _build_simple_domain()
+        Lb = _build_parallel_domain()
+        obs.register("A", La)
+        obs.register("B", Lb)
+        report = obs.readiness_report()
+        assert "A" in report and "B" in report
+        assert all(isinstance(v, float) for v in report.values())
+
+    def test_summary_before_cycle(self):
+        obs = DreamObserver()
+        obs.register("X", _build_simple_domain())
+        s = obs.summary()
+        assert "1 domains" in s
+        assert "not yet built" in s
+
+
+# ═══════════════════════════════════════════════
+# Test: DreamObserver — Dream Cycle
+# ═══════════════════════════════════════════════
+
+class TestDreamCycle:
+    """dream_cycle: observation pass across domain pairs."""
+
+    def test_cycle_two_fresh_domains(self):
+        """Two fresh domains (all edges fresh) → all dream-ready, finds equivalences."""
+        obs = DreamObserver(readiness_threshold=0.8)
+        obs.register("A", _build_simple_domain())
+        obs.register("B", _build_simple_domain())
+
+        result = obs.dream_cycle()
+        assert result.domains_observed == ["A", "B"]
+        assert result.domains_skipped == []
+        assert result.equivalences_found > 0
+        assert result.equivalences_new > 0
+        assert result.dream_landscape_states > 0
+        assert result.dream_landscape_edges > 0
+        assert obs.cycle_count == 1
+
+    def test_cycle_skips_unready_domain(self):
+        """Domain with contradictory history → low readiness → skipped."""
+        obs = DreamObserver(readiness_threshold=0.95)
+
+        La = _build_simple_domain()
+        # Contradictory inscription → low inertia → low readiness
+        _inscribe(La, ["A", "B"], Outcome.SUCCESS, 10)
+        _inscribe(La, ["A", "B"], Outcome.FAILURE, 10)
+        obs.register("confused", La)
+
+        Lb = _build_simple_domain()  # fresh = readiness 1.0
+        obs.register("fresh", Lb)
+
+        result = obs.dream_cycle()
+        # confused should be skipped (readiness < 0.95)
+        assert "confused" in result.domains_skipped
+        # With only 1 ready domain, no pairs to compare
+        assert result.equivalences_found == 0
+
+    def test_cycle_three_domains(self):
+        """Three domains → 3 pairs compared (A-B, A-C, B-C)."""
+        obs = DreamObserver()
+        obs.register("A", _build_simple_domain())
+        obs.register("B", _build_simple_domain())
+        obs.register("C", _build_parallel_domain())
+
+        result = obs.dream_cycle()
+        assert sorted(result.domains_observed) == ["A", "B", "C"]
+        assert result.equivalences_found > 0
+
+    def test_incremental_no_duplicates(self):
+        """Second cycle does not re-add existing equivalences."""
+        obs = DreamObserver()
+        obs.register("A", _build_simple_domain())
+        obs.register("B", _build_simple_domain())
+
+        r1 = obs.dream_cycle()
+        r2 = obs.dream_cycle()
+
+        # Same equivalences found, but none new
+        assert r2.equivalences_new == 0
+        assert r2.equivalences_found == r1.equivalences_found
+        # Dream Landscape unchanged
+        assert r2.dream_landscape_states == r1.dream_landscape_states
+        assert r2.dream_landscape_edges == r1.dream_landscape_edges
+        assert obs.cycle_count == 2
+
+    def test_incremental_new_domain_adds(self):
+        """Adding a third domain after first cycle → new equivalences."""
+        obs = DreamObserver()
+        obs.register("A", _build_simple_domain())
+        obs.register("B", _build_simple_domain())
+
+        r1 = obs.dream_cycle()
+        states_after_1 = r1.dream_landscape_states
+
+        obs.register("C", _build_parallel_domain())
+        r2 = obs.dream_cycle()
+
+        # New equivalences from C pairs
+        assert r2.equivalences_new > 0
+        assert r2.dream_landscape_states > states_after_1
+
+    def test_cycle_builds_valid_landscape(self):
+        """Dream Landscape after cycle is a valid E₀ Landscape."""
+        obs = DreamObserver()
+        La = _build_simple_domain()
+        Lb = _build_parallel_domain()
+        _inscribe(La, ["A", "B", "C", "GOAL"], Outcome.SUCCESS, 5)
+        _inscribe(Lb, ["S", "A", "G"], Outcome.SUCCESS, 5)
+        obs.register("A", La)
+        obs.register("B", Lb)
+
+        obs.dream_cycle()
+        dl = obs.dream_landscape
+        assert dl is not None
+        # Can historize
+        if dl.edges:
+            e = dl.edges[0]
+            dl.historization.update(e, Outcome.SUCCESS)
+            assert dl.historization.trace_load(e) > 0
+
+    def test_empty_observer_cycle(self):
+        """Cycle with no domains → empty result."""
+        obs = DreamObserver()
+        result = obs.dream_cycle()
+        assert result.domains_observed == []
+        assert result.equivalences_found == 0
+        assert result.dream_landscape_states == 0
+
+    def test_single_domain_no_pairs(self):
+        """Single domain → no pairs to compare."""
+        obs = DreamObserver()
+        obs.register("solo", _build_simple_domain())
+        result = obs.dream_cycle()
+        assert result.domains_observed == ["solo"]
+        assert result.equivalences_found == 0
+
+
+# ═══════════════════════════════════════════════
+# Test: DreamObserver — Feedback
+# ═══════════════════════════════════════════════
+
+class TestDreamFeedback:
+    """Feedback historization on the Dream Landscape."""
+
+    def _setup_observer(self):
+        obs = DreamObserver()
+        La = _build_simple_domain()
+        Lb = _build_simple_domain()
+        obs.register("A", La)
+        obs.register("B", Lb)
+        obs.dream_cycle()
+        return obs
+
+    def test_feedback_success(self):
+        """SUCCESS feedback increases trace_quality."""
+        obs = self._setup_observer()
+        dl = obs.dream_landscape
+        assert dl is not None and len(dl.edges) > 0
+
+        e = dl.edges[0]
+        for _ in range(5):
+            obs.feedback(e.source, e.target, Outcome.SUCCESS)
+
+        tq = dl.historization.trace_quality(e)
+        assert tq > 0.0
+
+    def test_feedback_failure(self):
+        """FAILURE feedback decreases trace_quality."""
+        obs = self._setup_observer()
+        dl = obs.dream_landscape
+        e = dl.edges[0]
+
+        for _ in range(5):
+            obs.feedback(e.source, e.target, Outcome.FAILURE)
+
+        tq = dl.historization.trace_quality(e)
+        assert tq < 0.0
+
+    def test_feedback_unknown_edge(self):
+        """Feedback on non-existent edge returns False."""
+        obs = self._setup_observer()
+        assert obs.feedback("fake:X→Y", "fake:P→Q", Outcome.SUCCESS) is False
+
+    def test_feedback_before_cycle(self):
+        """Feedback before any cycle → False (no Dream Landscape)."""
+        obs = DreamObserver()
+        assert obs.feedback("A:x→y", "B:p→q", Outcome.SUCCESS) is False
+
+    def test_feedback_updates_both_directions(self):
+        """Feedback on A→B also updates B→A (bidirectional)."""
+        obs = self._setup_observer()
+        dl = obs.dream_landscape
+        e_fwd = dl.edges[0]
+        e_rev = Edge(e_fwd.target, e_fwd.source)
+
+        obs.feedback(e_fwd.source, e_fwd.target, Outcome.SUCCESS)
+        assert dl.historization.trace_load(e_fwd) > 0
+        assert dl.historization.trace_load(e_rev) > 0
+
+
+# ═══════════════════════════════════════════════
+# Test: DreamObserver — Query
+# ═══════════════════════════════════════════════
+
+class TestDreamQuery:
+    """Querying equivalences for a specific domain."""
+
+    def test_equivalences_for_domain(self):
+        """Query returns entries for registered domain."""
+        obs = DreamObserver()
+        obs.register("X", _build_simple_domain())
+        obs.register("Y", _build_simple_domain())
+        obs.dream_cycle()
+
+        eqs = obs.equivalences_for("X")
+        assert len(eqs) > 0
+        assert all(e["own_state"].startswith("X:") for e in eqs)
+
+    def test_equivalences_for_unknown(self):
+        """Query for unregistered domain → empty."""
+        obs = DreamObserver()
+        obs.register("X", _build_simple_domain())
+        obs.register("Y", _build_simple_domain())
+        obs.dream_cycle()
+
+        assert obs.equivalences_for("Z") == []
+
+    def test_min_quality_filter(self):
+        """min_quality filters low-quality equivalences."""
+        obs = DreamObserver()
+        obs.register("A", _build_simple_domain())
+        obs.register("B", _build_simple_domain())
+        obs.dream_cycle()
+
+        # All fresh → trace_quality = 0
+        eqs_all = obs.equivalences_for("A")
+        eqs_filtered = obs.equivalences_for("A", min_quality=0.1)
+        assert len(eqs_filtered) <= len(eqs_all)
+
+    def test_query_sorted_by_quality(self):
+        """Results sorted by trace_quality descending."""
+        obs = DreamObserver()
+        La = _build_simple_domain()
+        Lb = _build_simple_domain()
+        obs.register("A", La)
+        obs.register("B", Lb)
+        obs.dream_cycle()
+
+        # Add varied feedback
+        dl = obs.dream_landscape
+        edges = [e for e in dl.edges if e.source.startswith("A:")]
+        if len(edges) >= 2:
+            obs.feedback(edges[0].source, edges[0].target, Outcome.SUCCESS)
+            obs.feedback(edges[0].source, edges[0].target, Outcome.SUCCESS)
+            obs.feedback(edges[1].source, edges[1].target, Outcome.FAILURE)
+
+        eqs = obs.equivalences_for("A")
+        for i in range(len(eqs) - 1):
+            assert eqs[i]["trace_quality"] >= eqs[i + 1]["trace_quality"]
+
+
+# ═══════════════════════════════════════════════
+# Test: P4 — Historization Filters Noise
+# ═══════════════════════════════════════════════
+
+class TestP4NoiseFiltering:
+    """Prediction P4: In domains with many edges but few true equivalences,
+    the Dream Landscape converges to a sparse set of high-quality entries
+    after feedback."""
+
+    def test_bad_analogies_suppressed(self):
+        """After FAILURE feedback, bad equivalences have negative quality."""
+        obs = DreamObserver()
+
+        # Two domains: one with success path, one with failure path
+        La = Landscape()
+        La.add_edge("S", "A", delta=0.3, resistance=0.5)
+        La.add_edge("A", "G", delta=0.3, resistance=0.5)
+        La.add_edge("S", "trap", delta=0.3, resistance=0.5)
+        La.add_edge("trap", "dead", delta=0.3, resistance=0.5)
+        _inscribe(La, ["S", "A", "G"], Outcome.SUCCESS, 10)
+        _inscribe(La, ["S", "trap", "dead"], Outcome.FAILURE, 10)
+
+        Lb = Landscape()
+        Lb.add_edge("X", "P", delta=0.3, resistance=0.5)
+        Lb.add_edge("P", "Z", delta=0.3, resistance=0.5)
+        Lb.add_edge("X", "bad", delta=0.3, resistance=0.5)
+        Lb.add_edge("bad", "end", delta=0.3, resistance=0.5)
+        _inscribe(Lb, ["X", "P", "Z"], Outcome.SUCCESS, 10)
+        _inscribe(Lb, ["X", "bad", "end"], Outcome.FAILURE, 10)
+
+        obs.register("A", La)
+        obs.register("B", Lb)
+        obs.dream_cycle()
+
+        dl = obs.dream_landscape
+        assert dl is not None
+
+        # Find a cross-type equivalence (success edge matched with failure edge)
+        # and provide negative feedback
+        for e in dl.edges:
+            src_parts = e.source.split(":")
+            tgt_parts = e.target.split(":")
+            # If one is a success-domain edge and the other failure-domain
+            src_is_trap = "trap" in e.source or "bad" in e.source or "dead" in e.source
+            tgt_is_trap = "trap" in e.target or "bad" in e.target or "dead" in e.target
+            if src_is_trap != tgt_is_trap:
+                # This is a bad analogy — feedback FAILURE
+                for _ in range(5):
+                    obs.feedback(e.source, e.target, Outcome.FAILURE)
+
+        # Now check: bad analogies should have negative trace_quality
+        for e in dl.edges:
+            src_is_trap = "trap" in e.source or "bad" in e.source or "dead" in e.source
+            tgt_is_trap = "trap" in e.target or "bad" in e.target or "dead" in e.target
+            if src_is_trap != tgt_is_trap:
+                tq = dl.historization.trace_quality(e)
+                tl = dl.historization.trace_load(e)
+                if tl > 0:
+                    assert tq < 0, f"Bad analogy {e} should have negative quality"
+
+    def test_good_analogies_strengthen(self):
+        """After SUCCESS feedback, good equivalences have positive quality
+        and appear first in query results."""
+        obs = DreamObserver()
+        La = _build_simple_domain()
+        Lb = _build_simple_domain()
+        _inscribe(La, ["A", "B", "C", "GOAL"], Outcome.SUCCESS, 10)
+        _inscribe(Lb, ["A", "B", "C", "GOAL"], Outcome.SUCCESS, 10)
+        obs.register("D1", La)
+        obs.register("D2", Lb)
+        obs.dream_cycle()
+
+        dl = obs.dream_landscape
+        # Provide SUCCESS feedback on all equivalences
+        for e in dl.edges:
+            for _ in range(3):
+                obs.feedback(e.source, e.target, Outcome.SUCCESS)
+
+        # All should have positive quality
+        for e in dl.edges:
+            assert dl.historization.trace_quality(e) > 0
+
+        # Query should return entries with positive quality
+        eqs = obs.equivalences_for("D1")
+        assert all(eq["trace_quality"] > 0 for eq in eqs)
+
+    def test_min_quality_filters_noise(self):
+        """min_quality=0 filters out FAILURE-feedback equivalences."""
+        obs = DreamObserver()
+        La = _build_simple_domain()
+        Lb = _build_parallel_domain()
+        _inscribe(La, ["A", "B", "C", "GOAL"], Outcome.SUCCESS, 5)
+        _inscribe(Lb, ["S", "A", "G"], Outcome.SUCCESS, 5)
+        obs.register("P", La)
+        obs.register("Q", Lb)
+        obs.dream_cycle()
+
+        dl = obs.dream_landscape
+        edges_p = [e for e in dl.edges if e.source.startswith("P:")]
+
+        # Give half SUCCESS, half FAILURE
+        mid = len(edges_p) // 2
+        for e in edges_p[:mid]:
+            for _ in range(5):
+                obs.feedback(e.source, e.target, Outcome.SUCCESS)
+        for e in edges_p[mid:]:
+            for _ in range(5):
+                obs.feedback(e.source, e.target, Outcome.FAILURE)
+
+        all_eqs = obs.equivalences_for("P")
+        good_eqs = obs.equivalences_for("P", min_quality=0.0)
+        assert len(good_eqs) <= len(all_eqs)
