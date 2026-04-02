@@ -11,6 +11,8 @@ C109: Fingerprint extraction, distance metric, equivalence detection,
       dream_readiness trigger.
 C110: DreamObserver class, dream_cycle, incremental updates,
       feedback historization.
+C111: Bridge hypothesis generation — dream equivalences → cross-reflexion
+      proposals. Integration via propose_bridges() and make_dream_peer_fn().
 """
 
 from __future__ import annotations
@@ -546,3 +548,230 @@ class DreamObserver:
             lines.append("  Dream Landscape: not yet built")
 
         return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# Bridge hypothesis generation (C111)
+# ---------------------------------------------------------------------------
+
+@dataclass
+class BridgeHypothesis:
+    """A concrete cross-reflexion proposal derived from a dream equivalence.
+
+    Wraps a CrossReflexionResult with the dream context that motivated it.
+    """
+    partner_domain: str
+    equivalence_quality: float   # trace_quality of the dream edge
+    coupling_discount: float     # derived from equivalence quality
+    cross_result: Any            # CrossReflexionResult (avoid circular import)
+    edges_added: int
+
+
+@dataclass
+class DreamBridgeResult:
+    """Outcome of propose_bridges(): all bridge hypotheses for a target domain."""
+    target_domain: str
+    bridges: List[BridgeHypothesis]
+    total_proposals: int
+    total_edges_added: int
+    domains_consulted: int
+    equivalences_used: int
+
+
+def dream_coupling_discount(
+    equivalence_quality: float,
+    base_discount: float = 0.5,
+) -> float:
+    """Derive coupling discount from dream equivalence quality.
+
+    High-quality equivalences (trace_quality -> 1.0) get closer to
+    base_discount (full trust). Low-quality or negative equivalences
+    get scaled down toward 0.
+
+    Formula: discount = base * max(0, quality)
+    This means:
+      - quality=1.0 -> discount=base (full weight)
+      - quality=0.5 -> discount=base*0.5 (half weight)
+      - quality<=0   -> discount=0 (no trust -- bad analogy)
+    """
+    return base_discount * max(0.0, equivalence_quality)
+
+
+def _parse_dream_state(state: str) -> Tuple[str, str, str]:
+    """Parse 'domain:src->tgt' into (domain, src, tgt)."""
+    colon = state.index(":")
+    domain = state[:colon]
+    arrow = state.index("\u2192", colon)
+    src = state[colon + 1:arrow]
+    tgt = state[arrow + 1:]
+    return domain, src, tgt
+
+
+def propose_bridges(
+    observer: DreamObserver,
+    target_domain: str,
+    current: str,
+    goal: str,
+    *,
+    max_bridges: int = 3,
+    min_quality: float = 0.0,
+    base_discount: float = 0.5,
+    max_proposals_per_bridge: int = 5,
+) -> DreamBridgeResult:
+    """Generate bridge hypotheses from dream equivalences.
+
+    For each high-quality equivalence involving the target domain:
+    1. Identify the partner domain
+    2. Compute coupling_discount from equivalence quality
+    3. Call cross_propose_edges(target, partner, current, goal)
+    4. Wrap in BridgeHypothesis
+
+    This is the key C111 integration: dream observation feeds into
+    cross-reflexion. The Dream Landscape's historization (via feedback())
+    determines which partner domains are trusted -- P3 self-correction.
+
+    Args:
+        observer: DreamObserver with registered domains and dream_landscape.
+        target_domain: Domain that needs bridge hypotheses (e.g., "invoice").
+        current: Current state in target domain.
+        goal: Goal state in target domain.
+        max_bridges: Maximum number of partner domains to consult.
+        min_quality: Minimum equivalence quality to consider.
+        base_discount: Base coupling discount (scaled by quality).
+        max_proposals_per_bridge: Max proposals per partner domain.
+
+    Returns:
+        DreamBridgeResult with all bridge hypotheses.
+    """
+    from e0_controller.cross_reflexion import cross_propose_edges
+
+    target_landscape = observer._domains.get(target_domain)
+    if target_landscape is None:
+        return DreamBridgeResult(
+            target_domain=target_domain,
+            bridges=[],
+            total_proposals=0,
+            total_edges_added=0,
+            domains_consulted=0,
+            equivalences_used=0,
+        )
+
+    # Get dream equivalences for target domain, filtered by quality
+    eqs = observer.equivalences_for(target_domain, min_quality=min_quality)
+    if not eqs:
+        return DreamBridgeResult(
+            target_domain=target_domain,
+            bridges=[],
+            total_proposals=0,
+            total_edges_added=0,
+            domains_consulted=0,
+            equivalences_used=0,
+        )
+
+    # Group by partner domain, take best quality per partner
+    partner_best: Dict[str, Dict[str, Any]] = {}
+    for eq in eqs:
+        partner_state = eq["partner_state"]
+        partner_domain, _, _ = _parse_dream_state(partner_state)
+        if partner_domain not in partner_best:
+            partner_best[partner_domain] = eq
+        # eqs are already sorted by quality desc, so first is best
+
+    # Limit to max_bridges partners (already sorted by quality)
+    partners = list(partner_best.items())[:max_bridges]
+
+    bridges: List[BridgeHypothesis] = []
+    total_proposals = 0
+    total_edges_added = 0
+
+    for partner_name, best_eq in partners:
+        partner_landscape = observer._domains.get(partner_name)
+        if partner_landscape is None:
+            continue
+
+        eq_quality = best_eq["trace_quality"]
+        discount = dream_coupling_discount(eq_quality, base_discount)
+
+        if discount <= 0.0:
+            continue  # negative quality -- don't trust this partner
+
+        cross_result = cross_propose_edges(
+            target_landscape,
+            partner_landscape,
+            current,
+            goal,
+            max_proposals=max_proposals_per_bridge,
+            coupling_discount=discount,
+            donor_name=f"dream:{partner_name}",
+        )
+
+        bridges.append(BridgeHypothesis(
+            partner_domain=partner_name,
+            equivalence_quality=eq_quality,
+            coupling_discount=discount,
+            cross_result=cross_result,
+            edges_added=cross_result.edges_added,
+        ))
+
+        total_proposals += len(cross_result.proposals)
+        total_edges_added += cross_result.edges_added
+
+    return DreamBridgeResult(
+        target_domain=target_domain,
+        bridges=bridges,
+        total_proposals=total_proposals,
+        total_edges_added=total_edges_added,
+        domains_consulted=len(bridges),
+        equivalences_used=len(eqs),
+    )
+
+
+def make_dream_peer_fn(
+    observer: DreamObserver,
+    domain_name: str,
+    goal: str,
+    *,
+    min_quality: float = 0.0,
+    base_discount: float = 0.5,
+):
+    """Create a peer_fn for E0Controller that consults dream equivalences.
+
+    Returns a callable with signature (landscape, current, neighbors) -> Optional[str]
+    compatible with E0Controller.peer_fn.
+
+    When the controller is overloaded, it calls peer_fn. This implementation:
+    1. Calls propose_bridges() using current dream state
+    2. If any proposals were generated, returns the best proposal target
+    3. If no proposals, returns None (controller handles normally)
+
+    This is a non-invasive integration: the controller doesn't know
+    it's consulting dream equivalences. It just gets a peer suggestion.
+    """
+    def _dream_peer(landscape, current, neighbors):
+        result = propose_bridges(
+            observer,
+            domain_name,
+            current,
+            goal,
+            min_quality=min_quality,
+            base_discount=base_discount,
+            max_bridges=1,          # fast: only best partner
+            max_proposals_per_bridge=1,
+        )
+
+        if not result.bridges:
+            return None
+
+        bridge = result.bridges[0]
+        proposals = bridge.cross_result.proposals
+        if not proposals:
+            return None
+
+        # Return best proposal's target if it's in neighbors
+        best_target = proposals[0].target
+        if best_target in neighbors:
+            return best_target
+
+        return None
+
+    return _dream_peer
