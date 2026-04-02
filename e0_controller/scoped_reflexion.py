@@ -102,6 +102,32 @@ class ReflexionScope:
 # Scope computation
 # ══════════════════════════════════════════════
 
+def landscape_mu(landscape: Landscape) -> float:
+    """Derive μ from landscape topology: μ = |E| / |V|.
+
+    Structural argument: μ controls when reflexion transitions from
+    global to local.  When mean trace_load equals the mean out-degree,
+    each edge has been traversed approximately as many times as there
+    are outgoing options per node — the threshold where local pattern
+    extraction becomes statistically meaningful.
+
+    Properties:
+      - Sparse graph (chain): μ < 1 → fast localization (correct:
+        one traversal suffices to characterize a non-branching path).
+      - Dense graph (fully connected): μ >> 1 → slow localization
+        (correct: many options require more experience to discriminate).
+      - Fresh degeneration is preserved for any μ > 0:
+        ℓ(m̄=0) = 0 regardless of μ.
+
+    Returns at least 1e-6 to avoid degeneracy.
+    """
+    edge_count = len(landscape._delta)
+    node_count = len(landscape.states)
+    if node_count == 0 or edge_count == 0:
+        return 1.0  # safe default for degenerate landscapes
+    return max(edge_count / node_count, 1e-6)
+
+
 def _bfs_neighborhood(
     landscape: Landscape,
     center: str,
@@ -166,7 +192,7 @@ def compute_reflexion_scope(
     current: str,
     *,
     goal: Optional[str] = None,
-    mu: float = 5.0,
+    mu: Optional[float] = None,
 ) -> ReflexionScope:
     """Compute reflexion scope from historization state.
 
@@ -180,8 +206,9 @@ def compute_reflexion_scope(
         landscape: Current landscape (with historization)
         current: Center node for scope
         goal: Optional goal node (if given, its neighborhood is included)
-        mu: Half-load parameter (same as inertia_factor default).
-            When mean_load == mu, locality = 0.5.
+        mu: Half-load parameter.  When mean_load == mu, locality = 0.5.
+            If None (default), derived from landscape topology as
+            |E|/|V| (mean out-degree).  See landscape_mu().
 
     Returns:
         ReflexionScope with included_states, locality, and radius.
@@ -198,6 +225,10 @@ def compute_reflexion_scope(
             mean_load=0.0,
             rationale="No edges — trivial scope",
         )
+
+    # Derive μ from landscape topology if not given
+    if mu is None:
+        mu = landscape_mu(landscape)
 
     # Compute mean trace_load across all edges
     loads = [hist.trace_load(e) for e in edges]
@@ -315,7 +346,7 @@ def scoped_propose_edges(
     *,
     max_proposals: int = 5,
     proactive: bool = True,
-    mu: float = 5.0,
+    mu: Optional[float] = None,
 ) -> List[ProposedEdge]:
     """Propose edges within historization-derived scope.
 
@@ -386,7 +417,7 @@ def run_with_scoped_reflexion(
     goal: str,
     max_cycles: int = 50,
     max_proposals: int = 5,
-    mu: float = 5.0,
+    mu: Optional[float] = None,
 ) -> Tuple[RunTrace, List[ProposedEdge], List[ReflexionScope]]:
     """Run with historization-scoped proactive reflexion.
 

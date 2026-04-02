@@ -21,6 +21,7 @@ from e0_controller.landscape import Landscape
 from e0_controller.scoped_reflexion import (
     ReflexionScope,
     compute_reflexion_scope,
+    landscape_mu,
     scoped_experienced_pattern,
     scoped_propose_edges,
     run_with_scoped_reflexion,
@@ -403,7 +404,7 @@ class TestFreshDegeneracy:
         exec_fn = lambda s, t: Outcome.SUCCESS
 
         trace_s, props_s, scopes_s = run_with_scoped_reflexion(
-            L_scoped, exec_fn, "S", "G",
+            L_scoped, exec_fn, "S", "G", mu=5.0,
         )
         trace_g, props_g = run_with_proactive_reflexion(
             L_global, exec_fn, "S", "G",
@@ -620,3 +621,127 @@ class TestMathematicalProperties:
         )
         assert not scope2.is_global
         assert scope2.scope_size == 2
+
+
+# ══════════════════════════════════════════════
+# TestAdaptiveMu (C105)
+# ══════════════════════════════════════════════
+
+class TestAdaptiveMu:
+    """Validate adaptive μ = |E|/|V| derivation from landscape topology.
+
+    C105 resolves P5 §10.4 open question 1 (optimal μ): the sensitivity
+    threshold is not a free parameter but a structural property of the
+    landscape — its mean out-degree.
+    """
+
+    def test_landscape_mu_formula(self):
+        """μ = |E|/|V| for any landscape."""
+        L = _make_chain(6)  # 5 edges, 6 nodes
+        assert landscape_mu(L) == pytest.approx(5 / 6)
+
+    def test_landscape_mu_star(self):
+        """Star: 10 edges (bidirectional), 7 nodes (5 arms + center + G)."""
+        L = _make_star()
+        mu = landscape_mu(L)
+        assert mu == pytest.approx(len(L.edges) / len(L.states))
+
+    def test_landscape_mu_grid(self):
+        """Grid: 24 edges (bidirectional), 9 nodes."""
+        L = _make_grid()
+        mu = landscape_mu(L)
+        assert mu == pytest.approx(24 / 9)
+
+    def test_sparse_graph_low_mu(self):
+        """Sparse (chain) → μ < 1: fast localization."""
+        L = _make_chain(6)
+        assert landscape_mu(L) < 1.0
+
+    def test_dense_graph_high_mu(self):
+        """Dense (grid, bidirectional) → μ > 2: slower localization."""
+        L = _make_grid()
+        assert landscape_mu(L) > 2.0
+
+    def test_mu_scales_with_density(self):
+        """Denser graph → larger μ → slower localization."""
+        mu_chain = landscape_mu(_make_chain(6))
+        mu_grid = landscape_mu(_make_grid())
+        assert mu_grid > mu_chain
+
+    def test_adaptive_mu_default(self):
+        """mu=None (default) uses landscape_mu()."""
+        L = _make_chain(6)
+        scope = compute_reflexion_scope(L, "S")  # mu=None default
+        expected_mu = landscape_mu(L)
+        assert f"μ={expected_mu:.2f}" in scope.rationale
+
+    def test_explicit_mu_overrides(self):
+        """Explicit mu=5.0 ignores landscape topology (backward compat)."""
+        L = _make_chain(6)
+        scope = compute_reflexion_scope(L, "S", mu=5.0)
+        assert "μ=5.0" in scope.rationale
+
+    def test_adaptive_fresh_still_global(self):
+        """Fresh landscape with adaptive μ still produces global scope."""
+        L = _make_chain(6)
+        scope = compute_reflexion_scope(L, "S")
+        assert scope.is_global
+        assert scope.locality == 0.0
+
+    def test_adaptive_historized_localizes(self):
+        """With adaptive μ, historized landscape reaches locality > 0.5."""
+        L = _make_chain(6)
+        mu = landscape_mu(L)
+        # Inscribe enough to exceed μ on average
+        for edge in L.edges:
+            for _ in range(5):
+                L.historization.update(edge, Outcome.SUCCESS)
+        scope = compute_reflexion_scope(L, "S")
+        # mean_load = 5.0, μ ≈ 0.83 → locality ≈ 5.0/5.83 ≈ 0.86
+        assert scope.locality > 0.5
+        assert not scope.is_global
+
+    def test_adaptive_chain_localizes_faster_than_fixed(self):
+        """Chain with adaptive μ reaches locality > 0.5 sooner than μ=5."""
+        L = _make_chain(6)
+        for edge in L.edges:
+            L.historization.update(edge, Outcome.SUCCESS)
+        # mean_load = 1.0. Adaptive μ ≈ 0.83 → ℓ ≈ 0.55.  Fixed μ=5 → ℓ ≈ 0.17.
+        scope_auto = compute_reflexion_scope(L, "S")
+        scope_fixed = compute_reflexion_scope(L, "S", mu=5.0)
+        assert scope_auto.locality > scope_fixed.locality
+
+    def test_adaptive_runner_reaches_goal(self):
+        """Runner with adaptive μ reaches goal on chain."""
+        L = _make_chain(6)
+        fn = lambda s, t: Outcome.SUCCESS
+        trace, proposals, scopes = run_with_scoped_reflexion(
+            L, fn, "S", "G", max_cycles=30,
+        )
+        assert trace.steps[-1].target == "G"
+
+    def test_adaptive_runner_reaches_goal_diamond(self):
+        """Runner with adaptive μ reaches goal on diamond with frontier."""
+        L = Landscape()
+        L.add_edge("S", "A", delta=0.5, resistance=1.0)
+        L.add_edge("S", "B", delta=0.5, resistance=1.0)
+        L.add_edge("A", "M", delta=0.5, resistance=1.0)
+        L.add_edge("B", "M", delta=0.5, resistance=1.0)
+        L.add_state("G")  # M → G missing: frontier at M
+        fn = lambda s, t: Outcome.SUCCESS
+        trace, proposals, scopes = run_with_scoped_reflexion(
+            L, fn, "S", "G", max_cycles=30,
+        )
+        assert trace.steps[-1].target == "G"
+        assert len(proposals) > 0  # reflexion was needed
+
+    def test_degenerate_empty_landscape(self):
+        """Empty landscape returns μ=1.0 (safe default)."""
+        L = Landscape()
+        assert landscape_mu(L) == 1.0
+
+    def test_single_edge_landscape(self):
+        """Single edge: |E|=1, |V|=2, μ=0.5."""
+        L = Landscape()
+        L.add_edge("A", "B", delta=1.0, resistance=1.0)
+        assert landscape_mu(L) == pytest.approx(0.5)

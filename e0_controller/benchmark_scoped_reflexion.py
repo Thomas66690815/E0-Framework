@@ -22,7 +22,7 @@ Usage:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Callable, List
+from typing import Callable, List, Optional
 
 from e0_controller.primitives import Outcome
 from e0_controller.controller import E0Controller, RunTrace
@@ -217,7 +217,7 @@ def _run_global(spec: DomainSpec, max_cycles: int = 50) -> ScopedResult:
 
 
 def _run_scoped(
-    spec: DomainSpec, max_cycles: int = 50, mu: float = 5.0,
+    spec: DomainSpec, max_cycles: int = 50, mu: Optional[float] = None,
 ) -> ScopedResult:
     """Proactive reflexion with historization scope (C101)."""
     trace, proposals, scopes = run_with_scoped_reflexion(
@@ -228,7 +228,7 @@ def _run_scoped(
 
 
 def _run_domain(
-    builder: Callable, max_cycles: int = 50, mu: float = 5.0,
+    builder: Callable, max_cycles: int = 50, mu: Optional[float] = None,
 ) -> ScopedComparison:
     """Run one domain under both modes (fresh landscape each)."""
     spec_g = builder()
@@ -246,7 +246,7 @@ def _run_domain(
 
 def run_scoped_benchmark(
     max_cycles: int = 50,
-    mu: float = 5.0,
+    mu: Optional[float] = None,
 ) -> ScopedBenchmarkResult:
     """Run all 10 domains × 2 modes (GLOBAL vs SCOPED)."""
     result = ScopedBenchmarkResult()
