@@ -373,10 +373,20 @@ class E0Controller:
         Multiplicative penalty for revisiting recently-seen states.
         Scales with the local tension — avoids dominating at low S_eff
         or vanishing at high S_eff (K7 fix over former additive form).
+
+        C98: When overlap_modulation is True, divides S_eff by M_H(x,y).
+        This is the greedy-loop dual of transition_field multiplying v by M_H:
+        lower M_H (weak overlap support) → higher effective tension →
+        greedy prefers well-supported edges.  When M_H = 1.0 everywhere
+        (simple domains without bypass structure), no effect.
         """
         s_eff = self._effective_tension(x, y)
         if math.isinf(s_eff):
             return math.inf
+        if self.landscape.overlap_modulation:
+            m_h = self.landscape._get_overlap_M_H(x, y)
+            if m_h > 0:
+                s_eff /= m_h
         if y in self._recent:
             s_eff *= (1 + self.alpha)
         return s_eff

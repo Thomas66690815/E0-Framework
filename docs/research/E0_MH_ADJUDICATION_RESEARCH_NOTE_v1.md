@@ -310,5 +310,7 @@ M_H would be a **separate mechanism** — possibly a new flag like `overlap_modu
 | 2026-03-28 | Q3 resolved: domain-relative normalization, M_H ∈ [0.2, 1.0], neutral on simple domains |
 | 2026-03-28 | Q4 resolved: custom overlap differentiator domain as falsification test |
 | 2026-03-28 | 45 domains surveyed — overlap is non-trivial on <10, trivially 1 on >35 |
-| pending | Implementation as existence test (Jaccard-level, v-weighted) |
-| pending | Empirical validation on falsification domain |
+| 2026-04-02 | C98: Greedy loop integration — `_penalized_tension` divides S_eff by M_H |
+| 2026-04-02 | Falsification domain validated: controller selects S→B (supported) over S→A (bridge) |
+| 2026-04-02 | 24 tests: greedy integration, neutrality on simple domains, historization interaction |
+| 2026-04-02 | **M_H research question CLOSED** — graduated overlap is implemented, integrated, and empirically validated |
