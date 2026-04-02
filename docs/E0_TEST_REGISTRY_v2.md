@@ -3,8 +3,8 @@
 > Central validation registry for the E₀ Framework.
 > **Purpose:** connect claims, tests, evidence, and status in one place.
 
-**Last updated:** 2026-04-01 — **2874 tests** (0 failures, 0 warnings) across **79 test files**  
-**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, **C52 Honest Self-Knowledge (CANON_PROCESS_MAP correction)**, **C53 Domain-Invariance Benchmark (10 domains, 1 controller)**, **C54 Raumzeit Coupling (closed vs coupled systems)**, **C55 Amplitude Benchmark (10 domains × 3 modes)**, **C56 Reflexive Edge Proposal (Historisierung informiert Topologie)**, **C57 Proactive Reflexion (Stufe 2)**, **C58 Reflexion Benchmark (10 domains × 3 Stufen)**, **C59 Integrated Reflexion (C49 + C57 unified)**, **C60 Multiverse (coupled systems, NoveltyGate, convergence/divergence)**, **C61 Cross-Domain Multiverse Benchmark**, **C62 Cross-Universe Reflexive Edge Discovery**, **C63 OVERLOADED Escalation (OI-triggered peer consultation)**, **C64 Gridworld Baseline Benchmark (E₀ vs A* vs Naive-Greedy)**, **C66 CouplingRouter (N>2 dynamic partner selection)**, **C67 Asymmetric Coupling (weight-based directional R₀)**, **C68 Coupling Self-Graph (Stufe-3 reflexion for coupling pipeline)**, **C69 Cross-Reflexion Benchmark (edge copying vs edge creation)**, **C70 OVERLOADED Benchmark (peer consultation × 10 domains)**, **C71 LLM Co-Cognition (2 LLMs coupled via multiverse)**, **C72 Chess Engine (strategic dimension navigation)**, **C73 Primitive Extensions (fully_connected + strategy_profile)**, **C74 Team Chess (multiverse team play)**, **C75–C81 Empirical Validation Phase (attractor universality, multi-attractor dynamics, transfer learning, convergence speed, asymmetric ρ, attractor prediction, focus narrowing — explore scripts)**, **C82 Focus Narrowing in Controller (focus_k + peer bypass)**, **C83 Service Layer (SnapshotCodec, InputPipeline, PeerBridge, ServiceSession, SessionManager)**, **C84 API Gateway (FastAPI REST + WebSocket, 13 endpoints)**, **C85 Client (React + Cytoscape.js)**, **C86 Test Runner UI**.
+**Last updated:** 2026-04-02 — **3020 tests** (0 failures, 0 warnings) across **83 test files**  
+**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, **C52 Honest Self-Knowledge (CANON_PROCESS_MAP correction)**, **C53 Domain-Invariance Benchmark (10 domains, 1 controller)**, **C54 Raumzeit Coupling (closed vs coupled systems)**, **C55 Amplitude Benchmark (10 domains × 3 modes)**, **C56 Reflexive Edge Proposal (Historisierung informiert Topologie)**, **C57 Proactive Reflexion (Stufe 2)**, **C58 Reflexion Benchmark (10 domains × 3 Stufen)**, **C59 Integrated Reflexion (C49 + C57 unified)**, **C60 Multiverse (coupled systems, NoveltyGate, convergence/divergence)**, **C61 Cross-Domain Multiverse Benchmark**, **C62 Cross-Universe Reflexive Edge Discovery**, **C63 OVERLOADED Escalation (OI-triggered peer consultation)**, **C64 Gridworld Baseline Benchmark (E₀ vs A* vs Naive-Greedy)**, **C66 CouplingRouter (N>2 dynamic partner selection)**, **C67 Asymmetric Coupling (weight-based directional R₀)**, **C68 Coupling Self-Graph (Stufe-3 reflexion for coupling pipeline)**, **C69 Cross-Reflexion Benchmark (edge copying vs edge creation)**, **C70 OVERLOADED Benchmark (peer consultation × 10 domains)**, **C71 LLM Co-Cognition (2 LLMs coupled via multiverse)**, **C72 Chess Engine (strategic dimension navigation)**, **C73 Primitive Extensions (fully_connected + strategy_profile)**, **C74 Team Chess (multiverse team play)**, **C75–C81 Empirical Validation Phase (attractor universality, multi-attractor dynamics, transfer learning, convergence speed, asymmetric ρ, attractor prediction, focus narrowing — explore scripts)**, **C82 Focus Narrowing in Controller (focus_k + peer bypass)**, **C83 Service Layer (SnapshotCodec, InputPipeline, PeerBridge, ServiceSession, SessionManager)**, **C84 API Gateway (FastAPI REST + WebSocket, 13 endpoints)**, **C85 Client (React + Cytoscape.js)**, **C86 Test Runner UI**, **C88 Keimzelle (graph-centric UI rebuild)**, **C89–C93 UI iteration (edge labels, path trail, peer interaction, mechanism indicator, scenarios)**, **C94 Observation Landscape (O-Landscape)**, **C95 Observation Controller (navigation + projection)**, **C96 Rendering Adapter (observation → wire format)**, **C97 Observation UI Integration (server + client wiring)**.
 
 ---
 
@@ -602,6 +602,10 @@ Born sampling (P ∝ I, choosing actions probabilistically from the amplitude-de
 | `test_focus_narrowing.py` | C82 |
 | `test_service_layer.py` | C83 |
 | `server/test_api.py` | C84 |
+| `test_observation.py` | C94 |
+| `test_observation_controller.py` | C95 |
+| `test_rendering_adapter.py` | C96 |
+| `test_observation_integration.py` | C97 |
 
 ---
 
@@ -2469,6 +2473,104 @@ All test and explore Python files are discoverable and runnable from the browser
 
 ---
 
+### C94 — Observation Landscape (O-Landscape)
+
+**Claim**  
+An Observation Landscape (O-Landscape) provides a navigable projection of any E₀ Landscape, enabling scoped views centered on a focus node with configurable depth. The O-Landscape supports three navigation actions (focus, move, defocus) and maintains its own internal state (scope, depth, focus) independently of the underlying domain landscape.
+
+**Evidence**  
+- `e0_controller/observation.py` — `ObservationLandscape` class with `focus()`, `move()`, `defocus()`, `project()`
+- `e0_controller/test_observation.py` — 39 tests across 5 classes:
+  - `TestObservationInit` (5): default state, custom depth, landscape reference
+  - `TestObservationFocus` (8): focus on node, re-focus, invalid node, scope tracking
+  - `TestObservationMove` (10): move to adjacent, non-adjacent blocked, scope update, path tracking
+  - `TestObservationDefocus` (6): defocus resets, defocus without focus, scope restoration
+  - `TestObservationProject` (10): projection contains correct nodes/edges, depth limiting, empty projection
+
+**Result**  
+- Focus/move/defocus navigation fully tested with scope tracking
+- Projection respects depth parameter, returns subgraph centered on focus
+- Invalid actions (move to non-adjacent, focus on nonexistent) properly rejected
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C95 — Observation Controller (Navigation + Projection)
+
+**Claim**  
+An ObservationController orchestrates observation lifecycle and provides a stateful API for navigating and projecting the O-Landscape. It wraps ObservationLandscape with session-aware context, forwards navigation actions, and produces structured snapshots suitable for wire transport.
+
+**Evidence**  
+- `e0_controller/observation_controller.py` — `ObservationController` class with `navigate()`, `snapshot()`, `meta_snapshot()`
+- `e0_controller/test_observation_controller.py` — 47 tests across 6 classes:
+  - `TestObservationControllerInit` (6): lazy init, landscape binding, default state
+  - `TestObservationControllerNavigate` (12): focus/move/defocus forwarding, error propagation, state transitions
+  - `TestObservationControllerSnapshot` (10): snapshot structure, node/edge format, metadata inclusion
+  - `TestObservationControllerMeta` (7): meta snapshot, scope info, depth info, navigation history
+  - `TestObservationControllerReset` (5): reset clears state, re-navigate after reset
+  - `TestObservationControllerEdgeCases` (7): empty landscape, single node, disconnected graph
+
+**Result**  
+- Controller correctly delegates to O-Landscape and enriches output with metadata
+- Snapshots include node positions, edge weights, scope boundaries
+- Meta snapshots provide navigation state for UI controls
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C96 — Rendering Adapter (Observation → Wire Format)
+
+**Claim**  
+A RenderingAdapter transforms ObservationController output into a wire-compatible format matching the existing GraphView protocol. This ensures the observation pipeline integrates seamlessly with the client's Cytoscape.js-based graph renderer without requiring client-side format changes.
+
+**Evidence**  
+- `e0_controller/rendering_adapter.py` — `render_observation()` function, format conversion
+- `e0_controller/test_rendering_adapter.py` — 32 tests across 4 classes:
+  - `TestRenderObservation` (10): node format (id, label, data), edge format (source, target, weight)
+  - `TestRenderObservationScope` (8): scope boundaries marked, focus node highlighted, depth rings
+  - `TestRenderObservationEmpty` (6): empty projection, no focus, graceful fallback
+  - `TestRenderObservationCompat` (8): GraphView protocol compliance, Cytoscape element format
+
+**Result**  
+- Output format matches GraphView expectations (Cytoscape elements array)
+- Focus node flagged for visual highlighting
+- Scope boundary nodes marked for UI differentiation
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C97 — Observation UI Integration (Server + Client Wiring)
+
+**Claim**  
+The observation pipeline (C94–C96) is fully wired to the server API and browser client. Three new REST endpoints expose observation state, metadata, and navigation. The client provides an Observe toggle, observation panel (scope/depth display, navigation controls), and node-click-based navigation (click to focus/move, double-click to defocus).
+
+**Evidence**  
+- `server/routes_sessions.py` — 3 new endpoints: GET `/observation`, GET `/observation/meta`, POST `/observation/navigate`
+- `server/models.py` — `ObservationNavigateRequest` Pydantic model
+- `client/src/api.js` — `getObservation()`, `getObservationMeta()`, `navigateObservation()`
+- `client/src/App.jsx` — observation toggle, panel, node-click navigation
+- `e0_controller/test_observation_integration.py` — 28 tests across 4 classes:
+  - `TestObservationIntegrationInit` (5): lazy controller init, session binding
+  - `TestObservationIntegrationSnapshot` (8): snapshot format for GraphView, landscape key wrapping
+  - `TestObservationIntegrationNavigate` (9): focus/move/defocus via API, error responses, round-trip
+  - `TestObservationIntegrationPydantic` (6): request validation, action enum, node_id requirements
+
+**Result**  
+- Full round-trip: client click → API POST → ObservationController.navigate → snapshot → GraphView render
+- Pydantic validation enforces action ∈ {focus, move, defocus} with proper node_id requirements
+- Observation mode toggleable without disrupting normal session operation
+
+**Status**  
+✅ Confirmed
+
+---
+
 ## 6. Test file inventory
 
 | Test file | Tests | Commit |
@@ -2552,7 +2654,11 @@ All test and explore Python files are discoverable and runnable from the browser
 | `test_topology_classification.py` | 30 | C11/C23 |
 | `test_waypoint.py` | 17 | C3/C4 |
 | `server/test_api.py` | 31 | C84 |
-| **Total** | **2874** | |
+| `test_observation.py` | 39 | C94 |
+| `test_observation_controller.py` | 47 | C95 |
+| `test_rendering_adapter.py` | 32 | C96 |
+| `test_observation_integration.py` | 28 | C97 |
+| **Total** | **3020** | |
 
 ---
 
