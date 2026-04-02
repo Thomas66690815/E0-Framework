@@ -379,6 +379,13 @@ class E0Controller:
         lower M_H (weak overlap support) → higher effective tension →
         greedy prefers well-supported edges.  When M_H = 1.0 everywhere
         (simple domains without bypass structure), no effect.
+
+        C99: When inertia_modulation is True, divides S_eff by I(x,y).
+        I = inertia_factor ∈ (1−α, 1.0].  Edges with high trace_load but
+        low |trace_quality| (contradictory inscription) get I < 1, which
+        inflates S_eff and makes greedy avoid them.  This captures what
+        δ_H ≈ 0 misses: "no net correction" ≠ "no experience".
+        When I = 1.0 (clear or uninscribed), no effect.
         """
         s_eff = self._effective_tension(x, y)
         if math.isinf(s_eff):
@@ -387,6 +394,12 @@ class E0Controller:
             m_h = self.landscape._get_overlap_M_H(x, y)
             if m_h > 0:
                 s_eff /= m_h
+        if self.landscape.inertia_modulation:
+            inertia = self.landscape.historization.inertia_factor(
+                Edge(x, y)
+            )
+            if inertia > 0:
+                s_eff /= inertia
         if y in self._recent:
             s_eff *= (1 + self.alpha)
         return s_eff
