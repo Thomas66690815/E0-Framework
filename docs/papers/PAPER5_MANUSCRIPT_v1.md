@@ -432,6 +432,53 @@ The radius starts at $D$ (full diameter) and contracts monotonically
 toward 1. The system progressively restricts its reflexive scope to
 the region where it has operational experience.
 
+### 5.5 Non-Uniform Convergence
+
+§5.3 assumes uniform inscription — every edge is inscribed each round.
+In practice, only $k$ edges per round receive inscription (where
+$k \leq |E|$). We extend the convergence result to this non-uniform
+regime.
+
+**Claim (Derived):** Under non-uniform inscription with $k$ edges
+inscribed per round, the mean trace load converges to:
+
+$$\bar{m}^* = \frac{k}{|E|(1-\rho)}$$
+
+and the equilibrium locality is:
+
+$$\ell^* = \frac{k}{k + |E| \cdot \mu \cdot (1-\rho)}$$
+
+**Proof:** Each round, $k$ edges gain 1 unit of trace load while all
+$|E|$ edges decay by $\rho$. The mean trace load evolves as:
+
+$$\bar{m}_{t+1} = \rho \cdot \bar{m}_t + \frac{k}{|E|}$$
+
+This is a linear recurrence with fixed point
+$\bar{m}^* = (k/|E|) / (1-\rho) = k / (|E|(1-\rho))$.
+Substituting into $\ell = \bar{m} / (\bar{m} + \mu)$ yields
+$\ell^* = \bar{m}^* / (\bar{m}^* + \mu) = k / (k + |E| \cdot \mu \cdot (1-\rho))$.
+$\square$
+
+**Convergence rate:** The gap $|\ell^* - \ell_n|$ is bounded by:
+
+$$|\ell^* - \ell_n| \leq \frac{\mu \cdot \rho^n \cdot \bar{m}^*}{(\bar{m}^* + \mu)^2}$$
+
+The rate $\rho^n$ is **topology-independent** — the system forgets
+its initial condition at the same geometric rate regardless of graph
+structure. However, the bound magnitude and the equilibrium
+$\ell^*$ are topology-dependent via $k/|E|$.
+
+**Topology ordering:** For a fixed $k$, sparser graphs (smaller $|E|$)
+produce higher equilibrium locality. Specifically:
+- Chain ($|E| = n-1$) > Grid ($|E| \approx 2n$) > Complete
+  ($|E| = n(n-1)/2$)
+
+This is intuitive: in a sparse graph, inscription covers a larger
+fraction of the edge set per round, building higher mean trace load.
+
+**Note:** When $k = |E|$ (uniform inscription), the formula reduces
+to the §5.3 result: $\ell^* = 1/(1 + \mu(1-\rho))$.
+
 ---
 
 ## 6. Structural Uniqueness
@@ -692,8 +739,13 @@ important and may itself be investigable.
    \gamma_{\min}) \times \ell_{\text{donor}})$ with $\gamma_{\min} = 0.3$.
    Fresh donor degeneration preserved.
 
-4. **Asymptotic tightness.** Under non-uniform inscription, is the
-   convergence rate of $\ell$ bounded by a function of graph topology?
+4. ~~**Asymptotic tightness.** Under non-uniform inscription, is the
+   convergence rate of $\ell$ bounded by a function of graph topology?~~
+   **Resolved (C108):** Non-uniform convergence theorem (§5.5).
+   Equilibrium $\ell^* = k/(k + |E| \cdot \mu \cdot (1-\rho))$ is
+   topology-dependent via $|E|$; convergence *rate* $\rho^n$ is
+   topology-independent. Sparse graphs localize more strongly than
+   dense graphs for equal inscription budget $k$.
 
 ---
 

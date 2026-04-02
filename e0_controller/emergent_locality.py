@@ -395,3 +395,110 @@ def theoretical_phase_transition(mu: float, rho: float = 0.9) -> float:
     if factor >= 1.0:
         return float("inf")
     return math.log(1 - factor) / math.log(rho)
+
+
+# ══════════════════════════════════════════════
+# Non-uniform convergence analysis (C108 / Q4)
+# ══════════════════════════════════════════════
+
+def theoretical_equilibrium_nonuniform(
+    k: int,
+    edge_count: int,
+    mu: float,
+    rho: float = 0.9,
+) -> float:
+    """Theoretical locality equilibrium under non-uniform inscription.
+
+    When k edges are inscribed per round (out of |E| total), each
+    inscribed edge gains 1 to its trace_load while all edges decay
+    by ρ. The mean load evolves as:
+
+        m̄_{t+1} = ρ · m̄_t + k/|E|
+
+    Converging to m̄* = k / (|E|·(1−ρ)).
+
+    The equilibrium locality is:
+
+        ℓ* = m̄* / (m̄* + μ) = k / (k + |E|·μ·(1−ρ))
+
+    Parameters:
+        k: Number of edges inscribed per round
+        edge_count: Total edges in graph |E|
+        mu: Locality sensitivity (μ)
+        rho: Decay parameter
+
+    Returns:
+        Theoretical equilibrium locality ℓ*.
+    """
+    if edge_count == 0 or k == 0:
+        return 0.0
+    m_star = k / (edge_count * (1.0 - rho))
+    return m_star / (m_star + mu)
+
+
+def convergence_rate_bound(
+    rho: float,
+    n: int,
+    m_star: float,
+    mu: float,
+) -> float:
+    """Upper bound on |ℓ* − ℓ_n| after n inscription rounds.
+
+    The locality gap decays geometrically:
+        |ℓ* − ℓ_n| ≤ μ · ρ^n · m̄* / (m̄* + μ)²
+
+    The rate ρ^n is topology-independent; the bound magnitude
+    depends on m̄* and μ (which are topology-dependent via k/|E|).
+
+    Parameters:
+        rho: Decay parameter
+        n: Number of rounds
+        m_star: Steady-state mean load
+        mu: Locality sensitivity
+
+    Returns:
+        Upper bound on the convergence gap.
+    """
+    denominator = (m_star + mu) ** 2
+    if denominator < 1e-12:
+        return 0.0
+    return mu * (rho ** n) * m_star / denominator
+
+
+def track_nonuniform_convergence(
+    landscape: Landscape,
+    current: str,
+    inscribed_edges: List[Edge],
+    *,
+    rounds: int = 30,
+    goal: Optional[str] = None,
+    mu: float = 5.0,
+) -> LocalityEvolution:
+    """Track locality under non-uniform inscription.
+
+    Only the specified edges receive inscription each round,
+    simulating a controller that traverses a fixed subset of the
+    graph (e.g., a single path through a larger topology).
+
+    Parameters:
+        landscape: Navigation landscape
+        current: Center for scope computation
+        inscribed_edges: Subset of edges that get inscribed each round
+        rounds: Number of inscription rounds
+        goal: Optional goal node
+        mu: Half-load parameter
+    """
+    evolution = LocalityEvolution(mu=mu)
+    hist = landscape.historization
+
+    snap = snapshot_locality(landscape, current, step=0, goal=goal, mu=mu)
+    evolution.snapshots.append(snap)
+
+    for r in range(1, rounds + 1):
+        for e in inscribed_edges:
+            hist.update(e, Outcome.SUCCESS)
+
+        snap = snapshot_locality(landscape, current, step=r, goal=goal, mu=mu)
+        evolution.snapshots.append(snap)
+
+    return evolution
