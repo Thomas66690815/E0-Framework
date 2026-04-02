@@ -1,8 +1,13 @@
 """
-Integrated Reflexion (C59)
+Integrated Reflexion (C59, extended C102)
 =============================
 Unifies C49 (reflexive flag action) and C57 (reflexive edge proposal)
 into a single reflexive response pipeline.
+
+C102 extension: Adds scoped reflexion (C101) as an option.  When
+scoped=True, topology reflexion uses historization-derived locality
+instead of global candidate search.  Fresh systems degenerate to
+global; historized systems propose locally.
 
 Insight: "Reflexion ist kein Spezialfall — sie ist der Normalfall
 für alles Neue."  Both flag toggling and topology construction are
@@ -12,7 +17,9 @@ coherent mechanism.
 Pipeline:
   1. Dual reflection diagnosis (C47) → SelfGraphDiagnosis
   2. Flag reflexion (C49): toggle harmful modulations
-  3. Topology reflexion (C57): propose edges at frontier nodes
+  3. Topology reflexion (C57/C101): propose edges at frontier nodes
+     - scoped=False: global candidates (C57)
+     - scoped=True: historization-scoped candidates (C101)
   4. Unified result with both kinds of actions
   5. Journal records everything
 
@@ -20,9 +27,17 @@ Usage:
   # As standalone function:
   result = integrated_reflexion(landscape, current, goal, report=report)
 
+  # With scoped reflexion (C102):
+  result = integrated_reflexion(landscape, current, goal, report=report, scoped=True)
+
   # As full runner with SelfGraph awareness:
   trace, result, journal = run_with_integrated_reflexion(
       landscape, execute_fn, "S", "GOAL",
+  )
+
+  # Scoped runner (C102):
+  trace, result, journal = run_with_integrated_reflexion(
+      landscape, execute_fn, "S", "GOAL", scoped=True,
   )
 """
 
@@ -47,6 +62,11 @@ from e0_controller.reflexive_edge_proposal import (
     is_frontier,
     propose_edges,
 )
+from e0_controller.scoped_reflexion import (
+    ReflexionScope,
+    compute_reflexion_scope,
+    scoped_propose_edges,
+)
 from e0_controller.dual_reflection import (
     DualReflectionReport,
     SelfGraphDiagnosis,
@@ -61,7 +81,7 @@ from e0_controller.self_graph import SelfGraph
 
 @dataclass
 class IntegratedReflexionResult:
-    """Unified outcome of both flag reflexion (C49) and topology reflexion (C57).
+    """Unified outcome of both flag reflexion (C49) and topology reflexion (C57/C101).
 
     Combines modulation flag toggles with edge proposals into a single
     result with joint undo capability.
@@ -70,6 +90,7 @@ class IntegratedReflexionResult:
     edge_proposals: List[ProposedEdge] = field(default_factory=list)
     edges_added: int = 0
     diagnosis_used: Optional[SelfGraphDiagnosis] = None
+    scopes: List[ReflexionScope] = field(default_factory=list)
 
     @property
     def any_changes(self) -> bool:
@@ -131,10 +152,12 @@ def integrated_reflexion(
     enable_topology: bool = True,
     proactive: bool = True,
     max_proposals: int = 5,
+    scoped: bool = False,
+    scope_mu: float = 5.0,
 ) -> IntegratedReflexionResult:
     """Unified reflexion: diagnosis → flags + topology.
 
-    Combines C49 flag reflexion and C57 edge proposal into one call.
+    Combines C49 flag reflexion and C57/C101 edge proposal into one call.
 
     Parameters:
         landscape: Current navigation landscape
@@ -145,6 +168,8 @@ def integrated_reflexion(
         enable_topology: Whether to propose new edges
         proactive: If True, use median R₀ for proposals (C57 Stufe 2)
         max_proposals: Maximum edge proposals
+        scoped: If True, use historization-scoped proposals (C101)
+        scope_mu: Half-load parameter for scope computation
     """
     result = IntegratedReflexionResult()
 
@@ -153,12 +178,24 @@ def integrated_reflexion(
         result.flag_result = apply_reflexive_actions(report, landscape)
         result.diagnosis_used = report.self_diagnosis
 
-    # C57: Topology reflexion (requires frontier)
+    # C57/C101: Topology reflexion (requires frontier)
     if enable_topology and is_frontier(landscape, current, goal):
-        proposals = propose_edges(
-            landscape, current, goal, max_proposals,
-            proactive=proactive,
-        )
+        if scoped:
+            scope = compute_reflexion_scope(
+                landscape, current, goal=goal, mu=scope_mu,
+            )
+            result.scopes.append(scope)
+            proposals = scoped_propose_edges(
+                landscape, current, goal, scope,
+                max_proposals=max_proposals,
+                proactive=proactive,
+                mu=scope_mu,
+            )
+        else:
+            proposals = propose_edges(
+                landscape, current, goal, max_proposals,
+                proactive=proactive,
+            )
         result.edge_proposals = proposals
         result.edges_added = apply_proposals(landscape, proposals)
 
@@ -200,14 +237,17 @@ def run_with_integrated_reflexion(
     max_cycles: int = 50,
     max_proposals: int = 5,
     diagnosis_interval: int = 10,
+    scoped: bool = False,
+    scope_mu: float = 5.0,
 ) -> Tuple[RunTrace, IntegratedReflexionResult, ReflexiveJournal]:
-    """Run with full integrated reflexion: C49 flags + C57 topology.
+    """Run with full integrated reflexion: C49 flags + C57/C101 topology.
 
     NEW capability beyond C56/C57 standalone:
     - SelfGraph awareness during navigation (self-historization via controller)
     - Diagnosis-driven flag toggling at intervals (C49)
     - Proactive edge proposals at every frontier (C57)
     - Unified result and journal
+    - C102: scoped=True uses historization-derived locality (C101)
 
     Parameters:
         landscape: Navigation landscape
@@ -217,6 +257,8 @@ def run_with_integrated_reflexion(
         max_cycles: Maximum navigation cycles
         max_proposals: Max edge proposals per frontier
         diagnosis_interval: Cycles between SelfGraph diagnoses
+        scoped: If True, use historization-scoped proposals (C101)
+        scope_mu: Half-load parameter for scope computation
 
     Returns:
         (trace, integrated_result, journal)
@@ -232,17 +274,30 @@ def run_with_integrated_reflexion(
     proposed_from: Set[str] = set()
     all_proposals: List[ProposedEdge] = []
     all_flag_actions: List[ReflexiveAction] = []
+    all_scopes: List[ReflexionScope] = []
 
     for cycle in range(max_cycles):
         if current == goal:
             break
 
-        # ── C57: Proactive topology reflexion at frontiers ──
+        # ── C57/C101: Proactive topology reflexion at frontiers ──
         if current not in proposed_from and is_frontier(landscape, current, goal):
-            proposals = propose_edges(
-                landscape, current, goal, max_proposals,
-                proactive=True,
-            )
+            if scoped:
+                scope = compute_reflexion_scope(
+                    landscape, current, goal=goal, mu=scope_mu,
+                )
+                all_scopes.append(scope)
+                proposals = scoped_propose_edges(
+                    landscape, current, goal, scope,
+                    max_proposals=max_proposals,
+                    proactive=True,
+                    mu=scope_mu,
+                )
+            else:
+                proposals = propose_edges(
+                    landscape, current, goal, max_proposals,
+                    proactive=True,
+                )
             proposed_from.add(current)
             if proposals:
                 apply_proposals(landscape, proposals)
@@ -286,6 +341,7 @@ def run_with_integrated_reflexion(
         flag_result=final_flag_result,
         edge_proposals=all_proposals,
         edges_added=len(all_proposals),
+        scopes=all_scopes,
     )
 
     return trace, result, journal
