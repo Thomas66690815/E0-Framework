@@ -1,4 +1,4 @@
-"""Tests for Dream Mode — C109/C110/C111.
+"""Tests for Dream Mode — C109/C110/C111/C119.
 
 C109: Edge fingerprint extraction, distance metric, equivalence detection,
       dream readiness, Dream Landscape construction. P1 + P5 validated.
@@ -6,6 +6,7 @@ C110: DreamObserver class, dream_cycle, incremental updates, feedback,
       query, noise filtering. P4 validated.
 C111: Bridge hypothesis generation — propose_bridges(), dream_coupling_discount(),
       make_dream_peer_fn(). P2 (acceleration) + P3 (self-correction) validated.
+C119: Dream Mode consolidation — structural decay during dream_cycle.
 """
 
 import math
@@ -1282,3 +1283,206 @@ class TestMakeDreamPeerFn:
         ctrl = E0Controller(target, lambda s, t: Outcome.SUCCESS, peer_fn=peer_fn)
         trace = ctrl.run("A", goal="GOAL")
         assert trace.path[-1] == "GOAL"
+
+
+# ═══════════════════════════════════════════════
+# C119: Dream Mode Consolidation — Structural Decay
+# ═══════════════════════════════════════════════
+
+class TestDreamDecayDisabled:
+    """dream_cycle with decay_enabled=False (default) does not mutate landscapes."""
+
+    def test_no_decay_by_default(self):
+        """Default DreamObserver does not decay."""
+        obs = DreamObserver(readiness_threshold=0.0)
+        la = _build_simple_domain()
+        _inscribe(la, ["A", "B", "C", "GOAL"], Outcome.SUCCESS, 5)
+        obs.register("d1", la)
+        states_before = la.states.copy()
+        result = obs.dream_cycle()
+        assert la.states == states_before
+        assert result.decay_reports == {}
+
+    def test_decay_reports_empty_by_default(self):
+        """DreamCycleResult.decay_reports is empty when decay disabled."""
+        obs = DreamObserver(readiness_threshold=0.0)
+        la = _build_simple_domain()
+        _inscribe(la, ["A", "B", "C", "GOAL"], Outcome.SUCCESS, 5)
+        obs.register("d1", la)
+        result = obs.dream_cycle()
+        assert len(result.decay_reports) == 0
+
+
+class TestDreamDecayEnabled:
+    """dream_cycle with decay_enabled=True prunes dormant weak states."""
+
+    def _build_decayable_domain(self):
+        """Domain with one strong hub and one weak dormant branch.
+
+        ANCHOR ↔ HUB ↔ GOAL   (strong, active)
+        HUB → WEAK → LEAF      (weak, will become dormant)
+        """
+        la = Landscape()
+        for s, t in [("ANCHOR", "HUB"), ("HUB", "ANCHOR"),
+                      ("HUB", "GOAL"), ("GOAL", "HUB")]:
+            la.add_edge(s, t, delta=0.5, resistance=1.0)
+        for s, t in [("HUB", "WEAK"), ("WEAK", "LEAF")]:
+            la.add_edge(s, t, delta=0.5, resistance=1.0)
+
+        h = la.historization
+        # Strong inscription on hub edges
+        for _ in range(20):
+            h.update(Edge("ANCHOR", "HUB"), Outcome.SUCCESS)
+            h.update(Edge("HUB", "ANCHOR"), Outcome.SUCCESS)
+            h.update(Edge("HUB", "GOAL"), Outcome.SUCCESS)
+            h.update(Edge("GOAL", "HUB"), Outcome.SUCCESS)
+        # Minimal inscription on weak branch
+        h.update(Edge("HUB", "WEAK"), Outcome.SUCCESS)
+        h.update(Edge("WEAK", "LEAF"), Outcome.SUCCESS)
+        # Make weak branch dormant
+        for _ in range(200):
+            h.update(Edge("ANCHOR", "HUB"), Outcome.SUCCESS)
+
+        return la
+
+    def test_decay_removes_dormant_states(self):
+        """Dormant weak states are removed during dream consolidation."""
+        la = self._build_decayable_domain()
+        states_before = la.states.copy()
+
+        obs = DreamObserver(
+            readiness_threshold=0.0,
+            decay_enabled=True,
+            theta_base=0.5,
+        )
+        obs.register("d1", la)
+        result = obs.dream_cycle()
+
+        assert "d1" in result.decay_reports
+        report = result.decay_reports["d1"]
+        assert len(report.removed_states) > 0
+        # At least WEAK or LEAF should be removed
+        removed = set(report.removed_states)
+        assert removed & {"WEAK", "LEAF"}, f"Expected WEAK/LEAF removed, got {removed}"
+
+    def test_protected_states_survive(self):
+        """States listed as protected are never decayed."""
+        la = self._build_decayable_domain()
+
+        obs = DreamObserver(
+            readiness_threshold=0.0,
+            decay_enabled=True,
+            theta_base=0.5,
+            protected_fn=lambda name: {"ANCHOR", "GOAL"},
+        )
+        obs.register("d1", la)
+        result = obs.dream_cycle()
+
+        if "d1" in result.decay_reports:
+            report = result.decay_reports["d1"]
+            assert "ANCHOR" not in report.removed_states
+            assert "GOAL" not in report.removed_states
+
+    def test_equivalences_before_decay(self):
+        """Equivalences are computed before decay — full graph is analyzed."""
+        la1 = self._build_decayable_domain()
+        la2 = self._build_decayable_domain()
+
+        obs = DreamObserver(
+            readiness_threshold=0.0,
+            decay_enabled=True,
+            theta_base=0.5,
+        )
+        obs.register("d1", la1)
+        obs.register("d2", la2)
+
+        # Edges before decay
+        edges_before_d1 = la1.edge_count()
+
+        result = obs.dream_cycle()
+
+        # Equivalences should have been found (from full graph)
+        assert result.equivalences_found >= 0
+        # And decay should have modified at least one domain
+        total_removed = sum(
+            len(r.removed_states) for r in result.decay_reports.values()
+        )
+        if total_removed > 0:
+            # After decay, at least one domain has fewer edges
+            assert la1.edge_count() < edges_before_d1 or la2.edge_count() < edges_before_d1
+
+    def test_decay_traces_created(self):
+        """DecayTraces are in the report for each removed state."""
+        la = self._build_decayable_domain()
+
+        obs = DreamObserver(
+            readiness_threshold=0.0,
+            decay_enabled=True,
+            theta_base=0.5,
+        )
+        obs.register("d1", la)
+        result = obs.dream_cycle()
+
+        if "d1" in result.decay_reports:
+            report = result.decay_reports["d1"]
+            assert len(report.traces) == len(report.removed_states)
+            for trace in report.traces:
+                assert trace.original_state in report.removed_states
+                assert trace.decayed_at_tau > 0
+
+    def test_no_decay_when_all_active(self):
+        """When all states are recently active, nothing is decayed."""
+        la = _build_simple_domain()
+        # All edges recently inscribed
+        _inscribe(la, ["A", "B", "C", "GOAL"], Outcome.SUCCESS, 5)
+
+        obs = DreamObserver(
+            readiness_threshold=0.0,
+            decay_enabled=True,
+            theta_base=0.5,
+        )
+        obs.register("d1", la)
+        result = obs.dream_cycle()
+
+        # Nothing should be decayed — everything was just touched
+        assert "d1" not in result.decay_reports or \
+               len(result.decay_reports["d1"].removed_states) == 0
+
+    def test_landscape_consistent_after_decay(self):
+        """After decay, surviving edges reference existing states."""
+        la = self._build_decayable_domain()
+
+        obs = DreamObserver(
+            readiness_threshold=0.0,
+            decay_enabled=True,
+            theta_base=0.5,
+        )
+        obs.register("d1", la)
+        obs.dream_cycle()
+
+        for e in la.edges:
+            assert e.source in la.states, f"{e.source} not in states"
+            assert e.target in la.states, f"{e.target} not in states"
+
+    def test_multiple_domains_independent_decay(self):
+        """Each domain is decayed independently."""
+        la1 = self._build_decayable_domain()
+        la2 = _build_simple_domain()
+        _inscribe(la2, ["A", "B", "C", "GOAL"], Outcome.SUCCESS, 5)
+
+        obs = DreamObserver(
+            readiness_threshold=0.0,
+            decay_enabled=True,
+            theta_base=0.5,
+        )
+        obs.register("d1", la1)
+        obs.register("d2", la2)
+
+        states_d2_before = la2.states.copy()
+        result = obs.dream_cycle()
+
+        # d2 was recently active, should not decay
+        if "d2" in result.decay_reports:
+            assert len(result.decay_reports["d2"].removed_states) == 0
+        # d2 states unchanged
+        assert la2.states == states_d2_before

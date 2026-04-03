@@ -283,12 +283,19 @@ class DreamCycleResult:
     equivalences_new: int           # not previously in Dream Landscape
     dream_landscape_states: int
     dream_landscape_edges: int
+    # C119: Structural decay during dream consolidation
+    decay_reports: Dict[str, Any] = field(default_factory=dict)  # domain → DecayReport
 
 
 class DreamObserver:
     """Passive observer that watches N domains and detects cross-domain patterns.
 
-    Holds read-only references to domain landscapes. Never mutates them.
+    Holds references to domain landscapes. Equivalence detection is
+    read-only.  Structural decay (C119) consolidates domain landscapes
+    during dream — pruning dormant, low-anchor states.  This mirrors
+    biological sleep consolidation: patterns are extracted first, then
+    the graph is compressed.
+
     Maintains a Dream Landscape that historizes equivalences — productive
     analogies strengthen, bad ones decay.
 
@@ -315,6 +322,9 @@ class DreamObserver:
         mu: float = 5.0,
         alpha: float = 0.5,
         base_resistance: float = 0.5,
+        decay_enabled: bool = False,
+        theta_base: float = 0.5,
+        protected_fn: Optional[Any] = None,
     ):
         self._domains: Dict[str, Landscape] = {}
         self._dream_landscape: Optional[Landscape] = None
@@ -325,6 +335,9 @@ class DreamObserver:
         self._mu = mu
         self._alpha = alpha
         self._base_resistance = base_resistance
+        self.decay_enabled = decay_enabled          # C119
+        self._theta_base = theta_base               # C119
+        self._protected_fn = protected_fn           # C119: domain → Set[str]
 
     # -- Domain management --------------------------------------------------
 
@@ -353,10 +366,12 @@ class DreamObserver:
     def dream_cycle(self) -> DreamCycleResult:
         """Run one dream observation pass across all domain pairs.
 
-        For each pair of dream-ready domains:
-        1. Extract fingerprints
-        2. Find equivalences (quantile-based)
+        Steps:
+        1. Partition domains by readiness
+        2. Extract fingerprints + find equivalences (quantile-based)
         3. Update (or build) the Dream Landscape incrementally
+        4. If decay_enabled: consolidate each domain landscape (C119)
+           — patterns are extracted BEFORE decay, then graphs are compressed
 
         Domains that are not dream-ready are skipped.
 
@@ -390,6 +405,28 @@ class DreamObserver:
         # Incremental update of Dream Landscape
         new_count = self._update_dream_landscape(all_equivalences)
 
+        # C119: Structural decay — consolidation during dream
+        decay_reports: Dict[str, Any] = {}
+        if self.decay_enabled:
+            from .structural_entropy import (
+                find_decay_candidates, apply_decay,
+            )
+            for name in ready:
+                landscape = self._domains[name]
+                protected = set()
+                if self._protected_fn is not None:
+                    protected = self._protected_fn(name)
+                candidates = find_decay_candidates(
+                    landscape.states,
+                    landscape.historization,
+                    landscape.edges,
+                    theta_base=self._theta_base,
+                    protected=protected,
+                )
+                if candidates:
+                    report = apply_decay(landscape, candidates)
+                    decay_reports[name] = report
+
         self._cycle_count += 1
 
         dl = self._dream_landscape
@@ -400,6 +437,7 @@ class DreamObserver:
             equivalences_new=new_count,
             dream_landscape_states=len(dl.states) if dl else 0,
             dream_landscape_edges=len(dl.edges) if dl else 0,
+            decay_reports=decay_reports,
         )
 
     def _update_dream_landscape(self, equivalences: List[Equivalence]) -> int:
