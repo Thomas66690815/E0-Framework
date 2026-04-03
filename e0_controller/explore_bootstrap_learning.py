@@ -254,6 +254,7 @@ def expand_dicts(
     base_dicts: List[PartialDictionary],
     discoveries: List[Tuple[str, str, int, float]],
     max_add: int = 5,
+    min_confidence: int = 2,
 ) -> List[PartialDictionary]:
     """Create new dictionaries by adding top discoveries.
 
@@ -261,9 +262,13 @@ def expand_dicts(
     Wait — that would be cheating.  We DON'T check ground truth here.
     The system must use its own confidence (vote count) to decide.
 
-    Strategy: Add top-N discoveries by vote count, regardless of
-    correctness.  If the system adds wrong pairs, that will degrade
+    Strategy: Add top-N discoveries by vote count that pass the
+    confidence gate.  If the system adds wrong pairs, that will degrade
     future rounds — a natural self-correcting signal.
+
+    Args:
+        min_confidence: Minimum vote count to accept a discovery.
+            Default=2 (permissive). Higher values = more conservative.
     """
     # Copy existing
     new_dicts = [
@@ -277,6 +282,8 @@ def expand_dicts(
     for en, de, votes, avg_d in discoveries:
         if added >= max_add:
             break
+        if votes < min_confidence:
+            continue
         new_translations[en] = de
         added += 1
 
@@ -290,7 +297,12 @@ def expand_dicts(
 # Bootstrap loop
 # ══════════════════════════════════════════════
 
-def bootstrap(n_rounds: int = 4, max_add_per_round: int = 5) -> None:
+def bootstrap(
+    n_rounds: int = 4,
+    max_add_per_round: int = 5,
+    min_confidence: int = 2,
+    label: str = "",
+) -> None:
     """Run the iterative bootstrap loop."""
     dicts = config_b()
     all_results: List[RoundResult] = []
@@ -304,7 +316,11 @@ def bootstrap(n_rounds: int = 4, max_add_per_round: int = 5) -> None:
             break
 
         # Expand dictionaries for next round
-        dicts = expand_dicts(dicts, result.discoveries, max_add=max_add_per_round)
+        dicts = expand_dicts(
+            dicts, result.discoveries,
+            max_add=max_add_per_round,
+            min_confidence=min_confidence,
+        )
 
     # ── Summary ──────────────────────────────────────────────
     print(f"\n{'='*72}")
@@ -367,15 +383,23 @@ def bootstrap(n_rounds: int = 4, max_add_per_round: int = 5) -> None:
 
 def main() -> None:
     print("=" * 72)
-    print("  E₀ Iterative Dictionary Expansion (C126)")
-    print("  Hypothesis: Dream discoveries bootstrap future rounds")
+    print("  E₀ Iterative Dictionary Expansion (C126b)")
+    print("  Comparing: ungated vs. confidence-gated bootstrap")
     print("  Starting from Config B (11 pairs)")
     print("=" * 72)
 
-    bootstrap(n_rounds=4, max_add_per_round=5)
+    print("\n\n" + "▓" * 72)
+    print("  STRATEGY 1: Ungated (min_confidence=2, as C126)")
+    print("▓" * 72)
+    bootstrap(n_rounds=5, max_add_per_round=5, min_confidence=2)
+
+    print("\n\n" + "▓" * 72)
+    print("  STRATEGY 2: Confidence-Gated (min_confidence=6)")
+    print("▓" * 72)
+    bootstrap(n_rounds=5, max_add_per_round=5, min_confidence=6)
 
     print("\n" + "=" * 72)
-    print("  Done — bootstrap loop complete.")
+    print("  Done — both strategies compared.")
     print("=" * 72)
 
 

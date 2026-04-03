@@ -28,12 +28,12 @@
   },
 
   "state": {
-    "latest_commit": "C124",
-    "latest_commit_msg": "C124: Language Learning Exploration — EN↔DE cross-domain dream discovery",
-    "test_count": 3499,
+    "latest_commit": "C126b",
+    "latest_commit_msg": "C126b: Confidence-Gated Bootstrap — gated vs ungated comparison",
+    "test_count": 3530,
     "test_failures": 0,
-    "module_count": "58 production + 9 benchmarks + 11 demos + 20 explorations + 95 test files + 4 canons",
-    "line_count": "~18700 production, ~69500 total"
+    "module_count": "58 production + 9 benchmarks + 11 demos + 22 explorations + 95 test files + 4 canons",
+    "line_count": "~18700 production, ~70800 total"
   },
 
   "conventions": {
@@ -191,7 +191,7 @@
   ],
 
   "active_work": {
-    "focus": "Language Learning Exploration (C124) complete. EN↔DE full-stack demo exercising all 12 layers. Next: C43 Self-Graph.",
+    "focus": "Language Learning Bootstrap C126b complete. Confidence-gating preserves discrimination. Next: weighted entries or Level-2 validation.",
     "completed": [
       "All 6/6 Multiverse Open Questions resolved (C66-C71)",
       "C72 Chess Engine — E₀ plays chess via 6 strategic dimensions, discovers opening principles through historization",
@@ -251,10 +251,14 @@
       "C122e Documentation update — archive 8 docs, update 5 docs, new Ontodynamics Canon Analysis.",
       "C123 Curriculum Navigator — CurriculumStrategy (cumulative turns from derivation levels), EquilibriumDetector (T_s stability replaces goal-reaching), build_scoped_landscape, transfer_historization, CurriculumRunner. 35 tests.",
       "C123b Documentation — Architecture v4 §14, Test Registry update, bootstrap.json layer 12, Ontodynamics Analysis P5/P6/P7.",
-      "C124 Language Learning Exploration — english_basic + german_basic canons (44 nodes, 59 edges each), explore_language_learning.py exercises all 12 layers (canon→curriculum→mode→entropy→dream→multiverse→sleep-wake). Dream Mode discovers 522 cross-language equivalences. Cognate pairs emerge from structural fingerprint matching."
+      "C124 Language Learning Exploration — english_basic + german_basic canons (44 nodes, 59 edges each), explore_language_learning.py exercises all 12 layers (canon→curriculum→mode→entropy→dream→multiverse→sleep-wake). Dream Mode discovers 522 cross-language equivalences. Cognate pairs emerge from structural fingerprint matching.",
+      "C124b Differentiated Canons v1.1 — 10-11 distinct delta values (0.1-0.7) by relationship type, 64 edges each, 5 EN-only + 5 DE-only edges for topological asymmetry.",
+      "C125 Dictionary-Mediated Learning — PartialDictionary + make_dict_execute provide SUCCESS/FAILURE signal. Config A (8 pairs) 61%, Config B (11 pairs) 73% correct unknown translations. Full-coverage exploration added (run from every node).",
+      "C126 Iterative Dictionary Expansion — bootstrap loop. 4 rounds from Config B: 11→25 known pairs, 6✓+9✗ discoveries (40%). Saturation discovered: S/F ratio collapses, distinct distances→1, rankings degrade.",
+      "C126b Confidence-Gated Bootstrap — gated (min_confidence=6) vs ungated (min_confidence=2) comparison. Gated: fewer pairs (16 vs 25) but rankings STABLE (mouth 6→8%ile vs 6→16%ile). Gated 50% accuracy vs ungated 40%. Gate preserves discrimination but limits growth."
     ],
-    "next_steps": ["C43: Self-Graph (E0 learns E0 first)", "C44: Bootstrapper (LLM output → Landscape init)"],
-    "next_commit_id": "C125"
+    "next_steps": ["Weighted/reversible dictionary entries", "Level-2 pair-based validation", "C43: Self-Graph (E0 learns E0 first)"],
+    "next_commit_id": "C127"
   },
 
   "key_modules_quick_ref": {
