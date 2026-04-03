@@ -28,11 +28,11 @@
   },
 
   "state": {
-    "latest_commit": "C127",
-    "latest_commit_msg": "C127: Level-2 Pair-Based Validation — multiplicative weighting prevents distance collapse",
+    "latest_commit": "C127b",
+    "latest_commit_msg": "C127b: Cumulative Vote Bootstrap — falsification: consistent wrong pairs also accumulate",
     "test_count": 3530,
     "test_failures": 0,
-    "module_count": "58 production + 9 benchmarks + 11 demos + 24 explorations + 95 test files + 4 canons",
+    "module_count": "58 production + 9 benchmarks + 11 demos + 25 explorations + 95 test files + 4 canons",
     "line_count": "~18700 production, ~70800 total"
   },
 
@@ -191,7 +191,7 @@
   ],
 
   "active_work": {
-    "focus": "Language Learning C127 complete. Level-2 pair validation PREVENTS distance collapse (64→52→99→154→... vs L1: 53→1→1→1). R7 = 5/5 correct, 20/32 pairs top-10%ile. Oscillation between rounds = next problem.",
+    "focus": "Language Learning C127b falsified. Pure cumulative voting amplifies systematic wrong correspondences (relation↔essen_n: 36v promoted wrong). Need competitive disambiguation or topology-aware validation.",
     "completed": [
       "All 6/6 Multiverse Open Questions resolved (C66-C71)",
       "C72 Chess Engine — E₀ plays chess via 6 strategic dimensions, discovers opening principles through historization",
@@ -257,10 +257,11 @@
       "C126 Iterative Dictionary Expansion — bootstrap loop. 4 rounds from Config B: 11→25 known pairs, 6✓+9✗ discoveries (40%). Saturation discovered: S/F ratio collapses, distinct distances→1, rankings degrade.",
       "C126b Confidence-Gated Bootstrap — gated (min_confidence=6) vs ungated (min_confidence=2) comparison. Gated: fewer pairs (16 vs 25) but rankings STABLE (mouth 6→8%ile vs 6→16%ile). Gated 50% accuracy vs ungated 40%. Gate preserves discrimination but limits growth.",
       "C126c Weighted Dictionary Bootstrap — 3-tier graduation (canonical/tentative/confirmed). Stochastic execute_fn for tentative entries. 4/4 confirmed pairs 100% correct. Decay removes wrong entries naturally. Distance collapse by R2 limits discrimination — dream works on topology alone. quality↔eigenschaft paradox: high initial weight prevents rediscovery.",
-      "C127 Level-2 Pair-Based Validation — p(SUCCESS)=w(source)×w(target). Distance collapse PREVENTED: 64→52→99→154→116→135→77→68 (vs L1: 53→1). S/F ratio stable ~30%. R7=5/5 correct, 20/32 unknown pairs top-10%ile. Oscillation between rounds. 1 confirmed (quality), 7/11 tentative correct."
+      "C127 Level-2 Pair-Based Validation — p(SUCCESS)=w(source)×w(target). Distance collapse PREVENTED: 64→52→99→154→116→135→77→68 (vs L1: 53→1). S/F ratio stable ~30%. R7=5/5 correct, 20/32 unknown pairs top-10%ile. Oscillation between rounds. 1 confirmed (quality), 7/11 tentative correct.",
+      "C127b Cumulative Vote Bootstrap — FALSIFICATION. weight=f(cumulative_votes). Wrong pairs accumulate consistently: relation↔essen_n 36v promoted, food↔beziehung 28v promoted. Only 2/4 confirmed correct (50%). Distance diversity preserved (64→38→55→83→111...). Pure accumulation amplifies systematic structural false matches."
     ],
-    "next_steps": ["Stabilize round-to-round oscillation", "Seed averaging or multi-seed consensus", "C43: Self-Graph (E0 learns E0 first)"],
-    "next_commit_id": "C127b"
+    "next_steps": ["Competitive disambiguation (mutual exclusion between candidates)", "Topology-aware validation (Level-3)", "C43: Self-Graph (E0 learns E0 first)"],
+    "next_commit_id": "C127c"
   },
 
   "key_modules_quick_ref": {
