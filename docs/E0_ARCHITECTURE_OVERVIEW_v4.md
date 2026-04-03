@@ -3,8 +3,8 @@
 **Status:** Canonical reference  
 **Date:** 2026-04-03  
 **Supersedes:** E0_ARCHITECTURE_OVERVIEW_v3.md (2026-04-02)  
-**Scope:** 58 production modules, 9 benchmarks, 11 demos, 19 explorations, 95 test files — ~19,300 production lines, 3499 tests
-**Latest:** C123 (Curriculum Navigator — hierarchical learning for canonical landscapes)
+**Scope:** 58 production modules, 9 benchmarks, 11 demos, 25 explorations, 95 test files — ~19,300 production lines, 3530 tests
+**Latest:** C128 (Level-3 Neighborhood Consistency — structural validation for cross-domain translation)
 **Papers:** P1 (Structural Interference), P2 (Spinor/Born), P3 (Non-Abelian), P4 (Reflexivity), P5 (Emergent Locality), P6 (Dream Mode)
 
 ---
@@ -330,7 +330,7 @@ All three share the same controller core. They differ only in the final action s
 
 ## 8. Test Infrastructure
 
-**3499 tests**, 0 failures (2026-04-03) across **95 test files**.
+**3530 tests**, 0 failures (2026-04-03) across **95 test files**.
 
 | Category | Test Files | Tests |
 |----------|-----------|-------|
@@ -483,3 +483,50 @@ A 51-node landscape cannot be learned in a single `run()` — greedy covers ~12%
 Ontodynamics default: 3 turns (levels 0–5 canonical, 0–11 border, 0–17 full). Historization persists across turns. Goal selection: highest-level goal_state within each turn's scope. Start: lowest derivation level node.
 
 35 tests in `test_curriculum.py`.
+
+---
+
+## 15. C124–C128 — Language Learning via Cross-Domain Fingerprint Matching
+
+### Problem
+
+Can E₀ learn unknown word translations from known ones?  The system has two vocabulary graphs (EN, DE) with parallel structure.  Dream Mode compares edge fingerprints across domains — but without heterogeneous SUCCESS/FAILURE signals, all fingerprints converge identically (C124: 614 equivalences at q=0.000).
+
+### Solution
+
+**Partial dictionaries as reality barrier**: Known translation pairs provide the SUCCESS/FAILURE signal that creates fingerprint differentiation.  Starting from 11 known pairs (Config B), the system bootstraps new translations through iterative rounds: learn → dream → discover → expand.
+
+**Three validation levels** (progressively stronger):
+
+| Level | Mechanism | Effect |
+|---|---|---|
+| L1: Target known? | SUCCESS if target ∈ known | Bootstrap start, but causes distance collapse |
+| L2: Pair-based | p(SUCCESS) = w(source) × w(target) | Prevents distance collapse, preserves diversity |
+| L3: Neighborhood | w = base_w × context_score | Rejects structural false matches |
+
+**Context score** (C128): Bidirectional neighborhood consistency.  For candidate en↔de, translate en's neighbors → check if they are de's neighbors (and vice versa).  Validates relational identity, not just isolated fingerprint similarity.
+
+### Key Files
+
+| File | Purpose |
+|---|---|
+| `canons/english_basic.json` | EN vocabulary canon (44 nodes, 64 edges) |
+| `canons/german_basic.json` | DE vocabulary canon (44 nodes, 64 edges) |
+| `explore_dict_learning.py` | C125: PartialDictionary, GROUND_TRUTH, config_a/b |
+| `explore_bootstrap_learning.py` | C126/b: Iterative bootstrap, bijective matching |
+| `explore_weighted_learning.py` | C126c: 3-tier graduation (canonical/tentative/confirmed) |
+| `explore_level2_learning.py` | C127: Level-2 multiplicative validation |
+| `explore_level2_cumulative.py` | C127b: Cumulative votes (falsified) |
+| `explore_level3_learning.py` | C128: Level-3 neighborhood consistency |
+
+### Results
+
+| Experiment | Confirmed accuracy | Distance diversity | Key finding |
+|---|---|---|---|
+| C126 ungated L1 | 40% | collapse | Contamination cascade |
+| C126c weighted L1 | 100% (4/4) | **collapse R2** | L1 floods SUCCESS |
+| C127 weighted L2 | 100% (1/1) | preserved | Oscillation |
+| C127b cumul L2 | **50%** (2/4) | preserved | **False matches amplified** |
+| **C128 context L3** | **100%** (4/4) | preserved | Structural validation works |
+
+Detailed results: `docs/E0_LANGUAGE_LEARNING_RESULTS_v1.md`.

@@ -1,6 +1,6 @@
 # E₀ Language Learning via Partial Dictionaries — Concept Document v1
 
-**Status**: Concept — pre-implementation  
+**Status**: Executed — see `E0_LANGUAGE_LEARNING_RESULTS_v1.md` for experimental results (C125–C128)  
 **Depends on**: C124b (differentiated EN/DE canons)  
 **Author**: C125 design phase
 

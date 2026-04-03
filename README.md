@@ -182,10 +182,11 @@ A reflexion layer that operates *across* universes rather than within a single r
 - [External validation / handoff note](docs/E0_EXTERNAL_VALIDATION_AND_HANDOFF_NOTE_v1.md) — package for reviewers or AI systems
 - [Phase 3q interference report](docs/E0_PHASE3Q_INTERFERENCE_REPORT_v1.md) — holonomy formula, goal_reaching geometry, Gordian Trap
 - [Paper 3: Non-Abelian Structure](docs/papers/E0_PAPER3_NON_ABELIAN_STRUCTURE_v1.md) — SU(2) transport, curvature modulation, topological invariants
-- [Test Registry v2](docs/E0_TEST_REGISTRY_v2.md) — complete per-file test inventory (3464 tests)
+- [Test Registry v2](docs/E0_TEST_REGISTRY_v2.md) — complete per-file test inventory (3530 tests)
 - [Empirical Insights](docs/E0_EMPIRICAL_INSIGHTS_v1.md) — what Chess (C72) reveals about E₀ as a whole
 - [Dream Mode Concept](docs/E0_DREAM_MODE_CONCEPT_v1.md) — cross-domain pattern recognition through passive observation (C109–C112)
 - [Structural Entropy Design](docs/E0_STRUCTURAL_ENTROPY_DESIGN_v1.md) — forgetting as structural necessity (C114–C120)
+- [Language Learning Results](docs/E0_LANGUAGE_LEARNING_RESULTS_v1.md) — cross-domain translation via structural fingerprints (C124–C128)
 
 ---
 
@@ -301,8 +302,10 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 | Dream Mode (C109–C112) | **Active** (88 tests) | `e0_controller/dream_mode.py` |
 | Structural Entropy (C114–C120) | **Active** (101 tests) | `e0_controller/structural_entropy.py` |
 | Sleep–Wake Cycle (C121) | **Active** (10 tests) | `e0_controller/sleep_wake.py` |
+| Curriculum Navigator (C123) | **Active** (35 tests) | `e0_controller/curriculum.py` |
+| Language Learning (C124–C128) | **Active** (explorations) | `e0_controller/explore_*_learning.py` |
 
-**Tests:** 3464 total (pytest discover), 0 failures, 0 warnings, 41 conditional (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
+**Tests:** 3530 total (pytest discover), 0 failures, 0 warnings, 41 conditional (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
 
 ---
 
@@ -423,7 +426,7 @@ E0-Framework/
 │   ├── chess_team.py                   E₀ Team Chess: multiverse team play (C74)
 │   ├── dream_mode.py                   Dream Mode: cross-domain pattern recognition (C109–C112)
 │   ├── explore_dream_mode.py            Dream Mode end-to-end exploration (C112)
-│   └── test_*.py                       3385 tests (see docs/E0_TEST_REGISTRY_v2.md)
+│   └── test_*.py                       3530 tests (see docs/E0_TEST_REGISTRY_v2.md)
 │
 ├── scenarios/                        Scenario Packets for grounded LLM demos
 │   ├── competitor_brief/               Domain-specific scenario data
@@ -434,7 +437,7 @@ E0-Framework/
 │   ├── E0_ARCHITECTURE_OVERVIEW_v4.md    9-layer module map (56+ modules)
 │   ├── E0_MULTIVERSE_DESIGN_v1.md        Multiverse architecture (C54–C63)
 │   ├── E0_HYBRID_CONTROLLER_SPEC_v1.md   Exact runtime behaviour and metrics
-│   ├── E0_TEST_REGISTRY_v2.md            Complete test inventory (3385 tests)
+│   ├── E0_TEST_REGISTRY_v2.md            Complete test inventory (3530 tests)
 │   ├── E0_MATH_IMPL_MAPPING_v1.md        Math ↔ Code mapping
 │   ├── papers/                           Manuscripts and formal paper drafts
 │   ├── research/                         Scientific investigations and derivations
