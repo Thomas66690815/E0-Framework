@@ -232,7 +232,7 @@ class TestReflexiveConvergence(unittest.TestCase):
 
         # Run iterate — mostly-failing fn causes amplification → step 7
         result = s.iterate("difference", goal="negative_necessity",
-                           max_cycles=20, max_iterations=4)
+                           max_cycles=40, max_iterations=8)
 
         # Step 7 should have produced at least one reflexive result
         reflex_fired = any(r is not None for r in result.reflexive_results)

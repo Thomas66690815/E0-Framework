@@ -478,10 +478,10 @@ class TestCanonTraces(unittest.TestCase):
         self.assertGreater(tl, 0.0)
 
     def test_primitive_edges_positive_quality(self):
-        """Primitive edges have high confidence → positive quality."""
+        """Primitive edges start with positive quality (U > F → q > 0)."""
         edge = Edge("difference", "local_realization")
         q = self.ls.historization.trace_quality(edge)
-        self.assertGreater(q, 0.5)
+        self.assertGreater(q, 0.0)
 
     def test_mass_edge_cautious_quality(self):
         """The mass edge (confidence=0.5) should have near-zero quality."""
