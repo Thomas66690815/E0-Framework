@@ -33,6 +33,7 @@ from typing import List, Optional, Set, Tuple
 
 from .primitives import Edge, Outcome
 from .historization import Historization
+from .landscape import Landscape
 
 
 # ---------------------------------------------------------------------------
@@ -394,3 +395,122 @@ def find_anchors(
         s for s in states
         if anchor_score(s, hist, all_edges) >= theta_decay
     }
+
+
+# ---------------------------------------------------------------------------
+# DecayTrace + DecayReport (Type 2 — structural decay execution)
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class DecayTrace:
+    """What remains after structural decay — the anchor's memory of the lost.
+
+    An anecdote: not the full experience, but enough to recognize it
+    if encountered again.  Stored per surviving neighbor state.
+    """
+    original_state: str
+    surviving_neighbors: Tuple[str, ...]
+    mean_quality: float     # was the experience good or bad?
+    peak_load: float        # how significant was it?
+    decayed_at_tau: int     # when it dissolved
+
+
+@dataclass(frozen=True)
+class DecayReport:
+    """Summary of a structural decay pass."""
+    removed_states: Tuple[str, ...]
+    removed_edges: Tuple[Edge, ...]
+    traces: Tuple[DecayTrace, ...]
+
+
+def _build_decay_trace(state: str, hist: Historization,
+                       all_edges: List[Edge],
+                       surviving_states: Set[str]) -> DecayTrace:
+    """Build a DecayTrace for a state about to be removed."""
+    incident = _incident_edges(state, all_edges)
+
+    # Surviving neighbors: states on the other end that are NOT being removed
+    neighbors = set()
+    for e in incident:
+        other = e.target if e.source == state else e.source
+        if other in surviving_states:
+            neighbors.add(other)
+
+    # Quality and load from incident edges
+    qualities = []
+    peak_load = 0.0
+    for e in incident:
+        qualities.append(hist.trace_quality(e))
+        load = hist.trace_load(e)
+        if load > peak_load:
+            peak_load = load
+
+    mean_q = sum(qualities) / len(qualities) if qualities else 0.0
+
+    return DecayTrace(
+        original_state=state,
+        surviving_neighbors=tuple(sorted(neighbors)),
+        mean_quality=mean_q,
+        peak_load=peak_load,
+        decayed_at_tau=hist.tau,
+    )
+
+
+def apply_decay(landscape: Landscape,
+                candidates: List[DecayCandidate]) -> DecayReport:
+    """
+    Execute structural decay: remove states and create DecayTraces.
+
+    For each candidate state:
+    1. Build DecayTrace from current data
+    2. Remove state + incident edges from landscape
+    3. Clean up historization entries for removed edges
+
+    The _log (audit trail) is preserved — historical events remain.
+
+    Parameters
+    ----------
+    landscape : Landscape
+        The landscape to modify (mutated in place).
+    candidates : List[DecayCandidate]
+        States to remove (from find_decay_candidates).
+
+    Returns
+    -------
+    DecayReport
+        Summary of removed states, edges, and traces.
+    """
+    if not candidates:
+        return DecayReport(
+            removed_states=(),
+            removed_edges=(),
+            traces=(),
+        )
+
+    hist = landscape.historization
+    all_edges = landscape.edges
+    states_to_remove = {c.state for c in candidates}
+    surviving_states = landscape.states - states_to_remove
+
+    # Phase 1: build traces BEFORE removing anything
+    traces = []
+    for c in candidates:
+        trace = _build_decay_trace(c.state, hist, all_edges, surviving_states)
+        traces.append(trace)
+
+    # Phase 2: remove states + edges from landscape
+    all_removed_edges: List[Edge] = []
+    for c in candidates:
+        removed = landscape.remove_state(c.state)
+        all_removed_edges.extend(removed)
+
+    # Phase 3: clean up historization
+    # Deduplicate — an edge between two removed states appears twice
+    unique_removed = list(dict.fromkeys(all_removed_edges))
+    hist.remove_edges(unique_removed)
+
+    return DecayReport(
+        removed_states=tuple(c.state for c in candidates),
+        removed_edges=tuple(unique_removed),
+        traces=tuple(traces),
+    )

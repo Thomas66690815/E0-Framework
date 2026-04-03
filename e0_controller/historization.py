@@ -151,6 +151,20 @@ class Historization:
             r_eff_before=r_eff_before, r_eff_after=r_eff_after,
         ))
 
+    def remove_edges(self, edges) -> None:
+        """Clean up trace data for removed edges.
+
+        Deletes _U, _F, _tau_last entries. The _log is preserved —
+        historical events remain as a record of what happened, even
+        after the structure that produced them is gone.
+
+        Does not modify _tau.
+        """
+        for e in edges:
+            self._U.pop(e, None)
+            self._F.pop(e, None)
+            self._tau_last.pop(e, None)
+
     # --- Inspection ---
 
     @property

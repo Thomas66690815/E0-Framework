@@ -1,9 +1,10 @@
 """
 Tests for structural_entropy.py — Structural Temperature, Inscription Threshold,
-Anchor Analysis, and Decay Candidates.
+Anchor Analysis, Decay Candidates, and Structural Decay.
 
 C115: Type 1 forgetting — non-inscription of routine transitions.
 C116: Type 2 forgetting — anchor analysis + decay candidates.
+C117: Structural decay — DecayTrace, apply_decay, Landscape.remove_state.
 """
 
 import math
@@ -11,6 +12,7 @@ import unittest
 
 from e0_controller.primitives import Edge, Outcome
 from e0_controller.historization import Historization
+from e0_controller.landscape import Landscape
 from e0_controller.structural_entropy import (
     structural_temperature,
     novelty,
@@ -21,7 +23,10 @@ from e0_controller.structural_entropy import (
     state_dormancy,
     find_decay_candidates,
     find_anchors,
+    apply_decay,
     DecayCandidate,
+    DecayTrace,
+    DecayReport,
     _signal,
 )
 
@@ -619,6 +624,320 @@ class TestFindAnchors(unittest.TestCase):
         candidate_states = {c.state for c in candidates}
         # No state is both anchor and candidate
         self.assertEqual(len(anchors & candidate_states), 0)
+
+
+# ===================================================================
+# C117: Structural Decay — DecayTrace, apply_decay, remove_state
+# ===================================================================
+
+def _build_landscape(*edge_specs, delta=0.5, resistance=1.0):
+    """Build a Landscape from (source, target) pairs."""
+    la = Landscape()
+    for src, tgt in edge_specs:
+        la.add_edge(src, tgt, delta=delta, resistance=resistance)
+    return la
+
+
+class TestLandscapeRemoveState(unittest.TestCase):
+    """Landscape.remove_state: remove state + all incident edges."""
+
+    def test_removes_state_and_edges(self):
+        """State and all incident edges are removed."""
+        la = _build_landscape(("A", "B"), ("B", "C"), ("C", "A"))
+        removed = la.remove_state("B")
+        self.assertNotIn("B", la.states)
+        # B→C and A→B removed
+        self.assertEqual(len(removed), 2)
+        # Only C→A survives
+        self.assertEqual(la.edge_count(), 1)
+        self.assertTrue(la.has_edge("C", "A"))
+
+    def test_nonexistent_state_raises(self):
+        """Removing a state that doesn't exist → KeyError."""
+        la = _build_landscape(("A", "B"))
+        with self.assertRaises(KeyError):
+            la.remove_state("Z")
+
+    def test_isolated_state_removed(self):
+        """An isolated state (no edges) is removed cleanly."""
+        la = Landscape()
+        la.add_state("lonely")
+        removed = la.remove_state("lonely")
+        self.assertEqual(removed, [])
+        self.assertNotIn("lonely", la.states)
+
+    def test_returns_incident_edges(self):
+        """Returns all edges that were incident to the removed state."""
+        la = _build_landscape(("A", "B"), ("C", "A"), ("D", "E"))
+        removed = la.remove_state("A")
+        removed_set = set(removed)
+        self.assertIn(Edge("A", "B"), removed_set)
+        self.assertIn(Edge("C", "A"), removed_set)
+        self.assertNotIn(Edge("D", "E"), removed_set)
+
+    def test_remaining_structure_consistent(self):
+        """After removal, states and edges are consistent."""
+        la = _build_landscape(("A", "B"), ("B", "C"), ("C", "D"))
+        la.remove_state("B")
+        # B gone, A and C survive (auto-registered)
+        self.assertNotIn("B", la.states)
+        self.assertIn("A", la.states)
+        self.assertIn("C", la.states)
+        # Only C→D survives
+        self.assertEqual(la.edge_count(), 1)
+        for e in la.edges:
+            self.assertIn(e.source, la.states)
+            self.assertIn(e.target, la.states)
+
+
+class TestHistorizationRemoveEdges(unittest.TestCase):
+    """Historization.remove_edges: clean up trace data."""
+
+    def test_removes_trace_data(self):
+        """_U, _F, _tau_last entries are deleted."""
+        h = Historization()
+        e = Edge("A", "B")
+        h.update(e, Outcome.SUCCESS)
+        self.assertIn(e, h._U)
+        h.remove_edges([e])
+        self.assertNotIn(e, h._U)
+        self.assertNotIn(e, h._F)
+        self.assertNotIn(e, h._tau_last)
+
+    def test_log_preserved(self):
+        """Audit log is NOT removed — historical record survives."""
+        h = Historization()
+        e = Edge("A", "B")
+        h.update(e, Outcome.SUCCESS)
+        h.record(e, Outcome.SUCCESS, 1.0, 0.85)
+        log_len_before = len(h.log)
+        h.remove_edges([e])
+        self.assertEqual(len(h.log), log_len_before)
+
+    def test_tau_preserved(self):
+        """Global clock τ is not affected."""
+        h = Historization()
+        e = Edge("A", "B")
+        h.update(e, Outcome.SUCCESS)
+        tau_before = h.tau
+        h.remove_edges([e])
+        self.assertEqual(h.tau, tau_before)
+
+    def test_unknown_edge_no_error(self):
+        """Removing an edge not in historization → no error."""
+        h = Historization()
+        h.remove_edges([Edge("X", "Y")])  # should not raise
+
+    def test_other_edges_unaffected(self):
+        """Removing one edge does not affect others."""
+        h = Historization()
+        e1 = Edge("A", "B")
+        e2 = Edge("C", "D")
+        h.update(e1, Outcome.SUCCESS)
+        h.update(e2, Outcome.FAILURE)
+        h.remove_edges([e1])
+        self.assertNotIn(e1, h._U)
+        self.assertIn(e2, h._F)
+        self.assertGreater(h.trace_load(e2), 0)
+
+
+class TestDecayTrace(unittest.TestCase):
+    """DecayTrace dataclass — the residue of a decayed state."""
+
+    def test_frozen_dataclass(self):
+        """DecayTrace is immutable."""
+        dt = DecayTrace("X", ("A", "B"), 0.5, 3.0, 10)
+        with self.assertRaises(AttributeError):
+            dt.original_state = "Y"
+
+    def test_fields_accessible(self):
+        """All fields are present and accessible."""
+        dt = DecayTrace("X", ("A", "B"), 0.5, 3.0, 10)
+        self.assertEqual(dt.original_state, "X")
+        self.assertEqual(dt.surviving_neighbors, ("A", "B"))
+        self.assertAlmostEqual(dt.mean_quality, 0.5)
+        self.assertAlmostEqual(dt.peak_load, 3.0)
+        self.assertEqual(dt.decayed_at_tau, 10)
+
+
+class TestApplyDecay(unittest.TestCase):
+    """apply_decay: execute structural decay on a landscape."""
+
+    def _make_decay_landscape(self):
+        """
+        Build a landscape with one strong anchor and one weak peripheral.
+
+        ANCHOR —→ MID —→ WEAK —→ LEAF
+           ←——————————/
+
+        ANCHOR: deep experience (20 successes on each edge)
+        MID: moderate (10 successes)
+        WEAK: minimal (1 success), then dormant
+        """
+        la = Landscape()
+        la.add_edge("ANCHOR", "MID", delta=0.5, resistance=1.0)
+        la.add_edge("MID", "WEAK", delta=0.5, resistance=1.0)
+        la.add_edge("WEAK", "LEAF", delta=0.5, resistance=1.0)
+        la.add_edge("MID", "ANCHOR", delta=0.5, resistance=1.0)
+
+        h = la.historization
+        # Strong experience on ANCHOR edges
+        for _ in range(20):
+            h.update(Edge("ANCHOR", "MID"), Outcome.SUCCESS)
+            h.update(Edge("MID", "ANCHOR"), Outcome.SUCCESS)
+        # Moderate experience on MID→WEAK
+        for _ in range(10):
+            h.update(Edge("MID", "WEAK"), Outcome.SUCCESS)
+        # Minimal experience on WEAK→LEAF
+        h.update(Edge("WEAK", "LEAF"), Outcome.SUCCESS)
+        # Make WEAK and LEAF dormant by advancing τ
+        for _ in range(200):
+            h.update(Edge("ANCHOR", "MID"), Outcome.SUCCESS)
+
+        return la
+
+    def test_empty_candidates_noop(self):
+        """No candidates → no changes."""
+        la = _build_landscape(("A", "B"))
+        report = apply_decay(la, [])
+        self.assertEqual(len(report.removed_states), 0)
+        self.assertEqual(len(report.removed_edges), 0)
+        self.assertEqual(len(report.traces), 0)
+        self.assertEqual(la.edge_count(), 1)
+
+    def test_removes_candidate_state(self):
+        """Candidate state is removed from landscape."""
+        la = self._make_decay_landscape()
+        states_before = la.states
+        candidates = find_decay_candidates(
+            la.states, la.historization, la.edges,
+            theta_base=0.5, protected={"ANCHOR"}
+        )
+        # WEAK and/or LEAF should be candidates
+        self.assertGreater(len(candidates), 0)
+
+        report = apply_decay(la, candidates)
+        for s in report.removed_states:
+            self.assertNotIn(s, la.states)
+
+    def test_edges_cleaned_up(self):
+        """Edges incident to removed states are gone."""
+        la = self._make_decay_landscape()
+        candidates = find_decay_candidates(
+            la.states, la.historization, la.edges,
+            theta_base=0.5, protected={"ANCHOR"}
+        )
+        report = apply_decay(la, candidates)
+        for e in la.edges:
+            self.assertIn(e.source, la.states)
+            self.assertIn(e.target, la.states)
+        for e in report.removed_edges:
+            self.assertFalse(la.has_edge(e.source, e.target))
+
+    def test_historization_cleaned_up(self):
+        """Trace data for removed edges is deleted."""
+        la = self._make_decay_landscape()
+        candidates = find_decay_candidates(
+            la.states, la.historization, la.edges,
+            theta_base=0.5, protected={"ANCHOR"}
+        )
+        report = apply_decay(la, candidates)
+        h = la.historization
+        for e in report.removed_edges:
+            self.assertNotIn(e, h._U)
+            self.assertNotIn(e, h._F)
+            self.assertNotIn(e, h._tau_last)
+
+    def test_tau_unchanged(self):
+        """Global clock τ is not modified by decay."""
+        la = self._make_decay_landscape()
+        tau_before = la.historization.tau
+        candidates = find_decay_candidates(
+            la.states, la.historization, la.edges,
+            theta_base=0.5, protected={"ANCHOR"}
+        )
+        apply_decay(la, candidates)
+        self.assertEqual(la.historization.tau, tau_before)
+
+    def test_log_preserved(self):
+        """Audit log entries survive decay."""
+        la = self._make_decay_landscape()
+        log_len_before = len(la.historization.log)
+        candidates = find_decay_candidates(
+            la.states, la.historization, la.edges,
+            theta_base=0.5, protected={"ANCHOR"}
+        )
+        apply_decay(la, candidates)
+        # Log never shrinks
+        self.assertGreaterEqual(len(la.historization.log), log_len_before)
+
+    def test_decay_trace_content(self):
+        """DecayTrace captures correct summary data."""
+        la = self._make_decay_landscape()
+        candidates = find_decay_candidates(
+            la.states, la.historization, la.edges,
+            theta_base=0.5, protected={"ANCHOR"}
+        )
+        self.assertGreater(len(candidates), 0)
+        report = apply_decay(la, candidates)
+        for trace in report.traces:
+            self.assertIsInstance(trace.original_state, str)
+            self.assertIsInstance(trace.surviving_neighbors, tuple)
+            self.assertEqual(trace.decayed_at_tau, la.historization.tau)
+
+    def test_surviving_neighbors_correct(self):
+        """DecayTrace lists only states that survived."""
+        la = self._make_decay_landscape()
+        candidates = find_decay_candidates(
+            la.states, la.historization, la.edges,
+            theta_base=0.5, protected={"ANCHOR"}
+        )
+        report = apply_decay(la, candidates)
+        surviving = la.states
+        for trace in report.traces:
+            for neighbor in trace.surviving_neighbors:
+                self.assertIn(neighbor, surviving)
+
+    def test_report_dataclass(self):
+        """DecayReport has correct structure."""
+        la = self._make_decay_landscape()
+        candidates = find_decay_candidates(
+            la.states, la.historization, la.edges,
+            theta_base=0.5, protected={"ANCHOR"}
+        )
+        report = apply_decay(la, candidates)
+        self.assertIsInstance(report.removed_states, tuple)
+        self.assertIsInstance(report.removed_edges, tuple)
+        self.assertIsInstance(report.traces, tuple)
+
+    def test_surviving_edges_have_valid_historization(self):
+        """Edges that survive decay still have valid trace data."""
+        la = self._make_decay_landscape()
+        candidates = find_decay_candidates(
+            la.states, la.historization, la.edges,
+            theta_base=0.5, protected={"ANCHOR"}
+        )
+        apply_decay(la, candidates)
+        h = la.historization
+        for e in la.edges:
+            # These should not raise and should return valid values
+            load = h.trace_load(e)
+            quality = h.trace_quality(e)
+            self.assertGreaterEqual(load, 0.0)
+            self.assertGreaterEqual(quality, -1.0)
+            self.assertLessEqual(quality, 1.0)
+
+    def test_multiple_candidates_all_removed(self):
+        """When multiple candidates exist, all are removed."""
+        la = self._make_decay_landscape()
+        candidates = find_decay_candidates(
+            la.states, la.historization, la.edges,
+            theta_base=0.5, protected={"ANCHOR"}
+        )
+        report = apply_decay(la, candidates)
+        self.assertEqual(len(report.removed_states), len(candidates))
+        for c in candidates:
+            self.assertIn(c.state, report.removed_states)
 
 
 if __name__ == "__main__":

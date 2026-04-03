@@ -143,6 +143,26 @@ class Landscape:
         # Invalidate modulation caches
         self._invalidate_caches()
 
+    def remove_state(self, state: str) -> List[Edge]:
+        """Remove a state and all its incident edges from the landscape.
+
+        Returns the list of removed edges (for DecayTrace construction).
+        Raises KeyError if state does not exist.
+        Does NOT clean up historization — caller is responsible
+        (apply_decay handles this).
+        """
+        if state not in self._states:
+            raise KeyError(f"State '{state}' does not exist")
+        # Collect all incident edges (source or target = state)
+        incident = [e for e in list(self._R0.keys())
+                     if e.source == state or e.target == state]
+        for edge in incident:
+            del self._delta[edge]
+            del self._R0[edge]
+        self._states.discard(state)
+        self._invalidate_caches()
+        return incident
+
     def adjust_base_resistance(self, source: str, target: str,
                                new_R0: float) -> float:
         """Change the base resistance R₀ of an existing edge.
