@@ -28,8 +28,8 @@
   },
 
   "state": {
-    "latest_commit": "f687e28",
-    "latest_commit_msg": "Docs update: Architecture v4 (11 layers), Test Registry (3464 tests), README",
+    "latest_commit": "232862e",
+    "latest_commit_msg": "C122: Ontodynamics canon v2.0 — 51 nodes, 86 edges, English IDs, implementation layer",
     "test_count": 3464,
     "test_failures": 0,
     "module_count": "57 production + 9 benchmarks + 11 demos + 19 explorations + 94 test files",
@@ -116,6 +116,7 @@
   },
 
   "commit_history_recent": [
+    { "hash": "232862e", "id": "C122", "title": "Ontodynamics canon v2.0 — 51 nodes, 86 edges, English IDs, implementation layer" },
     { "hash": "3549c78", "id": "C121", "title": "Sleep-Wake Cycle — automatic dream trigger via T_s" },
     { "hash": "5776c42", "id": "C120", "title": "Structural Entropy — end-to-end exploration" },
     { "hash": "c6ea2b5", "id": "C119", "title": "Dream Mode decay integration (decay_enabled, dream consolidation)" },
