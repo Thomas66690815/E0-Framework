@@ -28,11 +28,11 @@
   },
 
   "state": {
-    "latest_commit": "d3e17b0",
-    "latest_commit_msg": "C122d: Epistemic liveness — uniform U=2, F=1 for all 93 canon edges, all s_eff > 0",
-    "test_count": 3464,
+    "latest_commit": "4283c2d",
+    "latest_commit_msg": "C123: Curriculum Navigator — hierarchical learning for canonical landscapes",
+    "test_count": 3499,
     "test_failures": 0,
-    "module_count": "57 production + 9 benchmarks + 11 demos + 19 explorations + 94 test files",
+    "module_count": "58 production + 9 benchmarks + 11 demos + 19 explorations + 95 test files",
     "line_count": "~18400 production, ~69000 total"
   },
 
@@ -99,6 +99,10 @@
       "11_sleep_wake": {
         "files": ["sleep_wake.py"],
         "purpose": "Automatic sleep-wake rhythm. dream_pressure = T_s/(T_s+μ) triggers dreaming when T_s > μ. SleepWakeCycle orchestrates Controller + DreamObserver: wake builds experience, sleep consolidates + decays, cycle repeats. Parameter-free trigger (uses existing μ). C121."
+      },
+      "12_curriculum": {
+        "files": ["curriculum.py"],
+        "purpose": "Hierarchical learning for canonical landscapes. CurriculumStrategy generates cumulative turns from derivation levels. EquilibriumDetector monitors T_s stability (replaces goal-reaching as stop). build_scoped_landscape creates sub-landscapes per turn. transfer_historization carries traces across turns. CurriculumRunner orchestrates end-to-end. C123."
       }
     },
     "key_formulas": {
@@ -116,6 +120,8 @@
   },
 
   "commit_history_recent": [
+    { "hash": "4283c2d", "id": "C123", "title": "Curriculum Navigator — hierarchical learning for canonical landscapes" },
+    { "hash": "7ab9178", "id": "C122e", "title": "Documentation update — archive, update, and new analysis for C122 arc" },
     { "hash": "d3e17b0", "id": "C122d", "title": "Epistemic liveness — uniform U=2, F=1 for all 93 canon edges, all s_eff > 0" },
     { "hash": "dbb3f83", "id": "C122c", "title": "Dead-end sink repair — 7 feedback edges, 86→93 edges, all nodes reachable" },
     { "hash": "199461b", "id": "C122b", "title": "German ID cleanup — iterate('differenz', goal='negative_notwendigkeit') → English IDs" },
@@ -184,7 +190,7 @@
   ],
 
   "active_work": {
-    "focus": "Documentation update (C122e). Ontodynamics canon v2.0 complete (C122–C122d). 51 nodes, 93 edges, all epistemically live. Next: C43 Self-Graph.",
+    "focus": "Curriculum Navigator (C123) complete. Hierarchical learning for canonical landscapes. Next: C43 Self-Graph or exploration script.",
     "completed": [
       "All 6/6 Multiverse Open Questions resolved (C66-C71)",
       "C72 Chess Engine — E₀ plays chess via 6 strategic dimensions, discovers opening principles through historization",
@@ -240,10 +246,12 @@
       "C122 Ontodynamics Canon v2.0 — 51 nodes, 86 edges, English IDs, 18 derivation levels (0-17), implementation layer (levels 9-17).",
       "C122b German ID Cleanup — all iterate() calls updated from German to English IDs.",
       "C122c Dead-End Sink Repair — 7 feedback edges added, 86→93 edges, all nodes topologically live.",
-      "C122d Epistemic Liveness — uniform U=2, F=1 for all 93 edges. Key insight: F/U < 0.75 = correct decay direction. Greedy never escapes at F=0 (10k steps proven). 'Zweifel zuzulassen' principle."
+      "C122d Epistemic Liveness — uniform U=2, F=1 for all 93 edges. Key insight: F/U < 0.75 = correct decay direction. Greedy never escapes at F=0 (10k steps proven). 'Zweifel zuzulassen' principle.",
+      "C122e Documentation update — archive 8 docs, update 5 docs, new Ontodynamics Canon Analysis.",
+      "C123 Curriculum Navigator — CurriculumStrategy (cumulative turns from derivation levels), EquilibriumDetector (T_s stability replaces goal-reaching), build_scoped_landscape, transfer_historization, CurriculumRunner. 35 tests."
     ],
-    "next_steps": ["C43: Self-Graph (E0 learns E0 first)", "C44: Bootstrapper (LLM output → Landscape init)"],
-    "next_commit_id": "C122e"
+    "next_steps": ["C43: Self-Graph (E0 learns E0 first)", "explore_curriculum.py: end-to-end curriculum on ontodynamics"],
+    "next_commit_id": "C123b"
   },
 
   "key_modules_quick_ref": {

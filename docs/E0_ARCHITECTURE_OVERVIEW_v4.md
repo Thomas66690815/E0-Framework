@@ -3,8 +3,8 @@
 **Status:** Canonical reference  
 **Date:** 2026-04-03  
 **Supersedes:** E0_ARCHITECTURE_OVERVIEW_v3.md (2026-04-02)  
-**Scope:** 57 production modules, 9 benchmarks, 11 demos, 19 explorations, 94 test files — ~19,000 production lines, 3464 tests
-**Latest:** C122d (ontodynamics v2.0, epistemic liveness corrections)
+**Scope:** 58 production modules, 9 benchmarks, 11 demos, 19 explorations, 95 test files — ~19,300 production lines, 3499 tests
+**Latest:** C123 (Curriculum Navigator — hierarchical learning for canonical landscapes)
 **Papers:** P1 (Structural Interference), P2 (Spinor/Born), P3 (Non-Abelian), P4 (Reflexivity), P5 (Emergent Locality), P6 (Dream Mode)
 
 ---
@@ -330,7 +330,7 @@ All three share the same controller core. They differ only in the final action s
 
 ## 8. Test Infrastructure
 
-**3464 tests**, 0 failures (2026-04-03) across **94 test files**.
+**3499 tests**, 0 failures (2026-04-03) across **95 test files**.
 
 | Category | Test Files | Tests |
 |----------|-----------|-------|
@@ -456,3 +456,30 @@ All navigation code updated from German to English state identifiers.
 **Key insight:** Without difference there is no historization, without historization no learning. The threshold `F/U < λ_s/λ_f = 0.75` determines whether unvisited edges amplify (correct: unused knowledge atrophies) or spontaneously heal (incorrect).
 
 **Fix:** Uniform `U=2, F=1` for all 93 edges. No edge claims certainty E₀ hasn't earned. Result: all edges have `s_eff > 0` (min: 0.030), correct decay direction, reflexive action gate operational.
+
+---
+
+## 14. C123 — Curriculum Navigator
+
+### Problem
+
+A 51-node landscape cannot be learned in a single `run()` — greedy covers ~12% of edges per path. Two deeper questions:
+
+1. **Goals are not endpoints.** The real stopping condition is *equilibrium* — when T_s stabilizes below threshold, the system has exhausted internal difference and waits for external difference.
+2. **Derivation order matters.** You can't understand `resistance` without `difference`. The canon's derivation hierarchy implies a natural learning sequence.
+
+### Solution
+
+`curriculum.py` implements hierarchical curriculum learning:
+
+| Component | Purpose |
+|---|---|
+| `CurriculumStrategy` | Generates cumulative turns from derivation levels (auto-splits into thirds) |
+| `EquilibriumDetector` | Monitors T_s — equilibrium when below threshold for `patience` consecutive episodes |
+| `build_scoped_landscape` | Creates sub-landscapes per turn scope |
+| `transfer_historization` | Carries learned U/F traces across turns |
+| `CurriculumRunner` | Orchestrates: scope → navigate → equilibrium? → next turn |
+
+Ontodynamics default: 3 turns (levels 0–5 canonical, 0–11 border, 0–17 full). Historization persists across turns. Goal selection: highest-level goal_state within each turn's scope. Start: lowest derivation level node.
+
+35 tests in `test_curriculum.py`.

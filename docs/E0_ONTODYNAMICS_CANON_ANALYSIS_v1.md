@@ -237,12 +237,21 @@ unpredictable amplification/attenuation patterns.
 ### P5: Derivation Hierarchy
 Nodes should have explicit derivation levels. The level structure
 creates a natural tension gradient that guides navigation from
-concrete to abstract (or vice versa).
+concrete to abstract (or vice versa). The derivation order also
+implies a *learning order* — implemented in `curriculum.py` (C123)
+as cumulative curriculum turns.
 
 ### P6: Dual Goals
 A canonical landscape benefits from having both a conceptual goal
 (highest abstraction) and an operational goal (most derived construct).
-This enables bidirectional navigation.
+This enables bidirectional navigation. In curriculum learning (C123),
+the goal per turn is the highest-level goal_state within scope.
+
+### P7: Equilibrium as Stopping Condition
+Goal-reaching is not a meaningful stopping condition for continuous
+systems. Instead, *equilibrium* — when T_s stabilizes below threshold
+for consecutive episodes — signals that the system has exhausted
+internal difference. The `EquilibriumDetector` (C123) implements this.
 
 ---
 
