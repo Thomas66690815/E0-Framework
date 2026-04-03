@@ -1,10 +1,11 @@
 """
 Tests for structural_entropy.py — Structural Temperature, Inscription Threshold,
-Anchor Analysis, Decay Candidates, and Structural Decay.
+Anchor Analysis, Decay Candidates, Structural Decay, and Controller Integration.
 
 C115: Type 1 forgetting — non-inscription of routine transitions.
 C116: Type 2 forgetting — anchor analysis + decay candidates.
 C117: Structural decay — DecayTrace, apply_decay, Landscape.remove_state.
+C118: Controller integration — conditional inscription via inscription_threshold flag.
 """
 
 import math
@@ -938,6 +939,171 @@ class TestApplyDecay(unittest.TestCase):
         self.assertEqual(len(report.removed_states), len(candidates))
         for c in candidates:
             self.assertIn(c.state, report.removed_states)
+
+
+# ===================================================================
+# C118: Controller Integration — conditional inscription
+# ===================================================================
+
+class TestControllerInscriptionThreshold(unittest.TestCase):
+    """E0Controller with inscription_threshold=True skips routine inscriptions."""
+
+    def _make_simple_controller(self, inscription_threshold=False):
+        """A→B→C with deterministic SUCCESS execute_fn."""
+        from e0_controller.controller import E0Controller
+        la = Landscape()
+        la.add_edge("A", "B", delta=0.5, resistance=1.0)
+        la.add_edge("B", "C", delta=0.5, resistance=1.0)
+        la.add_edge("C", "A", delta=0.5, resistance=1.0)
+        ctrl = E0Controller(
+            la, lambda s, t: Outcome.SUCCESS,
+            inscription_threshold=inscription_threshold,
+        )
+        return ctrl
+
+    def test_default_always_inscribes(self):
+        """inscription_threshold=False (default) → every step inscribed."""
+        ctrl = self._make_simple_controller(inscription_threshold=False)
+        trace = ctrl.run("A", max_cycles=10)
+        for step in trace.steps:
+            self.assertTrue(step.inscribed)
+
+    def test_threshold_skips_routine(self):
+        """inscription_threshold=True → routine transitions not inscribed."""
+        ctrl = self._make_simple_controller(inscription_threshold=True)
+        trace = ctrl.run("A", max_cycles=20)
+        # After enough repetitions, some steps should be non-inscribed
+        non_inscribed = [s for s in trace.steps if not s.inscribed]
+        self.assertGreater(len(non_inscribed), 0,
+                           "Expected some non-inscribed steps after repetition")
+
+    def test_first_traversal_always_inscribed(self):
+        """Virgin edges are always inscribed (novelty = 1 > threshold = 0)."""
+        ctrl = self._make_simple_controller(inscription_threshold=True)
+        # First cycle on each edge
+        step1 = ctrl.cycle("A")
+        self.assertTrue(step1.inscribed)
+
+    def test_tau_advances_only_on_inscription(self):
+        """τ only increments when inscription actually happens."""
+        ctrl = self._make_simple_controller(inscription_threshold=True)
+        tau_after_steps = []
+        current = "A"
+        for _ in range(15):
+            step = ctrl.cycle(current)
+            if step is None:
+                break
+            tau_after_steps.append(
+                (step.inscribed, ctrl.landscape.historization.tau)
+            )
+            current = step.target
+
+        # Find pairs where inscription was skipped
+        for i in range(1, len(tau_after_steps)):
+            inscribed, tau = tau_after_steps[i]
+            _, prev_tau = tau_after_steps[i - 1]
+            if not inscribed:
+                # τ should not have advanced
+                self.assertEqual(tau, prev_tau)
+
+    def test_non_inscription_rate_in_metrics(self):
+        """RunTrace.metrics() reports non_inscription_rate."""
+        ctrl = self._make_simple_controller(inscription_threshold=True)
+        trace = ctrl.run("A", max_cycles=20)
+        m = trace.metrics()
+        self.assertIn("non_inscription_count", m)
+        self.assertIn("non_inscription_rate", m)
+        self.assertGreater(m["non_inscription_count"], 0)
+        self.assertGreater(m["non_inscription_rate"], 0)
+        self.assertLessEqual(m["non_inscription_rate"], 1.0)
+
+    def test_surprise_after_routine_is_inscribed(self):
+        """A surprising outcome breaks the autopilot: inscription resumes."""
+        la = Landscape()
+        la.add_edge("A", "B", delta=0.5, resistance=1.0)
+        la.add_edge("B", "A", delta=0.5, resistance=1.0)
+
+        call_count = [0]
+
+        def execute_fn(s, t):
+            call_count[0] += 1
+            # First 10 calls: SUCCESS (builds expectation)
+            # Then: FAILURE (surprise!)
+            if call_count[0] <= 10:
+                return Outcome.SUCCESS
+            return Outcome.FAILURE
+
+        from e0_controller.controller import E0Controller
+        ctrl = E0Controller(la, execute_fn, inscription_threshold=True)
+        current = "A"
+        inscribed_flags = []
+        for _ in range(15):
+            step = ctrl.cycle(current)
+            if step is None:
+                break
+            inscribed_flags.append(step.inscribed)
+            current = step.target
+
+        # The failure after routine should be inscribed
+        # Find the first failure step (call_count > 10)
+        if len(inscribed_flags) > 10:
+            self.assertTrue(inscribed_flags[10],
+                            "Surprising FAILURE after routine should be inscribed")
+
+    def test_backward_compat_step_result(self):
+        """StepResult.inscribed defaults to True for non-threshold controllers."""
+        from e0_controller.controller import StepResult
+        # Default construction
+        sr = StepResult(
+            tau=1, source="A", target="B", outcome=Outcome.SUCCESS,
+            s_eff=0.5, r_eff_before=1.0, r_eff_after=0.9,
+            candidates=["B"],
+        )
+        self.assertTrue(sr.inscribed)
+
+    def test_r_eff_unchanged_when_not_inscribed(self):
+        """When inscription is skipped, R_eff before == R_eff after."""
+        ctrl = self._make_simple_controller(inscription_threshold=True)
+        current = "A"
+        for _ in range(20):
+            step = ctrl.cycle(current)
+            if step is None:
+                break
+            if not step.inscribed:
+                self.assertEqual(step.r_eff_before, step.r_eff_after,
+                                 "R_eff should not change without inscription")
+            current = step.target
+
+    def test_self_graph_not_updated_when_not_inscribed(self):
+        """When inscription is skipped, self_graph is not historized."""
+        from e0_controller.self_graph import SelfGraph
+        ctrl = self._make_simple_controller(inscription_threshold=True)
+        ctrl.self_graph = SelfGraph()
+
+        current = "A"
+        load_after_non_inscribed = None
+        for _ in range(20):
+            step = ctrl.cycle(current)
+            if step is None:
+                break
+            if not step.inscribed:
+                # Capture self_graph load at this point
+                load_after_non_inscribed = sum(
+                    ctrl.self_graph.component_load(c)
+                    for c in ["historization", "overlap", "inertia"]
+                )
+                break
+            current = step.target
+
+        if load_after_non_inscribed is not None:
+            # Do one more non-inscribed cycle — load should not change
+            step2 = ctrl.cycle(current)
+            if step2 and not step2.inscribed:
+                load_after_second = sum(
+                    ctrl.self_graph.component_load(c)
+                    for c in ["historization", "overlap", "inertia"]
+                )
+                self.assertEqual(load_after_non_inscribed, load_after_second)
 
 
 if __name__ == "__main__":

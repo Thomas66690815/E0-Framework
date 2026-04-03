@@ -311,6 +311,7 @@ class TestMetrics(unittest.TestCase):
             "overlay_agree", "overlay_count",
             "hybrid_override_count", "hybrid_override_rate",
             "avg_override_confidence",
+            "non_inscription_count", "non_inscription_rate",
         }
         self.assertEqual(set(m.keys()), expected_keys)
 

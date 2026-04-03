@@ -62,6 +62,7 @@ class StepResult:
     overlay: Optional["OverlayReport"] = None  # 3k: amplitude overlay snapshot
     hybrid_overridden: bool = False  # 3l: True when amplitude overrode greedy
     override_confidence: float = 0.0  # 3f: P_best - P_second at override point
+    inscribed: bool = True       # C118: False when inscription was skipped (autopilot)
 
 
 @dataclass
@@ -169,6 +170,10 @@ class RunTrace:
                 sum(s.override_confidence for s in self.steps if s.hybrid_overridden)
                 / max(1, sum(1 for s in self.steps if s.hybrid_overridden))
             ),
+            "non_inscription_count": float(sum(
+                1 for s in self.steps if not s.inscribed)),
+            "non_inscription_rate": (sum(
+                1 for s in self.steps if not s.inscribed) / n),
         }
 
 
@@ -236,6 +241,7 @@ class E0Controller:
         peer_fn: Optional[Callable] = None,
         overload_threshold: float = 3.0,
         focus_k: Optional[int] = None,
+        inscription_threshold: bool = False,
     ):
         self.landscape = landscape
         self.execute_fn = execute_fn
@@ -262,6 +268,7 @@ class E0Controller:
         self.peer_fn = peer_fn  # C63: external peer consultation
         self.overload_threshold = overload_threshold  # C63: OI threshold
         self.focus_k = focus_k  # C82: focus narrowing limit
+        self.inscription_threshold = inscription_threshold  # C118: Type 1 forgetting
         self._focus_rng = random.Random(42)  # C82: deterministic but varied
         self._recent: List[str] = []   # sliding window of recent states
 
@@ -669,22 +676,34 @@ class E0Controller:
         # Execute
         outcome = self.execute_fn(current, target)
 
-        # Historize (Function 7)
-        self.landscape.historization.update(edge, outcome)
-        self.landscape.historization.record(
-            edge, outcome, r_eff_before,
-            self._effective_resistance(current, target)
-        )
+        # --- Inscription threshold (C118: Type 1 forgetting) ---
+        # When inscription_threshold is True and the outcome is expected
+        # (low novelty), skip inscription and reflexive overhead.
+        # The controller navigates on inertia ("autopilot").
+        if self.inscription_threshold:
+            from .structural_entropy import should_inscribe as _should_inscribe
+            inscribed = _should_inscribe(edge, outcome,
+                                         self.landscape.historization)
+        else:
+            inscribed = True  # default: always inscribe (backward-compat)
 
-        # Self-Graph update (C43): record which components contributed
-        if self.self_graph is not None:
-            from .self_graph import active_components
-            components = active_components(
-                curvature_active=self.landscape.curvature_modulation,
-                overlap_active=self.landscape.overlap_modulation,
-                inertia_active=self.landscape.inertia_modulation,
+        if inscribed:
+            # Historize (Function 7)
+            self.landscape.historization.update(edge, outcome)
+            self.landscape.historization.record(
+                edge, outcome, r_eff_before,
+                self._effective_resistance(current, target)
             )
-            self.self_graph.self_historize(components, outcome)
+
+            # Self-Graph update (C43): record which components contributed
+            if self.self_graph is not None:
+                from .self_graph import active_components
+                components = active_components(
+                    curvature_active=self.landscape.curvature_modulation,
+                    overlap_active=self.landscape.overlap_modulation,
+                    inertia_active=self.landscape.inertia_modulation,
+                )
+                self.self_graph.self_historize(components, outcome)
 
         # Capture R_eff after
         r_eff_after = self._effective_resistance(current, target)
@@ -711,6 +730,7 @@ class E0Controller:
             overlay=overlay,
             hybrid_overridden=overridden,
             override_confidence=(overlay.override_confidence if overlay else 0.0),
+            inscribed=inscribed,
         )
 
     def _compute_overlay(
