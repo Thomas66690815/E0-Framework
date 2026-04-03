@@ -4,12 +4,15 @@
 > tatsächlichen Implementation — was wurde bestätigt, was hat sich verändert,
 > was ist neu entstanden, und was haben wir gelernt.
 >
-> **Datum:** 2026-03-28 (aktualisiert)  
-> **Basis:** 2094 Tests, 0 Failures, 0 Warnings, Claims C1–C48  
+> **Datum:** 2026-03-28 (aktualisiert 2026-03-30, C122e)  
+> **Basis:** 3464 Tests, 0 Failures, 0 Warnings, Claims C1–C122d  
 > **Stufe 1–3 Bridge 4:** Structural Mutation implementiert (Commits dd6e277, e94be7e, e3f922d)  
 > **Canon-Dokumente:** `e0-canonical-reference.txt`, `e0-canon-plain.txt`,
-> `ontodynamics.txt`, `e0-agi-blueprint.md`  
-> **Siehe auch:** `E0_STRUCTURAL_DEEP_REVIEW_v1.md` für detaillierte Tiefenprüfung
+> `ontodynamics.txt` (v2.0, 51 nodes, 93 edges), `e0-agi-blueprint.md`  
+> **Ontodynamics Canon:** v2.0 (C122–C122d) — 51 nodes, 93 edges, English IDs,
+> uniform U=2/F=1, all edges epistemically live  
+> **Siehe auch:** `E0_STRUCTURAL_DEEP_REVIEW_v1.md` für detaillierte Tiefenprüfung,
+> `E0_ONTODYNAMICS_CANON_ANALYSIS_v1.md` für C122 Tiefenanalyse
 
 ---
 
@@ -140,6 +143,18 @@ Historisierung ist das Primitiv, bei dem die Projekt-Erfahrung am meisten
 über den Canon hinausgeht. Die *Idee* ist kanonisch einfach; die
 *Operationalisierung* erfordert ein Dutzend Designentscheidungen, die
 der Canon stillschweigend delegiert.
+
+**Ergänzung (2026-03-30 — C122d Epistemic Liveness):**  
+Die Ontodynamics Canon v2.0 (51 Knoten, 93 Kanten) offenbarte ein
+kritisches Problem: Bei initial_U=8–10 und F=0 produzierte
+δ_H = λ_f·0 − λ_s·10 ≈ −1.5, was R_eff auf den Floor klemmte und
+s_eff = 0 erzeugte — 50 von 93 Kanten waren *epistemisch tot*.
+Empirisch bewiesen: Greedy verlässt diese Falle *nie* (10.000 Schritte,
+trap_seff bleibt exakt 0.0000). Die Korrektur: uniform U=2, F=1 für
+alle Kanten. Die entscheidende Schwelle: F/U < λ_s/λ_f = 0.75
+bestimmt die korrekte Verfallsrichtung (ungenutztes Wissen atrophiert).
+Die Lektion: Historisierung muss von Anfang an *Zweifel zulassen* (F>0),
+sonst kann das System nie aus eingebrannten Pfaden entkommen.
 
 ---
 
@@ -418,6 +433,16 @@ um den Controller in realen Graphen funktionsfähig zu halten. Der Canon
 geht von idealen Zustandsräumen aus; der Code muss mit unvollständigen,
 fehlerhaften, verwaisten Graphen arbeiten.
 
+**Ergänzung (2026-03-30 — C122c Dead-End Repair):**  
+Beim Aufbau der Ontodynamics Canon v2.0 (51 Knoten) wurden 7
+Implementierungs-Knoten mit 0 ausgehenden Kanten entdeckt (Sinks).
+Diese topologischen Sackgassen verletzen die kanonische Forderung
+„if a path exists, a transition *can* occur" — ein Knoten ohne
+ausgehende Kanten ist ein dauerhaftes Dead End, nicht nur ein
+temporäres. Die Korrektur waren 7 Feedback-Kanten (93 statt 86
+Kanten), die die Sink-Knoten durch Rückkopplung auf hierarchisch
+höhere Ebenen topologisch lebendig machten.
+
 ---
 
 ## 6. Was der Canon behauptet, aber nicht implementiert ist
@@ -437,6 +462,8 @@ fehlerhaften, verwaisten Graphen arbeiten.
 | „Mass" (§4) | ✅ Implementiert (C42) | `trace_load(e) = U+F` (structural inscription), `trace_quality(e) = (U−F)/(U+F+ε)` (directional quality), `inertia_factor()` (dampens conflicted edges). Integrated via `inertia_modulation` flag in Landscape. 37 tests. 4-layer model: Historization → Inscription → Inertia → Mass (emergent). Old names retained as aliases. See `E0_HISTORISIERUNG_ALS_MASSE_v1.md` §7 |
 | „Spacetime" (§4) | ✅ Emergent bestätigt (C54) | Raumzeit emergiert durch Kopplung an ein Außen (FAILURE-Signale). Geschlossenes System → triviale Raumzeit. Gekoppeltes System → asymmetrische Historisierung → emergente Raumzeit. Theorem getestet: 23 Tests, 3 tiefe Traps. Siehe `raumzeit_coupling.py` |
 | „M_H as graduated overlap functional" | ✅ Implementiert (C40+C42) | Overlap-Funktional (C40, `overlap.py`) + Inertia-Modulation (C42, `inertia_factor()`). Two complementary M_H sources: structural embedding (overlap) + accumulated experience (inscription/inertia). See `E0_MH_ADJUDICATION_RESEARCH_NOTE_v1.md`, `E0_HISTORISIERUNG_ALS_MASSE_v1.md` §7 |
+| „Ontodynamics as navigable Landscape" | ✅ Materialisiert (C48, C122) | v1.0 (19 nodes, German IDs) → v2.0 (51 nodes, 93 edges, English IDs, 18 derivation levels). C122c: 7 dead-end sinks repaired. C122d: all 93 edges epistemically live (uniform U=2, F=1). Canon is now a *navigable* Landscape, not just a reference document. |
+| „Epistemic liveness" | ✅ Empirisch bewiesen (C122d) | F/U < 0.75 threshold determines correct decay direction. Greedy never escapes trap (10k steps). Initial F>0 mandatory ("Zweifel zuzulassen"). |
 
 ---
 

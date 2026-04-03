@@ -28,8 +28,8 @@
   },
 
   "state": {
-    "latest_commit": "232862e",
-    "latest_commit_msg": "C122: Ontodynamics canon v2.0 — 51 nodes, 86 edges, English IDs, implementation layer",
+    "latest_commit": "d3e17b0",
+    "latest_commit_msg": "C122d: Epistemic liveness — uniform U=2, F=1 for all 93 canon edges, all s_eff > 0",
     "test_count": 3464,
     "test_failures": 0,
     "module_count": "57 production + 9 benchmarks + 11 demos + 19 explorations + 94 test files",
@@ -116,6 +116,9 @@
   },
 
   "commit_history_recent": [
+    { "hash": "d3e17b0", "id": "C122d", "title": "Epistemic liveness — uniform U=2, F=1 for all 93 canon edges, all s_eff > 0" },
+    { "hash": "dbb3f83", "id": "C122c", "title": "Dead-end sink repair — 7 feedback edges, 86→93 edges, all nodes reachable" },
+    { "hash": "199461b", "id": "C122b", "title": "German ID cleanup — iterate('differenz', goal='negative_notwendigkeit') → English IDs" },
     { "hash": "232862e", "id": "C122", "title": "Ontodynamics canon v2.0 — 51 nodes, 86 edges, English IDs, implementation layer" },
     { "hash": "3549c78", "id": "C121", "title": "Sleep-Wake Cycle — automatic dream trigger via T_s" },
     { "hash": "5776c42", "id": "C120", "title": "Structural Entropy — end-to-end exploration" },
@@ -181,7 +184,7 @@
   ],
 
   "active_work": {
-    "focus": "Sleep-Wake Cycle (C121). Automatic T_s-based dream trigger closes the loop between Structural Entropy and Dream Mode. Next: C122 explore_sleep_wake.py end-to-end.",
+    "focus": "Documentation update (C122e). Ontodynamics canon v2.0 complete (C122–C122d). 51 nodes, 93 edges, all epistemically live. Next: C43 Self-Graph.",
     "completed": [
       "All 6/6 Multiverse Open Questions resolved (C66-C71)",
       "C72 Chess Engine — E₀ plays chess via 6 strategic dimensions, discovers opening principles through historization",
@@ -233,10 +236,14 @@
       "C118 Controller integration — inscription_threshold opt-in, StepResult.inscribed, non_inscription metrics, 9 tests (84 total).",
       "C119 Dream Mode decay — decay_enabled opt-in, DreamCycleResult.decay_reports, dream consolidation, 9 tests (88 dream total).",
       "C120 End-to-end exploration — explore_structural_entropy.py, 60% compression, 48% non-inscription rate, full consistency.",
-      "C121 Sleep-Wake Cycle — dream_pressure = T_s/(T_s+μ), SleepWakeCycle orchestrates Controller+DreamObserver, parameter-free trigger, 17 tests (101 structural entropy total)."
+      "C121 Sleep-Wake Cycle — dream_pressure = T_s/(T_s+μ), SleepWakeCycle orchestrates Controller+DreamObserver, parameter-free trigger, 17 tests (101 structural entropy total).",
+      "C122 Ontodynamics Canon v2.0 — 51 nodes, 86 edges, English IDs, 18 derivation levels (0-17), implementation layer (levels 9-17).",
+      "C122b German ID Cleanup — all iterate() calls updated from German to English IDs.",
+      "C122c Dead-End Sink Repair — 7 feedback edges added, 86→93 edges, all nodes topologically live.",
+      "C122d Epistemic Liveness — uniform U=2, F=1 for all 93 edges. Key insight: F/U < 0.75 = correct decay direction. Greedy never escapes at F=0 (10k steps proven). 'Zweifel zuzulassen' principle."
     ],
-    "next_steps": ["C122: explore_sleep_wake.py — end-to-end wake/sleep rhythm visualization"],
-    "next_commit_id": "C122"
+    "next_steps": ["C43: Self-Graph (E0 learns E0 first)", "C44: Bootstrapper (LLM output → Landscape init)"],
+    "next_commit_id": "C122e"
   },
 
   "key_modules_quick_ref": {

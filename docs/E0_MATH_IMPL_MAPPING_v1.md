@@ -1,6 +1,6 @@
 # E₀ — Mathematics ↔ Implementation Mapping v1.0
 
-**Status:** Draft (post Phase 5h / Path H)  
+**Status:** Draft → v1.1 (updated to C122d, 2026-04-03)  
 **Purpose:** Exact correspondence between formal E₀ mathematics and current implementation  
 **Scope:** `e0_controller/` package  
 **Language:** English
@@ -600,13 +600,14 @@ Implementation source:
 
 ### Mathematics
 
-The controller selects the minimal admissible transition:
+The controller selects the minimal penalized transition:
 
 ```text
-p* = argmin S_eff
+S_pen(e) = S_eff(e) / (M_H(e) · I(e))
+p* = argmin S_pen
 ```
 
-Operationally, in the current runtime, this is implemented as local edge selection.
+where M_H is the graduated overlap functional (§30) and I is the inertia factor (§31).
 
 ### Implementation
 
@@ -782,42 +783,15 @@ The adapter always receives bounded MemOS summaries rather than raw thread histo
 
 ---
 
-## 27. Structural Summary
+## 27. Structural Summary (see §39 for current version)
 
-The current implementation realizes the following derived chain:
-
-```text
-Δ → R₀ → H → δ_H → R_eff → S → C → Φ → v_grad / v_rot → ω → Θ → Ψ
-```
-
-with controller-level realization through:
-
-```text
-GREEDY_ONLY:           argmin S_eff
-AMPLITUDE_ON_DISAGREE: argmax I (override on disagree)
-BORN_SAMPLING:         sample P ∝ I
-```
-
-and persistence/semantic extension through:
-
-```text
-MemOS (geometry + confidence + snapshots) + LLM Adapter
-```
+*(Moved to §39 with updated derivation chain including C42–C122d additions.)*
 
 ---
 
-## 28. Scope Note
+## 28. Scope Note (see §40 for current version)
 
-This document maps the current runtime and mathematical structure as implemented after Phase 5h (Path H).
-
-It does **not** claim:
-
-- full graph-theoretic Helmholtz decomposition,
-- complete continuous-limit formalization,
-- finished phase-3b/open-domain validation,
-- completion of the spin-1/2 derivation program.
-
-It is an exact mapping document for the current implemented system.
+*(Moved to §40 with expanded scope through C122d.)*
 
 ---
 
@@ -847,6 +821,246 @@ Returns `OverlayReport` containing:
 - `action_infos[].probability` — P(a)
 - `action_infos[].psi_total` — Ψ(a) (complex)
 - `action_infos[].override_confidence` — 1 − 2·min(P, 1−P)
+
+---
+
+## 30. Graduated Overlap M_H (C40, C98)
+
+### Mathematics
+
+```text
+M_H(x→y) = max(ε, Σ_z √(v(x,z) · v(z,y)))
+```
+
+Triangle support: shared neighbors with strong transition fields increase edge familiarity.
+
+### Implementation
+
+```python
+overlap.graduated_m_h(landscape, source, target)
+```
+
+Used in controller greedy loop: `S_pen = S_eff / M_H` — high overlap makes an edge more attractive.
+
+Implementation source: `overlap.py`
+
+---
+
+## 31. Trace Quality q(e) (C42)
+
+### Mathematics
+
+```text
+q(e) = (U(e) − F(e)) / (U(e) + F(e) + ε)
+```
+
+Range: (−1, +1). Positive = mostly successful, negative = mostly failing, near zero = confused.
+
+### Implementation
+
+```python
+Historization.trace_quality(edge)
+```
+
+Implementation source: `historization.py`
+
+---
+
+## 32. Trace Load m(e) (C42)
+
+### Mathematics
+
+```text
+m(e) = U(e) + F(e)
+```
+
+Total accumulated experience on an edge.
+
+### Implementation
+
+```python
+Historization.trace_load(edge)
+```
+
+Implementation source: `historization.py`
+
+---
+
+## 33. Inertia Factor I(e) (C42, C99)
+
+### Mathematics
+
+```text
+I(e) = 1 − α · m/(m + μ) · (1 − |q|)
+```
+
+where α = 0.5, μ = |E|/|V|. Heavy-traffic confused edges (high m, low |q|) get penalized. Clear edges (|q| ≈ 1) pass through undamped.
+
+### Implementation
+
+```python
+Historization.inertia_factor(edge, alpha, mu)
+```
+
+Used in controller greedy loop: `S_pen = S_eff / (M_H · I)`.
+
+Implementation source: `historization.py`
+
+---
+
+## 34. Overload Index OI(x) (C63)
+
+### Mathematics
+
+```text
+OI(x) = N_admissible(x) × (1 − mean|q(e)|)
+```
+
+Many paths × little experience = overwhelmed. When OI > threshold, peer consultation fires.
+
+### Implementation
+
+Computed inline in `E0Controller.select_next()`. Triggers OVERLOADED escalation with `peer_fn` callback.
+
+Implementation source: `controller.py`
+
+---
+
+## 35. Scoped Reflexion Locality ℓ (C101, C105)
+
+### Mathematics
+
+```text
+ℓ = m̄ / (m̄ + μ),    μ = |E|/|V|
+r = max(1, ⌈(1 − ℓ) · D⌉)
+```
+
+Locality ℓ ∈ [0,1]: fresh landscape (m̄ ≈ 0) → ℓ ≈ 0 → global proposals. Historized landscape → ℓ → 1 → local proposals within radius r.
+
+### Implementation
+
+```python
+scoped_reflexion.compute_locality(landscape)
+scoped_reflexion.compute_scope_radius(locality, diameter)
+```
+
+Implementation source: `scoped_reflexion.py`
+
+---
+
+## 36. Structural Temperature T_s (C115)
+
+### Mathematics
+
+```text
+T_s = m̄ / q̄
+```
+
+where m̄ = mean trace load, q̄ = mean |trace_quality|. High T_s = much experience but low clarity (hot, noisy). Low T_s = clear knowledge (cold, stable).
+
+### Implementation
+
+```python
+structural_entropy.structural_temperature(landscape)
+```
+
+Controls inscription threshold and dream pressure.
+
+Implementation source: `structural_entropy.py`
+
+---
+
+## 37. Dream Pressure (C121)
+
+### Mathematics
+
+```text
+P_dream = T_s / (T_s + μ)
+```
+
+Triggers dreaming when P_dream > 0.5, i.e., when T_s > μ. Parameter-free: uses existing μ from landscape topology.
+
+### Implementation
+
+```python
+structural_entropy.dream_pressure(landscape)
+structural_entropy.should_dream(landscape)
+```
+
+Used by `SleepWakeCycle` to alternate between wake (controller.run) and sleep (dream_cycle).
+
+Implementation source: `structural_entropy.py`, `sleep_wake.py`
+
+---
+
+## 38. Canon Initial Historization (C122d)
+
+### Mathematics
+
+Canon edges carry initial traces (U₀, F₀) that set the prior before any runtime traversal:
+
+```text
+δ_H₀(e) = λ_f · F₀ − λ_s · U₀
+R_eff₀(e) = R₀(e) + δ_H₀(e)
+S_eff₀(e) = Δ(e) · R_eff₀(e)
+```
+
+**Epistemic liveness constraint:** S_eff₀ > 0 for all edges (no epistemically dead edges).
+
+**Decay direction constraint:** F₀/U₀ < λ_s/λ_f = 0.75 ensures unvisited edges amplify (unused knowledge atrophies, not spontaneously heals).
+
+### Implementation
+
+Set in `e0_controller/canons/ontodynamics.json` as `initial_U` and `initial_F` per edge. Uniform U=2, F=1 for all 93 edges.
+
+Loaded via `canon_loader.py` → `bootstrapper.py` → `Landscape`.
+
+---
+
+## 39. Structural Summary (updated)
+
+The current implementation realizes the following derived chain:
+
+```text
+Δ → R₀ → H(U,F) → δ_H → R_eff → S_eff → C → Φ → v_grad / v_rot → ω → Θ → Ψ
+                     ↓
+              q, m → I(e) → S_pen = S_eff/(M_H·I)
+                     ↓
+              T_s → P_dream → SleepWakeCycle
+                     ↓
+              ℓ → r → Scoped Reflexion
+```
+
+with controller-level realization through:
+
+```text
+GREEDY:                argmin S_pen = S_eff/(M_H·I)
+AMPLITUDE_ON_DISAGREE: argmax I (override on disagree)
+BORN_SAMPLING:         sample P ∝ I
+```
+
+and persistence/semantic/epistemic extension through:
+
+```text
+MemOS (geometry + confidence + snapshots)
+LLM Adapter (semantic interface)
+Canon (initial Δ, R₀, U₀, F₀ — ontodynamics.json)
+```
+
+---
+
+## 40. Scope Note
+
+This document maps the current runtime and mathematical structure as implemented through C122d.
+
+It does **not** claim:
+
+- full graph-theoretic Helmholtz decomposition,
+- complete continuous-limit formalization,
+- finished phase-3b/open-domain validation,
+- completion of the spin-1/2 derivation program.
+
+It is an exact mapping document for the current implemented system.
 
 Implementation source:
 

@@ -3,7 +3,8 @@
 **Status:** Canonical reference  
 **Date:** 2026-04-03  
 **Supersedes:** E0_ARCHITECTURE_OVERVIEW_v3.md (2026-04-02)  
-**Scope:** 57 production modules, 9 benchmarks, 11 demos, 19 explorations, 94 test files — ~19,000 production lines, 3464 tests  
+**Scope:** 57 production modules, 9 benchmarks, 11 demos, 19 explorations, 94 test files — ~19,000 production lines, 3464 tests
+**Latest:** C122d (ontodynamics v2.0, epistemic liveness corrections)
 **Papers:** P1 (Structural Interference), P2 (Spinor/Born), P3 (Non-Abelian), P4 (Reflexivity), P5 (Emergent Locality), P6 (Dream Mode)
 
 ---
@@ -329,7 +330,7 @@ All three share the same controller core. They differ only in the final action s
 
 ## 8. Test Infrastructure
 
-**3385 tests**, 0 failures (2026-04-03) across **92 test files**.
+**3464 tests**, 0 failures (2026-04-03) across **94 test files**.
 
 | Category | Test Files | Tests |
 |----------|-----------|-------|
@@ -414,15 +415,44 @@ primitives ← tension ← landscape ← historization
 |-------|----------|
 | Formal theory | `canon/e0-canonical-reference.txt` |
 | Math ↔ Code mapping | `docs/E0_MATH_IMPL_MAPPING_v1.md` |
-| Paper 1 (Interference) | `docs/PAPER1_MANUSCRIPT_v1.md` |
-| Paper 2 (Spinor/Born) | `docs/PAPER2_MANUSCRIPT_v1.md` |
-| Paper 3 (Non-Abelian) | `docs/E0_PAPER3_NON_ABELIAN_STRUCTURE_v1.md` |
-| Paper 4 (Reflexivity) | `docs/PAPER4_MANUSCRIPT_v1.md` |
+| Paper 1 (Interference) | `docs/papers/PAPER1_MANUSCRIPT_v1.md` |
+| Paper 2 (Spinor/Born) | `docs/papers/PAPER2_MANUSCRIPT_v1.md` |
+| Paper 3 (Non-Abelian) | `docs/papers/E0_PAPER3_NON_ABELIAN_STRUCTURE_v1.md` |
+| Paper 4 (Reflexivity) | `docs/papers/PAPER4_MANUSCRIPT_v1.md` |
 | Paper 5 (Emergent Locality) | `docs/papers/PAPER5_MANUSCRIPT_v1.md` |
+| Paper 6 (Dream Mode) | `docs/papers/PAPER6_MANUSCRIPT_v1.md` |
 | Multiverse Design | `docs/E0_MULTIVERSE_DESIGN_v1.md` |
 | Observation UI Architecture | `docs/E0_OBSERVATION_UI_ARCHITECTURE_v1.md` |
-| Controller Status | `docs/E0_CONTROLLER_STATUS.md` |
-| Test Registry | `docs/E0_TEST_REGISTRY_v2.md` |
-| Hybrid Spec | `docs/E0_HYBRID_CONTROLLER_SPEC_v1.md` |
 | Dream Mode Concept | `docs/E0_DREAM_MODE_CONCEPT_v1.md` |
-| Paper 6 (Dream Mode) | `docs/papers/PAPER6_MANUSCRIPT_v1.md` (planned) |
+| Structural Entropy Design | `docs/E0_STRUCTURAL_ENTROPY_DESIGN_v1.md` |
+| Ontodynamics Canon Analysis | `docs/E0_ONTODYNAMICS_CANON_ANALYSIS_v1.md` |
+| Test Registry | `docs/E0_TEST_REGISTRY_v2.md` |
+| Canon Alignment | `docs/E0_CANON_ALIGNMENT_v1.md` |
+
+---
+
+## 13. C122 — Ontodynamics Canon v2.0 and Epistemic Corrections
+
+### C122: Canon Renewal (51 nodes, 93 edges)
+
+The ontodynamics JSON canon was rebuilt from scratch:
+- **v1.2** (19 nodes, 31 edges, German IDs) → **v2.0** (51 nodes, 93 edges, English IDs)
+- 18 derivation levels (0-8 canonical, 9-17 implementation)
+- Edge types: canonical (31), border (13), implementation (42), feedback (7)
+- Goal states: `negative_necessity`, `sleep_wake_cycle`
+
+### C122b: German ID Cleanup
+
+All navigation code updated from German to English state identifiers.
+
+### C122c: Dead-End Repair
+
+7 implementation nodes were topological sinks (0 outgoing edges). Added 7 feedback edges to close them. Only goal states remain as sinks.
+
+### C122d: Epistemic Liveness ("Zweifel zuzulassen")
+
+**Problem discovered:** 50/93 edges had `s_eff = 0` (epistemically dead). Root cause: initial U=8-10 with F=0 produced `δ_H ≈ -1.5`, driving R_eff to floor. No historization possible — greedy permanently trapped in implementation layer.
+
+**Key insight:** Without difference there is no historization, without historization no learning. The threshold `F/U < λ_s/λ_f = 0.75` determines whether unvisited edges amplify (correct: unused knowledge atrophies) or spontaneously heal (incorrect).
+
+**Fix:** Uniform `U=2, F=1` for all 93 edges. No edge claims certainty E₀ hasn't earned. Result: all edges have `s_eff > 0` (min: 0.030), correct decay direction, reflexive action gate operational.

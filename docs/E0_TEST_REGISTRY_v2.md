@@ -4,7 +4,7 @@
 > **Purpose:** connect claims, tests, evidence, and status in one place.
 
 **Last updated:** 2026-04-03 — **3464 tests** (0 failures, 0 warnings) across **94 test files**  
-**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, **C52 Honest Self-Knowledge (CANON_PROCESS_MAP correction)**, **C53 Domain-Invariance Benchmark (10 domains, 1 controller)**, **C54 Raumzeit Coupling (closed vs coupled systems)**, **C55 Amplitude Benchmark (10 domains × 3 modes)**, **C56 Reflexive Edge Proposal (Historisierung informiert Topologie)**, **C57 Proactive Reflexion (Stufe 2)**, **C58 Reflexion Benchmark (10 domains × 3 Stufen)**, **C59 Integrated Reflexion (C49 + C57 unified)**, **C60 Multiverse (coupled systems, NoveltyGate, convergence/divergence)**, **C61 Cross-Domain Multiverse Benchmark**, **C62 Cross-Universe Reflexive Edge Discovery**, **C63 OVERLOADED Escalation (OI-triggered peer consultation)**, **C64 Gridworld Baseline Benchmark (E₀ vs A* vs Naive-Greedy)**, **C66 CouplingRouter (N>2 dynamic partner selection)**, **C67 Asymmetric Coupling (weight-based directional R₀)**, **C68 Coupling Self-Graph (Stufe-3 reflexion for coupling pipeline)**, **C69 Cross-Reflexion Benchmark (edge copying vs edge creation)**, **C70 OVERLOADED Benchmark (peer consultation × 10 domains)**, **C71 LLM Co-Cognition (2 LLMs coupled via multiverse)**, **C72 Chess Engine (strategic dimension navigation)**, **C73 Primitive Extensions (fully_connected + strategy_profile)**, **C74 Team Chess (multiverse team play)**, **C75–C81 Empirical Validation Phase (attractor universality, multi-attractor dynamics, transfer learning, convergence speed, asymmetric ρ, attractor prediction, focus narrowing — explore scripts + formal tests)**, **C82 Focus Narrowing in Controller (focus_k + peer bypass)**, **C83 Service Layer (SnapshotCodec, InputPipeline, PeerBridge, ServiceSession, SessionManager)**, **C84 API Gateway (FastAPI REST + WebSocket, 13 endpoints)**, **C85 Client (React + Cytoscape.js)**, **C86 Test Runner UI**, **C88 Keimzelle (graph-centric UI rebuild)**, **C89–C93 UI iteration (edge labels, path trail, peer interaction, mechanism indicator, scenarios)**, **C94 Observation Landscape (O-Landscape)**, **C95 Observation Controller (navigation + projection)**, **C96 Rendering Adapter (observation → wire format)**, **C97 Observation UI Integration (server + client wiring)**, **C98 Graduated Overlap in Greedy Loop (M_H closes last research question)**, **C99 Inertia Dampening in Greedy Loop (confused edges penalized)**, **C100 Modulation Benchmark (14 domains × 3 modes, overlap + inertia validated)**, **C101 Scoped Reflexion (historization-driven locality for edge proposals)**, **C102 Scoped Reflexion Controller Integration (scoped=True wired into integrated_reflexion pipeline)**, **C103 Scoped Reflexion Benchmark (10 domains × GLOBAL vs SCOPED, fresh degeneration validated)**, **C104 Emergent Locality (historization creates locality as emergent property)**, **C105 Adaptive μ (μ = |E|/|V| derived from topology)**, **C106 Corridor Scope (non-spherical locality)**, **C107 Scoped Cross-Reflexion (multi-agent locality, P5 §10.4 Q3)**, **C108 Asymptotic Tightness (non-uniform convergence, P5 §10.4 Q4)**, **C109 Dream Mode Phase 1 (edge fingerprints, functional equivalence, dream readiness)**, **C110 Dream Mode Phase 2 (DreamObserver, dream_cycle, feedback historization, P4 noise filtering)**, **C111 Dream Mode Phase 3 (bridge hypothesis generation, dream peer_fn, P2 acceleration, P3 self-correction)**, **C112 Dream Mode Phase 4 (explore_dream_mode.py end-to-end: 6 domains, equivalence precision, bridge proposals, self-correction, DL convergence)**, **C115–C120 Structural Entropy (forgetting as structural necessity: inscription threshold, anchor analysis, structural decay, controller integration, dream consolidation)**, **C121 Sleep–Wake Cycle (automatic dream trigger via T_s, SleepWakeCycle orchestrator)**.
+**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, **C52 Honest Self-Knowledge (CANON_PROCESS_MAP correction)**, **C53 Domain-Invariance Benchmark (10 domains, 1 controller)**, **C54 Raumzeit Coupling (closed vs coupled systems)**, **C55 Amplitude Benchmark (10 domains × 3 modes)**, **C56 Reflexive Edge Proposal (Historisierung informiert Topologie)**, **C57 Proactive Reflexion (Stufe 2)**, **C58 Reflexion Benchmark (10 domains × 3 Stufen)**, **C59 Integrated Reflexion (C49 + C57 unified)**, **C60 Multiverse (coupled systems, NoveltyGate, convergence/divergence)**, **C61 Cross-Domain Multiverse Benchmark**, **C62 Cross-Universe Reflexive Edge Discovery**, **C63 OVERLOADED Escalation (OI-triggered peer consultation)**, **C64 Gridworld Baseline Benchmark (E₀ vs A* vs Naive-Greedy)**, **C66 CouplingRouter (N>2 dynamic partner selection)**, **C67 Asymmetric Coupling (weight-based directional R₀)**, **C68 Coupling Self-Graph (Stufe-3 reflexion for coupling pipeline)**, **C69 Cross-Reflexion Benchmark (edge copying vs edge creation)**, **C70 OVERLOADED Benchmark (peer consultation × 10 domains)**, **C71 LLM Co-Cognition (2 LLMs coupled via multiverse)**, **C72 Chess Engine (strategic dimension navigation)**, **C73 Primitive Extensions (fully_connected + strategy_profile)**, **C74 Team Chess (multiverse team play)**, **C75–C81 Empirical Validation Phase (attractor universality, multi-attractor dynamics, transfer learning, convergence speed, asymmetric ρ, attractor prediction, focus narrowing — explore scripts + formal tests)**, **C82 Focus Narrowing in Controller (focus_k + peer bypass)**, **C83 Service Layer (SnapshotCodec, InputPipeline, PeerBridge, ServiceSession, SessionManager)**, **C84 API Gateway (FastAPI REST + WebSocket, 13 endpoints)**, **C85 Client (React + Cytoscape.js)**, **C86 Test Runner UI**, **C88 Keimzelle (graph-centric UI rebuild)**, **C89–C93 UI iteration (edge labels, path trail, peer interaction, mechanism indicator, scenarios)**, **C94 Observation Landscape (O-Landscape)**, **C95 Observation Controller (navigation + projection)**, **C96 Rendering Adapter (observation → wire format)**, **C97 Observation UI Integration (server + client wiring)**, **C98 Graduated Overlap in Greedy Loop (M_H closes last research question)**, **C99 Inertia Dampening in Greedy Loop (confused edges penalized)**, **C100 Modulation Benchmark (14 domains × 3 modes, overlap + inertia validated)**, **C101 Scoped Reflexion (historization-driven locality for edge proposals)**, **C102 Scoped Reflexion Controller Integration (scoped=True wired into integrated_reflexion pipeline)**, **C103 Scoped Reflexion Benchmark (10 domains × GLOBAL vs SCOPED, fresh degeneration validated)**, **C104 Emergent Locality (historization creates locality as emergent property)**, **C105 Adaptive μ (μ = |E|/|V| derived from topology)**, **C106 Corridor Scope (non-spherical locality)**, **C107 Scoped Cross-Reflexion (multi-agent locality, P5 §10.4 Q3)**, **C108 Asymptotic Tightness (non-uniform convergence, P5 §10.4 Q4)**, **C109 Dream Mode Phase 1 (edge fingerprints, functional equivalence, dream readiness)**, **C110 Dream Mode Phase 2 (DreamObserver, dream_cycle, feedback historization, P4 noise filtering)**, **C111 Dream Mode Phase 3 (bridge hypothesis generation, dream peer_fn, P2 acceleration, P3 self-correction)**, **C112 Dream Mode Phase 4 (explore_dream_mode.py end-to-end: 6 domains, equivalence precision, bridge proposals, self-correction, DL convergence)**, **C115–C120 Structural Entropy (forgetting as structural necessity: inscription threshold, anchor analysis, structural decay, controller integration, dream consolidation)**, **C121 Sleep–Wake Cycle (automatic dream trigger via T_s, SleepWakeCycle orchestrator)**, **C122 Ontodynamics Canon v2.0 (51 nodes, 93 edges, English IDs, implementation layer)**, **C122b German ID Cleanup**, **C122c Dead-End Sink Repair**, **C122d Epistemic Liveness (U=2, F=1 uniform, "Zweifel zuzulassen")**.
 
 ---
 
@@ -3060,6 +3060,96 @@ The system can self-regulate its wake/sleep rhythm without new parameters. dream
 - Multi-domain: hot domain correctly triggers sleep even with cold peers
 - Decay during sleep compresses landscapes
 - max_dream_cycles cap enforced
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C122 — Ontodynamics Canon v2.0
+
+**Claim**  
+The ontodynamics JSON canon can be rebuilt from v1.2 (19 nodes, 31 edges, German IDs) to v2.0 (51 nodes, 93 edges, English IDs) with a two-layer architecture (canonical levels 0-8, implementation levels 9-17) while maintaining all existing tests. The canon loader, bootstrapper, and self-bridge pipeline must adapt without code changes — only JSON + test threshold updates.
+
+**Evidence**  
+- `e0_controller/canons/ontodynamics.json` — v2.0: 51 nodes, 93 edges, 18 derivation levels
+- `e0_controller/canons/ontodynamics_v1.json` — archived v1.2 for comparison
+- `e0_controller/test_canon_loader.py` — updated node/edge counts (51/93)
+- `e0_controller/test_canon_self_bridge.py` — updated for English IDs
+- `e0_controller/test_honest_self_knowledge.py` — updated for v2 coverage
+- `e0_controller/test_system_integration.py` — all German IDs → English
+- `e0_controller/demo_canon_exposition.py` — all German IDs → English
+
+**Result**  
+- Canon loads correctly with 51 nodes, 93 edges
+- Canon self-bridge CANON_PROCESS_MAP expanded (33/51 = 65% coverage)
+- All navigation code uses English IDs
+- Pipeline (JSON → canon_loader → bootstrapper → Landscape) works unchanged
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C122b — German ID Cleanup in Navigation Code
+
+**Claim**  
+All `iterate()` calls using German state IDs (`differenz`, `negative_notwendigkeit`) were silently navigating via Dead-End escalation rather than canonical derivation. Switching to English IDs (`difference`, `negative_necessity`) restores intended navigation paths.
+
+**Evidence**  
+- `e0_controller/test_system_integration.py` — 10 `iterate()` calls updated
+- `e0_controller/test_canon_loader.py` — 1 navigation call updated
+- `e0_controller/demo_canon_exposition.py` — navigation + LLM prompts updated
+
+**Result**  
+- Navigation follows canonical derivation paths instead of Dead-End recovery
+- All 3464 tests pass
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C122c — Dead-End Sink Repair
+
+**Claim**  
+7 implementation nodes had 0 outgoing edges, creating topological sinks that caused DEAD_END escalation during navigation. Adding feedback edges to close these sinks should restore navigability while preserving the only legitimate sinks (goal states).
+
+**Evidence**  
+- `e0_controller/canons/ontodynamics.json` — 7 feedback edges added (edge count 86 → 93)
+- Feedback edges: cross_reflexion→historization, born_sampling→greedy_navigation, novelty_gate→cross_reflexion, asymmetric_coupling→cross_reflexion, inscription_threshold→historization, observation→reflexivity, spacetime→historization
+
+**Result**  
+- Only 2 sinks remain: `negative_necessity` and `sleep_wake_cycle` (both goal states)
+- cross_reflexion no longer causes DEAD_END escalation
+- All 3464 tests pass
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C122d — Epistemic Liveness ("Zweifel zuzulassen")
+
+**Claim**  
+50/93 edges had s_eff = 0 due to initial_U=8-10 with initial_F=0-1, producing δ_H ≈ −1.5 that drove R_eff to floor. These edges were epistemically dead — greedy always selected them, no historization occurred, no learning was possible. Uniform U=2, F=1 should restore epistemic liveness while maintaining correct decay direction (F/U < 0.75).
+
+**Evidence**  
+- `e0_controller/canons/ontodynamics.json` — all 93 edges set to initial_U=2, initial_F=1
+- `e0_controller/test_canon_loader.py` — trace quality threshold updated (0.5 → 0.0)
+- `e0_controller/test_system_integration.py` — reflexive action budget widened (20/4 → 40/8)
+
+**Key findings (empirically verified):**
+- Greedy under pure SUCCESS **never** escapes the reflexion loop (10,000 steps, trap_seff remains 0.000)
+- F/U threshold at λ_s/λ_f = 0.75 determines decay direction: below = amplify (correct), above = heal (incorrect)
+- Born Sampling: 28% success rate (topology-dependent, not U/F-dependent)
+- After fix: all edges s_eff > 0 (min: 0.030), correct decay direction, reflexive action gate operational
+
+**Result**  
+- Zero epistemically dead edges
+- Every traversal produces meaningful historization data
+- Reflexive action fires correctly with pre-poisoned self-graph
+- 3464 tests pass
 
 **Status**  
 ✅ Confirmed
