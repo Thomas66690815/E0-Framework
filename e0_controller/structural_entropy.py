@@ -14,7 +14,8 @@ Two forgetting types:
     where ε(e) = ε₀(T_s) · (1 − exp(−trace_load(e)/μ))
 
   Type 2 — Structural Decay (Anchor-Based Pruning):
-    → Implemented in a later commit (C116).
+    anchor_score(s) = |q̄_s| · m_max(s) · log(1 + degree(s))
+    decay_candidate(s) = anchor_score < θ_decay AND dormant > τ_dormant
 
 Self-calibrating via Structural Temperature:
     T_s = m̄ / q̄
@@ -28,7 +29,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Optional
+from typing import List, Optional, Set, Tuple
 
 from .primitives import Edge, Outcome
 from .historization import Historization
@@ -207,3 +208,189 @@ def dormancy_threshold(rho: float, trace_floor: float = 0.01) -> int:
     if rho <= 0.0 or rho >= 1.0:
         raise ValueError(f"rho must be in (0, 1), got {rho}")
     return max(1, math.ceil(math.log(trace_floor) / math.log(rho)))
+
+
+# ---------------------------------------------------------------------------
+# Anchor Analysis (Type 2 — structural decay)
+# ---------------------------------------------------------------------------
+
+def _incident_edges(state: str, all_edges: List[Edge]) -> List[Edge]:
+    """Return all edges incident to a state (source or target)."""
+    return [e for e in all_edges if e.source == state or e.target == state]
+
+
+def anchor_score(state: str, hist: Historization,
+                 all_edges: List[Edge]) -> float:
+    """
+    Anchor score for a state — how structurally important it is.
+
+    anchor_score(s) = |q̄_s| · m_max(s) · log(1 + degree(s))
+
+    Components:
+    - |q̄_s|: mean |trace_quality| of incident edges — emotional clarity
+    - m_max(s): max trace_load of incident edges — depth of experience
+    - log(1 + degree(s)): structural centrality — hub vs leaf
+
+    A state with strong emotional valence, deep experience, and many
+    connections is an anchor. A state that is neutral, lightly
+    experienced, and peripheral is not.
+
+    Returns
+    -------
+    float ≥ 0
+    """
+    incident = _incident_edges(state, all_edges)
+    if not incident:
+        return 0.0
+
+    degree = len(incident)
+    total_abs_quality = 0.0
+    max_load = 0.0
+
+    for e in incident:
+        total_abs_quality += abs(hist.trace_quality(e))
+        load = hist.trace_load(e)
+        if load > max_load:
+            max_load = load
+
+    mean_abs_quality = total_abs_quality / degree
+    return mean_abs_quality * max_load * math.log(1 + degree)
+
+
+def state_dormancy(state: str, hist: Historization,
+                   all_edges: List[Edge]) -> int:
+    """
+    How many cycles since any edge incident to this state was touched.
+
+    Returns τ − max(τ_last(e)) over incident edges.
+    If no incident edges have been historized, returns τ (= fully dormant).
+    """
+    incident = _incident_edges(state, all_edges)
+    if not incident:
+        return hist.tau
+
+    max_tau_last = 0
+    any_historized = False
+    for e in incident:
+        tau_last = hist._tau_last.get(e, 0)
+        if e in hist._U or e in hist._F:
+            any_historized = True
+            if tau_last > max_tau_last:
+                max_tau_last = tau_last
+
+    if not any_historized:
+        return hist.tau
+
+    return hist.tau - max_tau_last
+
+
+@dataclass(frozen=True)
+class DecayCandidate:
+    """A state identified as eligible for structural decay."""
+    state: str
+    anchor_score: float
+    dormancy: int
+    incident_edge_count: int
+
+
+def find_decay_candidates(
+    states: Set[str],
+    hist: Historization,
+    all_edges: List[Edge],
+    theta_base: float = 0.5,
+    T_s: Optional[float] = None,
+    tau_dormant: Optional[int] = None,
+    protected: Optional[Set[str]] = None,
+) -> List[DecayCandidate]:
+    """
+    Identify states eligible for structural decay.
+
+    A state is a decay candidate when:
+    1. anchor_score(s) < θ_decay(T_s)  — structurally unimportant
+    2. dormancy(s) > τ_dormant         — has been dormant long enough
+    3. s ∉ protected                    — not start/goal/current
+
+    Parameters
+    ----------
+    states : Set[str]
+        All states in the landscape.
+    hist : Historization
+        Current historization state.
+    all_edges : List[Edge]
+        All edges in the landscape.
+    theta_base : float
+        Baseline anchor threshold. The only new parameter in
+        Structural Entropy. Default 0.5 (to be calibrated empirically).
+    T_s : float, optional
+        Structural temperature. If None, computed from hist.
+    tau_dormant : int, optional
+        Dormancy threshold. If None, derived from hist.rho.
+    protected : Set[str], optional
+        States that must never be decay candidates (start, goal, current).
+
+    Returns
+    -------
+    List[DecayCandidate]
+        States eligible for decay, sorted by anchor_score ascending
+        (weakest anchors first).
+    """
+    if T_s is None:
+        T_s = structural_temperature(hist)
+    if tau_dormant is None:
+        rho = hist.rho
+        tau_dormant = dormancy_threshold(rho)
+    if protected is None:
+        protected = set()
+
+    # θ_decay increases with temperature — hotter system prunes more
+    theta_decay = theta_base * (1.0 + T_s)
+
+    candidates = []
+    for s in states:
+        if s in protected:
+            continue
+        score = anchor_score(s, hist, all_edges)
+        if score >= theta_decay:
+            continue
+        dorm = state_dormancy(s, hist, all_edges)
+        if dorm < tau_dormant:
+            continue
+        incident = _incident_edges(s, all_edges)
+        candidates.append(DecayCandidate(
+            state=s,
+            anchor_score=score,
+            dormancy=dorm,
+            incident_edge_count=len(incident),
+        ))
+
+    candidates.sort(key=lambda c: c.anchor_score)
+    return candidates
+
+
+def find_anchors(
+    states: Set[str],
+    hist: Historization,
+    all_edges: List[Edge],
+    theta_base: float = 0.5,
+    T_s: Optional[float] = None,
+) -> Set[str]:
+    """
+    Identify anchor states — those that will survive decay.
+
+    An anchor is any state with anchor_score ≥ θ_decay(T_s).
+    Anchors are the "landmarks" of the landscape — states with
+    strong emotional (quality) signatures that serve as memory anchors.
+
+    Returns
+    -------
+    Set[str]
+        States that are anchors (will not decay).
+    """
+    if T_s is None:
+        T_s = structural_temperature(hist)
+    theta_decay = theta_base * (1.0 + T_s)
+
+    return {
+        s for s in states
+        if anchor_score(s, hist, all_edges) >= theta_decay
+    }

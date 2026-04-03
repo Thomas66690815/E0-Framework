@@ -1,7 +1,9 @@
 """
-Tests for structural_entropy.py — Structural Temperature + Inscription Threshold.
+Tests for structural_entropy.py — Structural Temperature, Inscription Threshold,
+Anchor Analysis, and Decay Candidates.
 
 C115: Type 1 forgetting — non-inscription of routine transitions.
+C116: Type 2 forgetting — anchor analysis + decay candidates.
 """
 
 import math
@@ -15,6 +17,11 @@ from e0_controller.structural_entropy import (
     inscription_threshold,
     should_inscribe,
     dormancy_threshold,
+    anchor_score,
+    state_dormancy,
+    find_decay_candidates,
+    find_anchors,
+    DecayCandidate,
     _signal,
 )
 
@@ -326,6 +333,292 @@ class TestShouldInscribeEdgeCases(unittest.TestCase):
         T = structural_temperature(h)
         self.assertGreater(T, 0.0)
         self.assertLess(T, 100.0)  # sanity bound
+
+
+# ===================================================================
+# C116: Anchor Analysis + Decay Candidates
+# ===================================================================
+
+def _build_landscape_edges(state_pairs):
+    """Build edges from (source, target) pairs."""
+    return [Edge(source=s, target=t) for s, t in state_pairs]
+
+
+class TestAnchorScore(unittest.TestCase):
+    """anchor_score(s) = |q̄_s| · m_max(s) · log(1 + degree(s))"""
+
+    def test_no_incident_edges(self):
+        """Isolated state → score = 0."""
+        h = Historization()
+        score = anchor_score("lonely", h, [])
+        self.assertEqual(score, 0.0)
+
+    def test_single_successful_edge(self):
+        """One edge, one success → score > 0."""
+        e = _make_edge("A", "B")
+        h = _hist_with_experience([(e, Outcome.SUCCESS)])
+        score = anchor_score("A", h, [e])
+        self.assertGreater(score, 0.0)
+
+    def test_hub_scores_higher_than_leaf(self):
+        """State with more connections → higher score (log(1+degree))."""
+        e1 = _make_edge("HUB", "A")
+        e2 = _make_edge("HUB", "B")
+        e3 = _make_edge("HUB", "C")
+        e_leaf = _make_edge("LEAF", "X")
+        h = Historization()
+        # Same experience on all edges
+        for e in [e1, e2, e3, e_leaf]:
+            for _ in range(5):
+                h.update(e, Outcome.SUCCESS)
+        all_edges = [e1, e2, e3, e_leaf]
+        score_hub = anchor_score("HUB", h, all_edges)
+        score_leaf = anchor_score("LEAF", h, all_edges)
+        self.assertGreater(score_hub, score_leaf)
+
+    def test_strong_quality_scores_higher(self):
+        """State with clear outcomes → higher score than mixed."""
+        e_clear = _make_edge("CLEAR", "X")
+        e_mixed = _make_edge("MIXED", "Y")
+        h = Historization()
+        for _ in range(10):
+            h.update(e_clear, Outcome.SUCCESS)
+        for _ in range(5):
+            h.update(e_mixed, Outcome.SUCCESS)
+            h.update(e_mixed, Outcome.FAILURE)
+        all_edges = [e_clear, e_mixed]
+        score_clear = anchor_score("CLEAR", h, all_edges)
+        score_mixed = anchor_score("MIXED", h, all_edges)
+        self.assertGreater(score_clear, score_mixed)
+
+    def test_incoming_edges_count(self):
+        """Edges where state is target also contribute to score."""
+        e_out = _make_edge("S", "A")
+        e_in = _make_edge("B", "S")
+        h = Historization()
+        for _ in range(5):
+            h.update(e_out, Outcome.SUCCESS)
+            h.update(e_in, Outcome.SUCCESS)
+        score = anchor_score("S", h, [e_out, e_in])
+        # degree = 2, both edges contribute
+        score_one = anchor_score("S", h, [e_out])
+        self.assertGreater(score, score_one)
+
+    def test_score_nonnegative(self):
+        """Score is always ≥ 0."""
+        e = _make_edge("A", "B")
+        h = _hist_with_experience([(e, Outcome.FAILURE)] * 10)
+        score = anchor_score("A", h, [e])
+        self.assertGreaterEqual(score, 0.0)
+
+
+class TestStateDormancy(unittest.TestCase):
+    """How many cycles since any incident edge was last touched."""
+
+    def test_just_touched(self):
+        """Edge touched at current τ → dormancy = 0."""
+        e = _make_edge("A", "B")
+        h = Historization()
+        h.update(e, Outcome.SUCCESS)
+        dorm = state_dormancy("A", h, [e])
+        self.assertEqual(dorm, 0)
+
+    def test_dormancy_increases_with_time(self):
+        """Other edges advance τ → dormancy of untouched state grows."""
+        e_active = _make_edge("A", "B")
+        e_other = _make_edge("C", "D")
+        h = Historization()
+        h.update(e_active, Outcome.SUCCESS)  # τ = 1, A last touched at 1
+        for _ in range(10):
+            h.update(e_other, Outcome.SUCCESS)  # τ = 2..11
+        dorm = state_dormancy("A", h, [e_active])
+        self.assertEqual(dorm, 10)
+
+    def test_no_historized_edges(self):
+        """State with edges but no historization → dormancy = τ."""
+        e = _make_edge("A", "B")
+        h = Historization()
+        # Advance τ via other edges
+        other = _make_edge("X", "Y")
+        for _ in range(5):
+            h.update(other, Outcome.SUCCESS)
+        dorm = state_dormancy("A", h, [e])
+        self.assertEqual(dorm, 5)
+
+    def test_multiple_edges_uses_most_recent(self):
+        """Dormancy uses the most recently touched incident edge."""
+        e1 = _make_edge("A", "B")
+        e2 = _make_edge("A", "C")
+        h = Historization()
+        h.update(e1, Outcome.SUCCESS)  # τ = 1
+        for _ in range(5):
+            h.update(Edge("X", "Y"), Outcome.SUCCESS)  # τ = 2..6
+        h.update(e2, Outcome.SUCCESS)  # τ = 7
+        for _ in range(3):
+            h.update(Edge("X", "Y"), Outcome.SUCCESS)  # τ = 8..10
+        dorm = state_dormancy("A", h, [e1, e2])
+        self.assertEqual(dorm, 3)  # 10 - 7 = 3
+
+
+class TestFindDecayCandidates(unittest.TestCase):
+    """Integration: identify states eligible for structural decay."""
+
+    def _build_simple_graph(self):
+        """A→B→C→D with varying experience levels."""
+        edges = [
+            _make_edge("A", "B"),
+            _make_edge("B", "C"),
+            _make_edge("C", "D"),
+        ]
+        states = {"A", "B", "C", "D"}
+        return states, edges
+
+    def test_no_candidates_in_fresh_system(self):
+        """Fresh system with recent activity → no decay candidates."""
+        states, edges = self._build_simple_graph()
+        h = Historization()
+        for e in edges:
+            h.update(e, Outcome.SUCCESS)
+        candidates = find_decay_candidates(states, h, edges)
+        # Everything was just touched → dormancy = 0 → no candidates
+        self.assertEqual(len(candidates), 0)
+
+    def test_dormant_weak_state_is_candidate(self):
+        """A state that is both weak and dormant → decay candidate."""
+        e_weak = _make_edge("WEAK", "X")
+        e_strong = _make_edge("STRONG", "Y")
+        h = Historization()
+        # WEAK: single touch
+        h.update(e_weak, Outcome.SUCCESS)
+        # Make WEAK dormant by advancing τ
+        for _ in range(100):
+            h.update(e_strong, Outcome.SUCCESS)
+
+        all_edges = [e_weak, e_strong]
+        states = {"WEAK", "STRONG", "X", "Y"}
+        candidates = find_decay_candidates(
+            states, h, all_edges, theta_base=0.5
+        )
+        candidate_states = {c.state for c in candidates}
+        self.assertIn("WEAK", candidate_states)
+        self.assertNotIn("STRONG", candidate_states)
+
+    def test_protected_states_excluded(self):
+        """Start/goal/current states are never candidates."""
+        e = _make_edge("START", "X")
+        h = Historization()
+        h.update(e, Outcome.SUCCESS)
+        for _ in range(100):
+            h.update(_make_edge("A", "B"), Outcome.SUCCESS)
+        candidates = find_decay_candidates(
+            {"START", "X", "A", "B"}, h, [e, _make_edge("A", "B")],
+            protected={"START"}
+        )
+        self.assertTrue(all(c.state != "START" for c in candidates))
+
+    def test_sorted_by_score_ascending(self):
+        """Candidates are sorted weakest-first."""
+        e1 = _make_edge("W1", "X")
+        e2 = _make_edge("W2", "Y")
+        e3 = _make_edge("W2", "Z")  # W2 has more edges → higher score
+        h = Historization()
+        h.update(e1, Outcome.SUCCESS)
+        h.update(e2, Outcome.SUCCESS)
+        h.update(e3, Outcome.SUCCESS)
+        for _ in range(100):
+            h.update(_make_edge("A", "B"), Outcome.SUCCESS)
+
+        all_edges = [e1, e2, e3, _make_edge("A", "B")]
+        candidates = find_decay_candidates(
+            {"W1", "W2", "X", "Y", "Z", "A", "B"},
+            h, all_edges, theta_base=0.1
+        )
+        if len(candidates) >= 2:
+            for i in range(1, len(candidates)):
+                self.assertGreaterEqual(
+                    candidates[i].anchor_score,
+                    candidates[i - 1].anchor_score
+                )
+
+    def test_hot_system_prunes_more(self):
+        """Higher T_s raises θ_decay → more candidates."""
+        e = _make_edge("S", "T")
+        h = Historization()
+        h.update(e, Outcome.SUCCESS)
+        for _ in range(100):
+            h.update(_make_edge("X", "Y"), Outcome.SUCCESS)
+
+        all_edges = [e, _make_edge("X", "Y")]
+        states = {"S", "T", "X", "Y"}
+        cold = find_decay_candidates(states, h, all_edges, T_s=0.1)
+        hot = find_decay_candidates(states, h, all_edges, T_s=10.0)
+        self.assertGreaterEqual(len(hot), len(cold))
+
+    def test_decay_candidate_has_correct_fields(self):
+        """DecayCandidate dataclass has all required fields."""
+        e = _make_edge("A", "B")
+        h = Historization()
+        h.update(e, Outcome.SUCCESS)
+        for _ in range(100):
+            h.update(_make_edge("X", "Y"), Outcome.SUCCESS)
+        candidates = find_decay_candidates(
+            {"A", "B", "X", "Y"}, h,
+            [e, _make_edge("X", "Y")]
+        )
+        for c in candidates:
+            self.assertIsInstance(c.state, str)
+            self.assertIsInstance(c.anchor_score, float)
+            self.assertIsInstance(c.dormancy, int)
+            self.assertIsInstance(c.incident_edge_count, int)
+
+
+class TestFindAnchors(unittest.TestCase):
+    """Identify anchor states that will survive decay."""
+
+    def test_well_experienced_state_is_anchor(self):
+        """State with deep, clear experience → anchor."""
+        e1 = _make_edge("ANCHOR", "A")
+        e2 = _make_edge("ANCHOR", "B")
+        e3 = _make_edge("ANCHOR", "C")
+        h = Historization()
+        for e in [e1, e2, e3]:
+            for _ in range(20):
+                h.update(e, Outcome.SUCCESS)
+        all_edges = [e1, e2, e3]
+        anchors = find_anchors({"ANCHOR", "A", "B", "C"}, h, all_edges)
+        self.assertIn("ANCHOR", anchors)
+
+    def test_virgin_state_not_anchor(self):
+        """State with no experience → not an anchor."""
+        h = Historization()
+        anchors = find_anchors({"VIRGIN"}, h, [])
+        self.assertNotIn("VIRGIN", anchors)
+
+    def test_anchor_set_is_subset_of_states(self):
+        """Anchors must be a subset of provided states."""
+        e = _make_edge("A", "B")
+        h = _hist_with_experience([(e, Outcome.SUCCESS)] * 20)
+        anchors = find_anchors({"A", "B"}, h, [e])
+        self.assertTrue(anchors.issubset({"A", "B"}))
+
+    def test_anchors_and_candidates_partition(self):
+        """States are either anchors, candidates, or protected — no overlap."""
+        e1 = _make_edge("A", "B")
+        e2 = _make_edge("C", "D")
+        h = Historization()
+        for _ in range(20):
+            h.update(e1, Outcome.SUCCESS)
+        h.update(e2, Outcome.SUCCESS)
+        for _ in range(100):
+            h.update(_make_edge("X", "Y"), Outcome.SUCCESS)
+
+        all_edges = [e1, e2, _make_edge("X", "Y")]
+        states = {"A", "B", "C", "D", "X", "Y"}
+        anchors = find_anchors(states, h, all_edges)
+        candidates = find_decay_candidates(states, h, all_edges)
+        candidate_states = {c.state for c in candidates}
+        # No state is both anchor and candidate
+        self.assertEqual(len(anchors & candidate_states), 0)
 
 
 if __name__ == "__main__":
