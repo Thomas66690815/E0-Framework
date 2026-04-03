@@ -28,12 +28,12 @@
   },
 
   "state": {
-    "latest_commit": "4283c2d",
-    "latest_commit_msg": "C123: Curriculum Navigator — hierarchical learning for canonical landscapes",
+    "latest_commit": "C124",
+    "latest_commit_msg": "C124: Language Learning Exploration — EN↔DE cross-domain dream discovery",
     "test_count": 3499,
     "test_failures": 0,
-    "module_count": "58 production + 9 benchmarks + 11 demos + 19 explorations + 95 test files",
-    "line_count": "~18400 production, ~69000 total"
+    "module_count": "58 production + 9 benchmarks + 11 demos + 20 explorations + 95 test files + 4 canons",
+    "line_count": "~18700 production, ~69500 total"
   },
 
   "conventions": {
@@ -120,6 +120,7 @@
   },
 
   "commit_history_recent": [
+    { "hash": "PENDING", "id": "C124", "title": "Language Learning Exploration — EN↔DE cross-domain dream discovery" },
     { "hash": "4283c2d", "id": "C123", "title": "Curriculum Navigator — hierarchical learning for canonical landscapes" },
     { "hash": "7ab9178", "id": "C122e", "title": "Documentation update — archive, update, and new analysis for C122 arc" },
     { "hash": "d3e17b0", "id": "C122d", "title": "Epistemic liveness — uniform U=2, F=1 for all 93 canon edges, all s_eff > 0" },
@@ -190,7 +191,7 @@
   ],
 
   "active_work": {
-    "focus": "Curriculum Navigator (C123) complete. Hierarchical learning for canonical landscapes. Next: C43 Self-Graph or exploration script.",
+    "focus": "Language Learning Exploration (C124) complete. EN↔DE full-stack demo exercising all 12 layers. Next: C43 Self-Graph.",
     "completed": [
       "All 6/6 Multiverse Open Questions resolved (C66-C71)",
       "C72 Chess Engine — E₀ plays chess via 6 strategic dimensions, discovers opening principles through historization",
@@ -248,10 +249,12 @@
       "C122c Dead-End Sink Repair — 7 feedback edges added, 86→93 edges, all nodes topologically live.",
       "C122d Epistemic Liveness — uniform U=2, F=1 for all 93 edges. Key insight: F/U < 0.75 = correct decay direction. Greedy never escapes at F=0 (10k steps proven). 'Zweifel zuzulassen' principle.",
       "C122e Documentation update — archive 8 docs, update 5 docs, new Ontodynamics Canon Analysis.",
-      "C123 Curriculum Navigator — CurriculumStrategy (cumulative turns from derivation levels), EquilibriumDetector (T_s stability replaces goal-reaching), build_scoped_landscape, transfer_historization, CurriculumRunner. 35 tests."
+      "C123 Curriculum Navigator — CurriculumStrategy (cumulative turns from derivation levels), EquilibriumDetector (T_s stability replaces goal-reaching), build_scoped_landscape, transfer_historization, CurriculumRunner. 35 tests.",
+      "C123b Documentation — Architecture v4 §14, Test Registry update, bootstrap.json layer 12, Ontodynamics Analysis P5/P6/P7.",
+      "C124 Language Learning Exploration — english_basic + german_basic canons (44 nodes, 59 edges each), explore_language_learning.py exercises all 12 layers (canon→curriculum→mode→entropy→dream→multiverse→sleep-wake). Dream Mode discovers 522 cross-language equivalences. Cognate pairs emerge from structural fingerprint matching."
     ],
-    "next_steps": ["C43: Self-Graph (E0 learns E0 first)", "explore_curriculum.py: end-to-end curriculum on ontodynamics"],
-    "next_commit_id": "C123b"
+    "next_steps": ["C43: Self-Graph (E0 learns E0 first)", "C44: Bootstrapper (LLM output → Landscape init)"],
+    "next_commit_id": "C125"
   },
 
   "key_modules_quick_ref": {
