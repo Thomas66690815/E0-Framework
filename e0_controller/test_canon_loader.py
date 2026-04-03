@@ -105,7 +105,7 @@ class TestExtractInfo(unittest.TestCase):
         self.assertEqual(len(self.info.nodes), 51)
 
     def test_edge_count(self):
-        self.assertEqual(len(self.info.edges), 86)
+        self.assertEqual(len(self.info.edges), 93)
 
     def test_five_primitives(self):
         primitives = [n for n in self.info.nodes if n.is_primitive]
@@ -199,7 +199,7 @@ class TestToBootstrapperSpec(unittest.TestCase):
         self.assertEqual(len(self.bs_spec["nodes"]), 51)
 
     def test_edge_count_preserved(self):
-        self.assertEqual(len(self.bs_spec["edges"]), 86)
+        self.assertEqual(len(self.bs_spec["edges"]), 93)
 
     def test_edges_have_bootstrapper_fields(self):
         for e in self.bs_spec["edges"]:
@@ -256,7 +256,7 @@ class TestLoadCanon(unittest.TestCase):
 
     def test_landscape_has_edges(self):
         edges = self.cl.landscape.edges
-        self.assertEqual(len(edges), 86)
+        self.assertEqual(len(edges), 93)
 
     def test_inertia_modulation_enabled(self):
         self.assertTrue(self.cl.landscape.inertia_modulation)

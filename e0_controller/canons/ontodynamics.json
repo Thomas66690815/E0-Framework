@@ -1222,6 +1222,76 @@
       "initial_F": 2.0,
       "confidence": 0.75,
       "derivation": "Domain invariance principle enables multi-domain coupling."
+    },
+    {
+      "from": "cross_reflexion",
+      "to": "historization",
+      "delta": 0.6,
+      "resistance": 0.5,
+      "initial_U": 5.0,
+      "initial_F": 2.0,
+      "confidence": 0.8,
+      "derivation": "Cross-reflexion edge proposals become historized transitions in the receiving landscape."
+    },
+    {
+      "from": "born_sampling",
+      "to": "greedy_navigation",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 6.0,
+      "initial_F": 1.0,
+      "confidence": 0.85,
+      "derivation": "Born-sampled edge enters greedy navigation pipeline for execution."
+    },
+    {
+      "from": "novelty_gate",
+      "to": "cross_reflexion",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 5.0,
+      "initial_F": 2.0,
+      "confidence": 0.8,
+      "derivation": "Novelty-filtered proposals pass through to cross-reflexion for donation."
+    },
+    {
+      "from": "asymmetric_coupling",
+      "to": "cross_reflexion",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 5.0,
+      "initial_F": 2.0,
+      "confidence": 0.8,
+      "derivation": "Asymmetric coupling weights modulate cross-reflexion proposal transfer."
+    },
+    {
+      "from": "inscription_threshold",
+      "to": "historization",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 5.0,
+      "initial_F": 2.0,
+      "confidence": 0.8,
+      "derivation": "Inscription decisions gate what enters historization. Novelty filter on structural trace."
+    },
+    {
+      "from": "observation",
+      "to": "reflexivity",
+      "delta": 0.6,
+      "resistance": 0.5,
+      "initial_U": 4.0,
+      "initial_F": 1.0,
+      "confidence": 0.8,
+      "derivation": "Observing own landscape structure feeds reflexive self-modeling."
+    },
+    {
+      "from": "spacetime",
+      "to": "historization",
+      "delta": 0.8,
+      "resistance": 0.7,
+      "initial_U": 3.0,
+      "initial_F": 2.0,
+      "confidence": 0.6,
+      "derivation": "Spacetime IS the globally historized topology. Its structure constrains and informs further historization."
     }
   ],
   "goal_states": [
