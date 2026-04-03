@@ -29,7 +29,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from .primitives import Edge, Outcome
 from .historization import Historization
@@ -73,6 +73,88 @@ def structural_temperature(hist: Historization) -> float:
     mean_abs_quality = total_abs_quality / n + 1e-12
 
     return mean_load / mean_abs_quality
+
+
+# ---------------------------------------------------------------------------
+# Dream Pressure (sleep–wake coupling)
+# ---------------------------------------------------------------------------
+
+def dream_pressure(hist: Historization, mu: float = 5.0) -> float:
+    """
+    How strongly the system wants to dream.
+
+    dream_pressure = T_s / (T_s + μ)     ∈ [0, 1)
+
+    Uses the same sigmoid shape as inertia_factor — the system's
+    own half-load constant μ determines the tipping point.
+
+    - Cold system (T_s ≈ 0): pressure ≈ 0 → keep learning
+    - Warm system (T_s = μ): pressure = 0.5 → threshold
+    - Hot system (T_s >> μ): pressure → 1 → dream immediately
+
+    Parameters
+    ----------
+    hist : Historization
+        Current historization state.
+    mu : float
+        Half-load reference. Same μ as inertia_factor. Default 5.0.
+
+    Returns
+    -------
+    float ∈ [0, 1)
+    """
+    T_s = structural_temperature(hist)
+    return T_s / (T_s + mu)
+
+
+def should_dream(hist: Historization, mu: float = 5.0) -> bool:
+    """
+    Whether the system should enter dream mode.
+
+    should_dream ⟺ dream_pressure > 0.5 ⟺ T_s > μ
+
+    No new parameters — μ is the same half-load constant used
+    throughout the system (inertia_factor, inscription_threshold,
+    adaptive_mu). The threshold 0.5 is the natural midpoint of the
+    sigmoid, not a tuning parameter.
+
+    Parameters
+    ----------
+    hist : Historization
+        Current historization state.
+    mu : float
+        Half-load reference. Default 5.0.
+
+    Returns
+    -------
+    bool
+        True if the system has accumulated enough heat to benefit
+        from consolidation.
+    """
+    return dream_pressure(hist, mu) > 0.5
+
+
+def dream_pressure_report(
+    domains: Dict[str, Historization],
+    mu: float = 5.0,
+) -> Dict[str, Dict[str, float]]:
+    """
+    Dream pressure for multiple domains.
+
+    Returns
+    -------
+    Dict mapping domain name → {"T_s": float, "pressure": float, "should_dream": bool}
+    """
+    report: Dict[str, Dict[str, float]] = {}
+    for name, hist in domains.items():
+        T_s = structural_temperature(hist)
+        p = T_s / (T_s + mu)
+        report[name] = {
+            "T_s": T_s,
+            "pressure": p,
+            "should_dream": float(p > 0.5),
+        }
+    return report
 
 
 # ---------------------------------------------------------------------------

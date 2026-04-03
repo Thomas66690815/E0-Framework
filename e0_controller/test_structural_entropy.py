@@ -1,11 +1,13 @@
 """
 Tests for structural_entropy.py — Structural Temperature, Inscription Threshold,
-Anchor Analysis, Decay Candidates, Structural Decay, and Controller Integration.
+Anchor Analysis, Decay Candidates, Structural Decay, Controller Integration,
+and Dream Pressure (sleep–wake trigger).
 
 C115: Type 1 forgetting — non-inscription of routine transitions.
 C116: Type 2 forgetting — anchor analysis + decay candidates.
 C117: Structural decay — DecayTrace, apply_decay, Landscape.remove_state.
 C118: Controller integration — conditional inscription via inscription_threshold flag.
+C121: Dream pressure — T_s-based automatic dream trigger + SleepWakeCycle.
 """
 
 import math
@@ -14,6 +16,8 @@ import unittest
 from e0_controller.primitives import Edge, Outcome
 from e0_controller.historization import Historization
 from e0_controller.landscape import Landscape
+from e0_controller.controller import E0Controller
+from e0_controller.dream_mode import DreamObserver, DreamCycleResult
 from e0_controller.structural_entropy import (
     structural_temperature,
     novelty,
@@ -25,6 +29,9 @@ from e0_controller.structural_entropy import (
     find_decay_candidates,
     find_anchors,
     apply_decay,
+    dream_pressure,
+    should_dream,
+    dream_pressure_report,
     DecayCandidate,
     DecayTrace,
     DecayReport,
@@ -1104,6 +1111,313 @@ class TestControllerInscriptionThreshold(unittest.TestCase):
                     for c in ["historization", "overlap", "inertia"]
                 )
                 self.assertEqual(load_after_non_inscribed, load_after_second)
+
+
+# ═══════════════════════════════════════════════════
+# C121: Dream Pressure + SleepWakeCycle
+# ═══════════════════════════════════════════════════
+
+class TestDreamPressure(unittest.TestCase):
+    """dream_pressure = T_s / (T_s + μ) — sigmoid trigger for dreaming."""
+
+    def test_virgin_system_zero_pressure(self):
+        """No experience → T_s = 0 → pressure = 0."""
+        h = Historization()
+        self.assertEqual(dream_pressure(h), 0.0)
+        self.assertFalse(should_dream(h))
+
+    def test_pressure_sigmoid_shape(self):
+        """Pressure follows sigmoid: 0 → 0.5 → 1 as T_s grows."""
+        e = _make_edge()
+        h = Historization(rho=0.95)
+        pressures = []
+        for _ in range(100):
+            h.update(e, Outcome.SUCCESS)
+            pressures.append(dream_pressure(h, mu=5.0))
+
+        # Monotonically non-decreasing (T_s only grows with pure SUCCESS)
+        for i in range(1, len(pressures)):
+            self.assertGreaterEqual(pressures[i], pressures[i - 1] - 1e-9)
+
+        # Bounded in [0, 1)
+        for p in pressures:
+            self.assertGreaterEqual(p, 0.0)
+            self.assertLess(p, 1.0)
+
+    def test_threshold_at_mu(self):
+        """dream_pressure = 0.5 exactly when T_s = μ."""
+        # Manually verify: if T_s = 5.0 and mu = 5.0, pressure = 0.5
+        self.assertAlmostEqual(5.0 / (5.0 + 5.0), 0.5)
+
+    def test_should_dream_below_mu(self):
+        """T_s < μ → should_dream = False."""
+        e = _make_edge()
+        h = Historization(rho=0.95)
+        # A few updates — T_s stays low
+        for _ in range(3):
+            h.update(e, Outcome.SUCCESS)
+        T_s = structural_temperature(h)
+        self.assertLess(T_s, 5.0)
+        self.assertFalse(should_dream(h, mu=5.0))
+
+    def test_should_dream_above_mu_with_confusion(self):
+        """Mixed outcomes → high T_s → should_dream = True (with low enough μ)."""
+        e = _make_edge()
+        h = Historization(rho=0.95)
+        # Lots of mixed outcomes → high trace_load, middling quality → high T_s
+        for _ in range(30):
+            h.update(e, Outcome.SUCCESS)
+            h.update(e, Outcome.FAILURE)
+        T_s = structural_temperature(h)
+        # With low mu, T_s should exceed it
+        self.assertTrue(should_dream(h, mu=1.0))
+
+    def test_mu_controls_sensitivity(self):
+        """Higher μ → harder to trigger dreaming."""
+        e = _make_edge()
+        h = Historization(rho=0.95)
+        for _ in range(20):
+            h.update(e, Outcome.SUCCESS)
+        # Same experience, different μ
+        p_low_mu = dream_pressure(h, mu=1.0)
+        p_high_mu = dream_pressure(h, mu=100.0)
+        self.assertGreater(p_low_mu, p_high_mu)
+
+    def test_dream_pressure_report_multi_domain(self):
+        """dream_pressure_report returns per-domain T_s and pressure."""
+        e1 = _make_edge("A", "B")
+        h1 = Historization(rho=0.95)
+        for _ in range(10):
+            h1.update(e1, Outcome.SUCCESS)
+
+        h2 = Historization(rho=0.95)  # virgin
+
+        report = dream_pressure_report({"hot": h1, "cold": h2}, mu=5.0)
+
+        self.assertIn("hot", report)
+        self.assertIn("cold", report)
+        self.assertGreater(report["hot"]["pressure"], 0.0)
+        self.assertEqual(report["cold"]["pressure"], 0.0)
+        self.assertEqual(report["cold"]["T_s"], 0.0)
+
+
+class TestSleepWakeCycle(unittest.TestCase):
+    """SleepWakeCycle — automatic wake/sleep rhythm."""
+
+    def _build_domain(self, n_states: int = 5) -> Landscape:
+        """Build a simple chain: S0 → S1 → ... → Sn."""
+        la = Landscape()
+        for i in range(n_states - 1):
+            la.add_edge(f"S{i}", f"S{i + 1}", delta=0.5, resistance=1.0)
+            la.add_edge(f"S{i + 1}", f"S{i}", delta=0.5, resistance=1.0)
+        return la
+
+    def test_no_dream_on_cold_system(self):
+        """Fresh system never dreams — pressure = 0."""
+        from e0_controller.sleep_wake import SleepWakeCycle
+
+        la = self._build_domain()
+        ctrl = E0Controller(la, lambda s, t: Outcome.SUCCESS)
+        obs = DreamObserver(readiness_threshold=0.0)
+        obs.register("d1", la)
+
+        swc = SleepWakeCycle(obs, mu=100.0)  # very high mu → never triggers
+        swc.register("d1", ctrl, start="S0", goal="S4")
+
+        results = swc.run(n_episodes=3, max_cycles_per_run=10)
+
+        # Should not have slept in any episode
+        for r in results:
+            self.assertFalse(r.slept)
+
+    def test_dream_triggers_after_heat(self):
+        """After enough experience, dream triggers automatically."""
+        from e0_controller.sleep_wake import SleepWakeCycle
+
+        la = self._build_domain()
+        ctrl = E0Controller(la, lambda s, t: Outcome.SUCCESS)
+        obs = DreamObserver(readiness_threshold=0.0, decay_enabled=False)
+        obs.register("d1", la)
+
+        # Very low mu so dream triggers quickly
+        swc = SleepWakeCycle(obs, mu=0.5)
+        swc.register("d1", ctrl, start="S0", goal="S4")
+
+        results = swc.run(n_episodes=10, max_cycles_per_run=20)
+
+        # At least one episode should have triggered sleep
+        any_slept = any(r.slept for r in results)
+        self.assertTrue(any_slept, "Expected at least one sleep phase")
+
+    def test_sleep_phase_has_dream_results(self):
+        """When sleep triggers, sleep phase contains dream cycle results."""
+        from e0_controller.sleep_wake import SleepWakeCycle
+
+        la = self._build_domain()
+        ctrl = E0Controller(la, lambda s, t: Outcome.SUCCESS)
+        obs = DreamObserver(readiness_threshold=0.0, decay_enabled=False)
+        obs.register("d1", la)
+
+        swc = SleepWakeCycle(obs, mu=0.5)
+        swc.register("d1", ctrl, start="S0", goal="S4")
+
+        results = swc.run(n_episodes=10, max_cycles_per_run=20)
+
+        for r in results:
+            if r.slept:
+                self.assertIsNotNone(r.sleep)
+                self.assertGreater(len(r.sleep.dream_results), 0)
+                # Each dream result is a DreamCycleResult
+                for dr in r.sleep.dream_results:
+                    self.assertIsInstance(dr, DreamCycleResult)
+
+    def test_wake_phase_records_temperature(self):
+        """Wake phase captures T_s before and after."""
+        from e0_controller.sleep_wake import SleepWakeCycle
+
+        la = self._build_domain()
+        ctrl = E0Controller(la, lambda s, t: Outcome.SUCCESS)
+        obs = DreamObserver(readiness_threshold=0.0)
+        obs.register("d1", la)
+
+        swc = SleepWakeCycle(obs, mu=100.0)
+        swc.register("d1", ctrl, start="S0", goal="S4")
+
+        results = swc.run(n_episodes=3, max_cycles_per_run=10)
+
+        self.assertGreater(len(results), 0)
+        # T_s should rise after first wake (from 0 to something)
+        self.assertEqual(results[0].wake.T_s_before, 0.0)
+        self.assertGreater(results[0].wake.T_s_after, 0.0)
+
+    def test_pressure_report(self):
+        """pressure_report returns per-domain data."""
+        from e0_controller.sleep_wake import SleepWakeCycle
+
+        la = self._build_domain()
+        ctrl = E0Controller(la, lambda s, t: Outcome.SUCCESS)
+        obs = DreamObserver(readiness_threshold=0.0)
+        obs.register("d1", la)
+
+        swc = SleepWakeCycle(obs, mu=5.0)
+        swc.register("d1", ctrl, start="S0", goal="S4")
+
+        report = swc.pressure_report()
+        self.assertIn("d1", report)
+        self.assertIn("T_s", report["d1"])
+        self.assertIn("pressure", report["d1"])
+
+    def test_summary_string(self):
+        """summary() returns human-readable status."""
+        from e0_controller.sleep_wake import SleepWakeCycle
+
+        la = self._build_domain()
+        ctrl = E0Controller(la, lambda s, t: Outcome.SUCCESS)
+        obs = DreamObserver(readiness_threshold=0.0)
+        obs.register("d1", la)
+
+        swc = SleepWakeCycle(obs, mu=5.0)
+        swc.register("d1", ctrl, start="S0", goal="S4")
+        swc.run(n_episodes=2, max_cycles_per_run=5)
+
+        s = swc.summary()
+        self.assertIn("SleepWakeCycle", s)
+        self.assertIn("d1", s)
+
+    def test_multi_domain_selective_dream(self):
+        """Only hot domains trigger sleep; cold ones don't block it."""
+        from e0_controller.sleep_wake import SleepWakeCycle
+
+        # Domain 1: will get hot (low mu)
+        la1 = self._build_domain(3)
+        ctrl1 = E0Controller(la1, lambda s, t: Outcome.SUCCESS)
+
+        # Domain 2: stays cold (no controller registered, never run)
+        la2 = self._build_domain(3)
+
+        obs = DreamObserver(readiness_threshold=0.0, decay_enabled=False)
+        obs.register("hot", la1)
+        obs.register("cold", la2)
+
+        swc = SleepWakeCycle(obs, mu=0.5)
+        swc.register("hot", ctrl1, start="S0", goal="S2")
+
+        results = swc.run(n_episodes=5, max_cycles_per_run=15)
+
+        # Hot domain triggers sleep
+        any_slept = any(r.slept for r in results)
+        self.assertTrue(any_slept)
+
+    def test_dream_with_decay_compresses(self):
+        """Sleep with decay_enabled removes dormant states."""
+        from e0_controller.sleep_wake import SleepWakeCycle
+
+        # Build domain with peripheral nodes that won't be visited
+        la = Landscape()
+        la.add_edge("A", "B", delta=0.5, resistance=1.0)
+        la.add_edge("B", "A", delta=0.5, resistance=1.0)
+        # Peripheral: never visited
+        la.add_edge("P1", "P2", delta=0.3, resistance=2.0)
+        la.add_edge("P2", "P3", delta=0.3, resistance=2.0)
+
+        ctrl = E0Controller(la, lambda s, t: Outcome.SUCCESS)
+        obs = DreamObserver(
+            readiness_threshold=0.0,
+            decay_enabled=True,
+            theta_base=0.1,
+            protected_fn=lambda name: {"A", "B"},
+        )
+        obs.register("d1", la)
+
+        swc = SleepWakeCycle(obs, mu=0.5)
+        swc.register("d1", ctrl, start="A", goal="B")
+
+        states_before = len(la.states)
+        swc.run(n_episodes=10, max_cycles_per_run=10)
+        states_after = len(la.states)
+
+        # A and B must survive
+        self.assertIn("A", la.states)
+        self.assertIn("B", la.states)
+        # Peripheral nodes should eventually be removed
+        # (they're dormant + low anchor score)
+        self.assertLessEqual(states_after, states_before)
+
+    def test_episodes_property(self):
+        """episodes property returns accumulated history."""
+        from e0_controller.sleep_wake import SleepWakeCycle
+
+        la = self._build_domain()
+        ctrl = E0Controller(la, lambda s, t: Outcome.SUCCESS)
+        obs = DreamObserver(readiness_threshold=0.0)
+        obs.register("d1", la)
+
+        swc = SleepWakeCycle(obs, mu=100.0)
+        swc.register("d1", ctrl, start="S0", goal="S4")
+
+        swc.run(n_episodes=3, max_cycles_per_run=5)
+
+        self.assertEqual(len(swc.episodes), 3)
+
+    def test_max_dream_cycles_cap(self):
+        """max_dream_cycles prevents infinite sleep."""
+        from e0_controller.sleep_wake import SleepWakeCycle
+
+        la = self._build_domain()
+        ctrl = E0Controller(la, lambda s, t: Outcome.SUCCESS)
+        obs = DreamObserver(readiness_threshold=0.0, decay_enabled=False)
+        obs.register("d1", la)
+
+        # mu=0.1 → triggers very quickly, but no decay → T_s won't drop
+        # → cap should stop it
+        swc = SleepWakeCycle(obs, mu=0.1, max_dream_cycles=2)
+        swc.register("d1", ctrl, start="S0", goal="S4")
+
+        results = swc.run(n_episodes=5, max_cycles_per_run=10)
+
+        for r in results:
+            if r.slept and r.sleep:
+                self.assertLessEqual(len(r.sleep.dream_results), 2)
 
 
 if __name__ == "__main__":

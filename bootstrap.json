@@ -28,9 +28,9 @@
   },
 
   "state": {
-    "latest_commit": "470a473",
-    "latest_commit_msg": "C120: Structural Entropy — end-to-end exploration",
-    "test_count": 3447,
+    "latest_commit": "3549c78",
+    "latest_commit_msg": "C121: Sleep-Wake Cycle — automatic dream trigger via T_s",
+    "test_count": 3464,
     "test_failures": 0,
     "module_count": "57 production + 9 benchmarks + 11 demos + 18 explorations + 93 test files",
     "line_count": "~18400 production, ~69000 total"
@@ -95,6 +95,10 @@
       "10_structural_entropy": {
         "files": ["structural_entropy.py", "explore_structural_entropy.py"],
         "purpose": "Forgetting as structural necessity. Type 1: inscription threshold (novelty > ε, controlled by T_s). Type 2: anchor analysis (anchor_score = |q̄|·m_max·log(1+deg)), decay candidates, apply_decay (3-phase: trace→remove→clean). Controller: inscription_threshold opt-in. Dream: decay_enabled opt-in. Only new parameter: θ_base (anchor threshold). C114-C120."
+      },
+      "11_sleep_wake": {
+        "files": ["sleep_wake.py"],
+        "purpose": "Automatic sleep-wake rhythm. dream_pressure = T_s/(T_s+μ) triggers dreaming when T_s > μ. SleepWakeCycle orchestrates Controller + DreamObserver: wake builds experience, sleep consolidates + decays, cycle repeats. Parameter-free trigger (uses existing μ). C121."
       }
     },
     "key_formulas": {
@@ -112,7 +116,8 @@
   },
 
   "commit_history_recent": [
-    { "hash": "470a473", "id": "C120", "title": "Structural Entropy — end-to-end exploration" },
+    { "hash": "3549c78", "id": "C121", "title": "Sleep-Wake Cycle — automatic dream trigger via T_s" },
+    { "hash": "5776c42", "id": "C120", "title": "Structural Entropy — end-to-end exploration" },
     { "hash": "c6ea2b5", "id": "C119", "title": "Dream Mode decay integration (decay_enabled, dream consolidation)" },
     { "hash": "9cfcc73", "id": "C118", "title": "Controller integration — conditional inscription (inscription_threshold)" },
     { "hash": "a71cb51", "id": "C117", "title": "Structural Decay — remove_state, remove_edges, apply_decay, DecayTrace" },
@@ -175,7 +180,7 @@
   ],
 
   "active_work": {
-    "focus": "Structural Entropy arc COMPLETE (C114-C120). All 7 commits landed. Next arc TBD.",
+    "focus": "Sleep-Wake Cycle (C121). Automatic T_s-based dream trigger closes the loop between Structural Entropy and Dream Mode. Next: C122 explore_sleep_wake.py end-to-end.",
     "completed": [
       "All 6/6 Multiverse Open Questions resolved (C66-C71)",
       "C72 Chess Engine — E₀ plays chess via 6 strategic dimensions, discovers opening principles through historization",
@@ -226,10 +231,11 @@
       "C117 Structural Decay — Landscape.remove_state, Historization.remove_edges, apply_decay 3-phase, DecayTrace/DecayReport, 23 tests (75 total).",
       "C118 Controller integration — inscription_threshold opt-in, StepResult.inscribed, non_inscription metrics, 9 tests (84 total).",
       "C119 Dream Mode decay — decay_enabled opt-in, DreamCycleResult.decay_reports, dream consolidation, 9 tests (88 dream total).",
-      "C120 End-to-end exploration — explore_structural_entropy.py, 60% compression, 48% non-inscription rate, full consistency."
+      "C120 End-to-end exploration — explore_structural_entropy.py, 60% compression, 48% non-inscription rate, full consistency.",
+      "C121 Sleep-Wake Cycle — dream_pressure = T_s/(T_s+μ), SleepWakeCycle orchestrates Controller+DreamObserver, parameter-free trigger, 17 tests (101 structural entropy total)."
     ],
-    "next_steps": [],
-    "next_commit_id": "C121"
+    "next_steps": ["C122: explore_sleep_wake.py — end-to-end wake/sleep rhythm visualization"],
+    "next_commit_id": "C122"
   },
 
   "key_modules_quick_ref": {
