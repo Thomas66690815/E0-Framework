@@ -612,7 +612,7 @@ class TestCanonGraphQuality(unittest.TestCase):
 
     def test_quality_no_trivial_loops(self):
         ls = load_canon("ontodynamics").landscape
-        gq = graph_quality(ls, "differenz", "negative_notwendigkeit")
+        gq = graph_quality(ls, "difference", "negative_necessity")
         self.assertEqual(len(gq.trivial_loops), 0)
 
 

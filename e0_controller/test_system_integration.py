@@ -82,7 +82,7 @@ class TestPipelineWiring(unittest.TestCase):
         """iterate() produces IterationResult with all fields."""
         s = Session("c51-iter", self.cl.landscape, _always_succeed,
                     base_dir=self.tmpdir)
-        result = s.iterate("differenz", goal="negative_notwendigkeit",
+        result = s.iterate("difference", goal="negative_necessity",
                            max_cycles=20, max_iterations=3)
         self.assertIsInstance(result, IterationResult)
         self.assertGreater(result.iterations, 0)
@@ -93,7 +93,7 @@ class TestPipelineWiring(unittest.TestCase):
         """Self-graph has non-zero load after iterate()."""
         s = Session("c51-sg", self.cl.landscape, _always_succeed,
                     base_dir=self.tmpdir)
-        s.iterate("differenz", goal="negative_notwendigkeit",
+        s.iterate("difference", goal="negative_necessity",
                   max_cycles=20, max_iterations=2)
         snap = s.self_graph.snapshot()
         total_load = sum(v["load"] for v in snap.values())
@@ -104,7 +104,7 @@ class TestPipelineWiring(unittest.TestCase):
         """build_self_exposition produces all 5 sections after iterate."""
         s = Session("c51-expo", self.cl.landscape, _always_succeed,
                     base_dir=self.tmpdir)
-        s.iterate("differenz", goal="negative_notwendigkeit",
+        s.iterate("difference", goal="negative_necessity",
                   max_cycles=20, max_iterations=2)
         expo = build_self_exposition(
             self.cl, sg=s.self_graph,
@@ -123,7 +123,7 @@ class TestPipelineWiring(unittest.TestCase):
         """All lists in IterationResult have the same length."""
         s = Session("c51-align", self.cl.landscape, _always_succeed,
                     base_dir=self.tmpdir)
-        result = s.iterate("differenz", goal="negative_notwendigkeit",
+        result = s.iterate("difference", goal="negative_necessity",
                            max_cycles=15, max_iterations=3)
         n = result.iterations
         self.assertEqual(len(result.results), n)
@@ -185,7 +185,7 @@ class TestSelfFundierung(unittest.TestCase):
         """E₀ runs on its own canon and produces readable self-exposition."""
         s = Session("c51-full", self.cl.landscape, _always_succeed,
                     base_dir=self.tmpdir)
-        s.iterate("differenz", goal="negative_notwendigkeit",
+        s.iterate("difference", goal="negative_necessity",
                   max_cycles=30, max_iterations=3)
         expo = build_self_exposition(
             self.cl, sg=s.self_graph,
@@ -231,7 +231,7 @@ class TestReflexiveConvergence(unittest.TestCase):
         self.assertIn("curvature", diag.deactivation_candidates)
 
         # Run iterate — mostly-failing fn causes amplification → step 7
-        result = s.iterate("differenz", goal="negative_notwendigkeit",
+        result = s.iterate("difference", goal="negative_necessity",
                            max_cycles=20, max_iterations=4)
 
         # Step 7 should have produced at least one reflexive result
@@ -249,7 +249,7 @@ class TestReflexiveConvergence(unittest.TestCase):
                     base_dir=self.tmpdir)
         self._pre_poison_curvature(s.self_graph)
 
-        s.iterate("differenz", goal="negative_notwendigkeit",
+        s.iterate("difference", goal="negative_necessity",
                   max_cycles=20, max_iterations=4)
 
         # If deactivation happened, journal should show it
@@ -277,7 +277,7 @@ class TestReflexiveConvergence(unittest.TestCase):
                     base_dir=self.tmpdir)
         self._pre_poison_curvature(s.self_graph)
 
-        result = s.iterate("differenz", goal="negative_notwendigkeit",
+        result = s.iterate("difference", goal="negative_necessity",
                            max_cycles=20, max_iterations=4)
 
         changes_made = any(
@@ -395,7 +395,7 @@ class TestEdgeCases(unittest.TestCase):
 
         s = Session("c51-allfail", self.cl.landscape, all_fail,
                     base_dir=self.tmpdir)
-        s.iterate("differenz", goal="negative_notwendigkeit",
+        s.iterate("difference", goal="negative_necessity",
                   max_cycles=15, max_iterations=2)
         snap = s.self_graph.snapshot()
         loaded = [v for v in snap.values() if v["load"] > 0]
@@ -410,7 +410,7 @@ class TestEdgeCases(unittest.TestCase):
 
         s = Session("c51-diff", self.cl.landscape, _always_succeed,
                     base_dir=self.tmpdir)
-        s.iterate("differenz", goal="negative_notwendigkeit",
+        s.iterate("difference", goal="negative_necessity",
                   max_cycles=20, max_iterations=2)
 
         expo_after = build_self_exposition(

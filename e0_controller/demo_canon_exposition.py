@@ -63,23 +63,24 @@ Based on ONLY the information above, answer these questions:
 1. What is this framework fundamentally about? Describe its core thesis
    in 2-3 sentences.
 
-2. What role does "historisierung" (historization) play in this system?
+2. What role does "historization" play in this system?
    Why does it appear so centrally connected?
 
-3. The shortest path from root to goal skips the physical concepts
-   (zustand, masse, raumzeit) entirely. What does this imply about
-   the framework's claims?
+3. The derivation topology spans 18 levels (0-17), from pre-physical
+   primitives to implementation concepts like sleep-wake cycles.
+   What does this layered structure imply about the framework's claims?
 
-4. The confidence gradient drops from 0.9 (primitives) to 0.4 (thesis).
+4. The confidence gradient drops from high (primitives, validated by
+   multiple papers) to lower values (recent implementation concepts).
    What epistemological stance does this encode?
 
-5. There are three structural dead-ends (traps): masse, raumzeit,
-   strukturelle_zulaessigkeit. What do these traps tell you about
-   the framework's architecture?
+5. The canon has two goal states: negative_necessity (level 8) and
+   sleep_wake_cycle (level 17). What does having TWO goals — one
+   theoretical, one operational — tell you about the framework?
 
-6. The edge from raumzeit back to historisierung has the highest
-   effective tension (s_eff ≈ 5.0) in the entire navigation.
-   What structural meaning does this carry?
+6. The canon includes an implementation layer (levels 9-17) that maps
+   theoretical concepts to concrete mechanisms (greedy navigation,
+   reflexion, dream mode). Is this a strength or a category error?
 
 Respond thoughtfully. No JSON. Free-form analysis."""
 
@@ -117,7 +118,7 @@ Based on ONLY the information above, answer these questions:
    What does this frontier tell you about the framework's self-awareness?
 
 3. The self-graph component "historization" maps directly to the canon
-   primitive "historisierung". What is the significance of this identity?
+   primitive "historization". What is the significance of this identity?
    Why is it not merely an analogy?
 
 4. Which canon concepts have NO operational counterpart? What would it
@@ -144,8 +145,8 @@ def generate_trace() -> str:
     ctrl = E0Controller(cl.landscape, lambda s, t: Outcome.SUCCESS)
 
     lines = []
-    current = "differenz"
-    goal = "negative_notwendigkeit"
+    current = "difference"
+    goal = "negative_necessity"
 
     for step in range(20):
         r = ctrl.cycle(current)
@@ -200,7 +201,7 @@ def main():
         ctrl.self_graph = sg
 
         # Navigate to accumulate operational data
-        current = "differenz"
+        current = "difference"
         trace_lines = []
         for step in range(20):
             r = ctrl.cycle(current)
@@ -213,7 +214,7 @@ def main():
                 f"  (s_eff={r.s_eff:.4f}, candidates={n_cands})"
             )
             current = r.target
-            if current == "negative_notwendigkeit":
+            if current == "negative_necessity":
                 trace_lines.append(f"GOAL REACHED in {step+1} steps.")
                 break
         trace = "\n".join(trace_lines)
