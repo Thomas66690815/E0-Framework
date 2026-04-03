@@ -28,11 +28,11 @@
   },
 
   "state": {
-    "latest_commit": "C126b",
-    "latest_commit_msg": "C126b: Confidence-Gated Bootstrap — gated vs ungated comparison",
+    "latest_commit": "C126c",
+    "latest_commit_msg": "C126c: Weighted Dictionary Bootstrap — 3-tier graduation (canonical/tentative/confirmed)",
     "test_count": 3530,
     "test_failures": 0,
-    "module_count": "58 production + 9 benchmarks + 11 demos + 22 explorations + 95 test files + 4 canons",
+    "module_count": "58 production + 9 benchmarks + 11 demos + 23 explorations + 95 test files + 4 canons",
     "line_count": "~18700 production, ~70800 total"
   },
 
@@ -191,7 +191,7 @@
   ],
 
   "active_work": {
-    "focus": "Language Learning Bootstrap C126b complete. Confidence-gating preserves discrimination. Next: weighted entries or Level-2 validation.",
+    "focus": "Language Learning Bootstrap C126c complete. 3-tier weighted mechanism validates (100% confirmed accuracy). Distance collapse identified as key bottleneck. Next: Level-2 validation or initial-weight tuning.",
     "completed": [
       "All 6/6 Multiverse Open Questions resolved (C66-C71)",
       "C72 Chess Engine — E₀ plays chess via 6 strategic dimensions, discovers opening principles through historization",
@@ -255,9 +255,10 @@
       "C124b Differentiated Canons v1.1 — 10-11 distinct delta values (0.1-0.7) by relationship type, 64 edges each, 5 EN-only + 5 DE-only edges for topological asymmetry.",
       "C125 Dictionary-Mediated Learning — PartialDictionary + make_dict_execute provide SUCCESS/FAILURE signal. Config A (8 pairs) 61%, Config B (11 pairs) 73% correct unknown translations. Full-coverage exploration added (run from every node).",
       "C126 Iterative Dictionary Expansion — bootstrap loop. 4 rounds from Config B: 11→25 known pairs, 6✓+9✗ discoveries (40%). Saturation discovered: S/F ratio collapses, distinct distances→1, rankings degrade.",
-      "C126b Confidence-Gated Bootstrap — gated (min_confidence=6) vs ungated (min_confidence=2) comparison. Gated: fewer pairs (16 vs 25) but rankings STABLE (mouth 6→8%ile vs 6→16%ile). Gated 50% accuracy vs ungated 40%. Gate preserves discrimination but limits growth."
+      "C126b Confidence-Gated Bootstrap — gated (min_confidence=6) vs ungated (min_confidence=2) comparison. Gated: fewer pairs (16 vs 25) but rankings STABLE (mouth 6→8%ile vs 6→16%ile). Gated 50% accuracy vs ungated 40%. Gate preserves discrimination but limits growth.",
+      "C126c Weighted Dictionary Bootstrap — 3-tier graduation (canonical/tentative/confirmed). Stochastic execute_fn for tentative entries. 4/4 confirmed pairs 100% correct. Decay removes wrong entries naturally. Distance collapse by R2 limits discrimination — dream works on topology alone. quality↔eigenschaft paradox: high initial weight prevents rediscovery."
     ],
-    "next_steps": ["Weighted/reversible dictionary entries", "Level-2 pair-based validation", "C43: Self-Graph (E0 learns E0 first)"],
+    "next_steps": ["Level-2 pair-based validation", "Lower MAX_INITIAL_WEIGHT to prevent rediscovery paradox", "C43: Self-Graph (E0 learns E0 first)"],
     "next_commit_id": "C127"
   },
 
