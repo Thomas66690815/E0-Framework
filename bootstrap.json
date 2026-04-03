@@ -1,0 +1,271 @@
+{
+  "_meta": {
+    "purpose": "Session bootstrap for AI assistants resuming work on E₀-Framework",
+    "usage": "Paste this file (or reference it) at the start of a new thread to restore full project context",
+    "last_updated": "2026-04-02",
+    "update_instruction": "After each commit, update state.latest_commit, state.test_count, and active_work"
+  },
+
+  "project": {
+    "name": "E₀-Framework",
+    "repo": "https://github.com/Thomas66690815/E0-Framework",
+    "branch": "main",
+    "version": "0.7.0",
+    "doi": "10.5281/zenodo.19333487",
+    "license": "CC BY 4.0",
+    "language": "Python 3.12.9",
+    "description": "Implementation of the E₀ navigation controller from Ontodynamics — a formal framework for decision-making under uncertainty using Landscape, Historization, and Tension as core primitives"
+  },
+
+  "environment": {
+    "python_command": "py -3",
+    "test_command": "py -3 -m pytest e0_controller/ server/ --tb=short -q",
+    "test_single": "py -3 -m pytest e0_controller/test_FILE.py -v --tb=short",
+    "ci_file": ".github/workflows/tests.yml",
+    "ci_threshold": 2000,
+    "os": "Windows",
+    "pytest_version": "9.0.2"
+  },
+
+  "state": {
+    "latest_commit": "470a473",
+    "latest_commit_msg": "C120: Structural Entropy — end-to-end exploration",
+    "test_count": 3447,
+    "test_failures": 0,
+    "module_count": "57 production + 9 benchmarks + 11 demos + 18 explorations + 93 test files",
+    "line_count": "~18400 production, ~69000 total"
+  },
+
+  "conventions": {
+    "user_language": "German (user speaks German, code/docs in English)",
+    "commit_prefix": "C{N}: descriptive title",
+    "commit_style": "Detailed multi-line: what, why, key properties, test count, suite total",
+    "workflow": "feature → test → docs update (registry + README) → commit → push",
+    "test_style": "Grouped in classes by claim (e.g., TestStructuralDistance, TestRecoverySelection)",
+    "docs_to_update_per_commit": ["docs/E0_TEST_REGISTRY_v2.md (test count + scope line)", "README.md (4 locations with test count)"],
+    "execute_fn_mock": "lambda s, t: Outcome.SUCCESS",
+    "controller_constructor": "E0Controller(landscape, execute_fn, ...)",
+    "never_use": ["python (use py -3)", "goals= (use goal= for run(), hybrid_goals= for __init__)"],
+    "user_preferences": [
+      "Bottom-up: feature → test → formalize (never top-down schema first)",
+      "Values honesty about circularity and premature abstraction",
+      "erst erarbeiten, dann umsetzen (analyze before coding for conceptual questions)",
+      "Deine Entscheidung = make the decision confidently, don't hedge"
+    ]
+  },
+
+  "architecture": {
+    "layers": {
+      "1_primitives": {
+        "files": ["primitives.py", "historization.py", "tension.py"],
+        "purpose": "Edge, Outcome, Historization (U/F traces, decay), Tension (S_eff = Δ · R_eff)"
+      },
+      "2_landscape": {
+        "files": ["landscape.py"],
+        "purpose": "L_t = (X_t, E_t, v_t, S_t, H_t) — reachable states, edges, transition field, tension, historization"
+      },
+      "3_controller": {
+        "files": ["controller.py"],
+        "purpose": "E0Controller — greedy navigation with amplitude override, SU(2) phases, 4 escalation types (DEAD_END, FILTERED, EXHAUSTED, OVERLOADED), peer_fn for external consultation"
+      },
+      "4_phase_amplitude": {
+        "files": ["phase.py", "amplitude_overlay.py", "su2_phase.py", "exploration_policy.py"],
+        "purpose": "Amplitude override (high-Δ beats greedy when Δ·confidence > threshold), Born sampling, SU(2) spinor phases, stochastic exploration"
+      },
+      "5_reflexion": {
+        "files": ["self_graph.py", "dual_reflection.py", "reflexive_action.py", "reflexive_edge_proposal.py", "integrated_reflexion.py"],
+        "purpose": "Stufe 1 (reactive: stuck → propose edges from experience), Stufe 2 (proactive: frontier → propose before stuck), Stufe 3 (self-graph: E₀ observes its own structure)"
+      },
+      "6_multiverse": {
+        "files": ["multiverse.py", "cross_reflexion.py", "coupling_router.py", "raumzeit_coupling.py"],
+        "purpose": "N≥2 coupled E₀ systems. NoveltyGate prevents Δ-Kollaps. CouplingRouter with RECOVERY/EXPLORATION dual pressure. Asymmetric weights (C67). CouplingSelfGraph (C68): Stufe-3 reflexion for coupling pipeline with diagnose_coupling(). Coupling Theorem (C54)."
+      },
+      "7_llm_integration": {
+        "files": ["llm_adapter.py", "bootstrapper.py", "canon_loader.py", "mode_controller.py"],
+        "purpose": "E₀=Skeleton (structure/judgment), LLM=Muscle (generation/exploration). Bootstrapper: spec→Landscape. ModeController: LEARN/EXECUTE/COMBINATION."
+      },
+      "8_observation": {
+        "files": ["observation.py", "observation_controller.py", "rendering_adapter.py"],
+        "purpose": "E₀ observes its own landscape as a navigable domain. O-Landscape (scoped projection with focus/move/defocus), ObservationController (session-aware navigation), RenderingAdapter (→ GraphView wire format). Wired to server (3 REST endpoints) and client (Observe toggle + node-click navigation)."
+      },
+      "9_dream_mode": {
+        "files": ["dream_mode.py", "explore_dream_mode.py"],
+        "purpose": "Passive cross-domain pattern recognition. EdgeFingerprint f(e)=(q,m,I), functional equivalence detection (quantile-based), DreamObserver (N domains, dream_cycle, feedback historization), bridge hypothesis generation (→ cross_propose_edges), make_dream_peer_fn (E0Controller integration). Dream Landscape is self-historizing valid E₀ Landscape. C109-C112."
+      },
+      "10_structural_entropy": {
+        "files": ["structural_entropy.py", "explore_structural_entropy.py"],
+        "purpose": "Forgetting as structural necessity. Type 1: inscription threshold (novelty > ε, controlled by T_s). Type 2: anchor analysis (anchor_score = |q̄|·m_max·log(1+deg)), decay candidates, apply_decay (3-phase: trace→remove→clean). Controller: inscription_threshold opt-in. Dream: decay_enabled opt-in. Only new parameter: θ_base (anchor threshold). C114-C120."
+      }
+    },
+    "key_formulas": {
+      "effective_resistance": "R_eff(e) = R₀(e) + δ_H(U,F)",
+      "effective_tension": "S_eff(x,y) = Δ(x,y) · R_eff(x,y)",
+      "navigation": "argmin S_eff/(M_H·I) (greedy with overlap+inertia), with amplitude override when Δ·conf > threshold",
+      "overload_index": "OI = N_admissible × (1 − mean|trace_quality|)",
+      "trace_quality": "q(e) = (U−F)/(U+F+ε) ∈ (-1,+1)",
+      "trace_load": "m(e) = U+F",
+      "structural_distance": "d(A,B) = 1 − |states_A ∩ states_B| / |states_A ∪ states_B|",
+      "asymmetric_coupling": "R₀(requester→donor) = base_resistance / donor.weight",
+      "graduated_overlap": "M_H(x→y) = max(0.2, Σ_z √(v(x,z)·v(z,y))), greedy divides S_eff by M_H",
+      "inertia_factor": "I(e) = 1 − α·(m/(m+μ))·(1−|q|), greedy divides S_eff by I"
+    }
+  },
+
+  "commit_history_recent": [
+    { "hash": "470a473", "id": "C120", "title": "Structural Entropy — end-to-end exploration" },
+    { "hash": "c6ea2b5", "id": "C119", "title": "Dream Mode decay integration (decay_enabled, dream consolidation)" },
+    { "hash": "9cfcc73", "id": "C118", "title": "Controller integration — conditional inscription (inscription_threshold)" },
+    { "hash": "a71cb51", "id": "C117", "title": "Structural Decay — remove_state, remove_edges, apply_decay, DecayTrace" },
+    { "hash": "92082f8", "id": "C116", "title": "Anchor Analysis + Decay Candidates (Type 2 forgetting, analysis only)" },
+    { "hash": "1eee6bd", "id": "C115", "title": "Structural Temperature + Inscription Threshold (Type 1 forgetting)" },
+    { "hash": "7676a8f", "id": "C114", "title": "Structural Entropy Design Document" },
+    { "hash": "741d000", "id": "C113", "title": "Documentation update — Architecture v4, README, Dream Mode Concept" },
+    { "hash": "a763e6e", "id": "C112", "title": "Dream Mode Phase 4 — explore_dream_mode.py end-to-end (6 domains, convergence, P3 empirical)" },
+    { "hash": "22c8bad", "id": "C111", "title": "Dream Mode Phase 3 — bridge hypothesis generation, dream peer_fn, 21 tests (79 total)" },
+    { "hash": "e75e9c5", "id": "C110", "title": "Dream Mode Phase 2 — DreamObserver, dream_cycle, feedback historization, 26 tests (58 total)" },
+    { "hash": "9a00ecc", "id": "C109", "title": "Dream Mode Phase 1 — edge fingerprints, functional equivalence, dream readiness, 32 tests" },
+    { "hash": "89706f7", "id": "consolidation", "title": "C75-C81 consolidation: 42 formal pytest tests for empirical validation phase" },
+    { "hash": "62c9a29", "id": "C108", "title": "Asymptotic tightness — non-uniform convergence theorem (P5 §10.4 Q4), 15 tests" },
+    { "hash": "57aa59c", "id": "C107", "title": "Scoped cross-reflexion — multi-agent locality (P5 §10.4 Q3), 18 tests" },
+    { "hash": "33266ac", "id": "docs", "title": "Update P5 and Architecture for C105/C106" },
+    { "hash": "e5a076b", "id": "C106", "title": "Corridor scope — non-spherical reflexion (P5 §10.4 Q2), 12 tests" },
+    { "hash": "65dc760", "id": "C105", "title": "Adaptive mu — derive from landscape topology |E|/|V| (P5 §10.4 Q1), 15 tests" },
+    { "hash": "43df43c", "id": "P6", "title": "Paper P6: Coupled Transition Systems and Emergent Temporal Structure" },
+    { "hash": "d90c847", "id": "P3", "title": "Paper P3 promoted from draft to manuscript" },
+    { "hash": "8086ba0", "id": "P5+Arch", "title": "Paper P5: Emergent Locality + Architecture Overview v3" },
+    { "hash": "a142642", "id": "C101", "title": "Scoped Reflexion — historization-driven locality for edge proposals, 35 tests" },
+    { "hash": "76681c5", "id": "C100", "title": "Modulation Benchmark — 14 domains x 3 modes, overlap + inertia validated, 29 tests" },
+    { "hash": "7e75708", "id": "C99", "title": "Inertia Dampening in Greedy Loop — confused edges penalized, 21 tests" },
+    { "hash": "945bce0", "id": "C98", "title": "Graduated Overlap in Controller Greedy Loop — M_H closes last research question, 24 tests" },
+    { "hash": "55f1e58", "id": "docs", "title": "Update test registry (3020 tests, 83 files) and README for C88-C97" },
+    { "hash": "4a29317", "id": "docs", "title": "Observation UI Architecture — design journey C85→C97" },
+    { "hash": "92d86a8", "id": "C97", "title": "Observation UI Integration — server + client wiring, 28 tests" },
+    { "hash": "2915461", "id": "C96", "title": "Rendering Adapter — observation → wire format, 32 tests" },
+    { "hash": "806404c", "id": "C95", "title": "Observation Controller — navigation + projection, 47 tests" },
+    { "hash": "9c10217", "id": "C94", "title": "Observation Landscape — scoped navigable projection, 39 tests" },
+    { "hash": "MULTI", "id": "C89-C93", "title": "UI iteration — edge labels, path trail, peer interaction, mechanism indicator, scenarios" },
+    { "hash": "3e06e26", "id": "C88", "title": "Keimzelle — graph-centric UI rebuild" },
+    { "hash": "UNKNOWN", "id": "C87", "title": "Fix Oszilloskop connectivity — WS proxy, health indicator" },
+    { "hash": "4ee1bf2", "id": "C86", "title": "Test Runner UI — discover and run test/explore files from browser" },
+    { "hash": "0a63825", "id": "C85", "title": "Client (Layer D) — React + Cytoscape.js" },
+    { "hash": "028a900", "id": "C84", "title": "API Gateway (Layer C) — FastAPI + WebSocket" },
+    { "hash": "33745c1", "id": "C83", "title": "Service Layer (Layer B) — SnapshotCodec, InputPipeline, PeerBridge, ServiceSession" },
+    { "hash": "e78a217", "id": "C82", "title": "Focus Narrowing in Controller — focus_k, peer bypass, random pruning production-ready" },
+    { "hash": "ba0f5e7", "id": "C81", "title": "Focus Narrowing — random pruning to k=8 rescues N=100 from 0% to 82%" },
+    { "hash": "132843c", "id": "C80", "title": "Attractor Prediction — goal-distance predicts attractor with 83% accuracy" },
+    { "hash": "a645673", "id": "C79", "title": "Asymmetric ρ — failures remembered longer than successes" },
+    { "hash": "PENDING", "id": "C78", "title": "Convergence Speed — ρ controls convergence/adaptability tradeoff" },
+    { "hash": "1142efe", "id": "C77", "title": "Transfer Learning — conditional effectiveness in stochastic domains" },
+    { "hash": "bc5b935", "id": "C76", "title": "Multi-Attractor Dynamics — shared H monopoly vs multiverse coexistence" },
+    { "hash": "6bf295a", "id": "C75", "title": "Attractor Universality — conditional emergence from differential feedback" },
+    { "hash": "1a8bf46", "id": "C74", "title": "Team Chess — multiverse team play" },
+    { "hash": "ce02b7a", "id": "C73", "title": "Primitive Extensions — fully_connected + strategy_profile" },
+    { "hash": "5348eef", "id": "C72", "title": "Chess Engine — strategic dimension navigation" },
+    { "hash": "1a1ddda", "id": "C71", "title": "LLM Co-Cognition — two LLMs coupled via multiverse" },
+    { "hash": "c4b475f", "id": "C70", "title": "OVERLOADED Benchmark — peer consultation × 10 domains" },
+    { "hash": "308a67a", "id": "C69", "title": "Cross-Reflexion Benchmark — edge copying vs edge creation" },
+    { "hash": "ab176da", "id": "C68", "title": "Coupling Self-Graph — Stufe-3 reflexion for coupling pipeline" },
+    { "hash": "f213dfc", "id": "-", "title": "gitignore: add bootstrap.json" },
+    { "hash": "614688c", "id": "C67", "title": "Asymmetric Coupling — weight-based directional resistance" },
+    { "hash": "65e1fc6", "id": "C66", "title": "CouplingRouter — dynamic partner selection for N>2 universes" },
+    { "hash": "3ad7c04", "id": "C65", "title": "Close all 8 falsification targets (8/8 resolved)" },
+    { "hash": "0665f13", "id": "C64", "title": "Gridworld Baseline Benchmark — 49 tests" },
+    { "hash": "f658158", "id": "v0.7.0", "title": "Release: Multiverse Architecture, Cross-Reflexion, Overload Escalation" },
+    { "hash": "ecc1cd6", "id": "Paper4", "title": "Reflexive Self-Modification in E₀" }
+  ],
+
+  "active_work": {
+    "focus": "Structural Entropy arc COMPLETE (C114-C120). All 7 commits landed. Next arc TBD.",
+    "completed": [
+      "All 6/6 Multiverse Open Questions resolved (C66-C71)",
+      "C72 Chess Engine — E₀ plays chess via 6 strategic dimensions, discovers opening principles through historization",
+      "C73 Primitive Extensions — fully_connected + strategy_profile derived from Chess insights",
+      "C74 Team Chess — 3×E₀ teams with CouplingRouter beat Solo by checkmate in 17 moves",
+      "C75 Attractor Universality — tested across 10 domains × 2 topologies, two necessary conditions identified",
+      "C76 Multi-Attractor Dynamics — shared H = monopoly, independent H = 5 coexisting attractors",
+      "C77 Transfer Learning — 1.50× speedup in stochastic corridors, neutral in deterministic domains",
+      "C78 Convergence Speed — deterministic=1 episode, stochastic=never at ρ=0.90, ρ is convergence/adaptability tradeoff",
+      "C79 Asymmetric ρ — ρ_S=0.85/ρ_F=0.97 gives 1.20× speedup, makes transfer redundant in 8L×3D corridor",
+      "C80 Attractor Prediction — goal-distance predicts attractor 83%, betweenness/PageRank fail on fully-connected",
+      "C81 Focus Narrowing — random pruning to k=8 rescues N=100 from 0% to 82%, quality-biased pruning locks in at 23%",
+      "C82 Focus Narrowing in Controller — focus_k param, peer sees full graph then bypass filter, 12 new tests",
+      "C83 Service Layer (Layer B) — SnapshotCodec, InputPipeline, PeerBridge, ServiceSession, SessionManager. 43 tests.",
+      "C84 API Gateway (Layer C) — FastAPI + WebSocket. 13 REST endpoints, WebSocket handler, 12 Pydantic models. 31 tests.",
+      "C85 Client (Layer D) — React + Cytoscape.js. GraphView, ControlPanel, PeerDialog, HistoryTimeline, MetricsPanel.",
+      "All 7/7 Open Questions resolved (OQ#1-C78, OQ#2-C81, OQ#3-C77, OQ#4-C74, OQ#5-C75, OQ#6-C80, OQ#7-C76)",
+      "All 11 Empirical Insights documented (C72-C81)",
+      "UI Architecture Document written: docs/E0_UI_ARCHITECTURE_v1.md",
+      "C86 Test Runner UI — discover/run 93 test+explore files from browser, tab navigation",
+      "C87 Fix Oszilloskop connectivity — WS proxy, health indicator, start/goal dropdowns",
+      "C88 Keimzelle — graph-centric UI rebuild, Cytoscape.js center stage",
+      "C89-C93 UI iteration — edge labels, path trail, peer interaction, mechanism indicator, scenarios",
+      "C94 Observation Landscape — O-Landscape with focus/move/defocus navigation, 39 tests",
+      "C95 Observation Controller — navigation + projection + meta snapshots, 47 tests",
+      "C96 Rendering Adapter — observation → GraphView-compatible wire format, 32 tests",
+      "C97 Observation UI Integration — server + client wiring, Observe toggle, node-click navigation, 28 tests",
+      "C98 Graduated Overlap in Greedy Loop — _penalized_tension divides S_eff by M_H, falsification domain validated, 24 tests. M_H research question CLOSED.",
+      "C99 Inertia Dampening in Greedy Loop — _penalized_tension divides S_eff by I(edge), confused edges penalized, 21 tests. Last integration gap resolved.",
+      "C100 Modulation Benchmark — 14 domains (10 standard + 4 stress) x 3 modes (BASELINE/OVERLAP/FULL), 29 tests. Domain-invariance preserved, modulation never harms, measurable improvements on D6/D11/D12/D13.",
+      "C101 Scoped Reflexion — historization-driven locality for edge proposals. locality=mean_load/(mean_load+μ), radius=ceil((1-locality)*D). Fresh=global, historized=local. Scoped candidates + scoped pattern extraction. 35 tests.",
+      "C102-C104 Scoped reflexion arc — integration, benchmark, emergent locality tooling",
+      "C105 Adaptive mu — μ=|E|/|V| derived from topology. Sparse→fast localization, dense→slower. P5 §10.4 Q1 resolved. 15 tests.",
+      "C106 Corridor scope — non-spherical scope follows inscription corridors. Corridor ⊆ spherical. P5 §10.4 Q2 resolved. 12 tests.",
+      "C107 Scoped cross-reflexion — donor-side locality for cross-universe proposals. Locality-modulated discount: eff=d×(γ_min+(1-γ_min)×ℓ_donor). P5 §10.4 Q3 resolved. 18 tests.",
+      "C108 Asymptotic tightness — non-uniform convergence theorem. Equilibrium ℓ*=k/(k+|E|·μ·(1-ρ)), rate ρ^n topology-independent. P5 §10.4 Q4 resolved. 15 tests. All 4 P5 questions now closed.",
+      "C75-C81 Empirical Consolidation — 42 formal pytest tests in test_attractor_empirical.py (24, C75/C76/C80) and test_learning_empirical.py (18, C77/C78/C79). Explore scripts validated.",
+      "Papers P1-P6 all complete. P3 promoted from draft. P5 new (Emergent Locality). P6 new (Multiverse Coupling).",
+      "Architecture Overview v3 — updated for 3306 tests, C105-C108",
+      "C109 Dream Mode Phase 1 — edge fingerprints f(e)=(q,m,I), functional equivalence detection (quantile-based, order-invariant), dream readiness trigger (mean inertia_factor), Dream Landscape construction. Concept note: E0_DREAM_MODE_CONCEPT_v1.md. 32 tests.",
+      "C110 Dream Mode Phase 2 — DreamObserver (register/unregister domains), dream_cycle (passive cross-domain comparison, readiness partitioning, incremental DL), feedback (bidirectional historization), equivalences_for (query by domain + min_quality). P4 noise filtering confirmed. 26 new tests (58 total).",
+      "C111 Dream Mode Phase 3 — BridgeHypothesis + DreamBridgeResult, dream_coupling_discount (quality→coupling weight), propose_bridges (dream equivalences→cross_propose_edges), make_dream_peer_fn (non-invasive E0Controller integration). P2 acceleration + P3 self-correction confirmed. 21 new tests (79 total).",
+      "C112 Dream Mode Phase 4 — explore_dream_mode.py end-to-end (6 domains, convergence, P3 empirical).",
+      "C113 Documentation update — Architecture v4, README, Dream Mode Concept.",
+      "C114 Structural Entropy Design Document — T_s, inscription threshold, anchor analysis, decay pipeline.",
+      "C115 Structural Temperature + Inscription Threshold — Type 1 forgetting, 32 tests.",
+      "C116 Anchor Analysis + Decay Candidates — Type 2 analysis, anchor_score, find_decay_candidates, 20 tests (52 total).",
+      "C117 Structural Decay — Landscape.remove_state, Historization.remove_edges, apply_decay 3-phase, DecayTrace/DecayReport, 23 tests (75 total).",
+      "C118 Controller integration — inscription_threshold opt-in, StepResult.inscribed, non_inscription metrics, 9 tests (84 total).",
+      "C119 Dream Mode decay — decay_enabled opt-in, DreamCycleResult.decay_reports, dream consolidation, 9 tests (88 dream total).",
+      "C120 End-to-end exploration — explore_structural_entropy.py, 60% compression, 48% non-inscription rate, full consistency."
+    ],
+    "next_steps": [],
+    "next_commit_id": "C121"
+  },
+
+  "key_modules_quick_ref": {
+    "controller.py": "E0Controller(landscape, execute_fn, *, hybrid_goals=None, peer_fn=None, overload_threshold=3.0, focus_k=None). run(start, goal, max_steps=50) → RunTrace. focus_k: random narrows candidates, peer bypasses filter (C82). _penalized_tension divides S_eff by M_H when landscape.overlap_modulation=True (C98), by inertia_factor when landscape.inertia_modulation=True (C99).",
+    "landscape.py": "Landscape dataclass. add_state(), add_edge(src,tgt,delta,resistance), remove_edge(), adjust_delta(), adjust_base_resistance(), .states (property→Set), .edges (property→List[Edge]), .edge_count(), .difference(), .effective_resistance(), .effective_tension(), .historization (Historization instance)",
+    "multiverse.py": "Universe(name, landscape, execute_fn, start, goal). MultiverseController(a, b). NoveltyGate. LandscapeSnapshot.",
+    "coupling_router.py": "CouplingReason(RECOVERY|EXPLORATION). CouplingRouter(universes, coupling_weights={...}). select_partner(requester, reason). historize(src,tgt,outcome,weight_mod_active,distance_mod_active). set_weight(). self_graph=CouplingSelfGraph(). CouplingSelfGraph: self_historize(), component_quality/load/inertia(), diagnose_coupling(csg)→CouplingDiagnosis. make_routed_peer_fn(router, requester, goal).",
+    "cross_reflexion.py": "cross_propose_edges(landscape, donor, current, goal, coupling_discount=0.5, scoped=False) → CrossReflexionResult. scoped=True (C107): donor pattern from donor's scope, discount modulated by ℓ_donor. scoped_cross_reflexion_turn(): convenience TurnFn.",
+    "historization.py": "Historization. .update(edge, outcome). .trace_quality(edge)→float. .trace_load(edge)→float. .inertia_factor(edge)→float",
+    "primitives.py": "Edge(source, target), Outcome(SUCCESS|FAILURE)",
+    "client/": "React 19 + Cytoscape.js 3.30 + Recharts 2.15. Vite build. Components: GraphView (graph viz), ControlPanel (input/run), PeerDialog (Zentrale), HistoryTimeline, MetricsPanel. Hooks: useSession (lifecycle), useWebSocket (persistent connection). API client: api.js (REST + WS). Start: cd client && npm run dev.",
+    "server/routes_sessions.py": "13 REST endpoints: session CRUD, lifecycle (start/pause/resume/step), data retrieval (history/strategy/snapshot), canons, health. Module-level _manager set via set_manager().",
+    "server/ws_handler.py": "ConnectionManager (per-session WebSocket multiplexing). handle_websocket: event queue, peer_request push, pause/resume from client.",
+    "server/models.py": "12 Pydantic models for API validation: CreateSessionRequest/Response, StartRequest, SessionInfo, StepEventModel, WSMessage, CanonSummary, StrategyEntry, HealthResponse.",
+    "server/main.py": "FastAPI app (E₀ Framework API v0.8.0). Mounts router + WebSocket at /sessions/{id}/ws. Start: py -3 -m uvicorn server.main:app --reload",
+    "service.py": "ServiceSession(landscape, execute_fn, peer_bridge=). start/step/run_sync/pause/resume/snapshot/strategy. SessionManager: create_from_json/text/canon/landscape, get, remove, list_sessions. StepEvent: single event contract per cycle.",
+    "snapshot_codec.py": "encode_landscape/decode_landscape roundtrip. encode_step, encode_run_trace, encode_strategy_profile, encode_edge_info.",
+    "input_pipeline.py": "InputPipeline: from_json(spec), from_text(desc), from_canon(name), available_canons().",
+    "peer_bridge.py": "PeerBridge(session_id, timeout=60). as_peer_fn() → sync callback. submit_response(target). is_waiting, pending_request.",
+    "observation.py": "ObservationLandscape(landscape, depth=2). focus(node_id), move(node_id), defocus(). project() → subgraph dict. Scoped navigable projection of any E₀ Landscape.",
+    "observation_controller.py": "ObservationController(session). navigate(action, node_id). snapshot() → GraphView-compatible dict. meta_snapshot() → scope/depth/focus state.",
+    "rendering_adapter.py": "render_observation(obs_ctrl) → dict with Cytoscape elements. Wraps under 'landscape' key for GraphView compatibility."
+  },
+
+  "papers": {
+    "paper1": "docs/papers/P1_E0_Controller_Paper_v5.md — Core controller, Gordian existence theorem, 5 benchmark domains",
+    "paper2": "docs/papers/P2_Amplitude_Phase_Paper_v3.md — Amplitude override, Born sampling, SU(2) phases",
+    "paper3": "docs/papers/E0_PAPER3_NON_ABELIAN_STRUCTURE_v1.md — Multi-axis SU(2), Non-Abelian structure",
+    "paper4": "docs/papers/P4_Reflexive_Self_Modification_v1.md — Self-graph, dual reflection, reflexive action, Stufen 1-3",
+    "paper5": "docs/papers/PAPER5_MANUSCRIPT_v1.md — Emergent locality, scoped reflexion, modulation integration",
+    "paper6": "docs/papers/PAPER6_MANUSCRIPT_v1.md — Coupled transition systems, multiverse, cross-reflexion, overload"
+  },
+
+  "falsification": {
+    "status": "8/8 targets RESOLVED",
+    "doc": "docs/E0_EVIDENCE_AND_FALSIFICATION_STATUS_v1.md",
+    "date_resolved": "2026-03-31"
+  }
+}
