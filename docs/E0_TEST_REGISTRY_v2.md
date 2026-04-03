@@ -3,8 +3,8 @@
 > Central validation registry for the E₀ Framework.
 > **Purpose:** connect claims, tests, evidence, and status in one place.
 
-**Last updated:** 2026-04-02 — **3385 tests** (0 failures, 0 warnings) across **96 test files**  
-**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, **C52 Honest Self-Knowledge (CANON_PROCESS_MAP correction)**, **C53 Domain-Invariance Benchmark (10 domains, 1 controller)**, **C54 Raumzeit Coupling (closed vs coupled systems)**, **C55 Amplitude Benchmark (10 domains × 3 modes)**, **C56 Reflexive Edge Proposal (Historisierung informiert Topologie)**, **C57 Proactive Reflexion (Stufe 2)**, **C58 Reflexion Benchmark (10 domains × 3 Stufen)**, **C59 Integrated Reflexion (C49 + C57 unified)**, **C60 Multiverse (coupled systems, NoveltyGate, convergence/divergence)**, **C61 Cross-Domain Multiverse Benchmark**, **C62 Cross-Universe Reflexive Edge Discovery**, **C63 OVERLOADED Escalation (OI-triggered peer consultation)**, **C64 Gridworld Baseline Benchmark (E₀ vs A* vs Naive-Greedy)**, **C66 CouplingRouter (N>2 dynamic partner selection)**, **C67 Asymmetric Coupling (weight-based directional R₀)**, **C68 Coupling Self-Graph (Stufe-3 reflexion for coupling pipeline)**, **C69 Cross-Reflexion Benchmark (edge copying vs edge creation)**, **C70 OVERLOADED Benchmark (peer consultation × 10 domains)**, **C71 LLM Co-Cognition (2 LLMs coupled via multiverse)**, **C72 Chess Engine (strategic dimension navigation)**, **C73 Primitive Extensions (fully_connected + strategy_profile)**, **C74 Team Chess (multiverse team play)**, **C75–C81 Empirical Validation Phase (attractor universality, multi-attractor dynamics, transfer learning, convergence speed, asymmetric ρ, attractor prediction, focus narrowing — explore scripts + formal tests)**, **C82 Focus Narrowing in Controller (focus_k + peer bypass)**, **C83 Service Layer (SnapshotCodec, InputPipeline, PeerBridge, ServiceSession, SessionManager)**, **C84 API Gateway (FastAPI REST + WebSocket, 13 endpoints)**, **C85 Client (React + Cytoscape.js)**, **C86 Test Runner UI**, **C88 Keimzelle (graph-centric UI rebuild)**, **C89–C93 UI iteration (edge labels, path trail, peer interaction, mechanism indicator, scenarios)**, **C94 Observation Landscape (O-Landscape)**, **C95 Observation Controller (navigation + projection)**, **C96 Rendering Adapter (observation → wire format)**, **C97 Observation UI Integration (server + client wiring)**, **C98 Graduated Overlap in Greedy Loop (M_H closes last research question)**, **C99 Inertia Dampening in Greedy Loop (confused edges penalized)**, **C100 Modulation Benchmark (14 domains × 3 modes, overlap + inertia validated)**, **C101 Scoped Reflexion (historization-driven locality for edge proposals)**, **C102 Scoped Reflexion Controller Integration (scoped=True wired into integrated_reflexion pipeline)**, **C103 Scoped Reflexion Benchmark (10 domains × GLOBAL vs SCOPED, fresh degeneration validated)**, **C104 Emergent Locality (historization creates locality as emergent property)**, **C105 Adaptive μ (μ = |E|/|V| derived from topology)**, **C106 Corridor Scope (non-spherical locality)**, **C107 Scoped Cross-Reflexion (multi-agent locality, P5 §10.4 Q3)**, **C108 Asymptotic Tightness (non-uniform convergence, P5 §10.4 Q4)**, **C109 Dream Mode Phase 1 (edge fingerprints, functional equivalence, dream readiness)**, **C110 Dream Mode Phase 2 (DreamObserver, dream_cycle, feedback historization, P4 noise filtering)**, **C111 Dream Mode Phase 3 (bridge hypothesis generation, dream peer_fn, P2 acceleration, P3 self-correction)**, **C112 Dream Mode Phase 4 (explore_dream_mode.py end-to-end: 6 domains, equivalence precision, bridge proposals, self-correction, DL convergence)**.
+**Last updated:** 2026-04-03 — **3464 tests** (0 failures, 0 warnings) across **94 test files**  
+**Scope:** Deterministic controller, phase/amplitude layer, G5 geometries, hybrid arbitration, historization, multi-goal behavior, topology scans, Born sampling comparison, multi-axis SU(2), curvature modulation, LLM context enrichment, K5 field-based escalation, MemOS persistence fidelity, B4 self-tuning meta-layer, Session orchestrator, **C37 residual tension + iterative control (Axiom A₀)**, **C38 E0Envelope + TransportRegime**, **C39 resonator-controller integration**, **C40 graduated overlap functional (M_H from Ontodynamics §3.4)**, **C41 stochastic exploration policy (Born warmup → exploit)**, **B4-S1 Landscape mutation API (Bridge 4 Structural Reflexivity)**, **B4-S2 Structural Mutation Infrastructure**, **B4-S3 Structural Tuning Cycle + Session.iterate() hook**, **B4-S4a Identity Invariant (goal-reachable + A₀-compliant + historization-continuous)**, Beipackzettel real-world validation, non-circular amplitude mass trap, ProvenanceLog evidence chain, live LLM provenance, **C42 4-Layer Model (trace_load/trace_quality/inertia_factor)**, **C43 Self-Graph (Selbstunterscheidung)**, **C44 Bootstrapper (structured spec → Landscape)**, **C45 LLM Adapter v2 (propose_domain_graph)**, **C46 Mode Controller (LEARN/EXECUTE/COMBINATION)**, **C47 Dual Reflection (self-graph diagnosis + meta-control)**, **C48 Canon Materialization (Ontodynamics → navigable Landscape)**, **C49 Reflexive Action (diagnosis → concrete landscape mutation)**, **C50 Stufe 4b Representation (reflexive journal + self-exposition)**, **C51 System-Level Integration (E₀ lernt E₀)**, **C52 Honest Self-Knowledge (CANON_PROCESS_MAP correction)**, **C53 Domain-Invariance Benchmark (10 domains, 1 controller)**, **C54 Raumzeit Coupling (closed vs coupled systems)**, **C55 Amplitude Benchmark (10 domains × 3 modes)**, **C56 Reflexive Edge Proposal (Historisierung informiert Topologie)**, **C57 Proactive Reflexion (Stufe 2)**, **C58 Reflexion Benchmark (10 domains × 3 Stufen)**, **C59 Integrated Reflexion (C49 + C57 unified)**, **C60 Multiverse (coupled systems, NoveltyGate, convergence/divergence)**, **C61 Cross-Domain Multiverse Benchmark**, **C62 Cross-Universe Reflexive Edge Discovery**, **C63 OVERLOADED Escalation (OI-triggered peer consultation)**, **C64 Gridworld Baseline Benchmark (E₀ vs A* vs Naive-Greedy)**, **C66 CouplingRouter (N>2 dynamic partner selection)**, **C67 Asymmetric Coupling (weight-based directional R₀)**, **C68 Coupling Self-Graph (Stufe-3 reflexion for coupling pipeline)**, **C69 Cross-Reflexion Benchmark (edge copying vs edge creation)**, **C70 OVERLOADED Benchmark (peer consultation × 10 domains)**, **C71 LLM Co-Cognition (2 LLMs coupled via multiverse)**, **C72 Chess Engine (strategic dimension navigation)**, **C73 Primitive Extensions (fully_connected + strategy_profile)**, **C74 Team Chess (multiverse team play)**, **C75–C81 Empirical Validation Phase (attractor universality, multi-attractor dynamics, transfer learning, convergence speed, asymmetric ρ, attractor prediction, focus narrowing — explore scripts + formal tests)**, **C82 Focus Narrowing in Controller (focus_k + peer bypass)**, **C83 Service Layer (SnapshotCodec, InputPipeline, PeerBridge, ServiceSession, SessionManager)**, **C84 API Gateway (FastAPI REST + WebSocket, 13 endpoints)**, **C85 Client (React + Cytoscape.js)**, **C86 Test Runner UI**, **C88 Keimzelle (graph-centric UI rebuild)**, **C89–C93 UI iteration (edge labels, path trail, peer interaction, mechanism indicator, scenarios)**, **C94 Observation Landscape (O-Landscape)**, **C95 Observation Controller (navigation + projection)**, **C96 Rendering Adapter (observation → wire format)**, **C97 Observation UI Integration (server + client wiring)**, **C98 Graduated Overlap in Greedy Loop (M_H closes last research question)**, **C99 Inertia Dampening in Greedy Loop (confused edges penalized)**, **C100 Modulation Benchmark (14 domains × 3 modes, overlap + inertia validated)**, **C101 Scoped Reflexion (historization-driven locality for edge proposals)**, **C102 Scoped Reflexion Controller Integration (scoped=True wired into integrated_reflexion pipeline)**, **C103 Scoped Reflexion Benchmark (10 domains × GLOBAL vs SCOPED, fresh degeneration validated)**, **C104 Emergent Locality (historization creates locality as emergent property)**, **C105 Adaptive μ (μ = |E|/|V| derived from topology)**, **C106 Corridor Scope (non-spherical locality)**, **C107 Scoped Cross-Reflexion (multi-agent locality, P5 §10.4 Q3)**, **C108 Asymptotic Tightness (non-uniform convergence, P5 §10.4 Q4)**, **C109 Dream Mode Phase 1 (edge fingerprints, functional equivalence, dream readiness)**, **C110 Dream Mode Phase 2 (DreamObserver, dream_cycle, feedback historization, P4 noise filtering)**, **C111 Dream Mode Phase 3 (bridge hypothesis generation, dream peer_fn, P2 acceleration, P3 self-correction)**, **C112 Dream Mode Phase 4 (explore_dream_mode.py end-to-end: 6 domains, equivalence precision, bridge proposals, self-correction, DL convergence)**, **C115–C120 Structural Entropy (forgetting as structural necessity: inscription threshold, anchor analysis, structural decay, controller integration, dream consolidation)**, **C121 Sleep–Wake Cycle (automatic dream trigger via T_s, SleepWakeCycle orchestrator)**.
 
 ---
 
@@ -608,6 +608,15 @@ Born sampling (P ∝ I, choosing actions probabilistically from the amplitude-de
 | `test_observation_integration.py` | C97 |
 | `test_graduated_overlap.py` | C98 |
 | `test_inertia_greedy.py` | C99 |
+| `test_benchmark_modulation.py` | C100 |
+| `test_scoped_reflexion.py` | C101/C105/C106 |
+| `test_integrated_scoped_reflexion.py` | C102 |
+| `test_benchmark_scoped_reflexion.py` | C103 |
+| `test_emergent_locality.py` | C104/C108 |
+| `test_attractor_empirical.py` | C75/C76/C80 |
+| `test_learning_empirical.py` | C77/C78/C79 |
+| `test_dream_mode.py` | C109/C110/C111/C119 |
+| `test_structural_entropy.py` | C115/C116/C117/C118/C121 |
 
 ---
 
@@ -3000,6 +3009,63 @@ The full Dream Mode pipeline (inscription → dream cycles → bridge proposals 
 
 ---
 
+### C115–C120 — Structural Entropy: forgetting as structural necessity
+
+**Claim**  
+Forgetting is not a defect but a structural necessity. Type 1 (inscription threshold): routine transitions are not recorded when the outcome is expected — the controller operates on "autopilot". Type 2 (anchor analysis + decay): structurally unimportant dormant states are identified and removed during dream consolidation. Both types are parameter-free (derived from T_s and existing ρ, μ). The only new parameter is θ_base (anchor threshold, default 0.5).
+
+**Evidence**  
+- `e0_controller/test_structural_entropy.py` — 84 tests across 15 classes:
+  - C115: TestStructuralTemperature (5), TestNovelty (6), TestInscriptionThreshold (6), TestShouldInscribe (6), TestDormancyThreshold (6), TestShouldInscribeEdgeCases (3)
+  - C116: TestAnchorScore (6), TestStateDormancy (4), TestFindDecayCandidates (6), TestFindAnchors (4)
+  - C117: TestLandscapeRemoveState (5), TestHistorizationRemoveEdges (5), TestDecayTrace (2), TestApplyDecay (11)
+  - C118: TestControllerInscriptionThreshold (9)
+- `e0_controller/test_dream_mode.py` — 9 new tests (C119):
+  - TestDreamDecayDisabled (2), TestDreamDecayEnabled (7)
+- `e0_controller/explore_structural_entropy.py` — end-to-end demo (C120):
+  - 48% non-inscription rate, 60% landscape compression (20→8 states), full consistency
+  - Anchors survive (HUB/GOAL protected, S2/S2a earned anchor status)
+
+**Result**  
+- Inscription threshold: Type 1 autopilot works, non-inscription rate 48% on hub-spoke
+- Anchor analysis: anchor_score correctly identifies hub nodes
+- Structural decay: 3-phase (trace → remove → clean) preserves audit trail
+- Controller integration: opt-in via inscription_threshold=True (backward compatible)
+- Dream consolidation: decay_enabled during dream_cycle prunes dormant states
+- All consistency checks pass post-decay
+
+**Status**  
+✅ Confirmed
+
+---
+
+### C121 — Sleep–Wake Cycle: automatic dream trigger via structural temperature
+
+**Claim**  
+The system can self-regulate its wake/sleep rhythm without new parameters. dream_pressure = T_s / (T_s + μ) uses the same μ as inertia_factor. When T_s exceeds μ (pressure > 0.5), the system should dream. After dream consolidation with decay, T_s drops and learning resumes. This creates a self-regulating limit cycle: Learn → Heat → Dream → Cool → Learn.
+
+**Evidence**  
+- `e0_controller/test_structural_entropy.py` — 17 new tests:
+  - TestDreamPressure (7): virgin system, sigmoid shape, threshold at μ, below/above μ, μ sensitivity, multi-domain report
+  - TestSleepWakeCycle (10): cold system never dreams, heat triggers dream, sleep phase has dream results, wake records temperature, pressure report, summary, multi-domain selective, decay compresses, episodes property, max_dream_cycles cap
+- `e0_controller/sleep_wake.py` — SleepWakeCycle orchestrator:
+  - Owns only rhythm (Controller + DreamObserver unchanged)
+  - Safety cap: max_dream_cycles prevents infinite sleep
+  - Multi-domain: any hot domain triggers consolidation for all
+
+**Result**  
+- Virgin system: pressure = 0, never dreams
+- After heat-up: pressure exceeds 0.5, dream triggers automatically
+- Cold system with high μ: never triggers (correct)
+- Multi-domain: hot domain correctly triggers sleep even with cold peers
+- Decay during sleep compresses landscapes
+- max_dream_cycles cap enforced
+
+**Status**  
+✅ Confirmed
+
+---
+
 ## 6. Test file inventory
 | `test_amplitude_overlay.py` | 125 | C2/C3 |
 | `test_beipackzettel.py` | 20 | C31 |
@@ -3092,8 +3158,9 @@ The full Dream Mode pipeline (inscription → dream cycles → bridge proposals 
 | `test_emergent_locality.py` | 50 | C104/C108 |
 | `test_attractor_empirical.py` | 24 | C75/C76/C80 |
 | `test_learning_empirical.py` | 18 | C77/C78/C79 |
-| `test_dream_mode.py` | 79 | C109/C110/C111 |
-| **Total** | **3385** | |
+| `test_dream_mode.py` | 88 | C109/C110/C111/C119 |
+| `test_structural_entropy.py` | 101 | C115/C116/C117/C118/C121 |
+| **Total** | **3464** | |
 
 ---
 

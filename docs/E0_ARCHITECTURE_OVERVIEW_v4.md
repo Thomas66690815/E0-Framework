@@ -3,14 +3,14 @@
 **Status:** Canonical reference  
 **Date:** 2026-04-03  
 **Supersedes:** E0_ARCHITECTURE_OVERVIEW_v3.md (2026-04-02)  
-**Scope:** 56 production modules, 9 benchmarks, 11 demos, 18 explorations, 92 test files — ~18,000 production lines, 3385 tests  
+**Scope:** 57 production modules, 9 benchmarks, 11 demos, 19 explorations, 94 test files — ~19,000 production lines, 3464 tests  
 **Papers:** P1 (Structural Interference), P2 (Spinor/Born), P3 (Non-Abelian), P4 (Reflexivity), P5 (Emergent Locality), P6 (Dream Mode)
 
 ---
 
 ## 1. Structural Layer Model
 
-E₀ is organized in nine layers. Each layer depends only on layers above it.
+E₀ is organized in eleven layers. Each layer depends only on layers above it.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -50,6 +50,13 @@ E₀ is organized in nine layers. Each layer depends only on layers above it.
 │  Layer 9 — DREAM MODE                                   │
 │  EdgeFingerprint, Equivalence Detection, DreamObserver,  │
 │  Bridge Hypothesis, Dream Peer Integration               │
+├─────────────────────────────────────────────────────────┤
+│  Layer 10 — STRUCTURAL ENTROPY                          │
+│  Inscription Threshold (Type 1), Anchor Analysis,        │
+│  Structural Decay (Type 2), Structural Temperature       │
+├─────────────────────────────────────────────────────────┤
+│  Layer 11 — SLEEP–WAKE CYCLE                            │
+│  Dream Pressure, SleepWakeCycle Orchestrator             │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -156,7 +163,7 @@ E₀ is organized in nine layers. Each layer depends only on layers above it.
 
 Not listed individually — these are experimental tooling for interactive analysis.
 Demos: `demo_beipackzettel`, `demo_ezb_zinsentscheidung`, `demo_burnout_*`, `demo_invoice_llm`, `demo_greedy_trap`, `demo_open_domain`, `demo_research_brief`, `demo_incident_postmortem`, `demo_session_persist`, `demo_canon_exposition`.
-Explorations: `explore_gordian`, `explore_amplitude`, `explore_resonator`, `explore_spinor`, `explore_topology_scan`, `explore_omega_uniqueness`, `explore_g5_edge_cases`, `explore_multigoal`, `explore_historization_gordian`, `explore_asymmetric_rho`, `explore_attractor_prediction`, `explore_attractor_universality`, `explore_convergence_speed`, `explore_dream_mode`, `explore_focus_narrowing`, `explore_landscape_scaling`, `explore_multi_attractor`, `explore_transfer_learning`.
+Explorations: `explore_gordian`, `explore_amplitude`, `explore_resonator`, `explore_spinor`, `explore_topology_scan`, `explore_omega_uniqueness`, `explore_g5_edge_cases`, `explore_multigoal`, `explore_historization_gordian`, `explore_asymmetric_rho`, `explore_attractor_prediction`, `explore_attractor_universality`, `explore_convergence_speed`, `explore_dream_mode`, `explore_focus_narrowing`, `explore_landscape_scaling`, `explore_multi_attractor`, `explore_transfer_learning`, `explore_structural_entropy`.
 
 ### Layer 8 — Observation & Service (6 modules, 1,387 lines)
 
@@ -173,7 +180,19 @@ Explorations: `explore_gordian`, `explore_amplitude`, `explore_resonator`, `expl
 
 | Module | Lines | Purpose | Paper |
 |--------|------:|---------|-------|
-| `dream_mode.py` | 624 | Cross-domain pattern recognition: EdgeFingerprint, fingerprint_distance, find_equivalences, DreamObserver (register/unregister/dream_cycle/feedback), BridgeHypothesis, propose_bridges, make_dream_peer_fn (C109–C111) | P6 |
+| `dream_mode.py` | 624 | Cross-domain pattern recognition: EdgeFingerprint, fingerprint_distance, find_equivalences, DreamObserver (register/unregister/dream_cycle/feedback), BridgeHypothesis, propose_bridges, make_dream_peer_fn (C109–C111). Decay integration: decay_enabled, DreamCycleResult.decay_reports (C119) | P6 |
+
+### Layer 10 — Structural Entropy (1 module, ~600 lines)
+
+| Module | Lines | Purpose | Paper |
+|--------|------:|---------|-------|
+| `structural_entropy.py` | ~600 | Forgetting as structural necessity. Type 1: structural_temperature (T_s = m̄/q̄), novelty, inscription_threshold, should_inscribe. Type 2: anchor_score, state_dormancy, find_decay_candidates, find_anchors. Execution: DecayTrace, DecayReport, apply_decay (3-phase). Dream trigger: dream_pressure, should_dream (C115–C121) | — |
+
+### Layer 11 — Sleep–Wake Cycle (1 module, ~240 lines)
+
+| Module | Lines | Purpose | Paper |
+|--------|------:|---------|-------|
+| `sleep_wake.py` | ~240 | Automatic rhythm between wake (controller.run) and sleep (dream_cycle). dream_pressure = T_s/(T_s+μ) triggers dreaming when T_s > μ. SleepWakeCycle orchestrates Controller + DreamObserver. Parameter-free trigger (C121) | — |
 
 ### Applications (3 modules, 1,047 lines)
 
