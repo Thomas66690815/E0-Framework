@@ -36,36 +36,36 @@ from e0_controller.primitives import Outcome
 class TestNewMappings(unittest.TestCase):
     """Every C52 mapping addition has operational justification."""
 
-    def test_zeit_maps_to_historization(self):
+    def test_time_maps_to_historization(self):
         """τ is defined as ordering of historizations (historization._tau)."""
-        self.assertIn("zeit", CANON_PROCESS_MAP["historization"])
+        self.assertIn("time", CANON_PROCESS_MAP["historization"])
 
-    def test_zustand_maps_to_realization(self):
+    def test_state_maps_to_realization(self):
         """Realization acts on states (Landscape._states: Set[str])."""
-        self.assertIn("zustand", CANON_PROCESS_MAP["realization"])
+        self.assertIn("state", CANON_PROCESS_MAP["realization"])
 
-    def test_negative_notwendigkeit_maps_to_born(self):
+    def test_negative_necessity_maps_to_born(self):
         """A₀ = negative necessity: non-transition is unstable."""
-        self.assertIn("negative_notwendigkeit", CANON_PROCESS_MAP["born"])
+        self.assertIn("negative_necessity", CANON_PROCESS_MAP["born"])
 
-    def test_reflexivitaet_maps_to_transition_field(self):
+    def test_reflexivity_maps_to_transition_field(self):
         """Operational cycle includes reflexive Step 7 (C49+C50)."""
-        self.assertIn("reflexivitaet",
+        self.assertIn("reflexivity",
                       CANON_PROCESS_MAP["transition_field"])
 
-    def test_strukturelle_zulaessigkeit_maps_to_transition_field(self):
+    def test_structural_admissibility_maps_to_transition_field(self):
         """_admissible_neighbors() enforces §9 at every cycle."""
-        self.assertIn("strukturelle_zulaessigkeit",
+        self.assertIn("structural_admissibility",
                       CANON_PROCESS_MAP["transition_field"])
 
-    def test_strukturelle_ausrichtung_maps_to_inertia(self):
+    def test_structural_alignment_maps_to_inertia(self):
         """Alignment via resistance (§6): inertia_factor dampens."""
-        self.assertIn("strukturelle_ausrichtung",
+        self.assertIn("structural_alignment",
                       CANON_PROCESS_MAP["inertia"])
 
-    def test_domaeneninvarianz_maps_to_realization(self):
+    def test_domain_invariance_maps_to_realization(self):
         """No domain-specific primitives — works on any Landscape."""
-        self.assertIn("domaeneninvarianz",
+        self.assertIn("domain_invariance",
                       CANON_PROCESS_MAP["realization"])
 
 
@@ -80,17 +80,21 @@ class TestCoverageCorrection(unittest.TestCase):
         self.cl = load_canon("ontodynamics")
         self.cov = canon_coverage(self.cl)
 
-    def test_coverage_above_90_percent(self):
-        """Coverage should be >90% after honest mapping."""
-        self.assertGreater(self.cov["coverage_ratio"], 0.9)
+    def test_coverage_above_60_percent(self):
+        """Coverage should be >60% after honest mapping (33/51 in v2)."""
+        self.assertGreater(self.cov["coverage_ratio"], 0.6)
 
-    def test_only_raumzeit_not_instantiated(self):
-        """raumzeit is the only genuinely unimplemented concept."""
-        self.assertEqual(self.cov["not_instantiated"], {"raumzeit"})
+    def test_spacetime_not_instantiated(self):
+        """spacetime is a genuinely unimplemented concept."""
+        self.assertIn("spacetime", self.cov["not_instantiated"])
 
-    def test_18_of_19_instantiated(self):
-        """18 out of 19 canon nodes now have operational counterparts."""
-        self.assertEqual(len(self.cov["instantiated"]), 18)
+    def test_canonical_coverage_strong(self):
+        """Most canonical concepts (levels 0-8) should be instantiated."""
+        cl = load_canon("ontodynamics")
+        canonical = {n.id for n in cl.info.nodes if n.derivation_level <= 8}
+        instantiated_canonical = self.cov["instantiated"] & canonical
+        # All canonical except spacetime should be instantiated
+        self.assertGreaterEqual(len(instantiated_canonical), len(canonical) - 1)
 
     def test_partition_still_complete(self):
         """instantiated ∪ not_instantiated = all canon nodes."""
@@ -117,29 +121,26 @@ class TestExpositionAccuracy(unittest.TestCase):
         for _ in range(5):
             self.sg.self_historize(list(CORE_COMPONENTS), Outcome.SUCCESS)
 
-    def test_exposition_mentions_raumzeit_as_frontier(self):
-        """The only frontier node should appear in exposition."""
+    def test_exposition_mentions_spacetime_as_frontier(self):
+        """spacetime should appear in exposition as frontier."""
         expo = build_self_exposition(self.cl, sg=self.sg)
-        self.assertIn("raumzeit", expo.lower())
+        self.assertIn("spacetime", expo.lower())
 
-    def test_exposition_shows_reflexivitaet_as_operational(self):
-        """reflexivitaet should appear in HOW I OPERATE, not frontier."""
+    def test_exposition_shows_reflexivity_as_operational(self):
+        """reflexivity should appear in HOW I OPERATE, not frontier."""
         expo = build_self_exposition(self.cl, sg=self.sg)
         # Section 2 lists components with canon mappings
-        self.assertIn("reflexivitaet", expo.lower())
+        self.assertIn("reflexivity", expo.lower())
 
-    def test_exposition_shows_zeit_mapping(self):
-        """zeit should be mentioned as mapped to historization."""
+    def test_exposition_shows_time_mapping(self):
+        """time should be mentioned as mapped to historization."""
         expo = build_self_exposition(self.cl, sg=self.sg)
-        self.assertIn("zeit", expo.lower())
+        self.assertIn("time", expo.lower())
 
-    def test_frontier_is_small(self):
-        """Exposition should show only 1 not-instantiated concept."""
+    def test_frontier_exists(self):
+        """Exposition should show not-instantiated concepts (epistemic frontier)."""
         expo = build_self_exposition(self.cl, sg=self.sg)
-        # Section 4 mentions frontier — should be short now
         self.assertIn("frontier", expo.lower())
-        # The frontier should mention raumzeit
-        self.assertIn("raumzeit", expo.lower())
 
 
 # ──────────────────────────────────────────────
@@ -164,10 +165,10 @@ class TestReverseMap(unittest.TestCase):
             for comp in comps:
                 self.assertIn(comp, CANON_PROCESS_MAP)
 
-    def test_reflexivitaet_reverse_maps_to_transition_field(self):
-        """reflexivitaet → transition_field in reverse map."""
+    def test_reflexivity_reverse_maps_to_transition_field(self):
+        """reflexivity → transition_field in reverse map."""
         self.assertIn("transition_field",
-                      PROCESS_CANON_MAP["reflexivitaet"])
+                      PROCESS_CANON_MAP["reflexivity"])
 
 
 if __name__ == "__main__":

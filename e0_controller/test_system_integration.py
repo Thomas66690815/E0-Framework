@@ -149,7 +149,7 @@ class TestSelfFundierung(unittest.TestCase):
         """The controller can navigate through the canon landscape."""
         s = Session("c51-nav", self.cl.landscape, _always_succeed,
                     base_dir=self.tmpdir)
-        result = s.iterate("differenz", goal="negative_notwendigkeit",
+        result = s.iterate("difference", goal="negative_necessity",
                            max_cycles=50, max_iterations=2)
         self.assertGreater(result.iterations, 0)
         trace = result.results[0].trace
@@ -174,7 +174,7 @@ class TestSelfFundierung(unittest.TestCase):
         """More iterations → more self-knowledge in self-graph."""
         s = Session("c51-accum", self.cl.landscape, _always_succeed,
                     base_dir=self.tmpdir)
-        result = s.iterate("differenz", goal="negative_notwendigkeit",
+        result = s.iterate("difference", goal="negative_necessity",
                            max_cycles=30, max_iterations=5)
         snap = s.self_graph.snapshot()
         total_load = sum(v["load"] for v in snap.values())
@@ -193,8 +193,8 @@ class TestSelfFundierung(unittest.TestCase):
         )
         self.assertGreater(len(expo), 500,
             "Full exposition should be a substantial document")
-        self.assertIn("historisierung", expo.lower())
-        self.assertIn("differenz", expo.lower())
+        self.assertIn("historization", expo.lower())
+        self.assertIn("difference", expo.lower())
 
 
 # ──────────────────────────────────────────────
@@ -342,7 +342,7 @@ class TestDirectPipelineAssembly(unittest.TestCase):
             self.assertIn(section, expo)
         self.assertIn("curvature", expo)
         self.assertIn("Deactivated", expo)
-        self.assertIn("differenz", expo.lower())
+        self.assertIn("difference", expo.lower())
 
     def test_exposition_shows_component_canon_mapping(self):
         """Section 2 connects operational components to canon concepts."""

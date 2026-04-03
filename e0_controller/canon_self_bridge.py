@@ -38,45 +38,56 @@ from .reflexive_action import ReflexiveJournal
 
 # Each self-graph component → the canon concept(s) it instantiates.
 # This is the structural claim: E0's operation IS the canon in action.
+#
+# v2.0: English IDs, expanded to cover implementation-layer concepts
+# (levels 9-17). Higher-level mechanisms (multiverse, dream, entropy,
+# observation, sleep-wake) remain as EPISTEMIC FRONTIER — they are
+# operational code but not yet tracked by the self-graph's core cycle.
 CANON_PROCESS_MAP: Dict[str, List[str]] = {
-    # Δ-detection: the amplitude module finds differences
-    "amplitude": ["differenz"],
-    # State selection via A0 + realizability rate.
-    # negative_notwendigkeit: A₀ IS negative necessity —
-    # "if Δ>0 and path exists, non-transition is unstable" is a
-    # structural prohibition, not a positive prescription.
-    "born": ["axiom_a0", "rate", "negative_notwendigkeit"],
+    # Δ-detection: the amplitude module finds differences and constructs
+    # the tension signal S_eff = Δ · R_eff.
+    "amplitude": ["difference", "tension"],
+    # State selection via A0 + realizability rate + overrides.
+    # negative_necessity: A₀ IS negative necessity —
+    # "if Δ>0 and path exists, non-transition is unstable."
+    "born": [
+        "axiom_a0", "rate", "negative_necessity",
+        "born_sampling", "amplitude_override", "exploration_policy",
+    ],
     # Execution: local realization along structurally admissible paths.
-    # zustand: realization acts on distinguishable configurations
-    #   (Landscape._states: Set[str] — minimal, exactly canonical).
-    # domaeneninvarianz: the realization component works identically
-    #   on ANY Landscape — no domain-specific primitives exist.
+    # state: acts on distinguishable configurations (Landscape._states).
+    # domain_invariance: works identically on ANY Landscape.
+    # greedy_navigation + escalation: the concrete execution mechanisms.
     "realization": [
-        "lokale_realisierung", "pfad", "zustand", "domaeneninvarianz",
+        "local_realization", "path", "state", "domain_invariance",
+        "greedy_navigation", "escalation",
     ],
     # THE central connection — operational historization IS the canon
-    # primitive. zeit: τ is DEFINED as "ordering of historizations" —
-    # historization._tau increments on every update(). Canon §1.6: ✅
-    "historization": ["historisierung", "zeit"],
+    # primitive. time: τ is DEFINED as "ordering of historizations" —
+    # historization._tau increments on every update().
+    # trace_quality + trace_load: metrics derived from historization.
+    "historization": ["historization", "time", "trace_quality", "trace_load"],
     # Resistance from accumulated structure + topological inertia.
-    # strukturelle_ausrichtung: alignment via resistance (AGI Blueprint
-    # §6) — high R on destabilizing transitions prevents them. The
-    # inertia system (trace_load, trace_quality, inertia_factor) IS
-    # the alignment mechanism.
-    "inertia": ["widerstand", "masse", "strukturelle_ausrichtung"],
-    # The transition field: connecting differences via the operational
-    # cycle. reflexivitaet: the operational cycle now includes Step 7
-    # (reflexive self-modification via SelfGraph + dual_reflect +
-    # reflexive_action). strukturelle_zulaessigkeit: _admissible_neighbors()
-    # enforces Δ>0, R<∞, K11 Tier-2 at every cycle. §9 AGI-Blueprint.
-    "transition_field": [
-        "verbindung", "operationaler_zyklus",
-        "reflexivitaet", "strukturelle_zulaessigkeit",
+    # structural_alignment: alignment via resistance (AGI Blueprint §6).
+    # inertia_modulation + adaptive_mu: the concrete inertia mechanisms.
+    "inertia": [
+        "resistance", "mass", "structural_alignment",
+        "inertia_modulation", "adaptive_mu",
     ],
-    # Curvature modulation → degree of overlap (topological quality)
-    "curvature": ["gradueller_overlap"],
-    # Overlap modulation → also degree-based
-    "overlap": ["gradueller_overlap"],
+    # The transition field: connecting differences via the operational
+    # cycle. reflexivity: the cycle operating on its own structure.
+    # structural_admissibility: _admissible_neighbors() enforces Δ>0,
+    # R<∞ at every cycle. reflexion_reactive/proactive + scoped: the
+    # concrete reflexion mechanisms.
+    "transition_field": [
+        "connection", "operational_cycle",
+        "reflexivity", "structural_admissibility",
+        "reflexion_reactive", "reflexion_proactive", "scoped_reflexion",
+    ],
+    # Curvature modulation → SU(2) phase geometry
+    "curvature": ["overlap", "su2_phase"],
+    # Overlap modulation → graduated overlap M_H
+    "overlap": ["overlap", "overlap_modulation"],
 }
 
 # Reverse map: canon node → which self-graph component(s) instantiate it
@@ -185,14 +196,14 @@ def build_self_exposition(
         "  historization → inertia → transition_field → amplitude) IS the canon's"
     )
     sections.append(
-        "  'operationaler_zyklus' (L6) — not a separate implementation, but the"
+        "  'operational_cycle' (L6) — not a separate implementation, but the"
     )
     sections.append(
         "  same structure seen from the process side."
     )
     sections.append("")
     sections.append(
-        "  Key identity: self-graph 'historization' component = canon 'historisierung'"
+        "  Key identity: self-graph 'historization' component = canon 'historization'"
     )
     sections.append(
         "  primitive. When the self-graph historizes its own outcomes, it performs"

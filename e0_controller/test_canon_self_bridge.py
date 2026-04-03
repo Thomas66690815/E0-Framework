@@ -33,15 +33,15 @@ class TestCanonProcessMap(unittest.TestCase):
                           f"Component {comp} has no canon mapping")
             self.assertGreater(len(CANON_PROCESS_MAP[comp]), 0)
 
-    def test_historization_maps_to_historisierung(self):
-        """The central identity: historization IS historisierung + zeit."""
+    def test_historization_maps_to_historization(self):
+        """The central identity: historization IS historization + time."""
         mapped = CANON_PROCESS_MAP["historization"]
-        self.assertIn("historisierung", mapped)
-        self.assertIn("zeit", mapped)
+        self.assertIn("historization", mapped)
+        self.assertIn("time", mapped)
 
-    def test_amplitude_maps_to_differenz(self):
+    def test_amplitude_maps_to_difference(self):
         """Δ-detection maps to the root primitive."""
-        self.assertEqual(CANON_PROCESS_MAP["amplitude"], ["differenz"])
+        self.assertIn("difference", CANON_PROCESS_MAP["amplitude"])
 
     def test_born_maps_to_axiom_and_rate(self):
         """State selection maps to A0 + realizability."""
@@ -51,8 +51,8 @@ class TestCanonProcessMap(unittest.TestCase):
 
     def test_reverse_map_exists(self):
         """Reverse map is populated."""
-        self.assertIn("historisierung", PROCESS_CANON_MAP)
-        self.assertIn("historization", PROCESS_CANON_MAP["historisierung"])
+        self.assertIn("historization", PROCESS_CANON_MAP)
+        self.assertIn("historization", PROCESS_CANON_MAP["historization"])
 
     def test_reverse_map_bidirectional(self):
         """Forward and reverse maps are consistent."""
@@ -104,16 +104,16 @@ class TestCanonCoverage(unittest.TestCase):
         overlap = self.cov["instantiated"] & self.cov["not_instantiated"]
         self.assertEqual(overlap, set())
 
-    def test_historisierung_instantiated(self):
-        self.assertIn("historisierung", self.cov["instantiated"])
+    def test_historization_instantiated(self):
+        self.assertIn("historization", self.cov["instantiated"])
 
-    def test_negative_notwendigkeit_instantiated(self):
+    def test_negative_necessity_instantiated(self):
         """A₀ (born) IS negative necessity — non-transition is unstable."""
-        self.assertIn("negative_notwendigkeit", self.cov["instantiated"])
+        self.assertIn("negative_necessity", self.cov["instantiated"])
 
-    def test_reflexivitaet_instantiated(self):
+    def test_reflexivity_instantiated(self):
         """C49+C50+C51: operational cycle includes reflexive Step 7."""
-        self.assertIn("reflexivitaet", self.cov["instantiated"])
+        self.assertIn("reflexivity", self.cov["instantiated"])
 
     def test_coverage_ratio_between_0_and_1(self):
         self.assertGreater(self.cov["coverage_ratio"], 0.0)
@@ -132,8 +132,8 @@ class TestFormatProcessStatus(unittest.TestCase):
         status = format_process_status(sg)
         self.assertIn("amplitude", status)
         self.assertIn("historization", status)
-        self.assertIn("differenz", status)
-        self.assertIn("historisierung", status)
+        self.assertIn("difference", status)
+        self.assertIn("historization", status)
 
     def test_after_historization(self):
         sg = SelfGraph()
@@ -192,7 +192,7 @@ class TestBuildSelfExposition(unittest.TestCase):
     def test_contains_canon_summary(self):
         expo = build_self_exposition(self.cl)
         self.assertIn("ontodynamics", expo)
-        self.assertIn("v1.2", expo)
+        self.assertIn("v2.0", expo)
 
     def test_contains_coverage_ratio(self):
         expo = build_self_exposition(self.cl)
@@ -201,16 +201,14 @@ class TestBuildSelfExposition(unittest.TestCase):
 
     def test_contains_not_instantiated_concepts(self):
         expo = build_self_exposition(self.cl)
-        self.assertIn("negative_notwendigkeit", expo)
-        # Should show as "Not yet operational"
+        # v2 has implementation nodes not yet mapped to self-graph
         self.assertIn("Not yet operational", expo)
 
     def test_frontier_shows_labels(self):
         sg = SelfGraph()
         expo = build_self_exposition(self.cl, sg)
-        # Frontier should show human-readable labels
-        self.assertIn("Negative Necessity", expo)
-        self.assertIn("Reflexivity Emergence", expo)
+        # Frontier should show human-readable labels from not-instantiated nodes
+        self.assertIn("EPISTEMIC FRONTIER", expo)
 
     def test_exposition_is_substantial(self):
         sg = SelfGraph()
@@ -226,7 +224,7 @@ class TestBuildSelfExposition(unittest.TestCase):
 class TestStructuralCorrectness(unittest.TestCase):
     """The bridge encoding is structurally faithful to the canon."""
 
-    def test_core_cycle_maps_to_operationaler_zyklus(self):
+    def test_core_cycle_maps_to_operational_cycle(self):
         """The self-graph's 6-node cycle maps to the canon's L6 concept."""
         cycle_components = [
             "amplitude", "born", "realization",
@@ -235,18 +233,18 @@ class TestStructuralCorrectness(unittest.TestCase):
         all_mapped = set()
         for comp in cycle_components:
             all_mapped.update(CANON_PROCESS_MAP[comp])
-        self.assertIn("operationaler_zyklus", all_mapped)
+        self.assertIn("operational_cycle", all_mapped)
 
     def test_modulation_maps_to_overlap(self):
-        """Both modulation components map to gradueller_overlap."""
-        self.assertIn("gradueller_overlap", CANON_PROCESS_MAP["curvature"])
-        self.assertIn("gradueller_overlap", CANON_PROCESS_MAP["overlap"])
+        """Both modulation components map to overlap."""
+        self.assertIn("overlap", CANON_PROCESS_MAP["curvature"])
+        self.assertIn("overlap", CANON_PROCESS_MAP["overlap"])
 
     def test_inertia_maps_to_resistance_and_mass(self):
         """Inertia component instantiates both resistance and mass."""
         mapped = CANON_PROCESS_MAP["inertia"]
-        self.assertIn("widerstand", mapped)
-        self.assertIn("masse", mapped)
+        self.assertIn("resistance", mapped)
+        self.assertIn("mass", mapped)
 
     def test_no_duplicate_in_map_values(self):
         """Each component's mapping list has no duplicates."""

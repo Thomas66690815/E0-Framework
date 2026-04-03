@@ -1,64 +1,71 @@
 {
   "name": "ontodynamics",
-  "version": "1.2",
-  "source": "canon/ontodynamics.txt + canon/e0-canon-plain.txt + canon/e0-agi-blueprint.md",
-  "description": "Complete E0 canonical landscape. Layer 1: Ontodynamics (pre-physical primitives). Layer 2: Canon Plain (operative structure, Axiom A0). Layer 3: AGI Blueprint (operational cycle, reflexivity emergence, structural alignment, domain invariance, negative necessity thesis). Derivation order encoded in delta topology.",
+  "version": "2.0",
+  "source": "canon/ontodynamics.txt + canon/e0-canon-plain.txt + canon/e0-agi-blueprint.md + implementation (C1-C121, 3464 tests)",
+  "description": "Complete E0 landscape. Layers 0-8: Ontodynamics canon (pre-physical primitives, derivation topology, Axiom A0, emergence). Layers 9-17: Implementation (navigation, modulation, reflexion, multiverse, observation, dream mode, structural entropy, sleep-wake cycle). Derivation order encoded in delta topology. Confidence values reflect empirical validation from 3464 tests across 94 test files.",
   "nodes": [
     {
-      "id": "differenz",
+      "id": "difference",
       "label": "Difference",
       "derivation_level": 0,
       "is_primitive": true,
       "description": "Primitive, effective, directed, scaled. Entities are the result of stabilized difference."
     },
     {
-      "id": "lokale_realisierung",
+      "id": "local_realization",
       "label": "Local Realization",
       "derivation_level": 1,
       "is_primitive": true,
       "description": "Difference can be realized partially, not only globally. Minimal condition for actuality."
     },
     {
-      "id": "verbindung",
+      "id": "connection",
       "label": "Connection",
       "derivation_level": 2,
       "is_primitive": true,
       "description": "Elementary topological operation. Multiple difference components realized together."
     },
     {
-      "id": "gradueller_overlap",
+      "id": "overlap",
       "label": "Gradual Overlap",
       "derivation_level": 3,
       "is_primitive": true,
       "description": "Connections possess degree. Stability is an effect of sufficient overlap."
     },
     {
-      "id": "historisierung",
+      "id": "historization",
       "label": "Historization",
       "derivation_level": 3,
       "is_primitive": true,
       "description": "Realized connections leave irreversible structural trace. The cost of reality."
     },
     {
-      "id": "zustand",
+      "id": "state",
       "label": "State",
       "derivation_level": 4,
       "is_primitive": false,
       "description": "A stabilized configuration of historized connections."
     },
     {
-      "id": "widerstand",
+      "id": "resistance",
       "label": "Resistance",
       "derivation_level": 4,
       "is_primitive": false,
       "description": "The integration cost of reconfiguring historized topology."
     },
     {
-      "id": "zeit",
+      "id": "time",
       "label": "Time",
       "derivation_level": 4,
       "is_primitive": false,
       "description": "The ordering of realized transitions. Local, emergent, path-dependent."
+    },
+    {
+      "id": "path",
+      "label": "Path",
+      "derivation_level": 4,
+      "is_primitive": false,
+      "description": "Structural admissibility condition for transitions. A path exists iff total resistance is finite."
     },
     {
       "id": "rate",
@@ -68,78 +75,297 @@
       "description": "Effectiveness of realization relative to integration cost."
     },
     {
-      "id": "raumzeit",
+      "id": "spacetime",
       "label": "Spacetime",
       "derivation_level": 5,
       "is_primitive": false,
       "description": "The globally historized topology of realized connections."
     },
     {
-      "id": "masse",
+      "id": "mass",
       "label": "Mass",
       "derivation_level": 5,
       "is_primitive": false,
       "description": "Persistent topological inertia from accumulated historization."
     },
     {
-      "id": "pfad",
-      "label": "Path",
-      "derivation_level": 4,
-      "is_primitive": false,
-      "description": "Structural admissibility condition for transitions. Not an object, not a dynamic. A path exists iff total resistance is finite. Primitive in Canon Plain, derived in Ontodynamics."
-    },
-    {
       "id": "axiom_a0",
       "label": "Axiom A0 — Difference Minimization",
       "derivation_level": 5,
       "is_primitive": false,
-      "description": "If difference exists and a structurally admissible path with finite resistance is available, then transition is structurally more stable than non-transition. The foundational law of E0."    },
+      "description": "If difference exists and a structurally admissible path with finite resistance is available, then transition is structurally more stable than non-transition. The foundational law of E0."
+    },
     {
-      "id": "operationaler_zyklus",
+      "id": "operational_cycle",
       "label": "Core Operational Cycle",
       "derivation_level": 6,
       "is_primitive": false,
-      "description": "\u00a74: Detection of local differences, enumeration of admissible paths, estimation of resistance, selection by realizability, execution, structural historization. Learning is not optional. Blueprint instantiation of the primitives as continuous process."
+      "description": "Detection of local differences, enumeration of admissible paths, estimation of resistance, selection by realizability, execution, structural historization. Learning is not optional."
     },
     {
-      "id": "strukturelle_zulaessigkeit",
+      "id": "structural_admissibility",
       "label": "Structural Admissibility",
       "derivation_level": 6,
       "is_primitive": false,
-      "description": "\u00a79: Must reject transitions that collapse partial into global, cannot integrate into structure, simulate irreversibility without trace, or bypass resistance via global optimization. Implicit, non-negotiable."
+      "description": "Must reject transitions that collapse partial into global, cannot integrate into structure, simulate irreversibility without trace, or bypass resistance via global optimization."
     },
     {
-      "id": "reflexivitaet",
+      "id": "reflexivity",
       "label": "Reflexivity Emergence",
       "derivation_level": 7,
       "is_primitive": false,
-      "description": "\u00a75: Emerges when system models own transition structure, self-modification becomes admissible transition, historization constrains future self-changes. Structurally induced, not architecturally imposed."
+      "description": "Emerges when system models own transition structure. Self-modification becomes admissible transition. Historization constrains future self-changes. Structurally induced, not architecturally imposed."
     },
     {
-      "id": "strukturelle_ausrichtung",
+      "id": "structural_alignment",
       "label": "Structural Alignment",
       "derivation_level": 7,
       "is_primitive": false,
-      "description": "\u00a76: Arises mechanically, not normatively. High-impact transitions incur high resistance. Global resets destroy historized structure. Constrains classes of failure, not outcomes."
+      "description": "Arises mechanically, not normatively. High-impact transitions incur high resistance. Global resets destroy historized structure. Constrains classes of failure, not outcomes."
     },
     {
-      "id": "domaeneninvarianz",
+      "id": "domain_invariance",
       "label": "Domain Invariance",
       "derivation_level": 7,
       "is_primitive": false,
-      "description": "\u00a77: Does not depend on sensory modality, symbol systems, embodiment, or task environment. Domain specificity enters only through embedding, not through mechanism."
+      "description": "Does not depend on sensory modality, symbol systems, embodiment, or task environment. Domain specificity enters only through embedding, not through mechanism."
     },
     {
-      "id": "negative_notwendigkeit",
+      "id": "negative_necessity",
       "label": "Negative Necessity",
       "derivation_level": 8,
       "is_primitive": false,
-      "description": "\u00a72: Conditions under which avoiding intelligence becomes structurally unstable. Not a positive construction claim. Persistent non-intelligent behavior cannot be maintained without structural degeneration."    }
+      "description": "Conditions under which avoiding intelligence becomes structurally unstable. Not a positive construction claim. Persistent non-intelligent behavior cannot be maintained without structural degeneration."
+    },
+    {
+      "id": "tension",
+      "label": "Effective Tension",
+      "derivation_level": 9,
+      "is_primitive": false,
+      "description": "S_eff(x,y) = Δ(x,y) · R_eff(x,y). The composite navigation signal. R_eff = R₀ + δ_H(U,F). Greedy selection minimizes S_eff. Validated by P1 (5 benchmark domains)."
+    },
+    {
+      "id": "greedy_navigation",
+      "label": "Greedy Navigation",
+      "derivation_level": 9,
+      "is_primitive": false,
+      "description": "argmin S_eff/(M_H·I) with amplitude override. The core decision loop: enumerate admissible edges, compute penalized tension, select minimum. Recovers from 4 escalation types."
+    },
+    {
+      "id": "escalation",
+      "label": "Escalation Recovery",
+      "derivation_level": 9,
+      "is_primitive": false,
+      "description": "Four escalation types: DEAD_END (no edges), FILTERED (all filtered by historization), EXHAUSTED (max steps), OVERLOADED (OI > threshold → peer consultation). Each triggers specific recovery."
+    },
+    {
+      "id": "amplitude_override",
+      "label": "Amplitude Override",
+      "derivation_level": 10,
+      "is_primitive": false,
+      "description": "High-Δ edges beat greedy selection when Δ·confidence exceeds threshold. Non-perturbative correction to greedy. Validated by P2 (amplitude paper)."
+    },
+    {
+      "id": "born_sampling",
+      "label": "Born Sampling",
+      "derivation_level": 10,
+      "is_primitive": false,
+      "description": "Probabilistic edge selection weighted by amplitude. Breaks greedy determinism. Enables exploration of high-Δ alternatives."
+    },
+    {
+      "id": "su2_phase",
+      "label": "SU(2) Phase Geometry",
+      "derivation_level": 10,
+      "is_primitive": false,
+      "description": "Non-abelian phase accumulation on edges. Multi-axis spinor phases. Phase modulates amplitude. Validated by P3 (non-abelian structure)."
+    },
+    {
+      "id": "exploration_policy",
+      "label": "Exploration Policy",
+      "derivation_level": 10,
+      "is_primitive": false,
+      "description": "Stochastic exploration using Born-weighted sampling. Governs exploration-exploitation tradeoff via temperature-controlled randomness."
+    },
+    {
+      "id": "overlap_modulation",
+      "label": "Overlap Modulation (M_H)",
+      "derivation_level": 11,
+      "is_primitive": false,
+      "description": "M_H(x→y) = max(0.2, Σ_z √(v(x,z)·v(z,y))). Greedy divides S_eff by M_H. Well-connected paths preferred. Validated by C98 (24 tests) + C100 (29 tests). Modulation never harms."
+    },
+    {
+      "id": "inertia_modulation",
+      "label": "Inertia Modulation (I)",
+      "derivation_level": 11,
+      "is_primitive": false,
+      "description": "I(e) = 1 − α·(m/(m+μ))·(1−|q|). Greedy divides S_eff by I. Confused edges (|q|≈0) penalized, clear edges rewarded. Validated by C99 (21 tests) + C100 (29 tests)."
+    },
+    {
+      "id": "trace_quality",
+      "label": "Trace Quality",
+      "derivation_level": 11,
+      "is_primitive": false,
+      "description": "q(e) = (U−F)/(U+F+ε) ∈ (−1,+1). Directional signal: +1 = always succeeds, −1 = always fails, 0 = confused. Core metric for all modulation and reflexion decisions."
+    },
+    {
+      "id": "trace_load",
+      "label": "Trace Load",
+      "derivation_level": 11,
+      "is_primitive": false,
+      "description": "m(e) = U+F. Total experience intensity on an edge. High load = well-explored. Used in inertia_factor, anchor_score, and dream fingerprints."
+    },
+    {
+      "id": "reflexion_reactive",
+      "label": "Reflexion Stufe 1 (Reactive)",
+      "derivation_level": 12,
+      "is_primitive": false,
+      "description": "Stuck → propose edges from historization patterns. Pattern extraction from high-quality edges. Reactive: triggered only when navigation fails. Validated by P4."
+    },
+    {
+      "id": "reflexion_proactive",
+      "label": "Reflexion Stufe 2 (Proactive)",
+      "derivation_level": 12,
+      "is_primitive": false,
+      "description": "Frontier → propose edges before getting stuck. Anticipatory edge creation from partial patterns. More efficient than reactive. Validated by P4."
+    },
+    {
+      "id": "self_graph",
+      "label": "Self-Graph (Stufe 3)",
+      "derivation_level": 12,
+      "is_primitive": false,
+      "description": "E0 models own transition structure as navigable landscape. Self-modification becomes admissible transition. Historization constrains future self-changes. Validated by P4 (reflexive self-modification)."
+    },
+    {
+      "id": "scoped_reflexion",
+      "label": "Scoped Reflexion",
+      "derivation_level": 12,
+      "is_primitive": false,
+      "description": "Historization-driven locality for edge proposals. locality = mean_load/(mean_load+μ), radius = ceil((1−ℓ)·D). Fresh landscapes → global scope, historized → local. Validated by C101-C104 (35 tests). P5 §10.4 Q2."
+    },
+    {
+      "id": "adaptive_mu",
+      "label": "Adaptive μ",
+      "derivation_level": 12,
+      "is_primitive": false,
+      "description": "μ = |E|/|V| derived from landscape topology. Sparse graphs → fast localization, dense → slower. Eliminates fixed parameter. Validated by C105 (15 tests). P5 §10.4 Q1."
+    },
+    {
+      "id": "multiverse",
+      "label": "Multiverse",
+      "derivation_level": 13,
+      "is_primitive": false,
+      "description": "N≥2 coupled E0 systems navigating independent landscapes. Each universe has own historization. Coupling enables knowledge transfer. Validated by P6, C66-C71."
+    },
+    {
+      "id": "cross_reflexion",
+      "label": "Cross-Reflexion",
+      "derivation_level": 13,
+      "is_primitive": false,
+      "description": "Edge proposals donated across universe boundaries. Donor patterns transferred with coupling_discount. Scoped variant (C107) uses donor-side locality. Validated by C69 benchmark."
+    },
+    {
+      "id": "coupling_router",
+      "label": "Coupling Router",
+      "derivation_level": 13,
+      "is_primitive": false,
+      "description": "Dynamic partner selection for N>2 universes. RECOVERY/EXPLORATION dual pressure. Self-historizing coupling quality. CouplingSelfGraph for Stufe-3 coupling diagnosis. Validated by C66-C68."
+    },
+    {
+      "id": "novelty_gate",
+      "label": "Novelty Gate",
+      "derivation_level": 13,
+      "is_primitive": false,
+      "description": "Prevents Δ-collapse: filters coupling proposals that would reduce structural diversity. Ensures multiverse coupling remains productive. Validated by P6."
+    },
+    {
+      "id": "asymmetric_coupling",
+      "label": "Asymmetric Coupling",
+      "derivation_level": 13,
+      "is_primitive": false,
+      "description": "Weight-based directional resistance: R₀(req→don) = base_resistance/donor.weight. Experienced donors contribute more easily. Validated by C67."
+    },
+    {
+      "id": "observation",
+      "label": "Observation Landscape",
+      "derivation_level": 14,
+      "is_primitive": false,
+      "description": "E0 observes own landscape as a navigable domain. O-Landscape with focus/move/defocus navigation. Scoped projection with configurable depth. Wired to server (REST) and client (UI). Validated by C94-C97 (146 tests)."
+    },
+    {
+      "id": "dream_mode",
+      "label": "Dream Mode",
+      "derivation_level": 15,
+      "is_primitive": false,
+      "description": "Passive cross-domain pattern recognition. DreamObserver registers N domains, runs dream_cycle (passive comparison, readiness partitioning, incremental Dream Landscape). Dream Landscape is self-historizing valid E0 Landscape. Validated by C109-C112 (88 tests)."
+    },
+    {
+      "id": "edge_fingerprint",
+      "label": "Edge Fingerprint",
+      "derivation_level": 15,
+      "is_primitive": false,
+      "description": "f(e) = (q, m, I). Three-dimensional characterization of edge behavior: trace quality, trace load, inertia factor. Domain-agnostic representation enables cross-domain comparison."
+    },
+    {
+      "id": "functional_equivalence",
+      "label": "Functional Equivalence",
+      "derivation_level": 15,
+      "is_primitive": false,
+      "description": "Quantile-based, order-invariant matching of edge fingerprints across domains. Two edges are functionally equivalent if they occupy similar positions in their respective domains' fingerprint distributions."
+    },
+    {
+      "id": "bridge_hypothesis",
+      "label": "Bridge Hypothesis",
+      "derivation_level": 15,
+      "is_primitive": false,
+      "description": "Dream equivalences → cross-edge proposals. BridgeHypothesis + DreamBridgeResult. dream_coupling_discount (quality→coupling weight). propose_bridges feeds into cross_propose_edges. make_dream_peer_fn for non-invasive E0Controller integration."
+    },
+    {
+      "id": "structural_temperature",
+      "label": "Structural Temperature (T_s)",
+      "derivation_level": 16,
+      "is_primitive": false,
+      "description": "T_s = −Σ p·log(p) over state transition frequencies. Measures heat from unused paths. High T_s = many untried transitions. Rises during active navigation, drops during consolidation. Validated by C115 (32 tests)."
+    },
+    {
+      "id": "inscription_threshold",
+      "label": "Inscription Threshold",
+      "derivation_level": 16,
+      "is_primitive": false,
+      "description": "Type 1 forgetting: novelty > ε required for state inscription. T_s controls ε dynamically. Hot landscape = selective inscription, cold = accept everything. Controller opt-in. Validated by C115, C118 (9 tests)."
+    },
+    {
+      "id": "anchor_analysis",
+      "label": "Anchor Analysis",
+      "derivation_level": 16,
+      "is_primitive": false,
+      "description": "anchor_score = |q̄|·m_max·log(1+deg). States with high score are structurally anchored (clear traces, high load, high connectivity). Low-anchor states are decay candidates. Only new parameter: θ_base. Validated by C116 (20 tests)."
+    },
+    {
+      "id": "structural_decay",
+      "label": "Structural Decay",
+      "derivation_level": 16,
+      "is_primitive": false,
+      "description": "Type 2 forgetting: 3-phase execution (trace → remove → clean). Landscape.remove_state, Historization.remove_edges. DecayTrace + DecayReport. Dream mode: decay_enabled opt-in. Validated by C117 (23 tests), C119 (9 tests)."
+    },
+    {
+      "id": "dream_pressure",
+      "label": "Dream Pressure",
+      "derivation_level": 17,
+      "is_primitive": false,
+      "description": "dream_pressure = T_s/(T_s+μ) ∈ [0,1). Parameter-free trigger using existing μ. should_dream ⟺ T_s > μ ⟺ pressure > 0.5. Self-regulating: dreaming reduces T_s which reduces pressure."
+    },
+    {
+      "id": "sleep_wake_cycle",
+      "label": "Sleep-Wake Cycle",
+      "derivation_level": 17,
+      "is_primitive": false,
+      "description": "Automatic rhythm: wake (controller navigation builds experience) → check dream_pressure → sleep (dream_cycle consolidation + structural decay) → wake. Self-sustaining limit cycle: Learn → Heat → Dream → Cool → Learn. Validated by C121 (17 tests)."
+    }
   ],
   "edges": [
     {
-      "from": "differenz",
-      "to": "lokale_realisierung",
+      "from": "difference",
+      "to": "local_realization",
       "delta": 0.3,
       "resistance": 0.2,
       "initial_U": 10.0,
@@ -148,8 +374,8 @@
       "derivation": "Difference can be realized partially."
     },
     {
-      "from": "lokale_realisierung",
-      "to": "verbindung",
+      "from": "local_realization",
+      "to": "connection",
       "delta": 0.3,
       "resistance": 0.2,
       "initial_U": 10.0,
@@ -158,8 +384,8 @@
       "derivation": "Multiple difference components realized together."
     },
     {
-      "from": "verbindung",
-      "to": "gradueller_overlap",
+      "from": "connection",
+      "to": "overlap",
       "delta": 0.4,
       "resistance": 0.3,
       "initial_U": 10.0,
@@ -168,8 +394,8 @@
       "derivation": "Connections possess degree."
     },
     {
-      "from": "verbindung",
-      "to": "historisierung",
+      "from": "connection",
+      "to": "historization",
       "delta": 0.5,
       "resistance": 0.3,
       "initial_U": 10.0,
@@ -178,8 +404,8 @@
       "derivation": "Realized connections leave irreversible trace."
     },
     {
-      "from": "gradueller_overlap",
-      "to": "historisierung",
+      "from": "overlap",
+      "to": "historization",
       "delta": 0.3,
       "resistance": 0.2,
       "initial_U": 8.0,
@@ -188,8 +414,8 @@
       "derivation": "Stability requires non-zero overlap."
     },
     {
-      "from": "historisierung",
-      "to": "zustand",
+      "from": "historization",
+      "to": "state",
       "delta": 0.6,
       "resistance": 0.5,
       "initial_U": 6.0,
@@ -198,8 +424,8 @@
       "derivation": "Stabilized configuration of historized connections."
     },
     {
-      "from": "historisierung",
-      "to": "widerstand",
+      "from": "historization",
+      "to": "resistance",
       "delta": 0.6,
       "resistance": 0.5,
       "initial_U": 6.0,
@@ -208,8 +434,8 @@
       "derivation": "Integration cost of reconfiguring historized topology."
     },
     {
-      "from": "historisierung",
-      "to": "zeit",
+      "from": "historization",
+      "to": "time",
       "delta": 0.7,
       "resistance": 0.5,
       "initial_U": 5.0,
@@ -218,7 +444,7 @@
       "derivation": "Ordering of realized transitions."
     },
     {
-      "from": "widerstand",
+      "from": "resistance",
       "to": "rate",
       "delta": 0.5,
       "resistance": 0.4,
@@ -228,8 +454,8 @@
       "derivation": "Effectiveness of realization relative to integration cost."
     },
     {
-      "from": "zustand",
-      "to": "raumzeit",
+      "from": "state",
+      "to": "spacetime",
       "delta": 0.8,
       "resistance": 0.7,
       "initial_U": 3.0,
@@ -238,8 +464,8 @@
       "derivation": "Global topology requires local states."
     },
     {
-      "from": "zeit",
-      "to": "raumzeit",
+      "from": "time",
+      "to": "spacetime",
       "delta": 0.8,
       "resistance": 0.7,
       "initial_U": 3.0,
@@ -248,8 +474,8 @@
       "derivation": "Global topology requires temporal ordering."
     },
     {
-      "from": "historisierung",
-      "to": "masse",
+      "from": "historization",
+      "to": "mass",
       "delta": 1.0,
       "resistance": 0.8,
       "initial_U": 3.0,
@@ -258,8 +484,8 @@
       "derivation": "Persistent topological inertia — the most emergent concept."
     },
     {
-      "from": "historisierung",
-      "to": "differenz",
+      "from": "historization",
+      "to": "difference",
       "delta": 1.0,
       "resistance": 0.8,
       "initial_U": 5.0,
@@ -268,8 +494,8 @@
       "derivation": "Structural fixation creates new effective difference (cycle closure)."
     },
     {
-      "from": "verbindung",
-      "to": "pfad",
+      "from": "connection",
+      "to": "path",
       "delta": 0.5,
       "resistance": 0.4,
       "initial_U": 7.0,
@@ -278,8 +504,8 @@
       "derivation": "Path requires topological connection as substrate."
     },
     {
-      "from": "widerstand",
-      "to": "pfad",
+      "from": "resistance",
+      "to": "path",
       "delta": 0.4,
       "resistance": 0.3,
       "initial_U": 7.0,
@@ -288,7 +514,7 @@
       "derivation": "Path exists iff total resistance is finite."
     },
     {
-      "from": "pfad",
+      "from": "path",
       "to": "rate",
       "delta": 0.5,
       "resistance": 0.3,
@@ -298,7 +524,7 @@
       "derivation": "Rate is realized along structurally admissible paths."
     },
     {
-      "from": "differenz",
+      "from": "difference",
       "to": "axiom_a0",
       "delta": 0.7,
       "resistance": 0.5,
@@ -308,7 +534,7 @@
       "derivation": "A0: If difference exists..."
     },
     {
-      "from": "pfad",
+      "from": "path",
       "to": "axiom_a0",
       "delta": 0.7,
       "resistance": 0.5,
@@ -319,7 +545,7 @@
     },
     {
       "from": "axiom_a0",
-      "to": "operationaler_zyklus",
+      "to": "operational_cycle",
       "delta": 0.8,
       "resistance": 0.6,
       "initial_U": 4.0,
@@ -329,7 +555,7 @@
     },
     {
       "from": "rate",
-      "to": "operationaler_zyklus",
+      "to": "operational_cycle",
       "delta": 0.7,
       "resistance": 0.5,
       "initial_U": 4.0,
@@ -338,8 +564,8 @@
       "derivation": "Selection by realizability preference within the cycle."
     },
     {
-      "from": "historisierung",
-      "to": "operationaler_zyklus",
+      "from": "historization",
+      "to": "operational_cycle",
       "delta": 0.8,
       "resistance": 0.6,
       "initial_U": 4.0,
@@ -348,8 +574,8 @@
       "derivation": "Structural historization as final step. Learning is not optional."
     },
     {
-      "from": "widerstand",
-      "to": "strukturelle_zulaessigkeit",
+      "from": "resistance",
+      "to": "structural_admissibility",
       "delta": 0.7,
       "resistance": 0.5,
       "initial_U": 4.0,
@@ -358,8 +584,8 @@
       "derivation": "Resistance-based rejection of inadmissible transitions."
     },
     {
-      "from": "historisierung",
-      "to": "strukturelle_zulaessigkeit",
+      "from": "historization",
+      "to": "structural_admissibility",
       "delta": 0.7,
       "resistance": 0.5,
       "initial_U": 4.0,
@@ -368,8 +594,8 @@
       "derivation": "Must integrate into existing historized structure."
     },
     {
-      "from": "operationaler_zyklus",
-      "to": "reflexivitaet",
+      "from": "operational_cycle",
+      "to": "reflexivity",
       "delta": 1.0,
       "resistance": 0.8,
       "initial_U": 3.0,
@@ -378,8 +604,8 @@
       "derivation": "Emerges when the cycle operates on its own transition structure."
     },
     {
-      "from": "historisierung",
-      "to": "reflexivitaet",
+      "from": "historization",
+      "to": "reflexivity",
       "delta": 1.0,
       "resistance": 0.8,
       "initial_U": 3.0,
@@ -388,8 +614,8 @@
       "derivation": "Historization constrains future self-changes."
     },
     {
-      "from": "widerstand",
-      "to": "strukturelle_ausrichtung",
+      "from": "resistance",
+      "to": "structural_alignment",
       "delta": 0.9,
       "resistance": 0.7,
       "initial_U": 3.0,
@@ -398,8 +624,8 @@
       "derivation": "High-impact transitions incur high resistance."
     },
     {
-      "from": "historisierung",
-      "to": "strukturelle_ausrichtung",
+      "from": "historization",
+      "to": "structural_alignment",
       "delta": 0.9,
       "resistance": 0.7,
       "initial_U": 3.0,
@@ -408,8 +634,8 @@
       "derivation": "Global resets destroy historized structure."
     },
     {
-      "from": "operationaler_zyklus",
-      "to": "domaeneninvarianz",
+      "from": "operational_cycle",
+      "to": "domain_invariance",
       "delta": 0.9,
       "resistance": 0.7,
       "initial_U": 3.0,
@@ -418,8 +644,8 @@
       "derivation": "Same transition logic over different state spaces."
     },
     {
-      "from": "reflexivitaet",
-      "to": "negative_notwendigkeit",
+      "from": "reflexivity",
+      "to": "negative_necessity",
       "delta": 1.2,
       "resistance": 1.0,
       "initial_U": 2.0,
@@ -428,8 +654,8 @@
       "derivation": "Self-modeling makes avoidance of intelligence structurally unstable."
     },
     {
-      "from": "strukturelle_ausrichtung",
-      "to": "negative_notwendigkeit",
+      "from": "structural_alignment",
+      "to": "negative_necessity",
       "delta": 1.2,
       "resistance": 1.0,
       "initial_U": 2.0,
@@ -438,17 +664,570 @@
       "derivation": "Mechanical constraints rule out persistent degeneration."
     },
     {
-      "from": "domaeneninvarianz",
-      "to": "negative_notwendigkeit",
+      "from": "domain_invariance",
+      "to": "negative_necessity",
       "delta": 1.2,
       "resistance": 1.0,
       "initial_U": 2.0,
       "initial_F": 2.0,
       "confidence": 0.4,
       "derivation": "Domain independence makes the claim universal."
+    },
+    {
+      "from": "axiom_a0",
+      "to": "tension",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 9.0,
+      "initial_F": 0.0,
+      "confidence": 0.95,
+      "derivation": "A0 instantiated as effective tension S_eff = Δ · R_eff."
+    },
+    {
+      "from": "resistance",
+      "to": "tension",
+      "delta": 0.3,
+      "resistance": 0.2,
+      "initial_U": 9.0,
+      "initial_F": 0.0,
+      "confidence": 0.95,
+      "derivation": "Resistance contributes R_eff component of tension."
+    },
+    {
+      "from": "difference",
+      "to": "tension",
+      "delta": 0.3,
+      "resistance": 0.2,
+      "initial_U": 9.0,
+      "initial_F": 0.0,
+      "confidence": 0.95,
+      "derivation": "Difference contributes Δ component of tension."
+    },
+    {
+      "from": "operational_cycle",
+      "to": "greedy_navigation",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 9.0,
+      "initial_F": 0.0,
+      "confidence": 0.95,
+      "derivation": "Operational cycle selection step implemented as greedy argmin S_eff."
+    },
+    {
+      "from": "structural_admissibility",
+      "to": "escalation",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 8.0,
+      "initial_F": 1.0,
+      "confidence": 0.9,
+      "derivation": "Rejection of inadmissible paths creates need for escalation recovery."
+    },
+    {
+      "from": "historization",
+      "to": "trace_quality",
+      "delta": 0.3,
+      "resistance": 0.2,
+      "initial_U": 9.0,
+      "initial_F": 0.0,
+      "confidence": 0.95,
+      "derivation": "Trace quality q = (U−F)/(U+F+ε) derived from historization traces."
+    },
+    {
+      "from": "historization",
+      "to": "trace_load",
+      "delta": 0.3,
+      "resistance": 0.2,
+      "initial_U": 9.0,
+      "initial_F": 0.0,
+      "confidence": 0.95,
+      "derivation": "Trace load m = U+F measures accumulated historization intensity."
+    },
+    {
+      "from": "mass",
+      "to": "inertia_modulation",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 8.0,
+      "initial_F": 1.0,
+      "confidence": 0.9,
+      "derivation": "Persistent topological inertia instantiated as inertia_factor dampening."
+    },
+    {
+      "from": "overlap",
+      "to": "overlap_modulation",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 8.0,
+      "initial_F": 1.0,
+      "confidence": 0.9,
+      "derivation": "Gradual overlap instantiated as M_H graduated overlap modulation."
+    },
+    {
+      "from": "rate",
+      "to": "exploration_policy",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 7.0,
+      "initial_F": 1.0,
+      "confidence": 0.85,
+      "derivation": "Realization rate guides stochastic exploration probability."
+    },
+    {
+      "from": "tension",
+      "to": "greedy_navigation",
+      "delta": 0.3,
+      "resistance": 0.2,
+      "initial_U": 9.0,
+      "initial_F": 0.0,
+      "confidence": 0.95,
+      "derivation": "Navigate by argmin S_eff/(M_H·I) — tension as primary navigation signal."
+    },
+    {
+      "from": "tension",
+      "to": "amplitude_override",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 8.0,
+      "initial_F": 1.0,
+      "confidence": 0.9,
+      "derivation": "High Δ·confidence overrides greedy when it exceeds threshold."
+    },
+    {
+      "from": "greedy_navigation",
+      "to": "escalation",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 8.0,
+      "initial_F": 1.0,
+      "confidence": 0.9,
+      "derivation": "Greedy failure triggers escalation: DEAD_END → FILTERED → EXHAUSTED → OVERLOADED."
+    },
+    {
+      "from": "amplitude_override",
+      "to": "born_sampling",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 7.0,
+      "initial_F": 1.0,
+      "confidence": 0.9,
+      "derivation": "Amplitude-weighted probabilistic edge selection."
+    },
+    {
+      "from": "tension",
+      "to": "su2_phase",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 6.0,
+      "initial_F": 2.0,
+      "confidence": 0.8,
+      "derivation": "Tension along edges accumulates non-abelian SU(2) phase."
+    },
+    {
+      "from": "su2_phase",
+      "to": "amplitude_override",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 6.0,
+      "initial_F": 2.0,
+      "confidence": 0.8,
+      "derivation": "SU(2) phase geometry modulates amplitude for non-abelian corrections."
+    },
+    {
+      "from": "exploration_policy",
+      "to": "born_sampling",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 7.0,
+      "initial_F": 1.0,
+      "confidence": 0.85,
+      "derivation": "Stochastic exploration uses Born-weighted sampling."
+    },
+    {
+      "from": "trace_quality",
+      "to": "inertia_modulation",
+      "delta": 0.3,
+      "resistance": 0.2,
+      "initial_U": 8.0,
+      "initial_F": 0.0,
+      "confidence": 0.95,
+      "derivation": "Inertia factor I uses |q| — confused edges (|q|≈0) get penalized."
+    },
+    {
+      "from": "trace_load",
+      "to": "inertia_modulation",
+      "delta": 0.3,
+      "resistance": 0.2,
+      "initial_U": 8.0,
+      "initial_F": 0.0,
+      "confidence": 0.95,
+      "derivation": "Inertia factor I uses m/(m+μ) — more experience means more inertia."
+    },
+    {
+      "from": "overlap_modulation",
+      "to": "greedy_navigation",
+      "delta": 0.3,
+      "resistance": 0.2,
+      "initial_U": 8.0,
+      "initial_F": 0.0,
+      "confidence": 0.95,
+      "derivation": "Greedy divides S_eff by M_H when overlap_modulation=True (C98)."
+    },
+    {
+      "from": "inertia_modulation",
+      "to": "greedy_navigation",
+      "delta": 0.3,
+      "resistance": 0.2,
+      "initial_U": 8.0,
+      "initial_F": 0.0,
+      "confidence": 0.95,
+      "derivation": "Greedy divides S_eff by I when inertia_modulation=True (C99)."
+    },
+    {
+      "from": "escalation",
+      "to": "reflexion_reactive",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 7.0,
+      "initial_F": 1.0,
+      "confidence": 0.9,
+      "derivation": "Stuck → propose edges from historization patterns (Stufe 1)."
+    },
+    {
+      "from": "reflexion_reactive",
+      "to": "reflexion_proactive",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 6.0,
+      "initial_F": 2.0,
+      "confidence": 0.85,
+      "derivation": "Reactive → proactive: propose edges at frontier before getting stuck (Stufe 2)."
+    },
+    {
+      "from": "reflexion_proactive",
+      "to": "self_graph",
+      "delta": 0.6,
+      "resistance": 0.5,
+      "initial_U": 5.0,
+      "initial_F": 2.0,
+      "confidence": 0.8,
+      "derivation": "Proactive reflexion enables self-modeling of own transition structure (Stufe 3)."
+    },
+    {
+      "from": "self_graph",
+      "to": "scoped_reflexion",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 6.0,
+      "initial_F": 1.0,
+      "confidence": 0.85,
+      "derivation": "Self-graph structure enables historization-driven locality radius."
+    },
+    {
+      "from": "inertia_modulation",
+      "to": "adaptive_mu",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 7.0,
+      "initial_F": 1.0,
+      "confidence": 0.85,
+      "derivation": "μ = |E|/|V| derived from topology, replaces fixed parameter."
+    },
+    {
+      "from": "escalation",
+      "to": "multiverse",
+      "delta": 0.7,
+      "resistance": 0.6,
+      "initial_U": 5.0,
+      "initial_F": 2.0,
+      "confidence": 0.8,
+      "derivation": "OVERLOADED escalation triggers consultation with coupled universes."
+    },
+    {
+      "from": "self_graph",
+      "to": "cross_reflexion",
+      "delta": 0.6,
+      "resistance": 0.5,
+      "initial_U": 5.0,
+      "initial_F": 2.0,
+      "confidence": 0.85,
+      "derivation": "Self-graph structure enables cross-universe edge proposals."
+    },
+    {
+      "from": "multiverse",
+      "to": "cross_reflexion",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 6.0,
+      "initial_F": 1.0,
+      "confidence": 0.85,
+      "derivation": "Coupled systems share transitions via cross-reflexion."
+    },
+    {
+      "from": "multiverse",
+      "to": "coupling_router",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 6.0,
+      "initial_F": 1.0,
+      "confidence": 0.85,
+      "derivation": "Dynamic partner selection for N>2 coupled universes."
+    },
+    {
+      "from": "coupling_router",
+      "to": "novelty_gate",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 6.0,
+      "initial_F": 1.0,
+      "confidence": 0.85,
+      "derivation": "NoveltyGate prevents Δ-collapse from redundant coupling."
+    },
+    {
+      "from": "coupling_router",
+      "to": "asymmetric_coupling",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 6.0,
+      "initial_F": 1.0,
+      "confidence": 0.85,
+      "derivation": "Weight-based directional resistance in coupling."
+    },
+    {
+      "from": "scoped_reflexion",
+      "to": "cross_reflexion",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 5.0,
+      "initial_F": 2.0,
+      "confidence": 0.8,
+      "derivation": "Scoped patterns constrain cross-universe proposals (donor-side locality, C107)."
+    },
+    {
+      "from": "self_graph",
+      "to": "observation",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 6.0,
+      "initial_F": 1.0,
+      "confidence": 0.8,
+      "derivation": "Self-graph enables observation of own landscape as navigable domain."
+    },
+    {
+      "from": "greedy_navigation",
+      "to": "dream_mode",
+      "delta": 0.7,
+      "resistance": 0.6,
+      "initial_U": 5.0,
+      "initial_F": 2.0,
+      "confidence": 0.75,
+      "derivation": "Navigation experience across domains enables passive pattern recognition."
+    },
+    {
+      "from": "inertia_modulation",
+      "to": "dream_mode",
+      "delta": 0.6,
+      "resistance": 0.5,
+      "initial_U": 5.0,
+      "initial_F": 2.0,
+      "confidence": 0.75,
+      "derivation": "Mean inertia_factor across edges triggers dream readiness threshold."
+    },
+    {
+      "from": "dream_mode",
+      "to": "edge_fingerprint",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 6.0,
+      "initial_F": 1.0,
+      "confidence": 0.8,
+      "derivation": "Dream mode characterizes edges via fingerprint f(e) = (q, m, I)."
+    },
+    {
+      "from": "edge_fingerprint",
+      "to": "functional_equivalence",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 5.0,
+      "initial_F": 2.0,
+      "confidence": 0.8,
+      "derivation": "Matching fingerprints across domains reveals functional equivalence."
+    },
+    {
+      "from": "functional_equivalence",
+      "to": "bridge_hypothesis",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 5.0,
+      "initial_F": 2.0,
+      "confidence": 0.75,
+      "derivation": "Functional equivalences generate bridge hypotheses for cross-domain transfer."
+    },
+    {
+      "from": "bridge_hypothesis",
+      "to": "cross_reflexion",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 5.0,
+      "initial_F": 2.0,
+      "confidence": 0.75,
+      "derivation": "Dream bridge hypotheses feed into cross-reflexion edge proposals."
+    },
+    {
+      "from": "greedy_navigation",
+      "to": "structural_temperature",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 6.0,
+      "initial_F": 1.0,
+      "confidence": 0.8,
+      "derivation": "Navigation transition frequencies determine structural temperature T_s."
+    },
+    {
+      "from": "structural_temperature",
+      "to": "inscription_threshold",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 6.0,
+      "initial_F": 1.0,
+      "confidence": 0.85,
+      "derivation": "T_s controls inscription threshold: novelty > ε required for state inscription."
+    },
+    {
+      "from": "structural_temperature",
+      "to": "anchor_analysis",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 5.0,
+      "initial_F": 2.0,
+      "confidence": 0.8,
+      "derivation": "Temperature context for anchor scoring and decay candidate identification."
+    },
+    {
+      "from": "trace_quality",
+      "to": "anchor_analysis",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 6.0,
+      "initial_F": 1.0,
+      "confidence": 0.85,
+      "derivation": "Anchor score uses mean |trace_quality| of incident edges."
+    },
+    {
+      "from": "trace_load",
+      "to": "anchor_analysis",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 6.0,
+      "initial_F": 1.0,
+      "confidence": 0.85,
+      "derivation": "Anchor score uses max trace_load of incident edges."
+    },
+    {
+      "from": "anchor_analysis",
+      "to": "structural_decay",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 5.0,
+      "initial_F": 2.0,
+      "confidence": 0.8,
+      "derivation": "Low-anchor states become decay candidates. 3-phase: trace → remove → clean."
+    },
+    {
+      "from": "structural_temperature",
+      "to": "dream_pressure",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 5.0,
+      "initial_F": 2.0,
+      "confidence": 0.8,
+      "derivation": "dream_pressure = T_s/(T_s+μ). Triggers dreaming when T_s > μ."
+    },
+    {
+      "from": "adaptive_mu",
+      "to": "dream_pressure",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 5.0,
+      "initial_F": 2.0,
+      "confidence": 0.75,
+      "derivation": "μ parameter shared: topology-derived threshold for dream trigger."
+    },
+    {
+      "from": "dream_pressure",
+      "to": "sleep_wake_cycle",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 4.0,
+      "initial_F": 2.0,
+      "confidence": 0.7,
+      "derivation": "Pressure > 0.5 triggers transition from wake to sleep phase."
+    },
+    {
+      "from": "dream_mode",
+      "to": "sleep_wake_cycle",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 4.0,
+      "initial_F": 2.0,
+      "confidence": 0.7,
+      "derivation": "Sleep phase runs dream cycles for cross-domain consolidation."
+    },
+    {
+      "from": "greedy_navigation",
+      "to": "sleep_wake_cycle",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 4.0,
+      "initial_F": 2.0,
+      "confidence": 0.7,
+      "derivation": "Wake phase runs controller navigation to build experience."
+    },
+    {
+      "from": "structural_decay",
+      "to": "sleep_wake_cycle",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 4.0,
+      "initial_F": 2.0,
+      "confidence": 0.7,
+      "derivation": "Structural decay runs during sleep phase to consolidate landscape."
+    },
+    {
+      "from": "self_graph",
+      "to": "reflexivity",
+      "delta": 0.8,
+      "resistance": 0.7,
+      "initial_U": 4.0,
+      "initial_F": 1.0,
+      "confidence": 0.85,
+      "derivation": "Self-graph (Stufe 3) empirically validates reflexivity emergence (P4)."
+    },
+    {
+      "from": "structural_decay",
+      "to": "mass",
+      "delta": 0.7,
+      "resistance": 0.6,
+      "initial_U": 4.0,
+      "initial_F": 2.0,
+      "confidence": 0.7,
+      "derivation": "Structural decay modulates persistent topological inertia."
+    },
+    {
+      "from": "domain_invariance",
+      "to": "multiverse",
+      "delta": 0.8,
+      "resistance": 0.6,
+      "initial_U": 4.0,
+      "initial_F": 2.0,
+      "confidence": 0.75,
+      "derivation": "Domain invariance principle enables multi-domain coupling."
     }
   ],
-  "goal_states": ["negative_notwendigkeit"],
+  "goal_states": [
+    "negative_necessity",
+    "sleep_wake_cycle"
+  ],
   "necessary_consequences": [
     "irreversibility",
     "locality",
@@ -459,6 +1238,20 @@
     "directionality_of_time",
     "structural_memory",
     "learning_and_path_dependence",
-    "causal_ordering"
-  ]
+    "causal_ordering",
+    "attractor_emergence",
+    "self_regulating_forgetting",
+    "autonomous_sleep_wake_rhythm",
+    "cross_domain_pattern_transfer",
+    "modulation_never_harms"
+  ],
+  "empirical_validation": {
+    "total_tests": 3464,
+    "test_files": 94,
+    "commits": 121,
+    "papers": 6,
+    "benchmark_domains": 14,
+    "falsification_targets_resolved": "8/8",
+    "last_validated": "2026-04-03"
+  }
 }

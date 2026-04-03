@@ -1,0 +1,464 @@
+{
+  "name": "ontodynamics",
+  "version": "1.2",
+  "source": "canon/ontodynamics.txt + canon/e0-canon-plain.txt + canon/e0-agi-blueprint.md",
+  "description": "Complete E0 canonical landscape. Layer 1: Ontodynamics (pre-physical primitives). Layer 2: Canon Plain (operative structure, Axiom A0). Layer 3: AGI Blueprint (operational cycle, reflexivity emergence, structural alignment, domain invariance, negative necessity thesis). Derivation order encoded in delta topology.",
+  "nodes": [
+    {
+      "id": "differenz",
+      "label": "Difference",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "description": "Primitive, effective, directed, scaled. Entities are the result of stabilized difference."
+    },
+    {
+      "id": "lokale_realisierung",
+      "label": "Local Realization",
+      "derivation_level": 1,
+      "is_primitive": true,
+      "description": "Difference can be realized partially, not only globally. Minimal condition for actuality."
+    },
+    {
+      "id": "verbindung",
+      "label": "Connection",
+      "derivation_level": 2,
+      "is_primitive": true,
+      "description": "Elementary topological operation. Multiple difference components realized together."
+    },
+    {
+      "id": "gradueller_overlap",
+      "label": "Gradual Overlap",
+      "derivation_level": 3,
+      "is_primitive": true,
+      "description": "Connections possess degree. Stability is an effect of sufficient overlap."
+    },
+    {
+      "id": "historisierung",
+      "label": "Historization",
+      "derivation_level": 3,
+      "is_primitive": true,
+      "description": "Realized connections leave irreversible structural trace. The cost of reality."
+    },
+    {
+      "id": "zustand",
+      "label": "State",
+      "derivation_level": 4,
+      "is_primitive": false,
+      "description": "A stabilized configuration of historized connections."
+    },
+    {
+      "id": "widerstand",
+      "label": "Resistance",
+      "derivation_level": 4,
+      "is_primitive": false,
+      "description": "The integration cost of reconfiguring historized topology."
+    },
+    {
+      "id": "zeit",
+      "label": "Time",
+      "derivation_level": 4,
+      "is_primitive": false,
+      "description": "The ordering of realized transitions. Local, emergent, path-dependent."
+    },
+    {
+      "id": "rate",
+      "label": "Rate",
+      "derivation_level": 5,
+      "is_primitive": false,
+      "description": "Effectiveness of realization relative to integration cost."
+    },
+    {
+      "id": "raumzeit",
+      "label": "Spacetime",
+      "derivation_level": 5,
+      "is_primitive": false,
+      "description": "The globally historized topology of realized connections."
+    },
+    {
+      "id": "masse",
+      "label": "Mass",
+      "derivation_level": 5,
+      "is_primitive": false,
+      "description": "Persistent topological inertia from accumulated historization."
+    },
+    {
+      "id": "pfad",
+      "label": "Path",
+      "derivation_level": 4,
+      "is_primitive": false,
+      "description": "Structural admissibility condition for transitions. Not an object, not a dynamic. A path exists iff total resistance is finite. Primitive in Canon Plain, derived in Ontodynamics."
+    },
+    {
+      "id": "axiom_a0",
+      "label": "Axiom A0 — Difference Minimization",
+      "derivation_level": 5,
+      "is_primitive": false,
+      "description": "If difference exists and a structurally admissible path with finite resistance is available, then transition is structurally more stable than non-transition. The foundational law of E0."    },
+    {
+      "id": "operationaler_zyklus",
+      "label": "Core Operational Cycle",
+      "derivation_level": 6,
+      "is_primitive": false,
+      "description": "\u00a74: Detection of local differences, enumeration of admissible paths, estimation of resistance, selection by realizability, execution, structural historization. Learning is not optional. Blueprint instantiation of the primitives as continuous process."
+    },
+    {
+      "id": "strukturelle_zulaessigkeit",
+      "label": "Structural Admissibility",
+      "derivation_level": 6,
+      "is_primitive": false,
+      "description": "\u00a79: Must reject transitions that collapse partial into global, cannot integrate into structure, simulate irreversibility without trace, or bypass resistance via global optimization. Implicit, non-negotiable."
+    },
+    {
+      "id": "reflexivitaet",
+      "label": "Reflexivity Emergence",
+      "derivation_level": 7,
+      "is_primitive": false,
+      "description": "\u00a75: Emerges when system models own transition structure, self-modification becomes admissible transition, historization constrains future self-changes. Structurally induced, not architecturally imposed."
+    },
+    {
+      "id": "strukturelle_ausrichtung",
+      "label": "Structural Alignment",
+      "derivation_level": 7,
+      "is_primitive": false,
+      "description": "\u00a76: Arises mechanically, not normatively. High-impact transitions incur high resistance. Global resets destroy historized structure. Constrains classes of failure, not outcomes."
+    },
+    {
+      "id": "domaeneninvarianz",
+      "label": "Domain Invariance",
+      "derivation_level": 7,
+      "is_primitive": false,
+      "description": "\u00a77: Does not depend on sensory modality, symbol systems, embodiment, or task environment. Domain specificity enters only through embedding, not through mechanism."
+    },
+    {
+      "id": "negative_notwendigkeit",
+      "label": "Negative Necessity",
+      "derivation_level": 8,
+      "is_primitive": false,
+      "description": "\u00a72: Conditions under which avoiding intelligence becomes structurally unstable. Not a positive construction claim. Persistent non-intelligent behavior cannot be maintained without structural degeneration."    }
+  ],
+  "edges": [
+    {
+      "from": "differenz",
+      "to": "lokale_realisierung",
+      "delta": 0.3,
+      "resistance": 0.2,
+      "initial_U": 10.0,
+      "initial_F": 0.0,
+      "confidence": 1.0,
+      "derivation": "Difference can be realized partially."
+    },
+    {
+      "from": "lokale_realisierung",
+      "to": "verbindung",
+      "delta": 0.3,
+      "resistance": 0.2,
+      "initial_U": 10.0,
+      "initial_F": 0.0,
+      "confidence": 1.0,
+      "derivation": "Multiple difference components realized together."
+    },
+    {
+      "from": "verbindung",
+      "to": "gradueller_overlap",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 10.0,
+      "initial_F": 0.0,
+      "confidence": 1.0,
+      "derivation": "Connections possess degree."
+    },
+    {
+      "from": "verbindung",
+      "to": "historisierung",
+      "delta": 0.5,
+      "resistance": 0.3,
+      "initial_U": 10.0,
+      "initial_F": 0.0,
+      "confidence": 1.0,
+      "derivation": "Realized connections leave irreversible trace."
+    },
+    {
+      "from": "gradueller_overlap",
+      "to": "historisierung",
+      "delta": 0.3,
+      "resistance": 0.2,
+      "initial_U": 8.0,
+      "initial_F": 0.0,
+      "confidence": 0.9,
+      "derivation": "Stability requires non-zero overlap."
+    },
+    {
+      "from": "historisierung",
+      "to": "zustand",
+      "delta": 0.6,
+      "resistance": 0.5,
+      "initial_U": 6.0,
+      "initial_F": 1.0,
+      "confidence": 0.8,
+      "derivation": "Stabilized configuration of historized connections."
+    },
+    {
+      "from": "historisierung",
+      "to": "widerstand",
+      "delta": 0.6,
+      "resistance": 0.5,
+      "initial_U": 6.0,
+      "initial_F": 1.0,
+      "confidence": 0.8,
+      "derivation": "Integration cost of reconfiguring historized topology."
+    },
+    {
+      "from": "historisierung",
+      "to": "zeit",
+      "delta": 0.7,
+      "resistance": 0.5,
+      "initial_U": 5.0,
+      "initial_F": 1.0,
+      "confidence": 0.7,
+      "derivation": "Ordering of realized transitions."
+    },
+    {
+      "from": "widerstand",
+      "to": "rate",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 4.0,
+      "initial_F": 1.0,
+      "confidence": 0.7,
+      "derivation": "Effectiveness of realization relative to integration cost."
+    },
+    {
+      "from": "zustand",
+      "to": "raumzeit",
+      "delta": 0.8,
+      "resistance": 0.7,
+      "initial_U": 3.0,
+      "initial_F": 1.0,
+      "confidence": 0.6,
+      "derivation": "Global topology requires local states."
+    },
+    {
+      "from": "zeit",
+      "to": "raumzeit",
+      "delta": 0.8,
+      "resistance": 0.7,
+      "initial_U": 3.0,
+      "initial_F": 1.0,
+      "confidence": 0.6,
+      "derivation": "Global topology requires temporal ordering."
+    },
+    {
+      "from": "historisierung",
+      "to": "masse",
+      "delta": 1.0,
+      "resistance": 0.8,
+      "initial_U": 3.0,
+      "initial_F": 2.0,
+      "confidence": 0.5,
+      "derivation": "Persistent topological inertia — the most emergent concept."
+    },
+    {
+      "from": "historisierung",
+      "to": "differenz",
+      "delta": 1.0,
+      "resistance": 0.8,
+      "initial_U": 5.0,
+      "initial_F": 2.0,
+      "confidence": 0.6,
+      "derivation": "Structural fixation creates new effective difference (cycle closure)."
+    },
+    {
+      "from": "verbindung",
+      "to": "pfad",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 7.0,
+      "initial_F": 1.0,
+      "confidence": 0.9,
+      "derivation": "Path requires topological connection as substrate."
+    },
+    {
+      "from": "widerstand",
+      "to": "pfad",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 7.0,
+      "initial_F": 1.0,
+      "confidence": 0.9,
+      "derivation": "Path exists iff total resistance is finite."
+    },
+    {
+      "from": "pfad",
+      "to": "rate",
+      "delta": 0.5,
+      "resistance": 0.3,
+      "initial_U": 5.0,
+      "initial_F": 1.0,
+      "confidence": 0.8,
+      "derivation": "Rate is realized along structurally admissible paths."
+    },
+    {
+      "from": "differenz",
+      "to": "axiom_a0",
+      "delta": 0.7,
+      "resistance": 0.5,
+      "initial_U": 5.0,
+      "initial_F": 2.0,
+      "confidence": 0.7,
+      "derivation": "A0: If difference exists..."
+    },
+    {
+      "from": "pfad",
+      "to": "axiom_a0",
+      "delta": 0.7,
+      "resistance": 0.5,
+      "initial_U": 5.0,
+      "initial_F": 2.0,
+      "confidence": 0.7,
+      "derivation": "A0: ...and admissible path exists, then non-transition is structurally unstable."
+    },
+    {
+      "from": "axiom_a0",
+      "to": "operationaler_zyklus",
+      "delta": 0.8,
+      "resistance": 0.6,
+      "initial_U": 4.0,
+      "initial_F": 1.0,
+      "confidence": 0.7,
+      "derivation": "A0 instantiated as continuous operational process."
+    },
+    {
+      "from": "rate",
+      "to": "operationaler_zyklus",
+      "delta": 0.7,
+      "resistance": 0.5,
+      "initial_U": 4.0,
+      "initial_F": 1.0,
+      "confidence": 0.7,
+      "derivation": "Selection by realizability preference within the cycle."
+    },
+    {
+      "from": "historisierung",
+      "to": "operationaler_zyklus",
+      "delta": 0.8,
+      "resistance": 0.6,
+      "initial_U": 4.0,
+      "initial_F": 1.0,
+      "confidence": 0.7,
+      "derivation": "Structural historization as final step. Learning is not optional."
+    },
+    {
+      "from": "widerstand",
+      "to": "strukturelle_zulaessigkeit",
+      "delta": 0.7,
+      "resistance": 0.5,
+      "initial_U": 4.0,
+      "initial_F": 1.0,
+      "confidence": 0.8,
+      "derivation": "Resistance-based rejection of inadmissible transitions."
+    },
+    {
+      "from": "historisierung",
+      "to": "strukturelle_zulaessigkeit",
+      "delta": 0.7,
+      "resistance": 0.5,
+      "initial_U": 4.0,
+      "initial_F": 1.0,
+      "confidence": 0.8,
+      "derivation": "Must integrate into existing historized structure."
+    },
+    {
+      "from": "operationaler_zyklus",
+      "to": "reflexivitaet",
+      "delta": 1.0,
+      "resistance": 0.8,
+      "initial_U": 3.0,
+      "initial_F": 2.0,
+      "confidence": 0.5,
+      "derivation": "Emerges when the cycle operates on its own transition structure."
+    },
+    {
+      "from": "historisierung",
+      "to": "reflexivitaet",
+      "delta": 1.0,
+      "resistance": 0.8,
+      "initial_U": 3.0,
+      "initial_F": 2.0,
+      "confidence": 0.5,
+      "derivation": "Historization constrains future self-changes."
+    },
+    {
+      "from": "widerstand",
+      "to": "strukturelle_ausrichtung",
+      "delta": 0.9,
+      "resistance": 0.7,
+      "initial_U": 3.0,
+      "initial_F": 2.0,
+      "confidence": 0.5,
+      "derivation": "High-impact transitions incur high resistance."
+    },
+    {
+      "from": "historisierung",
+      "to": "strukturelle_ausrichtung",
+      "delta": 0.9,
+      "resistance": 0.7,
+      "initial_U": 3.0,
+      "initial_F": 2.0,
+      "confidence": 0.5,
+      "derivation": "Global resets destroy historized structure."
+    },
+    {
+      "from": "operationaler_zyklus",
+      "to": "domaeneninvarianz",
+      "delta": 0.9,
+      "resistance": 0.7,
+      "initial_U": 3.0,
+      "initial_F": 2.0,
+      "confidence": 0.5,
+      "derivation": "Same transition logic over different state spaces."
+    },
+    {
+      "from": "reflexivitaet",
+      "to": "negative_notwendigkeit",
+      "delta": 1.2,
+      "resistance": 1.0,
+      "initial_U": 2.0,
+      "initial_F": 2.0,
+      "confidence": 0.4,
+      "derivation": "Self-modeling makes avoidance of intelligence structurally unstable."
+    },
+    {
+      "from": "strukturelle_ausrichtung",
+      "to": "negative_notwendigkeit",
+      "delta": 1.2,
+      "resistance": 1.0,
+      "initial_U": 2.0,
+      "initial_F": 2.0,
+      "confidence": 0.4,
+      "derivation": "Mechanical constraints rule out persistent degeneration."
+    },
+    {
+      "from": "domaeneninvarianz",
+      "to": "negative_notwendigkeit",
+      "delta": 1.2,
+      "resistance": 1.0,
+      "initial_U": 2.0,
+      "initial_F": 2.0,
+      "confidence": 0.4,
+      "derivation": "Domain independence makes the claim universal."
+    }
+  ],
+  "goal_states": ["negative_notwendigkeit"],
+  "necessary_consequences": [
+    "irreversibility",
+    "locality",
+    "emergent_stability",
+    "finite_maximal_realization_rate",
+    "lawfulness_as_stabilized_history",
+    "transition_enforcement",
+    "directionality_of_time",
+    "structural_memory",
+    "learning_and_path_dependence",
+    "causal_ordering"
+  ]
+}

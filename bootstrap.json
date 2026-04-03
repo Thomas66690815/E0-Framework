@@ -2,7 +2,7 @@
   "_meta": {
     "purpose": "Session bootstrap for AI assistants resuming work on E₀-Framework",
     "usage": "Paste this file (or reference it) at the start of a new thread to restore full project context",
-    "last_updated": "2026-04-02",
+    "last_updated": "2026-04-03",
     "update_instruction": "After each commit, update state.latest_commit, state.test_count, and active_work"
   },
 
@@ -28,11 +28,11 @@
   },
 
   "state": {
-    "latest_commit": "3549c78",
-    "latest_commit_msg": "C121: Sleep-Wake Cycle — automatic dream trigger via T_s",
+    "latest_commit": "f687e28",
+    "latest_commit_msg": "Docs update: Architecture v4 (11 layers), Test Registry (3464 tests), README",
     "test_count": 3464,
     "test_failures": 0,
-    "module_count": "57 production + 9 benchmarks + 11 demos + 18 explorations + 93 test files",
+    "module_count": "57 production + 9 benchmarks + 11 demos + 19 explorations + 94 test files",
     "line_count": "~18400 production, ~69000 total"
   },
 
