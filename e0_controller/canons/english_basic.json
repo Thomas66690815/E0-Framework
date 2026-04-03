@@ -1,133 +1,903 @@
 {
   "name": "english_basic",
-  "version": "1.0",
-  "source": "E0 Language Learning Exploration (C124)",
-  "description": "Basic English vocabulary as a navigable semantic landscape. ~40 words across 5 categories (body, food, action, quality, relation) with 6 derivation levels. Designed for cross-domain dream learning with german_basic.",
-
+  "version": "1.1",
+  "source": "E0 Language Learning Exploration (C124b)",
+  "description": "Basic English vocabulary — 44 nodes, 64 edges, 6 derivation levels. Differentiated deltas (0.1–0.7) by relationship type: has-a=0.15, functional=0.5–0.6, opposites=0.4–0.7. 5 EN-only edges (food→good, water→cold, see→good, make→new, take→hand). Structural asymmetry with german_basic enables Dream Mode discrimination.",
   "nodes": [
-    {"id": "thing",     "derivation_level": 0, "is_primitive": true,  "label": "Thing",     "description": "Abstract concept of an entity"},
-    {"id": "action",    "derivation_level": 0, "is_primitive": true,  "label": "Action",    "description": "Abstract concept of doing"},
-    {"id": "quality",   "derivation_level": 0, "is_primitive": true,  "label": "Quality",   "description": "Abstract concept of a property"},
-    {"id": "relation",  "derivation_level": 0, "is_primitive": true,  "label": "Relation",  "description": "Abstract concept of connection between things"},
-
-    {"id": "body",      "derivation_level": 1, "is_primitive": false, "label": "Body",      "description": "Physical body, container of parts"},
-    {"id": "food",      "derivation_level": 1, "is_primitive": false, "label": "Food",      "description": "Edible substance"},
-    {"id": "self",      "derivation_level": 1, "is_primitive": false, "label": "Self",      "description": "The experiencing subject"},
-
-    {"id": "head",      "derivation_level": 2, "is_primitive": false, "label": "Head",      "description": "Upper body part, contains senses"},
-    {"id": "hand",      "derivation_level": 2, "is_primitive": false, "label": "Hand",      "description": "Grasping appendage"},
-    {"id": "arm",       "derivation_level": 2, "is_primitive": false, "label": "Arm",       "description": "Upper limb"},
-    {"id": "foot",      "derivation_level": 2, "is_primitive": false, "label": "Foot",      "description": "Lower extremity for walking"},
-    {"id": "eye",       "derivation_level": 2, "is_primitive": false, "label": "Eye",       "description": "Organ of sight"},
-    {"id": "mouth",     "derivation_level": 2, "is_primitive": false, "label": "Mouth",     "description": "Organ of eating and speaking"},
-    {"id": "ear",       "derivation_level": 2, "is_primitive": false, "label": "Ear",       "description": "Organ of hearing"},
-
-    {"id": "finger",    "derivation_level": 3, "is_primitive": false, "label": "Finger",    "description": "Digit of the hand"},
-    {"id": "water",     "derivation_level": 2, "is_primitive": false, "label": "Water",     "description": "Fundamental liquid"},
-    {"id": "bread",     "derivation_level": 2, "is_primitive": false, "label": "Bread",     "description": "Basic grain food"},
-    {"id": "fruit",     "derivation_level": 2, "is_primitive": false, "label": "Fruit",     "description": "Plant-based food"},
-    {"id": "apple",     "derivation_level": 3, "is_primitive": false, "label": "Apple",     "description": "Common fruit"},
-    {"id": "milk",      "derivation_level": 2, "is_primitive": false, "label": "Milk",      "description": "Animal-derived liquid"},
-    {"id": "salt",      "derivation_level": 2, "is_primitive": false, "label": "Salt",      "description": "Mineral seasoning"},
-
-    {"id": "go",        "derivation_level": 3, "is_primitive": false, "label": "Go",        "description": "Move away from here"},
-    {"id": "come",      "derivation_level": 3, "is_primitive": false, "label": "Come",      "description": "Move toward here"},
-    {"id": "see",       "derivation_level": 3, "is_primitive": false, "label": "See",       "description": "Perceive with eyes"},
-    {"id": "hear",      "derivation_level": 3, "is_primitive": false, "label": "Hear",      "description": "Perceive with ears"},
-    {"id": "eat",       "derivation_level": 3, "is_primitive": false, "label": "Eat",       "description": "Consume food"},
-    {"id": "drink",     "derivation_level": 3, "is_primitive": false, "label": "Drink",     "description": "Consume liquid"},
-    {"id": "give",      "derivation_level": 3, "is_primitive": false, "label": "Give",      "description": "Transfer to another"},
-    {"id": "take",      "derivation_level": 3, "is_primitive": false, "label": "Take",      "description": "Receive from another"},
-    {"id": "make",      "derivation_level": 3, "is_primitive": false, "label": "Make",      "description": "Create or produce"},
-    {"id": "say",       "derivation_level": 3, "is_primitive": false, "label": "Say",       "description": "Produce speech"},
-
-    {"id": "good",      "derivation_level": 4, "is_primitive": false, "label": "Good",      "description": "Positive quality"},
-    {"id": "bad",       "derivation_level": 4, "is_primitive": false, "label": "Bad",       "description": "Negative quality"},
-    {"id": "big",       "derivation_level": 4, "is_primitive": false, "label": "Big",       "description": "Large in size"},
-    {"id": "small",     "derivation_level": 4, "is_primitive": false, "label": "Small",     "description": "Small in size"},
-    {"id": "hot",       "derivation_level": 4, "is_primitive": false, "label": "Hot",       "description": "High temperature"},
-    {"id": "cold",      "derivation_level": 4, "is_primitive": false, "label": "Cold",      "description": "Low temperature"},
-    {"id": "new",       "derivation_level": 4, "is_primitive": false, "label": "New",       "description": "Recently created"},
-    {"id": "old",       "derivation_level": 4, "is_primitive": false, "label": "Old",       "description": "Existing for long time"},
-
-    {"id": "in",        "derivation_level": 5, "is_primitive": false, "label": "In",        "description": "Spatial containment"},
-    {"id": "with",      "derivation_level": 5, "is_primitive": false, "label": "With",      "description": "Accompaniment or instrument"},
-    {"id": "from",      "derivation_level": 5, "is_primitive": false, "label": "From",      "description": "Source or origin"},
-    {"id": "not",       "derivation_level": 5, "is_primitive": false, "label": "Not",       "description": "Negation"},
-    {"id": "all",       "derivation_level": 5, "is_primitive": false, "label": "All",       "description": "Universal quantifier"}
+    {
+      "id": "thing",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Thing",
+      "description": "Abstract concept of an entity"
+    },
+    {
+      "id": "action",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Action",
+      "description": "Abstract concept of doing"
+    },
+    {
+      "id": "quality",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Quality",
+      "description": "Abstract concept of a property"
+    },
+    {
+      "id": "relation",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Relation",
+      "description": "Abstract concept of connection between things"
+    },
+    {
+      "id": "body",
+      "derivation_level": 1,
+      "is_primitive": false,
+      "label": "Body",
+      "description": "Physical body, container of parts"
+    },
+    {
+      "id": "food",
+      "derivation_level": 1,
+      "is_primitive": false,
+      "label": "Food",
+      "description": "Edible substance"
+    },
+    {
+      "id": "self",
+      "derivation_level": 1,
+      "is_primitive": false,
+      "label": "Self",
+      "description": "The experiencing subject"
+    },
+    {
+      "id": "head",
+      "derivation_level": 2,
+      "is_primitive": false,
+      "label": "Head",
+      "description": "Upper body part, contains senses"
+    },
+    {
+      "id": "hand",
+      "derivation_level": 2,
+      "is_primitive": false,
+      "label": "Hand",
+      "description": "Grasping appendage"
+    },
+    {
+      "id": "arm",
+      "derivation_level": 2,
+      "is_primitive": false,
+      "label": "Arm",
+      "description": "Upper limb"
+    },
+    {
+      "id": "foot",
+      "derivation_level": 2,
+      "is_primitive": false,
+      "label": "Foot",
+      "description": "Lower extremity for walking"
+    },
+    {
+      "id": "eye",
+      "derivation_level": 2,
+      "is_primitive": false,
+      "label": "Eye",
+      "description": "Organ of sight"
+    },
+    {
+      "id": "mouth",
+      "derivation_level": 2,
+      "is_primitive": false,
+      "label": "Mouth",
+      "description": "Organ of eating and speaking"
+    },
+    {
+      "id": "ear",
+      "derivation_level": 2,
+      "is_primitive": false,
+      "label": "Ear",
+      "description": "Organ of hearing"
+    },
+    {
+      "id": "finger",
+      "derivation_level": 3,
+      "is_primitive": false,
+      "label": "Finger",
+      "description": "Digit of the hand"
+    },
+    {
+      "id": "water",
+      "derivation_level": 2,
+      "is_primitive": false,
+      "label": "Water",
+      "description": "Fundamental liquid"
+    },
+    {
+      "id": "bread",
+      "derivation_level": 2,
+      "is_primitive": false,
+      "label": "Bread",
+      "description": "Basic grain food"
+    },
+    {
+      "id": "fruit",
+      "derivation_level": 2,
+      "is_primitive": false,
+      "label": "Fruit",
+      "description": "Plant-based food"
+    },
+    {
+      "id": "apple",
+      "derivation_level": 3,
+      "is_primitive": false,
+      "label": "Apple",
+      "description": "Common fruit"
+    },
+    {
+      "id": "milk",
+      "derivation_level": 2,
+      "is_primitive": false,
+      "label": "Milk",
+      "description": "Animal-derived liquid"
+    },
+    {
+      "id": "salt",
+      "derivation_level": 2,
+      "is_primitive": false,
+      "label": "Salt",
+      "description": "Mineral seasoning"
+    },
+    {
+      "id": "go",
+      "derivation_level": 3,
+      "is_primitive": false,
+      "label": "Go",
+      "description": "Move away from here"
+    },
+    {
+      "id": "come",
+      "derivation_level": 3,
+      "is_primitive": false,
+      "label": "Come",
+      "description": "Move toward here"
+    },
+    {
+      "id": "see",
+      "derivation_level": 3,
+      "is_primitive": false,
+      "label": "See",
+      "description": "Perceive with eyes"
+    },
+    {
+      "id": "hear",
+      "derivation_level": 3,
+      "is_primitive": false,
+      "label": "Hear",
+      "description": "Perceive with ears"
+    },
+    {
+      "id": "eat",
+      "derivation_level": 3,
+      "is_primitive": false,
+      "label": "Eat",
+      "description": "Consume food"
+    },
+    {
+      "id": "drink",
+      "derivation_level": 3,
+      "is_primitive": false,
+      "label": "Drink",
+      "description": "Consume liquid"
+    },
+    {
+      "id": "give",
+      "derivation_level": 3,
+      "is_primitive": false,
+      "label": "Give",
+      "description": "Transfer to another"
+    },
+    {
+      "id": "take",
+      "derivation_level": 3,
+      "is_primitive": false,
+      "label": "Take",
+      "description": "Receive from another"
+    },
+    {
+      "id": "make",
+      "derivation_level": 3,
+      "is_primitive": false,
+      "label": "Make",
+      "description": "Create or produce"
+    },
+    {
+      "id": "say",
+      "derivation_level": 3,
+      "is_primitive": false,
+      "label": "Say",
+      "description": "Produce speech"
+    },
+    {
+      "id": "good",
+      "derivation_level": 4,
+      "is_primitive": false,
+      "label": "Good",
+      "description": "Positive quality"
+    },
+    {
+      "id": "bad",
+      "derivation_level": 4,
+      "is_primitive": false,
+      "label": "Bad",
+      "description": "Negative quality"
+    },
+    {
+      "id": "big",
+      "derivation_level": 4,
+      "is_primitive": false,
+      "label": "Big",
+      "description": "Large in size"
+    },
+    {
+      "id": "small",
+      "derivation_level": 4,
+      "is_primitive": false,
+      "label": "Small",
+      "description": "Small in size"
+    },
+    {
+      "id": "hot",
+      "derivation_level": 4,
+      "is_primitive": false,
+      "label": "Hot",
+      "description": "High temperature"
+    },
+    {
+      "id": "cold",
+      "derivation_level": 4,
+      "is_primitive": false,
+      "label": "Cold",
+      "description": "Low temperature"
+    },
+    {
+      "id": "new",
+      "derivation_level": 4,
+      "is_primitive": false,
+      "label": "New",
+      "description": "Recently created"
+    },
+    {
+      "id": "old",
+      "derivation_level": 4,
+      "is_primitive": false,
+      "label": "Old",
+      "description": "Existing for long time"
+    },
+    {
+      "id": "in",
+      "derivation_level": 5,
+      "is_primitive": false,
+      "label": "In",
+      "description": "Spatial containment"
+    },
+    {
+      "id": "with",
+      "derivation_level": 5,
+      "is_primitive": false,
+      "label": "With",
+      "description": "Accompaniment or instrument"
+    },
+    {
+      "id": "from",
+      "derivation_level": 5,
+      "is_primitive": false,
+      "label": "From",
+      "description": "Source or origin"
+    },
+    {
+      "id": "not",
+      "derivation_level": 5,
+      "is_primitive": false,
+      "label": "Not",
+      "description": "Negation"
+    },
+    {
+      "id": "all",
+      "derivation_level": 5,
+      "is_primitive": false,
+      "label": "All",
+      "description": "Universal quantifier"
+    }
   ],
-
   "edges": [
-    {"from": "thing",    "to": "body",    "delta": 0.4, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "thing manifests as body"},
-    {"from": "thing",    "to": "food",    "delta": 0.4, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "thing manifests as food"},
-    {"from": "thing",    "to": "self",    "delta": 0.5, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "thing becomes self-aware"},
-    {"from": "action",   "to": "go",      "delta": 0.4, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "action specializes to movement"},
-    {"from": "action",   "to": "come",    "delta": 0.4, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "action specializes to approach"},
-    {"from": "action",   "to": "make",    "delta": 0.4, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "action specializes to creation"},
-    {"from": "action",   "to": "give",    "delta": 0.4, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "action specializes to transfer"},
-    {"from": "action",   "to": "take",    "delta": 0.4, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "action specializes to reception"},
-    {"from": "quality",  "to": "good",    "delta": 0.4, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "quality specializes to positive"},
-    {"from": "quality",  "to": "bad",     "delta": 0.4, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "quality specializes to negative"},
-    {"from": "quality",  "to": "big",     "delta": 0.3, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "quality specializes to size"},
-    {"from": "quality",  "to": "small",   "delta": 0.3, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "quality specializes to size"},
-    {"from": "quality",  "to": "hot",     "delta": 0.3, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "quality specializes to temperature"},
-    {"from": "quality",  "to": "cold",    "delta": 0.3, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "quality specializes to temperature"},
-    {"from": "quality",  "to": "new",     "delta": 0.3, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "quality specializes to age"},
-    {"from": "quality",  "to": "old",     "delta": 0.3, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "quality specializes to age"},
-    {"from": "relation", "to": "in",      "delta": 0.3, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "relation specializes to containment"},
-    {"from": "relation", "to": "with",    "delta": 0.3, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "relation specializes to accompaniment"},
-    {"from": "relation", "to": "from",    "delta": 0.3, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "relation specializes to origin"},
-    {"from": "relation", "to": "not",     "delta": 0.3, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "relation specializes to negation"},
-    {"from": "relation", "to": "all",     "delta": 0.3, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "relation specializes to universal"},
-
-    {"from": "body",     "to": "head",    "delta": 0.3, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "body has head"},
-    {"from": "body",     "to": "hand",    "delta": 0.3, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "body has hand"},
-    {"from": "body",     "to": "arm",     "delta": 0.3, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "body has arm"},
-    {"from": "body",     "to": "foot",    "delta": 0.3, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "body has foot"},
-    {"from": "head",     "to": "eye",     "delta": 0.2, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "head has eye"},
-    {"from": "head",     "to": "mouth",   "delta": 0.2, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "head has mouth"},
-    {"from": "hand",     "to": "finger",  "delta": 0.2, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "hand has finger"},
-    {"from": "arm",      "to": "hand",    "delta": 0.2, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "arm ends in hand"},
-
-    {"from": "food",     "to": "bread",   "delta": 0.3, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "food includes bread"},
-    {"from": "food",     "to": "fruit",   "delta": 0.3, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "food includes fruit"},
-    {"from": "food",     "to": "water",   "delta": 0.3, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "food requires water"},
-    {"from": "food",     "to": "milk",    "delta": 0.3, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "food includes milk"},
-    {"from": "food",     "to": "salt",    "delta": 0.2, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "food uses salt"},
-    {"from": "fruit",    "to": "apple",   "delta": 0.2, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "fruit includes apple"},
-
-    {"from": "eye",      "to": "see",     "delta": 0.3, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "eye enables seeing"},
-    {"from": "mouth",    "to": "eat",     "delta": 0.3, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "mouth enables eating"},
-    {"from": "mouth",    "to": "say",     "delta": 0.3, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "mouth enables speaking"},
-    {"from": "mouth",    "to": "drink",   "delta": 0.3, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "mouth enables drinking"},
-    {"from": "foot",     "to": "go",      "delta": 0.3, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "foot enables going"},
-    {"from": "hand",     "to": "give",    "delta": 0.3, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "hand enables giving"},
-    {"from": "hand",     "to": "take",    "delta": 0.3, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "hand enables taking"},
-    {"from": "hand",     "to": "make",    "delta": 0.3, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "hand enables making"},
-    {"from": "ear",      "to": "hear",    "delta": 0.3, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "ear enables hearing"},
-    {"from": "head",     "to": "ear",     "delta": 0.2, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "head has ear"},
-
-    {"from": "eat",      "to": "food",    "delta": 0.2, "resistance": 0.4, "initial_U": 2, "initial_F": 1, "derivation": "eating requires food"},
-    {"from": "drink",    "to": "water",   "delta": 0.2, "resistance": 0.4, "initial_U": 2, "initial_F": 1, "derivation": "drinking requires water"},
-    {"from": "drink",    "to": "milk",    "delta": 0.2, "resistance": 0.4, "initial_U": 2, "initial_F": 1, "derivation": "can drink milk"},
-    {"from": "good",     "to": "bad",     "delta": 0.5, "resistance": 0.5, "initial_U": 2, "initial_F": 1, "derivation": "good opposes bad"},
-    {"from": "big",      "to": "small",   "delta": 0.5, "resistance": 0.5, "initial_U": 2, "initial_F": 1, "derivation": "big opposes small"},
-    {"from": "hot",      "to": "cold",    "delta": 0.5, "resistance": 0.5, "initial_U": 2, "initial_F": 1, "derivation": "hot opposes cold"},
-    {"from": "new",      "to": "old",     "delta": 0.5, "resistance": 0.5, "initial_U": 2, "initial_F": 1, "derivation": "new opposes old"},
-    {"from": "self",     "to": "body",    "delta": 0.3, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "self has body"},
-    {"from": "self",     "to": "action",  "delta": 0.3, "resistance": 0.3, "initial_U": 2, "initial_F": 1, "derivation": "self performs actions"},
-
-    {"from": "say",      "to": "self",    "delta": 0.2, "resistance": 0.4, "initial_U": 2, "initial_F": 1, "derivation": "saying expresses self"},
-    {"from": "see",      "to": "thing",   "delta": 0.2, "resistance": 0.4, "initial_U": 2, "initial_F": 1, "derivation": "seeing perceives things"},
-    {"from": "all",      "to": "thing",   "delta": 0.2, "resistance": 0.4, "initial_U": 2, "initial_F": 1, "derivation": "all refers to things"},
-    {"from": "not",      "to": "quality", "delta": 0.2, "resistance": 0.4, "initial_U": 2, "initial_F": 1, "derivation": "not negates quality"},
-    {"from": "in",       "to": "thing",   "delta": 0.2, "resistance": 0.4, "initial_U": 2, "initial_F": 1, "derivation": "in locates thing"}
+    {
+      "from": "thing",
+      "to": "body",
+      "delta": 0.5,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "thing manifests as body"
+    },
+    {
+      "from": "thing",
+      "to": "food",
+      "delta": 0.5,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "thing manifests as food"
+    },
+    {
+      "from": "thing",
+      "to": "self",
+      "delta": 0.7,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "thing becomes self-aware"
+    },
+    {
+      "from": "action",
+      "to": "go",
+      "delta": 0.4,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "action specializes to movement"
+    },
+    {
+      "from": "action",
+      "to": "come",
+      "delta": 0.4,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "action specializes to approach"
+    },
+    {
+      "from": "action",
+      "to": "make",
+      "delta": 0.5,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "action specializes to creation"
+    },
+    {
+      "from": "action",
+      "to": "give",
+      "delta": 0.4,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "action specializes to transfer"
+    },
+    {
+      "from": "action",
+      "to": "take",
+      "delta": 0.4,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "action specializes to reception"
+    },
+    {
+      "from": "quality",
+      "to": "good",
+      "delta": 0.5,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "quality specializes to positive"
+    },
+    {
+      "from": "quality",
+      "to": "bad",
+      "delta": 0.5,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "quality specializes to negative"
+    },
+    {
+      "from": "quality",
+      "to": "big",
+      "delta": 0.3,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "quality specializes to size"
+    },
+    {
+      "from": "quality",
+      "to": "small",
+      "delta": 0.3,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "quality specializes to size"
+    },
+    {
+      "from": "quality",
+      "to": "hot",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "quality specializes to temperature"
+    },
+    {
+      "from": "quality",
+      "to": "cold",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "quality specializes to temperature"
+    },
+    {
+      "from": "quality",
+      "to": "new",
+      "delta": 0.25,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "quality specializes to age"
+    },
+    {
+      "from": "quality",
+      "to": "old",
+      "delta": 0.25,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "quality specializes to age"
+    },
+    {
+      "from": "relation",
+      "to": "in",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "relation specializes to containment"
+    },
+    {
+      "from": "relation",
+      "to": "with",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "relation specializes to accompaniment"
+    },
+    {
+      "from": "relation",
+      "to": "from",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "relation specializes to origin"
+    },
+    {
+      "from": "relation",
+      "to": "not",
+      "delta": 0.4,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "relation specializes to negation"
+    },
+    {
+      "from": "relation",
+      "to": "all",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "relation specializes to universal"
+    },
+    {
+      "from": "body",
+      "to": "head",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "body has head"
+    },
+    {
+      "from": "body",
+      "to": "hand",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "body has hand"
+    },
+    {
+      "from": "body",
+      "to": "arm",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "body has arm"
+    },
+    {
+      "from": "body",
+      "to": "foot",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "body has foot"
+    },
+    {
+      "from": "head",
+      "to": "eye",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "head has eye"
+    },
+    {
+      "from": "head",
+      "to": "mouth",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "head has mouth"
+    },
+    {
+      "from": "head",
+      "to": "ear",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "head has ear"
+    },
+    {
+      "from": "hand",
+      "to": "finger",
+      "delta": 0.1,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "hand has finger"
+    },
+    {
+      "from": "arm",
+      "to": "hand",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "arm ends in hand"
+    },
+    {
+      "from": "food",
+      "to": "bread",
+      "delta": 0.2,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "food includes bread"
+    },
+    {
+      "from": "food",
+      "to": "fruit",
+      "delta": 0.2,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "food includes fruit"
+    },
+    {
+      "from": "food",
+      "to": "water",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "food adjacent to water"
+    },
+    {
+      "from": "food",
+      "to": "milk",
+      "delta": 0.25,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "food includes milk"
+    },
+    {
+      "from": "food",
+      "to": "salt",
+      "delta": 0.2,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "food uses salt"
+    },
+    {
+      "from": "fruit",
+      "to": "apple",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "fruit includes apple"
+    },
+    {
+      "from": "eye",
+      "to": "see",
+      "delta": 0.6,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "eye enables seeing"
+    },
+    {
+      "from": "mouth",
+      "to": "eat",
+      "delta": 0.5,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "mouth enables eating"
+    },
+    {
+      "from": "mouth",
+      "to": "say",
+      "delta": 0.5,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "mouth enables speaking"
+    },
+    {
+      "from": "mouth",
+      "to": "drink",
+      "delta": 0.4,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "mouth enables drinking"
+    },
+    {
+      "from": "foot",
+      "to": "go",
+      "delta": 0.5,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "foot enables going"
+    },
+    {
+      "from": "ear",
+      "to": "hear",
+      "delta": 0.6,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "ear enables hearing"
+    },
+    {
+      "from": "hand",
+      "to": "give",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "hand enables giving"
+    },
+    {
+      "from": "hand",
+      "to": "take",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "hand enables taking"
+    },
+    {
+      "from": "hand",
+      "to": "make",
+      "delta": 0.5,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "hand enables making"
+    },
+    {
+      "from": "eat",
+      "to": "food",
+      "delta": 0.3,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "eating requires food"
+    },
+    {
+      "from": "drink",
+      "to": "water",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "drinking requires water"
+    },
+    {
+      "from": "drink",
+      "to": "milk",
+      "delta": 0.25,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "can drink milk"
+    },
+    {
+      "from": "good",
+      "to": "bad",
+      "delta": 0.7,
+      "resistance": 0.5,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "good opposes bad"
+    },
+    {
+      "from": "big",
+      "to": "small",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "big opposes small"
+    },
+    {
+      "from": "hot",
+      "to": "cold",
+      "delta": 0.6,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "hot opposes cold"
+    },
+    {
+      "from": "new",
+      "to": "old",
+      "delta": 0.4,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "new opposes old"
+    },
+    {
+      "from": "self",
+      "to": "body",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "self has body"
+    },
+    {
+      "from": "self",
+      "to": "action",
+      "delta": 0.5,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "self performs actions"
+    },
+    {
+      "from": "say",
+      "to": "self",
+      "delta": 0.3,
+      "resistance": 0.5,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "saying expresses self"
+    },
+    {
+      "from": "see",
+      "to": "thing",
+      "delta": 0.3,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "seeing perceives things"
+    },
+    {
+      "from": "all",
+      "to": "thing",
+      "delta": 0.3,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "all refers to things"
+    },
+    {
+      "from": "not",
+      "to": "quality",
+      "delta": 0.3,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "not negates quality"
+    },
+    {
+      "from": "in",
+      "to": "thing",
+      "delta": 0.2,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "in locates thing"
+    },
+    {
+      "from": "food",
+      "to": "good",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "good food (idiomatic EN)"
+    },
+    {
+      "from": "water",
+      "to": "cold",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "cold water (EN association)"
+    },
+    {
+      "from": "see",
+      "to": "good",
+      "delta": 0.3,
+      "resistance": 0.5,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "looks good (visual judgment)"
+    },
+    {
+      "from": "make",
+      "to": "new",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "make new (EN creation idiom)"
+    },
+    {
+      "from": "take",
+      "to": "hand",
+      "delta": 0.35,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "derivation": "take by hand (EN embodied)"
+    }
   ],
-
-  "goal_states": ["self"],
+  "goal_states": [
+    "self"
+  ],
   "necessary_consequences": [
-    "Semantic categories emerge from shared edge patterns",
-    "Body-action connections create functional clusters",
-    "Opposite pairs (good/bad, hot/cold) form high-delta attractors"
+    "Functional links (eye→see δ=0.6) create high-delta attractors distinct from has-a bonds (body→hand δ=0.15)",
+    "Opposite polarity varies: good/bad (0.7) > hot/cold (0.6) > big/small (0.5) > new/old (0.4)",
+    "EN-only food→good and see→good create an aesthetic/judgment cluster absent in DE",
+    "Dream Mode should match: eye→see (0.6) ↔ ohr→hoeren (0.6), NOT eye→see (0.6) ↔ handlung→machen (0.3)"
   ]
 }
