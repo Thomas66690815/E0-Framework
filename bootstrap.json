@@ -2,7 +2,7 @@
   "_meta": {
     "purpose": "Session bootstrap for AI assistants resuming work on E₀-Framework",
     "usage": "Paste this file (or reference it) at the start of a new thread to restore full project context",
-    "last_updated": "2026-04-03",
+    "last_updated": "2026-04-04",
     "update_instruction": "After each commit, update state.latest_commit, state.test_count, and active_work"
   },
 
@@ -28,12 +28,12 @@
   },
 
   "state": {
-    "latest_commit": "C130",
-    "latest_commit_msg": "C130: Confidence-Weighted Edge-Role Matching — using quality/load/inertia signals",
+    "latest_commit": "C138c",
+    "latest_commit_msg": "C138c: scaling test — Hungarian+WL-D2 to 500 nodes, >99% accuracy, O(n^1.17)",
     "test_count": 3530,
     "test_failures": 0,
-    "module_count": "58 production + 9 benchmarks + 11 demos + 29 explorations + 95 test files + 4 canons",
-    "line_count": "~18700 production, ~73000 total"
+    "module_count": "60 production + 9 benchmarks + 11 demos + 40 explorations + 95 test files + 8 canons",
+    "line_count": "~20000 production, ~96000 total"
   },
 
   "conventions": {
@@ -90,7 +90,7 @@
       },
       "9_dream_mode": {
         "files": ["dream_mode.py", "explore_dream_mode.py"],
-        "purpose": "Passive cross-domain pattern recognition. EdgeFingerprint f(e)=(q,m,I), functional equivalence detection (quantile-based), DreamObserver (N domains, dream_cycle, feedback historization), bridge hypothesis generation (→ cross_propose_edges), make_dream_peer_fn (E0Controller integration). Dream Landscape is self-historizing valid E₀ Landscape. C109-C112."
+        "purpose": "Passive cross-domain pattern recognition. EdgeFingerprint f(e)=(q,m,I), functional equivalence detection (quantile-based), DreamObserver (N domains, dream_cycle, feedback historization), bridge hypothesis generation (→ cross_propose_edges), make_dream_peer_fn (E0Controller integration). WL recursive fingerprints (9-dim→81-dim at depth-2), Hungarian optimal assignment (find_wl_node_equivalences_hungarian, scipy). Dream Landscape is self-historizing valid E₀ Landscape. C109-C112, C135-C137."
       },
       "10_structural_entropy": {
         "files": ["structural_entropy.py", "explore_structural_entropy.py"],
@@ -120,6 +120,19 @@
   },
 
   "commit_history_recent": [
+    { "hash": "e417cc2", "id": "docs", "title": "Documentation update for C138a/b/c robustness suite" },
+    { "hash": "a360d60", "id": "C138c", "title": "Scaling test — Hungarian+WL-D2 to 500 nodes, >99% accuracy, O(n^1.17)" },
+    { "hash": "b692c3e", "id": "C138b", "title": "Score noise + topology perturbation robustness — graceful degradation" },
+    { "hash": "8822127", "id": "C138a", "title": "Ablation matrix — 18 configs, Hungarian+D2 dominates all" },
+    { "hash": "d347b91", "id": "docs", "title": "Language Learning Results doc update — Phase 2 (C129-C137)" },
+    { "hash": "f6b11b9", "id": "docs", "title": "Architecture v4 + Test Registry + requirements (scipy) update for C136/C137" },
+    { "hash": "322207c", "id": "C137", "title": "Hungarian optimal assignment — 44/44 BREAKTHROUGH" },
+    { "hash": "9395d86", "id": "C136", "title": "Feature engineering — 9-dim, 34/44, matching bottleneck diagnostic" },
+    { "hash": "5e7fe56", "id": "C135", "title": "WL recursive neighborhood matching — 33/44, 100% precision" },
+    { "hash": "707329d", "id": "C134b", "title": "Node-level equivalences — sorted quality profiles" },
+    { "hash": "a044042", "id": "C134a", "title": "Bootstrapper as teacher — score 0-10, continuous quality" },
+    { "hash": "7996d60", "id": "C133", "title": "LLM monolingual teaching + seedless playground — 44/44 position-based" },
+    { "hash": "PENDING", "id": "C132", "title": "LLM-enriched canons — typed relations for richer fingerprints" },
     { "hash": "PENDING", "id": "C131", "title": "Seed Expansion Experiment — Config C/R2/R5 systematic comparison, 26/44 firm with R5" },
     { "hash": "9a3a447", "id": "C130", "title": "Confidence-Weighted Edge-Role Matching — quality/load/inertia signals" },
     { "hash": "95a01a8", "id": "C129", "title": "Competitive Exclusion — structural gate (defense-in-depth, 0 blocked)" },
@@ -196,7 +209,7 @@
   ],
 
   "active_work": {
-    "focus": "C131 Seed Expansion Experiment. Systematic comparison of 4 seed configs on v1.1 canons (64/64 edges, NO bridge edges). B(11)→13, C(18)→21, C+R2(20)→23, C+R5(23)→26 firm. relation↔beziehung only confirmed with R5 (all 5 neighbors seeded). Key insight: 52% seed needed for 59% coverage — canon structure too shallow for bootstrapping. Next: LLM-enriched canons with typed relations.",
+    "focus": "C138 Robustness Suite complete. C137 BREAKTHROUGH (44/44 seedless cross-domain translation) validated across 3 robustness dimensions: C138a ablation matrix (18 configs, Hungarian+D2 dominant), C138b stress test (score noise σ≤2 = 100%, topology +20 edges = 80%, graceful degradation), C138c scaling (500 nodes, 99.3%, O(n^1.17)). Score correlation is the critical assumption for scaling. Next: integration into DreamObserver pipeline, or multi-domain experiments.",
     "completed": [
       "All 6/6 Multiverse Open Questions resolved (C66-C71)",
       "C72 Chess Engine — E₀ plays chess via 6 strategic dimensions, discovers opening principles through historization",
@@ -267,10 +280,19 @@
       "C128 Level-3 Neighborhood Consistency — bidirectional context scoring: for each candidate en↔de, translate neighbors and check structural overlap. w=base_w×context_score. Promotion gated by context≥50%. 4/4 confirmed=100% (food, quality, action, relation). Wrong pairs (go↔kalt ctx=0%, thing↔kalt ctx=0%) never promoted. relation↔essen_n NEVER APPEARED as discovery (suppressed by context-weighted execute_fn).",
       "C129 Competitive Exclusion — structural gate: promotion requires being best candidate for both EN and DE word. 0 promotions blocked (defense-in-depth, false pairs never reach threshold). Committed 95a01a8.",
       "C130 Confidence-Weighted Edge-Role Matching — votes weighted by equivalence.confidence instead of +1. Edge-role context: compare quality/load/inertia fingerprints of matched edge pairs. 11→13 firm, 2/2=100% confirmed. Edge-Role Score shows clear separation (correct 72-100%, wrong mostly 0%). Committed 9a3a447.",
-      "C131 Seed Expansion Experiment — 4 configs on v1.1 canons: B(11)→13 firm, C(18)→21 firm, C+R2(20)→23 firm, C+R5(23)→26 firm. Bridge edges (C131 Phase 1) created false positives (make↔nehmen ctx=100%) — reverted. Seed expansion is dominant lever. relation↔beziehung: B=tentative ctx=?, C=tentative ctx=0%, R2=tentative ctx=71%, R5=confirmed ctx=100%. Diagnosis: canon topology too shallow (avg degree 2.9, 64 edges on 44 nodes) — node fingerprints not locally unique. 52% seed needed for 59% coverage = not learning, just seeding. Next: LLM-enriched canons with typed relations (sees_with, opposite_of, used_for etc.) to create unique structural fingerprints per node."
+      "C131 Seed Expansion Experiment — 4 configs on v1.1 canons: B(11)→13 firm, C(18)→21 firm, C+R2(20)→23 firm, C+R5(23)→26 firm. Bridge edges (C131 Phase 1) created false positives (make↔nehmen ctx=100%) — reverted. Seed expansion is dominant lever. relation↔beziehung: B=tentative ctx=?, C=tentative ctx=0%, R2=tentative ctx=71%, R5=confirmed ctx=100%. Diagnosis: canon topology too shallow (avg degree 2.9, 64 edges on 44 nodes) — node fingerprints not locally unique. 52% seed needed for 59% coverage = not learning, just seeding. Next: LLM-enriched canons with typed relations (sees_with, opposite_of, used_for etc.) to create unique structural fingerprints per node.",
+      "C132 LLM-Enriched Canons — GPT-4o generates typed relations, creating richer structural fingerprints per node. Unique neighborhoods enable better seedless matching.",
+      "C133 Monolingual LLM Teaching (Binary) — LLM evaluates edges monolingually (YES/NO), never sees both languages. Position-based matching: 44/44 = 100% (oracle level). Key insight: monolingual teaching signal is sufficient.",
+      "C134 Bootstrapper as Teacher — Score 0–10 per edge, injected via bootstrap_landscape(initial_U=score, initial_F=10-score). Node-level equivalence functions added to dream_mode.py.",
+      "C135 WL Recursive Neighborhood Matching — Weisfeiler-Leman style iterative refinement. 4-dim Round-0[mean_q, std_q, degree, pos_frac], depth-2 → 36-dim. D0=25%, D1=70%, D2=75% (33/44, 100% precision). 'Not Edge, but Node plus recursive neighborhood' insight.",
+      "C136 Feature Engineering — 9-dim Round-0 [+min_q, max_q, median_q, trace_load_mean, trace_load_std], D2 → 81-dim. 34/44 (+1). Diagnostic: 6/10 unmatched had correct pair closer but mutual-best blocked them. Problem = matching strategy, not features.",
+      "C137 Hungarian Optimal Assignment — BREAKTHROUGH. scipy.optimize.linear_sum_assignment replaces greedy mutual-best. Globally optimal 1:1 assignment on full 44×44 WL distance matrix. 44/44 = 100%, 0 wrong. Matches position-oracle (C133) without using position knowledge. Seedless, no LLM in matching.",
+      "C138a Ablation Matrix — 3×3×2 = 18 data points (depth × noise × algorithm). Hungarian+D2 = 44/44 at ALL noise levels (100/200/300). Hungarian wins 9/9 over mutual-best. Not a lucky configuration.",
+      "C138b Score Noise + Topology Perturbation — Two stress axes. Score noise σ≤2: 100% (WL averages absorb). Topology +5/+10/+20 DE-only edges: 93%/91%/80% (linear degradation). Combined σ=2+10: 86%. Graceful under dual stress.",
+      "C138c Scaling — Synthetic isomorphic pairs (50/100/200/500 nodes), correlated scores, +100 noise. 100% at 50/100, 99.3% at 200/500. O(n^1.17) sub-cubic. Critical insight: score correlation is the load-bearing assumption."
     ],
-    "next_steps": ["LLM-enriched canons: use GPT-4o to generate rich typed relations for 44 words per language", "Test Config B (11 seed) on enriched canon — hypothesis: >60% firm with 25% seed", "If confirmed: formalize LLM-as-parent architecture (C43 Self-Graph path)"],
-    "next_commit_id": "C132"
+    "next_steps": ["Integration: wire Hungarian matching into DreamObserver pipeline for runtime cross-domain discovery", "Multi-domain: test with non-language domains (e.g., two different chess configurations, invoice variants)", "Asymmetric teaching: what if LLMs evaluate differently per language?", "Larger real canons: extend english_basic/german_basic beyond 44 nodes to test real-world scaling"],
+    "next_commit_id": "C139"
   },
 
   "key_modules_quick_ref": {
