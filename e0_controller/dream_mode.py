@@ -188,6 +188,149 @@ def find_equivalences(
 
 
 # ---------------------------------------------------------------------------
+# Node fingerprints  (C134b)
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class NodeFingerprint:
+    """Historization profile of a node: sorted quality vector of its edges."""
+    domain: str
+    node: str
+    qualities: tuple  # sorted tuple of edge qualities, ascending
+    degree: int       # number of edges (= len(qualities))
+
+
+def node_fingerprint(
+    node: str,
+    landscape: Landscape,
+    domain: str = "",
+) -> NodeFingerprint:
+    """Extract quality profile for a single node.
+
+    The profile is the sorted vector of trace_quality values for all
+    edges incident to this node (both as source and target).
+    Sorting makes the profile invariant to edge ordering.
+    """
+    h = landscape.historization
+    qualities = []
+    for edge in landscape.edges:
+        if edge.source == node or edge.target == node:
+            qualities.append(h.trace_quality(edge))
+    qualities.sort()
+    return NodeFingerprint(
+        domain=domain,
+        node=node,
+        qualities=tuple(qualities),
+        degree=len(qualities),
+    )
+
+
+def node_fingerprints(
+    landscape: Landscape,
+    domain: str = "",
+) -> List[NodeFingerprint]:
+    """Extract fingerprints for all nodes in a landscape."""
+    return [
+        node_fingerprint(n, landscape, domain)
+        for n in sorted(landscape.states)
+    ]
+
+
+def node_fingerprint_distance(a: NodeFingerprint, b: NodeFingerprint) -> float:
+    """Distance between two node profiles.
+
+    Compares sorted quality vectors element-wise. If degrees differ,
+    pads the shorter vector with 0.0 (neutral quality). Distance is
+    the RMS of element-wise differences, normalized by max degree.
+
+    Returns value in [0, 2.0] (since quality ∈ (-1, +1)).
+    """
+    qa = list(a.qualities)
+    qb = list(b.qualities)
+    max_len = max(len(qa), len(qb))
+    if max_len == 0:
+        return 0.0
+
+    # Pad shorter vector with 0.0
+    while len(qa) < max_len:
+        qa.append(0.0)
+    while len(qb) < max_len:
+        qb.append(0.0)
+
+    sum_sq = sum((x - y) ** 2 for x, y in zip(qa, qb))
+    return math.sqrt(sum_sq / max_len)
+
+
+@dataclass(frozen=True)
+class NodeEquivalence:
+    """A detected equivalence between two nodes in different domains."""
+    fp_a: NodeFingerprint
+    fp_b: NodeFingerprint
+    distance: float
+
+    @property
+    def node_a(self) -> str:
+        return self.fp_a.node
+
+    @property
+    def node_b(self) -> str:
+        return self.fp_b.node
+
+    @property
+    def confidence(self) -> float:
+        return max(0.0, 1.0 - self.distance)
+
+
+def find_node_equivalences(
+    landscape_a: Landscape,
+    landscape_b: Landscape,
+    *,
+    domain_a: str = "A",
+    domain_b: str = "B",
+    quantile: float = 0.1,
+    max_results: Optional[int] = None,
+) -> List[NodeEquivalence]:
+    """Find functional equivalences between nodes in two domains.
+
+    Compares node fingerprints (sorted quality profiles) instead of
+    individual edge fingerprints. This captures the structural role
+    of each node — how it participates across all its relationships.
+
+    Args:
+        landscape_a, landscape_b: The two domain landscapes (read-only).
+        domain_a, domain_b: Names for reporting.
+        quantile: Fraction of pairwise distances to keep (bottom %).
+        max_results: Optional cap on returned equivalences.
+
+    Returns:
+        List of NodeEquivalence objects, sorted by distance (ascending).
+    """
+    nfps_a = node_fingerprints(landscape_a, domain_a)
+    nfps_b = node_fingerprints(landscape_b, domain_b)
+
+    if not nfps_a or not nfps_b:
+        return []
+
+    # Compute all pairwise distances
+    pairs: List[NodeEquivalence] = []
+    for na in nfps_a:
+        for nb in nfps_b:
+            d = node_fingerprint_distance(na, nb)
+            pairs.append(NodeEquivalence(fp_a=na, fp_b=nb, distance=d))
+
+    pairs.sort(key=lambda eq: eq.distance)
+
+    # Apply quantile threshold
+    cutoff_idx = max(1, int(len(pairs) * quantile))
+    result = pairs[:cutoff_idx]
+
+    if max_results is not None:
+        result = result[:max_results]
+
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Dream readiness
 # ---------------------------------------------------------------------------
 

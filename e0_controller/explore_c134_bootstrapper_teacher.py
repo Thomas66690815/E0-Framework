@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-E₀ C134a — Bootstrapper as Monolingual Teacher
+E₀ C134b — Bootstrapper as Monolingual Teacher + Node Equivalences
 =================================================
 
 Evolution: C133 used binary YES/NO from LLM → quality ±1.0 → homogeneous
@@ -39,7 +39,9 @@ from e0_controller.bootstrapper import bootstrap_landscape
 from e0_controller.llm_adapter import LLMConfig, openai_call
 from e0_controller.dream_mode import (
     EdgeFingerprint, Equivalence,
+    NodeEquivalence, NodeFingerprint,
     domain_fingerprints, find_equivalences,
+    find_node_equivalences, node_fingerprints,
 )
 from e0_controller.structural_entropy import structural_temperature
 from e0_controller.canon_loader import load_canon_spec
@@ -307,7 +309,7 @@ def match_by_find_equivalences(
     en_L: Landscape,
     de_L: Landscape,
 ) -> List[Tuple[str, str, float, int]]:
-    """Match via find_equivalences — the REAL test for C134."""
+    """Match via find_equivalences (edge-level)."""
     equivalences = find_equivalences(
         en_L, de_L,
         domain_a="EN", domain_b="DE",
@@ -320,6 +322,55 @@ def match_by_find_equivalences(
         print(f"  Distance range: {min(dists):.4f} — {max(dists):.4f}")
 
     return extract_node_correspondences(equivalences, "EN")
+
+
+def match_by_node_equivalences(
+    en_L: Landscape,
+    de_L: Landscape,
+) -> List[Tuple[str, str, float, int]]:
+    """Match via find_node_equivalences (node-level profiles).
+
+    C134b: The key test. Node profiles (sorted quality vectors) should
+    capture the structural role of each node without needing position info.
+    """
+    node_eqs = find_node_equivalences(
+        en_L, de_L,
+        domain_a="EN", domain_b="DE",
+        quantile=0.15,
+    )
+
+    print(f"  Node equivalences found: {len(node_eqs)}")
+    if node_eqs:
+        dists = [eq.distance for eq in node_eqs]
+        print(f"  Distance range: {min(dists):.4f} — {max(dists):.4f}")
+
+    # Direct mutual best-match from node equivalences
+    best_for_en: Dict[str, Tuple[str, float]] = {}
+    vote_counts: Dict[Tuple[str, str], int] = defaultdict(int)
+
+    for eq in node_eqs:
+        en_node = eq.fp_a.node
+        de_node = eq.fp_b.node
+        conf = eq.confidence
+        vote_counts[(en_node, de_node)] += 1
+        if en_node not in best_for_en or conf > best_for_en[en_node][1]:
+            best_for_en[en_node] = (de_node, conf)
+
+    best_for_de: Dict[str, Tuple[str, float]] = {}
+    for eq in node_eqs:
+        en_node = eq.fp_a.node
+        de_node = eq.fp_b.node
+        conf = eq.confidence
+        if de_node not in best_for_de or conf > best_for_de[de_node][1]:
+            best_for_de[de_node] = (en_node, conf)
+
+    results = []
+    for en, (de, conf) in best_for_en.items():
+        if de in best_for_de and best_for_de[de][0] == en:
+            results.append((en, de, conf, vote_counts[(en, de)]))
+
+    results.sort(key=lambda x: -x[2])
+    return results
 
 
 def extract_node_correspondences(
@@ -410,9 +461,9 @@ def analyze_fingerprints(L: Landscape, domain: str):
 # ══════════════════════════════════════════════
 
 def run_experiment(noise_edges: int = 100):
-    """C134a: Bootstrapper as monolingual teacher."""
+    """C134b: Bootstrapper as monolingual teacher + node equivalences."""
     print("=" * 72)
-    print("  E₀ C134a — Bootstrapper as Monolingual Teacher")
+    print("  E₀ C134b — Bootstrapper as Monolingual Teacher + Node Equivalences")
     print(f"  Shared topology + {noise_edges} noise edges")
     print(f"  Score 0–10 → initial_U/F → bootstrap_landscape()")
     print("=" * 72)
@@ -485,15 +536,21 @@ def run_experiment(noise_edges: int = 100):
     )
     print(f"  Correspondences (mutual best match): {len(correspondences_A)}")
 
-    # Method B: find_equivalences — the REAL test
-    print(f"\n  Method B: find_equivalences (the test for C134)...")
+    # Method B: find_equivalences (edge-level, for comparison)
+    print(f"\n  Method B: find_equivalences (edge-level)...")
     correspondences_B = match_by_find_equivalences(en_L, de_L)
     print(f"  Correspondences (mutual best match): {len(correspondences_B)}")
 
-    # Score both methods
+    # Method C: find_node_equivalences — THE C134b TEST
+    print(f"\n  Method C: find_node_equivalences (node profiles)...")
+    correspondences_C = match_by_node_equivalences(en_L, de_L)
+    print(f"  Correspondences (mutual best match): {len(correspondences_C)}")
+
+    # Score all methods
     for method_name, correspondences in [
         ("A (position)", correspondences_A),
-        ("B (equivalences)", correspondences_B),
+        ("B (edge-eq)", correspondences_B),
+        ("C (node-eq)", correspondences_C),
     ]:
         correct = 0
         wrong = 0
@@ -526,13 +583,15 @@ def run_experiment(noise_edges: int = 100):
 
     # Final summary
     print(f"\n  {'='*60}")
-    print(f"  C134a RESULTS")
+    print(f"  C134b RESULTS")
     print(f"  {'='*60}")
 
-    for method_name, correspondences in [
+    all_methods = [
         ("A (position)", correspondences_A),
-        ("B (equivalences)", correspondences_B),
-    ]:
+        ("B (edge-eq)", correspondences_B),
+        ("C (node-eq)", correspondences_C),
+    ]
+    for method_name, correspondences in all_methods:
         correct = sum(1 for en, de, _, _ in correspondences
                       if GROUND_TRUTH.get(en) == de)
         wrong = sum(1 for en, de, _, _ in correspondences
@@ -557,12 +616,17 @@ def run_experiment(noise_edges: int = 100):
               if GROUND_TRUTH.get(en) == de)
     c_B = sum(1 for en, de, _, _ in correspondences_B
               if GROUND_TRUTH.get(en) == de)
+    c_C = sum(1 for en, de, _, _ in correspondences_C
+              if GROUND_TRUTH.get(en) == de)
     n_gt = len(GROUND_TRUTH)
-    print(f"  C134a (seed=0, scored+pos):   {c_A}/{n_gt} "
+    print(f"  C134b (seed=0, scored+pos):   {c_A}/{n_gt} "
           f"({c_A/n_gt*100:.0f}%) [position]")
-    print(f"  C134a (seed=0, scored+eq):    {c_B}/{n_gt} "
-          f"({c_B/n_gt*100:.0f}%) [find_eq]  ← KEY TEST")
+    print(f"  C134b (seed=0, edge-eq):      {c_B}/{n_gt} "
+          f"({c_B/n_gt*100:.0f}%) [edge-eq]")
+    print(f"  C134b (seed=0, node-eq):      {c_C}/{n_gt} "
+          f"({c_C/n_gt*100:.0f}%) [node-eq]  ← KEY TEST")
 
 
 if __name__ == "__main__":
-    run_experiment()
+    n = int(sys.argv[1]) if len(sys.argv) > 1 else 100
+    run_experiment(noise_edges=n)
