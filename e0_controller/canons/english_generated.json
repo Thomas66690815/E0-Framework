@@ -1,0 +1,1888 @@
+{
+  "name": "english_generated",
+  "version": "3.0-generated",
+  "source": "E0 C133 LLM-generated English vocabulary",
+  "description": "LLM-generated English vocabulary — 104 words, 115 edges",
+  "nodes": [
+    {
+      "id": "head",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "head",
+      "description": "body"
+    },
+    {
+      "id": "hand",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "hand",
+      "description": "body"
+    },
+    {
+      "id": "arm",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "arm",
+      "description": "body"
+    },
+    {
+      "id": "foot",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "foot",
+      "description": "body"
+    },
+    {
+      "id": "eye",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "eye",
+      "description": "body"
+    },
+    {
+      "id": "ear",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "ear",
+      "description": "body"
+    },
+    {
+      "id": "mouth",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "mouth",
+      "description": "body"
+    },
+    {
+      "id": "finger",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "finger",
+      "description": "body"
+    },
+    {
+      "id": "nose",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "nose",
+      "description": "body"
+    },
+    {
+      "id": "leg",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "leg",
+      "description": "body"
+    },
+    {
+      "id": "heart",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "heart",
+      "description": "body"
+    },
+    {
+      "id": "skin",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "skin",
+      "description": "body"
+    },
+    {
+      "id": "water",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "water",
+      "description": "food"
+    },
+    {
+      "id": "bread",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "bread",
+      "description": "food"
+    },
+    {
+      "id": "milk",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "milk",
+      "description": "food"
+    },
+    {
+      "id": "apple",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "apple",
+      "description": "food"
+    },
+    {
+      "id": "salt",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "salt",
+      "description": "food"
+    },
+    {
+      "id": "fruit",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "fruit",
+      "description": "food"
+    },
+    {
+      "id": "meat",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "meat",
+      "description": "food"
+    },
+    {
+      "id": "fishfood",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "fish",
+      "description": "food"
+    },
+    {
+      "id": "egg",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "egg",
+      "description": "food"
+    },
+    {
+      "id": "cheese",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "cheese",
+      "description": "food"
+    },
+    {
+      "id": "soup",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "soup",
+      "description": "food"
+    },
+    {
+      "id": "breakfast",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "breakfast",
+      "description": "food"
+    },
+    {
+      "id": "lunch",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "lunch",
+      "description": "food"
+    },
+    {
+      "id": "dinner",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "dinner",
+      "description": "food"
+    },
+    {
+      "id": "dog",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "dog",
+      "description": "animal"
+    },
+    {
+      "id": "cat",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "cat",
+      "description": "animal"
+    },
+    {
+      "id": "bird",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "bird",
+      "description": "animal"
+    },
+    {
+      "id": "fish",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "fish",
+      "description": "animal"
+    },
+    {
+      "id": "horse",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "horse",
+      "description": "animal"
+    },
+    {
+      "id": "cow",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "cow",
+      "description": "animal"
+    },
+    {
+      "id": "rabbit",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "rabbit",
+      "description": "animal"
+    },
+    {
+      "id": "pet",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "pet",
+      "description": "animal"
+    },
+    {
+      "id": "animal",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "animal",
+      "description": "animal"
+    },
+    {
+      "id": "go",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "go",
+      "description": "action"
+    },
+    {
+      "id": "come",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "come",
+      "description": "action"
+    },
+    {
+      "id": "see",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "see",
+      "description": "action"
+    },
+    {
+      "id": "hear",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "hear",
+      "description": "action"
+    },
+    {
+      "id": "eat",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "eat",
+      "description": "action"
+    },
+    {
+      "id": "drink",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "drink",
+      "description": "action"
+    },
+    {
+      "id": "give",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "give",
+      "description": "action"
+    },
+    {
+      "id": "take",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "take",
+      "description": "action"
+    },
+    {
+      "id": "say",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "say",
+      "description": "action"
+    },
+    {
+      "id": "make",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "make",
+      "description": "action"
+    },
+    {
+      "id": "run",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "run",
+      "description": "action"
+    },
+    {
+      "id": "fly",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "fly",
+      "description": "action"
+    },
+    {
+      "id": "swim",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "swim",
+      "description": "action"
+    },
+    {
+      "id": "sleep",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "sleep",
+      "description": "action"
+    },
+    {
+      "id": "play",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "play",
+      "description": "action"
+    },
+    {
+      "id": "work",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "work",
+      "description": "action"
+    },
+    {
+      "id": "write",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "write",
+      "description": "action"
+    },
+    {
+      "id": "read",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "read",
+      "description": "action"
+    },
+    {
+      "id": "good",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "good",
+      "description": "quality"
+    },
+    {
+      "id": "bad",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "bad",
+      "description": "quality"
+    },
+    {
+      "id": "big",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "big",
+      "description": "quality"
+    },
+    {
+      "id": "small",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "small",
+      "description": "quality"
+    },
+    {
+      "id": "hot",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "hot",
+      "description": "quality"
+    },
+    {
+      "id": "cold",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "cold",
+      "description": "quality"
+    },
+    {
+      "id": "new",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "new",
+      "description": "quality"
+    },
+    {
+      "id": "old",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "old",
+      "description": "quality"
+    },
+    {
+      "id": "fast",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "fast",
+      "description": "quality"
+    },
+    {
+      "id": "slow",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "slow",
+      "description": "quality"
+    },
+    {
+      "id": "sweet",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "sweet",
+      "description": "quality"
+    },
+    {
+      "id": "strong",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "strong",
+      "description": "quality"
+    },
+    {
+      "id": "fair",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "fair",
+      "description": "quality"
+    },
+    {
+      "id": "wet",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "wet",
+      "description": "quality"
+    },
+    {
+      "id": "dry",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "dry",
+      "description": "quality"
+    },
+    {
+      "id": "sun",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "sun",
+      "description": "nature"
+    },
+    {
+      "id": "rain",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "rain",
+      "description": "nature"
+    },
+    {
+      "id": "tree",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "tree",
+      "description": "nature"
+    },
+    {
+      "id": "flower",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "flower",
+      "description": "nature"
+    },
+    {
+      "id": "river",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "river",
+      "description": "nature"
+    },
+    {
+      "id": "stone",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "stone",
+      "description": "nature"
+    },
+    {
+      "id": "fire",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "fire",
+      "description": "nature"
+    },
+    {
+      "id": "wind",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "wind",
+      "description": "nature"
+    },
+    {
+      "id": "garden",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "garden",
+      "description": "nature"
+    },
+    {
+      "id": "weather",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "weather",
+      "description": "nature"
+    },
+    {
+      "id": "mother",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "mother",
+      "description": "people"
+    },
+    {
+      "id": "father",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "father",
+      "description": "people"
+    },
+    {
+      "id": "child",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "child",
+      "description": "people"
+    },
+    {
+      "id": "friend",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "friend",
+      "description": "people"
+    },
+    {
+      "id": "family",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "family",
+      "description": "people"
+    },
+    {
+      "id": "team",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "team",
+      "description": "people"
+    },
+    {
+      "id": "in",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "in",
+      "description": "relation"
+    },
+    {
+      "id": "with",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "with",
+      "description": "relation"
+    },
+    {
+      "id": "from",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "from",
+      "description": "relation"
+    },
+    {
+      "id": "not",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "not",
+      "description": "relation"
+    },
+    {
+      "id": "all",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "all",
+      "description": "relation"
+    },
+    {
+      "id": "to",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "to",
+      "description": "relation"
+    },
+    {
+      "id": "thing",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "thing",
+      "description": "abstract"
+    },
+    {
+      "id": "action",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "action",
+      "description": "abstract"
+    },
+    {
+      "id": "time",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "time",
+      "description": "abstract"
+    },
+    {
+      "id": "life",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "life",
+      "description": "abstract"
+    },
+    {
+      "id": "mind",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "mind",
+      "description": "abstract"
+    },
+    {
+      "id": "skill",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "skill",
+      "description": "abstract"
+    },
+    {
+      "id": "challenge",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "challenge",
+      "description": "abstract"
+    },
+    {
+      "id": "goal",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "goal",
+      "description": "abstract"
+    },
+    {
+      "id": "score",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "score",
+      "description": "abstract"
+    },
+    {
+      "id": "game",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "game",
+      "description": "abstract"
+    },
+    {
+      "id": "road",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "road",
+      "description": "english_specific"
+    },
+    {
+      "id": "bridge",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "bridge",
+      "description": "english_specific"
+    },
+    {
+      "id": "town",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "town",
+      "description": "english_specific"
+    },
+    {
+      "id": "pattern",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "pattern",
+      "description": "english_specific"
+    }
+  ],
+  "edges": [
+    {
+      "from": "finger",
+      "to": "hand",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "part_of",
+      "derivation": "finger part_of hand"
+    },
+    {
+      "from": "hand",
+      "to": "arm",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "part_of",
+      "derivation": "hand part_of arm"
+    },
+    {
+      "from": "foot",
+      "to": "leg",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "part_of",
+      "derivation": "foot part_of leg"
+    },
+    {
+      "from": "eye",
+      "to": "head",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "part_of",
+      "derivation": "eye part_of head"
+    },
+    {
+      "from": "ear",
+      "to": "head",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "part_of",
+      "derivation": "ear part_of head"
+    },
+    {
+      "from": "mouth",
+      "to": "head",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "part_of",
+      "derivation": "mouth part_of head"
+    },
+    {
+      "from": "nose",
+      "to": "head",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "part_of",
+      "derivation": "nose part_of head"
+    },
+    {
+      "from": "water",
+      "to": "thing",
+      "delta": 0.2,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "is_a",
+      "derivation": "water is_a thing"
+    },
+    {
+      "from": "bread",
+      "to": "thing",
+      "delta": 0.2,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "is_a",
+      "derivation": "bread is_a thing"
+    },
+    {
+      "from": "apple",
+      "to": "fruit",
+      "delta": 0.2,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "is_a",
+      "derivation": "apple is_a fruit"
+    },
+    {
+      "from": "dog",
+      "to": "animal",
+      "delta": 0.2,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "is_a",
+      "derivation": "dog is_a animal"
+    },
+    {
+      "from": "cat",
+      "to": "animal",
+      "delta": 0.2,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "is_a",
+      "derivation": "cat is_a animal"
+    },
+    {
+      "from": "bird",
+      "to": "animal",
+      "delta": 0.2,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "is_a",
+      "derivation": "bird is_a animal"
+    },
+    {
+      "from": "fish",
+      "to": "animal",
+      "delta": 0.2,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "is_a",
+      "derivation": "fish is_a animal"
+    },
+    {
+      "from": "horse",
+      "to": "animal",
+      "delta": 0.2,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "is_a",
+      "derivation": "horse is_a animal"
+    },
+    {
+      "from": "cow",
+      "to": "animal",
+      "delta": 0.2,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "is_a",
+      "derivation": "cow is_a animal"
+    },
+    {
+      "from": "rabbit",
+      "to": "animal",
+      "delta": 0.2,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "is_a",
+      "derivation": "rabbit is_a animal"
+    },
+    {
+      "from": "pet",
+      "to": "animal",
+      "delta": 0.2,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "is_a",
+      "derivation": "pet is_a animal"
+    },
+    {
+      "from": "go",
+      "to": "action",
+      "delta": 0.2,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "is_a",
+      "derivation": "go is_a action"
+    },
+    {
+      "from": "see",
+      "to": "action",
+      "delta": 0.2,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "is_a",
+      "derivation": "see is_a action"
+    },
+    {
+      "from": "eat",
+      "to": "action",
+      "delta": 0.2,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "is_a",
+      "derivation": "eat is_a action"
+    },
+    {
+      "from": "play",
+      "to": "action",
+      "delta": 0.2,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "is_a",
+      "derivation": "play is_a action"
+    },
+    {
+      "from": "road",
+      "to": "thing",
+      "delta": 0.2,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "is_a",
+      "derivation": "road is_a thing"
+    },
+    {
+      "from": "eye",
+      "to": "see",
+      "delta": 0.55,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "enables",
+      "derivation": "eye enables see"
+    },
+    {
+      "from": "ear",
+      "to": "hear",
+      "delta": 0.55,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "enables",
+      "derivation": "ear enables hear"
+    },
+    {
+      "from": "mouth",
+      "to": "eat",
+      "delta": 0.55,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "enables",
+      "derivation": "mouth enables eat"
+    },
+    {
+      "from": "mouth",
+      "to": "drink",
+      "delta": 0.55,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "enables",
+      "derivation": "mouth enables drink"
+    },
+    {
+      "from": "foot",
+      "to": "go",
+      "delta": 0.55,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "enables",
+      "derivation": "foot enables go"
+    },
+    {
+      "from": "leg",
+      "to": "run",
+      "delta": 0.55,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "enables",
+      "derivation": "leg enables run"
+    },
+    {
+      "from": "hand",
+      "to": "write",
+      "delta": 0.55,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "enables",
+      "derivation": "hand enables write"
+    },
+    {
+      "from": "hand",
+      "to": "take",
+      "delta": 0.55,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "enables",
+      "derivation": "hand enables take"
+    },
+    {
+      "from": "finger",
+      "to": "write",
+      "delta": 0.55,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "enables",
+      "derivation": "finger enables write"
+    },
+    {
+      "from": "heart",
+      "to": "life",
+      "delta": 0.55,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "enables",
+      "derivation": "heart enables life"
+    },
+    {
+      "from": "eye",
+      "to": "read",
+      "delta": 0.55,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "enables",
+      "derivation": "eye enables read"
+    },
+    {
+      "from": "hand",
+      "to": "make",
+      "delta": 0.55,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "enables",
+      "derivation": "hand enables make"
+    },
+    {
+      "from": "eat",
+      "to": "bread",
+      "delta": 0.35,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "acts_on",
+      "derivation": "eat acts_on bread"
+    },
+    {
+      "from": "eat",
+      "to": "apple",
+      "delta": 0.35,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "acts_on",
+      "derivation": "eat acts_on apple"
+    },
+    {
+      "from": "eat",
+      "to": "meat",
+      "delta": 0.35,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "acts_on",
+      "derivation": "eat acts_on meat"
+    },
+    {
+      "from": "eat",
+      "to": "egg",
+      "delta": 0.35,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "acts_on",
+      "derivation": "eat acts_on egg"
+    },
+    {
+      "from": "drink",
+      "to": "water",
+      "delta": 0.35,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "acts_on",
+      "derivation": "drink acts_on water"
+    },
+    {
+      "from": "drink",
+      "to": "milk",
+      "delta": 0.35,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "acts_on",
+      "derivation": "drink acts_on milk"
+    },
+    {
+      "from": "give",
+      "to": "thing",
+      "delta": 0.35,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "acts_on",
+      "derivation": "give acts_on thing"
+    },
+    {
+      "from": "take",
+      "to": "thing",
+      "delta": 0.35,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "acts_on",
+      "derivation": "take acts_on thing"
+    },
+    {
+      "from": "make",
+      "to": "thing",
+      "delta": 0.35,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "acts_on",
+      "derivation": "make acts_on thing"
+    },
+    {
+      "from": "write",
+      "to": "pattern",
+      "delta": 0.35,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "acts_on",
+      "derivation": "write acts_on pattern"
+    },
+    {
+      "from": "read",
+      "to": "pattern",
+      "delta": 0.35,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "acts_on",
+      "derivation": "read acts_on pattern"
+    },
+    {
+      "from": "play",
+      "to": "game",
+      "delta": 0.35,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "acts_on",
+      "derivation": "play acts_on game"
+    },
+    {
+      "from": "work",
+      "to": "goal",
+      "delta": 0.35,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "acts_on",
+      "derivation": "work acts_on goal"
+    },
+    {
+      "from": "see",
+      "to": "thing",
+      "delta": 0.35,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "acts_on",
+      "derivation": "see acts_on thing"
+    },
+    {
+      "from": "eat",
+      "to": "mouth",
+      "delta": 0.45,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "instrument",
+      "derivation": "eat instrument mouth"
+    },
+    {
+      "from": "drink",
+      "to": "mouth",
+      "delta": 0.45,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "instrument",
+      "derivation": "drink instrument mouth"
+    },
+    {
+      "from": "see",
+      "to": "eye",
+      "delta": 0.45,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "instrument",
+      "derivation": "see instrument eye"
+    },
+    {
+      "from": "hear",
+      "to": "ear",
+      "delta": 0.45,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "instrument",
+      "derivation": "hear instrument ear"
+    },
+    {
+      "from": "go",
+      "to": "foot",
+      "delta": 0.45,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "instrument",
+      "derivation": "go instrument foot"
+    },
+    {
+      "from": "run",
+      "to": "leg",
+      "delta": 0.45,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "instrument",
+      "derivation": "run instrument leg"
+    },
+    {
+      "from": "write",
+      "to": "hand",
+      "delta": 0.45,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "instrument",
+      "derivation": "write instrument hand"
+    },
+    {
+      "from": "make",
+      "to": "hand",
+      "delta": 0.45,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "instrument",
+      "derivation": "make instrument hand"
+    },
+    {
+      "from": "say",
+      "to": "mouth",
+      "delta": 0.45,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "instrument",
+      "derivation": "say instrument mouth"
+    },
+    {
+      "from": "play",
+      "to": "hand",
+      "delta": 0.45,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "instrument",
+      "derivation": "play instrument hand"
+    },
+    {
+      "from": "read",
+      "to": "eye",
+      "delta": 0.45,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "instrument",
+      "derivation": "read instrument eye"
+    },
+    {
+      "from": "hot",
+      "to": "cold",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "opposite_of",
+      "derivation": "hot opposite_of cold"
+    },
+    {
+      "from": "big",
+      "to": "small",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "opposite_of",
+      "derivation": "big opposite_of small"
+    },
+    {
+      "from": "new",
+      "to": "old",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "opposite_of",
+      "derivation": "new opposite_of old"
+    },
+    {
+      "from": "fast",
+      "to": "slow",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "opposite_of",
+      "derivation": "fast opposite_of slow"
+    },
+    {
+      "from": "good",
+      "to": "bad",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "opposite_of",
+      "derivation": "good opposite_of bad"
+    },
+    {
+      "from": "wet",
+      "to": "dry",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "opposite_of",
+      "derivation": "wet opposite_of dry"
+    },
+    {
+      "from": "with",
+      "to": "from",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "opposite_of",
+      "derivation": "with opposite_of from"
+    },
+    {
+      "from": "sweet",
+      "to": "apple",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "property_of",
+      "derivation": "sweet property_of apple"
+    },
+    {
+      "from": "sweet",
+      "to": "fruit",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "property_of",
+      "derivation": "sweet property_of fruit"
+    },
+    {
+      "from": "wet",
+      "to": "rain",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "property_of",
+      "derivation": "wet property_of rain"
+    },
+    {
+      "from": "hot",
+      "to": "fire",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "property_of",
+      "derivation": "hot property_of fire"
+    },
+    {
+      "from": "cold",
+      "to": "water",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "property_of",
+      "derivation": "cold property_of water"
+    },
+    {
+      "from": "strong",
+      "to": "horse",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "property_of",
+      "derivation": "strong property_of horse"
+    },
+    {
+      "from": "fair",
+      "to": "game",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "property_of",
+      "derivation": "fair property_of game"
+    },
+    {
+      "from": "good",
+      "to": "friend",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "property_of",
+      "derivation": "good property_of friend"
+    },
+    {
+      "from": "bad",
+      "to": "weather",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "property_of",
+      "derivation": "bad property_of weather"
+    },
+    {
+      "from": "new",
+      "to": "game",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "property_of",
+      "derivation": "new property_of game"
+    },
+    {
+      "from": "old",
+      "to": "tree",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "property_of",
+      "derivation": "old property_of tree"
+    },
+    {
+      "from": "fast",
+      "to": "bird",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "property_of",
+      "derivation": "fast property_of bird"
+    },
+    {
+      "from": "dry",
+      "to": "stone",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "property_of",
+      "derivation": "dry property_of stone"
+    },
+    {
+      "from": "fish",
+      "to": "water",
+      "delta": 0.25,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "located_in",
+      "derivation": "fish located_in water"
+    },
+    {
+      "from": "tree",
+      "to": "garden",
+      "delta": 0.25,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "located_in",
+      "derivation": "tree located_in garden"
+    },
+    {
+      "from": "flower",
+      "to": "garden",
+      "delta": 0.25,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "located_in",
+      "derivation": "flower located_in garden"
+    },
+    {
+      "from": "child",
+      "to": "family",
+      "delta": 0.25,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "located_in",
+      "derivation": "child located_in family"
+    },
+    {
+      "from": "friend",
+      "to": "team",
+      "delta": 0.25,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "located_in",
+      "derivation": "friend located_in team"
+    },
+    {
+      "from": "road",
+      "to": "town",
+      "delta": 0.25,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "located_in",
+      "derivation": "road located_in town"
+    },
+    {
+      "from": "bridge",
+      "to": "river",
+      "delta": 0.25,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "located_in",
+      "derivation": "bridge located_in river"
+    },
+    {
+      "from": "game",
+      "to": "team",
+      "delta": 0.25,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "located_in",
+      "derivation": "game located_in team"
+    },
+    {
+      "from": "rain",
+      "to": "wet",
+      "delta": 0.35,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "co_occurs",
+      "derivation": "rain co_occurs wet"
+    },
+    {
+      "from": "fire",
+      "to": "hot",
+      "delta": 0.35,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "co_occurs",
+      "derivation": "fire co_occurs hot"
+    },
+    {
+      "from": "bread",
+      "to": "breakfast",
+      "delta": 0.35,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "co_occurs",
+      "derivation": "bread co_occurs breakfast"
+    },
+    {
+      "from": "milk",
+      "to": "breakfast",
+      "delta": 0.35,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "co_occurs",
+      "derivation": "milk co_occurs breakfast"
+    },
+    {
+      "from": "soup",
+      "to": "dinner",
+      "delta": 0.35,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "co_occurs",
+      "derivation": "soup co_occurs dinner"
+    },
+    {
+      "from": "team",
+      "to": "game",
+      "delta": 0.35,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "co_occurs",
+      "derivation": "team co_occurs game"
+    },
+    {
+      "from": "goal",
+      "to": "score",
+      "delta": 0.35,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "co_occurs",
+      "derivation": "goal co_occurs score"
+    },
+    {
+      "from": "garden",
+      "to": "flower",
+      "delta": 0.35,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "co_occurs",
+      "derivation": "garden co_occurs flower"
+    },
+    {
+      "from": "road",
+      "to": "bridge",
+      "delta": 0.35,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "co_occurs",
+      "derivation": "road co_occurs bridge"
+    },
+    {
+      "from": "weather",
+      "to": "rain",
+      "delta": 0.35,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "co_occurs",
+      "derivation": "weather co_occurs rain"
+    },
+    {
+      "from": "work",
+      "to": "score",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "causes",
+      "derivation": "work causes score"
+    },
+    {
+      "from": "cold",
+      "to": "slow",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "causes",
+      "derivation": "cold causes slow"
+    },
+    {
+      "from": "hot",
+      "to": "dry",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "causes",
+      "derivation": "hot causes dry"
+    },
+    {
+      "from": "child",
+      "to": "play",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "agent",
+      "derivation": "child agent play"
+    },
+    {
+      "from": "bird",
+      "to": "fly",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "agent",
+      "derivation": "bird agent fly"
+    },
+    {
+      "from": "fish",
+      "to": "swim",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "agent",
+      "derivation": "fish agent swim"
+    },
+    {
+      "from": "dog",
+      "to": "run",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "agent",
+      "derivation": "dog agent run"
+    },
+    {
+      "from": "cat",
+      "to": "sleep",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "agent",
+      "derivation": "cat agent sleep"
+    },
+    {
+      "from": "mother",
+      "to": "give",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "agent",
+      "derivation": "mother agent give"
+    },
+    {
+      "from": "father",
+      "to": "make",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "agent",
+      "derivation": "father agent make"
+    },
+    {
+      "from": "friend",
+      "to": "play",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "agent",
+      "derivation": "friend agent play"
+    },
+    {
+      "from": "horse",
+      "to": "go",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "agent",
+      "derivation": "horse agent go"
+    },
+    {
+      "from": "cow",
+      "to": "eat",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "agent",
+      "derivation": "cow agent eat"
+    },
+    {
+      "from": "rabbit",
+      "to": "run",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "agent",
+      "derivation": "rabbit agent run"
+    },
+    {
+      "from": "tree",
+      "to": "water",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "needs",
+      "derivation": "tree needs water"
+    },
+    {
+      "from": "life",
+      "to": "water",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "needs",
+      "derivation": "life needs water"
+    },
+    {
+      "from": "work",
+      "to": "skill",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "needs",
+      "derivation": "work needs skill"
+    }
+  ]
+}

@@ -1,0 +1,1758 @@
+{
+  "name": "german_generated",
+  "version": "3.0-generated",
+  "source": "E0 C133 LLM-generated German vocabulary",
+  "description": "LLM-generated German vocabulary — 94 words, 109 edges",
+  "nodes": [
+    {
+      "id": "kopf",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Kopf",
+      "description": "body"
+    },
+    {
+      "id": "hand",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Hand",
+      "description": "body"
+    },
+    {
+      "id": "arm",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Arm",
+      "description": "body"
+    },
+    {
+      "id": "fuss",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Fuß",
+      "description": "body"
+    },
+    {
+      "id": "auge",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Auge",
+      "description": "body"
+    },
+    {
+      "id": "ohr",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Ohr",
+      "description": "body"
+    },
+    {
+      "id": "mund",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Mund",
+      "description": "body"
+    },
+    {
+      "id": "finger",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Finger",
+      "description": "body"
+    },
+    {
+      "id": "nase",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Nase",
+      "description": "body"
+    },
+    {
+      "id": "bein",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Bein",
+      "description": "body"
+    },
+    {
+      "id": "herz",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Herz",
+      "description": "body"
+    },
+    {
+      "id": "bauch",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Bauch",
+      "description": "body"
+    },
+    {
+      "id": "wasser",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Wasser",
+      "description": "food"
+    },
+    {
+      "id": "brot",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Brot",
+      "description": "food"
+    },
+    {
+      "id": "milch",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Milch",
+      "description": "food"
+    },
+    {
+      "id": "apfel",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Apfel",
+      "description": "food"
+    },
+    {
+      "id": "salz",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Salz",
+      "description": "food"
+    },
+    {
+      "id": "obst",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Obst",
+      "description": "food"
+    },
+    {
+      "id": "fleisch",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Fleisch",
+      "description": "food"
+    },
+    {
+      "id": "fisch_n",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Fisch",
+      "description": "food"
+    },
+    {
+      "id": "bier",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Bier",
+      "description": "food"
+    },
+    {
+      "id": "wurst",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Wurst",
+      "description": "food"
+    },
+    {
+      "id": "kuchen",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Kuchen",
+      "description": "food"
+    },
+    {
+      "id": "hund",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Hund",
+      "description": "animal"
+    },
+    {
+      "id": "katze",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Katze",
+      "description": "animal"
+    },
+    {
+      "id": "vogel",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Vogel",
+      "description": "animal"
+    },
+    {
+      "id": "fisch",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Fisch",
+      "description": "animal"
+    },
+    {
+      "id": "pferd",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Pferd",
+      "description": "animal"
+    },
+    {
+      "id": "maus",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Maus",
+      "description": "animal"
+    },
+    {
+      "id": "kuh",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Kuh",
+      "description": "animal"
+    },
+    {
+      "id": "schaf",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Schaf",
+      "description": "animal"
+    },
+    {
+      "id": "gehen",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "gehen",
+      "description": "action"
+    },
+    {
+      "id": "kommen",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "kommen",
+      "description": "action"
+    },
+    {
+      "id": "sehen",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "sehen",
+      "description": "action"
+    },
+    {
+      "id": "hoeren",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "hören",
+      "description": "action"
+    },
+    {
+      "id": "essen_v",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "essen",
+      "description": "action"
+    },
+    {
+      "id": "trinken",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "trinken",
+      "description": "action"
+    },
+    {
+      "id": "geben",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "geben",
+      "description": "action"
+    },
+    {
+      "id": "nehmen",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "nehmen",
+      "description": "action"
+    },
+    {
+      "id": "sagen",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "sagen",
+      "description": "action"
+    },
+    {
+      "id": "machen",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "machen",
+      "description": "action"
+    },
+    {
+      "id": "rennen",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "rennen",
+      "description": "action"
+    },
+    {
+      "id": "fliegen",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "fliegen",
+      "description": "action"
+    },
+    {
+      "id": "schwimmen",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "schwimmen",
+      "description": "action"
+    },
+    {
+      "id": "schlafen",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "schlafen",
+      "description": "action"
+    },
+    {
+      "id": "spielen",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "spielen",
+      "description": "action"
+    },
+    {
+      "id": "wandern",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "wandern",
+      "description": "action"
+    },
+    {
+      "id": "gut",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "gut",
+      "description": "quality"
+    },
+    {
+      "id": "schlecht",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "schlecht",
+      "description": "quality"
+    },
+    {
+      "id": "gross",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "groß",
+      "description": "quality"
+    },
+    {
+      "id": "klein",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "klein",
+      "description": "quality"
+    },
+    {
+      "id": "heiss",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "heiß",
+      "description": "quality"
+    },
+    {
+      "id": "kalt",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "kalt",
+      "description": "quality"
+    },
+    {
+      "id": "neu",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "neu",
+      "description": "quality"
+    },
+    {
+      "id": "alt",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "alt",
+      "description": "quality"
+    },
+    {
+      "id": "schnell",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "schnell",
+      "description": "quality"
+    },
+    {
+      "id": "langsam",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "langsam",
+      "description": "quality"
+    },
+    {
+      "id": "suess",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "süß",
+      "description": "quality"
+    },
+    {
+      "id": "stark",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "stark",
+      "description": "quality"
+    },
+    {
+      "id": "sonne",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Sonne",
+      "description": "nature"
+    },
+    {
+      "id": "regen",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Regen",
+      "description": "nature"
+    },
+    {
+      "id": "baum",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Baum",
+      "description": "nature"
+    },
+    {
+      "id": "blume",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Blume",
+      "description": "nature"
+    },
+    {
+      "id": "fluss",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Fluss",
+      "description": "nature"
+    },
+    {
+      "id": "stein",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Stein",
+      "description": "nature"
+    },
+    {
+      "id": "feuer",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Feuer",
+      "description": "nature"
+    },
+    {
+      "id": "wind",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Wind",
+      "description": "nature"
+    },
+    {
+      "id": "berg",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Berg",
+      "description": "nature"
+    },
+    {
+      "id": "schnee",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Schnee",
+      "description": "nature"
+    },
+    {
+      "id": "wald",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Wald",
+      "description": "nature"
+    },
+    {
+      "id": "himmel",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Himmel",
+      "description": "nature"
+    },
+    {
+      "id": "mutter",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Mutter",
+      "description": "person"
+    },
+    {
+      "id": "vater",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Vater",
+      "description": "person"
+    },
+    {
+      "id": "kind",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Kind",
+      "description": "person"
+    },
+    {
+      "id": "freund",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Freund",
+      "description": "person"
+    },
+    {
+      "id": "lehrer",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Lehrer",
+      "description": "person"
+    },
+    {
+      "id": "in",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "in",
+      "description": "relation"
+    },
+    {
+      "id": "mit",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "mit",
+      "description": "relation"
+    },
+    {
+      "id": "von",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "von",
+      "description": "relation"
+    },
+    {
+      "id": "nicht",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "nicht",
+      "description": "relation"
+    },
+    {
+      "id": "alle",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "alle",
+      "description": "relation"
+    },
+    {
+      "id": "thing",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Ding",
+      "description": "abstract"
+    },
+    {
+      "id": "action",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Handlung",
+      "description": "abstract"
+    },
+    {
+      "id": "zeit",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Zeit",
+      "description": "abstract"
+    },
+    {
+      "id": "leben",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Leben",
+      "description": "abstract"
+    },
+    {
+      "id": "ruhe",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Ruhe",
+      "description": "abstract"
+    },
+    {
+      "id": "angst",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Angst",
+      "description": "abstract"
+    },
+    {
+      "id": "sehnsucht",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Sehnsucht",
+      "description": "abstract"
+    },
+    {
+      "id": "ordnung",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Ordnung",
+      "description": "abstract"
+    },
+    {
+      "id": "pflicht",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Pflicht",
+      "description": "abstract"
+    },
+    {
+      "id": "gemuet",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Gemüt",
+      "description": "abstract"
+    },
+    {
+      "id": "kindergarten",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Kindergarten",
+      "description": "social"
+    },
+    {
+      "id": "fest",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Fest",
+      "description": "social"
+    },
+    {
+      "id": "lied",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "label": "Lied",
+      "description": "social"
+    }
+  ],
+  "edges": [
+    {
+      "from": "finger",
+      "to": "hand",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "part_of",
+      "derivation": "finger part_of hand"
+    },
+    {
+      "from": "hand",
+      "to": "arm",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "part_of",
+      "derivation": "hand part_of arm"
+    },
+    {
+      "from": "arm",
+      "to": "kopf",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "part_of",
+      "derivation": "arm part_of kopf"
+    },
+    {
+      "from": "fuss",
+      "to": "bein",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "part_of",
+      "derivation": "fuss part_of bein"
+    },
+    {
+      "from": "auge",
+      "to": "kopf",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "part_of",
+      "derivation": "auge part_of kopf"
+    },
+    {
+      "from": "ohr",
+      "to": "kopf",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "part_of",
+      "derivation": "ohr part_of kopf"
+    },
+    {
+      "from": "mund",
+      "to": "kopf",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "part_of",
+      "derivation": "mund part_of kopf"
+    },
+    {
+      "from": "nase",
+      "to": "kopf",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "part_of",
+      "derivation": "nase part_of kopf"
+    },
+    {
+      "from": "herz",
+      "to": "bauch",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "part_of",
+      "derivation": "herz part_of bauch"
+    },
+    {
+      "from": "wasser",
+      "to": "trinken",
+      "delta": 0.55,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "enables",
+      "derivation": "wasser enables trinken"
+    },
+    {
+      "from": "brot",
+      "to": "essen_v",
+      "delta": 0.55,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "enables",
+      "derivation": "brot enables essen_v"
+    },
+    {
+      "from": "fleisch",
+      "to": "stark",
+      "delta": 0.55,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "enables",
+      "derivation": "fleisch enables stark"
+    },
+    {
+      "from": "fisch_n",
+      "to": "schwimmen",
+      "delta": 0.55,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "enables",
+      "derivation": "fisch_n enables schwimmen"
+    },
+    {
+      "from": "hund",
+      "to": "hoeren",
+      "delta": 0.55,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "enables",
+      "derivation": "hund enables hoeren"
+    },
+    {
+      "from": "vogel",
+      "to": "fliegen",
+      "delta": 0.55,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "enables",
+      "derivation": "vogel enables fliegen"
+    },
+    {
+      "from": "auge",
+      "to": "sehen",
+      "delta": 0.55,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "enables",
+      "derivation": "auge enables sehen"
+    },
+    {
+      "from": "ohr",
+      "to": "hoeren",
+      "delta": 0.55,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "enables",
+      "derivation": "ohr enables hoeren"
+    },
+    {
+      "from": "mund",
+      "to": "sagen",
+      "delta": 0.55,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "enables",
+      "derivation": "mund enables sagen"
+    },
+    {
+      "from": "finger",
+      "to": "machen",
+      "delta": 0.55,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "enables",
+      "derivation": "finger enables machen"
+    },
+    {
+      "from": "bein",
+      "to": "gehen",
+      "delta": 0.55,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "enables",
+      "derivation": "bein enables gehen"
+    },
+    {
+      "from": "herz",
+      "to": "leben",
+      "delta": 0.55,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "enables",
+      "derivation": "herz enables leben"
+    },
+    {
+      "from": "bauch",
+      "to": "essen_v",
+      "delta": 0.55,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "enables",
+      "derivation": "bauch enables essen_v"
+    },
+    {
+      "from": "sehen",
+      "to": "auge",
+      "delta": 0.45,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "instrument",
+      "derivation": "sehen instrument auge"
+    },
+    {
+      "from": "hoeren",
+      "to": "ohr",
+      "delta": 0.45,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "instrument",
+      "derivation": "hoeren instrument ohr"
+    },
+    {
+      "from": "essen_v",
+      "to": "mund",
+      "delta": 0.45,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "instrument",
+      "derivation": "essen_v instrument mund"
+    },
+    {
+      "from": "trinken",
+      "to": "mund",
+      "delta": 0.45,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "instrument",
+      "derivation": "trinken instrument mund"
+    },
+    {
+      "from": "geben",
+      "to": "hand",
+      "delta": 0.45,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "instrument",
+      "derivation": "geben instrument hand"
+    },
+    {
+      "from": "nehmen",
+      "to": "hand",
+      "delta": 0.45,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "instrument",
+      "derivation": "nehmen instrument hand"
+    },
+    {
+      "from": "gehen",
+      "to": "fuss",
+      "delta": 0.45,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "instrument",
+      "derivation": "gehen instrument fuss"
+    },
+    {
+      "from": "rennen",
+      "to": "bein",
+      "delta": 0.45,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "instrument",
+      "derivation": "rennen instrument bein"
+    },
+    {
+      "from": "schwimmen",
+      "to": "arm",
+      "delta": 0.45,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "instrument",
+      "derivation": "schwimmen instrument arm"
+    },
+    {
+      "from": "spielen",
+      "to": "hand",
+      "delta": 0.45,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "instrument",
+      "derivation": "spielen instrument hand"
+    },
+    {
+      "from": "gut",
+      "to": "schlecht",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "opposite_of",
+      "derivation": "gut opposite_of schlecht"
+    },
+    {
+      "from": "gross",
+      "to": "klein",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "opposite_of",
+      "derivation": "gross opposite_of klein"
+    },
+    {
+      "from": "heiss",
+      "to": "kalt",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "opposite_of",
+      "derivation": "heiss opposite_of kalt"
+    },
+    {
+      "from": "neu",
+      "to": "alt",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "opposite_of",
+      "derivation": "neu opposite_of alt"
+    },
+    {
+      "from": "schnell",
+      "to": "langsam",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "opposite_of",
+      "derivation": "schnell opposite_of langsam"
+    },
+    {
+      "from": "sonne",
+      "to": "regen",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "opposite_of",
+      "derivation": "sonne opposite_of regen"
+    },
+    {
+      "from": "apfel",
+      "to": "suess",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "property_of",
+      "derivation": "apfel property_of suess"
+    },
+    {
+      "from": "schnee",
+      "to": "kalt",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "property_of",
+      "derivation": "schnee property_of kalt"
+    },
+    {
+      "from": "feuer",
+      "to": "heiss",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "property_of",
+      "derivation": "feuer property_of heiss"
+    },
+    {
+      "from": "baum",
+      "to": "gross",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "property_of",
+      "derivation": "baum property_of gross"
+    },
+    {
+      "from": "fisch",
+      "to": "wasser",
+      "delta": 0.25,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "located_in",
+      "derivation": "fisch located_in wasser"
+    },
+    {
+      "from": "vogel",
+      "to": "himmel",
+      "delta": 0.25,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "located_in",
+      "derivation": "vogel located_in himmel"
+    },
+    {
+      "from": "baum",
+      "to": "wald",
+      "delta": 0.25,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "located_in",
+      "derivation": "baum located_in wald"
+    },
+    {
+      "from": "wind",
+      "to": "kalt",
+      "delta": 0.35,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "co_occurs",
+      "derivation": "wind co_occurs kalt"
+    },
+    {
+      "from": "wald",
+      "to": "ruhe",
+      "delta": 0.35,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "co_occurs",
+      "derivation": "wald co_occurs ruhe"
+    },
+    {
+      "from": "fest",
+      "to": "lied",
+      "delta": 0.35,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "co_occurs",
+      "derivation": "fest co_occurs lied"
+    },
+    {
+      "from": "kindergarten",
+      "to": "kind",
+      "delta": 0.35,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "co_occurs",
+      "derivation": "kindergarten co_occurs kind"
+    },
+    {
+      "from": "berg",
+      "to": "wandern",
+      "delta": 0.35,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "co_occurs",
+      "derivation": "berg co_occurs wandern"
+    },
+    {
+      "from": "bier",
+      "to": "fest",
+      "delta": 0.35,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "co_occurs",
+      "derivation": "bier co_occurs fest"
+    },
+    {
+      "from": "kind",
+      "to": "spielen",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "agent",
+      "derivation": "kind agent spielen"
+    },
+    {
+      "from": "katze",
+      "to": "schlafen",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "agent",
+      "derivation": "katze agent schlafen"
+    },
+    {
+      "from": "pferd",
+      "to": "rennen",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "agent",
+      "derivation": "pferd agent rennen"
+    },
+    {
+      "from": "mutter",
+      "to": "geben",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "agent",
+      "derivation": "mutter agent geben"
+    },
+    {
+      "from": "vater",
+      "to": "machen",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "agent",
+      "derivation": "vater agent machen"
+    },
+    {
+      "from": "freund",
+      "to": "spielen",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "agent",
+      "derivation": "freund agent spielen"
+    },
+    {
+      "from": "lehrer",
+      "to": "sagen",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "agent",
+      "derivation": "lehrer agent sagen"
+    },
+    {
+      "from": "baum",
+      "to": "wasser",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "needs",
+      "derivation": "baum needs wasser"
+    },
+    {
+      "from": "leben",
+      "to": "wasser",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "needs",
+      "derivation": "leben needs wasser"
+    },
+    {
+      "from": "hand",
+      "to": "finger",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "part_of",
+      "derivation": "hand part_of finger"
+    },
+    {
+      "from": "arm",
+      "to": "hand",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "part_of",
+      "derivation": "arm part_of hand"
+    },
+    {
+      "from": "bein",
+      "to": "fuss",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "part_of",
+      "derivation": "bein part_of fuss"
+    },
+    {
+      "from": "kopf",
+      "to": "auge",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "part_of",
+      "derivation": "kopf part_of auge"
+    },
+    {
+      "from": "kopf",
+      "to": "ohr",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "part_of",
+      "derivation": "kopf part_of ohr"
+    },
+    {
+      "from": "kopf",
+      "to": "mund",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "part_of",
+      "derivation": "kopf part_of mund"
+    },
+    {
+      "from": "kopf",
+      "to": "nase",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "part_of",
+      "derivation": "kopf part_of nase"
+    },
+    {
+      "from": "bauch",
+      "to": "herz",
+      "delta": 0.15,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "part_of",
+      "derivation": "bauch part_of herz"
+    },
+    {
+      "from": "essen_v",
+      "to": "apfel",
+      "delta": 0.35,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "acts_on",
+      "derivation": "essen_v acts_on apfel"
+    },
+    {
+      "from": "essen_v",
+      "to": "brot",
+      "delta": 0.35,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "acts_on",
+      "derivation": "essen_v acts_on brot"
+    },
+    {
+      "from": "essen_v",
+      "to": "fleisch",
+      "delta": 0.35,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "acts_on",
+      "derivation": "essen_v acts_on fleisch"
+    },
+    {
+      "from": "trinken",
+      "to": "wasser",
+      "delta": 0.35,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "acts_on",
+      "derivation": "trinken acts_on wasser"
+    },
+    {
+      "from": "trinken",
+      "to": "milch",
+      "delta": 0.35,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "acts_on",
+      "derivation": "trinken acts_on milch"
+    },
+    {
+      "from": "geben",
+      "to": "kind",
+      "delta": 0.35,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "acts_on",
+      "derivation": "geben acts_on kind"
+    },
+    {
+      "from": "nehmen",
+      "to": "brot",
+      "delta": 0.35,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "acts_on",
+      "derivation": "nehmen acts_on brot"
+    },
+    {
+      "from": "sehen",
+      "to": "sonne",
+      "delta": 0.35,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "acts_on",
+      "derivation": "sehen acts_on sonne"
+    },
+    {
+      "from": "hoeren",
+      "to": "lied",
+      "delta": 0.35,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "acts_on",
+      "derivation": "hoeren acts_on lied"
+    },
+    {
+      "from": "machen",
+      "to": "kuchen",
+      "delta": 0.35,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "acts_on",
+      "derivation": "machen acts_on kuchen"
+    },
+    {
+      "from": "wandern",
+      "to": "berg",
+      "delta": 0.35,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "acts_on",
+      "derivation": "wandern acts_on berg"
+    },
+    {
+      "from": "gehen",
+      "to": "wald",
+      "delta": 0.35,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "acts_on",
+      "derivation": "gehen acts_on wald"
+    },
+    {
+      "from": "fliegen",
+      "to": "himmel",
+      "delta": 0.35,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "acts_on",
+      "derivation": "fliegen acts_on himmel"
+    },
+    {
+      "from": "schwimmen",
+      "to": "fluss",
+      "delta": 0.35,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "acts_on",
+      "derivation": "schwimmen acts_on fluss"
+    },
+    {
+      "from": "leben",
+      "to": "zeit",
+      "delta": 0.35,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "acts_on",
+      "derivation": "leben acts_on zeit"
+    },
+    {
+      "from": "kind",
+      "to": "mutter",
+      "delta": 0.25,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "located_in",
+      "derivation": "kind located_in mutter"
+    },
+    {
+      "from": "kind",
+      "to": "vater",
+      "delta": 0.25,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "located_in",
+      "derivation": "kind located_in vater"
+    },
+    {
+      "from": "freund",
+      "to": "kindergarten",
+      "delta": 0.25,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "located_in",
+      "derivation": "freund located_in kindergarten"
+    },
+    {
+      "from": "lied",
+      "to": "fest",
+      "delta": 0.25,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "located_in",
+      "derivation": "lied located_in fest"
+    },
+    {
+      "from": "ruhe",
+      "to": "wald",
+      "delta": 0.25,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "located_in",
+      "derivation": "ruhe located_in wald"
+    },
+    {
+      "from": "gemuet",
+      "to": "herz",
+      "delta": 0.25,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "located_in",
+      "derivation": "gemuet located_in herz"
+    },
+    {
+      "from": "angst",
+      "to": "schlecht",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "property_of",
+      "derivation": "angst property_of schlecht"
+    },
+    {
+      "from": "ordnung",
+      "to": "gut",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "property_of",
+      "derivation": "ordnung property_of gut"
+    },
+    {
+      "from": "spielen",
+      "to": "freund",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "needs",
+      "derivation": "spielen needs freund"
+    },
+    {
+      "from": "schwimmen",
+      "to": "wasser",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "needs",
+      "derivation": "schwimmen needs wasser"
+    },
+    {
+      "from": "schlafen",
+      "to": "ruhe",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "needs",
+      "derivation": "schlafen needs ruhe"
+    },
+    {
+      "from": "sagen",
+      "to": "mund",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "needs",
+      "derivation": "sagen needs mund"
+    },
+    {
+      "from": "machen",
+      "to": "hand",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "needs",
+      "derivation": "machen needs hand"
+    },
+    {
+      "from": "mutter",
+      "to": "kind",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "needs",
+      "derivation": "mutter needs kind"
+    },
+    {
+      "from": "vater",
+      "to": "kind",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "needs",
+      "derivation": "vater needs kind"
+    },
+    {
+      "from": "lehrer",
+      "to": "kind",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "needs",
+      "derivation": "lehrer needs kind"
+    },
+    {
+      "from": "hund",
+      "to": "kind",
+      "delta": 0.35,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "co_occurs",
+      "derivation": "hund co_occurs kind"
+    },
+    {
+      "from": "katze",
+      "to": "kind",
+      "delta": 0.35,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "co_occurs",
+      "derivation": "katze co_occurs kind"
+    },
+    {
+      "from": "pferd",
+      "to": "berg",
+      "delta": 0.35,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "co_occurs",
+      "derivation": "pferd co_occurs berg"
+    },
+    {
+      "from": "fisch",
+      "to": "fluss",
+      "delta": 0.35,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "co_occurs",
+      "derivation": "fisch co_occurs fluss"
+    },
+    {
+      "from": "vogel",
+      "to": "baum",
+      "delta": 0.35,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "co_occurs",
+      "derivation": "vogel co_occurs baum"
+    },
+    {
+      "from": "katze",
+      "to": "klein",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "property_of",
+      "derivation": "katze property_of klein"
+    },
+    {
+      "from": "pferd",
+      "to": "stark",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "property_of",
+      "derivation": "pferd property_of stark"
+    },
+    {
+      "from": "maus",
+      "to": "klein",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "property_of",
+      "derivation": "maus property_of klein"
+    },
+    {
+      "from": "kuh",
+      "to": "gross",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "property_of",
+      "derivation": "kuh property_of gross"
+    },
+    {
+      "from": "fisch",
+      "to": "schnell",
+      "delta": 0.3,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "type": "property_of",
+      "derivation": "fisch property_of schnell"
+    }
+  ]
+}

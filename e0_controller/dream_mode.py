@@ -352,24 +352,41 @@ def _edge_quality_stats(
     node: str,
     landscape: Landscape,
 ) -> List[float]:
-    """Round-0 features: statistics of a node's edge qualities.
+    """Round-0 features: statistics of a node's edge qualities and trace loads.
 
-    Returns [mean, std, degree, positive_fraction] (4 floats).
+    Returns 9 floats:
+      [mean_q, std_q, degree, pos_fraction,
+       min_q, max_q, median_q,
+       trace_load_mean, trace_load_std]
+
+    trace_load (U+F) is an independent dimension from quality (U-F)/(U+F).
+    Two edges with identical quality can have vastly different trace loads
+    depending on bootstrapper confidence, providing additional differentiation.
     """
     h = landscape.historization
     qualities = []
+    loads = []
     for edge in landscape.edges:
         if edge.source == node or edge.target == node:
             qualities.append(h.trace_quality(edge))
+            loads.append(h.trace_load(edge))
 
     if not qualities:
-        return [0.0, 0.0, 0.0, 0.0]
+        return [0.0] * 9
 
     n = len(qualities)
     mean_q = sum(qualities) / n
     std_q = (sum((q - mean_q) ** 2 for q in qualities) / n) ** 0.5
     pos_frac = sum(1 for q in qualities if q > 0.0) / n
-    return [mean_q, std_q, float(n), pos_frac]
+    min_q = min(qualities)
+    max_q = max(qualities)
+    sorted_q = sorted(qualities)
+    median_q = (sorted_q[n // 2] if n % 2 == 1
+                else (sorted_q[n // 2 - 1] + sorted_q[n // 2]) / 2.0)
+    load_mean = sum(loads) / n
+    load_std = (sum((l - load_mean) ** 2 for l in loads) / n) ** 0.5
+    return [mean_q, std_q, float(n), pos_frac,
+            min_q, max_q, median_q, load_mean, load_std]
 
 
 def wl_node_fingerprints(
@@ -379,12 +396,15 @@ def wl_node_fingerprints(
 ) -> List[WLNodeFingerprint]:
     """Compute WL-style recursive node fingerprints.
 
-    Round 0: each node gets [mean_q, std_q, degree, pos_fraction].
+    Round 0: each node gets 9 features:
+      [mean_q, std_q, degree, pos_fraction,
+       min_q, max_q, median_q, trace_load_mean, trace_load_std]
     Round k: each node's feature vector is extended by (mean, std)
     of each dimension of its neighbors' features from round k-1.
 
-    Feature vector size: 4 at depth 0, grows by 2×prev_size per round.
-    Depth 1 → 12 floats, depth 2 → 36 floats.
+    Feature vector size: 9 at depth 0, grows by 3× per round
+    (self + 2×prev_size neighbor aggregation).
+    Depth 1 → 27 floats, depth 2 → 81 floats.
     """
     nodes = sorted(landscape.states)
 
