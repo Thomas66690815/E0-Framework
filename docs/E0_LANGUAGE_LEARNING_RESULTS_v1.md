@@ -1,10 +1,10 @@
 # E₀ Language Learning — Experimental Results v1
 
-**Status:** Active — C124–C128 arc documented  
+**Status:** Active — C124–C137 arc documented  
 **Supersedes:** Pre-implementation concept in `E0_LANGUAGE_LEARNING_CONCEPT_v1.md`  
-**Date:** 2026-04-03  
-**Scope:** 10 explorations, 7 experiments, 2 falsifications, 1 breakthrough  
-**Tests:** 3530 (suite total, experiments are explorations not unit-tested)
+**Date:** 2026-04-04  
+**Scope:** 15 explorations, 14 experiments, 3 falsifications, 2 breakthroughs  
+**Tests:** 3499 (suite total, experiments are explorations not unit-tested)
 
 ---
 
@@ -12,13 +12,16 @@
 
 E₀ learns unknown word translations from known ones by comparing structural
 fingerprints across two independently learned vocabulary graphs (EN, DE).
-Starting from 11 known translation pairs (Config B), the system autonomously
-discovers new pairs through iterative bootstrap: learn → dream → expand → repeat.
 
-**Key result:** Level-3 Neighborhood Consistency (C128) achieves **100%
-confirmed accuracy** (4/4 pairs promoted = all correct) by validating
-candidates against their structural neighborhood.  This solves the
-systematic false-match problem that defeated pure vote accumulation (C127b).
+**Phase 1 (C124–C128, seed-based):** Starting from 11 known translation pairs
+(Config B), the system discovers new pairs through iterative bootstrap.
+Level-3 Neighborhood Consistency (C128) achieves **100% confirmed accuracy**
+(4/4 promoted = all correct) but saturates at 15/44.
+
+**Phase 2 (C129–C137, seedless):** Can E₀ identify ALL 44 translations
+without ANY seed? LLM teaches each language monolingually, then structural
+matching discovers correspondences. **C137 achieves 44/44 = 100% correct,
+0 wrong — pure structural identification without position knowledge.**
 
 **Core insight:** "Sprache sind nicht Wörter sondern Bedeutungen, also
 eigentlich selbst in einer Relation." Meaning is relational — a word's
@@ -347,6 +350,244 @@ Note: take↔machen has ctx=100% but only 2 votes — the double-gate
 | STALE_ROUNDS=3 | garbage collection | Very low — only affects cleanup timing | Irrelevant for core mechanism |
 | MIN_STALE_VOTES=5 | garbage collection | Very low | Irrelevant for core mechanism |
 | quantile=0.15 | equivalence threshold | Moderate — affects discovery sensitivity | Could adapt via T_s |
+
+---
+
+## 7. Phase 2: Seedless Structural Matching (C129–C137)
+
+### 7.1 The Seedless Question
+
+C124–C128 require 11 known translation pairs to bootstrap. **Can E₀ discover
+ALL 44 translations without any seed at all?** This shifts the problem from
+"iterate with partial knowledge" to "identify structure from scratch."
+
+### 7.2 Architecture Evolution (C129–C132)
+
+| Experiment | Approach | Result | Finding |
+|---|---|---|---|
+| C129 | Seed expansion (11→more→dream) | Marginal | More seeds don't help — the mechanism saturates |
+| C130 | Enriched canon (>64 edges) | **FALSIFIED** | More edges ≠ more signal — degrades discrimination |
+| C131 | Bilingual LLM teacher | 13/44 (seed=11) | LLM as bilingual validator works but still needs seed |
+| C132 | Bilingual LLM teacher refined | 20/44 (seed=8) | Better, but bilingual leaks cross-language info |
+
+**Key insight (C132):** Bilingual teaching introduces implicit cross-language
+leakage. The LLM sees both languages and its evaluations subtly correlate
+translation pairs. This is architecturally impure.
+
+### 7.3 Monolingual Teaching (C133–C134)
+
+**Phase 1 redesign:** The LLM teaches each language SEPARATELY. It never
+sees both languages simultaneously — no cross-language leakage.
+
+#### C133 — Binary YES/NO Teaching
+
+LLM evaluates each edge monolingually: "Is there a semantic relationship
+between X and Y in English?" → YES/NO → `historization.update(edge, outcome)`.
+
+Two seedless matching methods tested:
+- **Position-based** (oracle): compare quality at corresponding edge positions → **44/44 (100%)**
+- **find_equivalences** (framework): edge-level fingerprint matching → **1/44 (2%)**
+
+**Finding:** Position-based matching proves the teaching signal is sufficient.
+Edge-level matching fails because binary quality produces too many identical
+fingerprints (72×85 = 6120 same-quality pairs at q=−1.0).
+
+#### C134 — Bootstrapper as Teacher
+
+Replace binary YES/NO with continuous score 0–10. The Bootstrapper's native
+`_apply_confidence()` maps scores to initial_U/initial_F, creating a
+continuous quality spectrum.
+
+**C134a:** Score injection works. Quality distribution now spans 7+ distinct
+levels instead of binary.
+
+**C134b:** Node-level matching (sorted quality profile per node):
+9/44 (20%) with 100 noise edges, 13/44 (30%) with 300 noise.
+Sorting loses edge-position information — nodes with same degree and similar
+quality distribution become indistinguishable.
+
+### 7.4 WL Recursive Neighborhood (C135)
+
+**The correct comparison unit is not the edge, not the node, but the node
+plus its recursive neighborhood.**
+
+Weisfeiler-Leman-style iterative refinement:
+
+```
+Round 0: node features f₀ = edge_quality_stats(node)
+Round k: fₖ = fₖ₋₁ ⊕ aggregate(mean, std of each dim of neighbor fₖ₋₁)
+```
+
+Each round extends the feature vector by encoding neighborhood context
+at increasing distance. Depth 2 captures 2-hop structural role.
+
+| Depth | Features | Correct/44 | Wrong | Precision |
+|---|---|---|---|---|
+| D0 (stats only) | 4 | 11 | 10 | 52% |
+| D1 (1-hop) | 12 | 31 | 1 | 97% |
+| D2 (2-hop) | 36 | **33** | **0** | **100%** |
+
+The D0→D1 jump (25%→70%) proves **1-hop neighborhood context is the decisive
+signal**. D2 eliminates the last false match (100% precision). 11 nodes
+unmatched — low degree, insufficient neighborhood context.
+
+### 7.5 Feature Engineering (C136)
+
+Round-0 features expanded from 4 to 9:
+
+| # | Feature | Signal |
+|---|---|---|
+| 1–4 | mean_q, std_q, degree, pos_fraction | Quality statistics (C135) |
+| 5–7 | min_q, max_q, median_q | Quality extremes + robust center |
+| 8–9 | **trace_load_mean, trace_load_std** | **Volume dimension — independent from quality** |
+
+trace_load (U+F) is independent from quality (U−F)/(U+F+ε). Two edges with
+identical quality can have vastly different trace loads depending on
+bootstrapper confidence — a new differentiation axis.
+
+Feature vectors: D0=9, D1=27, D2=81 (was 4/12/36).
+
+Result: 34/44 (+1), 0 wrong. Marginal improvement, BUT critical diagnostic:
+
+| Group | Count | Problem |
+|---|---|---|
+| Mutual-best blocked | 6 | Correct pair IS closer, blocked by greedy assignment |
+| Genuine confusion | 4 | Wrong partner structurally closer (see↔eye, take↔go) |
+
+**Key finding:** The bottleneck is NOT feature quality — it's the matching
+algorithm. Features already provide the correct signal for 40/44.
+
+### 7.6 Hungarian Optimal Assignment (C137) — BREAKTHROUGH
+
+**Problem:** Greedy mutual-best matching: for each EN node, find closest DE
+node, then check if DE also picks that EN. If a third node "steals" a partner,
+both are left unmatched.
+
+**Solution:** Hungarian algorithm (`scipy.optimize.linear_sum_assignment`) —
+globally optimal 1:1 assignment minimizing total WL distance across all
+44×44 pairs.
+
+| Method | Correct/44 | Wrong | Precision |
+|---|---|---|---|
+| Mutual-best D2 (C136) | 34 | 0 | 100% |
+| **Hungarian D2 (C137)** | **44** | **0** | **100%** |
+
+All 10 previously unmatched nodes recovered:
+- 6 "mutual-best blocked" → resolved by global optimization
+- 4 "genuine confusions" → ALSO resolved — global assignment avoids
+  cascading errors that made local distances misleading
+
+### 7.7 The Complete Pipeline
+
+```
+  ┌───────────────────────────────────────────────────────────────┐
+  │                    Phase 1: TEACHING                          │
+  │                                                               │
+  │  ┌─────────────────┐         ┌─────────────────┐             │
+  │  │  LLM evaluates  │         │  LLM evaluates  │             │
+  │  │  EN edges 0-10  │         │  DE edges 0-10  │             │
+  │  │  (monolingual)  │         │  (monolingual)  │             │
+  │  └────────┬────────┘         └────────┬────────┘             │
+  │           │                           │                       │
+  │           ▼                           ▼                       │
+  │  ┌─────────────────┐         ┌─────────────────┐             │
+  │  │  bootstrap_     │         │  bootstrap_     │             │
+  │  │  landscape()    │         │  landscape()    │             │
+  │  │  score→U/F      │         │  score→U/F      │             │
+  │  └────────┬────────┘         └────────┬────────┘             │
+  │           │                           │                       │
+  │           ▼                           ▼                       │
+  │  ┌─────────────────┐         ┌─────────────────┐             │
+  │  │  EN Landscape   │         │  DE Landscape   │             │
+  │  │  44 nodes       │         │  44 nodes       │             │
+  │  │  164 edges      │         │  164 edges      │             │
+  │  └────────┬────────┘         └────────┬────────┘             │
+  └───────────┼───────────────────────────┼───────────────────────┘
+              │                           │
+  ┌───────────┼───────────────────────────┼───────────────────────┐
+  │           │    Phase 2: PLAYGROUND    │     (no LLM)          │
+  │           ▼                           ▼                       │
+  │  ┌─────────────────┐         ┌─────────────────┐             │
+  │  │  WL fingerprints│         │  WL fingerprints│             │
+  │  │  depth=2        │         │  depth=2        │             │
+  │  │  81-dim vectors │         │  81-dim vectors │             │
+  │  └────────┬────────┘         └────────┬────────┘             │
+  │           │                           │                       │
+  │           └──────────┬────────────────┘                       │
+  │                      ▼                                        │
+  │           ┌────────────────────┐                              │
+  │           │  44×44 distance    │                              │
+  │           │  matrix (WL dist)  │                              │
+  │           └────────┬───────────┘                              │
+  │                    ▼                                          │
+  │           ┌────────────────────┐                              │
+  │           │   Hungarian        │                              │
+  │           │   algorithm        │                              │
+  │           │   (global optimal) │                              │
+  │           └────────┬───────────┘                              │
+  │                    ▼                                          │
+  │           ┌────────────────────┐                              │
+  │           │  44/44 = 100%      │                              │
+  │           │  correct, 0 wrong  │                              │
+  │           └────────────────────┘                              │
+  └───────────────────────────────────────────────────────────────┘
+```
+
+### 7.8 Key Files (Phase 2)
+
+| File | Purpose |
+|---|---|
+| `explore_c133_playground.py` | Binary LLM teaching + seedless playground |
+| `explore_c134_bootstrapper_teacher.py` | Bootstrapper as teacher (score 0–10) |
+| `explore_c135_wl_matching.py` | WL recursive neighborhood at depth 0/1/2 |
+| `explore_c136_feature_engineering.py` | 9-dim features + unmatched diagnostic |
+| `explore_c137_hungarian.py` | Hungarian optimal assignment — breakthrough |
+| `dream_mode.py` | WLNodeFingerprint, find_wl_node_equivalences_hungarian |
+| `bootstrapper.py` | _apply_confidence, bootstrap_landscape (teacher role) |
+
+---
+
+## 8. Full Comparison Table (C124–C137)
+
+| Phase | Experiment | Seed | Matching | Correct | Wrong | Precision | Key finding |
+|---|---|---|---|---|---|---|---|
+| **1** | C125 Config B | 11 | Edge fingerprint | 30/41 top-20 | — | 73% | First discrimination |
+| **1** | C126 iterative | 11→25 | Edge + bootstrap | — | cascade | — | **FALSIFIED: ungated contamination** |
+| **1** | C126b gated | 11→16 | Edge + gated | 16/16 | 0 | 100% | Gating preserves but limits |
+| **1** | C126c weighted | 11→15 | Edge + L1 weighted | 4/4 confirmed | 0 | 100% | **FALSIFIED: distance collapse** |
+| **1** | C127 L2 | 11→12 | Edge + L2 pair | 1/1 | 0 | 100% | Distance preserved |
+| **1** | C127b cumul | 11→15 | Edge + L2 + votes | 2/4 | 2 | 50% | **FALSIFIED: false matches amplified** |
+| **1** | **C128 L3** | **11→15** | **Edge + L3 context** | **4/4** | **0** | **100%** | **Neighborhood consistency** |
+| **2** | C133 | **0** | Position oracle | 44/44 | 0 | 100% | Teaching signal sufficient |
+| **2** | C134b | **0** | Node sorted profile | 9 | 4 | 69% | Sorting loses edge info |
+| **2** | C135 | **0** | WL depth-2 (4-dim) | 33 | 0 | 100% | Neighborhood = right unit |
+| **2** | C136 | **0** | WL depth-2 (9-dim) | 34 | 0 | 100% | Matching, not features |
+| **2** | **C137** | **0** | **WL + Hungarian** | **44** | **0** | **100%** | **BREAKTHROUGH** |
+
+---
+
+## 9. Principled vs Heuristic Components (updated)
+
+### Principled (Phase 1 + Phase 2)
+
+| Component | Basis | Reference |
+|---|---|---|
+| Edge fingerprint f(e) = (q, m, I) | Direct from Historization layer | C109, Ontodynamics §4 |
+| WL recursive neighborhood | Structural role from graph topology | C135, WL literature |
+| trace_load as independent axis | U+F independent from (U−F)/(U+F+ε) | C136, Historization |
+| Hungarian optimal assignment | Bipartite matching (Kuhn 1955) | C137, combinatorial optimization |
+| Monolingual teaching | No cross-language leakage by construction | C133 |
+| Bootstrapper as teacher | score → initial_U/F → continuous quality | C134, bootstrapper.py |
+| Shared topology constraint | Without structural correspondence, domains are "aliens" | C133 |
+
+### Heuristic (experimentally tuned)
+
+| Parameter | Value | Sensitivity | Path to derivation |
+|---|---|---|---|
+| WL depth=2 | 2-hop neighborhood | Low — D2 >> D1, D3 likely overfits | Could derive from graph diameter |
+| noise_edges=100 | Noise edges added | Low — works at 100, 300 | Could derive from |E| |
+| 9-dim Round-0 features | Quality + load stats | Low — 4-dim already gets 33/44 | Minimal sufficient set TBD |
+| quantile=0.15 (mutual-best) | Equivalence threshold | N/A — Hungarian makes this obsolete | Replaced by Hungarian |
 
 **Assessment**: The **mechanisms** (context scoring, multiplicative validation,
 cumulative voting) are principled.  The **thresholds** are heuristic but
