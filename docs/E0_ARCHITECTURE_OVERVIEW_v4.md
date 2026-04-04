@@ -3,8 +3,8 @@
 **Status:** Canonical reference  
 **Date:** 2026-04-04  
 **Supersedes:** E0_ARCHITECTURE_OVERVIEW_v3.md (2026-04-02)  
-**Scope:** 60 production modules, 9 benchmarks, 11 demos, 37 explorations, 95 test files — ~23,900 production lines, 3540 tests
-**Latest:** C139 (DreamObserver + Hungarian/WL node equivalences wired into dream_cycle runtime)
+**Scope:** 60 production modules, 9 benchmarks, 12 demos, 37 explorations, 96 test files — ~24,100 production lines, 3546 tests
+**Latest:** C140 (Bootstrap Domain Demo — cold-start pipeline: LLM → Bootstrapper → Landscape → navigation)
 **Papers:** P1 (Structural Interference), P2 (Spinor/Born), P3 (Non-Abelian), P4 (Reflexivity), P5 (Emergent Locality), P6 (Dream Mode)
 
 ---
@@ -163,7 +163,7 @@ E₀ is organized in eleven layers. Each layer depends only on layers above it.
 ### Demos (11) and Explorations (18)
 
 Not listed individually — these are experimental tooling for interactive analysis.
-Demos: `demo_beipackzettel`, `demo_ezb_zinsentscheidung`, `demo_burnout_*`, `demo_invoice_llm`, `demo_greedy_trap`, `demo_open_domain`, `demo_research_brief`, `demo_incident_postmortem`, `demo_session_persist`, `demo_canon_exposition`.
+Demos: `demo_beipackzettel`, `demo_ezb_zinsentscheidung`, `demo_burnout_*`, `demo_invoice_llm`, `demo_greedy_trap`, `demo_open_domain`, `demo_research_brief`, `demo_incident_postmortem`, `demo_session_persist`, `demo_canon_exposition`, `demo_bootstrap_domain` (C140).
 Explorations: `explore_gordian`, `explore_amplitude`, `explore_resonator`, `explore_spinor`, `explore_topology_scan`, `explore_omega_uniqueness`, `explore_g5_edge_cases`, `explore_multigoal`, `explore_historization_gordian`, `explore_asymmetric_rho`, `explore_attractor_prediction`, `explore_attractor_universality`, `explore_convergence_speed`, `explore_dream_mode`, `explore_focus_narrowing`, `explore_landscape_scaling`, `explore_multi_attractor`, `explore_transfer_learning`, `explore_structural_entropy`.
 
 ### Layer 8 — Observation & Service (6 modules, 1,387 lines)

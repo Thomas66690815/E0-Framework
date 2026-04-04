@@ -28,12 +28,12 @@
   },
 
   "state": {
-    "latest_commit": "C139",
-    "latest_commit_msg": "C139: Wire Hungarian+WL node equivalences into DreamObserver.dream_cycle()",
-    "test_count": 3540,
+    "latest_commit": "C140",
+    "latest_commit_msg": "C140: Bootstrap Domain Demo — cold-start pipeline (LLM → Bootstrapper → Landscape → navigation)",
+    "test_count": 3546,
     "test_failures": 0,
-    "module_count": "60 production + 9 benchmarks + 11 demos + 40 explorations + 95 test files + 8 canons",
-    "line_count": "~20000 production, ~97600 total"
+    "module_count": "60 production + 9 benchmarks + 12 demos + 40 explorations + 96 test files + 8 canons",
+    "line_count": "~20200 production, ~97800 total"
   },
 
   "conventions": {
@@ -120,6 +120,8 @@
   },
 
   "commit_history_recent": [
+    { "hash": "PENDING", "id": "C140", "title": "Bootstrap Domain Demo — cold-start pipeline, 2 paths, mock+live, ModeController" },
+    { "hash": "c9fa4ea", "id": "docs", "title": "C139 documentation update (Architecture, Registry, Stories, bootstrap)" },
     { "hash": "998f1f6", "id": "C139", "title": "DreamObserver + Hungarian/WL node equivalences wired into dream_cycle runtime" },
     { "hash": "d61a6a5", "id": "docs", "title": "Revise Integration Stories — reprioritize around C137 breakthrough" },
     { "hash": "672b77a", "id": "bootstrap", "title": "bootstrap.json update to C138c state" },
@@ -212,7 +214,7 @@
   ],
 
   "active_work": {
-    "focus": "C139 DONE: Hungarian+WL node equivalences wired into DreamObserver.dream_cycle() runtime. Integration Story Priority 1 complete. DreamObserver now supports node_equivalence_method='hungarian'|'wl'|None, with node-level states coexisting alongside edge states in Dream Landscape. 10 new tests (3540 total). Next: Priority 2 (Bootstrapper demo) or Priority 3 (Entropy/Sleep-Wake flags).",
+    "focus": "C140 DONE: Bootstrap Domain Demo — demo_bootstrap_domain.py assembled from existing C44+C134 pieces. Two paths (LLM-designed topology or JSON spec), mock mode, 4-phase output (creation → mode analysis → navigation → post-nav mode). 6 smoke tests. Integration Story Priority 2 complete. Next: Priority 3 (Entropy/Sleep-Wake flags on standard demos).",
     "completed": [
       "All 6/6 Multiverse Open Questions resolved (C66-C71)",
       "C72 Chess Engine — E₀ plays chess via 6 strategic dimensions, discovers opening principles through historization",
@@ -292,10 +294,12 @@
       "C137 Hungarian Optimal Assignment — BREAKTHROUGH. scipy.optimize.linear_sum_assignment replaces greedy mutual-best. Globally optimal 1:1 assignment on full 44×44 WL distance matrix. 44/44 = 100%, 0 wrong. Matches position-oracle (C133) without using position knowledge. Seedless, no LLM in matching.",
       "C138a Ablation Matrix — 3×3×2 = 18 data points (depth × noise × algorithm). Hungarian+D2 = 44/44 at ALL noise levels (100/200/300). Hungarian wins 9/9 over mutual-best. Not a lucky configuration.",
       "C138b Score Noise + Topology Perturbation — Two stress axes. Score noise σ≤2: 100% (WL averages absorb). Topology +5/+10/+20 DE-only edges: 93%/91%/80% (linear degradation). Combined σ=2+10: 86%. Graceful under dual stress.",
-      "C138c Scaling — Synthetic isomorphic pairs (50/100/200/500 nodes), correlated scores, +100 noise. 100% at 50/100, 99.3% at 200/500. O(n^1.17) sub-cubic. Critical insight: score correlation is the load-bearing assumption."
+      "C138c Scaling — Synthetic isomorphic pairs (50/100/200/500 nodes), correlated scores, +100 noise. 100% at 50/100, 99.3% at 200/500. O(n^1.17) sub-cubic. Critical insight: score correlation is the load-bearing assumption.",
+      "C139 DreamObserver + Hungarian/WL Runtime Integration — node_equivalence_method param, dream_cycle node-EQ step, _update_dream_landscape_nodes, _node_equivalence_state, DreamCycleResult extended. 10 tests. Integration Story Priority 1 complete.",
+      "C140 Bootstrap Domain Demo — demo_bootstrap_domain.py: cold-start pipeline (LLM → Bootstrapper → Landscape → navigation). Path A (LLM designs graph) + Path B (JSON spec). Mock mode with onboarding domain (9 states, 10 edges). ModeController shows mode transitions. 6 smoke tests. Integration Story Priority 2 complete."
     ],
-    "next_steps": ["Integration: wire Hungarian matching into DreamObserver pipeline for runtime cross-domain discovery", "Multi-domain: test with non-language domains (e.g., two different chess configurations, invoice variants)", "Asymmetric teaching: what if LLMs evaluate differently per language?", "Larger real canons: extend english_basic/german_basic beyond 44 nodes to test real-world scaling"],
-    "next_commit_id": "C139"
+    "next_steps": ["Priority 3: Entropy/Sleep-Wake flags on standard demos", "Priority 4: Multiverse quickstart (compelling with C139 Hungarian in runtime)", "Priority 5: Reflexion-backed session (needs design discussion)", "Priority 6: Curriculum demo on ontodynamics canon"],
+    "next_commit_id": "C141"
   },
 
   "key_modules_quick_ref": {

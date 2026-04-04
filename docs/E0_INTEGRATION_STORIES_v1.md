@@ -58,22 +58,21 @@ Each story follows the same skeleton:
 
 ---
 
-### Priority 2 — Bootstrapper Demo
+### Priority 2 — Bootstrapper Demo (C140) ✅ DONE
 
 **Problem:** The Bootstrapper (C44) + LLM Teaching (C134) pipeline is proven but buried in explore scripts. A user cannot easily create a new domain Landscape from an LLM evaluation.
 
-**Trigger Surface:** A demo script `demo_bootstrap_domain.py` that:
-1. Takes a domain spec (JSON or natural language → LLM generates spec)
-2. LLM scores each edge monolingually (0–10)
-3. `inject_scores_into_spec()` → `bootstrap_landscape()` → ready Landscape
+**Resolution (commit pending, 2026-04-04):**
+- `demo_bootstrap_domain.py` — complete cold-start demo with two paths:
+  - Path A: LLM designs topology from natural-language description (`propose_and_bootstrap`)
+  - Path B: Load JSON spec + bootstrap directly
+- Built-in mock spec (9 states, 10 edges, onboarding domain) — runs without API keys
+- 4-phase output: Landscape Creation → Mode Analysis → Navigation → Post-Navigation Mode
+- Shows confidence scaling, inertia dampening, mode transitions
+- CLI: `--live` for real LLM, `--task` for custom, `--spec` for JSON file
+- 6 smoke tests in `test_demo_bootstrap.py` (3546 total)
 
-**User Evidence:** "Give me a topic" → LLM generates nodes+edges → scores them → Landscape ready for navigation. Complete cold-start-to-running in one script.
-
-**Tests:** Smoke test that doesn't require LLM (mock scores). Existing `test_bootstrapper.py` (41 tests) covers the core.
-
-**Open Questions:** Natural-language-to-spec is a separate LLM call (C45 LLM Adapter territory). Keep demo simple: JSON spec input first?
-
-**Effort:** Small. Mostly assembling existing pieces.
+**Key insight demonstrated:** Bootstrapper creates skeptical traces (confidence-scaled U/F), E₀ navigates immediately but inertia dampening keeps it cautious until real experience accumulates.
 
 ---
 
@@ -174,8 +173,8 @@ Low urgency. SU(2) is theoretically elegant and fully tested, but no practical a
 
 ## 5. Next Steps
 1. ~~C139: DreamObserver + Hungarian~~ — ✅ DONE (commit `998f1f6`)
-2. **C140: Bootstrapper demo** (Priority 2) — assemble existing pieces into standalone script
-3. Entropy/Sleep–Wake flags (Priority 3) — small wiring task
+2. ~~C140: Bootstrapper demo~~ — ✅ DONE
+3. **C141: Entropy/Sleep–Wake flags** (Priority 3) — small wiring task
 4. Multiverse quickstart (Priority 4) — now compelling with C139 Hungarian in runtime
 5. Reflexion needs design discussion before implementation
 6. Update README/Quickstart as each capability ships
