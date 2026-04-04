@@ -38,29 +38,23 @@ Each story follows the same skeleton:
 
 ## 3. Prioritized Stories
 
-### Priority 1 — DreamObserver + Hungarian (C139)
+### Priority 1 — DreamObserver + Hungarian (C139) ✅ DONE
 
 **Problem:** `DreamObserver.dream_cycle()` (C110) uses edge-fingerprint equivalence detection from C109 — comparing per-edge (q,m,I) tuples with quantile thresholds. This gave ~2% accuracy on language canons. Meanwhile, C137 proved that WL+Hungarian achieves 100% (44/44), validated robust to noise (C138a), score perturbation (C138b), and scaling to 500 nodes (C138c). The proven algorithm sits in explore scripts. The runtime uses the obsolete one.
 
-**Integration task:** Add a `node_equivalence_method` option to `DreamObserver` (or `dream_cycle`) that invokes `find_wl_node_equivalences_hungarian()` alongside or instead of the edge-fingerprint path. Node-level equivalences feed into bridge hypothesis generation.
+**Resolution (commit `998f1f6`, 2026-04-04):**
+- `DreamObserver.__init__`: new `node_equivalence_method` param (None/`"hungarian"`/`"wl"`), `wl_depth` (default 2), with validation
+- `DreamCycleResult`: +`node_equivalences_found`, +`node_equivalences_new` fields
+- `dream_cycle()`: node-EQ step runs **after** edge-EQ for each domain pair — layered approach (both coexist)
+- `_update_dream_landscape_nodes()`: creates `"domain:node"` states in Dream Landscape, bidirectional edges with confidence-scaled resistance
+- `_node_equivalence_state()`: helper encodes NodeFingerprint as `"domain:node"`
+- Backward compatible: `node_equivalence_method=None` (default) preserves all existing behavior
+- 10 new tests in `TestNodeEquivalenceIntegration` (3540 total, was 3530)
 
-**Runtime Path:**
-- `DreamObserver.dream_cycle()` → call `find_wl_node_equivalences_hungarian(L_a, L_b, depth=2)` for each domain pair
-- Node equivalences → `propose_bridges()` (existing C111 path, but fed with Hungarian results)
-- `DreamCycleResult` extended with node-equivalence data
-
-**User Evidence:**
-- `dream_cycle()` returns node-level matches with WL distances
-- Bridge proposals based on structurally matched nodes, not edge quantiles
-
-**Tests:** Extend `test_dream_mode.py` with Hungarian-based dream cycle test. Reuse existing DreamObserver test structure.
-
-**Open Questions:**
-- Does `dream_cycle` replace edge-EQ entirely, or keep both? (Edge-EQ is cheap, node-EQ is thorough — layered approach?)
-- How do WL node matches translate to bridge edge proposals? (Matched nodes → their edges become bridge candidates?)
-- Does `_apply_confidence` from the Bootstrapper apply to dream-discovered edges?
-
-**Effort:** Medium. The algorithm exists and is tested. The integration is wiring + API design.
+**Open Questions Resolved:**
+- Edge-EQ + node-EQ both run (layered, not replacement) — edge-EQ is cheap, node-EQ is thorough
+- Node states coexist with edge states in the same Dream Landscape using different encoding (`domain:node` vs `domain:src→tgt`)
+- Same `_known_edges` deduplication prevents re-adding across cycles
 
 ---
 
@@ -179,11 +173,12 @@ Low urgency. SU(2) is theoretically elegant and fully tested, but no practical a
 ---
 
 ## 5. Next Steps
-1. **C139: DreamObserver + Hungarian** — Priority 1 implementation
-2. After C139: Bootstrapper demo (Priority 2), then Entropy flags (Priority 3)
-3. Multiverse quickstart after C139 makes dream reports meaningful
-4. Reflexion needs design discussion before implementation
-5. Update README/Quickstart as each capability ships
+1. ~~C139: DreamObserver + Hungarian~~ — ✅ DONE (commit `998f1f6`)
+2. **C140: Bootstrapper demo** (Priority 2) — assemble existing pieces into standalone script
+3. Entropy/Sleep–Wake flags (Priority 3) — small wiring task
+4. Multiverse quickstart (Priority 4) — now compelling with C139 Hungarian in runtime
+5. Reflexion needs design discussion before implementation
+6. Update README/Quickstart as each capability ships
 
 ---
 

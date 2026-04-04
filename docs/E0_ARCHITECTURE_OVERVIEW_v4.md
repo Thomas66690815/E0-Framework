@@ -3,8 +3,8 @@
 **Status:** Canonical reference  
 **Date:** 2026-04-04  
 **Supersedes:** E0_ARCHITECTURE_OVERVIEW_v3.md (2026-04-02)  
-**Scope:** 60 production modules, 9 benchmarks, 11 demos, 37 explorations, 94 test files — ~23,900 production lines, 3499 tests
-**Latest:** C137 (Hungarian Optimal Assignment — **44/44 = 100%**, seedless cross-domain node identification, zero wrong)
+**Scope:** 60 production modules, 9 benchmarks, 11 demos, 37 explorations, 95 test files — ~23,900 production lines, 3540 tests
+**Latest:** C139 (DreamObserver + Hungarian/WL node equivalences wired into dream_cycle runtime)
 **Papers:** P1 (Structural Interference), P2 (Spinor/Born), P3 (Non-Abelian), P4 (Reflexivity), P5 (Emergent Locality), P6 (Dream Mode)
 
 ---
@@ -177,11 +177,11 @@ Explorations: `explore_gordian`, `explore_amplitude`, `explore_resonator`, `expl
 | `input_pipeline.py` | 67 | Input processing pipeline (C83) | — |
 | `snapshot_codec.py` | 181 | Snapshot encoding/decoding for persistence and wire format (C83) | — |
 
-### Layer 9 — Dream Mode (1 module, 1178 lines)
+### Layer 9 — Dream Mode (1 module, 1273 lines)
 
 | Module | Lines | Purpose | Paper |
 |--------|------:|---------|-------|
-| `dream_mode.py` | 1178 | Cross-domain pattern recognition: EdgeFingerprint, fingerprint_distance, find_equivalences, DreamObserver (register/unregister/dream_cycle/feedback), BridgeHypothesis, propose_bridges, make_dream_peer_fn (C109–C111). Decay integration: decay_enabled, DreamCycleResult.decay_reports (C119). **Node-level matching (C134b):** NodeFingerprint, node_fingerprints, node_fingerprint_distance, find_node_equivalences. **WL recursive neighborhood (C135–C136):** WLNodeFingerprint, wl_node_fingerprints (9-dim Round-0: mean/std/degree/pos_frac/min/max/median quality + trace_load mean/std), wl_node_distance, find_wl_node_equivalences. **Hungarian optimal assignment (C137):** find_wl_node_equivalences_hungarian — scipy.optimize.linear_sum_assignment on full WL distance matrix, globally optimal 1:1 node pairing → **44/44 = 100%** | P6 |
+| `dream_mode.py` | 1273 | Cross-domain pattern recognition: EdgeFingerprint, fingerprint_distance, find_equivalences, DreamObserver (register/unregister/dream_cycle/feedback), BridgeHypothesis, propose_bridges, make_dream_peer_fn (C109–C111). Decay integration: decay_enabled, DreamCycleResult.decay_reports (C119). **Node-level matching (C134b):** NodeFingerprint, node_fingerprints, node_fingerprint_distance, find_node_equivalences. **WL recursive neighborhood (C135–C136):** WLNodeFingerprint, wl_node_fingerprints (9-dim Round-0: mean/std/degree/pos_frac/min/max/median quality + trace_load mean/std), wl_node_distance, find_wl_node_equivalences. **Hungarian optimal assignment (C137):** find_wl_node_equivalences_hungarian — scipy.optimize.linear_sum_assignment on full WL distance matrix, globally optimal 1:1 node pairing → **44/44 = 100%**. **C139 Runtime Integration:** DreamObserver.dream_cycle() now invokes node-level equivalences (hungarian or wl method) alongside edge-EQ. `_update_dream_landscape_nodes()` creates "domain:node" states. `_node_equivalence_state()` helper. DreamCycleResult extended with `node_equivalences_found`/`node_equivalences_new`. | P6 |
 
 ### Layer 10 — Structural Entropy (1 module, ~600 lines)
 
@@ -341,7 +341,7 @@ All three share the same controller core. They differ only in the final action s
 | Infrastructure (L7) | ~12 files | ~550 |
 | Observation (L8) | 4 files | ~160 |
 | Modulation & Locality (C98–C108) | 5 files | ~140 |
-| Dream Mode (L9, C109–C112, C134b–C135) | 1 file | 88 |
+| Dream Mode (L9, C109–C112, C134b–C139) | 1 file | 98 |
 
 ---
 

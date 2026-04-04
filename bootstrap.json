@@ -28,12 +28,12 @@
   },
 
   "state": {
-    "latest_commit": "C138c",
-    "latest_commit_msg": "C138c: scaling test — Hungarian+WL-D2 to 500 nodes, >99% accuracy, O(n^1.17)",
-    "test_count": 3530,
+    "latest_commit": "C139",
+    "latest_commit_msg": "C139: Wire Hungarian+WL node equivalences into DreamObserver.dream_cycle()",
+    "test_count": 3540,
     "test_failures": 0,
     "module_count": "60 production + 9 benchmarks + 11 demos + 40 explorations + 95 test files + 8 canons",
-    "line_count": "~20000 production, ~96000 total"
+    "line_count": "~20000 production, ~97600 total"
   },
 
   "conventions": {
@@ -90,7 +90,7 @@
       },
       "9_dream_mode": {
         "files": ["dream_mode.py", "explore_dream_mode.py"],
-        "purpose": "Passive cross-domain pattern recognition. EdgeFingerprint f(e)=(q,m,I), functional equivalence detection (quantile-based), DreamObserver (N domains, dream_cycle, feedback historization), bridge hypothesis generation (→ cross_propose_edges), make_dream_peer_fn (E0Controller integration). WL recursive fingerprints (9-dim→81-dim at depth-2), Hungarian optimal assignment (find_wl_node_equivalences_hungarian, scipy). Dream Landscape is self-historizing valid E₀ Landscape. C109-C112, C135-C137."
+        "purpose": "Passive cross-domain pattern recognition. EdgeFingerprint f(e)=(q,m,I), functional equivalence detection (quantile-based), DreamObserver (N domains, dream_cycle, feedback historization), bridge hypothesis generation (→ cross_propose_edges), make_dream_peer_fn (E0Controller integration). WL recursive fingerprints (9-dim→81-dim at depth-2), Hungarian optimal assignment (find_wl_node_equivalences_hungarian, scipy). **C139:** DreamObserver.dream_cycle() invokes node-level equivalences (hungarian/wl) alongside edge-EQ. _update_dream_landscape_nodes creates domain:node states. Dream Landscape is self-historizing valid E₀ Landscape. C109-C112, C135-C139."
       },
       "10_structural_entropy": {
         "files": ["structural_entropy.py", "explore_structural_entropy.py"],
@@ -120,6 +120,9 @@
   },
 
   "commit_history_recent": [
+    { "hash": "998f1f6", "id": "C139", "title": "DreamObserver + Hungarian/WL node equivalences wired into dream_cycle runtime" },
+    { "hash": "d61a6a5", "id": "docs", "title": "Revise Integration Stories — reprioritize around C137 breakthrough" },
+    { "hash": "672b77a", "id": "bootstrap", "title": "bootstrap.json update to C138c state" },
     { "hash": "e417cc2", "id": "docs", "title": "Documentation update for C138a/b/c robustness suite" },
     { "hash": "a360d60", "id": "C138c", "title": "Scaling test — Hungarian+WL-D2 to 500 nodes, >99% accuracy, O(n^1.17)" },
     { "hash": "b692c3e", "id": "C138b", "title": "Score noise + topology perturbation robustness — graceful degradation" },
@@ -209,7 +212,7 @@
   ],
 
   "active_work": {
-    "focus": "C138 Robustness Suite complete. C137 BREAKTHROUGH (44/44 seedless cross-domain translation) validated across 3 robustness dimensions: C138a ablation matrix (18 configs, Hungarian+D2 dominant), C138b stress test (score noise σ≤2 = 100%, topology +20 edges = 80%, graceful degradation), C138c scaling (500 nodes, 99.3%, O(n^1.17)). Score correlation is the critical assumption for scaling. Next: integration into DreamObserver pipeline, or multi-domain experiments.",
+    "focus": "C139 DONE: Hungarian+WL node equivalences wired into DreamObserver.dream_cycle() runtime. Integration Story Priority 1 complete. DreamObserver now supports node_equivalence_method='hungarian'|'wl'|None, with node-level states coexisting alongside edge states in Dream Landscape. 10 new tests (3540 total). Next: Priority 2 (Bootstrapper demo) or Priority 3 (Entropy/Sleep-Wake flags).",
     "completed": [
       "All 6/6 Multiverse Open Questions resolved (C66-C71)",
       "C72 Chess Engine — E₀ plays chess via 6 strategic dimensions, discovers opening principles through historization",
