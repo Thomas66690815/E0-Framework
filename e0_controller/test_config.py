@@ -77,7 +77,7 @@ class TestCoreDefaults:
     def test_dream_defaults(self):
         assert DEFAULTS.dream_readiness == 0.8
         assert DEFAULTS.dream_quantile == 0.1
-        assert DEFAULTS.dream_alpha == 0.5
+        assert DEFAULTS.inertia_alpha == 0.5
         assert DEFAULTS.dream_base_resistance == 0.5
         assert DEFAULTS.wl_depth == 2
 

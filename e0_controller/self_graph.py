@@ -198,8 +198,8 @@ class SelfGraph:
         return total / len(outgoing)
 
     def component_inertia(self, component: str,
-                          alpha: float = 0.5,
-                          mu: float = 5.0) -> float:
+                          alpha: float = DEFAULTS.inertia_alpha,
+                          mu: float = DEFAULTS.mu) -> float:
         """Aggregate inertia_factor for a component.
 
         Returns the average inertia_factor across all outgoing edges.

@@ -40,6 +40,7 @@ from typing import Callable, Dict, List, Optional, Set, Tuple
 
 from e0_controller.primitives import Edge, Outcome
 from e0_controller.landscape import Landscape
+from e0_controller.config import DEFAULTS
 from e0_controller.controller import E0Controller, RunTrace
 from e0_controller.scoped_reflexion import (
     ReflexionScope,
@@ -90,7 +91,7 @@ class RegionalProfile:
 class LocalityEvolution:
     """Complete record of locality evolution during navigation."""
     snapshots: List[LocalitySnapshot] = field(default_factory=list)
-    mu: float = 5.0
+    mu: float = DEFAULTS.mu
 
     @property
     def initial_locality(self) -> float:
@@ -156,7 +157,7 @@ def snapshot_locality(
     step: int,
     *,
     goal: Optional[str] = None,
-    mu: float = 5.0,
+    mu: float = DEFAULTS.mu,
 ) -> LocalitySnapshot:
     """Capture a locality snapshot at the current state."""
     scope = compute_reflexion_scope(landscape, current, goal=goal, mu=mu)
@@ -187,7 +188,7 @@ def track_locality_evolution(
     *,
     max_cycles: int = 50,
     snapshot_interval: int = 1,
-    mu: float = 5.0,
+    mu: float = DEFAULTS.mu,
 ) -> LocalityEvolution:
     """Run navigation and track locality at each step.
 
@@ -239,7 +240,7 @@ def track_inscription_locality(
     *,
     rounds: int = 20,
     goal: Optional[str] = None,
-    mu: float = 5.0,
+    mu: float = DEFAULTS.mu,
 ) -> LocalityEvolution:
     """Track locality as uniform inscription rounds accumulate.
 
@@ -279,7 +280,7 @@ def track_inscription_locality(
 
 def compute_regional_profile(
     landscape: Landscape,
-    mu: float = 5.0,
+    mu: float = DEFAULTS.mu,
 ) -> List[RegionalProfile]:
     """Compute per-state locality profile.
 
@@ -344,7 +345,7 @@ def find_phase_transition(
     *,
     max_rounds: int = 100,
     goal: Optional[str] = None,
-    mu: float = 5.0,
+    mu: float = DEFAULTS.mu,
 ) -> Optional[int]:
     """Find the inscription round where locality first crosses 0.5.
 
@@ -472,7 +473,7 @@ def track_nonuniform_convergence(
     *,
     rounds: int = 30,
     goal: Optional[str] = None,
-    mu: float = 5.0,
+    mu: float = DEFAULTS.mu,
 ) -> LocalityEvolution:
     """Track locality under non-uniform inscription.
 

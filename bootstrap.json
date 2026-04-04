@@ -28,8 +28,8 @@
   },
 
   "state": {
-    "latest_commit": "C148",
-    "latest_commit_msg": "C148: Parameter Registry — central E0Config with all defaults, single source of truth",
+    "latest_commit": "C149",
+    "latest_commit_msg": "C149: \u03bc/\u03b1 unification \u2014 all function-level defaults flow through DEFAULTS",
     "test_count": 3608,
     "test_failures": 0,
     "module_count": "60 production + 9 benchmarks + 16 demos + 40 explorations + 100 test files + 8 canons",

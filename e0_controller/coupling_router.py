@@ -525,8 +525,8 @@ class CouplingSelfGraph:
                    for e in outgoing) / len(outgoing)
 
     def component_inertia(self, component: str,
-                          alpha: float = 0.5,
-                          mu: float = 5.0) -> float:
+                          alpha: float = DEFAULTS.inertia_alpha,
+                          mu: float = DEFAULTS.mu) -> float:
         """Average inertia_factor across outgoing edges from component."""
         outgoing = [Edge(s, t) for s, t in ALL_COUPLING_EDGES
                     if s == component]

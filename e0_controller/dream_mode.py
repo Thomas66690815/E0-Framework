@@ -45,8 +45,8 @@ def edge_fingerprint(
     landscape: Landscape,
     domain: str = "",
     *,
-    alpha: float = 0.5,
-    mu: float = 5.0,
+    alpha: float = DEFAULTS.inertia_alpha,
+    mu: float = DEFAULTS.mu,
 ) -> EdgeFingerprint:
     """Extract the historization fingerprint of an edge."""
     h = landscape.historization
@@ -63,8 +63,8 @@ def domain_fingerprints(
     landscape: Landscape,
     domain: str = "",
     *,
-    alpha: float = 0.5,
-    mu: float = 5.0,
+    alpha: float = DEFAULTS.inertia_alpha,
+    mu: float = DEFAULTS.mu,
 ) -> List[EdgeFingerprint]:
     """Extract fingerprints for all edges in a landscape."""
     return [
@@ -80,7 +80,7 @@ def domain_fingerprints(
 def fingerprint_distance(
     a: EdgeFingerprint,
     b: EdgeFingerprint,
-    mu: float = 5.0,
+    mu: float = DEFAULTS.mu,
 ) -> float:
     """Normalized distance between two edge fingerprints.
 
@@ -137,9 +137,9 @@ def find_equivalences(
     *,
     domain_a: str = "A",
     domain_b: str = "B",
-    mu: float = 5.0,
-    alpha: float = 0.5,
-    quantile: float = 0.1,
+    mu: float = DEFAULTS.mu,
+    alpha: float = DEFAULTS.inertia_alpha,
+    quantile: float = DEFAULTS.dream_quantile,
     max_results: Optional[int] = None,
 ) -> List[Equivalence]:
     """Find functional equivalences between edges in two domains.
@@ -555,7 +555,7 @@ def find_wl_node_equivalences_hungarian(
 # Dream readiness
 # ---------------------------------------------------------------------------
 
-def dream_readiness(landscape: Landscape, alpha: float = 0.5, mu: float = 5.0) -> float:
+def dream_readiness(landscape: Landscape, alpha: float = DEFAULTS.inertia_alpha, mu: float = DEFAULTS.mu) -> float:
     """How ready a domain is for dream observation.
 
     Returns the mean inertia_factor across all edges. High values (→1.0)
@@ -574,9 +574,9 @@ def dream_readiness(landscape: Landscape, alpha: float = 0.5, mu: float = 5.0) -
 
 def is_dream_ready(
     landscape: Landscape,
-    threshold: float = 0.8,
-    alpha: float = 0.5,
-    mu: float = 5.0,
+    threshold: float = DEFAULTS.dream_readiness,
+    alpha: float = DEFAULTS.inertia_alpha,
+    mu: float = DEFAULTS.mu,
 ) -> bool:
     """Whether a domain's fingerprints are stable enough for dreaming."""
     return dream_readiness(landscape, alpha=alpha, mu=mu) >= threshold
@@ -695,7 +695,7 @@ class DreamObserver:
         readiness_threshold: float = DEFAULTS.dream_readiness,
         quantile: float = DEFAULTS.dream_quantile,
         mu: float = DEFAULTS.mu,
-        alpha: float = DEFAULTS.dream_alpha,
+        alpha: float = DEFAULTS.inertia_alpha,
         base_resistance: float = DEFAULTS.dream_base_resistance,
         decay_enabled: bool = False,
         theta_base: float = DEFAULTS.theta_base,

@@ -232,8 +232,8 @@ class Historization:
     quality = trace_quality
 
     def inertia_factor(self, edge: Edge,
-                       alpha: float = 0.5,
-                       mu: float = 5.0) -> float:
+                       alpha: float = DEFAULTS.inertia_alpha,
+                       mu: float = DEFAULTS.mu) -> float:
         """
         Inertia modulation factor from structural inscription (Layer 3).
 

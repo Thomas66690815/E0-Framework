@@ -115,7 +115,8 @@ def _projection_to_snapshot(
         tl = edge_info["trace_load"]
         tq = edge_info["trace_quality"]
         if tl > 0:
-            alpha, mu = 0.5, 5.0
+            from .config import DEFAULTS
+            alpha, mu = DEFAULTS.inertia_alpha, DEFAULTS.mu
             edge_info["inertia"] = 1.0 - alpha * (tl / (tl + mu)) * (1.0 - abs(tq))
         else:
             edge_info["inertia"] = 1.0

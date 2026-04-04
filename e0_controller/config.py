@@ -134,8 +134,10 @@ class E0Config:
     # Bottom quantile of pairwise distances = equivalences.
     dream_quantile: float = 0.1
 
-    # DreamObserver alpha (dampening for dream landscape).
-    dream_alpha: float = 0.5
+    # Inertia dampening alpha: used in inertia_factor across all
+    # subsystems (historization, dream, self-graph, coupling).
+    # I(e) = 1 − α·(m/(m+μ))·(1−|q|).  Higher α = stronger dampening.
+    inertia_alpha: float = 0.5
 
     # Base resistance for dream landscape edges.
     dream_base_resistance: float = 0.5
