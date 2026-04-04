@@ -505,6 +505,51 @@ def find_wl_node_equivalences(
     return result
 
 
+def find_wl_node_equivalences_hungarian(
+    landscape_a: Landscape,
+    landscape_b: Landscape,
+    *,
+    domain_a: str = "A",
+    domain_b: str = "B",
+    depth: int = 2,
+) -> List[NodeEquivalence]:
+    """Find node equivalences using Hungarian algorithm on WL distances.
+
+    Unlike find_wl_node_equivalences (quantile + mutual best), this computes
+    the globally optimal 1:1 assignment that minimizes total WL distance
+    across all node pairs. Uses scipy.optimize.linear_sum_assignment.
+
+    Returns one NodeEquivalence per node in the smaller landscape,
+    sorted by distance (best matches first).
+    """
+    from scipy.optimize import linear_sum_assignment
+
+    wl_a = wl_node_fingerprints(landscape_a, domain_a, depth=depth)
+    wl_b = wl_node_fingerprints(landscape_b, domain_b, depth=depth)
+
+    if not wl_a or not wl_b:
+        return []
+
+    # Build full cost matrix
+    cost = []
+    for na in wl_a:
+        row = [wl_node_distance(na, nb) for nb in wl_b]
+        cost.append(row)
+
+    row_ind, col_ind = linear_sum_assignment(cost)
+
+    result = []
+    for r, c in zip(row_ind, col_ind):
+        result.append(NodeEquivalence(
+            fp_a=wl_a[r],
+            fp_b=wl_b[c],
+            distance=cost[r][c],
+        ))
+
+    result.sort(key=lambda eq: eq.distance)
+    return result
+
+
 # ---------------------------------------------------------------------------
 # Dream readiness
 # ---------------------------------------------------------------------------
