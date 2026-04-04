@@ -76,19 +76,28 @@ Each story follows the same skeleton:
 
 ---
 
-### Priority 3 — Entropy/Sleep–Wake in Standard Demos
+### Priority 3 — Entropy/Sleep–Wake in Standard Demos ✅ DONE
 
-**Trigger Surface:** Flag `--entropy` on demos toggling `inscription_threshold=True` and enabling `SleepWakeCycle` orchestration.
+**Problem:** Structural entropy (C114–C121) — inscription thresholds, decay, dream pressure, and sleep-wake orchestration — existed only in explore scripts and tests. Standard demos had no way to show forgetting/consolidation metrics.
 
-**Runtime Path:**
-- During wake phases, controller tracks non-inscription metrics; after threshold, `structural_entropy.apply_decay` prunes states.
-- Dream phases triggered via `sleep_wake.SleepWakeCycle.run()` schedule DreamObserver cycles.
+**Resolution (commit pending, C141):**
+- `demo_bootstrap_domain.py` extended with `--entropy` flag and `use_entropy` parameter
+- Phase 3: `E0Controller(inscription_threshold=True)` — tracks inscribed vs skipped transitions
+- Phase 3 output: T_s, dream_pressure, inscription count
+- New Phase 5: `SleepWakeCycle` with `DreamObserver(decay_enabled=True)`, 3 episodes
+- Output: per-episode T_s dynamics, wake/sleep transitions, anchor analysis, decay candidates
+- `protected_fn` protects start + goal states from decay
+- 7 new tests in `TestBootstrapDemoEntropy` (13 total in file, was 6)
 
-**User Evidence:** Demo output includes Type 1/Type 2 decay summaries, dream pressure values, and Sleep/Wake transitions.
+**Key observations from demo run:**
+- 6/7 transitions skipped by inscription threshold (high trace_load from bootstrap → high ε)
+- T_s = 24.28, pressure = 0.83 → immediately triggers dreaming
+- Single-domain demo: decay requires dormancy, so no structural pruning in short run
+- All anchors/candidates analysis visible in output
 
-**Tests:** Lean on `test_structural_entropy.py` (101 tests including SleepWakeCycle). Add scenario-level test verifying decay reports exist when flag is set.
-
-**Open Questions:** Default θ / dream-pressure parameters for short demos. Safety: avoid destructive decay on reference canons (clone landscape before decay?).
+**Open Questions Resolved:**
+- Default θ = 0.5 (standard theta_base), μ = 5.0 (system-wide)
+- Safety: `protected_fn` prevents start/goal removal; short demos don't produce dormant states anyway
 
 **Effort:** Small. Flag + wiring, no new algorithms.
 
@@ -173,8 +182,8 @@ Low urgency. SU(2) is theoretically elegant and fully tested, but no practical a
 
 ## 5. Next Steps
 1. ~~C139: DreamObserver + Hungarian~~ — ✅ DONE (commit `998f1f6`)
-2. ~~C140: Bootstrapper demo~~ — ✅ DONE
-3. **C141: Entropy/Sleep–Wake flags** (Priority 3) — small wiring task
+2. ~~C140: Bootstrapper demo~~ — ✅ DONE (commit `d3adfe1`)
+3. ~~C141: Entropy/Sleep–Wake flags~~ — ✅ DONE
 4. Multiverse quickstart (Priority 4) — now compelling with C139 Hungarian in runtime
 5. Reflexion needs design discussion before implementation
 6. Update README/Quickstart as each capability ships

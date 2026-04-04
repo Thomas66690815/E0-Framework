@@ -1,4 +1,4 @@
-"""Tests for demo_bootstrap_domain — C140 smoke tests.
+"""Tests for demo_bootstrap_domain — C140 smoke tests + C141 entropy tests.
 
 Validates the bootstrap demo pipeline works end-to-end without LLM keys.
 Core bootstrapper logic is covered by test_bootstrapper.py (41 tests).
@@ -66,3 +66,54 @@ class TestBootstrapDemo:
         expected = {"landscape", "trace", "goal_reached", "mode_before",
                     "mode_after", "path_used"}
         assert expected <= set(result.keys())
+
+
+class TestBootstrapDemoEntropy:
+    """C141: Entropy/Sleep-Wake integration on bootstrap demo."""
+
+    def test_entropy_flag_reaches_goal(self):
+        """Demo with --entropy still reaches goal."""
+        result = run_demo(use_mock=True, use_entropy=True)
+        assert result["goal_reached"] is True
+
+    def test_entropy_returns_entropy_key(self):
+        """use_entropy=True adds 'entropy' key to result dict."""
+        result = run_demo(use_mock=True, use_entropy=True)
+        assert "entropy" in result
+
+    def test_entropy_result_structure(self):
+        """Entropy result contains expected fields."""
+        result = run_demo(use_mock=True, use_entropy=True)
+        ent = result["entropy"]
+        assert "episodes" in ent
+        assert "sleep_phases" in ent
+        assert "dream_cycles" in ent
+        assert "anchor_count" in ent
+        assert "decay_candidate_count" in ent
+        assert "pressure_report" in ent
+
+    def test_entropy_episodes_count(self):
+        """SleepWakeCycle runs the expected number of episodes."""
+        result = run_demo(use_mock=True, use_entropy=True)
+        assert result["entropy"]["episodes"] == 3
+
+    def test_entropy_pressure_report_has_demo(self):
+        """Pressure report includes the 'demo' domain."""
+        result = run_demo(use_mock=True, use_entropy=True)
+        pr = result["entropy"]["pressure_report"]
+        assert "demo" in pr
+        assert "T_s" in pr["demo"]
+        assert "pressure" in pr["demo"]
+
+    def test_inscription_threshold_skips_transitions(self):
+        """With use_entropy, inscription threshold filters routine transitions."""
+        result = run_demo(use_mock=True, use_entropy=True)
+        trace = result["trace"]
+        inscribed = sum(1 for s in trace.steps if s.inscribed)
+        # Bootstrapped edges have trace_load=10 → high threshold → most skipped
+        assert inscribed < len(trace.steps)
+
+    def test_no_entropy_key_without_flag(self):
+        """Without use_entropy, result has no 'entropy' key."""
+        result = run_demo(use_mock=True, use_entropy=False)
+        assert "entropy" not in result

@@ -1,5 +1,5 @@
-"""E₀ Demo — Bootstrap Domain from Scratch (C140)
-====================================================
+"""E₀ Demo — Bootstrap Domain from Scratch (C140, entropy C141)
+================================================================
 Demonstrates the complete cold-start pipeline:
   LLM describes a domain → scores edges → Bootstrapper creates Landscape
   → E0Controller navigates → ModeController monitors learning progress.
@@ -12,9 +12,17 @@ Two paths supported:
 
 This demo uses Path A with a built-in mock so it runs without API keys.
 
+Optional --entropy flag (C141) enables:
+  - inscription_threshold on the controller (Type 1 forgetting)
+  - SleepWakeCycle orchestration with DreamObserver (Type 2 decay)
+  - Output includes T_s dynamics, dream pressure, and decay summaries
+
 Usage:
     # Mock mode (no API key needed):
     py -3 -m e0_controller.demo_bootstrap_domain
+
+    # With structural entropy + sleep-wake:
+    py -3 -m e0_controller.demo_bootstrap_domain --entropy
 
     # Live LLM (requires OPENAI_API_KEY in .env):
     py -3 -m e0_controller.demo_bootstrap_domain --live
@@ -38,6 +46,15 @@ from e0_controller.bootstrapper import bootstrap_landscape
 from e0_controller.controller import E0Controller, RunTrace
 from e0_controller.llm_adapter import E0LLMAdapter, LLMConfig, materialize_landscape
 from e0_controller.mode_controller import ModeController
+from e0_controller.structural_entropy import (
+    structural_temperature,
+    dream_pressure,
+    should_dream,
+    find_anchors,
+    find_decay_candidates,
+)
+from e0_controller.dream_mode import DreamObserver
+from e0_controller.sleep_wake import SleepWakeCycle
 
 
 # ── Default task ──────────────────────────────────────────────────────
@@ -117,6 +134,7 @@ def run_demo(
     goal: str = DEFAULT_GOAL,
     use_mock: bool = True,
     spec_file: str | None = None,
+    use_entropy: bool = False,
 ) -> dict:
     """Run the bootstrap demo. Returns results dict.
 
@@ -126,9 +144,12 @@ def run_demo(
         goal: Goal state name.
         use_mock: If True, use deterministic mock LLM.
         spec_file: If provided, load JSON spec from file (Path B).
+        use_entropy: If True, enable inscription_threshold + SleepWakeCycle (C141).
     """
     print("=" * 64)
     print("E₀ — Bootstrap Domain Demo (C140)")
+    if use_entropy:
+        print("     + Structural Entropy / Sleep-Wake (C141)")
     print("=" * 64)
 
     # ── Phase 1: Create Landscape ────────────────────────────────
@@ -191,7 +212,7 @@ def run_demo(
     print(f"\n── Phase 3: Navigation ({start} → {goal}) ──")
 
     execute_fn = lambda s, t: Outcome.SUCCESS
-    ctrl = E0Controller(L, execute_fn)
+    ctrl = E0Controller(L, execute_fn, inscription_threshold=use_entropy)
     trace = ctrl.run(start, goal=goal, max_cycles=30)
 
     path_str = " → ".join(trace.path)
@@ -204,6 +225,16 @@ def run_demo(
     print(f"   Success:  {m['success_rate']:.0%}")
     print(f"   Avg S_eff: {m['avg_tension']:.4f}")
 
+    if use_entropy:
+        T_s = structural_temperature(L.historization)
+        p = dream_pressure(L.historization)
+        inscribed = sum(1 for s in trace.steps if s.inscribed)
+        skipped = len(trace.steps) - inscribed
+        print(f"   Inscribed: {inscribed}/{len(trace.steps)} "
+              f"({skipped} skipped by threshold)")
+        print(f"   T_s:       {T_s:.3f}")
+        print(f"   Pressure:  {p:.3f} {'→ dream' if p > 0.5 else '→ stay awake'}")
+
     # ── Phase 4: Post-navigation mode check ──────────────────────
     print("\n── Phase 4: Post-Navigation Mode ──")
     mode_after = mc.current_mode()
@@ -215,6 +246,76 @@ def run_demo(
     if mode_after != mode:
         print(f"   ↳ Mode changed: {mode.value} → {mode_after.value}")
 
+    # ── Phase 5 (optional): Sleep-Wake consolidation ─────────────
+    entropy_result = None
+    if use_entropy:
+        print("\n── Phase 5: Sleep-Wake Consolidation (C141) ──")
+
+        # DreamObserver with decay enabled, protect start + goal
+        obs = DreamObserver(
+            readiness_threshold=0.0,
+            decay_enabled=True,
+            theta_base=0.5,
+            protected_fn=lambda domain: {start, goal},
+        )
+        obs.register("demo", L)
+
+        # Fresh controller with inscription_threshold for wake phases
+        ctrl_entropy = E0Controller(
+            L, execute_fn, inscription_threshold=True,
+        )
+        swc = SleepWakeCycle(obs, mu=5.0, max_dream_cycles=5)
+        swc.register("demo", ctrl_entropy, start, goal)
+
+        episodes = swc.run(n_episodes=3, max_cycles_per_run=20)
+
+        print(f"   Episodes: {len(episodes)}")
+        sleep_count = 0
+        total_dream_cycles = 0
+        for ep in episodes:
+            w = ep.wake
+            status = f"  Ep {ep.episode}: T_s {w.T_s_before:.3f}→{w.T_s_after:.3f}  pressure={w.pressure_after:.3f}"
+            if ep.slept and ep.sleep:
+                sleep_count += 1
+                n_dreams = len(ep.sleep.dream_results)
+                total_dream_cycles += n_dreams
+                status += (f"  → SLEEP (dream×{n_dreams}, "
+                           f"T_s {ep.sleep.T_s_before:.3f}→{ep.sleep.T_s_after:.3f})")
+            else:
+                status += "  → awake"
+            print(f"   {status}")
+
+        # Anchor / decay summary
+        anchors = find_anchors(L.states, L.historization, list(L.edges),
+                               theta_base=0.5)
+        candidates = find_decay_candidates(
+            L.states, L.historization, list(L.edges),
+            theta_base=0.5, protected={start, goal},
+        )
+
+        print(f"\n   Anchor states:    {len(anchors)} / {len(L.states)}")
+        for a in sorted(anchors):
+            print(f"     ✦ {a}")
+        print(f"   Decay candidates: {len(candidates)}")
+        for c in candidates:
+            print(f"     ✗ {c.state} (anchor={c.anchor_score:.3f}, "
+                  f"dormancy={c.dormancy})")
+        print(f"   Sleep phases:     {sleep_count}")
+        print(f"   Dream cycles:     {total_dream_cycles}")
+
+        pr = swc.pressure_report()
+        for name, info in pr.items():
+            print(f"   {name}: T_s={info['T_s']:.3f}, pressure={info['pressure']:.3f}")
+
+        entropy_result = {
+            "episodes": len(episodes),
+            "sleep_phases": sleep_count,
+            "dream_cycles": total_dream_cycles,
+            "anchor_count": len(anchors),
+            "decay_candidate_count": len(candidates),
+            "pressure_report": pr,
+        }
+
     # ── Summary ──────────────────────────────────────────────────
     print(f"\n{'=' * 64}")
     print("Summary")
@@ -224,11 +325,19 @@ def run_demo(
     print(f"  Topology:     {len(L.states)} states, {L.edge_count()} edges")
     print(f"  Navigation:   {int(m['steps'])} steps, goal {'reached' if reached else 'missed'}")
     print(f"  Mode:         {mode.value} → {mode_after.value}")
+    if use_entropy and entropy_result:
+        print(f"  Entropy:      {entropy_result['anchor_count']} anchors, "
+              f"{entropy_result['decay_candidate_count']} decay candidates")
+        print(f"  Sleep-Wake:   {entropy_result['sleep_phases']} sleep phases, "
+              f"{entropy_result['dream_cycles']} dream cycles")
     print(f"  Key insight:  Bootstrapper creates skeptical traces (confidence-scaled),")
     print(f"                E₀ navigates immediately but inertia dampening keeps it cautious.")
+    if use_entropy:
+        print(f"                With --entropy, inscription threshold filters routine transitions")
+        print(f"                and SleepWakeCycle consolidates via dreaming when T_s rises.")
     print(f"{'=' * 64}")
 
-    return {
+    result = {
         "landscape": L,
         "trace": trace,
         "goal_reached": reached,
@@ -236,6 +345,9 @@ def run_demo(
         "mode_after": mode_after.value,
         "path_used": path_used,
     }
+    if entropy_result:
+        result["entropy"] = entropy_result
+    return result
 
 
 # ── CLI ───────────────────────────────────────────────────────────────
@@ -248,11 +360,14 @@ def main():
     goal = DEFAULT_GOAL
     use_mock = True
     spec_file = None
+    use_entropy = False
 
     i = 0
     while i < len(args):
         if args[i] == "--live":
             use_mock = False
+        elif args[i] == "--entropy":
+            use_entropy = True
         elif args[i] == "--task" and i + 1 < len(args):
             task = args[i + 1]
             i += 1
@@ -276,6 +391,7 @@ def main():
         goal=goal,
         use_mock=use_mock,
         spec_file=spec_file,
+        use_entropy=use_entropy,
     )
 
 
