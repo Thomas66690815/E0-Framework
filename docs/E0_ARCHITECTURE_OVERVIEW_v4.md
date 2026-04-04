@@ -423,6 +423,7 @@ primitives ← tension ← landscape ← historization
 | Paper 6 (Dream Mode) | `docs/papers/PAPER6_MANUSCRIPT_v1.md` |
 | Multiverse Design | `docs/E0_MULTIVERSE_DESIGN_v1.md` |
 | Observation UI Architecture | `docs/E0_OBSERVATION_UI_ARCHITECTURE_v1.md` |
+| Observation Onboarding | `docs/E0_OBSERVATION_ONBOARDING_v1.md` |
 | Dream Mode Concept | `docs/E0_DREAM_MODE_CONCEPT_v1.md` |
 | Structural Entropy Design | `docs/E0_STRUCTURAL_ENTROPY_DESIGN_v1.md` |
 | Ontodynamics Canon Analysis | `docs/E0_ONTODYNAMICS_CANON_ANALYSIS_v1.md` |

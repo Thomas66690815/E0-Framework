@@ -28,8 +28,8 @@
   },
 
   "state": {
-    "latest_commit": "C145",
-    "latest_commit_msg": "C145: README overhaul — all 15 demos, dead links fixed, 3590 tests, layers 12-13",
+    "latest_commit": "C146",
+    "latest_commit_msg": "C146: Observation Onboarding — step-by-step guide, REST/UI/Python recipes, all 8 priorities done",
     "test_count": 3590,
     "test_failures": 0,
     "module_count": "60 production + 9 benchmarks + 15 demos + 40 explorations + 99 test files + 8 canons",
@@ -120,6 +120,7 @@
   },
 
   "commit_history_recent": [
+    { "hash": "PENDING", "id": "C146", "title": "Observation Onboarding — step-by-step guide, all 8 Integration Stories done" },
     { "hash": "PENDING", "id": "C145", "title": "README overhaul — all 15 demos, dead links fixed, 3590 tests, layers 12-13" },
     { "hash": "PENDING", "id": "C144", "title": "Reflexion Demo — reactive vs. proactive vs. integrated on frontier domain" },
     { "hash": "PENDING", "id": "C143", "title": "Curriculum Demo — level-by-level learning on ontodynamics canon" },
