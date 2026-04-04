@@ -134,6 +134,80 @@ def config_b() -> List[PartialDictionary]:
     ]
 
 
+def config_c() -> List[PartialDictionary]:
+    """Config C: Config B + body senses + actions + qualities (11+7 = 18 pairs).
+
+    C131: Expands seed coverage to eliminate context deserts.
+    Adds 3 body parts (eye, mouth, foot), 2 actions (see, go),
+    2 qualities (good, big) — each in a previously unreachable cluster.
+    """
+    return [
+        PartialDictionary("body", {
+            "hand": "hand", "arm": "arm", "finger": "finger", "ear": "ohr",
+            "eye": "auge", "mouth": "mund", "foot": "fuss",
+            "hear": "hoeren", "see": "sehen", "go": "gehen",
+        }),
+        PartialDictionary("food", {
+            "bread": "brot", "water": "wasser", "milk": "milch", "salt": "salz",
+            "eat": "essen_v", "drink": "trinken",
+        }),
+        PartialDictionary("quality", {
+            "good": "gut", "big": "gross",
+        }),
+    ]
+
+
+def config_c_r2() -> List[PartialDictionary]:
+    """Config C+R2: Config C + 2 relation pairs (18+2 = 20 pairs).
+
+    Targeted fix for relation↔beziehung: seed 2 of its 5 neighbors
+    (in↔in_de, with↔mit) so context scoring can validate relation.
+    """
+    return [
+        PartialDictionary("body", {
+            "hand": "hand", "arm": "arm", "finger": "finger", "ear": "ohr",
+            "eye": "auge", "mouth": "mund", "foot": "fuss",
+            "hear": "hoeren", "see": "sehen", "go": "gehen",
+        }),
+        PartialDictionary("food", {
+            "bread": "brot", "water": "wasser", "milk": "milch", "salt": "salz",
+            "eat": "essen_v", "drink": "trinken",
+        }),
+        PartialDictionary("quality", {
+            "good": "gut", "big": "gross",
+        }),
+        PartialDictionary("relation", {
+            "in": "in_de", "with": "mit",
+        }),
+    ]
+
+
+def config_c_r5() -> List[PartialDictionary]:
+    """Config C+R5: Config C + all 5 relation pairs (18+5 = 23 pairs).
+
+    Full relation cluster seeding: in, with, from, not, all.
+    Tests whether diminishing returns from overly dense seeding.
+    """
+    return [
+        PartialDictionary("body", {
+            "hand": "hand", "arm": "arm", "finger": "finger", "ear": "ohr",
+            "eye": "auge", "mouth": "mund", "foot": "fuss",
+            "hear": "hoeren", "see": "sehen", "go": "gehen",
+        }),
+        PartialDictionary("food", {
+            "bread": "brot", "water": "wasser", "milk": "milch", "salt": "salz",
+            "eat": "essen_v", "drink": "trinken",
+        }),
+        PartialDictionary("quality", {
+            "good": "gut", "big": "gross",
+        }),
+        PartialDictionary("relation", {
+            "in": "in_de", "with": "mit", "from": "von",
+            "not": "nicht", "all": "alle",
+        }),
+    ]
+
+
 # ══════════════════════════════════════════════
 # Learning pipeline
 # ══════════════════════════════════════════════

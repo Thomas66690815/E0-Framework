@@ -28,12 +28,12 @@
   },
 
   "state": {
-    "latest_commit": "C128",
-    "latest_commit_msg": "C128: Level-3 Neighborhood Consistency — structural validation via bidirectional context scoring. 4/4 confirmed 100% correct.",
+    "latest_commit": "C130",
+    "latest_commit_msg": "C130: Confidence-Weighted Edge-Role Matching — using quality/load/inertia signals",
     "test_count": 3530,
     "test_failures": 0,
-    "module_count": "58 production + 9 benchmarks + 11 demos + 25 explorations + 95 test files + 4 canons",
-    "line_count": "~18700 production, ~70800 total"
+    "module_count": "58 production + 9 benchmarks + 11 demos + 29 explorations + 95 test files + 4 canons",
+    "line_count": "~18700 production, ~73000 total"
   },
 
   "conventions": {
@@ -120,6 +120,11 @@
   },
 
   "commit_history_recent": [
+    { "hash": "PENDING", "id": "C131", "title": "Seed Expansion Experiment — Config C/R2/R5 systematic comparison, 26/44 firm with R5" },
+    { "hash": "9a3a447", "id": "C130", "title": "Confidence-Weighted Edge-Role Matching — quality/load/inertia signals" },
+    { "hash": "95a01a8", "id": "C129", "title": "Competitive Exclusion — structural gate (defense-in-depth, 0 blocked)" },
+    { "hash": "a909436", "id": "C128b", "title": "Documentation update — results, README, architecture, test registry" },
+    { "hash": "8e21e63", "id": "C128", "title": "Level-3 Neighborhood Consistency — bidirectional context scoring, 4/4=100%" },
     { "hash": "PENDING", "id": "C124", "title": "Language Learning Exploration — EN↔DE cross-domain dream discovery" },
     { "hash": "4283c2d", "id": "C123", "title": "Curriculum Navigator — hierarchical learning for canonical landscapes" },
     { "hash": "7ab9178", "id": "C122e", "title": "Documentation update — archive, update, and new analysis for C122 arc" },
@@ -191,7 +196,7 @@
   ],
 
   "active_work": {
-    "focus": "Language Learning C128 breakthrough. Level-3 neighborhood consistency rejects structural false matches. 4/4 confirmed=100%. Next: extend dictionary coverage, test with more rounds or different configs.",
+    "focus": "C131 Seed Expansion Experiment. Systematic comparison of 4 seed configs on v1.1 canons (64/64 edges, NO bridge edges). B(11)→13, C(18)→21, C+R2(20)→23, C+R5(23)→26 firm. relation↔beziehung only confirmed with R5 (all 5 neighbors seeded). Key insight: 52% seed needed for 59% coverage — canon structure too shallow for bootstrapping. Next: LLM-enriched canons with typed relations.",
     "completed": [
       "All 6/6 Multiverse Open Questions resolved (C66-C71)",
       "C72 Chess Engine — E₀ plays chess via 6 strategic dimensions, discovers opening principles through historization",
@@ -259,10 +264,13 @@
       "C126c Weighted Dictionary Bootstrap — 3-tier graduation (canonical/tentative/confirmed). Stochastic execute_fn for tentative entries. 4/4 confirmed pairs 100% correct. Decay removes wrong entries naturally. Distance collapse by R2 limits discrimination — dream works on topology alone. quality↔eigenschaft paradox: high initial weight prevents rediscovery.",
       "C127 Level-2 Pair-Based Validation — p(SUCCESS)=w(source)×w(target). Distance collapse PREVENTED: 64→52→99→154→116→135→77→68 (vs L1: 53→1). S/F ratio stable ~30%. R7=5/5 correct, 20/32 unknown pairs top-10%ile. Oscillation between rounds. 1 confirmed (quality), 7/11 tentative correct.",
       "C127b Cumulative Vote Bootstrap — FALSIFICATION. weight=f(cumulative_votes). Wrong pairs accumulate consistently: relation↔essen_n 36v promoted, food↔beziehung 28v promoted. Only 2/4 confirmed correct (50%). Distance diversity preserved (64→38→55→83→111...). Pure accumulation amplifies systematic structural false matches.",
-      "C128 Level-3 Neighborhood Consistency — bidirectional context scoring: for each candidate en↔de, translate neighbors and check structural overlap. w=base_w×context_score. Promotion gated by context≥50%. 4/4 confirmed=100% (food, quality, action, relation). Wrong pairs (go↔kalt ctx=0%, thing↔kalt ctx=0%) never promoted. relation↔essen_n NEVER APPEARED as discovery (suppressed by context-weighted execute_fn)."
+      "C128 Level-3 Neighborhood Consistency — bidirectional context scoring: for each candidate en↔de, translate neighbors and check structural overlap. w=base_w×context_score. Promotion gated by context≥50%. 4/4 confirmed=100% (food, quality, action, relation). Wrong pairs (go↔kalt ctx=0%, thing↔kalt ctx=0%) never promoted. relation↔essen_n NEVER APPEARED as discovery (suppressed by context-weighted execute_fn).",
+      "C129 Competitive Exclusion — structural gate: promotion requires being best candidate for both EN and DE word. 0 promotions blocked (defense-in-depth, false pairs never reach threshold). Committed 95a01a8.",
+      "C130 Confidence-Weighted Edge-Role Matching — votes weighted by equivalence.confidence instead of +1. Edge-role context: compare quality/load/inertia fingerprints of matched edge pairs. 11→13 firm, 2/2=100% confirmed. Edge-Role Score shows clear separation (correct 72-100%, wrong mostly 0%). Committed 9a3a447.",
+      "C131 Seed Expansion Experiment — 4 configs on v1.1 canons: B(11)→13 firm, C(18)→21 firm, C+R2(20)→23 firm, C+R5(23)→26 firm. Bridge edges (C131 Phase 1) created false positives (make↔nehmen ctx=100%) — reverted. Seed expansion is dominant lever. relation↔beziehung: B=tentative ctx=?, C=tentative ctx=0%, R2=tentative ctx=71%, R5=confirmed ctx=100%. Diagnosis: canon topology too shallow (avg degree 2.9, 64 edges on 44 nodes) — node fingerprints not locally unique. 52% seed needed for 59% coverage = not learning, just seeding. Next: LLM-enriched canons with typed relations (sees_with, opposite_of, used_for etc.) to create unique structural fingerprints per node."
     ],
-    "next_steps": ["Extend L3 (more rounds, different configs, parameter sensitivity)", "thing↔ding path to promotion (cum=19, ctx=71% — needs more rounds or lower PROMOTION_VOTES)", "Deeper L3: second-order context (neighbor-of-neighbor)", "C43: Self-Graph (E0 learns E0 first)"],
-    "next_commit_id": "C128b"
+    "next_steps": ["LLM-enriched canons: use GPT-4o to generate rich typed relations for 44 words per language", "Test Config B (11 seed) on enriched canon — hypothesis: >60% firm with 25% seed", "If confirmed: formalize LLM-as-parent architecture (C43 Self-Graph path)"],
+    "next_commit_id": "C132"
   },
 
   "key_modules_quick_ref": {
