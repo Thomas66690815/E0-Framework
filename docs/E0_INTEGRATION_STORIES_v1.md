@@ -103,21 +103,27 @@ Each story follows the same skeleton:
 
 ---
 
-### Priority 4 — Multiverse Quickstart
+### Priority 4 — Multiverse Quickstart ✅ DONE
 
-**Trigger Surface:** Dedicated `demo_multiverse_invoice.py` or flag `--multiverse 2` on existing demos.
+**Problem:** The Multiverse (C60) with cross-reflexion (C62, C107), NoveltyGate, and divergence pressure existed only in benchmarks and explore scripts. No standalone demo showed coupled domains discovering structural correspondences. After C139 wired Hungarian+WL into DreamObserver, cross-domain node matching became compelling enough for a demo.
 
-**Runtime Path:**
-- `MultiverseController(Universe A, Universe B)` with `cross_reflexion_turn` as turn fn.
-- Post-run: DreamObserver with Hungarian (after C139) discovers structural correspondences between the two universes.
+**Resolution (commit pending, C142):**
+- `demo_multiverse.py` — complete multiverse pipeline with two onboarding variants
+  - Domain A (Standard, 9 states/10 edges) + Domain B (Accelerated, 9 states/10 edges)
+  - MultiverseController with `scoped_cross_reflexion_turn`, 20 turns
+  - NoveltyGate detects consensus stagnation, divergence pressure injects exploration
+  - DreamObserver with `node_equivalence_method="hungarian"`, 3 dream cycles
+  - 8-phase output: construction → mode assessment → coupling → coupling landscape → dream → correspondences → (optional) sleep-wake → summary
+- `--entropy` flag adds SleepWakeCycle with inscription_threshold on both domains
+- 11 tests in `test_demo_multiverse.py` (8 base + 3 entropy)
 
-**Why after C139:** Multiverse becomes much more compelling when DreamObserver can actually find meaningful cross-domain matches. With old edge-EQ this was noise.
+**Key observations from demo run:**
+- 9/9 node-EQ matches (all nodes paired by Hungarian), 33 edge-EQ
+- Convergence at turn 2, divergence pressure 5x (20 edges injected)
+- Novelty rate 25% — divergence successfully breaks consensus traps
+- Coupling landscape shows asymmetric quality: Domain-A→B q=-1.0 vs B→A q=+0.1
 
-**User Evidence:** Summary table: novelty rate, peer consultations, edges via cross-reflexion. Dream report with node-level matches.
-
-**Open Questions:** Best domain pair to demonstrate coupling necessity? How to expose peer callbacks without LLM keys? (Mock execute_fn sufficient for demo.)
-
-**Effort:** Medium. Assembly, but needs C139 to be compelling.
+**Effort:** Medium. Assembly from existing components, no new algorithms.
 
 ---
 
@@ -183,10 +189,11 @@ Low urgency. SU(2) is theoretically elegant and fully tested, but no practical a
 ## 5. Next Steps
 1. ~~C139: DreamObserver + Hungarian~~ — ✅ DONE (commit `998f1f6`)
 2. ~~C140: Bootstrapper demo~~ — ✅ DONE (commit `d3adfe1`)
-3. ~~C141: Entropy/Sleep–Wake flags~~ — ✅ DONE
-4. Multiverse quickstart (Priority 4) — now compelling with C139 Hungarian in runtime
-5. Reflexion needs design discussion before implementation
-6. Update README/Quickstart as each capability ships
+3. ~~C141: Entropy/Sleep–Wake flags~~ — ✅ DONE (commit `a7bb2d2`)
+4. ~~C142: Multiverse quickstart~~ — ✅ DONE
+5. Reflexion needs design discussion before implementation (Priority 5)
+6. Curriculum demo on ontodynamics canon (Priority 6)
+7. Update README/Quickstart as each capability ships
 
 ---
 
