@@ -1,7 +1,7 @@
 # E₀ Architecture Overview v4
 
 **Status:** Canonical reference  
-**Date:** 2026-04-03  
+**Date:** 2026-04-04  
 **Supersedes:** E0_ARCHITECTURE_OVERVIEW_v3.md (2026-04-02)  
 **Scope:** 60 production modules, 9 benchmarks, 11 demos, 37 explorations, 94 test files — ~23,900 production lines, 3499 tests
 **Latest:** C137 (Hungarian Optimal Assignment — **44/44 = 100%**, seedless cross-domain node identification, zero wrong)
@@ -604,3 +604,45 @@ Result: **ALL 44/44 correct**, including the 4 "genuine confusions" — because 
 | C135 D2 (seedless) | WL depth=2 (4-dim) | 33 | 0 | 100% | Framework-native, mutual-best |
 | C136 D2 (seedless) | WL depth=2 (9-dim) | 34 | 0 | 100% | +trace_load features |
 | **C137 (seedless)** | **WL d=2 + Hungarian** | **44** | **0** | **100%** | **BREAKTHROUGH — matches oracle** |
+
+### Robustness Suite (C138a–c)
+
+Systematic validation that the C137 pipeline is not a lucky configuration:
+
+**C138a — Ablation Matrix** (18 configurations: depth × noise × algorithm):
+- Hungarian+D2 = 44/44 at ALL noise levels (100/200/300)
+- Hungarian wins 9/9 over mutual-best across all configurations
+- More noise even helps at lower depths (richer neighborhood signal)
+
+**C138b — Stress Test** (score noise + topology perturbation):
+
+| Axis | Parameter | Correct/44 | Key finding |
+|---|---|---|---|
+| Score noise σ=0 | Gaussian on LLM scores | 44 (100%) | Baseline |
+| Score noise σ=1 | | 44 (100%) | Fully robust |
+| Score noise σ=2 | | 44 (100%) | WL averages absorb noise |
+| Score noise σ=3 | | 42 (95%) | First drop, graceful |
+| Topology +5 DE-only | Asymmetric edges | 41 (93%) | Breaks isomorphism |
+| Topology +10 | | 40 (91%) | Linear degradation |
+| Topology +20 | | 35 (80%) | Still no cliff-edge |
+| Combined σ=2, +10 | Both axes | 38 (86%) | Graceful under dual stress |
+
+**C138c — Scaling** (synthetic isomorphic pairs, correlated scores, +100 noise):
+
+| Nodes | Accuracy | Wall-clock | Key finding |
+|---|---|---|---|
+| 50 | 100.0% | 0.5s | Perfect |
+| 100 | 100.0% | 0.1s | Perfect |
+| 200 | 99.3% | 0.9s | 198–200/200 |
+| 500 | 99.3% | 7.8s | 494–498/500 |
+
+- Empirical scaling: O(n^1.17) — sub-cubic, practical
+- **Critical assumption:** score correlation (same edge → similar LLM score in both languages). Without correlation, accuracy drops to ~45%. With correlation: >99% at 500 nodes.
+
+### Key Files (C138)
+
+| File | Purpose |
+|---|---|
+| `explore_c138a_ablation.py` | Ablation matrix: depth × noise × algorithm (18 configs) |
+| `explore_c138b_robustness.py` | Score noise + topology perturbation stress test |
+| `explore_c138c_scaling.py` | Scaling to 50–500 nodes with synthetic graphs |

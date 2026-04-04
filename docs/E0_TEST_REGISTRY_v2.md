@@ -3318,6 +3318,83 @@ Greedy mutual-best matching leaves correct pairs unmatched when a third node "st
 
 ---
 
+### C138a — Ablation Matrix
+
+**Claim**  
+The C137 result (44/44) is not a lucky configuration. Hungarian+D2 dominates across all combinations of WL depth (0/1/2), noise edge counts (100/200/300), and matching algorithm (mutual-best/Hungarian).
+
+**Evidence**  
+- `explore_c138a_ablation.py` — Full 3 × 3 × 2 = 18 data point matrix
+- Hungarian+D2: 44/44 at ALL noise levels (100, 200, 300)
+- Hungarian+D1 at noise=300: also 44/44
+- Worst configuration: MutBest+D0+noise=100: 12/44
+- Hungarian wins 9/9 over mutual-best in all configurations
+- More noise edges help at lower depths (richer neighborhood signal)
+
+**Result**  
+- 18/18 configurations tested, Hungarian dominates in all
+- No configuration-sensitivity at D2
+
+**Status**  
+✅ Confirmed. C137 is not a lucky parameter choice — Hungarian+D2 is robustly optimal.
+
+---
+
+### C138b — Score Noise + Topology Perturbation
+
+**Claim**  
+The pipeline tolerates significant score noise (noisy/inconsistent LLM teaching) and moderate topology perturbation (asymmetric edges breaking perfect isomorphism), with graceful degradation under combined stress.
+
+**Evidence**  
+- `explore_c138b_robustness.py` — Two stress axes + combined matrix
+- **Score perturbation** (Gaussian noise σ=0,1,2,3 on LLM scores, clamped 0–10):
+  - σ=0,1,2: 44/44 (100%) — fully robust
+  - σ=3: 42/44 (95%) — first drop, graceful
+- **Topology perturbation** (+0,5,10,20 DE-only edges, no EN counterpart):
+  - +0: 44/44, +5: 41/44 (93%), +10: 40/44 (91%), +20: 35/44 (80%)
+- **Combined**: σ=1+5: 93%, σ=1+10: 93%, σ=2+5: 93%, σ=2+10: 86%
+- No cliff-edge: degradation is linear, not catastrophic
+
+**Result**  
+- Score noise: tolerant up to σ=2 (100%), first drop at σ=3 (95%)
+- Topology: more sensitive axis (WL is structural by design), but linear degradation
+- Combined: graceful under dual stress
+
+**Status**  
+✅ Confirmed. Score noise tolerance is excellent. Topology is the more sensitive axis but degrades gracefully.
+
+---
+
+### C138c — Scaling to Larger Graphs
+
+**Claim**  
+Hungarian+WL-D2 scales beyond the 44-node real canons, maintaining >99% accuracy at 500 nodes with practical wall-clock time, given correlated scores between isomorphic edges.
+
+**Evidence**  
+- `explore_c138c_scaling.py` — Synthetic isomorphic graph pairs with planted ground truth
+- Correlated scores (same edge → similar score in both graphs, σ=1 perturbation)
+- Edge density ~1.5/node (matches real canons), +100 noise edges, 3 trials per size
+
+| Nodes | Avg Accuracy | Avg Time | Trials |
+|---|---|---|---|
+| 50 | 100.0% | 0.5s | 3/3 perfect |
+| 100 | 100.0% | 0.1s | 3/3 perfect |
+| 200 | 99.3% | 0.9s | 1/3 perfect |
+| 500 | 99.3% | 7.8s | 0/3 perfect, 494–498/500 |
+
+- Empirical scaling exponent: O(n^1.17) — sub-cubic, practical
+- **Critical insight:** score correlation is the load-bearing assumption. Without correlation, accuracy drops to ~45%.
+
+**Result**  
+- >99% accuracy at 10× real canon size
+- Practical runtime (500 nodes in ~8s)
+- Score correlation (LLM evaluates same relationship similarly across languages) is the essential precondition
+
+**Status**  
+✅ Confirmed. Pipeline scales to 500 nodes with >99% accuracy. Score correlation is the critical assumption, validated by real LLM behavior in C138a/b.
+
+---
+
 ## 6. Test file inventory
 | `test_amplitude_overlay.py` | 125 | C2/C3 |
 | `test_beipackzettel.py` | 20 | C31 |
