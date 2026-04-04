@@ -28,11 +28,11 @@
   },
 
   "state": {
-    "latest_commit": "C142",
-    "latest_commit_msg": "C142: Multiverse Demo — coupled domains with cross-reflexion + Hungarian dream discovery",
-    "test_count": 3564,
+    "latest_commit": "C143",
+    "latest_commit_msg": "C143: Curriculum Demo — level-by-level learning on ontodynamics canon",
+    "test_count": 3575,
     "test_failures": 0,
-    "module_count": "60 production + 9 benchmarks + 13 demos + 40 explorations + 97 test files + 8 canons",
+    "module_count": "60 production + 9 benchmarks + 14 demos + 40 explorations + 98 test files + 8 canons",
     "line_count": "~20200 production, ~97800 total"
   },
 
@@ -120,6 +120,7 @@
   },
 
   "commit_history_recent": [
+    { "hash": "PENDING", "id": "C143", "title": "Curriculum Demo — level-by-level learning on ontodynamics canon" },
     { "hash": "PENDING", "id": "C140", "title": "Bootstrap Domain Demo — cold-start pipeline, 2 paths, mock+live, ModeController" },
     { "hash": "c9fa4ea", "id": "docs", "title": "C139 documentation update (Architecture, Registry, Stories, bootstrap)" },
     { "hash": "998f1f6", "id": "C139", "title": "DreamObserver + Hungarian/WL node equivalences wired into dream_cycle runtime" },
