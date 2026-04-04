@@ -28,11 +28,11 @@
   },
 
   "state": {
-    "latest_commit": "C146",
-    "latest_commit_msg": "C146: Observation Onboarding — step-by-step guide, REST/UI/Python recipes, all 8 priorities done",
-    "test_count": 3590,
+    "latest_commit": "C147",
+    "latest_commit_msg": "C147: Self-Graph Demo — E0 learns its own components via differential sampling, 3-level meta-control",
+    "test_count": 3580,
     "test_failures": 0,
-    "module_count": "60 production + 9 benchmarks + 15 demos + 40 explorations + 99 test files + 8 canons",
+    "module_count": "60 production + 9 benchmarks + 16 demos + 40 explorations + 100 test files + 8 canons",
     "line_count": "~20200 production, ~97800 total"
   },
 
