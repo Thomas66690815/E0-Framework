@@ -3,8 +3,8 @@
 **Status:** Canonical reference  
 **Date:** 2026-04-03  
 **Supersedes:** E0_ARCHITECTURE_OVERVIEW_v3.md (2026-04-02)  
-**Scope:** 60 production modules, 9 benchmarks, 11 demos, 35 explorations, 94 test files — ~19,800 production lines, 3499 tests
-**Latest:** C135 (WL Recursive Neighborhood Matching — 33/44 at 100% precision, seedless cross-domain node identification)
+**Scope:** 60 production modules, 9 benchmarks, 11 demos, 37 explorations, 94 test files — ~23,900 production lines, 3499 tests
+**Latest:** C137 (Hungarian Optimal Assignment — **44/44 = 100%**, seedless cross-domain node identification, zero wrong)
 **Papers:** P1 (Structural Interference), P2 (Spinor/Born), P3 (Non-Abelian), P4 (Reflexivity), P5 (Emergent Locality), P6 (Dream Mode)
 
 ---
@@ -177,11 +177,11 @@ Explorations: `explore_gordian`, `explore_amplitude`, `explore_resonator`, `expl
 | `input_pipeline.py` | 67 | Input processing pipeline (C83) | — |
 | `snapshot_codec.py` | 181 | Snapshot encoding/decoding for persistence and wire format (C83) | — |
 
-### Layer 9 — Dream Mode (1 module, 1113 lines)
+### Layer 9 — Dream Mode (1 module, 1178 lines)
 
 | Module | Lines | Purpose | Paper |
 |--------|------:|---------|-------|
-| `dream_mode.py` | 1113 | Cross-domain pattern recognition: EdgeFingerprint, fingerprint_distance, find_equivalences, DreamObserver (register/unregister/dream_cycle/feedback), BridgeHypothesis, propose_bridges, make_dream_peer_fn (C109–C111). Decay integration: decay_enabled, DreamCycleResult.decay_reports (C119). **Node-level matching (C134b):** NodeFingerprint, node_fingerprints, node_fingerprint_distance, find_node_equivalences. **WL recursive neighborhood (C135):** WLNodeFingerprint, wl_node_fingerprints, wl_node_distance, find_wl_node_equivalences — computes node profiles via iterative (mean, std) aggregation of neighbor features; depth-2 captures 2-hop structural context | P6 |
+| `dream_mode.py` | 1178 | Cross-domain pattern recognition: EdgeFingerprint, fingerprint_distance, find_equivalences, DreamObserver (register/unregister/dream_cycle/feedback), BridgeHypothesis, propose_bridges, make_dream_peer_fn (C109–C111). Decay integration: decay_enabled, DreamCycleResult.decay_reports (C119). **Node-level matching (C134b):** NodeFingerprint, node_fingerprints, node_fingerprint_distance, find_node_equivalences. **WL recursive neighborhood (C135–C136):** WLNodeFingerprint, wl_node_fingerprints (9-dim Round-0: mean/std/degree/pos_frac/min/max/median quality + trace_load mean/std), wl_node_distance, find_wl_node_equivalences. **Hungarian optimal assignment (C137):** find_wl_node_equivalences_hungarian — scipy.optimize.linear_sum_assignment on full WL distance matrix, globally optimal 1:1 node pairing → **44/44 = 100%** | P6 |
 
 ### Layer 10 — Structural Entropy (1 module, ~600 lines)
 
@@ -531,7 +531,7 @@ Can E₀ learn unknown word translations from known ones?  The system has two vo
 
 Detailed results: `docs/E0_LANGUAGE_LEARNING_RESULTS_v1.md`.
 
-## 16. C129–C135 — Monolingual Teaching + Seedless Structural Matching
+## 16. C129–C137 — Monolingual Teaching + Seedless Structural Matching
 
 ### Problem
 
@@ -556,20 +556,31 @@ The two children "meet" and discover translation correspondences through structu
 |---|---|---|---|
 | `find_equivalences` (C109) | Individual edge fingerprints (q, m, I) | 1/44 (2%) | Same-quality pairs swamp quantile |
 | `find_node_equivalences` (C134b) | Sorted quality profiles per node | 9/44 (20%) | Sorting loses edge-position info |
-| **`find_wl_node_equivalences` (C135)** | **Recursive neighborhood profiles** | **33/44 (75%)** | **100% precision** |
-| Position-based matching (C133) | Quality at corresponding edge positions | 44/44 (100%) | Requires known topology positions |
+| `find_wl_node_equivalences` (C135) | Recursive neighborhood profiles | 33/44 (75%) | 100% precision, mutual-best blocks 6 correct |
+| **`find_wl_node_equivalences_hungarian` (C137)** | **WL + Hungarian optimal assignment** | **44/44 (100%)** | **100% precision, globally optimal** |
+| Position-based matching (C133) | Quality at corresponding edge positions | 44/44 (100%) | Requires known topology positions (oracle) |
 
 **"Not Edge, but Node plus recursive neighborhood"** is the right comparison unit for cross-domain structural identification.
 
-### WL Recursive Fingerprints (C135)
+### WL Recursive Fingerprints (C135–C136)
 
 Weisfeiler-Leman-style iterative refinement:
 
-- **Round 0:** Node features = (mean_q, std_q, degree, positive_fraction) — 4 floats
+- **Round 0 (C136):** Node features = 9 floats: mean_q, std_q, degree, pos_fraction, min_q, max_q, median_q, **trace_load_mean**, **trace_load_std**
 - **Round k:** Aggregate (mean, std) of each neighbor feature dimension from round k−1 → append to own features
-- **Depth 2:** 36-dimensional feature vector capturing 2-hop structural context
+- **Depth 2:** 81-dimensional feature vector capturing 2-hop structural context
 
-The D0→D1 jump (25%→70%) shows that **1-hop neighborhood context is the decisive signal**. D2 refines further (75%) and eliminates all false matches.
+trace_load (U+F) is independent from quality (U−F)/(U+F+ε) — two edges with identical quality can have vastly different trace loads depending on bootstrapper confidence, providing a new differentiation axis.
+
+The D0→D1 jump (25%→70%) shows that **1-hop neighborhood context is the decisive signal**. D2 refines further and eliminates false matches.
+
+### Hungarian Optimal Assignment (C137)
+
+C136 diagnosis: 6/10 unmatched nodes had the correct partner CLOSER in WL distance, but greedy mutual-best matching blocked them (another node "stole" the partner). The remaining 4 had genuine semantic confusions (see↔eye, take↔go).
+
+Fix: Replace greedy mutual-best with **Hungarian algorithm** (`scipy.optimize.linear_sum_assignment`) — globally optimal 1:1 assignment minimizing total WL distance across all 44×44 pairs.
+
+Result: **ALL 44/44 correct**, including the 4 "genuine confusions" — because global optimization avoids cascading assignment errors.
 
 ### Key Files
 
@@ -578,7 +589,9 @@ The D0→D1 jump (25%→70%) shows that **1-hop neighborhood context is the deci
 | `explore_c133_playground.py` | LLM monolingual teaching + seedless playground (binary YES/NO) |
 | `explore_c134_bootstrapper_teacher.py` | Bootstrapper as teacher (score 0–10), node-eq + WL methods |
 | `explore_c135_wl_matching.py` | WL recursive neighborhood matching at depth 0/1/2 |
-| `dream_mode.py` (extended) | NodeFingerprint, WLNodeFingerprint, find_wl_node_equivalences |
+| `explore_c136_feature_engineering.py` | 9-dim features + unmatched diagnostics |
+| `explore_c137_hungarian.py` | Hungarian optimal assignment — the breakthrough |
+| `dream_mode.py` (extended) | NodeFingerprint, WLNodeFingerprint, find_wl_node_equivalences, find_wl_node_equivalences_hungarian |
 
 ### Results
 
@@ -588,4 +601,6 @@ The D0→D1 jump (25%→70%) shows that **1-hop neighborhood context is the deci
 | C132b (seed=8, LLM) | Bilingual validator | 20 | — | — | Wrong architecture (bilingual) |
 | C133 (seedless) | Position-based | **44** | 0 | 100% | Oracle-level, needs shared positions |
 | C134b (seedless) | Node sorted profile | 9 | 13 | 41% | First framework-native attempt |
-| **C135 D2 (seedless)** | **WL depth=2** | **33** | **0** | **100%** | **Framework-native, no position info** |
+| C135 D2 (seedless) | WL depth=2 (4-dim) | 33 | 0 | 100% | Framework-native, mutual-best |
+| C136 D2 (seedless) | WL depth=2 (9-dim) | 34 | 0 | 100% | +trace_load features |
+| **C137 (seedless)** | **WL d=2 + Hungarian** | **44** | **0** | **100%** | **BREAKTHROUGH — matches oracle** |

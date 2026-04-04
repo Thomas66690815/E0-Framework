@@ -13,6 +13,7 @@ numpy
 # pyyaml
 # duckdb
 transformers
+scipy
 
 # Optional — chess engine:
 chess
