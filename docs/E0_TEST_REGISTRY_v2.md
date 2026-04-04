@@ -3432,6 +3432,61 @@ Hungarian+WL-D2 scales beyond the 44-node real canons, maintaining >99% accuracy
 
 ---
 
+### C147 — Self-Graph Demo: Differential Sampling and Meta-Control
+
+**Claim:** The Self-Graph mechanism (C43) combined with Dual Reflection (C47) and Reflexive Action (C49) can be demonstrated end-to-end via a pedagogical demo. Three empirical properties are shown:
+
+1. **Differential Sampling** — Core components (always active) accumulate quality from all periods. Modulation components (toggled on/off) accumulate quality only from their active periods. If a modulation is only active during failures, it acquires negative quality while core quality stays diluted but positive.
+2. **Bulk Attribution** — `self_historize(components, outcome)` records the same outcome simultaneously on all edges where both endpoints are in the active component set. Precision depends on activity patterns, not causal analysis.
+3. **Correlation-based Meta-Control** — `diagnose_self_graph()` classifies overlap as harmful (quality < -0.2), recommends deactivation. `apply_reflexive_actions()` toggles overlap OFF. The system uses correlation (not causation) — sufficient because deactivation is reversible.
+
+**Modules under test:**
+- `e0_controller/demo_self_graph.py` — 6-phase demo: Structure, Mechanism (direct `self_historize` calls), Diagnosis, End-to-end (controller), Convergence, Summary
+- `e0_controller/test_demo_self_graph.py` — 21 tests across 7 classes
+
+**Tests:**
+| Test | What it validates |
+|------|-------------------|
+| `TestSelfGraphStructure::test_component_counts` | 6 core + 2 modulation = 8 total |
+| `TestSelfGraphStructure::test_edge_counts` | 6 core + 2 modulation edges |
+| `TestSelfGraphStructure::test_active_components_core_only` | overlap_active=False → 6 core |
+| `TestSelfGraphStructure::test_active_components_with_overlap` | overlap_active=True → includes overlap |
+| `TestApprovalDomain::test_domain_has_5_edges` | Approval pipeline structure |
+| `TestApprovalDomain::test_domain_states` | 6 states: SUBMIT→...→DONE |
+| `TestApprovalDomain::test_execute_always_succeeds` | Clean domain, no failures |
+| `TestApprovalDomain::test_controller_reaches_done` | E0Controller navigates to DONE |
+| `TestMechanism::test_core_only_success_quality_positive` | 20×SUCCESS core-only → quality +1.0, overlap load 0 |
+| `TestMechanism::test_overlap_only_failure_quality_negative` | 20×U core + 10×F both → overlap quality -1.0, core > 0 |
+| `TestMechanism::test_core_recovers_after_failures` | Additional core-only successes → core quality improves |
+| `TestMechanism::test_overlap_quality_unchanged_by_core_only` | Core-only traces don't affect overlap quality |
+| `TestDiagnosis::test_overlap_classified_harmful` | overlap ∈ diag.harmful |
+| `TestDiagnosis::test_core_classified_healthy` | All 6 core components healthy |
+| `TestDiagnosis::test_curvature_insufficient_data` | curvature (never active) → insufficient |
+| `TestDiagnosis::test_deactivation_candidate_is_overlap` | Only overlap in deactivation_candidates |
+| `TestReflexiveAction::test_overlap_deactivated` | apply_reflexive_actions toggles overlap OFF |
+| `TestEndToEnd::test_self_graph_accumulates_via_controller` | Controller.cycle() calls self_historize |
+| `TestEndToEnd::test_all_healthy_when_all_succeed` | All-success domain → all core healthy |
+| `TestRunDemo::test_demo_returns_results` | Full demo: overlap_harmful=True, quality=-1.0 |
+| `TestRunDemo::test_demo_convergence_quality` | 30-run convergence → quality +1.0 |
+
+**Key empirical findings:**
+- 20 U (core) + 10 F (core+overlap) + 10 U (core) → core quality = +0.500, overlap quality = -1.000
+- Overlap quality is determined entirely by its ON-period (10 failures, 0 successes)
+- Core quality is diluted (30 U + 10 F → +0.500) but stays healthy (above -0.2 threshold)
+- Core-only recovery (Step 2c) improves core from +0.333 → +0.500 without touching overlap
+- Convergence in all-success domain: quality reaches +1.0 immediately (deterministic case)
+- Self-graph ρ=1.0 means quality is cumulative — early failures never decay, only get diluted
+
+**Result**
+- 21/21 tests pass
+- Full chain demonstrated: historize → diagnose → classify → deactivate → recover
+- 3580 total, 0 failures
+
+**Status**
+✅ Confirmed
+
+---
+
 ## 6. Test file inventory
 | `test_amplitude_overlay.py` | 125 | C2/C3 |
 | `test_beipackzettel.py` | 20 | C31 |

@@ -267,6 +267,35 @@ Three stages of self-modification, corresponding to increasing structural depth:
                     └───────────────────────────────┘
 ```
 
+### Self-Graph Attribution Mechanism (C43/C147)
+
+The Self-Graph applies \*the same historization\* that E₀ uses on domains to its own
+operational structure. After each controller step, `self_historize(active_components, outcome)`
+records the step's outcome on all edges whose endpoints are both in the active set.
+
+**Differential Sampling:** Core components (6) are always active. Modulation components
+(curvature, overlap) are only active when their flag is True. This creates asymmetric
+quality accumulation:
+
+```
+  Period A: core=ON, overlap=OFF  → 20 × SUCCESS
+  Period B: core=ON, overlap=ON   → 10 × FAILURE
+  Period C: core=ON, overlap=OFF  → 10 × SUCCESS
+
+  Result:
+    q(core)    = (30 - 10) / (30 + 10) = +0.500  (diluted but healthy)
+    q(overlap) = ( 0 - 10) / ( 0 + 10) = -1.000  (pure failure)
+```
+
+**Bulk Attribution:** All active components receive the same outcome simultaneously.
+No per-component measurement exists. Attribution arises from *which components were
+active during which periods* — correlation, not causation.
+
+**Meta-Control:** `diagnose_self_graph()` classifies components by quality threshold
+(harmful < -0.2, confused |q| < 0.1, healthy otherwise). Only modulation components
+can be deactivated — core components are structurally protected. Deactivation is a
+flag toggle (reversible in O(1)), making correlation-based decisions safe.
+
 ---
 
 ## 5. Multiverse Architecture (Layer 6)
@@ -428,6 +457,7 @@ primitives ← tension ← landscape ← historization
 | Structural Entropy Design | `docs/E0_STRUCTURAL_ENTROPY_DESIGN_v1.md` |
 | Ontodynamics Canon Analysis | `docs/E0_ONTODYNAMICS_CANON_ANALYSIS_v1.md` |
 | Test Registry | `docs/E0_TEST_REGISTRY_v2.md` |
+| Empirical Insights | `docs/E0_EMPIRICAL_INSIGHTS_v1.md` |
 | Canon Alignment | `docs/E0_CANON_ALIGNMENT_v1.md` |
 
 ---

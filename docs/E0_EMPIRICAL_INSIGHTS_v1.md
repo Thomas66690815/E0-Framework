@@ -1,8 +1,8 @@
-# E₀ Empirical Insights — What Chess Reveals About the Framework
+# E₀ Empirical Insights
 
-**Date:** 2026-03-31  
-**Trigger:** C72–C81 Chess Engine + Team Chess + Attractor Universality + Multi-Attractor + Transfer Learning + Convergence Speed + Asymmetric ρ + Attractor Prediction + Focus Narrowing  
-**Status:** Validated through self-play, team-vs-solo, 10-domain benchmark, multi-cluster dynamics, transfer experiments, convergence analysis, asymmetric decay experiments, structural prediction analysis, scaling + focus narrowing experiments
+**Date:** 2026-04-04  
+**Trigger:** C72–C81 (Chess), C147 (Self-Graph Demo)  
+**Status:** Validated through self-play, team-vs-solo, 10-domain benchmark, multi-cluster dynamics, transfer experiments, convergence analysis, asymmetric decay experiments, structural prediction analysis, scaling + focus narrowing experiments, self-graph mechanism demo
 
 ---
 
@@ -777,6 +777,131 @@ the narrowing, and the Zentrale decides whether to integrate.
 
 ---
 
+## Part II: What E0 Reveals About E0 — Self-Graph Experiments (C147)
+
+C147 applied E₀ to its own operational structure — the Self-Graph (C43).
+Unlike Chess or the 10-domain benchmark, the domain here is E₀ itself:
+8 nodes representing its operational cycle, 8 edges encoding component
+interactions. The question: can E₀'s historization mechanism distinguish
+which of its own components are helping vs. hurting?
+
+Result: yes, via a mechanism we call **differential sampling**. The
+experiment reveals three insights about self-knowledge that are independent
+of any application domain.
+
+---
+
+## Insight 12: Differential Sampling — Activity Patterns Create Attribution Without Causation
+
+**Observation:**  
+In the Self-Graph demo, 20 successes are historized with core-only active,
+then 10 failures with core+overlap active, then 10 successes core-only again.
+Result: core quality = +0.500 (diluted but healthy), overlap quality = -1.000
+(purely negative — it only saw failures).
+
+The system never measured whether overlap *caused* the failures. Overlap
+simply happened to be active during the failure period and inactive during
+the success periods. The quality differential arises from the activity pattern.
+
+**Why this matters for E₀:**  
+In all prior E₀ applications, historization operates on *domain* edges —
+transitions between states in an external problem. The Self-Graph applies
+the same mechanism to E₀'s own operational structure. The fact that it works
+(correct attribution with zero domain knowledge about causation) validates
+an important property:
+
+- `q(e) = (U-F)/(U+F+ε)` is sufficient for *structural* self-knowledge,
+  not just *domain* knowledge
+- Causal analysis is unnecessary when deactivation is reversible
+- The precision of attribution depends on the *granularity of toggling*:
+  fine-grained on/off patterns create sharper quality differentials
+
+**Formal implication:**  
+Self-knowledge via historization requires only two conditions:
+1. Components can be independently toggled (activity granularity)
+2. The system samples both states (component ON, component OFF)
+
+If both conditions hold, `q(component)` converges to a meaningful
+signal — even with bulk attribution (Insight 13).
+
+---
+
+## Insight 13: Bulk Attribution — Shared Outcomes Are Sufficient Under Differential Activity
+
+**Observation:**  
+`self_historize(active_components, outcome)` records the *same* outcome
+on *all* edges where both endpoints are in the active set. When 7
+components are active (core + overlap), all 7 get the failure trace.
+There is no per-component outcome measurement.
+
+Yet overlap quality (-1.000) diverges sharply from core quality (+0.500).
+How? Because core was also active during the 30 success periods (where
+overlap was OFF). The differential arises not from per-component fidelity,
+but from the *sampling history* — which periods each component was present for.
+
+**Why this matters for E₀:**  
+This refutes the intuition that attribution requires fine-grained measurement.
+In classical RL, credit assignment is a fundamental problem: which action
+caused the reward? E₀ sidesteps this entirely. The mechanism:
+
+- Core components: always active → quality = all_periods_average
+- Modulation components: toggle → quality = only_active_periods_average
+- The *difference* between these two averages is the attribution signal
+
+This is exactly analogous to A/B testing: you don't need to know *why*
+variant B is worse — you only need to observe the performance difference
+between the A-only and A+B periods.
+
+**Formal implication:**  
+Let U_core/F_core be the success/failure counts when only core is active,
+U_both/F_both when core+modulation are active. Then:
+
+- q(core) = ((U_core + U_both) - (F_core + F_both)) / (U_core + U_both + F_core + F_both + ε)
+- q(modulation) = (U_both - F_both) / (U_both + F_both + ε)
+
+The quality differential `q(core) - q(modulation)` is nonzero whenever the
+modulation's active period has a different success rate than the core-only period.
+No causal model required.
+
+---
+
+## Insight 14: Reversible Meta-Control — Correlation Is Sufficient When Actions Are Undoable
+
+**Observation:**  
+The Self-Graph demo shows the full chain: self_historize → diagnose_self_graph
+→ overlap classified harmful → apply_reflexive_actions → overlap_modulation = False.
+This is a concrete structural mutation based on *correlation*, not causation.
+
+After deactivation, core quality recovers (no more failures). The system
+could later re-enable overlap and observe whether performance degrades again —
+a natural experiment that would strengthen or weaken the attribution.
+
+**Why this matters for E₀:**  
+The reversibility of modulation toggles transforms an epistemically weak signal
+(correlation) into a practically strong meta-control mechanism:
+
+1. **Deactivation cost is low:** toggling a boolean, not restructuring
+2. **Observation continues:** the system can measure post-deactivation performance
+3. **Re-activation is always available:** if deactivation hurts, undo it
+4. **Asymmetric risk:** deactivating a harmful modulation helps (true positive);
+   deactivating a helpful one hurts temporarily but is caught and reversed (false positive recovery)
+
+This is the same principle as reversible mutations in structural tuning (B4-S3):
+the system prefers low-cost, undoable changes over high-confidence, irreversible ones.
+
+**Formal implication:**  
+Meta-control via correlation-based attribution is safe when:
+- Only modulation edges can be toggled (core is structurally protected)
+- Deactivation is a flag flip (reversible in O(1))
+- Post-deactivation performance is continuously monitored
+- The decision threshold (quality < -0.2) is conservative relative to the quality range [-1, +1]
+
+The three-level self-knowledge hierarchy (Level 1: structure, Level 2: operational
+attribution, Level 3: meta-control) forms a complete perception-action loop over
+E₀'s own internal structure.
+
+---
+
 ## Open Questions for Future Work
 
 1. ~~Convergence speed~~ → **Resolved in C78.** Deterministic: 1 episode.
@@ -800,6 +925,20 @@ the narrowing, and the Zentrale decides whether to integrate.
 7. ~~Multi-attractor dynamics~~ → **Resolved in C76.** Shared Historization
    creates monopoly (1 attractor). Independent Historization (multiverse)
    enables coexistence (5 attractors). See Insight 6.
+8. Granularity of self-knowledge: The current Self-Graph has 8 components
+   (6 core + 2 modulation). Could per-parameter self-knowledge (e.g.,
+   tracking whether α=2.0 helps more than α=1.5) improve meta-control?
+   Trade-off: more components = more toggleable dimensions, but also
+   more combinatorial states to sample.
+9. Self-Graph convergence under mixed domains: The C147 demo uses a
+   controlled scenario (deterministic phases). In a real application
+   with gradual domain shifts, how quickly does the Self-Graph attribution
+   adapt? Does ρ=1.0 (no decay) create a "quality lag" problem where
+   early success masks later degradation?
+10. Self-Graph + Dream Mode integration: Can the Self-Graph serve as a
+    meta-domain for the DreamObserver? If E₀ dreams about its own
+    components, can it discover structural equivalences between
+    different meta-control strategies?
 
 ---
 
@@ -816,6 +955,10 @@ the narrowing, and the Zentrale decides whether to integrate.
 - **C79 Asymmetric ρ:** `e0_controller/explore_asymmetric_rho.py` — sym vs asym cold, 4-way transfer comparison, ρ_F sweep
 - **C80 Attractor Prediction:** `e0_controller/explore_attractor_prediction.py` — 7 structural predictors × 23 domains, goal-distance wins 83%
 - **C81 Focus Narrowing:** `e0_controller/explore_focus_narrowing.py` — random pruning to k=8 rescues N=100 from 0% to 82%, scaling limit is option space
+- **C43 Self-Graph:** `e0_controller/self_graph.py` — 8-component structural self-knowledge (Selbstunterscheidung)
+- **C47 Dual Reflection:** `e0_controller/dual_reflection.py` — component diagnosis (healthy/confused/harmful/insufficient)
+- **C49 Reflexive Action:** `e0_controller/reflexive_action.py` — modulation toggle based on diagnosis
+- **C147 Self-Graph Demo:** `e0_controller/demo_self_graph.py` — differential sampling, bulk attribution, meta-control
 - **Ontodynamics §4:** 4-Layer Model — trace_load, trace_quality, inertia_factor, mass
 - **Ontodynamics §7:** Landscape definition — X_t unconstrained
 - **Ontodynamics §17:** Historization — U/F traces, δ_H correction
