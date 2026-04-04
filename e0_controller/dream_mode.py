@@ -331,6 +331,161 @@ def find_node_equivalences(
 
 
 # ---------------------------------------------------------------------------
+# WL node fingerprints  (C135)
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class WLNodeFingerprint:
+    """Weisfeiler-Leman-style recursive neighborhood fingerprint.
+
+    Features encode not just the node's own edge qualities, but also
+    the aggregated features of its neighbors — recursively to `depth` rounds.
+    This captures structural role without knowing edge positions.
+    """
+    domain: str
+    node: str
+    features: tuple   # fixed-size feature vector (floats)
+    depth: int        # number of WL refinement rounds applied
+
+
+def _edge_quality_stats(
+    node: str,
+    landscape: Landscape,
+) -> List[float]:
+    """Round-0 features: statistics of a node's edge qualities.
+
+    Returns [mean, std, degree, positive_fraction] (4 floats).
+    """
+    h = landscape.historization
+    qualities = []
+    for edge in landscape.edges:
+        if edge.source == node or edge.target == node:
+            qualities.append(h.trace_quality(edge))
+
+    if not qualities:
+        return [0.0, 0.0, 0.0, 0.0]
+
+    n = len(qualities)
+    mean_q = sum(qualities) / n
+    std_q = (sum((q - mean_q) ** 2 for q in qualities) / n) ** 0.5
+    pos_frac = sum(1 for q in qualities if q > 0.0) / n
+    return [mean_q, std_q, float(n), pos_frac]
+
+
+def wl_node_fingerprints(
+    landscape: Landscape,
+    domain: str = "",
+    depth: int = 2,
+) -> List[WLNodeFingerprint]:
+    """Compute WL-style recursive node fingerprints.
+
+    Round 0: each node gets [mean_q, std_q, degree, pos_fraction].
+    Round k: each node's feature vector is extended by (mean, std)
+    of each dimension of its neighbors' features from round k-1.
+
+    Feature vector size: 4 at depth 0, grows by 2×prev_size per round.
+    Depth 1 → 12 floats, depth 2 → 36 floats.
+    """
+    nodes = sorted(landscape.states)
+
+    # Build adjacency map
+    neighbors: Dict[str, List[str]] = {n: [] for n in nodes}
+    for edge in landscape.edges:
+        neighbors[edge.source].append(edge.target)
+        neighbors[edge.target].append(edge.source)
+
+    # Round 0: edge quality statistics
+    features: Dict[str, List[float]] = {}
+    for node in nodes:
+        features[node] = _edge_quality_stats(node, landscape)
+
+    # Refinement rounds
+    for _ in range(depth):
+        new_features: Dict[str, List[float]] = {}
+        for node in nodes:
+            self_f = features[node]
+            neighbor_fs = [features[nb] for nb in neighbors[node]]
+
+            if neighbor_fs:
+                n_dims = len(self_f)
+                agg: List[float] = []
+                for dim in range(n_dims):
+                    vals = [f[dim] for f in neighbor_fs]
+                    m = sum(vals) / len(vals)
+                    s = (sum((v - m) ** 2 for v in vals) / len(vals)) ** 0.5
+                    agg.extend([m, s])
+                new_features[node] = self_f + agg
+            else:
+                new_features[node] = self_f + [0.0] * (2 * len(self_f))
+        features = new_features
+
+    return [
+        WLNodeFingerprint(
+            domain=domain,
+            node=node,
+            features=tuple(features[node]),
+            depth=depth,
+        )
+        for node in nodes
+    ]
+
+
+def wl_node_distance(a: WLNodeFingerprint, b: WLNodeFingerprint) -> float:
+    """Euclidean distance between WL feature vectors, normalized by dimension."""
+    fa, fb = a.features, b.features
+    n = max(len(fa), len(fb))
+    if n == 0:
+        return 0.0
+
+    # Pad if needed (should not happen with same depth, but safe)
+    fa_list = list(fa) + [0.0] * (n - len(fa))
+    fb_list = list(fb) + [0.0] * (n - len(fb))
+
+    sum_sq = sum((x - y) ** 2 for x, y in zip(fa_list, fb_list))
+    return math.sqrt(sum_sq / n)
+
+
+def find_wl_node_equivalences(
+    landscape_a: Landscape,
+    landscape_b: Landscape,
+    *,
+    domain_a: str = "A",
+    domain_b: str = "B",
+    depth: int = 2,
+    quantile: float = 0.1,
+    max_results: Optional[int] = None,
+) -> List[NodeEquivalence]:
+    """Find node equivalences using WL-style recursive fingerprints.
+
+    Like find_node_equivalences but with neighborhood-aware profiles
+    instead of simple sorted quality vectors. Returns NodeEquivalence
+    objects (reusing the existing dataclass with WLNodeFingerprint
+    as fp_a/fp_b).
+    """
+    wl_a = wl_node_fingerprints(landscape_a, domain_a, depth=depth)
+    wl_b = wl_node_fingerprints(landscape_b, domain_b, depth=depth)
+
+    if not wl_a or not wl_b:
+        return []
+
+    pairs: List[NodeEquivalence] = []
+    for na in wl_a:
+        for nb in wl_b:
+            d = wl_node_distance(na, nb)
+            pairs.append(NodeEquivalence(fp_a=na, fp_b=nb, distance=d))
+
+    pairs.sort(key=lambda eq: eq.distance)
+
+    cutoff_idx = max(1, int(len(pairs) * quantile))
+    result = pairs[:cutoff_idx]
+
+    if max_results is not None:
+        result = result[:max_results]
+
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Dream readiness
 # ---------------------------------------------------------------------------
 
