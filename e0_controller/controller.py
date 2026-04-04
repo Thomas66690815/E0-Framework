@@ -25,6 +25,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Set, Tupl
 from .primitives import Edge, Outcome
 from .landscape import Landscape
 from .tension import tension, coherence
+from .config import DEFAULTS
 
 if TYPE_CHECKING:
     from .amplitude_overlay import OverlayReport
@@ -224,22 +225,22 @@ class E0Controller:
         self,
         landscape: Landscape,
         execute_fn: ExecuteFn,
-        alpha: float = 2.0,
-        recent_k: int = 3,
-        max_escalation_R: float = 5.0,
-        s_max: float = math.inf,
-        c_min: float = 0.0,
+        alpha: float = DEFAULTS.alpha,
+        recent_k: int = DEFAULTS.recent_k,
+        max_escalation_R: float = DEFAULTS.max_escalation_R,
+        s_max: float = DEFAULTS.s_max,
+        c_min: float = DEFAULTS.c_min,
         hybrid_mode: HybridMode = HybridMode.GREEDY,
-        hybrid_horizon: int = 3,
+        hybrid_horizon: int = DEFAULTS.hybrid_horizon,
         hybrid_goals: Optional[Set[str]] = None,
         hybrid_geometry: str = "simple",
         horizon_strategy: Optional[Any] = None,
-        confidence_threshold: float = 0.0,
+        confidence_threshold: float = DEFAULTS.confidence_threshold,
         use_su2: object = False,
         axis_fn=None,
         resonator_modulation: bool = False,
         peer_fn: Optional[Callable] = None,
-        overload_threshold: float = 3.0,
+        overload_threshold: float = DEFAULTS.overload_threshold,
         focus_k: Optional[int] = None,
         inscription_threshold: bool = False,
     ):

@@ -200,7 +200,7 @@ Two systems that solve cold-start and hierarchical learning:
 - [External validation / handoff note](docs/E0_EXTERNAL_VALIDATION_AND_HANDOFF_NOTE_v1.md) — package for reviewers or AI systems
 - [Phase 3q interference report](docs/E0_PHASE3Q_INTERFERENCE_REPORT_v1.md) — holonomy formula, goal_reaching geometry, Gordian Trap
 - [Paper 3: Non-Abelian Structure](docs/papers/E0_PAPER3_NON_ABELIAN_STRUCTURE_v1.md) — SU(2) transport, curvature modulation, topological invariants
-- [Test Registry v2](docs/E0_TEST_REGISTRY_v2.md) — complete per-file test inventory (3580 tests)
+- [Test Registry v2](docs/E0_TEST_REGISTRY_v2.md) — complete per-file test inventory (3608 tests)
 - [Empirical Insights](docs/E0_EMPIRICAL_INSIGHTS_v1.md) — what Chess (C72) reveals about E₀ as a whole
 - [Dream Mode Concept](docs/E0_DREAM_MODE_CONCEPT_v1.md) — cross-domain pattern recognition through passive observation (C109–C139)
 - [Structural Entropy Design](docs/E0_STRUCTURAL_ENTROPY_DESIGN_v1.md) — forgetting as structural necessity (C114–C121)
@@ -333,7 +333,7 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 | Reflexion Demo (C144) | **Active** | `e0_controller/demo_reflexion.py` |
 | Self-Graph Demo (C147) | **Active** (21 tests) | `e0_controller/demo_self_graph.py` |
 
-**Tests:** 3580 total (pytest), 0 failures, 0 warnings, 41 conditional (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
+**Tests:** 3608 total (pytest), 0 failures, 0 warnings, 41 conditional (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
 
 ---
 
@@ -361,7 +361,7 @@ from e0_controller import E0Controller, Landscape, Session, Outcome
 ### Run the tests (no API key needed)
 
 ```bash
-# Full test suite (3580 tests, pytest):
+# Full test suite (3608 tests, pytest):
 py -3 -m pytest e0_controller/ --tb=short -q
 
 # Single file:
@@ -489,7 +489,7 @@ E0-Framework/
 │   ├── integrated_reflexion.py         Unified reflexion: topology + flags + SelfGraph (C59)
 │   ├── scoped_reflexion.py             Historization-driven reflexion locality (C101)
 │   ├── explore_dream_mode.py           Dream Mode end-to-end exploration (C112)
-│   └── test_*.py                       3580 tests (see docs/E0_TEST_REGISTRY_v2.md)
+│   └── test_*.py                       3608 tests (see docs/E0_TEST_REGISTRY_v2.md)
 │
 ├── scenarios/                        Scenario Packets for grounded LLM demos
 │   ├── competitor_brief/               Domain-specific scenario data
@@ -500,7 +500,7 @@ E0-Framework/
 │   ├── E0_ARCHITECTURE_OVERVIEW_v4.md    12-layer module map (60+ modules)
 │   ├── E0_MULTIVERSE_DESIGN_v1.md        Multiverse architecture (C54–C63)
 │   ├── E0_INTEGRATION_STORIES_v1.md      Integration roadmap (C139–C144)
-│   ├── E0_TEST_REGISTRY_v2.md            Complete test inventory (3580 tests)
+│   ├── E0_TEST_REGISTRY_v2.md            Complete test inventory (3608 tests)
 │   ├── E0_MATH_IMPL_MAPPING_v1.md        Math ↔ Code mapping
 │   ├── E0_STRUCTURAL_ENTROPY_DESIGN_v1.md  Forgetting as structural necessity
 │   ├── E0_DREAM_MODE_CONCEPT_v1.md       Cross-domain pattern recognition

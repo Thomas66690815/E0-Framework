@@ -49,6 +49,7 @@ from typing import Callable, List, Optional, Set, Tuple
 from e0_controller.primitives import Edge, Outcome
 from e0_controller.landscape import Landscape
 from e0_controller.controller import E0Controller, RunTrace
+from e0_controller.config import DEFAULTS
 
 
 # ══════════════════════════════════════════════
@@ -226,10 +227,10 @@ class MultiverseController:
         universe_a: Universe,
         universe_b: Universe,
         *,
-        convergence_window: int = 3,
-        max_steps_per_turn: int = 10,
-        coupling_delta: float = 1.0,
-        coupling_resistance: float = 0.5,
+        convergence_window: int = DEFAULTS.convergence_window,
+        max_steps_per_turn: int = DEFAULTS.max_steps_per_turn,
+        coupling_delta: float = DEFAULTS.coupling_delta,
+        coupling_resistance: float = DEFAULTS.coupling_resistance,
     ):
         self.a = universe_a
         self.b = universe_b

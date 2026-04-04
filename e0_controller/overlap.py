@@ -31,6 +31,8 @@ from typing import TYPE_CHECKING, Dict, Set, Tuple
 if TYPE_CHECKING:
     from .landscape import Landscape
 
+from .config import DEFAULTS
+
 
 # ─────────────────────────────────────────────
 # Core functions
@@ -81,7 +83,7 @@ class OverlapInfo:
     support_set: frozenset
 
 
-def overlap_map(L: Landscape, floor: float = 0.2) -> Dict[Tuple[str, str], OverlapInfo]:
+def overlap_map(L: Landscape, floor: float = DEFAULTS.overlap_floor) -> Dict[Tuple[str, str], OverlapInfo]:
     """
     Compute overlap and M_H for all edges in the landscape.
 

@@ -48,6 +48,7 @@ from typing import Callable, List, Optional, Set, Tuple
 
 from e0_controller.primitives import Edge, Outcome
 from e0_controller.landscape import Landscape
+from e0_controller.config import DEFAULTS
 from e0_controller.controller import E0Controller, RunTrace
 from e0_controller.reflexive_action import (
     ReflexiveAction,
@@ -151,9 +152,9 @@ def integrated_reflexion(
     enable_flags: bool = True,
     enable_topology: bool = True,
     proactive: bool = True,
-    max_proposals: int = 5,
+    max_proposals: int = DEFAULTS.max_proposals,
     scoped: bool = False,
-    scope_mu: float = 5.0,
+    scope_mu: float = DEFAULTS.mu,
 ) -> IntegratedReflexionResult:
     """Unified reflexion: diagnosis → flags + topology.
 
@@ -235,10 +236,10 @@ def run_with_integrated_reflexion(
     start: str,
     goal: str,
     max_cycles: int = 50,
-    max_proposals: int = 5,
+    max_proposals: int = DEFAULTS.max_proposals,
     diagnosis_interval: int = 10,
     scoped: bool = False,
-    scope_mu: float = 5.0,
+    scope_mu: float = DEFAULTS.mu,
 ) -> Tuple[RunTrace, IntegratedReflexionResult, ReflexiveJournal]:
     """Run with full integrated reflexion: C49 flags + C57/C101 topology.
 

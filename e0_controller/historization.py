@@ -34,6 +34,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Tuple, Optional
 
 from .primitives import Edge, Outcome
+from .config import DEFAULTS
 
 
 @dataclass
@@ -58,10 +59,10 @@ class Historization:
     """
 
     # Learning parameters
-    rho: float = 0.9          # decay rate (forgetting) — default for both traces
-    lambda_s: float = 0.15    # success learning rate
-    lambda_f: float = 0.20    # failure learning rate
-    delta_max: float = 3.0    # resistance clipping bound
+    rho: float = DEFAULTS.rho
+    lambda_s: float = DEFAULTS.lambda_s
+    lambda_f: float = DEFAULTS.lambda_f
+    delta_max: float = DEFAULTS.delta_max
     rho_s: Optional[float] = None  # success-trace decay (None → rho)
     rho_f: Optional[float] = None  # failure-trace decay (None → rho)
 

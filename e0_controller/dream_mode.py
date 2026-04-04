@@ -23,6 +23,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from e0_controller.landscape import Landscape
 from e0_controller.primitives import Edge, Outcome
+from e0_controller.config import DEFAULTS
 
 
 # ---------------------------------------------------------------------------
@@ -691,16 +692,16 @@ class DreamObserver:
     def __init__(
         self,
         *,
-        readiness_threshold: float = 0.8,
-        quantile: float = 0.1,
-        mu: float = 5.0,
-        alpha: float = 0.5,
-        base_resistance: float = 0.5,
+        readiness_threshold: float = DEFAULTS.dream_readiness,
+        quantile: float = DEFAULTS.dream_quantile,
+        mu: float = DEFAULTS.mu,
+        alpha: float = DEFAULTS.dream_alpha,
+        base_resistance: float = DEFAULTS.dream_base_resistance,
         decay_enabled: bool = False,
-        theta_base: float = 0.5,
+        theta_base: float = DEFAULTS.theta_base,
         protected_fn: Optional[Any] = None,
         node_equivalence_method: Optional[str] = None,
-        wl_depth: int = 2,
+        wl_depth: int = DEFAULTS.wl_depth,
     ):
         self._domains: Dict[str, Landscape] = {}
         self._dream_landscape: Optional[Landscape] = None

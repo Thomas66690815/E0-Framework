@@ -27,6 +27,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Set
 
+from .config import DEFAULTS
 from .controller import E0Controller, RunTrace
 from .dream_mode import DreamCycleResult, DreamObserver
 from .structural_entropy import (
@@ -103,8 +104,8 @@ class SleepWakeCycle:
         self,
         observer: DreamObserver,
         *,
-        mu: float = 5.0,
-        max_dream_cycles: int = 10,
+        mu: float = DEFAULTS.mu,
+        max_dream_cycles: int = DEFAULTS.max_dream_cycles,
     ):
         self._observer = observer
         self._mu = mu

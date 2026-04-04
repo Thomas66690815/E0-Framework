@@ -75,6 +75,7 @@ from typing import Dict, List, Optional, Set
 from e0_controller.landscape import Landscape
 from e0_controller.multiverse import Universe
 from e0_controller.primitives import Edge, Outcome
+from e0_controller.config import DEFAULTS
 
 
 # ──────────────────────────────────────────────
@@ -130,8 +131,8 @@ class CouplingRouter:
     def __init__(
         self,
         universes: List[Universe],
-        base_resistance: float = 1.0,
-        min_delta: float = 0.1,
+        base_resistance: float = DEFAULTS.router_base_resistance,
+        min_delta: float = DEFAULTS.router_min_delta,
         coupling_weights: Optional[Dict[str, float]] = None,
     ):
         if len(universes) < 2:
@@ -562,9 +563,9 @@ class CouplingSelfGraph:
 # Coupling Diagnosis (C68)
 # ──────────────────────────────────────────────
 
-_LOAD_MIN = 3.0
-_QUALITY_CONFUSED = 0.1
-_QUALITY_HARMFUL = -0.2
+_LOAD_MIN = DEFAULTS.sg_load_min
+_QUALITY_CONFUSED = DEFAULTS.sg_quality_confused
+_QUALITY_HARMFUL = DEFAULTS.sg_quality_harmful
 
 
 @dataclass

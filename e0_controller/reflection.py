@@ -25,6 +25,7 @@ from typing import Any, Callable, Dict, List, Optional
 from .evaluation import ScenarioEvaluation, RunEvaluation, SemanticEvaluation
 from .graph_validation import GraphQuality
 from .llm_adapter import LLMConfig, LLMResponseError, TransitionResult, LandscapeProposal
+from .config import DEFAULTS
 
 
 # ──────────────────────────────────────────────
@@ -76,34 +77,34 @@ class StructuralDiagnostic:
 
 
 # ──────────────────────────────────────────────
-# 3. Trigger Thresholds
+# 3. Trigger Thresholds (sourced from config registry)
 # ──────────────────────────────────────────────
 
 # Failure triggers (hard — always reflect)
-_FAILURE_EFFICIENCY_FLOOR = 0.0     # goal not reached
+_FAILURE_EFFICIENCY_FLOOR = DEFAULTS.refl_efficiency_floor
 
 # Quality triggers (soft — reflect on suboptimal success)
-_QUALITY_EFFICIENCY_CEIL = 0.5      # low efficiency despite goal
-_QUALITY_LOOP_PENALTY_CEIL = 0.15   # non-trivial looping
-_QUALITY_SEMANTIC_CEIL = 0.6        # weak semantic coverage
-_QUALITY_ESCALATION_RATIO = 0.3     # high escalation rate
-_QUALITY_PROGRESS_FLOOR = 0.5       # low progress ratio
+_QUALITY_EFFICIENCY_CEIL = DEFAULTS.refl_quality_efficiency_ceil
+_QUALITY_LOOP_PENALTY_CEIL = DEFAULTS.refl_loop_penalty_ceil
+_QUALITY_SEMANTIC_CEIL = DEFAULTS.refl_semantic_ceil
+_QUALITY_ESCALATION_RATIO = DEFAULTS.refl_escalation_ratio
+_QUALITY_PROGRESS_FLOOR = DEFAULTS.refl_progress_floor
 
 # Opportunity triggers (positive — reflect to preserve)
 _OPPORTUNITY_RATING = "A"
-_OPPORTUNITY_EFFICIENCY_FLOOR = 0.8
-_OPPORTUNITY_GRAPH_SCORE_FLOOR = 0.9
+_OPPORTUNITY_EFFICIENCY_FLOOR = DEFAULTS.refl_opportunity_efficiency
+_OPPORTUNITY_GRAPH_SCORE_FLOOR = DEFAULTS.refl_opportunity_graph_score
 
 # Amplitude hybrid triggers (Phase 3h)
-_AMPLITUDE_DRIFT_THRESHOLD = 0.3       # > 30% greedy-vs-amplitude mismatch
-_COHERENCE_QUALITY_FLOOR = 0.3         # R_coh < 30% triggers quality
-_COHERENCE_OPPORTUNITY_FLOOR = 0.8     # R_coh > 80% is opportunity
-_THETA_OPPORTUNITY_FLOOR = 0.9         # Θ > 90% is opportunity
-_MASS_TRAP_IMBALANCE_THRESHOLD = 3.0   # path_count ratio > 3 + looping = mass trap
+_AMPLITUDE_DRIFT_THRESHOLD = DEFAULTS.refl_amplitude_drift
+_COHERENCE_QUALITY_FLOOR = DEFAULTS.refl_coherence_quality
+_COHERENCE_OPPORTUNITY_FLOOR = DEFAULTS.refl_coherence_opportunity
+_THETA_OPPORTUNITY_FLOOR = DEFAULTS.refl_theta_opportunity
+_MASS_TRAP_IMBALANCE_THRESHOLD = DEFAULTS.refl_mass_trap_imbalance
 
 # Structural triggers (landscape-level — requires cross-run history)
-_STRUCTURAL_PLATEAU_SLOPE = 0.01       # |trend| < this = plateau
-_STRUCTURAL_CHRONIC_RATIO = 0.5        # issue in >50% of recent runs
+_STRUCTURAL_PLATEAU_SLOPE = DEFAULTS.refl_plateau_slope
+_STRUCTURAL_CHRONIC_RATIO = DEFAULTS.refl_chronic_ratio
 
 
 # ──────────────────────────────────────────────

@@ -36,6 +36,7 @@ from typing import Dict, List, Optional, Set
 
 from .primitives import Edge, Outcome
 from .landscape import Landscape
+from .config import DEFAULTS
 
 
 # ──────────────────────────────────────────────
@@ -69,11 +70,11 @@ MODULATION_EDGES = [
     ("overlap", "transition_field"),
 ]
 
-# Default parameters for edge initialization
-CORE_DELTA = 0.5
-CORE_R0 = 0.3
-MODULATION_DELTA = 1.0
-MODULATION_R0 = 1.0
+# Default parameters for edge initialization (sourced from config registry)
+CORE_DELTA = DEFAULTS.sg_core_delta
+CORE_R0 = DEFAULTS.sg_core_R0
+MODULATION_DELTA = DEFAULTS.sg_modulation_delta
+MODULATION_R0 = DEFAULTS.sg_modulation_R0
 
 
 # ──────────────────────────────────────────────
@@ -129,7 +130,7 @@ class SelfGraph:
         # not decaying. Unlike domain edges that may become stale,
         # E0's operational cycle is fixed — what it learns about its
         # own components is persistent structural knowledge.
-        self._landscape.historization.rho = 1.0
+        self._landscape.historization.rho = DEFAULTS.sg_rho
         self._build_topology()
 
     def _build_topology(self) -> None:

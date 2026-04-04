@@ -32,23 +32,17 @@ from .reflection import (
 )
 from .self_graph import SelfGraph, CORE_COMPONENTS, MODULATION_COMPONENTS, ALL_COMPONENTS
 from .llm_adapter import LLMConfig
+from .config import DEFAULTS
 
 
 # ──────────────────────────────────────────────
-# 1. Thresholds
+# 1. Thresholds (sourced from config registry)
 # ──────────────────────────────────────────────
 
-# Minimum trace load before judging a component
-LOAD_MIN_THRESHOLD = 3.0
-
-# |quality| below this (with sufficient load) → confused
-QUALITY_CONFUSED_THRESHOLD = 0.1
-
-# Negative quality below this → actively harmful
-QUALITY_HARMFUL_THRESHOLD = -0.2
-
-# Inertia below this → contradictory history
-INERTIA_WARN_THRESHOLD = 0.3
+LOAD_MIN_THRESHOLD = DEFAULTS.sg_load_min
+QUALITY_CONFUSED_THRESHOLD = DEFAULTS.sg_quality_confused
+QUALITY_HARMFUL_THRESHOLD = DEFAULTS.sg_quality_harmful
+INERTIA_WARN_THRESHOLD = DEFAULTS.sg_inertia_warn
 
 
 # ──────────────────────────────────────────────

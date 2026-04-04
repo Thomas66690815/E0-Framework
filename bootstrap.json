@@ -28,9 +28,9 @@
   },
 
   "state": {
-    "latest_commit": "C147",
-    "latest_commit_msg": "C147: Self-Graph Demo — E0 learns its own components via differential sampling, 3-level meta-control",
-    "test_count": 3580,
+    "latest_commit": "C148",
+    "latest_commit_msg": "C148: Parameter Registry — central E0Config with all defaults, single source of truth",
+    "test_count": 3608,
     "test_failures": 0,
     "module_count": "60 production + 9 benchmarks + 16 demos + 40 explorations + 100 test files + 8 canons",
     "line_count": "~20200 production, ~97800 total"
@@ -57,8 +57,8 @@
   "architecture": {
     "layers": {
       "1_primitives": {
-        "files": ["primitives.py", "historization.py", "tension.py"],
-        "purpose": "Edge, Outcome, Historization (U/F traces, decay), Tension (S_eff = Δ · R_eff)"
+        "files": ["primitives.py", "historization.py", "tension.py", "config.py"],
+        "purpose": "Edge, Outcome, Historization (U/F traces, decay), Tension (S_eff = Δ · R_eff), E0Config (central parameter registry)"
       },
       "2_landscape": {
         "files": ["landscape.py"],

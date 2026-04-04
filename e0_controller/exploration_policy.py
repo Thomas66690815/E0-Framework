@@ -26,6 +26,7 @@ from dataclasses import dataclass
 from typing import Optional, TYPE_CHECKING
 
 from .controller import HybridMode
+from .config import DEFAULTS
 
 if TYPE_CHECKING:
     from .residual_tension import ResidualTensionMap
@@ -56,10 +57,10 @@ class ExplorationPolicy:
         If > 0 and mean residual tension drops below this during
         warmup, switch to exploit early.  0 = disabled (default).
     """
-    warmup: int = 0
+    warmup: int = DEFAULTS.warmup
     explore_mode: HybridMode = HybridMode.BORN_SAMPLING
     exploit_mode: HybridMode = HybridMode.AMPLITUDE_ON_DISAGREE
-    convergence_threshold: float = 0.0
+    convergence_threshold: float = DEFAULTS.convergence_threshold
 
     def decide(
         self,

@@ -33,6 +33,7 @@ from typing import Dict, List, Optional, Tuple
 
 from .primitives import Edge
 from .landscape import Landscape
+from .config import DEFAULTS
 
 
 # ──────────────────────────────────────────────
@@ -74,8 +75,8 @@ class ModeController:
     def __init__(
         self,
         landscape: Landscape,
-        mu: float = 5.0,
-        learn_ratio: float = 0.8,
+        mu: float = DEFAULTS.mu,
+        learn_ratio: float = DEFAULTS.learn_ratio,
     ):
         self.landscape = landscape
         self.mu = mu

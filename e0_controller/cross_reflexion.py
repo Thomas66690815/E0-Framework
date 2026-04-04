@@ -49,6 +49,7 @@ from typing import List, Optional, Set
 
 from e0_controller.primitives import Edge, Outcome
 from e0_controller.landscape import Landscape
+from e0_controller.config import DEFAULTS
 from e0_controller.controller import E0Controller
 from e0_controller.reflexive_edge_proposal import (
     EdgePattern,
@@ -137,7 +138,7 @@ def blend_patterns(
 # ══════════════════════════════════════════════
 
 # Minimum discount floor: even a fresh donor contributes γ_min weight.
-_GAMMA_MIN = 0.3
+_GAMMA_MIN = DEFAULTS.gamma_min
 
 
 def _donor_scope_center(donor: Landscape, current: str) -> str:
@@ -189,8 +190,8 @@ def cross_propose_edges(
     current: str,
     goal: str,
     *,
-    max_proposals: int = 5,
-    coupling_discount: float = 0.5,
+    max_proposals: int = DEFAULTS.max_proposals,
+    coupling_discount: float = DEFAULTS.coupling_discount,
     donor_name: str = "donor",
     scoped: bool = False,
 ) -> CrossReflexionResult:

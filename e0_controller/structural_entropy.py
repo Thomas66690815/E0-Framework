@@ -34,6 +34,7 @@ from typing import Dict, List, Optional, Set, Tuple
 from .primitives import Edge, Outcome
 from .historization import Historization
 from .landscape import Landscape
+from .config import DEFAULTS
 
 
 # ---------------------------------------------------------------------------
@@ -79,7 +80,7 @@ def structural_temperature(hist: Historization) -> float:
 # Dream Pressure (sleep–wake coupling)
 # ---------------------------------------------------------------------------
 
-def dream_pressure(hist: Historization, mu: float = 5.0) -> float:
+def dream_pressure(hist: Historization, mu: float = DEFAULTS.mu) -> float:
     """
     How strongly the system wants to dream.
 
@@ -107,7 +108,7 @@ def dream_pressure(hist: Historization, mu: float = 5.0) -> float:
     return T_s / (T_s + mu)
 
 
-def should_dream(hist: Historization, mu: float = 5.0) -> bool:
+def should_dream(hist: Historization, mu: float = DEFAULTS.mu) -> bool:
     """
     Whether the system should enter dream mode.
 
@@ -136,7 +137,7 @@ def should_dream(hist: Historization, mu: float = 5.0) -> bool:
 
 def dream_pressure_report(
     domains: Dict[str, Historization],
-    mu: float = 5.0,
+    mu: float = DEFAULTS.mu,
 ) -> Dict[str, Dict[str, float]]:
     """
     Dream pressure for multiple domains.
@@ -190,7 +191,7 @@ def novelty(edge: Edge, outcome: Outcome, hist: Historization) -> float:
 
 def inscription_threshold(edge: Edge, hist: Historization,
                           T_s: float,
-                          mu: float = 5.0) -> float:
+                          mu: float = DEFAULTS.mu) -> float:
     """
     Per-edge inscription threshold.
 
@@ -228,7 +229,7 @@ def inscription_threshold(edge: Edge, hist: Historization,
 def should_inscribe(edge: Edge, outcome: Outcome,
                     hist: Historization,
                     T_s: Optional[float] = None,
-                    mu: float = 5.0) -> bool:
+                    mu: float = DEFAULTS.mu) -> bool:
     """
     Decide whether a transition outcome should be inscribed.
 
@@ -380,7 +381,7 @@ def find_decay_candidates(
     states: Set[str],
     hist: Historization,
     all_edges: List[Edge],
-    theta_base: float = 0.5,
+    theta_base: float = DEFAULTS.theta_base,
     T_s: Optional[float] = None,
     tau_dormant: Optional[int] = None,
     protected: Optional[Set[str]] = None,
@@ -454,7 +455,7 @@ def find_anchors(
     states: Set[str],
     hist: Historization,
     all_edges: List[Edge],
-    theta_base: float = 0.5,
+    theta_base: float = DEFAULTS.theta_base,
     T_s: Optional[float] = None,
 ) -> Set[str]:
     """
