@@ -19,8 +19,12 @@ In practical terms, this means the repository is no longer only about a determin
 - a session orchestrator with automatic MemOS persistence,
 - persistent runtime support via MemOS,
 - multiverse architecture with cross-universe reflexion (C59–C63),
+- dream mode with Hungarian-optimal cross-domain pattern discovery (C109–C139),
+- structural entropy with sleep–wake cycles (C114–C121),
+- curriculum-driven canon learning (C123),
+- proactive reflexion that proposes before stagnation (C57),
 - an LLM adapter with embedded E₀ semantic context,
-- and live integration into multiple LLM-driven demos.
+- and 15 live demos covering all major capabilities.
 
 This is not a prompt-engineering repo and not a conventional agent framework.
 It is an attempt to build a structural decision layer that operates beneath semantics and can still be exposed to semantic systems.
@@ -58,7 +62,7 @@ The full canon: [canon/e0-canon-plain.txt](canon/e0-canon-plain.txt) — 155 lin
 
 ## What exists in this repository now
 
-This repository currently contains eleven connected layers — from raw primitives through dreaming and self-regulated sleep–wake cycles.
+This repository currently contains thirteen connected layers — from raw primitives through dreaming, curriculum learning, and self-regulated sleep–wake cycles.
 
 ### 1. Canonical E₀ core
 
@@ -170,23 +174,39 @@ A reflexion layer that operates *across* universes rather than within a single r
 - **Cross-proposal engine** — generates hypothesis edges from blended patterns, subject to confidence caps (0.7) that are deliberately lower than self-reflexion (0.8) to reflect epistemic humility about foreign experience.
 - **Integration** — `cross_reflexion_turn()` plugs directly into `MultiverseController` as a `TurnFn`, enabling cross-reflexive edge discovery as part of the standard multiverse cycle.
 
+### 12. Dream mode and structural entropy (C109–C121)
+
+Two complementary systems that handle what a learning system eventually *must* handle: pattern recognition across domains, and forgetting.
+
+- **Dream Mode (C109–C139)** — Passive cross-domain pattern recognition. `DreamObserver` monitors N domains, computes edge fingerprints and node-level equivalences (WL recursive + Hungarian optimal assignment), and generates bridge hypotheses. No active navigation — dreaming is observation, not action.
+- **Structural Entropy (C114–C120)** — Structural temperature T_s measures landscape disorder. Type 1 (inscription threshold): conditional inscription based on novelty. Type 2 (anchors + decay): remove low-value edges and states to prevent overload.
+- **Sleep–Wake Cycle (C121)** — Automatic rhythm: wake phase builds experience, sleep phase consolidates (dream + decay). Dream pressure `p = T_s/(T_s+μ)` triggers sleep when disorder is high.
+
+### 13. Curriculum and bootstrapping (C44, C123)
+
+Two systems that solve cold-start and hierarchical learning:
+
+- **Bootstrapper (C44)** — Converts domain specifications (LLM-generated or manual) into valid E₀ Landscapes. The bridge from semantic descriptions to structural operation.
+- **Curriculum Navigator (C123)** — Divides canonical knowledge into derivation levels and learns them in cumulative turns. Each turn builds a scoped sub-landscape, runs until T_s equilibrium, and transfers historization to the next. "E₀ learns E₀" on the ontodynamics canon.
+
 ---
 
 ## Documentation quick links
 
-- [Architecture overview v4](docs/E0_ARCHITECTURE_OVERVIEW_v4.md) — 11-layer model with all 57+ production modules
+- [Architecture overview v4](docs/E0_ARCHITECTURE_OVERVIEW_v4.md) — 12-layer model with all 60+ production modules
 - [Multiverse design](docs/E0_MULTIVERSE_DESIGN_v1.md) — C54–C63 architecture, coupling theorem, benchmarks
-- [Hybrid controller spec](docs/E0_HYBRID_CONTROLLER_SPEC_v1.md) — exact runtime behaviour and metrics
-- [Derived / Empirical / Heuristic map](docs/E0_DERIVED_EMPIRICAL_HEURISTIC_MAP_v1.md) — classification of each subsystem
+- [Integration Stories](docs/E0_INTEGRATION_STORIES_v1.md) — prioritized demo + integration roadmap (C139–C144)
 - [Evidence & falsification status](docs/E0_EVIDENCE_AND_FALSIFICATION_STATUS_v1.md) — what is demonstrated vs open
 - [External validation / handoff note](docs/E0_EXTERNAL_VALIDATION_AND_HANDOFF_NOTE_v1.md) — package for reviewers or AI systems
 - [Phase 3q interference report](docs/E0_PHASE3Q_INTERFERENCE_REPORT_v1.md) — holonomy formula, goal_reaching geometry, Gordian Trap
 - [Paper 3: Non-Abelian Structure](docs/papers/E0_PAPER3_NON_ABELIAN_STRUCTURE_v1.md) — SU(2) transport, curvature modulation, topological invariants
-- [Test Registry v2](docs/E0_TEST_REGISTRY_v2.md) — complete per-file test inventory (3530 tests)
+- [Test Registry v2](docs/E0_TEST_REGISTRY_v2.md) — complete per-file test inventory (3590 tests)
 - [Empirical Insights](docs/E0_EMPIRICAL_INSIGHTS_v1.md) — what Chess (C72) reveals about E₀ as a whole
-- [Dream Mode Concept](docs/E0_DREAM_MODE_CONCEPT_v1.md) — cross-domain pattern recognition through passive observation (C109–C112)
-- [Structural Entropy Design](docs/E0_STRUCTURAL_ENTROPY_DESIGN_v1.md) — forgetting as structural necessity (C114–C120)
-- [Language Learning Results](docs/E0_LANGUAGE_LEARNING_RESULTS_v1.md) — cross-domain translation via structural fingerprints (C124–C128)
+- [Dream Mode Concept](docs/E0_DREAM_MODE_CONCEPT_v1.md) — cross-domain pattern recognition through passive observation (C109–C139)
+- [Structural Entropy Design](docs/E0_STRUCTURAL_ENTROPY_DESIGN_v1.md) — forgetting as structural necessity (C114–C121)
+- [Language Learning Results](docs/E0_LANGUAGE_LEARNING_RESULTS_v1.md) — cross-domain translation via structural fingerprints (C124–C137)
+- [Observation UI Architecture](docs/E0_OBSERVATION_UI_ARCHITECTURE_v1.md) — O-Landscape projection and navigation (C94–C97)
+- [LLM Bootstrap Architecture](docs/E0_LLM_BOOTSTRAP_ARCHITECTURE_v1.md) — E₀=Skeleton, LLM=Muscle (C43–C47)
 
 ---
 
@@ -202,7 +222,9 @@ What is unusual here is the combination of:
 - empirically tested summation geometry,
 - hybrid correction of local greedy decisions,
 - emergent locality (scope narrows with experience),
-- and dream mode (cross-domain pattern recognition through passive observation).
+- dream mode (cross-domain pattern recognition through passive observation),
+- structural entropy (forgetting as structural necessity),
+- and curriculum learning (hierarchical canon acquisition with equilibrium detection).
 
 In plain language:
 
@@ -236,7 +258,7 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 
 ## Current state
 
-*Last updated: 2026-04-01*
+*Last updated: 2026-04-04*
 
 | Component | Status | Where |
 |-----------|--------|-------|
@@ -303,9 +325,14 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 | Structural Entropy (C114–C120) | **Active** (101 tests) | `e0_controller/structural_entropy.py` |
 | Sleep–Wake Cycle (C121) | **Active** (10 tests) | `e0_controller/sleep_wake.py` |
 | Curriculum Navigator (C123) | **Active** (35 tests) | `e0_controller/curriculum.py` |
-| Language Learning (C124–C128) | **Active** (explorations) | `e0_controller/explore_*_learning.py` |
+| Language Learning (C124–C137) | **Active** (explorations) | `e0_controller/explore_*_learning.py` |
+| Hungarian Node Matching (C137–C139) | **Active** (DreamObserver wired) | `e0_controller/dream_mode.py` |
+| Bootstrap Demo (C140) | **Active** (15 demos total) | `e0_controller/demo_bootstrap_domain.py` |
+| Multiverse Demo (C142) | **Active** | `e0_controller/demo_multiverse.py` |
+| Curriculum Demo (C143) | **Active** | `e0_controller/demo_curriculum.py` |
+| Reflexion Demo (C144) | **Active** | `e0_controller/demo_reflexion.py` |
 
-**Tests:** 3530 total (pytest discover), 0 failures, 0 warnings, 41 conditional (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
+**Tests:** 3590 total (pytest), 0 failures, 0 warnings, 41 conditional (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
 
 ---
 
@@ -333,38 +360,63 @@ from e0_controller import E0Controller, Landscape, Session, Outcome
 ### Run the tests (no API key needed)
 
 ```bash
-# Mini-domain: 21 tests (custom runner)
-python e0_controller/test_minidomain.py
+# Full test suite (3590 tests, pytest):
+py -3 -m pytest e0_controller/ --tb=short -q
 
-# Full test suite: 1254 tests (unittest)
-python -m unittest discover -s e0_controller -p "test_*.py" -v
+# Single file:
+py -3 -m pytest e0_controller/test_controller.py -v --tb=short
 ```
 
-### Run a standard demo (mock mode — no API key)
+> **Windows note:** Use `py -3` instead of `python` to ensure the correct Python version.
+
+### Run a demo (mock mode — no API key needed)
 
 ```bash
-python -m e0_controller.demo_greedy_trap
-python -m e0_controller.demo_invoice_llm --mock
-python -m e0_controller.demo_open_domain --mock
-python -m e0_controller.demo_research_brief --mock
-python -m e0_controller.demo_incident_postmortem --mock
-python -m e0_controller.demo_session_persist
+# Core framework demos:
+py -3 -m e0_controller.demo_greedy_trap              # Greedy trap vs hybrid routing
+py -3 -m e0_controller.demo_session_persist           # MemOS save + resume
+py -3 -m e0_controller.demo_canon_exposition          # Canon falsification test
+
+# LLM-bootstrapped demos (mock mode):
+py -3 -m e0_controller.demo_invoice_llm --mock        # Invoice processing
+py -3 -m e0_controller.demo_open_domain --mock         # Arbitrary task → Landscape
+py -3 -m e0_controller.demo_research_brief --mock      # Paper abstract → brief
+py -3 -m e0_controller.demo_incident_postmortem --mock # Incident postmortem
+py -3 -m e0_controller.demo_beipackzettel             # Real-world: medication insert
+py -3 -m e0_controller.demo_ezb_zinsentscheidung      # Real-world: ECB policy
+py -3 -m e0_controller.demo_burnout_composite         # Multi-perspective burnout
+py -3 -m e0_controller.demo_burnout_iterate           # Iterative equilibrium
+
+# Advanced capability demos (C140–C144):
+py -3 -m e0_controller.demo_bootstrap_domain          # Cold-start LLM → Landscape
+py -3 -m e0_controller.demo_multiverse                # Coupled domains + dream discovery
+py -3 -m e0_controller.demo_curriculum                # Level-by-level canon learning
+py -3 -m e0_controller.demo_reflexion                 # Reactive vs proactive reflexion
+```
+
+All advanced demos support `--entropy` for structural entropy / sleep-wake consolidation:
+
+```bash
+py -3 -m e0_controller.demo_bootstrap_domain --entropy
+py -3 -m e0_controller.demo_multiverse --entropy
+py -3 -m e0_controller.demo_curriculum --entropy
+py -3 -m e0_controller.demo_reflexion --entropy
 ```
 
 ### Run a hybrid demo
 
 ```bash
-python -m e0_controller.demo_invoice_llm --mock --hybrid
-python -m e0_controller.demo_open_domain --mock --hybrid
-python -m e0_controller.demo_research_brief --mock --hybrid
-python -m e0_controller.demo_incident_postmortem --mock --hybrid
+py -3 -m e0_controller.demo_invoice_llm --mock --hybrid
+py -3 -m e0_controller.demo_open_domain --mock --hybrid
+py -3 -m e0_controller.demo_research_brief --mock --hybrid
+py -3 -m e0_controller.demo_incident_postmortem --mock --hybrid
 ```
 
 ### Run cross-domain validation
 
 ```bash
-python -m e0_controller.validate_cross_domain
-python -m e0_controller.validate_cross_domain --hybrid
+py -3 -m e0_controller.validate_cross_domain
+py -3 -m e0_controller.validate_cross_domain --hybrid
 ```
 
 ### Read the canon
@@ -424,9 +476,17 @@ E0-Framework/
 │   ├── llm_cocognition.py              LLM Co-Cognition: 2 LLMs coupled via multiverse (C71)
 │   ├── chess_e0.py                     E₀ Chess Engine: strategic dimension navigation (C72)
 │   ├── chess_team.py                   E₀ Team Chess: multiverse team play (C74)
-│   ├── dream_mode.py                   Dream Mode: cross-domain pattern recognition (C109–C112)
-│   ├── explore_dream_mode.py            Dream Mode end-to-end exploration (C112)
-│   └── test_*.py                       3530 tests (see docs/E0_TEST_REGISTRY_v2.md)
+│   ├── dream_mode.py                   Dream Mode: cross-domain pattern recognition (C109–C139)
+│   ├── structural_entropy.py           Structural temperature, anchors, decay (C114–C120)
+│   ├── sleep_wake.py                   Automatic sleep–wake rhythm (C121)
+│   ├── curriculum.py                   Curriculum Navigator: level-by-level canon learning (C123)
+│   ├── bootstrapper.py                 Domain Bootstrapper: spec → Landscape (C44)
+│   ├── canon_loader.py                 Canon loader (ontodynamics, english_basic, etc.)
+│   ├── mode_controller.py              LEARN / EXECUTE / COMBINATION modes (C46)
+│   ├── integrated_reflexion.py         Unified reflexion: topology + flags + SelfGraph (C59)
+│   ├── scoped_reflexion.py             Historization-driven reflexion locality (C101)
+│   ├── explore_dream_mode.py           Dream Mode end-to-end exploration (C112)
+│   └── test_*.py                       3590 tests (see docs/E0_TEST_REGISTRY_v2.md)
 │
 ├── scenarios/                        Scenario Packets for grounded LLM demos
 │   ├── competitor_brief/               Domain-specific scenario data
@@ -434,11 +494,14 @@ E0-Framework/
 │   └── research_brief/                 Domain-specific scenario data
 │
 ├── docs/                             Current essential documentation
-│   ├── E0_ARCHITECTURE_OVERVIEW_v4.md    9-layer module map (56+ modules)
+│   ├── E0_ARCHITECTURE_OVERVIEW_v4.md    12-layer module map (60+ modules)
 │   ├── E0_MULTIVERSE_DESIGN_v1.md        Multiverse architecture (C54–C63)
-│   ├── E0_HYBRID_CONTROLLER_SPEC_v1.md   Exact runtime behaviour and metrics
-│   ├── E0_TEST_REGISTRY_v2.md            Complete test inventory (3530 tests)
+│   ├── E0_INTEGRATION_STORIES_v1.md      Integration roadmap (C139–C144)
+│   ├── E0_TEST_REGISTRY_v2.md            Complete test inventory (3590 tests)
 │   ├── E0_MATH_IMPL_MAPPING_v1.md        Math ↔ Code mapping
+│   ├── E0_STRUCTURAL_ENTROPY_DESIGN_v1.md  Forgetting as structural necessity
+│   ├── E0_DREAM_MODE_CONCEPT_v1.md       Cross-domain pattern recognition
+│   ├── E0_LLM_BOOTSTRAP_ARCHITECTURE_v1.md  E₀=Skeleton, LLM=Muscle
 │   ├── papers/                           Manuscripts and formal paper drafts
 │   ├── research/                         Scientific investigations and derivations
 │   └── history/                          Session logs, superseded versions
@@ -516,7 +579,8 @@ If you are new here, the best path is:
 1. Read the canon: [canon/e0-canon-plain.txt](canon/e0-canon-plain.txt)
 2. Inspect the controller: `e0_controller/controller.py`
 3. Inspect the amplitude layer: `e0_controller/amplitude_overlay.py`
-4. Run a hybrid demo: `python -m e0_controller.demo_invoice_llm --mock --hybrid`
+4. Run a demo: `py -3 -m e0_controller.demo_greedy_trap`
+5. Run an advanced demo: `py -3 -m e0_controller.demo_reflexion`
 5. Read the analysis notes in `docs/`
 
 For a structured handoff to independent reviewers or AI systems, see [docs/E0_EXTERNAL_VALIDATION_AND_HANDOFF_NOTE_v1.md](docs/E0_EXTERNAL_VALIDATION_AND_HANDOFF_NOTE_v1.md).

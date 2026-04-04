@@ -193,7 +193,9 @@ Low urgency. SU(2) is theoretically elegant and fully tested, but no practical a
 4. ~~C142: Multiverse quickstart~~ — ✅ DONE
 5. ~~Reflexion demo~~ — ✅ DONE (commit C144, reactive vs. proactive vs. integrated)
 6. ~~Curriculum demo on ontodynamics canon (Priority 6)~~ — ✅ DONE (commit C143)
-7. Update README/Quickstart as each capability ships
+7. ~~README/Quickstart update~~ — ✅ DONE (commit C145, all 15 demos documented)
+8. SU(2) transport: documented as "available but dormant" — no demo (value unclear on real domains)
+9. Observation UI onboarding (Priority 8) — documentation task, not blocked
 
 ---
 
