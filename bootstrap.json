@@ -28,9 +28,9 @@
   },
 
   "state": {
-    "latest_commit": "C149",
-    "latest_commit_msg": "C149: \u03bc/\u03b1 unification \u2014 all function-level defaults flow through DEFAULTS",
-    "test_count": 3608,
+    "latest_commit": "C150",
+    "latest_commit_msg": "C150: Parameter Sensitivity \u2014 Self-Graph evaluates config choices, 28 tests",
+    "test_count": 3667,
     "test_failures": 0,
     "module_count": "60 production + 9 benchmarks + 16 demos + 40 explorations + 100 test files + 8 canons",
     "line_count": "~20200 production, ~97800 total"
@@ -119,8 +119,10 @@
     }
   },
 
-  "commit_history_recent": [
-    { "hash": "PENDING", "id": "C146", "title": "Observation Onboarding — step-by-step guide, all 8 Integration Stories done" },
+  "commit_history_recent": [    { "hash": "PENDING", "id": "C150", "title": "Parameter Sensitivity \u2014 Self-Graph evaluates config choices, 28 tests" },
+    { "hash": "PENDING", "id": "C149", "title": "\u03bc/\u03b1 unification \u2014 all function-level defaults flow through DEFAULTS" },
+    { "hash": "PENDING", "id": "C148", "title": "Parameter Registry \u2014 E0Config frozen dataclass, DEFAULTS singleton, 15 modules wired" },
+    { "hash": "PENDING", "id": "C147", "title": "Self-Graph Demo \u2014 6-phase differential sampling, 21 tests" },    { "hash": "PENDING", "id": "C146", "title": "Observation Onboarding — step-by-step guide, all 8 Integration Stories done" },
     { "hash": "PENDING", "id": "C145", "title": "README overhaul — all 15 demos, dead links fixed, 3590 tests, layers 12-13" },
     { "hash": "PENDING", "id": "C144", "title": "Reflexion Demo — reactive vs. proactive vs. integrated on frontier domain" },
     { "hash": "PENDING", "id": "C143", "title": "Curriculum Demo — level-by-level learning on ontodynamics canon" },
@@ -218,7 +220,7 @@
   ],
 
   "active_work": {
-    "focus": "C142 DONE: Multiverse Demo — demo_multiverse.py with two onboarding variants, MultiverseController + scoped_cross_reflexion_turn, NoveltyGate + divergence pressure, DreamObserver with Hungarian node matching. 9/9 node-EQ, 33 edge-EQ. Optional --entropy for SleepWakeCycle. 11 tests. Integration Story Priority 4 complete. Next: Priority 5 (Reflexion, needs design) or Priority 6 (Curriculum demo).",
+    "focus": "C150 DONE: Parameter Sensitivity \u2014 parameter_sensitivity.py: TrialResult, SensitivityReport, run_trial, sensitivity_analysis, suggest_perturbations. COMPONENT_PARAMS maps Self-Graph components to tunable E0Config fields. Self-Graph evaluates parameter choices empirically. 28 tests. Part 3 of C148\u2192C149\u2192C150 parameter arc.",
     "completed": [
       "All 6/6 Multiverse Open Questions resolved (C66-C71)",
       "C72 Chess Engine — E₀ plays chess via 6 strategic dimensions, discovers opening principles through historization",
@@ -302,10 +304,14 @@
       "C139 DreamObserver + Hungarian/WL Runtime Integration — node_equivalence_method param, dream_cycle node-EQ step, _update_dream_landscape_nodes, _node_equivalence_state, DreamCycleResult extended. 10 tests. Integration Story Priority 1 complete.",
       "C140 Bootstrap Domain Demo — demo_bootstrap_domain.py: cold-start pipeline (LLM → Bootstrapper → Landscape → navigation). Path A (LLM designs graph) + Path B (JSON spec). Mock mode with onboarding domain (9 states, 10 edges). ModeController shows mode transitions. 6 smoke tests. Integration Story Priority 2 complete.",
       "C141 Entropy/Sleep-Wake Flags — demo_bootstrap_domain.py --entropy enables inscription_threshold + SleepWakeCycle. Phase 3 inscription metrics, Phase 5 sleep-wake consolidation. DreamObserver with decay, anchor analysis, protected start/goal. 7 new tests. Integration Story Priority 3 complete.",
-      "C142 Multiverse Demo — demo_multiverse.py: two onboarding variants (9+9 states), MultiverseController with scoped_cross_reflexion_turn (20 turns), NoveltyGate + divergence pressure, DreamObserver with Hungarian node matching (9/9 node-EQ, 33 edge-EQ). Optional --entropy. 11 tests. Integration Story Priority 4 complete."
+      "C142 Multiverse Demo \u2014 demo_multiverse.py: two onboarding variants (9+9 states), MultiverseController with scoped_cross_reflexion_turn (20 turns), NoveltyGate + divergence pressure, DreamObserver with Hungarian node matching (9/9 node-EQ, 33 edge-EQ). Optional --entropy. 11 tests. Integration Story Priority 4 complete.",
+      "C147 Self-Graph Demo \u2014 demo_self_graph.py: 6-phase differential sampling, core vs modulation quality attribution. 21 tests.",
+      "C148 Parameter Registry \u2014 E0Config frozen dataclass (45+ fields), DEFAULTS singleton, 15 production modules wired. 28 tests.",
+      "C149 \u03bc/\u03b1 Unification \u2014 all function-level mu/inertia_alpha defaults flow through DEFAULTS. dream_alpha renamed inertia_alpha.",
+      "C150 Parameter Sensitivity \u2014 parameter_sensitivity.py: run_trial deep-copies landscape, attaches SelfGraph, runs controller, diagnoses. sensitivity_analysis compares configs. suggest_perturbations proposes variants for harmful/confused components. 28 tests."
     ],
-    "next_steps": ["Priority 5: Reflexion-backed session (needs design discussion)", "Priority 6: Curriculum demo on ontodynamics canon"],
-    "next_commit_id": "C143"
+    "next_steps": ["C151+: Adaptive parameter control (auto-adopt best config from sensitivity analysis)", "Priority 5: Reflexion-backed session"],
+    "next_commit_id": "C151"
   },
 
   "key_modules_quick_ref": {
