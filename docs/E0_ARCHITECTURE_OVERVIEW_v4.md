@@ -3,8 +3,8 @@
 **Status:** Canonical reference  
 **Date:** 2026-04-03  
 **Supersedes:** E0_ARCHITECTURE_OVERVIEW_v3.md (2026-04-02)  
-**Scope:** 58 production modules, 9 benchmarks, 11 demos, 25 explorations, 95 test files — ~19,300 production lines, 3530 tests
-**Latest:** C128 (Level-3 Neighborhood Consistency — structural validation for cross-domain translation)
+**Scope:** 60 production modules, 9 benchmarks, 11 demos, 35 explorations, 94 test files — ~19,800 production lines, 3499 tests
+**Latest:** C135 (WL Recursive Neighborhood Matching — 33/44 at 100% precision, seedless cross-domain node identification)
 **Papers:** P1 (Structural Interference), P2 (Spinor/Born), P3 (Non-Abelian), P4 (Reflexivity), P5 (Emergent Locality), P6 (Dream Mode)
 
 ---
@@ -50,7 +50,7 @@ E₀ is organized in eleven layers. Each layer depends only on layers above it.
 ├─────────────────────────────────────────────────────────┤
 │  Layer 9 — DREAM MODE                                   │
 │  EdgeFingerprint, Equivalence Detection, DreamObserver,  │
-│  Bridge Hypothesis, Dream Peer Integration               │
+│  WLNodeFingerprint, Node Equivalences, Bridge Hypothesis │
 ├─────────────────────────────────────────────────────────┤
 │  Layer 10 — STRUCTURAL ENTROPY                          │
 │  Inscription Threshold (Type 1), Anchor Analysis,        │
@@ -132,7 +132,7 @@ E₀ is organized in eleven layers. Each layer depends only on layers above it.
 | `session.py` | 491 | Lifecycle: load → run → iterate → save. ExplorationPolicy (C41) | P4 |
 | `memory_os.py` | 568 | Persistent substrate: snapshots, hybrid traces, geometry | P1 |
 | `llm_adapter.py` | 869 | Structured LLM interface: extract_delta, propose_states, execute_transition | — |
-| `bootstrapper.py` | 182 | Structured spec → Landscape (C44) | — |
+| `bootstrapper.py` | 230 | Structured spec → Landscape (C44). Monolingual teacher role (C134): LLM score 0–10 → initial_U/F → continuous quality spectrum via _apply_confidence | — |
 | `evaluation.py` | 454 | Run quality: A–F rating, hard failure gates, semantic assessment | P1, P4 |
 | `reflection.py` | *(see L5)* | *(also infrastructure — trigger + diagnostic)* | P4 |
 | `residual_tension.py` | 234 | Iteration control: residual map, should_continue (C37) | — |
@@ -177,11 +177,11 @@ Explorations: `explore_gordian`, `explore_amplitude`, `explore_resonator`, `expl
 | `input_pipeline.py` | 67 | Input processing pipeline (C83) | — |
 | `snapshot_codec.py` | 181 | Snapshot encoding/decoding for persistence and wire format (C83) | — |
 
-### Layer 9 — Dream Mode (1 module, 624 lines)
+### Layer 9 — Dream Mode (1 module, 1113 lines)
 
 | Module | Lines | Purpose | Paper |
 |--------|------:|---------|-------|
-| `dream_mode.py` | 624 | Cross-domain pattern recognition: EdgeFingerprint, fingerprint_distance, find_equivalences, DreamObserver (register/unregister/dream_cycle/feedback), BridgeHypothesis, propose_bridges, make_dream_peer_fn (C109–C111). Decay integration: decay_enabled, DreamCycleResult.decay_reports (C119) | P6 |
+| `dream_mode.py` | 1113 | Cross-domain pattern recognition: EdgeFingerprint, fingerprint_distance, find_equivalences, DreamObserver (register/unregister/dream_cycle/feedback), BridgeHypothesis, propose_bridges, make_dream_peer_fn (C109–C111). Decay integration: decay_enabled, DreamCycleResult.decay_reports (C119). **Node-level matching (C134b):** NodeFingerprint, node_fingerprints, node_fingerprint_distance, find_node_equivalences. **WL recursive neighborhood (C135):** WLNodeFingerprint, wl_node_fingerprints, wl_node_distance, find_wl_node_equivalences — computes node profiles via iterative (mean, std) aggregation of neighbor features; depth-2 captures 2-hop structural context | P6 |
 
 ### Layer 10 — Structural Entropy (1 module, ~600 lines)
 
@@ -330,7 +330,7 @@ All three share the same controller core. They differ only in the final action s
 
 ## 8. Test Infrastructure
 
-**3530 tests**, 0 failures (2026-04-03) across **95 test files**.
+**3499 tests**, 0 failures (2026-04-04) across **94 test files**.
 
 | Category | Test Files | Tests |
 |----------|-----------|-------|
@@ -341,7 +341,7 @@ All three share the same controller core. They differ only in the final action s
 | Infrastructure (L7) | ~12 files | ~550 |
 | Observation (L8) | 4 files | ~160 |
 | Modulation & Locality (C98–C108) | 5 files | ~140 |
-| Dream Mode (L9, C109–C112) | 1 file | 79 |
+| Dream Mode (L9, C109–C112, C134b–C135) | 1 file | 88 |
 
 ---
 
@@ -530,3 +530,62 @@ Can E₀ learn unknown word translations from known ones?  The system has two vo
 | **C128 context L3** | **100%** (4/4) | preserved | Structural validation works |
 
 Detailed results: `docs/E0_LANGUAGE_LEARNING_RESULTS_v1.md`.
+
+## 16. C129–C135 — Monolingual Teaching + Seedless Structural Matching
+
+### Problem
+
+C124–C128 rely on seed dictionaries (known translation pairs) to bootstrap. Can E₀ learn translations **without any seed** — Zero-Shot?
+
+### Architecture: Two-Phase Teaching + Playground
+
+**Phase 1 — Monolingual Teaching (with LLM, per language, NO translation):**
+
+Each language gets its own "teacher" that evaluates edges monolingually. The LLM never sees both languages simultaneously — no cross-language leakage.
+
+- C133: Binary YES/NO evaluation → `historization.update(edge, outcome)`
+- C134: Score 0–10 → `bootstrap_landscape(initial_U=score, initial_F=10-score)` → continuous quality spectrum via the Bootstrapper's native `_apply_confidence` mechanism
+
+**Phase 2 — Playground (NO LLM, NO seed):**
+
+The two children "meet" and discover translation correspondences through structural matching alone. Shared topology (isomorphic graphs) provides the "common world" — this is necessary, not cheating, because without structural correspondence the graphs are "aliens" to each other.
+
+### Key Insight: The Correct Comparison Unit
+
+| Approach | Compares | Best Result | Limitation |
+|---|---|---|---|
+| `find_equivalences` (C109) | Individual edge fingerprints (q, m, I) | 1/44 (2%) | Same-quality pairs swamp quantile |
+| `find_node_equivalences` (C134b) | Sorted quality profiles per node | 9/44 (20%) | Sorting loses edge-position info |
+| **`find_wl_node_equivalences` (C135)** | **Recursive neighborhood profiles** | **33/44 (75%)** | **100% precision** |
+| Position-based matching (C133) | Quality at corresponding edge positions | 44/44 (100%) | Requires known topology positions |
+
+**"Not Edge, but Node plus recursive neighborhood"** is the right comparison unit for cross-domain structural identification.
+
+### WL Recursive Fingerprints (C135)
+
+Weisfeiler-Leman-style iterative refinement:
+
+- **Round 0:** Node features = (mean_q, std_q, degree, positive_fraction) — 4 floats
+- **Round k:** Aggregate (mean, std) of each neighbor feature dimension from round k−1 → append to own features
+- **Depth 2:** 36-dimensional feature vector capturing 2-hop structural context
+
+The D0→D1 jump (25%→70%) shows that **1-hop neighborhood context is the decisive signal**. D2 refines further (75%) and eliminates all false matches.
+
+### Key Files
+
+| File | Purpose |
+|---|---|
+| `explore_c133_playground.py` | LLM monolingual teaching + seedless playground (binary YES/NO) |
+| `explore_c134_bootstrapper_teacher.py` | Bootstrapper as teacher (score 0–10), node-eq + WL methods |
+| `explore_c135_wl_matching.py` | WL recursive neighborhood matching at depth 0/1/2 |
+| `dream_mode.py` (extended) | NodeFingerprint, WLNodeFingerprint, find_wl_node_equivalences |
+
+### Results
+
+| Experiment | Matching | Correct/44 | Wrong | Precision | Key finding |
+|---|---|---|---|---|---|
+| C131b (seed=11) | Dream edge-eq | 13 | — | — | Seed-based baseline (30%) |
+| C132b (seed=8, LLM) | Bilingual validator | 20 | — | — | Wrong architecture (bilingual) |
+| C133 (seedless) | Position-based | **44** | 0 | 100% | Oracle-level, needs shared positions |
+| C134b (seedless) | Node sorted profile | 9 | 13 | 41% | First framework-native attempt |
+| **C135 D2 (seedless)** | **WL depth=2** | **33** | **0** | **100%** | **Framework-native, no position info** |
