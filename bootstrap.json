@@ -28,11 +28,11 @@
   },
 
   "state": {
-    "latest_commit": "C143",
-    "latest_commit_msg": "C143: Curriculum Demo — level-by-level learning on ontodynamics canon",
-    "test_count": 3575,
+    "latest_commit": "C144",
+    "latest_commit_msg": "C144: Reflexion Demo — reactive vs. proactive vs. integrated on frontier domain",
+    "test_count": 3590,
     "test_failures": 0,
-    "module_count": "60 production + 9 benchmarks + 14 demos + 40 explorations + 98 test files + 8 canons",
+    "module_count": "60 production + 9 benchmarks + 15 demos + 40 explorations + 99 test files + 8 canons",
     "line_count": "~20200 production, ~97800 total"
   },
 
@@ -120,6 +120,7 @@
   },
 
   "commit_history_recent": [
+    { "hash": "PENDING", "id": "C144", "title": "Reflexion Demo — reactive vs. proactive vs. integrated on frontier domain" },
     { "hash": "PENDING", "id": "C143", "title": "Curriculum Demo — level-by-level learning on ontodynamics canon" },
     { "hash": "PENDING", "id": "C140", "title": "Bootstrap Domain Demo — cold-start pipeline, 2 paths, mock+live, ModeController" },
     { "hash": "c9fa4ea", "id": "docs", "title": "C139 documentation update (Architecture, Registry, Stories, bootstrap)" },

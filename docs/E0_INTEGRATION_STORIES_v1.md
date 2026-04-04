@@ -191,7 +191,7 @@ Low urgency. SU(2) is theoretically elegant and fully tested, but no practical a
 2. ~~C140: Bootstrapper demo~~ — ✅ DONE (commit `d3adfe1`)
 3. ~~C141: Entropy/Sleep–Wake flags~~ — ✅ DONE (commit `a7bb2d2`)
 4. ~~C142: Multiverse quickstart~~ — ✅ DONE
-5. Reflexion needs design discussion before implementation (Priority 5)
+5. ~~Reflexion demo~~ — ✅ DONE (commit C144, reactive vs. proactive vs. integrated)
 6. ~~Curriculum demo on ontodynamics canon (Priority 6)~~ — ✅ DONE (commit C143)
 7. Update README/Quickstart as each capability ships
 
