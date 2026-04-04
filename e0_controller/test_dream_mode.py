@@ -1,4 +1,4 @@
-"""Tests for Dream Mode — C109/C110/C111/C119.
+"""Tests for Dream Mode — C109/C110/C111/C119/C139.
 
 C109: Edge fingerprint extraction, distance metric, equivalence detection,
       dream readiness, Dream Landscape construction. P1 + P5 validated.
@@ -7,6 +7,7 @@ C110: DreamObserver class, dream_cycle, incremental updates, feedback,
 C111: Bridge hypothesis generation — propose_bridges(), dream_coupling_discount(),
       make_dream_peer_fn(). P2 (acceleration) + P3 (self-correction) validated.
 C119: Dream Mode consolidation — structural decay during dream_cycle.
+C139: Node-level equivalences via Hungarian/WL in DreamObserver.dream_cycle().
 """
 
 import math
@@ -36,6 +37,7 @@ from e0_controller.dream_mode import (
     is_dream_ready,
     build_dream_landscape,
     _equivalence_state,
+    _node_equivalence_state,
     dream_coupling_discount,
     propose_bridges,
     make_dream_peer_fn,
@@ -1283,6 +1285,177 @@ class TestMakeDreamPeerFn:
         ctrl = E0Controller(target, lambda s, t: Outcome.SUCCESS, peer_fn=peer_fn)
         trace = ctrl.run("A", goal="GOAL")
         assert trace.path[-1] == "GOAL"
+
+
+# ═══════════════════════════════════════════════
+# Test: C139 — Node-level Equivalences in DreamObserver
+# ═══════════════════════════════════════════════
+
+class TestNodeEquivalenceIntegration:
+    """C139: DreamObserver with node_equivalence_method wires Hungarian/WL
+    into dream_cycle and populates the Dream Landscape with node states."""
+
+    def test_invalid_method_raises(self):
+        """Unknown node_equivalence_method raises ValueError."""
+        with pytest.raises(ValueError, match="node_equivalence_method"):
+            DreamObserver(node_equivalence_method="bogus")
+
+    def test_none_method_backward_compatible(self):
+        """node_equivalence_method=None → no node equivalences, same as before."""
+        obs = DreamObserver(readiness_threshold=0.0)
+        obs.register("A", _build_simple_domain())
+        obs.register("B", _build_simple_domain())
+        result = obs.dream_cycle()
+
+        assert result.node_equivalences_found == 0
+        assert result.node_equivalences_new == 0
+        # Edge equivalences still work
+        assert result.equivalences_found > 0
+
+    def test_hungarian_finds_node_equivalences(self):
+        """Hungarian method finds node-level equivalences between isomorphic domains."""
+        obs = DreamObserver(
+            readiness_threshold=0.0,
+            node_equivalence_method="hungarian",
+        )
+        La = _build_simple_domain()
+        Lb = _build_simple_domain()
+        _inscribe(La, ["A", "B", "C", "GOAL"], Outcome.SUCCESS, 5)
+        _inscribe(Lb, ["A", "B", "C", "GOAL"], Outcome.SUCCESS, 5)
+        obs.register("alpha", La)
+        obs.register("beta", Lb)
+
+        result = obs.dream_cycle()
+        assert result.node_equivalences_found > 0
+        assert result.node_equivalences_new > 0
+
+    def test_wl_method_finds_node_equivalences(self):
+        """WL (mutual-best) method also finds node equivalences."""
+        obs = DreamObserver(
+            readiness_threshold=0.0,
+            node_equivalence_method="wl",
+        )
+        La = _build_simple_domain()
+        Lb = _build_simple_domain()
+        _inscribe(La, ["A", "B", "C", "GOAL"], Outcome.SUCCESS, 5)
+        _inscribe(Lb, ["A", "B", "C", "GOAL"], Outcome.SUCCESS, 5)
+        obs.register("alpha", La)
+        obs.register("beta", Lb)
+
+        result = obs.dream_cycle()
+        assert result.node_equivalences_found > 0
+        assert result.node_equivalences_new > 0
+
+    def test_dream_landscape_contains_node_states(self):
+        """Dream Landscape is populated with 'domain:node' states from node equivalences."""
+        obs = DreamObserver(
+            readiness_threshold=0.0,
+            node_equivalence_method="hungarian",
+        )
+        La = _build_simple_domain()
+        Lb = _build_simple_domain()
+        _inscribe(La, ["A", "B", "C", "GOAL"], Outcome.SUCCESS, 5)
+        _inscribe(Lb, ["A", "B", "C", "GOAL"], Outcome.SUCCESS, 5)
+        obs.register("X", La)
+        obs.register("Y", Lb)
+
+        obs.dream_cycle()
+        dl = obs.dream_landscape
+        assert dl is not None
+
+        # Node states use "domain:node" format (no arrow)
+        node_states = [s for s in dl.states if "→" not in s]
+        assert len(node_states) > 0
+        # All node states must be prefixed with "X:" or "Y:"
+        for s in node_states:
+            assert s.startswith("X:") or s.startswith("Y:")
+
+    def test_node_equivalence_state_helper(self):
+        """_node_equivalence_state encodes fingerprint as 'domain:node'."""
+        from e0_controller.dream_mode import NodeFingerprint
+        fp = NodeFingerprint(domain="chess", node="KING", qualities=(1.0, 0.5), degree=2)
+        assert _node_equivalence_state(fp) == "chess:KING"
+
+    def test_incremental_no_duplicate_nodes(self):
+        """Second dream_cycle does not re-add existing node equivalences."""
+        obs = DreamObserver(
+            readiness_threshold=0.0,
+            node_equivalence_method="hungarian",
+        )
+        La = _build_simple_domain()
+        Lb = _build_simple_domain()
+        _inscribe(La, ["A", "B", "C", "GOAL"], Outcome.SUCCESS, 5)
+        _inscribe(Lb, ["A", "B", "C", "GOAL"], Outcome.SUCCESS, 5)
+        obs.register("P", La)
+        obs.register("Q", Lb)
+
+        r1 = obs.dream_cycle()
+        r2 = obs.dream_cycle()
+
+        # First cycle finds new node equivalences
+        assert r1.node_equivalences_new > 0
+        # Second cycle re-detects them but adds 0 new
+        assert r2.node_equivalences_found == r1.node_equivalences_found
+        assert r2.node_equivalences_new == 0
+
+    def test_single_domain_no_node_equivalences(self):
+        """With only one domain, no pairs → no node equivalences."""
+        obs = DreamObserver(
+            readiness_threshold=0.0,
+            node_equivalence_method="hungarian",
+        )
+        obs.register("solo", _build_simple_domain())
+        result = obs.dream_cycle()
+        assert result.node_equivalences_found == 0
+        assert result.node_equivalences_new == 0
+
+    def test_three_domains_node_equivalences(self):
+        """Three domains → 3 pairs compared for node equivalences."""
+        obs = DreamObserver(
+            readiness_threshold=0.0,
+            node_equivalence_method="hungarian",
+        )
+        La = _build_simple_domain()
+        Lb = _build_simple_domain()
+        Lc = _build_parallel_domain()
+        _inscribe(La, ["A", "B", "C", "GOAL"], Outcome.SUCCESS, 5)
+        _inscribe(Lb, ["A", "B", "C", "GOAL"], Outcome.SUCCESS, 5)
+        _inscribe(Lc, ["S", "A", "G"], Outcome.SUCCESS, 5)
+        _inscribe(Lc, ["S", "B", "G"], Outcome.SUCCESS, 5)
+        obs.register("D1", La)
+        obs.register("D2", Lb)
+        obs.register("D3", Lc)
+
+        result = obs.dream_cycle()
+        # All three domains observed; node equivalences from 3 pairs
+        assert sorted(result.domains_observed) == ["D1", "D2", "D3"]
+        assert result.node_equivalences_found > 0
+
+    def test_edge_and_node_coexist(self):
+        """Both edge and node equivalences coexist in the same Dream Landscape."""
+        obs = DreamObserver(
+            readiness_threshold=0.0,
+            node_equivalence_method="hungarian",
+        )
+        La = _build_simple_domain()
+        Lb = _build_simple_domain()
+        _inscribe(La, ["A", "B", "C", "GOAL"], Outcome.SUCCESS, 5)
+        _inscribe(Lb, ["A", "B", "C", "GOAL"], Outcome.SUCCESS, 5)
+        obs.register("M", La)
+        obs.register("N", Lb)
+
+        result = obs.dream_cycle()
+        dl = obs.dream_landscape
+        assert dl is not None
+
+        # Edge states contain "→", node states do not
+        edge_states = [s for s in dl.states if "→" in s]
+        node_states = [s for s in dl.states if "→" not in s]
+        assert len(edge_states) > 0, "edge equivalences must produce states"
+        assert len(node_states) > 0, "node equivalences must produce states"
+        # Both contribute to overall counts
+        assert result.equivalences_found > 0
+        assert result.node_equivalences_found > 0
 
 
 # ═══════════════════════════════════════════════

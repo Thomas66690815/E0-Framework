@@ -590,6 +590,14 @@ def _equivalence_state(fp: EdgeFingerprint) -> str:
     return f"{fp.domain}:{fp.edge.source}→{fp.edge.target}"
 
 
+def _node_equivalence_state(fp) -> str:
+    """Encode a node fingerprint as a Dream Landscape state (C139).
+
+    Uses 'domain:node' format for NodeFingerprint and WLNodeFingerprint.
+    """
+    return f"{fp.domain}:{fp.node}"
+
+
 def build_dream_landscape(
     equivalences: List[Equivalence],
     *,
@@ -648,6 +656,9 @@ class DreamCycleResult:
     dream_landscape_edges: int
     # C119: Structural decay during dream consolidation
     decay_reports: Dict[str, Any] = field(default_factory=dict)  # domain → DecayReport
+    # C139: Node-level equivalences via WL + Hungarian
+    node_equivalences_found: int = 0
+    node_equivalences_new: int = 0
 
 
 class DreamObserver:
@@ -688,6 +699,8 @@ class DreamObserver:
         decay_enabled: bool = False,
         theta_base: float = 0.5,
         protected_fn: Optional[Any] = None,
+        node_equivalence_method: Optional[str] = None,
+        wl_depth: int = 2,
     ):
         self._domains: Dict[str, Landscape] = {}
         self._dream_landscape: Optional[Landscape] = None
@@ -701,6 +714,11 @@ class DreamObserver:
         self.decay_enabled = decay_enabled          # C119
         self._theta_base = theta_base               # C119
         self._protected_fn = protected_fn           # C119: domain → Set[str]
+        # C139: Node-level equivalence detection
+        if node_equivalence_method is not None and node_equivalence_method not in ("hungarian", "wl"):
+            raise ValueError(f"node_equivalence_method must be None, 'hungarian', or 'wl', got {node_equivalence_method!r}")
+        self._node_eq_method = node_equivalence_method
+        self._wl_depth = wl_depth
 
     # -- Domain management --------------------------------------------------
 
@@ -731,9 +749,11 @@ class DreamObserver:
 
         Steps:
         1. Partition domains by readiness
-        2. Extract fingerprints + find equivalences (quantile-based)
-        3. Update (or build) the Dream Landscape incrementally
-        4. If decay_enabled: consolidate each domain landscape (C119)
+        2. Extract edge fingerprints + find equivalences (quantile-based)
+        3. (C139) If node_equivalence_method set: find node-level equivalences
+           via WL + Hungarian or WL + mutual-best
+        4. Update (or build) the Dream Landscape incrementally
+        5. If decay_enabled: consolidate each domain landscape (C119)
            — patterns are extracted BEFORE decay, then graphs are compressed
 
         Domains that are not dream-ready are skipped.
@@ -750,7 +770,7 @@ class DreamObserver:
             else:
                 skipped.append(name)
 
-        # Collect equivalences across all ready domain pairs
+        # Collect edge equivalences across all ready domain pairs
         all_equivalences: List[Equivalence] = []
         for i, name_a in enumerate(ready):
             for name_b in ready[i + 1:]:
@@ -765,8 +785,34 @@ class DreamObserver:
                 )
                 all_equivalences.extend(eqs)
 
-        # Incremental update of Dream Landscape
+        # Incremental update of Dream Landscape (edge equivalences)
         new_count = self._update_dream_landscape(all_equivalences)
+
+        # C139: Node-level equivalences via WL fingerprints
+        all_node_eqs: List[NodeEquivalence] = []
+        if self._node_eq_method is not None and len(ready) >= 2:
+            for i, name_a in enumerate(ready):
+                for name_b in ready[i + 1:]:
+                    if self._node_eq_method == "hungarian":
+                        node_eqs = find_wl_node_equivalences_hungarian(
+                            self._domains[name_a],
+                            self._domains[name_b],
+                            domain_a=name_a,
+                            domain_b=name_b,
+                            depth=self._wl_depth,
+                        )
+                    else:  # "wl" — mutual-best
+                        node_eqs = find_wl_node_equivalences(
+                            self._domains[name_a],
+                            self._domains[name_b],
+                            domain_a=name_a,
+                            domain_b=name_b,
+                            depth=self._wl_depth,
+                            quantile=self._quantile,
+                        )
+                    all_node_eqs.extend(node_eqs)
+
+        node_new_count = self._update_dream_landscape_nodes(all_node_eqs)
 
         # C119: Structural decay — consolidation during dream
         decay_reports: Dict[str, Any] = {}
@@ -801,6 +847,8 @@ class DreamObserver:
             dream_landscape_states=len(dl.states) if dl else 0,
             dream_landscape_edges=len(dl.edges) if dl else 0,
             decay_reports=decay_reports,
+            node_equivalences_found=len(all_node_eqs),
+            node_equivalences_new=node_new_count,
         )
 
     def _update_dream_landscape(self, equivalences: List[Equivalence]) -> int:
@@ -834,6 +882,53 @@ class DreamObserver:
             conf = max(eq.confidence, 0.01)
             r0 = self._base_resistance / conf
             delta = eq.distance
+
+            dl.add_edge(sa, sb, delta=delta, resistance=r0)
+            dl.add_edge(sb, sa, delta=delta, resistance=r0)
+
+            self._known_edges.add(key_fwd)
+            self._known_edges.add(key_rev)
+            new_count += 1
+
+        return new_count
+
+    def _update_dream_landscape_nodes(
+        self, node_eqs: List[NodeEquivalence],
+    ) -> int:
+        """Incrementally add node-level equivalences to the Dream Landscape (C139).
+
+        Node equivalences are represented as "domain:node" states connected
+        by bidirectional edges. Uses the same _known_edges deduplication as
+        edge equivalences — both coexist in the same Dream Landscape.
+
+        Returns count of newly added node equivalence edges.
+        """
+        if not node_eqs:
+            return 0
+
+        if self._dream_landscape is None:
+            self._dream_landscape = Landscape()
+
+        dl = self._dream_landscape
+        new_count = 0
+
+        for neq in node_eqs:
+            sa = _node_equivalence_state(neq.fp_a)
+            sb = _node_equivalence_state(neq.fp_b)
+            key_fwd = (sa, sb)
+            key_rev = (sb, sa)
+
+            if key_fwd in self._known_edges:
+                continue
+
+            if sa not in dl.states:
+                dl.add_state(sa)
+            if sb not in dl.states:
+                dl.add_state(sb)
+
+            conf = max(neq.confidence, 0.01)
+            r0 = self._base_resistance / conf
+            delta = neq.distance
 
             dl.add_edge(sa, sb, delta=delta, resistance=r0)
             dl.add_edge(sb, sa, delta=delta, resistance=r0)
