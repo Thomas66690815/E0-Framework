@@ -315,13 +315,25 @@ This answers: does SU(2) produce better Born sampling decisions than U(1)?
    phase produces different constructive/destructive patterns. 43% reversal rate
    on near-degenerate landscapes confirms non-trivial path-order sensitivity.
 
-3. **Can axis_fn be meaningfully parameterized?** Still open. The pretest used
-   fixed axes (ẑ, x̂, ŷ, mixed) — all produced identical results on the simple
-   topologies. However, on 5+ node graphs axis choice may matter. Needs testing.
+3. ~~**Can axis_fn be meaningfully parameterized?**~~
+   **ANSWERED (Pretest 7): No — fixed axes are mathematically equivalent.**
+   On 4114 random 5-node topologies, ẑ/x̂/ŷ produce **0.0% inter-axis
+   disagreement** (identical rankings on every topology). ω-derived: 1.3%
+   marginal deviation. Random: 1.7%. Only the **geometric** (3-generator)
+   axis produces genuine divergence: 7.3% disagreement vs all fixed axes.
+   Near-degenerate reversal rates: all fixed axes identical at 25.2%,
+   geometric at 20.2%. The axis_fn parameter space for fixed axes **collapses
+   to a single point** — only the number of active generators matters.
 
-4. **What about the 720° periodicity?** Still open. Holonomy measurements show
-   98.8° on the extreme triangle (Pretest 4) — not yet reaching the 360°/720°
-   regime where sign flips occur. Longer cycles on larger graphs could reach it.
+4. ~~**What about the 720° periodicity?**~~
+   **ANSWERED (Pretest 8): Yes — operationally the strongest SU(2) driver.**
+   Holonomy angles routinely reach 360° (U ≈ −I, spinor sign flip) on 7+
+   node graphs. Mean max holonomy: 191° (5 nodes) → 294° (7 nodes) → 327°
+   (8 nodes). **Reversal rate scales monotonically with holonomy:**
+   0.7% (0–90°) → 6.2% (90–180°) → 14.6% (180–270°) → **26.1% (270–360°)**.
+   Sign-flip regime (330°–390°): **28.7% reversal rate** across 491 topologies.
+   The 720° periodicity is not a theoretical curiosity — it is the primary
+   mechanism driving SU(2) ranking reversals on complex graphs.
 
 5. ~~**What is the minimum graph complexity for SU(2) relevance?**~~
    **ANSWERED (Pretest 6).** Activation threshold at **5 nodes** (>5% reversal).
@@ -455,7 +467,90 @@ This validates the meta-cognitive interpretation from §4.4: SU(2) provides a
 second opinion that is structurally different from U(1), not just a rescaling.
 When the two perspectives disagree, the system has evidence that its assessment
 is perspective-dependent — the very signal needed to trigger frame questioning.
+### 6.6 Pretest 7: Axis Function Parameterization (Q3)
 
+4114 valid 5-node topologies (same seed as Pretest 5), comparing 5 axis
+strategies + geometric mode.
+
+**Phase 1 — Reversal rate vs U(1) per axis:**
+
+| Axis | Reversals | Rate |
+|------|-----------|------|
+| ẑ [0,0,1] | 260 / 4114 | 6.3% |
+| x̂ [1,0,0] | 260 / 4114 | 6.3% |
+| ŷ [0,1,0] | 260 / 4114 | 6.3% |
+| ω-derived | 259 / 4114 | 6.3% |
+| random | 264 / 4114 | 6.4% |
+| geometric | 262 / 4114 | 6.4% |
+
+**Phase 2 — Inter-axis disagreement:**
+
+| Pair | Disagreement |
+|------|-------------|
+| ẑ vs x̂ | **0.0%** |
+| ẑ vs ŷ | **0.0%** |
+| x̂ vs ŷ | **0.0%** |
+| ẑ vs ω-derived | 1.3% |
+| ẑ vs random | 1.7% |
+| **ẑ vs geometric** | **7.3%** |
+| ω-derived vs geometric | 7.0% |
+
+**Phase 3 — Near-degenerate:** All fixed axes identical at 25.2%,
+geometric at 20.2%.
+
+**Phase 4 — Unique rankings:** 91.9% of topologies produce a single
+ranking across all axes. Only in 8.1% does axis choice matter — and
+almost always it is geometric vs the rest.
+
+**Conclusion:** The axis parameter space for single-generator SU(2)
+**collapses to a point** — ẑ, x̂, ŷ are literally identical because
+`cos(θ/2)` is independent of which Pauli matrix generates the rotation
+when only one axis is active. Only the geometric mode (3 generators:
+vorticity gradient + face holonomy + direct phase) produces genuinely
+different interference, because different generators contribute different
+phase components along different edges.
+
+### 6.7 Pretest 8: 720° Periodicity (Q4)
+
+5–8 node topologies (500/300/300 trials), high density (0.7),
+cycle lengths up to 5 edges.
+
+**Phase 1 — Holonomy angle distribution (max per topology):**
+
+| Nodes | Valid | Max° | Mean° | >90° | >180° | >270° |
+|------:|------:|-----:|------:|-----:|------:|------:|
+| 5 | 450 | 359.8 | 190.8 | 330 | 225 | 153 |
+| 7 | 294 | 360.0 | 293.9 | 281 | 254 | 208 |
+| 8 | 299 | 360.0 | 326.6 | 296 | 284 | 251 |
+
+Holonomy angles routinely reach 360° (= U ≈ −I, spinor sign flip).
+Above 7 nodes, >70% of topologies have max holonomy > 270°.
+
+**Phase 2 — Reversal rate conditioned on holonomy:**
+
+| Holonomy | Total | SU(2) reversal |
+|----------|------:|---------------:|
+| 0°–90° | 136 | 1 (0.7%) |
+| 90°–180° | 144 | 9 (6.2%) |
+| 180°–270° | 151 | 22 (14.6%) |
+| 270°–360° | 612 | 160 (**26.1%**) |
+
+**Monotonic correlation.** The reversal rate scales with holonomy angle —
+the closer the holonomy gets to 360° (sign flip), the more likely SU(2)
+produces a different ranking. This is causal, not correlational: higher
+holonomy means larger `cos(θ/2)` vs `cos(θ)` divergence, which directly
+affects multi-path interference.
+
+**Phase 3 — Sign flip regime (330°–390°):**
+
+491 topologies with holonomy near 360°. SU(2) reversal rate: **28.7%**.
+
+This is the highest reversal rate observed across all pretests. The 720°
+periodicity is not a theoretical curiosity — it is the **primary mechanism**
+driving SU(2) ranking reversals. At θ_holonomy ≈ 360°, U(1) sees
+`exp(iθ) ≈ +1` (trivial holonomy) while SU(2) sees `exp(iθ/2) ≈ −1`
+(maximal sign flip). This is exactly the "plate trick" manifest in graph
+interference.
 ---
 
 ## 7. Relationship to E0 Principles
