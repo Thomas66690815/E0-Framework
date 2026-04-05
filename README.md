@@ -200,7 +200,7 @@ Two systems that solve cold-start and hierarchical learning:
 - [External validation / handoff note](docs/E0_EXTERNAL_VALIDATION_AND_HANDOFF_NOTE_v1.md) â€” package for reviewers or AI systems
 - [Phase 3q interference report](docs/E0_PHASE3Q_INTERFERENCE_REPORT_v1.md) â€” holonomy formula, goal_reaching geometry, Gordian Trap
 - [Paper 3: Non-Abelian Structure](docs/papers/E0_PAPER3_NON_ABELIAN_STRUCTURE_v1.md) â€” SU(2) transport, curvature modulation, topological invariants
-- [Test Registry v2](docs/E0_TEST_REGISTRY_v2.md) â€” complete per-file test inventory (3694 tests)
+- [Test Registry v2](docs/E0_TEST_REGISTRY_v2.md) â€” complete per-file test inventory (3757 tests)
 - [Empirical Insights](docs/E0_EMPIRICAL_INSIGHTS_v1.md) â€” what Chess (C72) reveals about Eâ‚€ as a whole
 - [Dream Mode Concept](docs/E0_DREAM_MODE_CONCEPT_v1.md) â€” cross-domain pattern recognition through passive observation (C109â€“C139)
 - [Structural Entropy Design](docs/E0_STRUCTURAL_ENTROPY_DESIGN_v1.md) â€” forgetting as structural necessity (C114â€“C121)
@@ -361,7 +361,7 @@ from e0_controller import E0Controller, Landscape, Session, Outcome
 ### Run the tests (no API key needed)
 
 ```bash
-# Full test suite (3694 tests, pytest):
+# Full test suite (3757 tests, pytest):
 py -3 -m pytest e0_controller/ --tb=short -q
 
 # Single file:
@@ -489,7 +489,7 @@ E0-Framework/
 â”‚   â”œâ”€â”€ integrated_reflexion.py         Unified reflexion: topology + flags + SelfGraph (C59)
 â”‚   â”œâ”€â”€ scoped_reflexion.py             Historization-driven reflexion locality (C101)
 â”‚   â”œâ”€â”€ explore_dream_mode.py           Dream Mode end-to-end exploration (C112)
-â”‚   â””â”€â”€ test_*.py                       3694 tests (see docs/E0_TEST_REGISTRY_v2.md)
+â”‚   â””â”€â”€ test_*.py                       3757 tests (see docs/E0_TEST_REGISTRY_v2.md)
 â”‚
 â”œâ”€â”€ scenarios/                        Scenario Packets for grounded LLM demos
 â”‚   â”œâ”€â”€ competitor_brief/               Domain-specific scenario data
@@ -500,7 +500,7 @@ E0-Framework/
 â”‚   â”œâ”€â”€ E0_ARCHITECTURE_OVERVIEW_v4.md    12-layer module map (60+ modules)
 â”‚   â”œâ”€â”€ E0_MULTIVERSE_DESIGN_v1.md        Multiverse architecture (C54â€“C63)
 â”‚   â”œâ”€â”€ E0_INTEGRATION_STORIES_v1.md      Integration roadmap (C139â€“C144)
-â”‚   â”œâ”€â”€ E0_TEST_REGISTRY_v2.md            Complete test inventory (3694 tests)
+â”‚   â”œâ”€â”€ E0_TEST_REGISTRY_v2.md            Complete test inventory (3757 tests)
 â”‚   â”œâ”€â”€ E0_MATH_IMPL_MAPPING_v1.md        Math â†” Code mapping
 â”‚   â”œâ”€â”€ E0_STRUCTURAL_ENTROPY_DESIGN_v1.md  Forgetting as structural necessity
 â”‚   â”œâ”€â”€ E0_DREAM_MODE_CONCEPT_v1.md       Cross-domain pattern recognition

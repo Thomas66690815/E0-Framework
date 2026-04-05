@@ -1002,6 +1002,11 @@ class DreamObserver:
             if not edge.source.startswith(prefix):
                 continue
 
+            # Skip node equivalence states (no →); those are handled
+            # by node_equivalences_for() (C154).
+            if "\u2192" not in edge.source:
+                continue
+
             tq = dl.historization.trace_quality(edge)
             if min_quality is not None and tq < min_quality:
                 continue
@@ -1017,6 +1022,71 @@ class DreamObserver:
             })
 
         # Sort by trace_quality descending (best analogies first)
+        results.sort(key=lambda r: r["trace_quality"], reverse=True)
+        return results
+
+    def node_equivalences_for(
+        self,
+        domain: str,
+        node: Optional[str] = None,
+        *,
+        min_quality: Optional[float] = None,
+    ) -> List[Dict[str, Any]]:
+        """List node-level equivalences involving a specific domain (C154).
+
+        Returns dicts with: own_node, partner_domain, partner_node,
+        trace_quality, trace_load.
+
+        Node states in the Dream Landscape use "domain:node" format
+        (no → arrow). Edge equivalences use "domain:src→tgt".
+
+        Args:
+            domain: Name of the domain to query.
+            node: If set, only return equivalences for this specific node.
+            min_quality: If set, only return equivalences with
+                trace_quality >= this value.
+        """
+        if self._dream_landscape is None:
+            return []
+
+        dl = self._dream_landscape
+        prefix = f"{domain}:"
+        results: List[Dict[str, Any]] = []
+
+        for edge in dl.edges:
+            src = edge.source
+            tgt = edge.target
+
+            # Skip edge-level equivalences (contain →)
+            if "\u2192" in src or "\u2192" in tgt:
+                continue
+
+            if not src.startswith(prefix):
+                continue
+
+            # Parse "domain:node"
+            own_node = src[len(prefix):]
+            colon_idx = tgt.find(":")
+            if colon_idx < 0:
+                continue
+            partner_domain = tgt[:colon_idx]
+            partner_node = tgt[colon_idx + 1:]
+
+            if node is not None and own_node != node:
+                continue
+
+            tq = dl.historization.trace_quality(edge)
+            if min_quality is not None and tq < min_quality:
+                continue
+
+            results.append({
+                "own_node": own_node,
+                "partner_domain": partner_domain,
+                "partner_node": partner_node,
+                "trace_quality": tq,
+                "trace_load": dl.historization.trace_load(edge),
+            })
+
         results.sort(key=lambda r: r["trace_quality"], reverse=True)
         return results
 
@@ -1223,6 +1293,195 @@ def propose_bridges(
     )
 
 
+# ---------------------------------------------------------------------------
+# Node-level bridge hypothesis generation (C154)
+# ---------------------------------------------------------------------------
+
+@dataclass
+class NodeBridgeProposal:
+    """A single edge proposal derived from node-level equivalence transfer."""
+    source: str
+    target: str
+    delta: float
+    resistance: float
+    confidence: float
+    donor_domain: str
+    donor_source: str
+    donor_target: str
+
+
+@dataclass
+class NodeBridgeResult:
+    """Outcome of propose_node_bridges(): edge proposals from node mapping."""
+    target_domain: str
+    proposals: List[NodeBridgeProposal]
+    edges_added: int
+    node_mappings_used: int
+    donor_edges_checked: int
+
+
+def propose_node_bridges(
+    observer: DreamObserver,
+    target_domain: str,
+    current: str,
+    goal: Optional[str] = None,
+    *,
+    base_discount: float = 0.5,
+    min_quality: float = 0.0,
+    max_proposals: int = 5,
+    confidence_floor: float = 0.1,
+) -> NodeBridgeResult:
+    """Propose edges using node-level equivalences from Hungarian matching (C154).
+
+    Algorithm:
+    1. Find which donor nodes match `current` (via Dream Landscape)
+    2. For each donor match: list donor's successful outgoing edges
+    3. For each donor edge target: check if it maps back to target domain
+    4. Propose edge current → mapped_target with discounted parameters
+
+    This is structural transfer: the donor's navigation pattern around
+    its equivalent node is proposed as a hypothesis for the target domain.
+
+    Args:
+        observer: DreamObserver with node equivalences in Dream Landscape.
+        target_domain: Domain that needs proposals.
+        current: Current state in target domain.
+        goal: Goal state (for proximity sorting).
+        base_discount: Base coupling discount for donor parameters.
+        min_quality: Minimum equivalence quality on Dream Landscape edge.
+        max_proposals: Maximum proposals to return.
+        confidence_floor: Minimum confidence for node equivalences.
+            Node equivalences from structural matching (Hungarian) start
+            with trace_quality=0 in the Dream Landscape. The floor
+            breaks the chicken-and-egg: without it, no proposals would
+            be generated until historization confirms them — but
+            historization requires proposals to exist first.
+
+    Returns:
+        NodeBridgeResult with proposed edges and statistics.
+    """
+    target_landscape = observer._domains.get(target_domain)
+    if target_landscape is None:
+        return NodeBridgeResult(
+            target_domain=target_domain, proposals=[],
+            edges_added=0, node_mappings_used=0, donor_edges_checked=0,
+        )
+
+    # 1. Find donor nodes matching current
+    current_matches = observer.node_equivalences_for(
+        target_domain, current, min_quality=min_quality,
+    )
+    if not current_matches:
+        return NodeBridgeResult(
+            target_domain=target_domain, proposals=[],
+            edges_added=0, node_mappings_used=0, donor_edges_checked=0,
+        )
+
+    proposals: List[NodeBridgeProposal] = []
+    mappings_used = 0
+    edges_checked = 0
+
+    for match in current_matches:
+        donor_domain = match["partner_domain"]
+        donor_node = match["partner_node"]
+        match_quality = match["trace_quality"]
+
+        donor_landscape = observer._domains.get(donor_domain)
+        if donor_landscape is None:
+            continue
+
+        # 2. List donor's outgoing edges from the matched node
+        donor_neighbors = donor_landscape.admissible_neighbors(donor_node)
+        if not donor_neighbors:
+            continue
+
+        mappings_used += 1
+
+        # Get all node equivalences from donor → target for reverse mapping
+        donor_to_target = observer.node_equivalences_for(
+            donor_domain, min_quality=min_quality,
+        )
+        reverse_map: Dict[str, str] = {}
+        for eq in donor_to_target:
+            if eq["partner_domain"] == target_domain:
+                reverse_map[eq["own_node"]] = eq["partner_node"]
+
+        for donor_target in donor_neighbors:
+            edges_checked += 1
+            mapped_target = reverse_map.get(donor_target)
+            if mapped_target is None:
+                continue
+
+            # Don't propose self-loops or edges back to current
+            if mapped_target == current:
+                continue
+
+            # Don't propose edges that already exist
+            edge = Edge(current, mapped_target)
+            if edge in target_landscape._R0:
+                continue
+
+            # Get donor edge parameters
+            donor_edge = Edge(donor_node, donor_target)
+            donor_delta = 1.0
+            donor_r0 = 1.0
+
+            # Use donor landscape parameters with discount
+            if donor_edge in donor_landscape._delta:
+                donor_delta = donor_landscape._delta[donor_edge]
+            if donor_edge in donor_landscape._R0:
+                donor_r0 = donor_landscape._R0[donor_edge]
+
+            discount = dream_coupling_discount(
+                max(match_quality, confidence_floor), base_discount,
+            )
+            if discount <= 0.0:
+                continue
+
+            # Inflate resistance by inverse discount (more uncertainty)
+            proposed_r0 = donor_r0 / max(discount, 0.1)
+
+            proposals.append(NodeBridgeProposal(
+                source=current,
+                target=mapped_target,
+                delta=donor_delta,
+                resistance=round(proposed_r0, 4),
+                confidence=round(discount, 3),
+                donor_domain=donor_domain,
+                donor_source=donor_node,
+                donor_target=donor_target,
+            ))
+
+    # Sort by goal proximity if goal is set, else by confidence
+    if goal is not None and target_landscape is not None:
+        from e0_controller.reflexive_edge_proposal import _goal_proximity
+        proposals.sort(key=lambda p: _goal_proximity(
+            target_landscape, p.target, goal,
+        ))
+    else:
+        proposals.sort(key=lambda p: p.confidence, reverse=True)
+
+    proposals = proposals[:max_proposals]
+
+    # Apply proposals to target landscape
+    edges_added = 0
+    for p in proposals:
+        edge = Edge(p.source, p.target)
+        if edge not in target_landscape._R0:
+            target_landscape.add_edge(
+                p.source, p.target, delta=p.delta, resistance=p.resistance,
+            )
+            edges_added += 1
+
+    return NodeBridgeResult(
+        target_domain=target_domain,
+        proposals=proposals,
+        edges_added=edges_added,
+        node_mappings_used=mappings_used,
+        donor_edges_checked=edges_checked,
+    )
+
+
 def make_dream_peer_fn(
     observer: DreamObserver,
     domain_name: str,
@@ -1245,6 +1504,7 @@ def make_dream_peer_fn(
     it's consulting dream equivalences. It just gets a peer suggestion.
     """
     def _dream_peer(landscape, current, neighbors):
+        # 1. Try edge-level bridges first (original path)
         result = propose_bridges(
             observer,
             domain_name,
@@ -1256,18 +1516,28 @@ def make_dream_peer_fn(
             max_proposals_per_bridge=1,
         )
 
-        if not result.bridges:
-            return None
+        if result.bridges:
+            bridge = result.bridges[0]
+            proposals = bridge.cross_result.proposals
+            if proposals:
+                best_target = proposals[0].target
+                if best_target in neighbors:
+                    return best_target
 
-        bridge = result.bridges[0]
-        proposals = bridge.cross_result.proposals
-        if not proposals:
-            return None
-
-        # Return best proposal's target if it's in neighbors
-        best_target = proposals[0].target
-        if best_target in neighbors:
-            return best_target
+        # 2. Fallback: try node-level bridges (C154)
+        node_result = propose_node_bridges(
+            observer,
+            domain_name,
+            current,
+            goal,
+            min_quality=min_quality,
+            base_discount=base_discount,
+            max_proposals=1,
+        )
+        if node_result.proposals:
+            best_target = node_result.proposals[0].target
+            if best_target in neighbors:
+                return best_target
 
         return None
 

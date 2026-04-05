@@ -28,9 +28,9 @@
   },
 
   "state": {
-    "latest_commit": "C153",
-    "latest_commit_msg": "C153: SU(2) Perspective Diagnostic — perspective_check, PerspectiveReport, wired into controller.cycle/run + DualReflectionReport",
-    "test_count": 3694,
+    "latest_commit": "C154",
+    "latest_commit_msg": "C154: DreamObserver Node Bridge Pipeline — propose_node_bridges structural transfer, make_dream_peer_fn node fallback, SleepWakeCycle.wire_peer_fns, confidence_floor for cold-start",
+    "test_count": 3757,
     "test_failures": 0,
     "module_count": "60 production + 9 benchmarks + 16 demos + 40 explorations + 100 test files + 8 canons",
     "line_count": "~20200 production, ~97800 total"
@@ -90,7 +90,7 @@
       },
       "9_dream_mode": {
         "files": ["dream_mode.py", "explore_dream_mode.py"],
-        "purpose": "Passive cross-domain pattern recognition. EdgeFingerprint f(e)=(q,m,I), functional equivalence detection (quantile-based), DreamObserver (N domains, dream_cycle, feedback historization), bridge hypothesis generation (→ cross_propose_edges), make_dream_peer_fn (E0Controller integration). WL recursive fingerprints (9-dim→81-dim at depth-2), Hungarian optimal assignment (find_wl_node_equivalences_hungarian, scipy). **C139:** DreamObserver.dream_cycle() invokes node-level equivalences (hungarian/wl) alongside edge-EQ. _update_dream_landscape_nodes creates domain:node states. Dream Landscape is self-historizing valid E₀ Landscape. C109-C112, C135-C139."
+        "purpose": "Passive cross-domain pattern recognition. EdgeFingerprint f(e)=(q,m,I), functional equivalence detection (quantile-based), DreamObserver (N domains, dream_cycle, feedback historization), bridge hypothesis generation (→ cross_propose_edges), make_dream_peer_fn (E0Controller integration). WL recursive fingerprints (9-dim→81-dim at depth-2), Hungarian optimal assignment (find_wl_node_equivalences_hungarian, scipy). **C139:** DreamObserver.dream_cycle() invokes node-level equivalences (hungarian/wl) alongside edge-EQ. _update_dream_landscape_nodes creates domain:node states. **C154:** node_equivalences_for query, propose_node_bridges (structural transfer from donor neighborhoods via node mapping), make_dream_peer_fn node-bridge fallback, confidence_floor (breaks cold-start chicken-and-egg), equivalences_for now filters out node states. C109-C112, C135-C139, C154."
       },
       "10_structural_entropy": {
         "files": ["structural_entropy.py", "explore_structural_entropy.py"],
@@ -98,7 +98,7 @@
       },
       "11_sleep_wake": {
         "files": ["sleep_wake.py"],
-        "purpose": "Automatic sleep-wake rhythm. dream_pressure = T_s/(T_s+μ) triggers dreaming when T_s > μ. SleepWakeCycle orchestrates Controller + DreamObserver: wake builds experience, sleep consolidates + decays, cycle repeats. Parameter-free trigger (uses existing μ). C121."
+        "purpose": "Automatic sleep-wake rhythm. dream_pressure = T_s/(T_s+μ) triggers dreaming when T_s > μ. SleepWakeCycle orchestrates Controller + DreamObserver: wake builds experience, sleep consolidates + decays, cycle repeats. Parameter-free trigger (uses existing μ). **C154:** wire_peer_fns() auto-creates dream peer_fns for all registered controllers (edge + node bridge support). C121, C154."
       },
       "12_curriculum": {
         "files": ["curriculum.py"],
@@ -120,6 +120,7 @@
   },
 
   "commit_history_recent": [
+    { "hash": "PENDING", "id": "C154", "title": "DreamObserver Node Bridge Pipeline \u2014 propose_node_bridges structural transfer, make_dream_peer_fn node fallback, SleepWakeCycle.wire_peer_fns, confidence_floor, 32 new tests" },
     { "hash": "PENDING", "id": "C153", "title": "SU(2) Perspective Diagnostic \u2014 perspective_check compares U(1) vs SU(2) rankings, PerspectiveReport, wired into cycle/run + DualReflectionReport, 35 new tests" },
     { "hash": "PENDING", "id": "C152", "title": "Hybrid Mode in Sensitivity \u2014 hybrid_mode/use_su2 in E0Config, run_trial forwarding, 13 new tests" },
     { "hash": "a55c6ce", "id": "C151", "title": "Honest Activation — amplitude/born excluded from Self-Graph in GREEDY mode, 10 new tests" },

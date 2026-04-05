@@ -29,7 +29,7 @@ from typing import Any, Callable, Dict, List, Optional, Set
 
 from .config import DEFAULTS
 from .controller import E0Controller, RunTrace
-from .dream_mode import DreamCycleResult, DreamObserver
+from .dream_mode import DreamCycleResult, DreamObserver, make_dream_peer_fn
 from .structural_entropy import (
     dream_pressure,
     should_dream,
@@ -132,6 +132,35 @@ class SleepWakeCycle:
     @property
     def domain_names(self) -> List[str]:
         return list(self._controllers.keys())
+
+    def wire_peer_fns(
+        self,
+        *,
+        min_quality: float = 0.0,
+        base_discount: float = 0.5,
+    ) -> int:
+        """Auto-create dream peer_fns for all registered controllers (C154).
+
+        Each controller gets a peer_fn that consults dream equivalences
+        (both edge-level and node-level) during overload.
+
+        Must be called after all domains are registered.
+
+        Returns number of controllers wired.
+        """
+        wired = 0
+        for name, ctrl in self._controllers.items():
+            goal = self._goals.get(name)
+            peer = make_dream_peer_fn(
+                self._observer,
+                name,
+                goal,
+                min_quality=min_quality,
+                base_discount=base_discount,
+            )
+            ctrl.peer_fn = peer
+            wired += 1
+        return wired
 
     @property
     def episodes(self) -> List[EpisodeResult]:
