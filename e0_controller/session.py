@@ -72,6 +72,11 @@ from .reflexive_action import (
     ReflexiveJournal,
     apply_reflexive_actions,
 )
+from .parameter_sensitivity import (
+    AutoTuneResult,
+    auto_tune as _auto_tune,
+    apply_config,
+)
 
 
 @dataclass
@@ -556,3 +561,78 @@ class Session:
     def exists_on_disk(self) -> bool:
         """Check if this session has been saved before."""
         return self.memos.session_exists(self.session_id)
+
+    def auto_tune(
+        self,
+        start: str,
+        goal: Optional[str] = None,
+        *,
+        max_cycles: int = 50,
+        max_rounds: int = 3,
+        perturbation_factor: float = 0.2,
+        min_improvement: float = 0.01,
+        adopt: bool = True,
+    ) -> AutoTuneResult:
+        """Auto-tune controller parameters via Self-Graph feedback (C155).
+
+        Runs the auto-tuning loop on a deep-copy of the current landscape
+        to find the best E0Config. If *adopt* is True (default), applies
+        the best config to the live controller.
+
+        Parameters
+        ----------
+        start : str
+            Start state for trial runs.
+        goal : str, optional
+            Goal state for trial runs.
+        max_cycles : int
+            Controller cycles per trial.
+        max_rounds : int
+            Maximum tuning rounds.
+        perturbation_factor : float
+            Magnitude of parameter perturbations (±20% by default).
+        min_improvement : float
+            Minimum quality improvement to adopt a new config.
+        adopt : bool
+            If True, apply best config to the live controller.
+
+        Returns
+        -------
+        AutoTuneResult
+            Full tuning history; check .improved and .best_config.
+        """
+        from .config import E0Config
+        ctrl = self.controller
+
+        # Build current config from controller state
+        current = E0Config(
+            alpha=ctrl.alpha,
+            recent_k=ctrl.recent_k,
+            max_escalation_R=ctrl.max_escalation_R,
+            overload_threshold=ctrl.overload_threshold,
+            confidence_threshold=ctrl.confidence_threshold,
+            hybrid_mode=ctrl.hybrid_mode,
+            hybrid_horizon=ctrl.hybrid_horizon,
+            use_su2=ctrl.use_su2,
+            rho=ctrl.landscape.historization.rho,
+            lambda_s=ctrl.landscape.historization.lambda_s,
+            lambda_f=ctrl.landscape.historization.lambda_f,
+            delta_max=ctrl.landscape.historization.delta_max,
+        )
+
+        result = _auto_tune(
+            self.landscape,
+            ctrl.execute_fn,
+            start,
+            goal,
+            base_config=current,
+            max_cycles=max_cycles,
+            max_rounds=max_rounds,
+            perturbation_factor=perturbation_factor,
+            min_improvement=min_improvement,
+        )
+
+        if adopt and result.improved:
+            apply_config(ctrl, result.best_config)
+
+        return result

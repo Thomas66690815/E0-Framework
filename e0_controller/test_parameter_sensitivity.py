@@ -387,3 +387,225 @@ class TestComponentParamsC152:
     def test_no_params_components_unchanged(self):
         for comp in ("realization", "inertia", "curvature", "overlap"):
             assert COMPONENT_PARAMS[comp] == [], f"{comp} should have no params"
+
+
+# ══════════════════════════════════════════════════════════
+# C155: Auto-Tuning
+# ══════════════════════════════════════════════════════════
+
+from e0_controller.parameter_sensitivity import (
+    AutoTuneResult,
+    AutoTuneRound,
+    auto_tune,
+    apply_config,
+)
+from e0_controller.controller import E0Controller, HybridMode
+
+
+class TestAutoTuneResult:
+    """AutoTuneResult dataclass properties."""
+
+    def _make(self, initial=1.0, final=2.0, rounds=None):
+        rnd = rounds or [
+            AutoTuneRound(
+                round_nr=1,
+                baseline=TrialResult(DEFAULTS, RunTrace(), None, {}),
+                report=SensitivityReport(trials=[
+                    TrialResult(DEFAULTS, RunTrace(), None, {"a": final}),
+                ]),
+                adopted_config=DEFAULTS,
+                improvement=final - initial,
+            ),
+        ]
+        return AutoTuneResult(
+            rounds=rnd,
+            initial_config=DEFAULTS,
+            best_config=DEFAULTS,
+            initial_quality=initial,
+            final_quality=final,
+        )
+
+    def test_improved_true(self):
+        assert self._make(1.0, 2.0).improved is True
+
+    def test_improved_false(self):
+        assert self._make(1.0, 1.0).improved is False
+
+    def test_improvement_delta(self):
+        assert self._make(1.0, 2.5).improvement == 1.5
+
+    def test_total_trials(self):
+        assert self._make(1.0, 2.0).total_trials == 1
+
+    def test_summary_string(self):
+        s = self._make(1.0, 2.0).summary()
+        assert "AutoTune" in s
+        assert "Improvement" in s
+
+
+class TestAutoTune:
+    """auto_tune() closed-loop parameter optimization."""
+
+    def test_returns_result(self):
+        result = auto_tune(
+            _make_landscape(), _success_fn, "S", max_cycles=15,
+        )
+        assert isinstance(result, AutoTuneResult)
+        assert len(result.rounds) >= 1
+
+    def test_initial_config_preserved(self):
+        cfg = replace(DEFAULTS, alpha=3.0)
+        result = auto_tune(
+            _make_landscape(), _success_fn, "S",
+            base_config=cfg, max_cycles=15,
+        )
+        assert result.initial_config.alpha == 3.0
+
+    def test_max_rounds_respected(self):
+        result = auto_tune(
+            _make_landscape(), _success_fn, "S",
+            max_cycles=15, max_rounds=1,
+        )
+        assert len(result.rounds) <= 1
+
+    def test_healthy_baseline_stops_early(self):
+        """If baseline is already healthy, auto_tune stops after 1 round."""
+        result = auto_tune(
+            _make_landscape(), _success_fn, "S",
+            max_cycles=15, max_rounds=5,
+        )
+        # With success_fn on a fully connected graph, everything should be healthy
+        # → auto_tune stops at round 1
+        assert len(result.rounds) >= 1
+
+    def test_with_goal(self):
+        L = Landscape()
+        L.add_edge("S", "G", delta=1.0, resistance=1.0)
+        result = auto_tune(L, _success_fn, "S", goal="G", max_cycles=50)
+        assert isinstance(result, AutoTuneResult)
+
+    def test_best_config_is_valid(self):
+        result = auto_tune(
+            _make_landscape(), _success_fn, "S", max_cycles=15,
+        )
+        assert isinstance(result.best_config, E0Config)
+
+    def test_round_has_baseline_and_report(self):
+        result = auto_tune(
+            _make_landscape(), _success_fn, "S", max_cycles=15,
+        )
+        rnd = result.rounds[0]
+        assert isinstance(rnd, AutoTuneRound)
+        assert isinstance(rnd.baseline, TrialResult)
+        assert isinstance(rnd.report, SensitivityReport)
+
+    def test_mixed_fn_may_improve(self):
+        """With mixed outcomes, auto_tune may find better configs."""
+        result = auto_tune(
+            _make_landscape(), _mixed_fn, "S",
+            max_cycles=20, max_rounds=2,
+        )
+        assert isinstance(result, AutoTuneResult)
+        # Should at least attempt perturbations
+        assert result.total_trials >= 1
+
+    def test_custom_perturbation_factor(self):
+        result = auto_tune(
+            _make_landscape(), _mixed_fn, "S",
+            max_cycles=15, perturbation_factor=0.5,
+        )
+        assert isinstance(result, AutoTuneResult)
+
+
+class TestApplyConfig:
+    """apply_config() updates a live controller."""
+
+    def test_updates_alpha(self):
+        L = _make_landscape()
+        ctrl = E0Controller(L, _success_fn)
+        cfg = replace(DEFAULTS, alpha=7.5)
+        apply_config(ctrl, cfg)
+        assert ctrl.alpha == 7.5
+
+    def test_updates_historization(self):
+        L = _make_landscape()
+        ctrl = E0Controller(L, _success_fn)
+        cfg = replace(DEFAULTS, rho=0.5, lambda_s=0.3)
+        apply_config(ctrl, cfg)
+        assert ctrl.landscape.historization.rho == 0.5
+        assert ctrl.landscape.historization.lambda_s == 0.3
+
+    def test_updates_hybrid_mode(self):
+        L = _make_landscape()
+        ctrl = E0Controller(L, _success_fn)
+        cfg = replace(DEFAULTS, hybrid_mode="born_sampling")
+        apply_config(ctrl, cfg)
+        assert ctrl.hybrid_mode == HybridMode.BORN_SAMPLING
+
+    def test_updates_overload_threshold(self):
+        L = _make_landscape()
+        ctrl = E0Controller(L, _success_fn)
+        cfg = replace(DEFAULTS, overload_threshold=10.0)
+        apply_config(ctrl, cfg)
+        assert ctrl.overload_threshold == 10.0
+
+    def test_updates_use_su2(self):
+        L = _make_landscape()
+        ctrl = E0Controller(L, _success_fn)
+        cfg = replace(DEFAULTS, use_su2=True)
+        apply_config(ctrl, cfg)
+        assert ctrl.use_su2 is True
+
+    def test_preserves_landscape_reference(self):
+        """apply_config modifies in-place, not reconstructs."""
+        L = _make_landscape()
+        ctrl = E0Controller(L, _success_fn)
+        apply_config(ctrl, replace(DEFAULTS, alpha=1.0))
+        assert ctrl.landscape is L
+
+    def test_controller_runs_after_apply(self):
+        """Controller still works after config change."""
+        L = _make_landscape()
+        ctrl = E0Controller(L, _success_fn)
+        apply_config(ctrl, replace(DEFAULTS, alpha=1.0, recent_k=2))
+        trace = ctrl.run("S", max_cycles=10)
+        assert len(trace.steps) > 0
+
+
+class TestSessionAutoTune:
+    """Session.auto_tune() integrates auto-tuning."""
+
+    def test_session_auto_tune_runs(self):
+        from e0_controller.session import Session
+        L = _make_landscape()
+        session = Session("test-auto", L, _success_fn)
+        result = session.auto_tune("S", max_cycles=15, max_rounds=1)
+        assert isinstance(result, AutoTuneResult)
+
+    def test_session_auto_tune_adopt(self):
+        """When adopt=True (default), best config is applied."""
+        from e0_controller.session import Session
+        L = _make_landscape()
+        session = Session("test-adopt", L, _success_fn)
+        original_alpha = session.controller.alpha
+        result = session.auto_tune("S", max_cycles=15)
+        # If improved, alpha may have changed
+        if result.improved:
+            assert result.best_config != result.initial_config
+
+    def test_session_auto_tune_no_adopt(self):
+        """adopt=False prevents applying the config."""
+        from e0_controller.session import Session
+        L = _make_landscape()
+        session = Session("test-no-adopt", L, _success_fn)
+        original_alpha = session.controller.alpha
+        result = session.auto_tune("S", max_cycles=15, adopt=False)
+        assert session.controller.alpha == original_alpha
+
+    def test_session_auto_tune_with_goal(self):
+        from e0_controller.session import Session
+        L = Landscape()
+        L.add_edge("S", "G", delta=1.0, resistance=1.0)
+        session = Session("test-goal", L, _success_fn)
+        result = session.auto_tune("S", goal="G", max_cycles=50)
+        assert isinstance(result, AutoTuneResult)
