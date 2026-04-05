@@ -158,6 +158,8 @@ __all__ = [
     "CrossReflexionResult", "CrossReflexionRunResult",
     "blend_patterns", "cross_propose_edges", "apply_cross_proposals",
     "cross_reflexion_turn", "run_with_cross_reflexion",
+    # Perspective Diagnostic (C153)
+    "PerspectiveReport", "perspective_check",
 ]
 
 from .primitives import Edge, Outcome, TransportRegime
@@ -244,3 +246,4 @@ from .cross_reflexion import (
     blend_patterns, cross_propose_edges, apply_cross_proposals,
     cross_reflexion_turn, run_with_cross_reflexion,
 )
+from .perspective_diagnostic import PerspectiveReport, perspective_check

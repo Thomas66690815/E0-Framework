@@ -29,6 +29,7 @@ from .config import DEFAULTS
 
 if TYPE_CHECKING:
     from .amplitude_overlay import OverlayReport
+    from .perspective_diagnostic import PerspectiveReport
 
 
 class EscalationType(Enum):
@@ -64,6 +65,7 @@ class StepResult:
     hybrid_overridden: bool = False  # 3l: True when amplitude overrode greedy
     override_confidence: float = 0.0  # 3f: P_best - P_second at override point
     inscribed: bool = True       # C118: False when inscription was skipped (autopilot)
+    perspective: Optional["PerspectiveReport"] = None  # C153: SU(2) perspective diagnostic
 
 
 @dataclass
@@ -652,6 +654,7 @@ class E0Controller:
         current: str,
         overlay_horizon: int = 0,
         overlay_goals: Optional[Set[str]] = None,
+        perspective_horizon: int = 0,
     ) -> Optional[StepResult]:
         """
         One complete controller cycle:
@@ -728,6 +731,14 @@ class E0Controller:
             current, overlay_horizon, overlay_goals,
         )
 
+        # SU(2) Perspective Diagnostic (C153): compare U(1) vs SU(2) rankings
+        perspective = None
+        if perspective_horizon > 0:
+            from .perspective_diagnostic import perspective_check
+            perspective = perspective_check(
+                self, current, horizon=perspective_horizon, goals=overlay_goals,
+            )
+
         return StepResult(
             tau=self.landscape.historization.tau,
             source=current,
@@ -743,6 +754,7 @@ class E0Controller:
             hybrid_overridden=overridden,
             override_confidence=(overlay.override_confidence if overlay else 0.0),
             inscribed=inscribed,
+            perspective=perspective,
         )
 
     def _compute_overlay(
@@ -775,6 +787,7 @@ class E0Controller:
         goal: Optional[str] = None,
         overlay_horizon: int = 0,
         overlay_goals: Optional[Set[str]] = None,
+        perspective_horizon: int = 0,
     ) -> RunTrace:
         """
         Run the controller from start.
@@ -782,6 +795,9 @@ class E0Controller:
         If overlay_horizon > 0, each StepResult will carry an amplitude
         overlay snapshot for that decision point (analysis only, does NOT
         alter transitions).
+
+        If perspective_horizon > 0, each StepResult will carry a
+        PerspectiveReport comparing U(1) vs SU(2) rankings (C153).
 
         Stops when:
         - goal state is reached (if specified — can be a single string
@@ -804,7 +820,10 @@ class E0Controller:
             if goal_set and current in goal_set:
                 break
 
-            step = self.cycle(current, overlay_horizon, overlay_goals)
+            step = self.cycle(
+                current, overlay_horizon, overlay_goals,
+                perspective_horizon=perspective_horizon,
+            )
             if step is None:
                 break  # complete dead-end, no escalation possible
 

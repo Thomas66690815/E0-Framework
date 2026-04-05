@@ -33,6 +33,7 @@ from .reflection import (
 from .self_graph import SelfGraph, CORE_COMPONENTS, MODULATION_COMPONENTS, ALL_COMPONENTS
 from .llm_adapter import LLMConfig
 from .config import DEFAULTS
+from .perspective_diagnostic import PerspectiveReport
 
 
 # ──────────────────────────────────────────────
@@ -197,14 +198,31 @@ class DualReflectionReport:
     self_diagnosis: SelfGraphDiagnosis
     meta_actions: List[str] = field(default_factory=list)
     mode_info: Optional[Dict[str, object]] = None
+    perspective: Optional[PerspectiveReport] = None
 
 
 def _cross_reference(
     domain: Optional[ReflectionReport],
     diag: SelfGraphDiagnosis,
+    perspective: Optional[PerspectiveReport] = None,
 ) -> List[str]:
     """Derive meta-actions from cross-referencing domain and self issues."""
     actions: List[str] = list(diag.meta_actions)
+
+    # SU(2) perspective fragility check
+    if perspective is not None and perspective.fragile:
+        actions.append(
+            f"SU(2) perspective fragile at {perspective.current}: "
+            f"U(1) best={perspective.u1_ranking[0]}, "
+            f"SU(2) best={perspective.su2_ranking[0]} "
+            f"(agreement={perspective.ranking_agreement:.2f}) "
+            f"— frame may be the problem, not parameters"
+        )
+        if diag.harmful:
+            actions.append(
+                f"Perspective-fragile + harmful components {diag.harmful} "
+                f"— consider frame change before parameter tuning"
+            )
 
     if domain is None:
         return actions
@@ -261,6 +279,7 @@ def reflect_dual(
     tuning_memory: Optional[Any] = None,
     landscape: Optional[Any] = None,
     mode_summary: Optional[Dict[str, object]] = None,
+    perspective: Optional[PerspectiveReport] = None,
 ) -> DualReflectionReport:
     """Run dual reflection: domain + self-graph diagnosis.
 
@@ -277,6 +296,7 @@ def reflect_dual(
         tuning_memory: Optional TuningMemory for structural triggers
         landscape: Optional Landscape for structural analysis
         mode_summary: Optional mode controller summary dict (from C46)
+        perspective: Optional PerspectiveReport from perspective_check (C153)
 
     Returns:
         DualReflectionReport with domain report, self-diagnosis, and meta-actions
@@ -295,13 +315,14 @@ def reflect_dual(
     self_diag = diagnose_self_graph(self_graph)
 
     # 3. Cross-reference for meta-actions
-    meta = _cross_reference(domain_report, self_diag)
+    meta = _cross_reference(domain_report, self_diag, perspective=perspective)
 
     return DualReflectionReport(
         domain_report=domain_report,
         self_diagnosis=self_diag,
         meta_actions=meta,
         mode_info=mode_summary,
+        perspective=perspective,
     )
 
 
@@ -371,6 +392,22 @@ def format_dual_report(report: DualReflectionReport) -> str:
     if d.deactivation_candidates:
         lines.append("")
         lines.append(f"  Deactivation candidates: {', '.join(d.deactivation_candidates)}")
+
+    # Perspective diagnostic (C153)
+    if report.perspective is not None:
+        lines.append("")
+        lines.append("─" * 78)
+        lines.append("SU(2) Perspective Diagnostic:")
+        lines.append("─" * 78)
+        p = report.perspective
+        status = "ROBUST" if p.robust else "FRAGILE"
+        lines.append(f"  Status: {status} (agreement={p.ranking_agreement:.2f})")
+        lines.append(f"  U(1)  ranking: {' > '.join(p.u1_ranking)}")
+        lines.append(f"  SU(2) ranking: {' > '.join(p.su2_ranking)}")
+        if p.geo_ranking:
+            lines.append(f"  Geo   ranking: {' > '.join(p.geo_ranking)}")
+        if p.fragile_actions:
+            lines.append(f"  Fragile actions: {', '.join(p.fragile_actions)}")
 
     # Meta-actions
     lines.append("")
