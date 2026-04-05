@@ -87,6 +87,19 @@ DEFAULT_TASK = (
 DEFAULT_START = "RAW_ANNOUNCEMENT"
 DEFAULT_GOAL = "BRIEFING_DELIVERED"
 
+_DERIVE_ENDPOINTS_SYSTEM = """\
+You derive start and goal states for a task processing pipeline.
+State names must be UPPER_CASE_WITH_UNDERSCORES, descriptive of the task."""
+
+_DERIVE_ENDPOINTS_PROMPT = """\
+Given this task, determine the appropriate start state (initial input/situation) \
+and goal state (final deliverable/outcome).
+
+Task: {task}
+
+Respond with exactly this JSON (no other text):
+{{"start": "START_STATE_NAME", "goal": "GOAL_STATE_NAME"}}"""
+
 DEFAULT_ENVELOPE = E0Envelope(
     mode=HybridMode.AMPLITUDE_ON_DISAGREE,
     geometry="goal_reaching",
@@ -145,32 +158,38 @@ class E0SessionResult:
 def _mock_llm_call(system: str, user: str, config: LLMConfig) -> str:
     """Deterministic mock for end-to-end testing."""
     if "design the complete state graph" in user:
+        # Extract start/goal from prompt to produce matching landscape
+        import re
+        m_start = re.search(r"Start state:\s*(\S+)", user)
+        m_goal = re.search(r"Goal state:\s*(\S+)", user)
+        start = m_start.group(1) if m_start else "RAW_ANNOUNCEMENT"
+        goal = m_goal.group(1) if m_goal else "BRIEFING_DELIVERED"
         return json.dumps({
             "states": [
-                "RAW_ANNOUNCEMENT", "TEXT_PARSED", "KEY_FACTS_EXTRACTED",
-                "MARKET_CONTEXT_GATHERED", "IMPACT_ASSESSED",
-                "RESPONSES_DRAFTED", "BRIEFING_ASSEMBLED", "BRIEFING_DELIVERED",
+                start, "STEP_PARSE", "STEP_EXTRACT",
+                "STEP_CONTEXT", "STEP_ASSESS",
+                "STEP_DRAFT", "STEP_ASSEMBLE", goal,
             ],
             "edges": [
-                {"source": "RAW_ANNOUNCEMENT", "target": "TEXT_PARSED",
+                {"source": start, "target": "STEP_PARSE",
                  "delta": 0.3, "resistance": 0.4,
-                 "description": "Parse announcement into sections."},
-                {"source": "TEXT_PARSED", "target": "KEY_FACTS_EXTRACTED",
+                 "description": "Parse input into sections."},
+                {"source": "STEP_PARSE", "target": "STEP_EXTRACT",
                  "delta": 0.5, "resistance": 0.8,
-                 "description": "Extract key facts."},
-                {"source": "KEY_FACTS_EXTRACTED", "target": "MARKET_CONTEXT_GATHERED",
+                 "description": "Extract key elements."},
+                {"source": "STEP_EXTRACT", "target": "STEP_CONTEXT",
                  "delta": 0.4, "resistance": 1.0,
-                 "description": "Research market context."},
-                {"source": "MARKET_CONTEXT_GATHERED", "target": "IMPACT_ASSESSED",
+                 "description": "Gather context."},
+                {"source": "STEP_CONTEXT", "target": "STEP_ASSESS",
                  "delta": 0.6, "resistance": 1.2,
-                 "description": "Assess strategic impact."},
-                {"source": "IMPACT_ASSESSED", "target": "RESPONSES_DRAFTED",
+                 "description": "Assess situation."},
+                {"source": "STEP_ASSESS", "target": "STEP_DRAFT",
                  "delta": 0.5, "resistance": 1.0,
-                 "description": "Draft response options."},
-                {"source": "RESPONSES_DRAFTED", "target": "BRIEFING_ASSEMBLED",
+                 "description": "Draft response."},
+                {"source": "STEP_DRAFT", "target": "STEP_ASSEMBLE",
                  "delta": 0.3, "resistance": 0.5,
-                 "description": "Assemble briefing document."},
-                {"source": "BRIEFING_ASSEMBLED", "target": "BRIEFING_DELIVERED",
+                 "description": "Assemble output."},
+                {"source": "STEP_ASSEMBLE", "target": goal,
                  "delta": 0.2, "resistance": 0.3,
                  "description": "Final review and delivery."},
             ],
@@ -193,8 +212,8 @@ def _mock_llm_call(system: str, user: str, config: LLMConfig) -> str:
 def run_session(
     *,
     task: str = DEFAULT_TASK,
-    start: str = DEFAULT_START,
-    goal: str = DEFAULT_GOAL,
+    start: Optional[str] = None,
+    goal: Optional[str] = None,
     session_id: str = "e0-session",
     use_mock: bool = False,
     scenario: Optional[ScenarioPacket] = None,
@@ -224,15 +243,6 @@ def run_session(
     Returns:
         E0SessionResult with full pipeline output.
     """
-    if envelope is None:
-        envelope = E0Envelope(
-            mode=HybridMode.AMPLITUDE_ON_DISAGREE,
-            geometry="goal_reaching",
-            horizon=4,
-            transport=TransportRegime.U1,
-            goals=frozenset({goal}),
-            alpha=0.5,
-        )
     if policy is None:
         policy = DEFAULT_POLICY
 
@@ -243,6 +253,31 @@ def run_session(
         goal = scenario.goal_state or goal
         if not session_id or session_id == "e0-session":
             session_id = scenario.scenario_id
+
+    # Derive start/goal from task when not provided
+    if start is None or goal is None:
+        if use_mock:
+            derived_start, derived_goal = _mock_derive_endpoints(task)
+        else:
+            config = LLMConfig(model="gpt-4.1-mini", temperature=0.2)
+            from .llm_adapter import openai_call
+            derived_start, derived_goal = _derive_endpoints(
+                task, openai_call, config,
+            )
+        if start is None:
+            start = derived_start
+        if goal is None:
+            goal = derived_goal
+
+    if envelope is None:
+        envelope = E0Envelope(
+            mode=HybridMode.AMPLITUDE_ON_DISAGREE,
+            geometry="goal_reaching",
+            horizon=4,
+            transport=TransportRegime.U1,
+            goals=frozenset({goal}),
+            alpha=0.5,
+        )
 
     _print(f"{'='*60}")
     _print(f"  E₀ Session Runner")
@@ -471,6 +506,32 @@ def _mock_llm_call_as_execute():
     return execute_fn
 
 
+def _derive_endpoints(
+    task: str,
+    llm_call: LLMCallFn,
+    config: LLMConfig,
+) -> tuple:
+    """Ask the LLM to derive appropriate start/goal states from a task."""
+    from .llm_adapter import _parse_json_response, _normalize_state_name
+    prompt = _DERIVE_ENDPOINTS_PROMPT.format(task=task)
+    raw = llm_call(_DERIVE_ENDPOINTS_SYSTEM, prompt, config)
+    data = _parse_json_response(raw, ["start", "goal"])
+    start = _normalize_state_name(str(data["start"]))
+    goal = _normalize_state_name(str(data["goal"]))
+    return start, goal
+
+
+def _mock_derive_endpoints(task: str) -> tuple:
+    """Deterministic mock: extract meaningful start/goal from task keywords."""
+    import re
+    # Keep only alphanumeric words
+    words = re.findall(r"[A-Za-z]+", task.upper())
+    skip = {"THE", "AND", "FOR", "INTO", "THIS", "FROM", "WITH", "THAT", "A", "AN"}
+    significant = [w for w in words if len(w) > 2 and w not in skip][:2]
+    tag = "_".join(significant) if significant else "TASK"
+    return f"RAW_{tag}", f"{tag}_COMPLETE"
+
+
 # ──────────────────────────────────────────────
 # CLI
 # ──────────────────────────────────────────────
@@ -483,18 +544,22 @@ def main() -> None:
     do_resume = "--resume" in args
 
     task = DEFAULT_TASK
-    start = DEFAULT_START
-    goal = DEFAULT_GOAL
+    start: Optional[str] = None
+    goal: Optional[str] = None
     session_id = "e0-session"
     scenario = None
+    explicit_start = False
+    explicit_goal = False
 
     for i, arg in enumerate(args):
         if arg == "--task" and i + 1 < len(args):
             task = args[i + 1]
         elif arg == "--start" and i + 1 < len(args):
             start = args[i + 1]
+            explicit_start = True
         elif arg == "--goal" and i + 1 < len(args):
             goal = args[i + 1]
+            explicit_goal = True
         elif arg == "--session" and i + 1 < len(args):
             session_id = args[i + 1]
         elif arg == "--scenario" and i + 1 < len(args):
@@ -521,6 +586,12 @@ def main() -> None:
             if arg == "--resume" and i + 1 < len(args):
                 session_id = args[i + 1]
                 break
+
+    # If using the default task without explicit endpoints, use defaults
+    if task == DEFAULT_TASK and not explicit_start:
+        start = DEFAULT_START
+    if task == DEFAULT_TASK and not explicit_goal:
+        goal = DEFAULT_GOAL
 
     run_session(
         task=task,

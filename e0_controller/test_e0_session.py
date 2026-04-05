@@ -1,4 +1,4 @@
-"""Tests for E₀ Session Runner (C165)."""
+"""Tests for E₀ Session Runner (C165 + C166b)."""
 
 from __future__ import annotations
 
@@ -14,6 +14,11 @@ from e0_controller.e0_session import (
     run_session,
     _load_perception,
     _mock_llm_call,
+    _mock_derive_endpoints,
+    _derive_endpoints,
+    DEFAULT_TASK,
+    DEFAULT_START,
+    DEFAULT_GOAL,
     PERCEPTION_MEMO,
 )
 from e0_controller.communication import IntentReport, IntentType
@@ -208,6 +213,101 @@ class TestSessionResult(unittest.TestCase):
         self.assertIsInstance(result.goal_reached, bool)
         self.assertIsInstance(result.resumed, bool)
         self.assertFalse(result.resumed)
+
+
+class TestEndpointDerivation(unittest.TestCase):
+    """C166b: LLM-derived start/goal states from task description."""
+
+    def test_mock_derive_endpoints_default_task(self):
+        start, goal = _mock_derive_endpoints(DEFAULT_TASK)
+        self.assertTrue(start.startswith("RAW_"))
+        self.assertTrue(goal.endswith("_COMPLETE"))
+        self.assertNotEqual(start, "RAW_")
+        self.assertNotEqual(goal, "_COMPLETE")
+
+    def test_mock_derive_endpoints_custom_task(self):
+        start, goal = _mock_derive_endpoints(
+            "Translate a Biological Immune Response into a Cybersecurity Protocol"
+        )
+        self.assertTrue(start.startswith("RAW_"))
+        self.assertTrue(goal.endswith("_COMPLETE"))
+        # Must contain task-specific keyword
+        self.assertIn("TRANSLATE", start)
+
+    def test_mock_derive_different_tasks_produce_different_endpoints(self):
+        s1, g1 = _mock_derive_endpoints("Build a trading strategy")
+        s2, g2 = _mock_derive_endpoints("Design a medical protocol")
+        self.assertNotEqual(s1, s2)
+        self.assertNotEqual(g1, g2)
+
+    def test_mock_derive_empty_task_fallback(self):
+        start, goal = _mock_derive_endpoints("a")
+        self.assertEqual(start, "RAW_TASK")
+        self.assertEqual(goal, "TASK_COMPLETE")
+
+    def test_derive_endpoints_with_mock_llm(self):
+        """_derive_endpoints parses LLM JSON response correctly."""
+        from e0_controller.llm_adapter import LLMConfig
+
+        def fake_llm(system, user, config):
+            return json.dumps({"start": "IMMUNE_INPUT", "goal": "PROTOCOL_READY"})
+
+        start, goal = _derive_endpoints("test task", fake_llm, LLMConfig())
+        self.assertEqual(start, "IMMUNE_INPUT")
+        self.assertEqual(goal, "PROTOCOL_READY")
+
+    def test_session_custom_task_derives_endpoints(self):
+        """run_session with custom task and no start/goal derives them."""
+        result = run_session(
+            task="Build a trading strategy for emerging markets",
+            use_mock=True,
+            open_browser=False,
+            session_id="test-derive",
+            max_iterations=1,
+        )
+        self.assertIsInstance(result, E0SessionResult)
+        self.assertTrue(result.goal_reached or result.iterations > 0)
+
+    def test_session_explicit_start_goal_skips_derivation(self):
+        """Explicit start/goal are used as-is, no derivation."""
+        result = run_session(
+            task="Some custom task",
+            start="MY_START",
+            goal="MY_GOAL",
+            use_mock=True,
+            open_browser=False,
+            session_id="test-explicit",
+            max_iterations=1,
+        )
+        self.assertIsInstance(result, E0SessionResult)
+
+    def test_session_partial_override_goal_only(self):
+        """Providing only goal derives start from task."""
+        result = run_session(
+            task="Analyze protein folding patterns",
+            goal="ANALYSIS_DONE",
+            use_mock=True,
+            open_browser=False,
+            session_id="test-partial",
+            max_iterations=1,
+        )
+        self.assertIsInstance(result, E0SessionResult)
+
+    def test_mock_landscape_uses_derived_endpoints(self):
+        """Mock landscape states should include the derived start/goal."""
+        from e0_controller.llm_adapter import LLMConfig
+        raw = _mock_llm_call(
+            "system",
+            "design the complete state graph\nStart state: CUSTOM_START\nGoal state: CUSTOM_END",
+            LLMConfig(),
+        )
+        data = json.loads(raw)
+        self.assertIn("CUSTOM_START", data["states"])
+        self.assertIn("CUSTOM_END", data["states"])
+        # First edge starts from CUSTOM_START
+        self.assertEqual(data["edges"][0]["source"], "CUSTOM_START")
+        # Last edge targets CUSTOM_END
+        self.assertEqual(data["edges"][-1]["target"], "CUSTOM_END")
 
 
 class TestCleanup(unittest.TestCase):
