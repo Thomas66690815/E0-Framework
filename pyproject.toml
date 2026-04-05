@@ -63,6 +63,8 @@ dev = ["ruff"]
 include = ["e0_controller*"]
 
 [tool.pytest.ini_options]
+testpaths = ["e0_controller", "server"]
+norecursedirs = ["_archive", "__pycache__", "*.egg-info"]
 filterwarnings = [
     # Advisory hint for goal+simple geometry — intentional in tests
     "ignore:Goal .* is set but hybrid_geometry='simple':UserWarning",
