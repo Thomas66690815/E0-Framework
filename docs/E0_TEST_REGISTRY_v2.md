@@ -3623,7 +3623,41 @@ Hungarian+WL-D2 scales beyond the 44-node real canons, maintaining >99% accuracy
 
 ---
 
-## 6. Test file inventory
+### C151 — Honest Activation: Amplitude/Born Self-Graph Attribution
+
+**Claim:** In GREEDY mode, `amplitude` and `born` components have zero influence on the controller’s decision. Marking them as active in the Self-Graph is dishonest and causes core-component degeneracy (all 6 share identical quality/load/inertia). C151 makes their activation conditional on actual participation: `amplitude` is active only when a hybrid overlay is computed, `born` only when Born sampling is used.
+
+**Key changes:**
+- `active_components()` gains `amplitude_active` and `born_active` keyword params
+- `ALWAYS_ACTIVE_COMPONENTS` constant: the 4 components always active regardless of mode
+- `self_historize()` updates edges where **source** is active (was: both endpoints)
+- Controller call site passes honest flags based on `hybrid_mode` and overlay state
+
+**File:** `test_self_graph.py` — 10 new tests (57 total in file)
+
+| Test | Validates |
+|---|---|
+| `TestActiveComponents::test_default_all_core` | Default params include all CORE_COMPONENTS |
+| `TestActiveComponents::test_greedy_mode_excludes_amplitude_born` | amplitude_active=False, born_active=False → ALWAYS_ACTIVE only |
+| `TestActiveComponents::test_amplitude_on_disagree` | amplitude in, born out |
+| `TestActiveComponents::test_born_sampling` | Both amplitude and born in |
+| `TestActiveComponents::test_always_active_constant` | ALWAYS_ACTIVE = {realization, historization, inertia, transition_field} |
+| `TestHonestActivation::test_greedy_excludes_amplitude_born` | GREEDY → amplitude/born load=0, others >0 |
+| `TestHonestActivation::test_greedy_breaks_degeneracy` | transition_field load ≠ amplitude load |
+| `TestHonestActivation::test_born_sampling_activates_both` | BORN_SAMPLING → amplitude AND born load >0 |
+| `TestHonestActivation::test_amplitude_on_disagree_activates_amplitude_only` | AMPLITUDE_ON_DISAGREE → amplitude >0, born =0 |
+| `TestHonestActivation::test_self_historize_source_only` | Source-only edge update (tf→amp updated, amp→born not) |
+| `TestHonestActivation::test_always_active_subset_correct` | ALWAYS_ACTIVE ⊂ CORE, len=4, no amp/born |
+
+**Result**
+- 3646/3646 tests pass, 0 failures
+- Core component degeneracy broken: amplitude/born stay at zero in GREEDY
+- Existing tests updated: 8 tests in test_self_graph.py and test_demo_self_graph.py
+
+**Status**
+✅ Confirmed
+
+---
 | `test_amplitude_overlay.py` | 125 | C2/C3 |
 | `test_beipackzettel.py` | 20 | C31 |
 | `test_beipackzettel_noncircular.py` | 11 | C32 |
@@ -3693,7 +3727,7 @@ Hungarian+WL-D2 scales beyond the 44-node real canons, maintaining >99% accuracy
 | `test_resonator.py` | 73 | C16/C24 |
 | `test_resonator_integration.py` | 37 | C39 |
 | `test_scaling.py` | 14 | C12 |
-| `test_self_graph.py` | 47 | C43 |
+| `test_self_graph.py` | 57 | C43/C151 |
 | `test_self_tuning.py` | 87 | C29 |
 | `test_service_layer.py` | 43 | C83 |
 | `test_session.py` | 13 | C30 |

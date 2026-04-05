@@ -697,12 +697,23 @@ class E0Controller:
             )
 
             # Self-Graph update (C43): record which components contributed
+            # Honest activation (C151): amplitude and born are only active
+            # when they actually participated in the decision.
             if self.self_graph is not None:
                 from .self_graph import active_components
+                overlay_participated = (
+                    self.hybrid_mode != HybridMode.GREEDY
+                    and hybrid_overlay is not None
+                )
                 components = active_components(
                     curvature_active=self.landscape.curvature_modulation,
                     overlap_active=self.landscape.overlap_modulation,
                     inertia_active=self.landscape.inertia_modulation,
+                    amplitude_active=overlay_participated,
+                    born_active=(
+                        overlay_participated
+                        and self.hybrid_mode == HybridMode.BORN_SAMPLING
+                    ),
                 )
                 self.self_graph.self_historize(components, outcome)
 

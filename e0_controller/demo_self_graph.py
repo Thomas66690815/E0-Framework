@@ -40,7 +40,7 @@ from e0_controller.landscape import Landscape
 from e0_controller.controller import E0Controller
 from e0_controller.self_graph import (
     SelfGraph, active_components, ALL_COMPONENTS,
-    CORE_COMPONENTS, MODULATION_COMPONENTS,
+    CORE_COMPONENTS, MODULATION_COMPONENTS, ALWAYS_ACTIVE_COMPONENTS,
     CORE_EDGES, MODULATION_EDGES,
 )
 from e0_controller.dual_reflection import (
@@ -163,7 +163,7 @@ def run_demo(use_entropy: bool = False) -> dict:
             print(f"     ► {a}")
 
     # Show the key insight
-    mech_core_q = sg.component_quality("amplitude")
+    mech_core_q = sg.component_quality("transition_field")
     mech_overlap_q = sg.component_quality("overlap")
     print(f"\n   Core quality:     {mech_core_q:+.3f}  "
           f"(30 U + 10 F = quality {mech_core_q:+.3f})")
@@ -230,9 +230,9 @@ def run_demo(use_entropy: bool = False) -> dict:
         ctrl.self_graph = sg_conv
         ctrl.run("SUBMIT", max_cycles=20, goal="DONE")
         snap = sg_conv.snapshot()
-        core_q = sum(snap[c]["quality"] for c in CORE_COMPONENTS) / len(CORE_COMPONENTS)
-        core_load = sum(snap[c]["load"] for c in CORE_COMPONENTS) / len(CORE_COMPONENTS)
-        core_inertia = sum(snap[c]["inertia"] for c in CORE_COMPONENTS) / len(CORE_COMPONENTS)
+        core_q = sum(snap[c]["quality"] for c in ALWAYS_ACTIVE_COMPONENTS) / len(ALWAYS_ACTIVE_COMPONENTS)
+        core_load = sum(snap[c]["load"] for c in ALWAYS_ACTIVE_COMPONENTS) / len(ALWAYS_ACTIVE_COMPONENTS)
+        core_inertia = sum(snap[c]["inertia"] for c in ALWAYS_ACTIVE_COMPONENTS) / len(ALWAYS_ACTIVE_COMPONENTS)
         history.append({
             "run": i + 1, "core_q": core_q,
             "core_load": core_load, "core_inertia": core_inertia,

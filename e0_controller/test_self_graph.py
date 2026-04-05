@@ -13,6 +13,7 @@ from e0_controller.self_graph import (
     SelfGraph,
     ALL_COMPONENTS,
     CORE_COMPONENTS,
+    ALWAYS_ACTIVE_COMPONENTS,
     MODULATION_COMPONENTS,
     CORE_EDGES,
     MODULATION_EDGES,
@@ -80,9 +81,29 @@ class TestSelfGraphTopology:
 class TestActiveComponents:
     """active_components() returns the right set based on flags."""
 
-    def test_default_core_only(self):
+    def test_default_all_core(self):
+        # Default: amplitude_active=True, born_active=True
         result = active_components()
         assert set(result) == set(CORE_COMPONENTS)
+
+    def test_greedy_mode_excludes_amplitude_born(self):
+        # C151: GREEDY mode passes amplitude_active=False, born_active=False
+        result = active_components(amplitude_active=False, born_active=False)
+        assert set(result) == set(ALWAYS_ACTIVE_COMPONENTS)
+        assert "amplitude" not in result
+        assert "born" not in result
+
+    def test_amplitude_on_disagree(self):
+        # AMPLITUDE_ON_DISAGREE: amplitude active, born not
+        result = active_components(amplitude_active=True, born_active=False)
+        assert "amplitude" in result
+        assert "born" not in result
+
+    def test_born_sampling(self):
+        # BORN_SAMPLING: both active
+        result = active_components(amplitude_active=True, born_active=True)
+        assert "amplitude" in result
+        assert "born" in result
 
     def test_with_curvature(self):
         result = active_components(curvature_active=True)
@@ -105,6 +126,11 @@ class TestActiveComponents:
         # only changes whether it _modulates_
         result = active_components(inertia_active=False)
         assert "inertia" in result
+
+    def test_always_active_constant(self):
+        assert set(ALWAYS_ACTIVE_COMPONENTS) == {
+            "realization", "historization", "inertia", "transition_field",
+        }
 
 
 # ──────────────────────────────────────────────
@@ -141,13 +167,16 @@ class TestSelfHistorize:
 
     def test_only_matching_edges_updated(self):
         sg = SelfGraph()
-        # Only curvature + transition_field active — should only update
-        # curvature→transition_field, not any core edges
+        # Only curvature + transition_field active — should update edges
+        # where source is in the active set
         sg.self_historize(["curvature", "transition_field"], Outcome.SUCCESS)
+        # curvature→transition_field: curvature is source, curvature active → updated
         e_mod = Edge("curvature", "transition_field")
         assert sg.landscape.historization.trace_load(e_mod) > 0
-
-        # Core edges should be untouched
+        # transition_field→amplitude: tf is source, tf active → updated
+        e_tf = Edge("transition_field", "amplitude")
+        assert sg.landscape.historization.trace_load(e_tf) > 0
+        # amplitude→born: amplitude NOT active → NOT updated
         e_core = Edge("amplitude", "born")
         assert sg.landscape.historization.trace_load(e_core) == 0.0
 
@@ -367,12 +396,15 @@ class TestControllerIntegration:
         ctrl = E0Controller(ls, lambda s, t: Outcome.SUCCESS)
         ctrl.self_graph = sg
         # Before cycle: all loads are zero
-        assert sg.component_load("born") == 0.0
+        assert sg.component_load("transition_field") == 0.0
         # Run one cycle
         ctrl.cycle("A")
-        # After cycle: core components should be historized
-        assert sg.component_load("born") > 0.0
-        assert sg.component_load("amplitude") > 0.0
+        # After cycle: always-active components should be historized
+        assert sg.component_load("transition_field") > 0.0
+        assert sg.component_load("historization") > 0.0
+        # In GREEDY mode, amplitude/born should NOT be active (C151)
+        assert sg.component_load("amplitude") == 0.0
+        assert sg.component_load("born") == 0.0
 
     def test_multiple_cycles_accumulate(self):
         ls = _build_test_landscape()
@@ -380,9 +412,9 @@ class TestControllerIntegration:
         ctrl = E0Controller(ls, lambda s, t: Outcome.SUCCESS)
         ctrl.self_graph = sg
         ctrl.cycle("A")
-        load1 = sg.component_load("born")
+        load1 = sg.component_load("transition_field")
         ctrl.cycle("A")
-        load2 = sg.component_load("born")
+        load2 = sg.component_load("transition_field")
         assert load2 > load1
 
     def test_failure_outcome_recorded(self):
@@ -391,7 +423,7 @@ class TestControllerIntegration:
         ctrl = E0Controller(ls, lambda s, t: Outcome.FAILURE)
         ctrl.self_graph = sg
         ctrl.cycle("A")
-        q = sg.component_quality("born")
+        q = sg.component_quality("transition_field")
         assert q < 0, f"Expected negative quality for failure, got {q}"
 
     def test_modulation_components_reflected(self):
@@ -413,7 +445,7 @@ class TestControllerIntegration:
         ctrl.self_graph = sg
         ctrl.run("A", max_cycles=5)
         # After 5 cycles, significant load should have accumulated
-        assert sg.component_load("born") > 2.0
+        assert sg.component_load("transition_field") > 2.0
 
     def test_no_self_graph_no_error(self):
         ls = _build_test_landscape()
@@ -429,8 +461,101 @@ class TestControllerIntegration:
         ctrl.self_graph = sg
         ctrl.run("A", max_cycles=10)
         snap = sg.snapshot()
-        # Core components should have non-zero load
-        assert snap["born"]["load"] > 0
-        assert snap["amplitude"]["load"] > 0
+        # Always-active components should have non-zero load
+        assert snap["transition_field"]["load"] > 0
+        assert snap["historization"]["load"] > 0
         # Quality should be positive (all successes)
-        assert snap["born"]["quality"] > 0.5
+        assert snap["transition_field"]["quality"] > 0.5
+        # In GREEDY mode, amplitude/born should stay at zero (C151)
+        assert snap["amplitude"]["load"] == 0
+        assert snap["born"]["load"] == 0
+
+
+# ──────────────────────────────────────────────
+# 8. Honest Activation (C151)
+# ──────────────────────────────────────────────
+
+class TestHonestActivation:
+    """C151: amplitude/born only active when they participate."""
+
+    def test_greedy_excludes_amplitude_born(self):
+        """In GREEDY mode, amplitude and born have zero load."""
+        ls = _build_test_landscape()
+        sg = SelfGraph()
+        ctrl = E0Controller(ls, lambda s, t: Outcome.SUCCESS)
+        ctrl.self_graph = sg
+        ctrl.run("A", max_cycles=10)
+        assert sg.component_load("amplitude") == 0.0
+        assert sg.component_load("born") == 0.0
+        # Always-active components DO accumulate
+        assert sg.component_load("transition_field") > 0
+        assert sg.component_load("historization") > 0
+        assert sg.component_load("realization") > 0
+        assert sg.component_load("inertia") > 0
+
+    def test_greedy_breaks_degeneracy(self):
+        """C151 core insight: always-active components diverge from amplitude/born."""
+        ls = _build_test_landscape()
+        sg = SelfGraph()
+        ctrl = E0Controller(ls, lambda s, t: Outcome.SUCCESS)
+        ctrl.self_graph = sg
+        for _ in range(10):
+            ctrl.cycle("A")
+        # Always-active components have load > 0
+        tf_load = sg.component_load("transition_field")
+        assert tf_load > 0
+        # amplitude/born have zero load — degeneracy is broken
+        assert sg.component_load("amplitude") == 0.0
+        assert sg.component_load("born") == 0.0
+        assert tf_load != sg.component_load("amplitude")
+
+    def test_born_sampling_activates_both(self):
+        """In BORN_SAMPLING mode, amplitude AND born accumulate load."""
+        from e0_controller.controller import HybridMode
+        ls = _build_test_landscape()
+        sg = SelfGraph()
+        ctrl = E0Controller(
+            ls, lambda s, t: Outcome.SUCCESS,
+            hybrid_mode=HybridMode.BORN_SAMPLING,
+            hybrid_horizon=2,
+        )
+        ctrl.self_graph = sg
+        ctrl.run("A", max_cycles=10)
+        # Both amplitude and born should now have load
+        assert sg.component_load("amplitude") > 0
+        assert sg.component_load("born") > 0
+
+    def test_amplitude_on_disagree_activates_amplitude_only(self):
+        """In AMPLITUDE_ON_DISAGREE, amplitude is active but born is not."""
+        from e0_controller.controller import HybridMode
+        ls = _build_test_landscape()
+        sg = SelfGraph()
+        ctrl = E0Controller(
+            ls, lambda s, t: Outcome.SUCCESS,
+            hybrid_mode=HybridMode.AMPLITUDE_ON_DISAGREE,
+            hybrid_horizon=2,
+        )
+        ctrl.self_graph = sg
+        ctrl.run("A", max_cycles=10)
+        # Amplitude should have load (overlay is computed)
+        assert sg.component_load("amplitude") > 0
+        # Born should NOT (no Born sampling in this mode)
+        assert sg.component_load("born") == 0.0
+
+    def test_self_historize_source_only(self):
+        """self_historize updates edges where SOURCE is active (not both endpoints)."""
+        sg = SelfGraph()
+        # Only transition_field active — its outgoing edge tf→amplitude IS updated
+        sg.self_historize(["transition_field"], Outcome.SUCCESS)
+        e_tf_amp = Edge("transition_field", "amplitude")
+        assert sg.landscape.historization.trace_load(e_tf_amp) > 0
+        # amplitude→born NOT updated (amplitude not in active set)
+        e_amp_born = Edge("amplitude", "born")
+        assert sg.landscape.historization.trace_load(e_amp_born) == 0.0
+
+    def test_always_active_subset_correct(self):
+        """ALWAYS_ACTIVE_COMPONENTS is the correct subset of CORE_COMPONENTS."""
+        assert set(ALWAYS_ACTIVE_COMPONENTS) < set(CORE_COMPONENTS)
+        assert "amplitude" not in ALWAYS_ACTIVE_COMPONENTS
+        assert "born" not in ALWAYS_ACTIVE_COMPONENTS
+        assert len(ALWAYS_ACTIVE_COMPONENTS) == 4

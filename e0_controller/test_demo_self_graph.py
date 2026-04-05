@@ -35,12 +35,18 @@ class TestSelfGraphStructure:
 
     def test_active_components_core_only(self):
         comps = active_components(overlap_active=False)
-        assert set(comps) == set(CORE_COMPONENTS)
+        # In default (GREEDY) mode, amplitude/born not active
+        assert "realization" in comps
+        assert "historization" in comps
+        assert "transition_field" in comps
+        assert "inertia" in comps
+        assert "amplitude" in comps  # default: amplitude_active=True
+        assert "born" in comps        # default: born_active=True
 
     def test_active_components_with_overlap(self):
         comps = active_components(overlap_active=True)
         assert "overlap" in comps
-        for c in CORE_COMPONENTS:
+        for c in ["realization", "historization", "transition_field", "inertia"]:
             assert c in comps
 
 
@@ -190,9 +196,13 @@ class TestEndToEnd:
             ctrl = E0Controller(L, _execute_approval, alpha=2.0, recent_k=3)
             ctrl.self_graph = sg
             ctrl.run("SUBMIT", max_cycles=20, goal="DONE")
-        assert sg.component_load("amplitude") > 0
+        # Always-active components accumulate in GREEDY mode
+        assert sg.component_load("transition_field") > 0
         assert sg.component_load("overlap") > 0
-        assert sg.component_quality("amplitude") == pytest.approx(1.0)
+        assert sg.component_quality("transition_field") == pytest.approx(1.0)
+        # amplitude/born stay at zero in GREEDY mode (C151)
+        assert sg.component_load("amplitude") == 0
+        assert sg.component_load("born") == 0
 
     def test_all_healthy_when_all_succeed(self):
         sg = SelfGraph()
@@ -202,8 +212,13 @@ class TestEndToEnd:
             ctrl.self_graph = sg
             ctrl.run("SUBMIT", max_cycles=20, goal="DONE")
         diag = diagnose_self_graph(sg)
-        for c in CORE_COMPONENTS:
+        # Always-active components should be healthy
+        from e0_controller.self_graph import ALWAYS_ACTIVE_COMPONENTS
+        for c in ALWAYS_ACTIVE_COMPONENTS:
             assert c in diag.healthy
+        # amplitude/born should be insufficient_data in GREEDY mode
+        assert "amplitude" in diag.insufficient_data
+        assert "born" in diag.insufficient_data
 
 
 # ── Full Demo ────────────────────────────────────────────────────

@@ -43,10 +43,16 @@ from .config import DEFAULTS
 # 1. Component Definitions
 # ──────────────────────────────────────────────
 
-# Core cycle: always active
+# Core cycle components
 CORE_COMPONENTS = [
     "amplitude", "born", "realization", "historization",
     "inertia", "transition_field",
+]
+
+# Always-active subset: participate in every cycle regardless of hybrid mode.
+# amplitude and born only participate when hybrid mode is active (C151).
+ALWAYS_ACTIVE_COMPONENTS = [
+    "realization", "historization", "inertia", "transition_field",
 ]
 
 # Optional modulations: may or may not be active
@@ -86,18 +92,31 @@ def active_components(
     curvature_active: bool = False,
     overlap_active: bool = False,
     inertia_active: bool = False,
+    amplitude_active: bool = True,
+    born_active: bool = True,
 ) -> List[str]:
     """Return the list of components active in this decision cycle.
 
-    Core components (amplitude, born, realization, historization,
-    transition_field) are always active. Modulation components are
-    active only when their flags are enabled.
+    Core components (realization, historization, inertia, transition_field)
+    are always active.  ``amplitude`` and ``born`` are only active when
+    they actually participated in the decision (honest activation).
+
+    In GREEDY mode without overlay, amplitude and born have zero influence
+    on the chosen action — marking them active would be dishonest and
+    causes core-component degeneracy (all 6 share identical quality).
+
+    Modulation components are active only when their landscape flags are
+    enabled.
 
     The `inertia` component is always in the graph (it's part of the
     core cycle) but only *modulates* when inertia_modulation is True.
     When inactive, its edge still exists but gets neutral outcomes.
     """
-    result = list(CORE_COMPONENTS)
+    result = ["realization", "historization", "inertia", "transition_field"]
+    if amplitude_active:
+        result.append("amplitude")
+    if born_active:
+        result.append("born")
     if curvature_active:
         result.append("curvature")
     if overlap_active:
@@ -148,19 +167,25 @@ class SelfGraph:
     # --- Self-Historization ---
 
     def self_historize(self, components: List[str], outcome: Outcome) -> None:
-        """Record the outcome on all edges involving the given components.
+        """Record the outcome on edges originating from active components.
 
         After a controller decision, call this with the list of components
         that were active in that cycle and the decision outcome.
 
-        Updates traces on every edge where *both* source and target
-        are in the active component set. This ensures that only
-        edges that actually participated get historized.
+        Updates traces on every edge where the *source* is in the active
+        component set.  This ensures that each active component's outgoing
+        edges (which determine its load/quality/inertia) reflect the
+        outcome — even when the target component was not active.
+
+        C151 (Honest Activation): amplitude and born are excluded from
+        the active set in GREEDY mode, so their outgoing edges accumulate
+        no data, breaking the degeneracy where all 6 core components
+        shared identical metrics.
         """
         component_set = set(components)
         all_edges = CORE_EDGES + MODULATION_EDGES
         for src, tgt in all_edges:
-            if src in component_set and tgt in component_set:
+            if src in component_set:
                 edge = Edge(src, tgt)
                 self._landscape.historization.update(edge, outcome)
 
