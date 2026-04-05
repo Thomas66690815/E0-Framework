@@ -24,7 +24,8 @@ In practical terms, this means the repository is no longer only about a determin
 - curriculum-driven canon learning (C123),
 - proactive reflexion that proposes before stagnation (C57),
 - an LLM adapter with embedded E₀ semantic context,
-- and 15 live demos covering all major capabilities.
+- human communication layer with learnable perception ontology (C158–C162),
+- and 16 live demos covering all major capabilities.
 
 This is not a prompt-engineering repo and not a conventional agent framework.
 It is an attempt to build a structural decision layer that operates beneath semantics and can still be exposed to semantic systems.
@@ -200,13 +201,14 @@ Two systems that solve cold-start and hierarchical learning:
 - [External validation / handoff note](docs/E0_EXTERNAL_VALIDATION_AND_HANDOFF_NOTE_v1.md) — package for reviewers or AI systems
 - [Phase 3q interference report](docs/E0_PHASE3Q_INTERFERENCE_REPORT_v1.md) — holonomy formula, goal_reaching geometry, Gordian Trap
 - [Paper 3: Non-Abelian Structure](docs/papers/E0_PAPER3_NON_ABELIAN_STRUCTURE_v1.md) — SU(2) transport, curvature modulation, topological invariants
-- [Test Registry v2](docs/E0_TEST_REGISTRY_v2.md) — complete per-file test inventory (3811 tests)
+- [Test Registry v2](docs/E0_TEST_REGISTRY_v2.md) — complete per-file test inventory (3975 tests)
 - [Empirical Insights](docs/E0_EMPIRICAL_INSIGHTS_v1.md) — what Chess (C72) reveals about E₀ as a whole
 - [Dream Mode Concept](docs/E0_DREAM_MODE_CONCEPT_v1.md) — cross-domain pattern recognition through passive observation (C109–C139)
 - [Structural Entropy Design](docs/E0_STRUCTURAL_ENTROPY_DESIGN_v1.md) — forgetting as structural necessity (C114–C121)
 - [Language Learning Results](docs/E0_LANGUAGE_LEARNING_RESULTS_v1.md) — cross-domain translation via structural fingerprints (C124–C137)
 - [Observation UI Architecture](docs/E0_OBSERVATION_UI_ARCHITECTURE_v1.md) — O-Landscape projection and navigation (C94–C97)
 - [LLM Bootstrap Architecture](docs/E0_LLM_BOOTSTRAP_ARCHITECTURE_v1.md) — E₀=Skeleton, LLM=Muscle (C43–C47)
+- [Human Communication Design](docs/E0_HUMAN_COMMUNICATION_DESIGN_v1.md) — learnable perception + intent + UISpec emission (C158–C162)
 
 ---
 
@@ -338,8 +340,13 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 | Auto-Tuning (C155) | **Active** (25 tests) | `e0_controller/parameter_sensitivity.py`, `session.py` |
 | Curriculum ↔ Sleep-Wake (C156) | **Active** (14 tests) | `e0_controller/curriculum.py` |
 | Dream → CouplingRouter (C157) | **Active** (15 tests) | `e0_controller/coupling_router.py` |
+| Perception Ontology (C158) | **Active** (48 tests) | `e0_controller/perception.py` |
+| Communication Intent (C159) | **Active** (42 tests) | `e0_controller/communication.py` |
+| UI-Schema Emitter (C160) | **Active** (32 tests) | `e0_controller/ui_emitter.py` |
+| Human Feedback Loop (C161) | **Active** (30 tests) | `e0_controller/feedback.py` |
+| Human Communication PoC (C162) | **Active** (12 tests) | `e0_controller/demo_human_communication.py` |
 
-**Tests:** 3811 total (pytest), 0 failures, 0 warnings, 41 conditional (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
+**Tests:** 3975 total (pytest), 0 failures, 0 warnings, 41 conditional (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
 
 ---
 

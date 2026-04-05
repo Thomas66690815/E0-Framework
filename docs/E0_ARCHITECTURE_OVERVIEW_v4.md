@@ -3,8 +3,8 @@
 **Status:** Canonical reference  
 **Date:** 2026-04-05  
 **Supersedes:** E0_ARCHITECTURE_OVERVIEW_v3.md (2026-04-02)  
-**Scope:** 60 production modules, 9 benchmarks, 15 demos, 37 explorations, 102 test files — ~24,400 production lines, 3811 tests
-**Latest:** C157 (Dream Equivalences → CouplingRouter — all integration gaps closed)
+**Scope:** 64 production modules, 9 benchmarks, 16 demos, 37 explorations, 106 test files — ~25,700 production lines, 3975 tests
+**Latest:** C162 (Human Communication Proof-of-Concept — end-to-end: perception → intent → UISpec → feedback)
 **Papers:** P1 (Structural Interference), P2 (Spinor/Born), P3 (Non-Abelian), P4 (Reflexivity), P5 (Emergent Locality), P6 (Dream Mode)
 
 ---
@@ -58,6 +58,10 @@ E₀ is organized in eleven layers. Each layer depends only on layers above it.
 ├─────────────────────────────────────────────────────────┤
 │  Layer 11 — SLEEP–WAKE CYCLE                            │
 │  Dream Pressure, SleepWakeCycle Orchestrator             │
+├─────────────────────────────────────────────────────────┤
+│  Layer 12 — HUMAN COMMUNICATION                         │
+│  Perception Ontology, Communication Intent,              │
+│  UI-Schema Emitter, Human Feedback Loop                  │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -194,6 +198,15 @@ Explorations: `explore_gordian`, `explore_amplitude`, `explore_resonator`, `expl
 | Module | Lines | Purpose | Paper |
 |--------|------:|---------|-------|
 | `sleep_wake.py` | ~240 | Automatic rhythm between wake (controller.run) and sleep (dream_cycle). dream_pressure = T_s/(T_s+μ) triggers dreaming when T_s > μ. SleepWakeCycle orchestrates Controller + DreamObserver. Parameter-free trigger (C121) | — |
+
+### Layer 12 — Human Communication (4 modules, ~1,150 lines)
+
+| Module | Lines | Purpose | Paper |
+|--------|------:|---------|-------|
+| `perception.py` | ~290 | Perception Ontology: 10 visual + 5 language Gestalt primitives as landscape domain, 20 sparse edges (C158) | — |
+| `communication.py` | ~400 | Communication Intent: 6 intent types (uncertainty/decision/pattern/request/status/anomaly), `detect_intents()` from SelfGraph + StepResult + DreamObserver (C159) | — |
+| `ui_emitter.py` | ~300 | UI-Schema Emitter: (Intent × Perception) → UISpec with heuristic affinities + learned perception override, `emit_ui_spec()` (C160) | — |
+| `feedback.py` | ~160 | Human Feedback Loop: 6 HumanActions → Outcome, perception edge historization closes the learning cycle (C161) | — |
 
 ### Applications (3 modules, 1,047 lines)
 
@@ -359,7 +372,7 @@ All three share the same controller core. They differ only in the final action s
 
 ## 8. Test Infrastructure
 
-**3499 tests**, 0 failures (2026-04-04) across **94 test files**.
+**3975 tests**, 0 failures (2026-04-05) across **106 test files**.
 
 | Category | Test Files | Tests |
 |----------|-----------|-------|
@@ -371,6 +384,7 @@ All three share the same controller core. They differ only in the final action s
 | Observation (L8) | 4 files | ~160 |
 | Modulation & Locality (C98–C108) | 5 files | ~140 |
 | Dream Mode (L9, C109–C112, C134b–C139) | 1 file | 98 |
+| Human Communication (L12, C158–C162) | 5 files | 164 |
 
 ---
 
@@ -459,6 +473,7 @@ primitives ← tension ← landscape ← historization
 | Test Registry | `docs/E0_TEST_REGISTRY_v2.md` |
 | Empirical Insights | `docs/E0_EMPIRICAL_INSIGHTS_v1.md` |
 | Canon Alignment | `docs/E0_CANON_ALIGNMENT_v1.md` |
+| Human Communication Design | `docs/E0_HUMAN_COMMUNICATION_DESIGN_v1.md` |
 
 ---
 

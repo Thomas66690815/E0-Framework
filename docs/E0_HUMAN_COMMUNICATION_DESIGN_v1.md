@@ -1,9 +1,10 @@
 # E0 Human Communication Design v1
 
-**Status:** Concept note — architectural vision
+**Status:** Implemented — all five commits landed (C158–C162)
 **Date:** 2026-04-05
 **Scope:** C158–C162 (Perception Ontology → Human Feedback Loop → Proof-of-Concept)
-**Context:** After closing all internal integration gaps (C155–C157), E0 has no external communication channel. This document defines how E0 learns to communicate with a human peer — not via a hardcoded UI, but by acquiring perception and communication as learnable domains.
+**Tests:** 164 new tests (48 + 42 + 32 + 30 + 12), 3975 total
+**Context:** After closing all internal integration gaps (C155–C157), E0 had no external communication channel. This document defines how E0 learns to communicate with a human peer — not via a hardcoded UI, but by acquiring perception and communication as learnable domains.
 
 ---
 
@@ -159,20 +160,20 @@ If this works, E0 has demonstrated that it can not only optimize internally but 
 
 | Commit | Name | Scope | Depends on |
 |--------|------|-------|------------|
-| **C158** | Perception Ontology | ~15 perception primitives as landscape domain, LLM-taught via Bootstrapper | Bootstrapper (C44), Landscape |
-| **C159** | Communication Intent | Intent detection from Self-Graph + controller state, `detect_intents()` function | Self-Graph (C43), Controller |
-| **C160** | UI-Schema Emitter | Deterministic mapping (Intent × Perception) → `UISpec` dataclass, `emit_ui_spec()` | C158, C159 |
-| **C161** | Human Feedback Loop | Outcome ingestion from human interaction, maps user action → E0 Outcome | C160, Session |
-| **C162** | Proof-of-Concept | End-to-end: E0 generates dashboard spec, coding agent builds it, human tests | C158–C161 |
+| **C158** | Perception Ontology | 15 perception primitives as landscape domain (10 visual + 5 language), 20 sparse edges | ✅ `perception.py` (48 tests) |
+| **C159** | Communication Intent | 6 intent types, `detect_intents()` from SelfGraph + StepResult + DreamObserver | ✅ `communication.py` (42 tests) |
+| **C160** | UI-Schema Emitter | (Intent × Perception) → `UISpec`, heuristic affinities + learned override | ✅ `ui_emitter.py` (32 tests) |
+| **C161** | Human Feedback Loop | 6 HumanActions → Outcome, perception edge historization | ✅ `feedback.py` (30 tests) |
+| **C162** | Proof-of-Concept | 3-round end-to-end demo + 12 integration tests | ✅ `demo_human_communication.py` (12 tests) |
 
 C158 and C159 are independent and can be developed in parallel (conceptually). C160 is the join point. C161 adds the closed loop. C162 is the integration test.
 
-### Estimated scope per commit
-- **C158:** `perception.py` + tests (~150–200 LOC, ~15 tests)
-- **C159:** `communication.py` + tests (~200–250 LOC, ~20 tests)
-- **C160:** `ui_emitter.py` + tests (~150–200 LOC, ~15 tests)
-- **C161:** Extension to `session.py` or new `feedback.py` (~100–150 LOC, ~10 tests)
-- **C162:** `demo_human_communication.py` + integration tests (~200 LOC, ~5 tests)
+### Actual scope per commit
+- **C158:** `perception.py` + `test_perception.py` — 290 + 350 LOC, 48 tests
+- **C159:** `communication.py` + `test_communication.py` — 400 + 350 LOC, 42 tests
+- **C160:** `ui_emitter.py` + `test_ui_emitter.py` — 300 + 280 LOC, 32 tests
+- **C161:** `feedback.py` + `test_feedback.py` — 160 + 300 LOC, 30 tests
+- **C162:** `demo_human_communication.py` + `test_human_communication_integration.py` — 155 + 195 LOC, 12 tests
 
 ## §7 — Open Questions
 
@@ -185,4 +186,4 @@ C158 and C159 are independent and can be developed in parallel (conceptually). C
 
 ---
 
-*Concept by Thomas + Copilot, 2026-04-05. Pre-implementation analysis — no code yet.*
+*Concept by Thomas + Copilot, 2026-04-05. Fully implemented same day (C158–C162). Next: stateless renderer that maps UISpec JSON → screen.*
