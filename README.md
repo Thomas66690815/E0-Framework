@@ -258,7 +258,7 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 
 ## Current state
 
-*Last updated: 2026-04-04*
+*Last updated: 2026-04-05*
 
 | Component | Status | Where |
 |-----------|--------|-------|
@@ -332,8 +332,14 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 | Curriculum Demo (C143) | **Active** | `e0_controller/demo_curriculum.py` |
 | Reflexion Demo (C144) | **Active** | `e0_controller/demo_reflexion.py` |
 | Self-Graph Demo (C147) | **Active** (21 tests) | `e0_controller/demo_self_graph.py` |
+| E0Config Registry (C148) | **Active** (28 tests) | `e0_controller/config.py` |
+| Parameter Sensitivity (C150–C153) | **Active** (66+35 tests) | `e0_controller/parameter_sensitivity.py`, `perspective_diagnostic.py` |
+| Dream Node Bridges (C154) | **Active** (32 tests) | `e0_controller/dream_mode.py`, `sleep_wake.py` |
+| Auto-Tuning (C155) | **Active** (25 tests) | `e0_controller/parameter_sensitivity.py`, `session.py` |
+| Curriculum ↔ Sleep-Wake (C156) | **Active** (14 tests) | `e0_controller/curriculum.py` |
+| Dream → CouplingRouter (C157) | **Active** (15 tests) | `e0_controller/coupling_router.py` |
 
-**Tests:** 3694 total (pytest), 0 failures, 0 warnings, 41 conditional (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
+**Tests:** 3811 total (pytest), 0 failures, 0 warnings, 41 conditional (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
 
 ---
 

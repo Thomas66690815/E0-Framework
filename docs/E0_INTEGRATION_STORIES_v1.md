@@ -1,7 +1,7 @@
 # E0 Integration Stories v1
 
-**Status:** Draft — integration planning  
-**Date:** 2026-04-04  
+**Status:** Complete — all integration gaps closed (C157)  
+**Date:** 2026-04-05  
 **Origin:** Initial analysis by Codex, reviewed and revised with Copilot  
 **Scope:** Identify how underused capabilities become first-class runtime features.  
 **Out of scope:** UI polish, parameter tuning minutiae.
@@ -178,11 +178,14 @@ Low urgency. SU(2) is theoretically elegant and fully tested, but no practical a
 
 | Missing Item | Status | Why It Matters |
 |---|---|---|
-| DreamObserver still uses C109 edge-EQ, not C137 Hungarian | **Critical gap** — Priority 1 | The proven 100% algorithm isn't wired into runtime |
-| Bootstrapper+LLM-Teaching pipeline (C134) | Not mentioned | The cold-start solution exists but has no demo |
-| Curriculum (C123) | Not mentioned | 35 tests, zero demos |
-| C43–C47 Self-Graph architecture | Not referenced | The overarching integration framework for "E0 learns E0" |
-| Score correlation as scaling assumption | Not flagged | C138c showed this is the load-bearing assumption — affects all multi-domain stories |
+| ~~DreamObserver still uses C109 edge-EQ, not C137 Hungarian~~ | ✅ **DONE** (C139) | Hungarian+WL wired into runtime |
+| ~~Bootstrapper+LLM-Teaching pipeline (C134)~~ | ✅ **DONE** (C140) | Cold-start demo available |
+| ~~Curriculum (C123)~~ | ✅ **DONE** (C143) | Demo on ontodynamics canon |
+| ~~C43–C47 Self-Graph architecture~~ | ✅ **Wired** (C150–C155) | Parameter sensitivity + auto-tuning closes the loop |
+| ~~Score correlation as scaling assumption~~ | ✅ **Documented** (C138c) | Load-bearing assumption flagged |
+| ~~Parameter Sensitivity → Auto-Tuning~~ | ✅ **DONE** (C155) | Closed-loop: diagnose → perturb → evaluate → adopt |
+| ~~Curriculum ↔ Sleep-Wake~~ | ✅ **DONE** (C156) | Dream consolidation between curriculum turns |
+| ~~Dream Equivalences → CouplingRouter~~ | ✅ **DONE** (C157) | Auto-bias partner selection from dream quality |
 
 ---
 
@@ -199,4 +202,52 @@ Low urgency. SU(2) is theoretically elegant and fully tested, but no practical a
 
 ---
 
-*Initial analysis by Codex, 2026-04-04. Reviewed and revised with Copilot.*
+## 6. Integration Gap Closure (C155–C157)
+
+After the initial integration stories (C139–C146), a systematic gap analysis identified three remaining unwired subsystems. All three were closed in C155–C157:
+
+### C155 — Auto-Tuning (Parameter Sensitivity → Closed Loop)
+
+**Gap:** `suggest_perturbations()` (C150) generated config variants from Self-Graph diagnosis, but no one adopted the results. The sensitivity pipeline was open-loop: diagnose → suggest → stop.
+
+**Resolution:** `auto_tune()` closes the loop: baseline trial → diagnose via Self-Graph → suggest perturbations for unhealthy components → evaluate variants via sensitivity analysis → adopt best config if improvement exceeds threshold → repeat until healthy or budget exhausted. `apply_config()` updates a live controller in-place (including HybridMode string→enum conversion). `Session.auto_tune()` provides a convenience wrapper.
+
+**Evidence:** 25 tests (3782 total). Healthy baselines stop after 1 round.
+
+### C156 — Curriculum ↔ Sleep-Wake Integration
+
+**Gap:** `CurriculumRunner` computed T_s for equilibrium detection but only used it to advance turns. No dream consolidation between turns — DreamObserver was only used post-hoc in `demo_curriculum.py` Phase 5.
+
+**Resolution:** `CurriculumRunner.__init__` accepts optional `observer: DreamObserver` and `consolidation_cycles: int`. After each turn completes, the scoped landscape is registered with the observer and `dream_cycle()` runs for consolidation. `TurnResult.dream_consolidation` captures dream results per turn.
+
+**Evidence:** 14 tests (3796 total). Turn domains registered as `curriculum_turn_{level_max}`.
+
+### C157 — Dream Equivalences → CouplingRouter
+
+**Gap:** CouplingRouter selected partners based on historical quality (RECOVERY) or structural difference (EXPLORATION), but made no use of dream equivalence signals. Weights were static — set once, never adapted.
+
+**Resolution:** `update_weights_from_dream(router, observer)` queries edge-level and node-level equivalences per universe, computes mean trace_quality, and maps it to weight: `weight = max(floor, 1.0 + mean_quality)`. Positive equivalences → higher weight → lower R₀ → trusted donor. Negative equivalences → lower weight → expensive.
+
+**Evidence:** 15 tests (3811 total). Weight range [floor..2.0], combines edge + node equivalences, idempotent.
+
+### Integration Status Summary
+
+All subsystems are now wired:
+
+| Subsystem | Wired To | Via |
+|-----------|----------|-----|
+| Self-Graph diagnosis | Parameter perturbation + adoption | `auto_tune()` (C155) |
+| Curriculum equilibrium | Dream consolidation | `CurriculumRunner(observer=...)` (C156) |
+| Dream equivalence quality | Coupling partner selection | `update_weights_from_dream()` (C157) |
+| DreamObserver Hungarian | Runtime dream_cycle | C139 |
+| SleepWakeCycle | Controller run rhythm | C121 |
+| Structural Entropy | Inscription gating + decay | C118/C119 |
+| Dual Reflection | Self-Graph + meta-control | C47 |
+| Reflexive Action | Landscape mutation | C49 |
+| Scoped Reflexion | Historization-driven locality | C101–C106 |
+
+**Remaining unwired:** SU(2) transport (no practical advantage demonstrated; available as flag).
+
+---
+
+*Initial analysis by Codex, 2026-04-04. Revised with Copilot, 2026-04-05. Gap closure C155–C157 completed 2026-04-05.*

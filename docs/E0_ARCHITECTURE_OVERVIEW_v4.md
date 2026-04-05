@@ -1,10 +1,10 @@
 # E₀ Architecture Overview v4
 
 **Status:** Canonical reference  
-**Date:** 2026-04-04  
+**Date:** 2026-04-05  
 **Supersedes:** E0_ARCHITECTURE_OVERVIEW_v3.md (2026-04-02)  
-**Scope:** 60 production modules, 9 benchmarks, 15 demos, 37 explorations, 99 test files — ~24,400 production lines, 3590 tests
-**Latest:** C142 (Multiverse Demo — coupled domains with cross-reflexion + Hungarian dream discovery)
+**Scope:** 60 production modules, 9 benchmarks, 15 demos, 37 explorations, 102 test files — ~24,400 production lines, 3811 tests
+**Latest:** C157 (Dream Equivalences → CouplingRouter — all integration gaps closed)
 **Papers:** P1 (Structural Interference), P2 (Spinor/Born), P3 (Non-Abelian), P4 (Reflexivity), P5 (Emergent Locality), P6 (Dream Mode)
 
 ---
