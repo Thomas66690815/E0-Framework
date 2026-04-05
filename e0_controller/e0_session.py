@@ -294,11 +294,14 @@ def run_session(
 
     # ── 4. Detect intents ────────────────────────────────
     _print(f"\n[4] Communication Intents")
-    last_session_result = iter_result.results[-1]
-    last_step = last_session_result.trace.steps[-1] if last_session_result.trace.steps else None
+    last_step = last_trace.steps[-1] if last_trace.steps else None
     report = detect_intents(
         self_graph=session.self_graph,
         step_result=last_step,
+        landscape=session.landscape,
+        trace=last_trace,
+        goal=goal,
+        task_description=task,
         include_status=True,
     )
     _print(f"    {report.summary()}")

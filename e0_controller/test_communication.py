@@ -18,6 +18,7 @@ from e0_controller.communication import (
     IntentType,
     detect_dream_intents,
     detect_intents,
+    detect_landscape_intents,
     detect_self_graph_intents,
     detect_status_intent,
     detect_step_intents,
@@ -472,3 +473,214 @@ class TestDetectIntents:
         }])
         report = detect_intents(dream_observer=obs)
         assert report.count == 0
+
+
+# ──────────────────────────────────────────────
+# Landscape Intent Tests (C166)
+# ──────────────────────────────────────────────
+
+from e0_controller import Landscape
+from e0_controller.controller import RunTrace, StepResult
+
+
+def _make_task_landscape():
+    """A→B→C→D linear landscape."""
+    L = Landscape()
+    L.add_edge("A", "B", delta=0.3, resistance=0.5)
+    L.add_edge("B", "C", delta=0.5, resistance=1.0)
+    L.add_edge("C", "D", delta=0.2, resistance=0.3)
+    return L
+
+
+def _make_trace(*steps_spec):
+    """Build a RunTrace from (source, target, s_eff, outcome) tuples."""
+    steps = []
+    for i, (src, tgt, s_eff, outcome) in enumerate(steps_spec):
+        steps.append(StepResult(
+            tau=i, source=src, target=tgt,
+            outcome=outcome, s_eff=s_eff,
+            r_eff_before=1.0, r_eff_after=0.9,
+            candidates=[tgt],
+        ))
+    return RunTrace(steps=steps)
+
+
+class TestLandscapeIntents:
+    """C166: Task-landscape-aware intent detection."""
+
+    def test_task_status_intent_with_path(self):
+        """Landscape intents include a STATUS with task overview."""
+        L = _make_task_landscape()
+        trace = _make_trace(
+            ("A", "B", 0.15, Outcome.SUCCESS),
+            ("B", "C", 0.50, Outcome.SUCCESS),
+            ("C", "D", 0.06, Outcome.SUCCESS),
+        )
+        intents = detect_landscape_intents(
+            L, trace=trace, goal="D",
+            task_description="Test task",
+        )
+        status = [i for i in intents if i.subject == "task_landscape"]
+        assert len(status) == 1
+        s = status[0]
+        assert s.type == IntentType.STATUS
+        assert "Goal REACHED" in s.summary
+        assert "A → B → C → D" in s.summary
+        assert s.evidence["goal_reached"] is True
+        assert s.evidence["path"] == ["A", "B", "C", "D"]
+        assert s.evidence["states"] == ["A", "B", "C", "D"]
+        assert s.evidence["edge_count"] == 3
+
+    def test_task_status_goal_pending(self):
+        """When goal is not reached, status says 'pending'."""
+        L = _make_task_landscape()
+        trace = _make_trace(
+            ("A", "B", 0.15, Outcome.SUCCESS),
+        )
+        intents = detect_landscape_intents(L, trace=trace, goal="D")
+        status = [i for i in intents if i.subject == "task_landscape"][0]
+        assert "Goal pending" in status.summary
+        assert status.evidence["goal_reached"] is False
+
+    def test_high_tension_edge_produces_decision(self):
+        """Steps with S_eff > 0.5 produce DECISION intents."""
+        L = _make_task_landscape()
+        trace = _make_trace(
+            ("A", "B", 0.15, Outcome.SUCCESS),
+            ("B", "C", 0.80, Outcome.SUCCESS),
+        )
+        intents = detect_landscape_intents(L, trace=trace, goal="D")
+        decisions = [i for i in intents if i.type == IntentType.DECISION]
+        assert len(decisions) == 1
+        d = decisions[0]
+        assert d.subject == "B→C"
+        assert "High tension" in d.summary
+        assert d.evidence["s_eff"] == 0.80
+
+    def test_low_tension_no_decision(self):
+        """Steps with S_eff <= 0.5 don't produce DECISION intents."""
+        L = _make_task_landscape()
+        trace = _make_trace(
+            ("A", "B", 0.15, Outcome.SUCCESS),
+            ("B", "C", 0.30, Outcome.SUCCESS),
+        )
+        intents = detect_landscape_intents(L, trace=trace, goal="D")
+        decisions = [i for i in intents if i.type == IntentType.DECISION]
+        assert len(decisions) == 0
+
+    def test_negative_quality_produces_uncertainty(self):
+        """Edges with negative quality + sufficient load → UNCERTAINTY."""
+        L = _make_task_landscape()
+        edge = Edge("A", "B")
+        for _ in range(5):
+            L.historization.update(edge, Outcome.FAILURE)
+        trace = _make_trace(
+            ("A", "B", 0.20, Outcome.FAILURE),
+        )
+        intents = detect_landscape_intents(L, trace=trace, goal="D")
+        uncertainties = [i for i in intents
+                         if i.type == IntentType.UNCERTAINTY]
+        assert len(uncertainties) >= 1
+        u = uncertainties[0]
+        assert "Struggling" in u.summary
+        assert u.evidence["quality"] < 0
+
+    def test_stabilizing_edge_produces_pattern(self):
+        """Edges with positive quality + high load → PATTERN."""
+        L = _make_task_landscape()
+        edge = Edge("A", "B")
+        for _ in range(10):
+            L.historization.update(edge, Outcome.SUCCESS)
+        trace = _make_trace(
+            ("A", "B", 0.15, Outcome.SUCCESS),
+        )
+        intents = detect_landscape_intents(L, trace=trace, goal="D")
+        patterns = [i for i in intents if i.type == IntentType.PATTERN]
+        assert len(patterns) >= 1
+        p = patterns[0]
+        assert "stable" in p.summary
+        assert p.evidence["quality"] > 0
+
+    def test_dead_end_produces_request(self):
+        """When current state has no admissible neighbors → REQUEST."""
+        L = Landscape()
+        L.add_edge("A", "B", delta=0.3, resistance=0.5)
+        trace = _make_trace(
+            ("A", "B", 0.15, Outcome.SUCCESS),
+        )
+        intents = detect_landscape_intents(L, trace=trace, goal="C")
+        requests = [i for i in intents if i.type == IntentType.REQUEST]
+        assert len(requests) == 1
+        r = requests[0]
+        assert r.subject == "B"
+        assert "Dead end" in r.summary
+        assert r.urgency >= 0.8
+
+    def test_no_dead_end_when_goal_reached(self):
+        """No REQUEST when goal is reached even if no outgoing edges."""
+        L = Landscape()
+        L.add_edge("A", "B", delta=0.3, resistance=0.5)
+        trace = _make_trace(
+            ("A", "B", 0.15, Outcome.SUCCESS),
+        )
+        intents = detect_landscape_intents(L, trace=trace, goal="B")
+        requests = [i for i in intents if i.type == IntentType.REQUEST]
+        assert len(requests) == 0
+
+    def test_empty_trace_gives_status_only(self):
+        """Without trace, only status intent is produced."""
+        L = _make_task_landscape()
+        intents = detect_landscape_intents(L, goal="D")
+        assert len(intents) == 1
+        assert intents[0].type == IntentType.STATUS
+        assert intents[0].evidence["path"] == []
+
+    def test_evidence_includes_task_description(self):
+        """Task description flows into evidence."""
+        L = _make_task_landscape()
+        trace = _make_trace(("A", "B", 0.15, Outcome.SUCCESS))
+        intents = detect_landscape_intents(
+            L, trace=trace, task_description="Build a spaceship",
+        )
+        status = [i for i in intents if i.subject == "task_landscape"][0]
+        assert status.evidence["task"] == "Build a spaceship"
+        assert "Build a spaceship" in status.summary
+
+
+class TestUnifiedWithLandscape:
+    """detect_intents() passes landscape data through."""
+
+    def test_landscape_intents_in_unified_report(self):
+        """Landscape intents appear in the unified report."""
+        L = _make_task_landscape()
+        trace = _make_trace(
+            ("A", "B", 0.15, Outcome.SUCCESS),
+            ("B", "C", 0.80, Outcome.SUCCESS),
+            ("C", "D", 0.06, Outcome.SUCCESS),
+        )
+        report = detect_intents(
+            landscape=L, trace=trace, goal="D",
+            task_description="Test unified",
+        )
+        # Should have task status + high-tension decision
+        types = [i.type for i in report.intents]
+        assert IntentType.STATUS in types
+        assert IntentType.DECISION in types
+
+    def test_landscape_and_selfgraph_combined(self):
+        """Landscape and self-graph intents can coexist."""
+        L = _make_task_landscape()
+        trace = _make_trace(("A", "B", 0.15, Outcome.SUCCESS))
+        sg = SelfGraph()
+        report = detect_intents(
+            self_graph=sg,
+            landscape=L,
+            trace=trace,
+            goal="D",
+            include_status=True,
+        )
+        # Should have both self-graph status and task status
+        status_intents = report.by_type(IntentType.STATUS)
+        subjects = {s.subject for s in status_intents}
+        assert "self_graph" in subjects
+        assert "task_landscape" in subjects

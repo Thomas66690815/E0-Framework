@@ -33,6 +33,7 @@ from .dual_reflection import (
     SelfGraphDiagnosis,
     diagnose_self_graph,
 )
+from .primitives import Edge
 
 
 # ──────────────────────────────────────────────
@@ -352,7 +353,162 @@ def detect_status_intent(
 
 
 # ──────────────────────────────────────────────
-# 7. Unified Detection
+# 7. Task-Landscape Intents (C166)
+# ──────────────────────────────────────────────
+
+def detect_landscape_intents(
+    landscape: Any,
+    *,
+    trace: Any = None,
+    goal: Optional[str] = None,
+    task_description: str = "",
+) -> List[CommunicationIntent]:
+    """Detect communication intents from the task landscape and run trace.
+
+    This is what makes the UI task-aware: it reads the actual problem
+    graph (states, edges, tensions) and the path E0 took through it.
+
+    Produces:
+      - STATUS with task overview (states, edges, path taken, goal status)
+      - DECISION for high-tension edges in the path
+      - PATTERN for stabilizing edges (high trace_load, positive quality)
+      - UNCERTAINTY for edges with negative quality (repeated failure)
+      - ANOMALY for dead-end states (no outgoing admissible neighbors)
+
+    Args:
+        landscape: The task Landscape.
+        trace: Optional RunTrace from the last iteration.
+        goal: Optional goal state name.
+        task_description: Human-readable task description.
+    """
+    intents: List[CommunicationIntent] = []
+    hist = landscape.historization
+
+    # ── Task overview (STATUS) ────────────────────────
+    path = trace.path if trace else []
+    goal_reached = goal in path if goal else False
+    metrics = trace.metrics() if trace else {}
+
+    task_label = task_description[:80] if task_description else "Task"
+    path_str = " → ".join(path) if path else "(no path)"
+
+    intents.append(CommunicationIntent(
+        type=IntentType.STATUS,
+        urgency=0.8 if goal_reached else 0.5,
+        subject="task_landscape",
+        summary=(
+            f"{task_label}: {len(landscape.states)} states, "
+            f"{landscape.edge_count()} edges. "
+            f"{'Goal REACHED' if goal_reached else 'Goal pending'}. "
+            f"Path: {path_str}"
+        ),
+        evidence={
+            "task": task_description,
+            "states": sorted(landscape.states),
+            "edge_count": landscape.edge_count(),
+            "path": path,
+            "goal": goal,
+            "goal_reached": goal_reached,
+            "steps": int(metrics.get("steps", 0)),
+            "success_rate": metrics.get("success_rate", 0.0),
+            "avg_tension": metrics.get("avg_tension", 0.0),
+        },
+    ))
+
+    if not trace or not trace.steps:
+        return intents
+
+    # ── Per-edge analysis along the path ──────────────
+    for step in trace.steps:
+        edge = Edge(step.source, step.target)
+        s_eff = step.s_eff
+        quality = hist.trace_quality(edge)
+        load = hist.trace_load(edge)
+
+        # High-tension decision (hard transition)
+        if s_eff > 0.5:
+            intents.append(CommunicationIntent(
+                type=IntentType.DECISION,
+                urgency=min(1.0, 0.4 + s_eff * 0.4),
+                subject=f"{step.source}→{step.target}",
+                summary=(
+                    f"High tension at {step.source} → {step.target} "
+                    f"(S_eff={s_eff:.3f}, outcome={step.outcome.value})"
+                ),
+                evidence={
+                    "source": step.source,
+                    "target": step.target,
+                    "s_eff": s_eff,
+                    "outcome": step.outcome.value,
+                    "quality": quality,
+                    "load": load,
+                    "candidates": getattr(step, "candidates", []),
+                },
+            ))
+
+        # Negative quality (repeated failure on this edge)
+        if quality < -0.2 and load > 2.0:
+            intents.append(CommunicationIntent(
+                type=IntentType.UNCERTAINTY,
+                urgency=min(1.0, 0.5 + abs(quality) * 0.5),
+                subject=f"{step.source}→{step.target}",
+                summary=(
+                    f"Struggling at {step.source} → {step.target} "
+                    f"(quality={quality:+.3f}, load={load:.1f})"
+                ),
+                evidence={
+                    "source": step.source,
+                    "target": step.target,
+                    "quality": quality,
+                    "load": load,
+                    "outcome": step.outcome.value,
+                },
+            ))
+
+        # Stabilizing (high load + positive quality → learned)
+        if quality > 0.3 and load > 3.0:
+            intents.append(CommunicationIntent(
+                type=IntentType.PATTERN,
+                urgency=0.2 + quality * 0.2,
+                subject=f"{step.source}→{step.target}",
+                summary=(
+                    f"Path {step.source} → {step.target} is stable "
+                    f"(quality={quality:+.3f}, load={load:.1f})"
+                ),
+                evidence={
+                    "source": step.source,
+                    "target": step.target,
+                    "quality": quality,
+                    "load": load,
+                },
+            ))
+
+    # ── Dead-end detection ────────────────────────────
+    current_state = path[-1] if path else None
+    if current_state and not goal_reached:
+        neighbors = landscape.admissible_neighbors(current_state)
+        if not neighbors:
+            intents.append(CommunicationIntent(
+                type=IntentType.REQUEST,
+                urgency=0.9,
+                subject=current_state,
+                summary=(
+                    f"Dead end at '{current_state}': "
+                    f"no admissible transitions"
+                ),
+                evidence={
+                    "state": current_state,
+                    "admissible_neighbors": [],
+                    "goal": goal,
+                },
+            ))
+
+    intents.sort(key=lambda i: i.urgency, reverse=True)
+    return intents
+
+
+# ──────────────────────────────────────────────
+# 8. Unified Detection
 # ──────────────────────────────────────────────
 
 @dataclass
@@ -397,19 +553,27 @@ def detect_intents(
     step_result: Optional[Any] = None,
     dream_observer: Optional[Any] = None,
     dream_domain: Optional[str] = None,
+    landscape: Optional[Any] = None,
+    trace: Optional[Any] = None,
+    goal: Optional[str] = None,
+    task_description: str = "",
     include_status: bool = True,
     anomaly_threshold: float = -0.3,
 ) -> IntentReport:
     """Unified intent detection from all available E0 sources.
 
     Combines intents from Self-Graph health, controller step results,
-    and dream equivalences into a single sorted report.
+    dream equivalences, and task landscape into a single sorted report.
 
     Args:
         self_graph: Optional Self-Graph for health-based intents.
         step_result: Optional StepResult for decision/escalation intents.
         dream_observer: Optional DreamObserver for equivalence intents.
         dream_domain: Domain name to query in the DreamObserver.
+        landscape: Optional task Landscape for task-aware intents (C166).
+        trace: Optional RunTrace from the last iteration (C166).
+        goal: Optional goal state for goal-reaching detection (C166).
+        task_description: Human-readable task description (C166).
         include_status: Whether to include a status intent.
         anomaly_threshold: Dream quality below this = anomaly.
 
@@ -436,6 +600,14 @@ def detect_intents(
         all_intents.extend(detect_dream_intents(
             dream_observer, dream_domain,
             anomaly_threshold=anomaly_threshold,
+        ))
+
+    if landscape is not None:
+        all_intents.extend(detect_landscape_intents(
+            landscape,
+            trace=trace,
+            goal=goal,
+            task_description=task_description,
         ))
 
     all_intents.sort(key=lambda i: i.urgency, reverse=True)
