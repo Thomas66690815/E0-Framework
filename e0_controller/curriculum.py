@@ -1,7 +1,12 @@
 """
-E₀ Curriculum Navigator (C123)
-================================
+E₀ Curriculum Navigator (C123, C156)
+======================================
 Hierarchical learning for canonical landscapes.
+
+C156 extends the runner with optional DreamObserver integration:
+after each turn reaches equilibrium, a consolidation phase runs
+dream cycles to consolidate cross-domain knowledge before the
+next turn begins. This closes the Curriculum ↔ Sleep-Wake gap.
 
 Solves two problems:
 
@@ -38,6 +43,7 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 from .canon_loader import CanonInfo, CanonLandscape, load_canon_spec, _extract_info, _to_bootstrapper_spec
 from .bootstrapper import bootstrap_landscape
 from .controller import E0Controller, RunTrace
+from .dream_mode import DreamCycleResult, DreamObserver
 from .landscape import Landscape
 from .primitives import Edge, Outcome
 from .structural_entropy import structural_temperature
@@ -65,6 +71,7 @@ class TurnResult:
     final_T_s: float
     total_steps: int
     episodes: int
+    dream_consolidation: List[DreamCycleResult] = field(default_factory=list)
 
 
 # ──────────────────────────────────────────────
@@ -287,7 +294,9 @@ class CurriculumRunner:
                  equilibrium_threshold: float = 1.0,
                  equilibrium_patience: int = 3,
                  max_episodes_per_turn: int = 20,
-                 max_cycles_per_episode: int = 50):
+                 max_cycles_per_episode: int = 50,
+                 observer: Optional[DreamObserver] = None,
+                 consolidation_cycles: int = 3):
         self._spec = load_canon_spec(canon_name)
         self._info = _extract_info(self._spec)
         self._execute_fn = execute_fn
@@ -298,8 +307,15 @@ class CurriculumRunner:
         )
         self._max_episodes = max_episodes_per_turn
         self._max_cycles = max_cycles_per_episode
+        self._observer = observer
+        self._consolidation_cycles = consolidation_cycles
         self._results: List[TurnResult] = []
         self._final_landscape: Optional[Landscape] = None
+
+    @property
+    def observer(self) -> Optional[DreamObserver]:
+        """The DreamObserver used for consolidation (if any)."""
+        return self._observer
 
     def run(self) -> List[TurnResult]:
         """Execute the full curriculum. Returns results per turn."""
@@ -347,6 +363,15 @@ class CurriculumRunner:
             if trace.steps:
                 start = trace.steps[-1].target
 
+        # C156: Dream consolidation after turn completes
+        dream_results: List[DreamCycleResult] = []
+        if self._observer is not None:
+            # Register this turn's landscape for dream observation
+            domain = f"curriculum_turn_{turn.level_max}"
+            self._observer.register(domain, landscape)
+            for _ in range(self._consolidation_cycles):
+                dream_results.append(self._observer.dream_cycle())
+
         return TurnResult(
             turn=turn,
             traces=traces,
@@ -354,6 +379,7 @@ class CurriculumRunner:
             final_T_s=structural_temperature(landscape.historization),
             total_steps=total_steps,
             episodes=len(traces),
+            dream_consolidation=dream_results,
         )
 
     def _pick_start(self, turn: CurriculumTurn,
