@@ -236,12 +236,18 @@ def _select_layout(intents: List[CommunicationIntent]) -> str:
 def _build_panel(
     intent: CommunicationIntent,
     snapshot: Optional[PerceptionSnapshot],
+    domain: Optional[PerceptionDomain] = None,
 ) -> UIPanel:
     """Build a single UIPanel from an intent and perception state."""
     visual = _select_visual_perception(intent.type, snapshot)
     language = _select_language_act(intent.type, snapshot)
-    suggested = _INTENT_VISUAL_SUGGESTION.get(intent.type, "text")
     data_source = _INTENT_DATA_SOURCE.get(intent.type, "self_graph")
+
+    # C164: learnable rendering selection
+    if domain is not None and domain.has_rendering:
+        suggested = domain.suggest_rendering(visual)
+    else:
+        suggested = _INTENT_VISUAL_SUGGESTION.get(intent.type, "text")
 
     return UIPanel(
         intent=intent.type.value,
@@ -289,7 +295,7 @@ def emit_ui_spec(
     intents = intents[:max_panels]
 
     # Build panels
-    panels = [_build_panel(i, snapshot) for i in intents]
+    panels = [_build_panel(i, snapshot, perception) for i in intents]
 
     # Select layout
     layout = _select_layout(intents)

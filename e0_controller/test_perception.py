@@ -10,6 +10,7 @@ from e0_controller.primitives import Edge, Outcome
 from e0_controller.perception import (
     ALL_PRIMITIVES,
     LANGUAGE_PRIMITIVES,
+    RENDERING_PRIMITIVES,
     VISUAL_PRIMITIVES,
     PerceptionDomain,
     PerceptionKind,
@@ -36,7 +37,7 @@ class TestPrimitiveConstants:
         assert len(LANGUAGE_PRIMITIVES) == 5
 
     def test_all_primitives_is_union(self):
-        assert ALL_PRIMITIVES == VISUAL_PRIMITIVES + LANGUAGE_PRIMITIVES
+        assert ALL_PRIMITIVES == VISUAL_PRIMITIVES + LANGUAGE_PRIMITIVES + RENDERING_PRIMITIVES
 
     def test_no_overlap(self):
         assert set(VISUAL_PRIMITIVES) & set(LANGUAGE_PRIMITIVES) == set()
@@ -67,7 +68,7 @@ class TestDefaultSpec:
 
     def test_spec_has_edges(self):
         spec = default_perception_spec()
-        assert len(spec["edges"]) == 20
+        assert len(spec["edges"]) == 34
 
     def test_spec_edges_reference_valid_nodes(self):
         spec = default_perception_spec()
@@ -97,7 +98,7 @@ class TestBuildDomain:
     def test_default_build(self):
         dom = build_perception_domain()
         assert isinstance(dom, PerceptionDomain)
-        assert len(dom.primitives) == 15
+        assert len(dom.primitives) == 22
 
     def test_landscape_has_all_states(self):
         dom = build_perception_domain()
@@ -105,7 +106,7 @@ class TestBuildDomain:
 
     def test_landscape_has_edges(self):
         dom = build_perception_domain()
-        assert dom.landscape.edge_count() == 20
+        assert dom.landscape.edge_count() == 34
 
     def test_landscape_inertia_modulation_on(self):
         dom = build_perception_domain()
@@ -202,7 +203,7 @@ class TestSnapshot:
     def test_snapshot_all_primitives(self):
         dom = build_perception_domain()
         snap = dom.snapshot()
-        assert len(snap.profiles) == 15
+        assert len(snap.profiles) == 22
 
     def test_snapshot_total_load(self):
         dom = build_perception_domain()
@@ -232,7 +233,7 @@ class TestSnapshot:
         dom = build_perception_domain()
         snap = dom.snapshot()
         ranked = snap.ranked()
-        assert len(ranked) == 15
+        assert len(ranked) == 22
 
     def test_ranked_descending_order(self):
         dom = build_perception_domain()

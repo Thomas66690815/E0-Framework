@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E₀ Communication — Round 3</title>
+<style>
+
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Segoe UI',system-ui,sans-serif; background:#f5f5f5;
+       color:#222; padding:24px; }
+h1 { font-size:1.4rem; margin-bottom:4px; }
+.meta { color:#666; font-size:0.85rem; margin-bottom:20px; }
+.panel { background:#fff; border-radius:8px; padding:16px;
+         box-shadow:0 1px 3px rgba(0,0,0,0.12); }
+.panel-header { display:flex; align-items:center; gap:8px;
+                margin-bottom:8px; }
+.urgency-badge { width:12px; height:12px; border-radius:50%;
+                 display:inline-block; flex-shrink:0; }
+.panel-label { font-weight:600; font-size:1rem; }
+.panel-tags { display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; }
+.tag { font-size:0.75rem; padding:2px 8px; border-radius:10px;
+       background:#e0e0e0; color:#333; }
+.intent-tag { background:#e3f2fd; color:#1565c0; }
+.perception-tag { background:#fce4ec; color:#c62828; }
+.lang-tag { background:#f3e5f5; color:#6a1b9a; }
+.panel-body { margin-bottom:10px; }
+.panel-feedback { display:flex; gap:6px; margin-top:8px; }
+.panel-feedback button { font-size:0.8rem; padding:4px 10px;
+  border:1px solid #ccc; border-radius:4px; background:#fafafa;
+  cursor:pointer; }
+.panel-feedback button:hover { background:#e0e0e0; }
+.evidence summary { font-size:0.8rem; color:#666; cursor:pointer;
+                    margin-top:6px; }
+.evidence pre { font-size:0.75rem; background:#f9f9f9; padding:8px;
+                border-radius:4px; overflow-x:auto; margin-top:4px; }
+.visual-tree { list-style:none; padding-left:16px; }
+.visual-tree li { margin:2px 0; font-size:0.9rem; }
+.visual-timeline { padding-left:8px; }
+.timeline-entry { margin:4px 0; font-size:0.9rem; }
+.timeline-dot { color:#1976d2; }
+.visual-bar { display:flex; align-items:center; gap:8px; }
+.visual-bar span { font-size:0.85rem; color:#666; }
+.visual-dashboard { display:flex; flex-wrap:wrap; gap:8px; }
+.metric { background:#f5f5f5; padding:6px 10px; border-radius:4px;
+          font-size:0.85rem; }
+.metric-key { color:#666; margin-right:4px; }
+.metric-val { font-weight:600; }
+.data-source { font-size:0.8rem; color:#888; font-style:italic; }
+.feedback-section { margin-top:24px; padding:16px; background:#fff;
+  border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.12); }
+.feedback-section h2 { font-size:1.1rem; margin-bottom:8px; }
+.feedback-section textarea { width:100%; height:80px; font-family:monospace;
+  font-size:0.8rem; border:1px solid #ccc; border-radius:4px; padding:8px; }
+
+.panels { display:flex; flex-direction:column; gap:16px; max-width:800px; margin:0 auto; }
+.panel:first-child { border:3px solid #f44336; transform:scale(1.02); }
+
+</style>
+</head>
+<body>
+<h1>E₀ Communication — Round 3</h1>
+<div class="meta">
+  Layout: alert · Panels: 3 ·
+  Max urgency: 1.00 · 2026-04-05T16:36:19.271416+00:00
+  <br>Demo round 3: Only anomalies matter
+</div>
+<div class="panels">
+<div class="panel" data-index="0">
+  <div class="panel-header">
+    <span class="urgency-badge" style="background:rgb(244,67,54)" title="urgency 1.00"></span>
+    <span class="panel-label">Component &#x27;overlap&#x27; is harmful (quality=-1.000, load=5.0)</span>
+  </div>
+  <div class="panel-tags">
+    <span class="tag intent-tag">uncertainty</span>
+    <span class="tag perception-tag">emphasis</span>
+    <span class="tag lang-tag">uncertainty</span>
+  </div>
+  <div class="panel-body">
+    <div class="visual-bar"><div style="width:99%;background:rgb(244,67,54);height:24px;border-radius:4px;transition:width 0.3s"></div><span>1.00</span></div>
+  </div>
+  <details class="evidence"><summary>Evidence</summary><pre>{
+  &quot;status&quot;: &quot;harmful&quot;,
+  &quot;quality&quot;: -0.9999999999997999,
+  &quot;load&quot;: 5.0,
+  &quot;inertia&quot;: 0.99999999999995,
+  &quot;is_modulation&quot;: true
+}</pre></details>
+  <div class="panel-feedback">
+    <button onclick="feedback(0,'click')">Engage</button>
+    <button onclick="feedback(0,'acknowledge')">Acknowledge</button>
+    <button onclick="feedback(0,'confusion')">Confused</button>
+    <button onclick="feedback(0,'dismiss')">Dismiss</button>
+  </div>
+</div>
+<div class="panel" data-index="1">
+  <div class="panel-header">
+    <span class="urgency-badge" style="background:rgb(252,201,58)" title="urgency 0.60"></span>
+    <span class="panel-label">6/8 healthy, 0 confused, 1 harmful, 1 insufficient data</span>
+  </div>
+  <div class="panel-tags">
+    <span class="tag intent-tag">status</span>
+    <span class="tag perception-tag">hierarchy</span>
+    <span class="tag lang-tag">enumeration</span>
+  </div>
+  <div class="panel-body">
+    <div class="visual-dashboard">
+<div class="metric"><span class="metric-key">healthy</span><span class="metric-val">[&#x27;amplitude&#x27;, &#x27;born&#x27;, &#x27;realization&#x27;, &#x27;historization&#x27;, &#x27;inertia&#x27;, &#x27;transition_field&#x27;]</span></div>
+<div class="metric"><span class="metric-key">confused</span><span class="metric-val">[]</span></div>
+<div class="metric"><span class="metric-key">harmful</span><span class="metric-val">[&#x27;overlap&#x27;]</span></div>
+<div class="metric"><span class="metric-key">insufficient_data</span><span class="metric-val">[&#x27;curvature&#x27;]</span></div>
+<div class="metric"><span class="metric-key">meta_actions</span><span class="metric-val">[&#x27;Disable overlap modulation (quality=-1.000, load=5.0)&#x27;]</span></div>
+</div>
+  </div>
+  <details class="evidence"><summary>Evidence</summary><pre>{
+  &quot;healthy&quot;: [
+    &quot;amplitude&quot;,
+    &quot;born&quot;,
+    &quot;realization&quot;,
+    &quot;historization&quot;,
+    &quot;inertia&quot;,
+    &quot;transition_field&quot;
+  ],
+  &quot;confused&quot;: [],
+  &quot;harmful&quot;: [
+    &quot;overlap&quot;
+  ],
+  &quot;insufficient_data&quot;: [
+    &quot;curvature&quot;
+  ],
+  &quot;meta_actions&quot;: [
+    &quot;Disable overlap modulation (quality=-1.000, load=5.0)&quot;
+  ]
+}</pre></details>
+  <div class="panel-feedback">
+    <button onclick="feedback(1,'click')">Engage</button>
+    <button onclick="feedback(1,'acknowledge')">Acknowledge</button>
+    <button onclick="feedback(1,'confusion')">Confused</button>
+    <button onclick="feedback(1,'dismiss')">Dismiss</button>
+  </div>
+</div>
+<div class="panel" data-index="2">
+  <div class="panel-header">
+    <span class="urgency-badge" style="background:rgb(183,211,67)" title="urgency 0.30"></span>
+    <span class="panel-label">Component &#x27;curvature&#x27; lacks data (load=0.0)</span>
+  </div>
+  <div class="panel-tags">
+    <span class="tag intent-tag">request</span>
+    <span class="tag perception-tag">emphasis</span>
+    <span class="tag lang-tag">question</span>
+  </div>
+  <div class="panel-body">
+    <div class="visual-bar"><div style="width:30%;background:rgb(183,211,67);height:24px;border-radius:4px;transition:width 0.3s"></div><span>0.30</span></div>
+  </div>
+  <details class="evidence"><summary>Evidence</summary><pre>{
+  &quot;status&quot;: &quot;insufficient_data&quot;,
+  &quot;load&quot;: 0.0
+}</pre></details>
+  <div class="panel-feedback">
+    <button onclick="feedback(2,'click')">Engage</button>
+    <button onclick="feedback(2,'acknowledge')">Acknowledge</button>
+    <button onclick="feedback(2,'confusion')">Confused</button>
+    <button onclick="feedback(2,'dismiss')">Dismiss</button>
+  </div>
+</div>
+</div>
+<div class="feedback-section">
+  <h2>Feedback</h2>
+  <p style="font-size:0.85rem;color:#666;margin-bottom:8px">
+    Click the buttons on each panel. Copy the JSON below to feed back into E0.
+  </p>
+  <textarea id="feedback-json" readonly>[]</textarea>
+</div>
+<script>
+
+var feedbackLog = [];
+function feedback(panelIndex, action) {
+  feedbackLog.push({panel: panelIndex, action: action});
+  var btn = event.target;
+  btn.style.background = '#c8e6c9';
+  btn.textContent += ' ✓';
+  btn.disabled = true;
+  document.getElementById('feedback-json').value =
+    JSON.stringify(feedbackLog, null, 2);
+}
+
+</script>
+</body>
+</html>

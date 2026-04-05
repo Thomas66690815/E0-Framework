@@ -26,6 +26,10 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+
 from .bootstrapper import bootstrap_landscape, EdgeSpec, validate_spec
 from .landscape import Landscape
 from .primitives import Edge
@@ -39,6 +43,7 @@ class PerceptionKind(Enum):
     """Classification of perception primitives."""
     VISUAL = "visual"
     LANGUAGE = "language"
+    RENDERING = "rendering"
 
 
 VISUAL_PRIMITIVES = [
@@ -62,15 +67,27 @@ LANGUAGE_PRIMITIVES = [
     "enumeration",  # listing items
 ]
 
-ALL_PRIMITIVES = VISUAL_PRIMITIVES + LANGUAGE_PRIMITIVES
+RENDERING_PRIMITIVES = [
+    "heatmap",      # colored intensity display
+    "tree",         # hierarchical nested view
+    "timeline",     # sequential/temporal view
+    "bar",          # proportional bar display
+    "text",         # plain text rendering
+    "highlight",    # bordered accent card
+    "dashboard",    # multi-metric summary
+]
+
+ALL_PRIMITIVES = VISUAL_PRIMITIVES + LANGUAGE_PRIMITIVES + RENDERING_PRIMITIVES
 
 
 def primitive_kind(name: str) -> PerceptionKind:
-    """Return the kind (visual/language) of a named primitive."""
+    """Return the kind (visual/language/rendering) of a named primitive."""
     if name in VISUAL_PRIMITIVES:
         return PerceptionKind.VISUAL
     if name in LANGUAGE_PRIMITIVES:
         return PerceptionKind.LANGUAGE
+    if name in RENDERING_PRIMITIVES:
+        return PerceptionKind.RENDERING
     raise ValueError(f"Unknown perception primitive: {name!r}")
 
 
@@ -132,6 +149,39 @@ _DEFAULT_EDGES: List[Dict[str, Any]] = [
      "initial_U": 5.0, "initial_F": 1.0, "confidence": 0.8},
     {"from": "assertion",  "to": "reference",  "delta": 0.2, "resistance": 0.4,
      "initial_U": 5.0, "initial_F": 1.0, "confidence": 0.7},
+
+    # Perception → Rendering (C164: learnable visual widget selection)
+    # These edges encode which perception primitives naturally map to
+    # which rendering widgets. Feedback historizes the specific edge
+    # used, so E0 learns which widget works best for each perception.
+    {"from": "emphasis",   "to": "heatmap",    "delta": 0.3, "resistance": 0.4,
+     "initial_U": 5.0, "initial_F": 2.0, "confidence": 0.7},
+    {"from": "emphasis",   "to": "highlight",  "delta": 0.3, "resistance": 0.4,
+     "initial_U": 4.0, "initial_F": 2.0, "confidence": 0.6},
+    {"from": "emphasis",   "to": "bar",        "delta": 0.4, "resistance": 0.5,
+     "initial_U": 3.0, "initial_F": 2.0, "confidence": 0.5},
+    {"from": "hierarchy",  "to": "tree",       "delta": 0.3, "resistance": 0.4,
+     "initial_U": 6.0, "initial_F": 1.0, "confidence": 0.8},
+    {"from": "hierarchy",  "to": "dashboard",  "delta": 0.4, "resistance": 0.5,
+     "initial_U": 3.0, "initial_F": 2.0, "confidence": 0.5},
+    {"from": "sequence",   "to": "timeline",   "delta": 0.3, "resistance": 0.4,
+     "initial_U": 6.0, "initial_F": 1.0, "confidence": 0.8},
+    {"from": "grouping",   "to": "dashboard",  "delta": 0.3, "resistance": 0.4,
+     "initial_U": 5.0, "initial_F": 1.5, "confidence": 0.7},
+    {"from": "density",    "to": "heatmap",    "delta": 0.3, "resistance": 0.4,
+     "initial_U": 5.0, "initial_F": 1.0, "confidence": 0.7},
+    {"from": "contrast",   "to": "highlight",  "delta": 0.3, "resistance": 0.4,
+     "initial_U": 5.0, "initial_F": 1.5, "confidence": 0.7},
+    {"from": "contrast",   "to": "bar",        "delta": 0.3, "resistance": 0.5,
+     "initial_U": 4.0, "initial_F": 2.0, "confidence": 0.6},
+    {"from": "label",      "to": "text",       "delta": 0.2, "resistance": 0.3,
+     "initial_U": 6.0, "initial_F": 1.0, "confidence": 0.8},
+    {"from": "motion",     "to": "timeline",   "delta": 0.3, "resistance": 0.4,
+     "initial_U": 5.0, "initial_F": 1.5, "confidence": 0.7},
+    {"from": "absence",    "to": "text",       "delta": 0.3, "resistance": 0.4,
+     "initial_U": 4.0, "initial_F": 2.0, "confidence": 0.6},
+    {"from": "proximity",  "to": "dashboard",  "delta": 0.3, "resistance": 0.5,
+     "initial_U": 4.0, "initial_F": 2.0, "confidence": 0.6},
 ]
 
 
@@ -284,6 +334,108 @@ class PerceptionDomain:
         snap = self.snapshot()
         return [p.name for p in snap.top(n, kind)]
 
+    @property
+    def rendering_primitives(self) -> List[str]:
+        """Return rendering primitives present in this domain."""
+        return [p for p in self._primitives if p in RENDERING_PRIMITIVES]
+
+    @property
+    def has_rendering(self) -> bool:
+        """True if this domain includes rendering primitives."""
+        return any(p in RENDERING_PRIMITIVES for p in self._primitives)
+
+    def suggest_rendering(self, perception: str) -> str:
+        """Suggest the best rendering widget for a perception primitive.
+
+        Uses E0's transition_field to pick the rendering node with the
+        highest structural openness from the given perception. This
+        incorporates historization: feedback shifts which rendering wins.
+
+        Args:
+            perception: A perception primitive name (e.g., "emphasis").
+
+        Returns:
+            Name of the best rendering primitive (e.g., "heatmap").
+            Falls back to "text" if no rendering edges exist.
+        """
+        best_name = "text"
+        best_v = -1.0
+        for rp in RENDERING_PRIMITIVES:
+            if self._landscape.has_edge(perception, rp):
+                v = self._landscape.transition_field(perception, rp)
+                if v > best_v:
+                    best_v = v
+                    best_name = rp
+        return best_name
+
+    def save_state(self, path: str | Path) -> Path:
+        """Save the perception domain state to a JSON memo file.
+
+        Exports the full topology + current historization traces as a
+        bootstrapper-compatible spec. On reload, ``from_saved()``
+        rebuilds the domain with exactly these trace values.
+
+        Args:
+            path: File path for the JSON output.
+
+        Returns:
+            Resolved Path of the written file.
+        """
+        p = Path(path)
+        hist = self._landscape.historization
+        edges_out = []
+        for edge in self._landscape.edges:
+            U, F = hist._effective_traces(edge)
+            edges_out.append({
+                "from": edge.source,
+                "to": edge.target,
+                "delta": self._landscape.difference(edge.source, edge.target),
+                "resistance": self._landscape.base_resistance(
+                    edge.source, edge.target
+                ),
+                "initial_U": round(U, 6),
+                "initial_F": round(F, 6),
+                "confidence": 1.0,
+            })
+        memo = {
+            "version": "1.0",
+            "saved_at": datetime.now(timezone.utc).isoformat(),
+            "tau": hist._tau,
+            "spec": {
+                "nodes": list(self._primitives),
+                "edges": edges_out,
+            },
+        }
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(
+            json.dumps(memo, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
+        return p.resolve()
+
+    @classmethod
+    def from_saved(cls, path: str | Path) -> "PerceptionDomain":
+        """Load a perception domain from a saved memo file.
+
+        The memo contains a bootstrapper-compatible spec with
+        initial_U/F set to the trace values at save time.
+
+        Args:
+            path: Path to the JSON memo file.
+
+        Returns:
+            A PerceptionDomain with restored traces.
+
+        Raises:
+            FileNotFoundError: if the memo file does not exist.
+        """
+        p = Path(path)
+        if not p.exists():
+            raise FileNotFoundError(f"Perception memo not found: {p}")
+        memo = json.loads(p.read_text(encoding="utf-8"))
+        spec = memo["spec"]
+        landscape = bootstrap_landscape(spec)
+        return cls(landscape, spec["nodes"])
+
 
 # ──────────────────────────────────────────────
 # 5. Builder Functions
@@ -294,8 +446,9 @@ def build_perception_domain(
 ) -> PerceptionDomain:
     """Build a perception domain from a spec (or use the default).
 
-    The default spec contains 15 perception primitives with 20 sparse
-    directed edges encoding Gestalt support relationships.
+    The default spec contains 22 perception primitives (10 visual,
+    5 language, 7 rendering) with 35 sparse directed edges encoding
+    Gestalt support relationships and perception→rendering mappings.
 
     Args:
         spec: Optional custom domain spec. If None, uses the default

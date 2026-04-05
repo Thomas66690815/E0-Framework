@@ -24,7 +24,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional
 
-from .perception import PerceptionDomain
+from .perception import PerceptionDomain, RENDERING_PRIMITIVES
 from .primitives import Edge, Outcome
 from .ui_emitter import UIPanel, UISpec
 
@@ -132,6 +132,11 @@ def ingest_panel_feedback(
     Historizes all perception edges touching the panel's perception
     primitive with the outcome derived from the human action.
 
+    C164: Additionally historizes the specific perception→rendering
+    edge that was used (e.g., emphasis→heatmap). This gives the
+    chosen rendering widget a stronger learning signal than
+    alternatives, enabling E0 to learn which widget works best.
+
     Returns the FeedbackEvent for audit.
     """
     outcome = action_to_outcome(action)
@@ -140,6 +145,13 @@ def ingest_panel_feedback(
     hist = domain.landscape.historization
     for edge in edges:
         hist.update(edge, outcome)
+
+    # C164: targeted rendering edge update
+    rendering_edge = Edge(panel.perception, panel.suggested_visual)
+    if (panel.suggested_visual in RENDERING_PRIMITIVES
+            and domain.landscape.has_edge(
+                panel.perception, panel.suggested_visual)):
+        hist.update(rendering_edge, outcome)
 
     return FeedbackEvent(panel=panel, action=action, outcome=outcome)
 
