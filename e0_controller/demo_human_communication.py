@@ -37,6 +37,7 @@ from e0_controller.perception import (
 from e0_controller.self_graph import SelfGraph
 from e0_controller.primitives import Outcome
 from e0_controller.ui_emitter import emit_ui_spec
+from e0_controller.ui_renderer import render_and_open
 
 
 # ──────────────────────────────────────────────
@@ -159,10 +160,18 @@ def run_demo() -> None:
     spec_dict = spec.to_dict()
     print(json.dumps(spec_dict, indent=2))
 
+    # ── Render to HTML and open in browser ────────────────
+    _print_header("Opening in Browser")
+    path = render_and_open(
+        spec,
+        title=f"E₀ Communication — Round {len(ROUND_BEHAVIORS)}",
+    )
+    print(f"  HTML written to: {path}")
+
     _print_header("Demo Complete")
     print("  E0 has completed 3 feedback rounds.")
     print("  Perception landscape has adapted to simulated human behavior.")
-    print("  A coding agent can consume the UISpec JSON above to build a UI.")
+    print(f"  UI opened in browser: {path}")
 
 
 if __name__ == "__main__":
