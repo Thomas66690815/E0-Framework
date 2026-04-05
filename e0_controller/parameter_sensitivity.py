@@ -52,8 +52,8 @@ from .self_graph import ALL_COMPONENTS, SelfGraph
 # ══════════════════════════════════════════════════════════
 
 COMPONENT_PARAMS: Dict[str, List[str]] = {
-    "amplitude":        [],
-    "born":             [],
+    "amplitude":        ["hybrid_mode", "confidence_threshold", "hybrid_horizon"],
+    "born":             ["hybrid_mode", "use_su2", "hybrid_horizon"],
     "realization":      [],
     "historization":    ["rho", "lambda_s", "lambda_f", "delta_max"],
     "inertia":          [],
@@ -203,6 +203,9 @@ def run_trial(
         max_escalation_R=config.max_escalation_R,
         overload_threshold=config.overload_threshold,
         confidence_threshold=config.confidence_threshold,
+        hybrid_mode=config.hybrid_mode,
+        hybrid_horizon=config.hybrid_horizon,
+        use_su2=config.use_su2,
     )
 
     sg = SelfGraph()

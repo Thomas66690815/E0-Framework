@@ -237,8 +237,22 @@ class TestSuggestPerturbations:
 
     def test_no_params_component(self):
         """Components with no tunable params produce no variants."""
-        diag = SelfGraphDiagnosis(harmful=["amplitude"])
+        diag = SelfGraphDiagnosis(harmful=["realization"])
         assert suggest_perturbations(diag) == []
+
+    def test_harmful_amplitude_produces_numeric_perturbations(self):
+        """amplitude has numeric params (confidence_threshold, hybrid_horizon)."""
+        diag = SelfGraphDiagnosis(harmful=["amplitude"])
+        variants = suggest_perturbations(diag)
+        assert len(variants) > 0
+        # hybrid_mode and use_su2 are non-numeric → skipped by suggest_perturbations
+        perturbed = set()
+        for v in variants:
+            if v.confidence_threshold != DEFAULTS.confidence_threshold:
+                perturbed.add("confidence_threshold")
+            if v.hybrid_horizon != DEFAULTS.hybrid_horizon:
+                perturbed.add("hybrid_horizon")
+        assert "hybrid_horizon" in perturbed
 
     def test_perturbation_values_float(self):
         diag = SelfGraphDiagnosis(harmful=["historization"])
@@ -263,3 +277,113 @@ class TestSuggestPerturbations:
         assert len(rho_vals) == 2
         assert any(v > base.rho for v in rho_vals)
         assert any(v < base.rho for v in rho_vals)
+
+
+# ── C152: Hybrid Mode / SU(2) in Sensitivity ─────────────
+
+
+class TestHybridModeForwarding:
+    """run_trial forwards hybrid_mode, hybrid_horizon, use_su2 to controller."""
+
+    def test_greedy_excludes_amplitude_born(self):
+        """GREEDY default: amplitude/born stay at zero in Self-Graph."""
+        result = run_trial(_make_landscape(), _success_fn, "S", max_cycles=15)
+        assert result.config.hybrid_mode == "greedy"
+        # amplitude and born should have no load
+        assert "amplitude" not in result.component_qualities
+        assert "born" not in result.component_qualities
+
+    def test_born_mode_activates_amplitude_and_born(self):
+        """Born mode produces non-zero amplitude AND born load."""
+        cfg = replace(DEFAULTS, hybrid_mode="born_sampling")
+        result = run_trial(_make_landscape(), _success_fn, "S", config=cfg, max_cycles=20)
+        assert "amplitude" in result.component_qualities
+        assert "born" in result.component_qualities
+
+    def test_amplitude_on_disagree_activates_amplitude_only(self):
+        """AMPLITUDE_ON_DISAGREE: amplitude active, born not."""
+        cfg = replace(DEFAULTS, hybrid_mode="amplitude_on_disagree")
+        result = run_trial(_make_landscape(), _success_fn, "S", config=cfg, max_cycles=20)
+        assert "amplitude" in result.component_qualities
+        assert "born" not in result.component_qualities
+
+    def test_hybrid_horizon_forwarded(self):
+        """Custom hybrid_horizon is respected in controller."""
+        cfg = replace(DEFAULTS, hybrid_mode="born_sampling", hybrid_horizon=5)
+        result = run_trial(_make_landscape(), _success_fn, "S", config=cfg, max_cycles=15)
+        # Simply runs without error; horizon=5 on a 4-node graph still works.
+        assert result.trace is not None
+
+    def test_use_su2_forwarded(self):
+        """use_su2=True reaches the controller as SU(2) transport."""
+        cfg = replace(DEFAULTS, hybrid_mode="born_sampling", use_su2=True)
+        result = run_trial(_make_landscape(), _success_fn, "S", config=cfg, max_cycles=15)
+        assert result.trace is not None
+        assert "born" in result.component_qualities
+
+    def test_use_su2_geometric(self):
+        """use_su2='geometric' variant runs successfully."""
+        cfg = replace(DEFAULTS, hybrid_mode="born_sampling", use_su2="geometric")
+        result = run_trial(_make_landscape(), _success_fn, "S", config=cfg, max_cycles=15)
+        assert result.trace is not None
+
+
+class TestSensitivityWithModes:
+    """sensitivity_analysis can compare greedy vs hybrid vs SU(2)."""
+
+    def test_greedy_vs_born_different_qualities(self):
+        """Greedy and Born modes produce different component quality profiles."""
+        configs = [DEFAULTS, replace(DEFAULTS, hybrid_mode="born_sampling")]
+        report = sensitivity_analysis(
+            _make_landscape(), _success_fn, "S", None, configs, max_cycles=20,
+        )
+        greedy_q = report.trials[0].component_qualities
+        born_q = report.trials[1].component_qualities
+        # Born has amplitude/born components that greedy doesn't
+        assert "amplitude" not in greedy_q
+        assert "amplitude" in born_q
+
+    def test_parameter_impact_detects_hybrid_mode(self):
+        """hybrid_mode shows up in parameter_impact when it varies."""
+        configs = [DEFAULTS, replace(DEFAULTS, hybrid_mode="born_sampling")]
+        report = sensitivity_analysis(
+            _make_landscape(), _success_fn, "S", None, configs, max_cycles=20,
+        )
+        impact = report.parameter_impact()
+        assert "hybrid_mode" in impact
+
+    def test_three_regime_comparison(self):
+        """U(1), SU(2), and geometric Born configs run and compare."""
+        configs = [
+            replace(DEFAULTS, hybrid_mode="born_sampling"),
+            replace(DEFAULTS, hybrid_mode="born_sampling", use_su2=True),
+            replace(DEFAULTS, hybrid_mode="born_sampling", use_su2="geometric"),
+        ]
+        report = sensitivity_analysis(
+            _make_landscape(), _success_fn, "S", None, configs, max_cycles=15,
+        )
+        assert len(report.trials) == 3
+        # All trials have born component active
+        for t in report.trials:
+            assert "born" in t.component_qualities
+        s = report.summary()
+        assert "Trial 0" in s
+        assert "Trial 2" in s
+
+
+class TestComponentParamsC152:
+    """COMPONENT_PARAMS updated for amplitude/born."""
+
+    def test_amplitude_has_params(self):
+        assert "hybrid_mode" in COMPONENT_PARAMS["amplitude"]
+        assert "confidence_threshold" in COMPONENT_PARAMS["amplitude"]
+        assert "hybrid_horizon" in COMPONENT_PARAMS["amplitude"]
+
+    def test_born_has_params(self):
+        assert "hybrid_mode" in COMPONENT_PARAMS["born"]
+        assert "use_su2" in COMPONENT_PARAMS["born"]
+        assert "hybrid_horizon" in COMPONENT_PARAMS["born"]
+
+    def test_no_params_components_unchanged(self):
+        for comp in ("realization", "inertia", "curvature", "overlap"):
+            assert COMPONENT_PARAMS[comp] == [], f"{comp} should have no params"

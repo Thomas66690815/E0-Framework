@@ -269,7 +269,7 @@ The non-Abelian property is essential here: `U(ẑ→x̂) ≠ U(x̂→ẑ)` mean
 
 ## 5. Synthesis: Recommended Path
 
-### Phase 1 — Honest Activation (Proposal A, partial)
+### Phase 1 — Honest Activation (Proposal A, partial) — ✅ C151
 
 Break core component degeneracy by making amplitude/born activation conditional. This is a precondition for any SU(2) integration to matter.
 
@@ -277,7 +277,7 @@ Break core component degeneracy by making amplitude/born activation conditional.
 
 Decision point: Is the honest Self-Graph (with conditional activation) worth pursuing even without SU(2)? If yes → implement first, independently.
 
-### Phase 2 — Hybrid Mode in Sensitivity (Proposal B)
+### Phase 2 — Hybrid Mode in Sensitivity (Proposal B) — ✅ C152
 
 Add `hybrid_mode` and `hybrid_horizon` forwarding to `run_trial()`. This enables:
 ```python
@@ -291,7 +291,7 @@ report = sensitivity_analysis(L, exec_fn, "S", None, configs)
 
 The system can then empirically compare: does enabling amplitude guidance help or hurt?
 
-### Phase 3 — SU(2) Regime Comparison (Proposals B+C)
+### Phase 3 — SU(2) Regime Comparison (Proposals B+C) — ✅ C152
 
 Once hybrid mode works in sensitivity analysis:
 ```python

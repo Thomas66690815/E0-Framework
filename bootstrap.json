@@ -28,9 +28,9 @@
   },
 
   "state": {
-    "latest_commit": "C151",
-    "latest_commit_msg": "C151: Honest Activation — amplitude/born excluded from Self-Graph in GREEDY mode",
-    "test_count": 3646,
+    "latest_commit": "C152",
+    "latest_commit_msg": "C152: Hybrid Mode in Sensitivity — hybrid_mode/use_su2 in E0Config, run_trial forwarding, 3-regime comparison",
+    "test_count": 3659,
     "test_failures": 0,
     "module_count": "60 production + 9 benchmarks + 16 demos + 40 explorations + 100 test files + 8 canons",
     "line_count": "~20200 production, ~97800 total"
@@ -119,7 +119,8 @@
     }
   },
 
-  "commit_history_recent": [    { "hash": "PENDING", "id": "C151", "title": "Honest Activation — amplitude/born excluded from Self-Graph in GREEDY mode, 10 new tests" },
+  "commit_history_recent": [    { "hash": "PENDING", "id": "C152", "title": "Hybrid Mode in Sensitivity — hybrid_mode/use_su2 in E0Config, run_trial forwarding, 13 new tests" },
+    { "hash": "a55c6ce", "id": "C151", "title": "Honest Activation — amplitude/born excluded from Self-Graph in GREEDY mode, 10 new tests" },
     { "hash": "PENDING", "id": "C150", "title": "Parameter Sensitivity — Self-Graph evaluates config choices, 28 tests" },
     { "hash": "PENDING", "id": "C149", "title": "\u03bc/\u03b1 unification \u2014 all function-level defaults flow through DEFAULTS" },
     { "hash": "PENDING", "id": "C148", "title": "Parameter Registry \u2014 E0Config frozen dataclass, DEFAULTS singleton, 15 modules wired" },

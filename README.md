@@ -200,7 +200,7 @@ Two systems that solve cold-start and hierarchical learning:
 - [External validation / handoff note](docs/E0_EXTERNAL_VALIDATION_AND_HANDOFF_NOTE_v1.md) — package for reviewers or AI systems
 - [Phase 3q interference report](docs/E0_PHASE3Q_INTERFERENCE_REPORT_v1.md) — holonomy formula, goal_reaching geometry, Gordian Trap
 - [Paper 3: Non-Abelian Structure](docs/papers/E0_PAPER3_NON_ABELIAN_STRUCTURE_v1.md) — SU(2) transport, curvature modulation, topological invariants
-- [Test Registry v2](docs/E0_TEST_REGISTRY_v2.md) — complete per-file test inventory (3646 tests)
+- [Test Registry v2](docs/E0_TEST_REGISTRY_v2.md) — complete per-file test inventory (3659 tests)
 - [Empirical Insights](docs/E0_EMPIRICAL_INSIGHTS_v1.md) — what Chess (C72) reveals about E₀ as a whole
 - [Dream Mode Concept](docs/E0_DREAM_MODE_CONCEPT_v1.md) — cross-domain pattern recognition through passive observation (C109–C139)
 - [Structural Entropy Design](docs/E0_STRUCTURAL_ENTROPY_DESIGN_v1.md) — forgetting as structural necessity (C114–C121)

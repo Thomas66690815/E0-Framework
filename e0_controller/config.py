@@ -57,12 +57,18 @@ class E0Config:
     # Admissibility filter: minimum coherence (K11).  0.0 = no filter.
     c_min: float = 0.0
 
+    # Hybrid arbitration mode: "greedy", "amplitude_on_disagree", "born".
+    hybrid_mode: str = "greedy"
+
     # Amplitude overlay: bounded-horizon path count.
     hybrid_horizon: int = 3
 
     # Confidence threshold for amplitude override.
     # 0.0 = amplitude always active when mode allows.
     confidence_threshold: float = 0.0
+
+    # SU(2) transport: False, True (minimal), or "geometric".
+    use_su2: object = False
 
     # Overload index threshold for peer consultation (C63).
     overload_threshold: float = 3.0
