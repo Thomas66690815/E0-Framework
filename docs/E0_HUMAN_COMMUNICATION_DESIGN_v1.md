@@ -179,11 +179,78 @@ C158 and C159 are independent and can be developed in parallel (conceptually). C
 
 1. **Perception granularity:** Are 10–15 primitives enough, or does E0 need to discover sub-primitives (e.g., `emphasis.color` vs. `emphasis.size`)?
 2. **Multi-modal:** Should E0 learn to emit audio/haptic specs, or is visual+text sufficient for now?
-3. **Coding agent interface:** Do we standardize on a specific agent (Copilot?) or keep the UISpec agent-agnostic?
+3. ~~**Coding agent interface:** Do we standardize on a specific agent (Copilot?) or keep the UISpec agent-agnostic?~~ → Resolved: stateless HTML renderer, no coding agent needed (§8).
 4. **Feedback latency:** Human feedback is slow (seconds to minutes). How does E0 handle the async gap?
 5. **Intent composition:** Can E0 compose multiple intents into one panel, or is it always one intent per panel?
 6. **Adversarial communication:** What if the human deliberately gives misleading feedback? (Robustness question, analogous to C138b noise.)
 
+## §8 — Stateless Renderer (C163)
+
+### Design Decision
+
+The UISpec is agent-agnostic by design (§2 Layer 3). But we don't actually need a coding agent to render it — the spec is structured enough that a **stateless translator** can map it directly to a visual format. No intelligence required. No E0 knowledge. Just a format transform.
+
+**Language choice: Python → self-contained HTML.**
+- Stays in the Python ecosystem — no npm, no React, no build tools
+- Zero new dependencies (stdlib only: `html`, `json`, `pathlib`)
+- HTML/CSS is purpose-built for visual rendering
+- `UISpec.to_dict()` already produces JSON — direct template injection
+- Universal: any browser, any OS, single file, no server
+
+### Architecture
+
+```
+UISpec  →  render_html(spec)    →  self-contained HTML string
+        →  render_to_file(spec) →  .html file on disk
+        →  render_and_open(spec) →  opens in default browser
+```
+
+The renderer is as "dumb" as a CSS stylesheet. It transforms format, nothing more. All intelligence (what to show, why, how urgent, which perceptual strategy) lies entirely in E0.
+
+### Layout Mapping
+
+| `layout` value | HTML/CSS realization |
+|-----------------|---------------------|
+| `alert` | Red full-width banner, single panel prominent |
+| `narrative` | Single-column vertical layout (storytelling) |
+| `dashboard` | CSS Grid, 2–3 columns |
+
+### Visual Mapping (`suggested_visual`)
+
+| Type | HTML realization |
+|------|-----------------|
+| `heatmap` | Color-coded cells (urgency → color scale) |
+| `tree` | Nested `<ul>/<li>` with indentation |
+| `timeline` | Vertical sequence with time markers |
+| `bar` | CSS bars (width = value) |
+| `text` | Paragraph with label + evidence |
+| `highlight` | Bordered box with accent color |
+| `dashboard` | Summary card with metrics |
+
+### Urgency → Color
+
+Linear gradient: green (0.0) → yellow (0.5) → red (1.0).
+
+### Panel Card Structure
+
+Each panel renders as a card with:
+- **Header:** `label` + urgency badge (colored dot)
+- **Tags:** intent type + perception primitive
+- **Body:** visual component based on `suggested_visual`
+- **Evidence:** collapsible raw data section
+
+### Human Feedback (Phase 1)
+
+Each panel has four buttons: **Engage / Acknowledge / Confused / Dismiss**. Clicking a button records the action into a JSON array in a `<textarea>` at the bottom of the page. The user copies this JSON → E0 ingests it via `ingest_feedback()`.
+
+No server, no WebSocket, no infrastructure. Pure client-side JavaScript.
+
+### Scope
+
+- `ui_renderer.py` — ~200–250 LOC, 3 public functions
+- `test_ui_renderer.py` — ~15–20 tests
+- Zero new dependencies
+
 ---
 
-*Concept by Thomas + Copilot, 2026-04-05. Fully implemented same day (C158–C162). Next: stateless renderer that maps UISpec JSON → screen.*
+*Concept by Thomas + Copilot, 2026-04-05. Fully implemented same day (C158–C162). C163 renderer: stateless UISpec → HTML.*
