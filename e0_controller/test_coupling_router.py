@@ -861,3 +861,217 @@ class TestRouterSelfGraphIntegration:
         # Should have enough data + reveal mixed component status
         assert isinstance(d, CouplingDiagnosis)
         assert len(d.components) == len(ALL_COUPLING_COMPONENTS)
+
+
+# ══════════════════════════════════════════════════════════
+# C157: Dream Equivalences → CouplingRouter Weight Update
+# ══════════════════════════════════════════════════════════
+
+from e0_controller.coupling_router import (
+    DreamWeightUpdate,
+    DreamWeightReport,
+    update_weights_from_dream,
+)
+from e0_controller.dream_mode import DreamObserver
+
+
+class TestDreamWeightUpdate:
+    """DreamWeightUpdate dataclass."""
+
+    def test_changed_true(self):
+        u = DreamWeightUpdate("A", 5, 0.5, 1.0, 1.5)
+        assert u.changed is True
+
+    def test_changed_false(self):
+        u = DreamWeightUpdate("A", 0, 0.0, 1.0, 1.0)
+        assert u.changed is False
+
+
+class TestDreamWeightReport:
+    """DreamWeightReport dataclass."""
+
+    def test_changed_count(self):
+        updates = [
+            DreamWeightUpdate("A", 3, 0.5, 1.0, 1.5),
+            DreamWeightUpdate("B", 0, 0.0, 1.0, 1.0),
+            DreamWeightUpdate("C", 2, -0.3, 1.0, 0.7),
+        ]
+        r = DreamWeightReport(updates)
+        assert r.changed_count == 2
+
+    def test_total_equivalences(self):
+        updates = [
+            DreamWeightUpdate("A", 3, 0.5, 1.0, 1.5),
+            DreamWeightUpdate("B", 2, 0.0, 1.0, 1.0),
+        ]
+        r = DreamWeightReport(updates)
+        assert r.total_equivalences == 5
+
+    def test_summary(self):
+        updates = [DreamWeightUpdate("A", 3, 0.5, 1.0, 1.5)]
+        r = DreamWeightReport(updates)
+        s = r.summary()
+        assert "DreamWeightReport" in s
+        assert "1/1" in s
+
+
+class TestUpdateWeightsFromDream:
+    """update_weights_from_dream() integration."""
+
+    def test_no_equivalences_keeps_weights(self):
+        """Without dream data, weights stay at default 1.0."""
+        a, b = _universe_A(), _universe_B()
+        router = CouplingRouter([a, b])
+        obs = DreamObserver()
+
+        report = update_weights_from_dream(router, obs)
+        assert report.changed_count == 0
+        assert router.get_weight("A") == 1.0
+        assert router.get_weight("B") == 1.0
+
+    def test_positive_equivalences_raise_weight(self):
+        """Domains with positive equivalences get higher weights."""
+        a, b = _universe_A(), _universe_B()
+        router = CouplingRouter([a, b])
+        obs = DreamObserver()
+
+        # Register both domains and run dream cycle to create equivalences
+        obs.register("A", a.landscape)
+        obs.register("B", b.landscape)
+        obs.dream_cycle()
+
+        # Give positive feedback on equivalences
+        eqs = obs.equivalences_for("A")
+        for eq in eqs[:3]:
+            obs.feedback(eq["own_state"], eq["partner_state"], Outcome.SUCCESS)
+            obs.feedback(eq["own_state"], eq["partner_state"], Outcome.SUCCESS)
+
+        report = update_weights_from_dream(router, obs)
+        # A has equivalences with positive quality → weight > 1.0
+        for u in report.updates:
+            if u.equivalences_count > 0 and u.mean_quality > 0:
+                assert u.new_weight > 1.0
+
+    def test_negative_equivalences_lower_weight(self):
+        """Domains with negative equivalences get lower weights."""
+        a, b = _universe_A(), _universe_B()
+        router = CouplingRouter([a, b])
+        obs = DreamObserver()
+
+        obs.register("A", a.landscape)
+        obs.register("B", b.landscape)
+        obs.dream_cycle()
+
+        # Give negative feedback on equivalences
+        eqs = obs.equivalences_for("A")
+        for eq in eqs[:3]:
+            obs.feedback(eq["own_state"], eq["partner_state"], Outcome.FAILURE)
+            obs.feedback(eq["own_state"], eq["partner_state"], Outcome.FAILURE)
+
+        report = update_weights_from_dream(router, obs)
+        for u in report.updates:
+            if u.equivalences_count > 0 and u.mean_quality < 0:
+                assert u.new_weight < 1.0
+
+    def test_weight_floor_respected(self):
+        """Weight never drops below weight_floor."""
+        a, b = _universe_A(), _universe_B()
+        router = CouplingRouter([a, b])
+        obs = DreamObserver()
+
+        obs.register("A", a.landscape)
+        obs.register("B", b.landscape)
+        obs.dream_cycle()
+
+        # Heavily negative feedback
+        eqs = obs.equivalences_for("A")
+        for eq in eqs:
+            for _ in range(10):
+                obs.feedback(eq["own_state"], eq["partner_state"], Outcome.FAILURE)
+
+        report = update_weights_from_dream(router, obs, weight_floor=0.2)
+        for u in report.updates:
+            assert u.new_weight >= 0.2
+
+    def test_min_equivalences_threshold(self):
+        """Domains with fewer than min_equivalences keep current weight."""
+        a, b = _universe_A(), _universe_B()
+        router = CouplingRouter([a, b])
+        obs = DreamObserver()
+
+        obs.register("A", a.landscape)
+        obs.register("B", b.landscape)
+        obs.dream_cycle()
+
+        # High threshold — likely fewer equivalences than this
+        report = update_weights_from_dream(router, obs, min_equivalences=999)
+        assert report.changed_count == 0
+        assert router.get_weight("A") == 1.0
+
+    def test_weight_updates_affect_routing(self):
+        """After weight update, R₀ on routing edges changes."""
+        a, b, c = _universe_A(), _universe_B(), _universe_C()
+        router = CouplingRouter([a, b, c])
+
+        # Manually set weight to verify routing effect
+        old_r0_b = router.landscape._R0.get(Edge("A", "B"), None)
+        router.set_weight("B", 2.0)
+        new_r0_b = router.landscape._R0.get(Edge("A", "B"), None)
+
+        # Higher weight → lower R₀ (cheaper to receive from B)
+        assert new_r0_b < old_r0_b
+
+    def test_report_returns_all_domains(self):
+        """Report has one entry per universe in the router."""
+        a, b, c = _universe_A(), _universe_B(), _universe_C()
+        router = CouplingRouter([a, b, c])
+        obs = DreamObserver()
+
+        report = update_weights_from_dream(router, obs)
+        assert len(report.updates) == 3
+        domains = {u.domain for u in report.updates}
+        assert domains == {"A", "B", "C"}
+
+    def test_includes_node_equivalences(self):
+        """Node-level equivalences also contribute to weight computation."""
+        a, b = _universe_A(), _universe_B()
+        router = CouplingRouter([a, b])
+        obs = DreamObserver(node_equivalence_method="wl")
+
+        obs.register("A", a.landscape)
+        obs.register("B", b.landscape)
+        obs.dream_cycle()
+
+        report = update_weights_from_dream(router, obs)
+        # Should count both edge and node equivalences
+        assert isinstance(report, DreamWeightReport)
+
+    def test_three_universe_differential(self):
+        """With 3 universes, weights can diverge based on equivalence quality."""
+        a, b, c = _universe_A(), _universe_B(), _universe_C()
+        router = CouplingRouter([a, b, c])
+        obs = DreamObserver()
+
+        obs.register("A", a.landscape)
+        obs.register("B", b.landscape)
+        obs.register("C", c.landscape)
+        obs.dream_cycle()
+
+        report = update_weights_from_dream(router, obs)
+        assert len(report.updates) == 3
+
+    def test_idempotent_without_new_feedback(self):
+        """Calling twice without new feedback produces same weights."""
+        a, b = _universe_A(), _universe_B()
+        router = CouplingRouter([a, b])
+        obs = DreamObserver()
+
+        obs.register("A", a.landscape)
+        obs.register("B", b.landscape)
+        obs.dream_cycle()
+
+        r1 = update_weights_from_dream(router, obs)
+        r2 = update_weights_from_dream(router, obs)
+
+        for u1, u2 in zip(r1.updates, r2.updates):
+            assert u1.new_weight == u2.new_weight

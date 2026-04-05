@@ -28,9 +28,9 @@
   },
 
   "state": {
-    "latest_commit": "C156",
-    "latest_commit_msg": "C156: Curriculum ↔ Sleep-Wake Integration — DreamObserver consolidation between curriculum turns, TurnResult.dream_consolidation, 14 new tests",
-    "test_count": 3796,
+    "latest_commit": "C157",
+    "latest_commit_msg": "C157: Dream Equivalences → CouplingRouter — update_weights_from_dream auto-biases partner selection from dream quality signals, 15 new tests",
+    "test_count": 3811,
     "test_failures": 0,
     "module_count": "60 production + 9 benchmarks + 16 demos + 40 explorations + 100 test files + 8 canons",
     "line_count": "~20200 production, ~97800 total"

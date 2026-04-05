@@ -64,6 +64,14 @@ which components participated and the outcome.  Diagnosis reveals:
   - selection "confused" → partner choice inconsistent
   - exchange "harmful"   → cross-reflexion hurting more than helping
   - weight_mod "harmful" → asymmetric weights counterproductive
+
+C157 — Dream Equivalences → CouplingRouter
+-------------------------------------------
+update_weights_from_dream() dynamically adjusts universe weights based
+on dream equivalence quality signals.  Universes whose analogies are
+productive get higher weights (cheaper to receive from); universes
+whose analogies fail get lower weights (more expensive).  This closes
+the last integration gap: Dream → CouplingRouter.
 """
 
 from __future__ import annotations
@@ -76,6 +84,10 @@ from e0_controller.landscape import Landscape
 from e0_controller.multiverse import Universe
 from e0_controller.primitives import Edge, Outcome
 from e0_controller.config import DEFAULTS
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from e0_controller.dream_mode import DreamObserver
 
 
 # ──────────────────────────────────────────────
@@ -657,3 +669,122 @@ def diagnose_coupling(csg: CouplingSelfGraph) -> CouplingDiagnosis:
         deactivation_candidates=deactivation,
         meta_actions=meta_actions,
     )
+
+
+# ──────────────────────────────────────────────
+# Dream Equivalences → Weight Update (C157)
+# ──────────────────────────────────────────────
+
+@dataclass
+class DreamWeightUpdate:
+    """Result of updating coupling weights from dream equivalences."""
+    domain: str
+    equivalences_count: int
+    mean_quality: float
+    old_weight: float
+    new_weight: float
+
+    @property
+    def changed(self) -> bool:
+        return self.old_weight != self.new_weight
+
+
+@dataclass
+class DreamWeightReport:
+    """Report from update_weights_from_dream()."""
+    updates: List[DreamWeightUpdate]
+
+    @property
+    def changed_count(self) -> int:
+        return sum(1 for u in self.updates if u.changed)
+
+    @property
+    def total_equivalences(self) -> int:
+        return sum(u.equivalences_count for u in self.updates)
+
+    def summary(self) -> str:
+        lines = [f"DreamWeightReport: {self.changed_count}/{len(self.updates)} weights updated"]
+        for u in self.updates:
+            tag = "→" if u.changed else "="
+            lines.append(
+                f"  {u.domain}: {u.old_weight:.3f} {tag} {u.new_weight:.3f} "
+                f"(eq={u.equivalences_count}, q={u.mean_quality:+.3f})"
+            )
+        return "\n".join(lines)
+
+
+def update_weights_from_dream(
+    router: CouplingRouter,
+    observer: "DreamObserver",
+    *,
+    min_equivalences: int = 1,
+    weight_floor: float = 0.1,
+) -> DreamWeightReport:
+    """Adjust coupling weights based on dream equivalence quality (C157).
+
+    For each universe in the router, queries the DreamObserver for
+    equivalences where this domain participates. Computes mean
+    trace_quality across all equivalences and maps it to a weight:
+
+        weight = max(weight_floor, 1.0 + mean_quality)
+
+    This means:
+      - mean_quality = +1.0 → weight = 2.0 (expert donor, low R₀)
+      - mean_quality =  0.0 → weight = 1.0 (neutral, default R₀)
+      - mean_quality = -0.5 → weight = 0.5 (poor donor, high R₀)
+      - mean_quality = -1.0 → weight = weight_floor (unreliable)
+
+    Parameters
+    ----------
+    router : CouplingRouter
+        The router whose weights to update.
+    observer : DreamObserver
+        Source of equivalence quality signals.
+    min_equivalences : int
+        Minimum equivalences required before adjusting weight.
+        Domains with fewer equivalences keep their current weight.
+    weight_floor : float
+        Minimum weight (prevents division-by-zero in R₀ calculation).
+
+    Returns
+    -------
+    DreamWeightReport
+        Per-domain weight changes and summary statistics.
+    """
+    updates: List[DreamWeightUpdate] = []
+
+    for name in router.universes:
+        eqs = observer.equivalences_for(name)
+        node_eqs = observer.node_equivalences_for(name)
+
+        # Combine edge and node equivalence qualities
+        qualities = [e["trace_quality"] for e in eqs]
+        qualities.extend(e["trace_quality"] for e in node_eqs)
+
+        old_weight = router.get_weight(name)
+
+        if len(qualities) < min_equivalences:
+            updates.append(DreamWeightUpdate(
+                domain=name,
+                equivalences_count=len(qualities),
+                mean_quality=0.0,
+                old_weight=old_weight,
+                new_weight=old_weight,
+            ))
+            continue
+
+        mean_q = sum(qualities) / len(qualities)
+        new_weight = max(weight_floor, 1.0 + mean_q)
+
+        if new_weight != old_weight:
+            router.set_weight(name, new_weight)
+
+        updates.append(DreamWeightUpdate(
+            domain=name,
+            equivalences_count=len(qualities),
+            mean_quality=mean_q,
+            old_weight=old_weight,
+            new_weight=new_weight,
+        ))
+
+    return DreamWeightReport(updates=updates)
