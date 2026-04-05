@@ -199,11 +199,16 @@ def run_pretraining(
     hist = domain.landscape.historization
     evaluations: List[RenderingEval] = []
 
+    # Count total evaluations for progress
+    active_edges = [
+        (p, r) for p in VISUAL_PRIMITIVES for r in RENDERING_PRIMITIVES
+        if domain.landscape.has_edge(p, r)
+    ]
+    total_evals = len(active_edges) * len(intents) * rounds
+    eval_counter = 0
+
     for round_idx in range(rounds):
-        for perception in VISUAL_PRIMITIVES:
-            for rendering in RENDERING_PRIMITIVES:
-                if not domain.landscape.has_edge(perception, rendering):
-                    continue
+        for perception, rendering in active_edges:
                 edge = Edge(perception, rendering)
 
                 for intent in intents:
@@ -227,6 +232,12 @@ def run_pretraining(
                     outcome = score_to_outcome(score)
                     hist.update(edge, outcome)
 
+                    eval_counter += 1
+                    print(f"\r  [{eval_counter}/{total_evals}] "
+                          f"{perception}→{rendering} ({intent}): "
+                          f"{score}/10 → {outcome.name}",
+                          end="", flush=True)
+
                     evaluations.append(RenderingEval(
                         perception=perception,
                         rendering=rendering,
@@ -235,6 +246,9 @@ def run_pretraining(
                         reasoning=reasoning,
                         outcome=outcome,
                     ))
+
+    if eval_counter:
+        print()  # newline after progress
 
     return PretrainingResult(
         rounds=rounds,
