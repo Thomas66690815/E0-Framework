@@ -3,8 +3,8 @@
 **Status:** Canonical reference  
 **Date:** 2026-04-06  
 **Supersedes:** E0_ARCHITECTURE_OVERVIEW_v3.md (2026-04-02)  
-**Scope:** 71 production modules, 9 benchmarks, 17 demos, 49 explorations, 111 test files — ~29,000 production lines, 4063 tests
-**Latest:** C168 (Compatibility-Gated Dreaming — mean WL distance pre-filters incompatible domain pairs, ~59% edge noise / ~67% node noise reduction)
+**Scope:** 71 production modules, 9 benchmarks, 17 demos, 52 explorations, 111 test files — ~29,000 production lines, 4063 tests
+**Latest:** C171 (Asymmetric Teaching — training effect=0, topology dominates, asymmetry scoped to LLM-bootstrapped domains only)
 **Papers:** P1 (Structural Interference), P2 (Spinor/Born), P3 (Non-Abelian), P4 (Reflexivity), P5 (Emergent Locality), P6 (Dream Mode)
 
 ---
@@ -193,7 +193,7 @@ Explorations: `explore_gordian`, `explore_amplitude`, `explore_resonator`, `expl
 
 | Module | Lines | Purpose | Paper |
 |--------|------:|---------|-------|
-| `dream_mode.py` | 1320 | Cross-domain pattern recognition: EdgeFingerprint, fingerprint_distance, find_equivalences, DreamObserver (register/unregister/dream_cycle/feedback), BridgeHypothesis, propose_bridges, make_dream_peer_fn (C109–C111). Decay integration: decay_enabled, DreamCycleResult.decay_reports (C119). **Node-level matching (C134b):** NodeFingerprint, node_fingerprints, node_fingerprint_distance, find_node_equivalences. **WL recursive neighborhood (C135–C136):** WLNodeFingerprint, wl_node_fingerprints (9-dim Round-0: mean/std/degree/pos_frac/min/max/median quality + trace_load mean/std), wl_node_distance, find_wl_node_equivalences. **Hungarian optimal assignment (C137):** find_wl_node_equivalences_hungarian — scipy.optimize.linear_sum_assignment on full WL distance matrix, globally optimal 1:1 node pairing → **44/44 = 100%**. **C139 Runtime Integration:** DreamObserver.dream_cycle() now invokes node-level equivalences (hungarian or wl method) alongside edge-EQ. `_update_dream_landscape_nodes()` creates "domain:node" states. `_node_equivalence_state()` helper. DreamCycleResult extended with `node_equivalences_found`/`node_equivalences_new`. **C168 Compatibility Gating:** `dream_compatibility()` (mean WL distance under Hungarian assignment), `is_dream_compatible()` (threshold check). DreamObserver pre-filters domain pairs — incompatible pairs skipped. DreamCycleResult extended with `compatibility_skipped`/`compatibility_scores`. Config: `dream_compatibility_threshold = 0.6`. Empirical: EN↔DE=0.375✓, EN↔ONTO=0.870✗, DE↔ONTO=1.014✗. | P6 |
+| `dream_mode.py` | 1320 | Cross-domain pattern recognition: EdgeFingerprint, fingerprint_distance, find_equivalences, DreamObserver (register/unregister/dream_cycle/feedback), BridgeHypothesis, propose_bridges, make_dream_peer_fn (C109–C111). Decay integration: decay_enabled, DreamCycleResult.decay_reports (C119). **Node-level matching (C134b):** NodeFingerprint, node_fingerprints, node_fingerprint_distance, find_node_equivalences. **WL recursive neighborhood (C135–C136):** WLNodeFingerprint, wl_node_fingerprints (9-dim Round-0: mean/std/degree/pos_frac/min/max/median quality + trace_load mean/std), wl_node_distance, find_wl_node_equivalences. **Hungarian optimal assignment (C137):** find_wl_node_equivalences_hungarian — scipy.optimize.linear_sum_assignment on full WL distance matrix, globally optimal 1:1 node pairing → **44/44 = 100%**. **C139 Runtime Integration:** DreamObserver.dream_cycle() now invokes node-level equivalences (hungarian or wl method) alongside edge-EQ. `_update_dream_landscape_nodes()` creates "domain:node" states. `_node_equivalence_state()` helper. DreamCycleResult extended with `node_equivalences_found`/`node_equivalences_new`. **C168 Compatibility Gating:** `dream_compatibility()` (mean WL distance under Hungarian assignment), `is_dream_compatible()` (threshold check). DreamObserver pre-filters domain pairs — incompatible pairs skipped. DreamCycleResult extended with `compatibility_skipped`/`compatibility_scores`. Config: `dream_compatibility_threshold = 0.6`. Empirical: EN↔DE=0.375✓, EN↔ONTO=0.870✗, DE↔ONTO=1.014✗. **C169 Threshold Calibration:** 36 domain pairs (9 domains), gap=0.410 between compatible (max 0.190) and incompatible (min 0.600). Any threshold in [0.4, 0.7] gives identical results. **C170 Partial Matching (NEGATIVE):** Full NxM WL distance matrices for incompatible pairs show 0% overlap with compatible best-5 distances — WL fingerprints are too specific for subgraph matching. **C171 Asymmetric Teaching:** EN_heavy (5400 steps) vs EN_light (300 steps) produce identical fingerprints (variance ratio=1.000). All cross-domain differences are topology-driven (EN/DE ratio=0.692). Asymmetric teaching scoped to LLM-bootstrapped domains only. | P6 |
 
 ### Layer 10 — Structural Entropy (1 module, ~600 lines)
 
@@ -394,6 +394,8 @@ All three share the same controller core. They differ only in the final action s
 ## 8. Test Infrastructure
 
 **4063 tests**, 0 failures (2026-04-06) across **111 test files**.
+
+**Explorations (C169–C171):** 3 new explorations closing all 4 open questions from Multi-Domain Dream Analysis — Q1/Q2 compatibility calibration, Q3 partial matching (negative), Q4 asymmetric teaching (training=0, topology dominates).
 
 | Category | Test Files | Tests |
 |----------|-----------|-------|

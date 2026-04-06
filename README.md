@@ -203,8 +203,9 @@ Two systems that solve cold-start and hierarchical learning:
 - [Paper 3: Non-Abelian Structure](docs/papers/E0_PAPER3_NON_ABELIAN_STRUCTURE_v1.md) — SU(2) transport, curvature modulation, topological invariants
 - [Test Registry v2](docs/E0_TEST_REGISTRY_v2.md) — complete per-file test inventory (4063 tests)
 - [Empirical Insights](docs/E0_EMPIRICAL_INSIGHTS_v1.md) — what Chess (C72) reveals about E₀ as a whole
-- [Dream Mode Concept](docs/E0_DREAM_MODE_CONCEPT_v1.md) — cross-domain pattern recognition through passive observation (C109–C139, C168)
-- [Multi-Domain Dream Analysis](docs/E0_MULTI_DOMAIN_DREAM_ANALYSIS_v1.md) — compatibility gating empirical analysis (C168)
+- [Dream Mode Concept](docs/E0_DREAM_MODE_CONCEPT_v1.md) — cross-domain pattern recognition through passive observation (C109–C139, C168–C171)
+- [Multi-Domain Dream Analysis](docs/E0_MULTI_DOMAIN_DREAM_ANALYSIS_v1.md) — compatibility gating empirical analysis (C168–C171, all 4 questions closed)
+- [Asymmetric Teaching Research](docs/research/E0_ASYMMETRIC_TEACHING_RESEARCH_v1.md) — training effect=0, topology dominates (C171)
 - [Structural Entropy Design](docs/E0_STRUCTURAL_ENTROPY_DESIGN_v1.md) — forgetting as structural necessity (C114–C121)
 - [Language Learning Results](docs/E0_LANGUAGE_LEARNING_RESULTS_v1.md) — cross-domain translation via structural fingerprints (C124–C137)
 - [Observation UI Architecture](docs/E0_OBSERVATION_UI_ARCHITECTURE_v1.md) — O-Landscape projection and navigation (C94–C97)
@@ -353,6 +354,9 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 | LLM-Derived Endpoints (C166b) | **Active** (9 tests) | `e0_controller/e0_session.py` |
 | Infrastructure Hardening (C167) | **Active** (conftest.py) | `e0_controller/conftest.py` |
 | Compatibility-Gated Dreaming (C168) | **Active** (15 tests) | `e0_controller/dream_mode.py` |
+| Compatibility Calibration (C169) | **Active** (exploration) | `e0_controller/explore_compatibility_threshold.py` |
+| Partial Matching (C170) | **Closed** (negative) | `e0_controller/explore_partial_matching.py` |
+| Asymmetric Teaching (C171) | **Closed** (topology dominates) | `e0_controller/explore_asymmetric_teaching.py` |
 
 **Tests:** 4063 total (pytest), 0 failures, 0 warnings, 41 conditional (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
 
