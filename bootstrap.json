@@ -28,14 +28,14 @@
   },
 
   "state": {
-    "latest_commit": "C166b",
-    "latest_commit_hash": "502413c",
-    "latest_commit_msg": "C166b: LLM-derived start/goal endpoints from task description",
-    "test_count": 4048,
+    "latest_commit": "C168b",
+    "latest_commit_hash": "f4d487d",
+    "latest_commit_msg": "C168b: Compatibility-gated dreaming exploration",
+    "test_count": 4063,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
-    "module_count": "74 production + 9 benchmarks + 17 demos + 48 explorations + 111 test files",
-    "line_count": "~28700 production, ~111000 total"
+    "module_count": "71 production + 9 benchmarks + 17 demos + 49 explorations + 111 test files",
+    "line_count": "~29000 production, ~112000 total"
   },
 
   "conventions": {
@@ -92,7 +92,7 @@
       },
       "9_dream_mode": {
         "files": ["dream_mode.py", "explore_dream_mode.py"],
-        "purpose": "Passive cross-domain pattern recognition. EdgeFingerprint f(e)=(q,m,I), functional equivalence detection (quantile-based), DreamObserver (N domains, dream_cycle, feedback historization), bridge hypothesis generation (→ cross_propose_edges), make_dream_peer_fn (E0Controller integration). WL recursive fingerprints (9-dim→81-dim at depth-2), Hungarian optimal assignment (find_wl_node_equivalences_hungarian, scipy). **C139:** DreamObserver.dream_cycle() invokes node-level equivalences (hungarian/wl) alongside edge-EQ. _update_dream_landscape_nodes creates domain:node states. **C154:** node_equivalences_for query, propose_node_bridges (structural transfer from donor neighborhoods via node mapping), make_dream_peer_fn node-bridge fallback, confidence_floor (breaks cold-start chicken-and-egg), equivalences_for now filters out node states. C109-C112, C135-C139, C154."
+        "purpose": "Passive cross-domain pattern recognition. EdgeFingerprint f(e)=(q,m,I), functional equivalence detection (quantile-based), DreamObserver (N domains, dream_cycle, feedback historization), bridge hypothesis generation (→ cross_propose_edges), make_dream_peer_fn (E0Controller integration). WL recursive fingerprints (9-dim→81-dim at depth-2), Hungarian optimal assignment (find_wl_node_equivalences_hungarian, scipy). **C139:** DreamObserver.dream_cycle() invokes node-level equivalences (hungarian/wl) alongside edge-EQ. _update_dream_landscape_nodes creates domain:node states. **C154:** node_equivalences_for query, propose_node_bridges (structural transfer from donor neighborhoods via node mapping), make_dream_peer_fn node-bridge fallback, confidence_floor (breaks cold-start chicken-and-egg), equivalences_for now filters out node states. **C168:** dream_compatibility() (mean WL distance as structural compatibility metric), is_dream_compatible() (threshold check), compatibility-gated dream_cycle() (skips incompatible domain pairs, reports compatibility_skipped/compatibility_scores). Empirical: EN↔DE=0.375 PASS, EN↔ONTO=0.870 SKIP, 59% edge noise filtered. C109-C112, C135-C139, C154, C168."
       },
       "10_structural_entropy": {
         "files": ["structural_entropy.py", "explore_structural_entropy.py"],
@@ -130,6 +130,9 @@
   },
 
   "commit_history_recent": [
+    { "hash": "f4d487d", "id": "C168b", "title": "Compatibility-gated dreaming exploration — 59% edge noise, 67% node noise filtered" },
+    { "hash": "8398fc2", "id": "C168", "title": "Compatibility-gated dreaming — dream_compatibility(), is_dream_compatible(), gated DreamObserver (15 tests)" },
+    { "hash": "8f11ab7", "id": "C167", "title": "Infrastructure hardening — bootstrap.json, conftest.py, docs alignment" },
     { "hash": "502413c", "id": "fix", "title": "CI: add scipy to dependencies, fix pyproject.toml structure, fix .gitignore encoding" },
     { "hash": "50e2474", "id": "C166b", "title": "LLM-derived start/goal endpoints from task description" },
     { "hash": "c01c7b8", "id": "C166", "title": "Task-aware intents — landscape + trace data flows into UI (12 tests, 4070 total)" },

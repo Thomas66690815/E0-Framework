@@ -19,7 +19,7 @@ In practical terms, this means the repository is no longer only about a determin
 - a session orchestrator with automatic MemOS persistence,
 - persistent runtime support via MemOS,
 - multiverse architecture with cross-universe reflexion (C59–C63),
-- dream mode with Hungarian-optimal cross-domain pattern discovery (C109–C139),
+- dream mode with Hungarian-optimal cross-domain pattern discovery and compatibility gating (C109–C139, C168),
 - structural entropy with sleep–wake cycles (C114–C121),
 - curriculum-driven canon learning (C123),
 - proactive reflexion that proposes before stagnation (C57),
@@ -179,7 +179,7 @@ A reflexion layer that operates *across* universes rather than within a single r
 
 Two complementary systems that handle what a learning system eventually *must* handle: pattern recognition across domains, and forgetting.
 
-- **Dream Mode (C109–C139)** — Passive cross-domain pattern recognition. `DreamObserver` monitors N domains, computes edge fingerprints and node-level equivalences (WL recursive + Hungarian optimal assignment), and generates bridge hypotheses. No active navigation — dreaming is observation, not action.
+- **Dream Mode (C109–C139, C168)** — Passive cross-domain pattern recognition. `DreamObserver` monitors N domains, computes edge fingerprints and node-level equivalences (WL recursive + Hungarian optimal assignment), and generates bridge hypotheses. **Compatibility gating (C168):** mean WL distance under Hungarian assignment pre-filters domain pairs — incompatible pairs (distance > threshold) are skipped, reducing noise by ~59% (edge-EQ) and ~67% (node-EQ). No active navigation — dreaming is observation, not action.
 - **Structural Entropy (C114–C120)** — Structural temperature T_s measures landscape disorder. Type 1 (inscription threshold): conditional inscription based on novelty. Type 2 (anchors + decay): remove low-value edges and states to prevent overload.
 - **Sleep–Wake Cycle (C121)** — Automatic rhythm: wake phase builds experience, sleep phase consolidates (dream + decay). Dream pressure `p = T_s/(T_s+μ)` triggers sleep when disorder is high.
 
@@ -194,16 +194,17 @@ Two systems that solve cold-start and hierarchical learning:
 
 ## Documentation quick links
 
-- [Architecture overview v4](docs/E0_ARCHITECTURE_OVERVIEW_v4.md) — 12-layer model with all 60+ production modules
+- [Architecture overview v4](docs/E0_ARCHITECTURE_OVERVIEW_v4.md) — 14-layer model with all 70+ production modules
 - [Multiverse design](docs/E0_MULTIVERSE_DESIGN_v1.md) — C54–C63 architecture, coupling theorem, benchmarks
 - [Integration Stories](docs/E0_INTEGRATION_STORIES_v1.md) — prioritized demo + integration roadmap (C139–C144)
 - [Evidence & falsification status](docs/E0_EVIDENCE_AND_FALSIFICATION_STATUS_v1.md) — what is demonstrated vs open
 - [External validation / handoff note](docs/E0_EXTERNAL_VALIDATION_AND_HANDOFF_NOTE_v1.md) — package for reviewers or AI systems
 - [Phase 3q interference report](docs/E0_PHASE3Q_INTERFERENCE_REPORT_v1.md) — holonomy formula, goal_reaching geometry, Gordian Trap
 - [Paper 3: Non-Abelian Structure](docs/papers/E0_PAPER3_NON_ABELIAN_STRUCTURE_v1.md) — SU(2) transport, curvature modulation, topological invariants
-- [Test Registry v2](docs/E0_TEST_REGISTRY_v2.md) — complete per-file test inventory (4048 tests)
+- [Test Registry v2](docs/E0_TEST_REGISTRY_v2.md) — complete per-file test inventory (4063 tests)
 - [Empirical Insights](docs/E0_EMPIRICAL_INSIGHTS_v1.md) — what Chess (C72) reveals about E₀ as a whole
-- [Dream Mode Concept](docs/E0_DREAM_MODE_CONCEPT_v1.md) — cross-domain pattern recognition through passive observation (C109–C139)
+- [Dream Mode Concept](docs/E0_DREAM_MODE_CONCEPT_v1.md) — cross-domain pattern recognition through passive observation (C109–C139, C168)
+- [Multi-Domain Dream Analysis](docs/E0_MULTI_DOMAIN_DREAM_ANALYSIS_v1.md) — compatibility gating empirical analysis (C168)
 - [Structural Entropy Design](docs/E0_STRUCTURAL_ENTROPY_DESIGN_v1.md) — forgetting as structural necessity (C114–C121)
 - [Language Learning Results](docs/E0_LANGUAGE_LEARNING_RESULTS_v1.md) — cross-domain translation via structural fingerprints (C124–C137)
 - [Observation UI Architecture](docs/E0_OBSERVATION_UI_ARCHITECTURE_v1.md) — O-Landscape projection and navigation (C94–C97)
@@ -323,7 +324,7 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 | Modulation Benchmark (C100) | **Active** (32 tests) | `e0_controller/benchmark_modulation.py` |
 | Scoped Reflexion (C101–C106) | **Active** (42 tests) | `e0_controller/scoped_reflexion.py` |
 | Emergent Locality (C104) | **Active** (29 tests) | `e0_controller/emergent_locality.py` |
-| Dream Mode (C109–C112) | **Active** (88 tests) | `e0_controller/dream_mode.py` |
+| Dream Mode (C109–C112, C168) | **Active** (113 tests) | `e0_controller/dream_mode.py` |
 | Structural Entropy (C114–C120) | **Active** (101 tests) | `e0_controller/structural_entropy.py` |
 | Sleep–Wake Cycle (C121) | **Active** (10 tests) | `e0_controller/sleep_wake.py` |
 | Curriculum Navigator (C123) | **Active** (35 tests) | `e0_controller/curriculum.py` |
@@ -350,8 +351,10 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 | Session Runner (C165) | **Active** (15 tests) | `e0_controller/e0_session.py` |
 | Task-Aware Intents (C166) | **Active** (12 tests) | `e0_controller/e0_session.py` |
 | LLM-Derived Endpoints (C166b) | **Active** (9 tests) | `e0_controller/e0_session.py` |
+| Infrastructure Hardening (C167) | **Active** (conftest.py) | `e0_controller/conftest.py` |
+| Compatibility-Gated Dreaming (C168) | **Active** (15 tests) | `e0_controller/dream_mode.py` |
 
-**Tests:** 4048 total (pytest), 0 failures, 0 warnings, 41 conditional (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
+**Tests:** 4063 total (pytest), 0 failures, 0 warnings, 41 conditional (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
 
 ---
 
@@ -379,7 +382,7 @@ from e0_controller import E0Controller, Landscape, Session, Outcome
 ### Run the tests (no API key needed)
 
 ```bash
-# Full test suite (4048 tests, pytest):
+# Full test suite (4063 tests, pytest):
 py -3 -m pytest e0_controller/ --tb=short -q
 
 # Single file:
@@ -497,7 +500,7 @@ E0-Framework/
 │   ├── llm_cocognition.py              LLM Co-Cognition: 2 LLMs coupled via multiverse (C71)
 │   ├── chess_e0.py                     E₀ Chess Engine: strategic dimension navigation (C72)
 │   ├── chess_team.py                   E₀ Team Chess: multiverse team play (C74)
-│   ├── dream_mode.py                   Dream Mode: cross-domain pattern recognition (C109–C139)
+│   ├── dream_mode.py                   Dream Mode: cross-domain pattern recognition + compatibility gating (C109–C139, C168)
 │   ├── structural_entropy.py           Structural temperature, anchors, decay (C114–C120)
 │   ├── sleep_wake.py                   Automatic sleep–wake rhythm (C121)
 │   ├── curriculum.py                   Curriculum Navigator: level-by-level canon learning (C123)
@@ -507,7 +510,7 @@ E0-Framework/
 │   ├── integrated_reflexion.py         Unified reflexion: topology + flags + SelfGraph (C59)
 │   ├── scoped_reflexion.py             Historization-driven reflexion locality (C101)
 │   ├── explore_dream_mode.py           Dream Mode end-to-end exploration (C112)
-│   └── test_*.py                       4048 tests (see docs/E0_TEST_REGISTRY_v2.md)
+│   └── test_*.py                       4063 tests (see docs/E0_TEST_REGISTRY_v2.md)
 │
 ├── scenarios/                        Scenario Packets for grounded LLM demos
 │   ├── competitor_brief/               Domain-specific scenario data
@@ -515,10 +518,10 @@ E0-Framework/
 │   └── research_brief/                 Domain-specific scenario data
 │
 ├── docs/                             Current essential documentation
-│   ├── E0_ARCHITECTURE_OVERVIEW_v4.md    12-layer module map (60+ modules)
+│   ├── E0_ARCHITECTURE_OVERVIEW_v4.md    14-layer module map (70+ modules)
 │   ├── E0_MULTIVERSE_DESIGN_v1.md        Multiverse architecture (C54–C63)
 │   ├── E0_INTEGRATION_STORIES_v1.md      Integration roadmap (C139–C144)
-│   ├── E0_TEST_REGISTRY_v2.md            Complete test inventory (4048 tests)
+│   ├── E0_TEST_REGISTRY_v2.md            Complete test inventory (4063 tests)
 │   ├── E0_MATH_IMPL_MAPPING_v1.md        Math ↔ Code mapping
 │   ├── E0_STRUCTURAL_ENTROPY_DESIGN_v1.md  Forgetting as structural necessity
 │   ├── E0_DREAM_MODE_CONCEPT_v1.md       Cross-domain pattern recognition

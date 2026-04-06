@@ -3,8 +3,8 @@
 **Status:** Canonical reference  
 **Date:** 2026-04-06  
 **Supersedes:** E0_ARCHITECTURE_OVERVIEW_v3.md (2026-04-02)  
-**Scope:** 74 production modules, 9 benchmarks, 17 demos, 48 explorations, 112 test files — ~28,700 production lines, 4048 tests
-**Latest:** C166b (LLM-Derived Endpoints — task → LLM-derived start/goal → Controller → Perception → Intent → UISpec → HTML)
+**Scope:** 71 production modules, 9 benchmarks, 17 demos, 49 explorations, 111 test files — ~29,000 production lines, 4063 tests
+**Latest:** C168 (Compatibility-Gated Dreaming — mean WL distance pre-filters incompatible domain pairs, ~59% edge noise / ~67% node noise reduction)
 **Papers:** P1 (Structural Interference), P2 (Spinor/Born), P3 (Non-Abelian), P4 (Reflexivity), P5 (Emergent Locality), P6 (Dream Mode)
 
 ---
@@ -189,11 +189,11 @@ Explorations: `explore_gordian`, `explore_amplitude`, `explore_resonator`, `expl
 | `input_pipeline.py` | 67 | Input processing pipeline (C83) | — |
 | `snapshot_codec.py` | 181 | Snapshot encoding/decoding for persistence and wire format (C83) | — |
 
-### Layer 9 — Dream Mode (1 module, 1273 lines)
+### Layer 9 — Dream Mode (1 module, 1320 lines)
 
 | Module | Lines | Purpose | Paper |
 |--------|------:|---------|-------|
-| `dream_mode.py` | 1273 | Cross-domain pattern recognition: EdgeFingerprint, fingerprint_distance, find_equivalences, DreamObserver (register/unregister/dream_cycle/feedback), BridgeHypothesis, propose_bridges, make_dream_peer_fn (C109–C111). Decay integration: decay_enabled, DreamCycleResult.decay_reports (C119). **Node-level matching (C134b):** NodeFingerprint, node_fingerprints, node_fingerprint_distance, find_node_equivalences. **WL recursive neighborhood (C135–C136):** WLNodeFingerprint, wl_node_fingerprints (9-dim Round-0: mean/std/degree/pos_frac/min/max/median quality + trace_load mean/std), wl_node_distance, find_wl_node_equivalences. **Hungarian optimal assignment (C137):** find_wl_node_equivalences_hungarian — scipy.optimize.linear_sum_assignment on full WL distance matrix, globally optimal 1:1 node pairing → **44/44 = 100%**. **C139 Runtime Integration:** DreamObserver.dream_cycle() now invokes node-level equivalences (hungarian or wl method) alongside edge-EQ. `_update_dream_landscape_nodes()` creates "domain:node" states. `_node_equivalence_state()` helper. DreamCycleResult extended with `node_equivalences_found`/`node_equivalences_new`. | P6 |
+| `dream_mode.py` | 1320 | Cross-domain pattern recognition: EdgeFingerprint, fingerprint_distance, find_equivalences, DreamObserver (register/unregister/dream_cycle/feedback), BridgeHypothesis, propose_bridges, make_dream_peer_fn (C109–C111). Decay integration: decay_enabled, DreamCycleResult.decay_reports (C119). **Node-level matching (C134b):** NodeFingerprint, node_fingerprints, node_fingerprint_distance, find_node_equivalences. **WL recursive neighborhood (C135–C136):** WLNodeFingerprint, wl_node_fingerprints (9-dim Round-0: mean/std/degree/pos_frac/min/max/median quality + trace_load mean/std), wl_node_distance, find_wl_node_equivalences. **Hungarian optimal assignment (C137):** find_wl_node_equivalences_hungarian — scipy.optimize.linear_sum_assignment on full WL distance matrix, globally optimal 1:1 node pairing → **44/44 = 100%**. **C139 Runtime Integration:** DreamObserver.dream_cycle() now invokes node-level equivalences (hungarian or wl method) alongside edge-EQ. `_update_dream_landscape_nodes()` creates "domain:node" states. `_node_equivalence_state()` helper. DreamCycleResult extended with `node_equivalences_found`/`node_equivalences_new`. **C168 Compatibility Gating:** `dream_compatibility()` (mean WL distance under Hungarian assignment), `is_dream_compatible()` (threshold check). DreamObserver pre-filters domain pairs — incompatible pairs skipped. DreamCycleResult extended with `compatibility_skipped`/`compatibility_scores`. Config: `dream_compatibility_threshold = 0.6`. Empirical: EN↔DE=0.375✓, EN↔ONTO=0.870✗, DE↔ONTO=1.014✗. | P6 |
 
 ### Layer 10 — Structural Entropy (1 module, ~600 lines)
 
@@ -393,7 +393,7 @@ All three share the same controller core. They differ only in the final action s
 
 ## 8. Test Infrastructure
 
-**4048 tests**, 0 failures (2026-04-06) across **112 test files**.
+**4063 tests**, 0 failures (2026-04-06) across **111 test files**.
 
 | Category | Test Files | Tests |
 |----------|-----------|-------|
