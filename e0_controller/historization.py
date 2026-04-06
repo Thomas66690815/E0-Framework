@@ -45,6 +45,7 @@ class TraceRecord:
     outcome: Outcome
     r_eff_before: float
     r_eff_after: float
+    predecessor: Optional[Edge] = None  # C176: previous edge in same run
 
 
 @dataclass
@@ -145,11 +146,13 @@ class Historization:
         return max(-self.delta_max, min(raw, self.delta_max))
 
     def record(self, edge: Edge, outcome: Outcome,
-               r_eff_before: float, r_eff_after: float) -> None:
+               r_eff_before: float, r_eff_after: float,
+               predecessor: Optional[Edge] = None) -> None:
         """Append to audit trail."""
         self._log.append(TraceRecord(
             tau=self._tau, edge=edge, outcome=outcome,
             r_eff_before=r_eff_before, r_eff_after=r_eff_after,
+            predecessor=predecessor,
         ))
 
     def remove_edges(self, edges) -> None:
@@ -376,3 +379,69 @@ class Historization:
         if top_n > 0:
             ranked = ranked[:top_n]
         return ranked
+
+    # --- Context Sensitivity (C176) ---
+
+    def context_quality(
+        self,
+        edge: Edge,
+    ) -> Dict[Optional[Edge], Tuple[float, float]]:
+        """Compute trace quality of an edge conditioned on predecessor.
+
+        Returns a dict mapping predecessor_edge → (quality, count):
+            quality = (U − F) / (U + F + ε) for events from that predecessor
+            count   = number of events from that predecessor
+
+        Predecessor None means "first step in a run" (no prior edge).
+
+        Uses the audit log, not the live traces (which aggregate across
+        all predecessors). This is intentional: the conditioned view
+        reveals what the aggregated view hides.
+        """
+        EPS = 1e-12
+        # Collect events: predecessor → (U_count, F_count)
+        contexts: Dict[Optional[Edge], List[float]] = {}
+        for rec in self._log:
+            if rec.edge != edge:
+                continue
+            pred = rec.predecessor
+            if pred not in contexts:
+                contexts[pred] = [0.0, 0.0]
+            if rec.outcome == Outcome.SUCCESS:
+                contexts[pred][0] += 1.0
+            elif rec.outcome == Outcome.FAILURE:
+                contexts[pred][1] += 1.0
+            elif rec.outcome == Outcome.PARTIAL:
+                contexts[pred][0] += 0.5
+                contexts[pred][1] += 0.3
+
+        result: Dict[Optional[Edge], Tuple[float, float]] = {}
+        for pred, (u, f) in contexts.items():
+            q = (u - f) / (u + f + EPS)
+            result[pred] = (q, u + f)
+        return result
+
+    def context_sensitivity(
+        self,
+        edge: Edge,
+    ) -> float:
+        """Measure how much an edge's quality depends on predecessor context.
+
+        Returns a value in [0, 2]:
+            0.0 = quality is identical regardless of predecessor (context-free)
+            2.0 = maximum divergence (q=+1 from one pred, q=-1 from another)
+
+        Computed as max quality range across all observed predecessor contexts.
+        Requires at least 2 distinct predecessors; returns 0.0 otherwise.
+
+        This is E₀'s structural analog of causal sensitivity:
+        high context_sensitivity means the edge's success depends on
+        HOW you arrived, not just WHERE you are.
+        """
+        cq = self.context_quality(edge)
+        if len(cq) < 2:
+            return 0.0
+        qualities = [q for q, count in cq.values() if count >= 1.0]
+        if len(qualities) < 2:
+            return 0.0
+        return max(qualities) - min(qualities)

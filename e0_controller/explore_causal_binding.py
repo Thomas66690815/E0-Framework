@@ -1,8 +1,8 @@
 """
-C175 — Causal Binding Exploration
+C175/C176 — Causal Binding Exploration
 
-Can E₀ distinguish causal structure from mere correlation using existing
-primitives — without explicit causal annotation?
+C175: Can E₀ distinguish causal structure from mere correlation?
+C176: Context Sensitivity Metric — formalizes causal detection.
 
 Test: Twin domains with identical topology, different causal backing.
   - CAUSAL domain: B→GOAL works regardless of predecessor
@@ -16,6 +16,9 @@ Two-phase protocol:
 The intervention test is E₀'s analog of Pearl's do-calculus:
   P(GOAL | observe A→B) is the same for both domains.
   P(GOAL | do(start at B)) reveals the confound.
+
+C176 addition: context_sensitivity(B→GOAL) measures how much quality
+depends on predecessor. CAUSAL → 0.0, CONFOUNDED → ~2.0.
 
 Reference: docs/research/E0_CAUSAL_BINDING_RESEARCH_v1.md
 """
@@ -483,6 +486,70 @@ def scenario_transfer():
     return verdict
 
 
+# ── Scenario 6: Context Sensitivity Metric (C176) ──────────────────
+
+def scenario_context_sensitivity(L_causal, L_confound):
+    """
+    C176: Compute context_sensitivity for B→GOAL in both domains.
+    Prediction: CAUSAL ≈ 0.0, CONFOUNDED ≈ 2.0.
+
+    This formalizes C175's implicit finding:
+    E₀ generates contrasts through variation → the metric makes them explicit.
+    """
+    print("=" * 72)
+    print("SCENARIO 6: Context Sensitivity Metric (C176)")
+    print("  context_sensitivity(edge) = quality range across predecessors")
+    print("  CAUSAL: 0.0 (works from any pred)  CONFOUNDED: ~2.0 (depends on pred)")
+    print("=" * 72)
+    print()
+
+    b_goal = Edge("B", "GOAL")
+
+    # Full context quality breakdown
+    print("[CAUSAL domain — context quality for B→GOAL]")
+    cq_causal = L_causal.historization.context_quality(b_goal)
+    for pred, (q, count) in sorted(cq_causal.items(), key=lambda x: str(x[0])):
+        pred_str = f"{pred.source}→{pred.target}" if pred else "(start of run)"
+        print(f"  predecessor {pred_str}: q={q:+.4f}  events={count:.0f}")
+
+    cs_causal = L_causal.historization.context_sensitivity(b_goal)
+    print(f"  → context_sensitivity = {cs_causal:.4f}")
+    print()
+
+    print("[CONFOUNDED domain — context quality for B→GOAL]")
+    cq_confound = L_confound.historization.context_quality(b_goal)
+    for pred, (q, count) in sorted(cq_confound.items(), key=lambda x: str(x[0])):
+        pred_str = f"{pred.source}→{pred.target}" if pred else "(start of run)"
+        print(f"  predecessor {pred_str}: q={q:+.4f}  events={count:.0f}")
+
+    cs_confound = L_confound.historization.context_sensitivity(b_goal)
+    print(f"  → context_sensitivity = {cs_confound:.4f}")
+    print()
+
+    # Also check all other edges for comparison
+    print("[Context sensitivity for ALL edges]")
+    all_edges = [
+        ("START", "A"), ("START", "C"),
+        ("A", "B"), ("C", "B"), ("B", "GOAL"),
+    ]
+    print(f"  {'Edge':<15} {'CAUSAL':>10} {'CONFOUNDED':>12}")
+    print(f"  {'-'*15} {'-'*10} {'-'*12}")
+    for src, tgt in all_edges:
+        e = Edge(src, tgt)
+        cs_c = L_causal.historization.context_sensitivity(e)
+        cs_f = L_confound.historization.context_sensitivity(e)
+        marker = " ← CONFOUND DETECTED" if cs_f > 0.5 and cs_c < 0.5 else ""
+        print(f"  {src}→{tgt:<10} {cs_c:>10.4f} {cs_f:>12.4f}{marker}")
+    print()
+
+    verdict = "PASS" if cs_confound > 1.0 and cs_causal < 0.1 else "FAIL"
+    print(f"  CAUSAL context_sensitivity(B→GOAL):    {cs_causal:.4f}")
+    print(f"  CONFOUNDED context_sensitivity(B→GOAL): {cs_confound:.4f}")
+    print(f"\n  Verdict (metric detects confound): {verdict}")
+    print()
+    return cs_causal, cs_confound, verdict
+
+
 # ══════════════════════════════════════════════════════════════════════
 # Main
 # ══════════════════════════════════════════════════════════════════════
@@ -490,8 +557,9 @@ def scenario_transfer():
 if __name__ == "__main__":
     print()
     print("╔══════════════════════════════════════════════════════════════════════╗")
-    print("║  C175: CAUSAL BINDING EXPLORATION                                  ║")
+    print("║  C175/C176: CAUSAL BINDING EXPLORATION                              ║")
     print("║  Can E₀ distinguish causation from correlation?                    ║")
+    print("║  C176: Context Sensitivity Metric                                   ║")
     print("╚══════════════════════════════════════════════════════════════════════╝")
     print()
 
@@ -510,6 +578,9 @@ if __name__ == "__main__":
     # Scenario 5: Cross-domain transfer
     v5 = scenario_transfer()
 
+    # Scenario 6: Context Sensitivity Metric (C176)
+    cs_causal, cs_confound, v6 = scenario_context_sensitivity(L_c, L_f)
+
     # Summary
     print("=" * 72)
     print("SUMMARY")
@@ -520,6 +591,7 @@ if __name__ == "__main__":
         ("S3: Dream Detection", v3, "Dream detects causal divergence"),
         ("S4: Fragile Degradation", v4, "Historization detects path degradation"),
         ("S5: Cross-Domain Transfer", v5, "Causal knowledge more transferable"),
+        ("S6: Context Sensitivity", v6, f"CAUSAL={cs_causal:.2f} CONFOUNDED={cs_confound:.2f}"),
     ]
     for name, verdict, description in results:
         icon = "✓" if verdict == "PASS" else ("~" if verdict == "PARTIAL" else "✗")

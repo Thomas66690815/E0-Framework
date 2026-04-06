@@ -209,7 +209,32 @@ A→B degrades after 3 uses: quality drops from +1.0 to -0.4987. Controller cont
 
 Post-intervention, CAUSAL domain B→GOAL (q=+1.0) does NOT match FRESH domain B→GOAL (q=0.0) — different loads. But CONFOUNDED domain B→GOAL (q=-0.6323) DOES match FRESH (both differ from healthy). The transfer signal is in the quality: causal knowledge (q>0) is reliably positive, confounded knowledge (q<0) is a warning.
 
-### 6.6 Results Summary
+### 6.7 S6: Context Sensitivity Metric (C176)
+
+C175's central finding — that E₀ detects confounds through implicit multipath exploration — remained observational. C176 formalizes this as a computable metric.
+
+**Implementation:**
+- `TraceRecord.predecessor`: each historization entry now records which edge was traversed immediately before
+- `context_quality(edge)`: per-predecessor quality breakdown from audit log
+- `context_sensitivity(edge)`: max quality range across predecessors, ∈ [0, 2]
+  - 0.0 = edge behaves identically regardless of context (context-free)
+  - 2.0 = maximum divergence (always succeeds from one predecessor, always fails from another)
+
+**Results:**
+
+| Edge | CAUSAL cs | CONFOUNDED cs | Interpretation |
+|------|----------|--------------|----------------|
+| START→A | 0.0000 | 0.0000 | Context-free ✓ |
+| START→C | 0.0000 | 0.0000 | Context-free ✓ |
+| A→B | 0.0000 | 0.0000 | Context-free ✓ |
+| C→B | 0.0000 | 0.0000 | Context-free ✓ |
+| B→GOAL | 0.0000 | **2.0000** | **← CONFOUND DETECTED** |
+
+Only B→GOAL in the confounded domain is flagged. All other edges — in both domains — show zero context sensitivity. The metric perfectly isolates the confounded edge.
+
+**Why this matters:** E₀ doesn't "know" causality. It generates learnable contrasts through its own path variation. Context sensitivity makes those contrasts explicit and queryable. No new primitive needed — predecessor tracking is a minimal extension of existing historization.
+
+### 6.8 Results Summary
 
 | Scenario | Prediction | Result | Finding |
 |----------|-----------|--------|--------|
@@ -218,6 +243,7 @@ Post-intervention, CAUSAL domain B→GOAL (q=+1.0) does NOT match FRESH domain B
 | S3: Dream Detection | Broken equivalence | **PASS** | B→GOAL excluded, all others matched |
 | S4: Fragile | Degradation detected | **PASS** | Trivial baseline confirmed |
 | S5: Transfer | Asymmetric portability | **PASS** | Causal q>0; confounded q<0 |
+| S6: Context Sensitivity | Isolate confound | **PASS** | CAUSAL=0.0, CONFOUNDED=2.0, only B→GOAL flagged |
 
 ## 7. Architectural Implications
 
@@ -264,15 +290,21 @@ Both findings share the same epistemological principle: E₀ cannot access groun
 
 **For detection:** No. Existing primitives suffice when topology provides alternative paths.
 
-**For annotation:** Maybe. If we want to LABEL edges as “causal” vs. “confounded” for downstream use (e.g., transfer decisions), we could add a `context_sensitivity` score: how much does an edge’s quality vary by predecessor? This is computable from existing traces.
+**For quantification:** Solved (C176). `context_sensitivity(edge)` computes quality variance by predecessor from existing traces. The metric is:
+- Minimal: one new field (`TraceRecord.predecessor`), two new methods
+- Non-invasive: predecessor tracking is opt-in (default `None` preserves backward compatibility)
+- Complete: ∈ [0, 2], where 0 = context-free and 2 = maximally confounded
+- Precise: in the twin experiment, only B→GOAL in the confounded domain is flagged (0.0 vs 2.0)
 
-**For transfer:** Yes, eventually. The S5 result shows that quality sign (+/-) transfers causal information. But a richer signal (context_sensitivity + quality) would enable smarter cross-domain proposals.
+**For transfer:** Quality sign (+/-) transfers basic causal information (S5). Context sensitivity adds structural detail: edges with cs > 0 should not be transferred without predecessor context. This enables smarter cross-domain proposals.
+
+**For annotation:** No explicit `cause` field needed. Context sensitivity IS the causal annotation — derived, not primitive, exactly as the canon predicts (§5).
 
 ### 7.6 Next Steps
 
-1. **Context sensitivity metric:** For each edge, compute quality variance across predecessor contexts. High variance = context-dependent = potentially confounded.
+1. ~~**Context sensitivity metric:**~~ ✅ Done (C176). `context_quality()` and `context_sensitivity()` implemented, 18 tests, exploration S6 confirms perfect isolation.
 2. **Larger topologies:** Test with 10+ node domains where confounds are non-obvious.
-3. **Dream-based causal transfer:** Use broken equivalences as causal divergence signal in cross-domain proposals.
+3. **Dream-based causal transfer:** Use broken equivalences as causal divergence signal in cross-domain proposals. Context sensitivity enables predecessor-aware transfer filtering.
 4. **Connection to Priority 3 (N-domain mesh):** Causal detection through implicit intervention scales with N — more domains = more alternative paths = more natural experiments.
 
 ## 8. Open Questions

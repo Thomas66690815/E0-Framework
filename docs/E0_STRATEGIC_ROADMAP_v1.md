@@ -185,6 +185,7 @@ These are valuable but premature:
 | 2026-04-06 | C173: Structural Skepticism viable for stagnation | Load-without-frontier detects coherent loops; injection needs Level 2 (quality spread) |
 | 2026-04-06 | C174: Self-Honesty L2 solves injection attacks | "Truth is perspective. Self-honesty is structural." Avoid known-bad beats prefer known-good. Scenario C: FAIL → PARTIAL (goal reached, fakes 19→4, bloat 167%→67%) |
 | 2026-04-06 | C175: Causal binding — implicit intervention discovery | E₀'s natural path alternation functions as causal probing. Confound leaks through observation alone (S1 refuted). No explicit causal layer needed for detection. |
+| 2026-04-06 | C176: Context Sensitivity Metric | Formalizes C175 finding: predecessor tracking + context_sensitivity() ∈ [0,2]. CAUSAL=0.0, CONFOUNDED=2.0 — only confounded edge flagged. Canon §5 validated: causality derived, not primitive. |
 
 ---
 
@@ -208,7 +209,7 @@ These are valuable but premature:
 - [x] Build exploration: structural twin edges with different causes
 - [x] Measure: does historization differentiate? → YES, via implicit intervention (multi-path exploration)
 - [x] Verdict: causal detection emergent from topology + historization — no explicit layer needed for detection
-- [ ] Context sensitivity metric (quality variance by predecessor)
+- [x] Context sensitivity metric (quality variance by predecessor) — C176: context_sensitivity() ∈ [0,2], CAUSAL=0.0 vs CONFOUNDED=2.0
 - [ ] Larger topology test (10+ nodes, non-obvious confounds)
 - [ ] Dream-based causal transfer (broken equivalences as divergence signal)
 

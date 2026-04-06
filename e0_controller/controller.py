@@ -655,6 +655,7 @@ class E0Controller:
         overlay_horizon: int = 0,
         overlay_goals: Optional[Set[str]] = None,
         perspective_horizon: int = 0,
+        predecessor_edge: Optional[Edge] = None,
     ) -> Optional[StepResult]:
         """
         One complete controller cycle:
@@ -696,7 +697,8 @@ class E0Controller:
             self.landscape.historization.update(edge, outcome)
             self.landscape.historization.record(
                 edge, outcome, r_eff_before,
-                self._effective_resistance(current, target)
+                self._effective_resistance(current, target),
+                predecessor=predecessor_edge,
             )
 
             # Self-Graph update (C43): record which components contributed
@@ -814,6 +816,7 @@ class E0Controller:
 
         trace = RunTrace()
         current = start
+        prev_edge: Optional[Edge] = None
 
         for _ in range(max_cycles):
             # Check goal
@@ -823,11 +826,13 @@ class E0Controller:
             step = self.cycle(
                 current, overlay_horizon, overlay_goals,
                 perspective_horizon=perspective_horizon,
+                predecessor_edge=prev_edge,
             )
             if step is None:
                 break  # complete dead-end, no escalation possible
 
             trace.steps.append(step)
+            prev_edge = Edge(current, step.target)
             current = step.target
 
         return trace

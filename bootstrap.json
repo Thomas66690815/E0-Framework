@@ -29,10 +29,10 @@
   },
 
   "state": {
-    "latest_commit": "C175",
-    "latest_commit_hash": "5e5c362",
-    "latest_commit_msg": "C175: Causal Binding — implicit intervention via natural path alternation detects confounds (4 PASS, 1 informative FAIL)",
-    "test_count": 4063,
+    "latest_commit": "C176",
+    "latest_commit_hash": "297416f",
+    "latest_commit_msg": "C176: Context Sensitivity — predecessor tracking + context_sensitivity() formalizes C175 implicit intervention (18 tests, CAUSAL=0.0 vs CONFOUNDED=2.0)",
+    "test_count": 4081,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
     "module_count": "71 production + 9 benchmarks + 17 demos + 54 explorations + 111 test files",
