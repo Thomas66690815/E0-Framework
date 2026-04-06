@@ -1,0 +1,339 @@
+{
+  "version": "1.0",
+  "saved_at": "2026-04-06T05:54:21.015044+00:00",
+  "tau": 0,
+  "spec": {
+    "nodes": [
+      "proximity",
+      "emphasis",
+      "hierarchy",
+      "sequence",
+      "grouping",
+      "contrast",
+      "density",
+      "motion",
+      "label",
+      "absence",
+      "assertion",
+      "question",
+      "uncertainty",
+      "reference",
+      "enumeration",
+      "heatmap",
+      "tree",
+      "timeline",
+      "bar",
+      "text",
+      "highlight",
+      "dashboard"
+    ],
+    "edges": [
+      {
+        "from": "proximity",
+        "to": "grouping",
+        "delta": 0.3,
+        "resistance": 0.5,
+        "initial_U": 6.7,
+        "initial_F": 1.3,
+        "confidence": 1.0
+      },
+      {
+        "from": "emphasis",
+        "to": "contrast",
+        "delta": 0.4,
+        "resistance": 0.5,
+        "initial_U": 5.6,
+        "initial_F": 2.4,
+        "confidence": 1.0
+      },
+      {
+        "from": "hierarchy",
+        "to": "grouping",
+        "delta": 0.3,
+        "resistance": 0.6,
+        "initial_U": 5.55,
+        "initial_F": 1.95,
+        "confidence": 1.0
+      },
+      {
+        "from": "sequence",
+        "to": "motion",
+        "delta": 0.3,
+        "resistance": 0.5,
+        "initial_U": 4.4,
+        "initial_F": 1.6,
+        "confidence": 1.0
+      },
+      {
+        "from": "contrast",
+        "to": "emphasis",
+        "delta": 0.3,
+        "resistance": 0.5,
+        "initial_U": 4.55,
+        "initial_F": 2.45,
+        "confidence": 1.0
+      },
+      {
+        "from": "density",
+        "to": "absence",
+        "delta": 0.5,
+        "resistance": 0.8,
+        "initial_U": 3.7,
+        "initial_F": 2.3,
+        "confidence": 1.0
+      },
+      {
+        "from": "label",
+        "to": "hierarchy",
+        "delta": 0.2,
+        "resistance": 0.4,
+        "initial_U": 4.6,
+        "initial_F": 1.4,
+        "confidence": 1.0
+      },
+      {
+        "from": "grouping",
+        "to": "proximity",
+        "delta": 0.3,
+        "resistance": 0.5,
+        "initial_U": 5.55,
+        "initial_F": 1.95,
+        "confidence": 1.0
+      },
+      {
+        "from": "absence",
+        "to": "emphasis",
+        "delta": 0.4,
+        "resistance": 0.6,
+        "initial_U": 3.6,
+        "initial_F": 2.4,
+        "confidence": 1.0
+      },
+      {
+        "from": "motion",
+        "to": "sequence",
+        "delta": 0.3,
+        "resistance": 0.5,
+        "initial_U": 4.475,
+        "initial_F": 2.025,
+        "confidence": 1.0
+      },
+      {
+        "from": "assertion",
+        "to": "label",
+        "delta": 0.3,
+        "resistance": 0.5,
+        "initial_U": 4.6,
+        "initial_F": 1.4,
+        "confidence": 1.0
+      },
+      {
+        "from": "question",
+        "to": "emphasis",
+        "delta": 0.4,
+        "resistance": 0.6,
+        "initial_U": 3.625,
+        "initial_F": 1.875,
+        "confidence": 1.0
+      },
+      {
+        "from": "uncertainty",
+        "to": "contrast",
+        "delta": 0.4,
+        "resistance": 0.7,
+        "initial_U": 3.7,
+        "initial_F": 2.8,
+        "confidence": 1.0
+      },
+      {
+        "from": "reference",
+        "to": "sequence",
+        "delta": 0.3,
+        "resistance": 0.5,
+        "initial_U": 4.4,
+        "initial_F": 1.6,
+        "confidence": 1.0
+      },
+      {
+        "from": "enumeration",
+        "to": "grouping",
+        "delta": 0.3,
+        "resistance": 0.5,
+        "initial_U": 4.6,
+        "initial_F": 1.4,
+        "confidence": 1.0
+      },
+      {
+        "from": "emphasis",
+        "to": "assertion",
+        "delta": 0.3,
+        "resistance": 0.6,
+        "initial_U": 3.5,
+        "initial_F": 2.0,
+        "confidence": 1.0
+      },
+      {
+        "from": "absence",
+        "to": "uncertainty",
+        "delta": 0.4,
+        "resistance": 0.7,
+        "initial_U": 2.75,
+        "initial_F": 2.25,
+        "confidence": 1.0
+      },
+      {
+        "from": "hierarchy",
+        "to": "enumeration",
+        "delta": 0.3,
+        "resistance": 0.5,
+        "initial_U": 4.4,
+        "initial_F": 1.6,
+        "confidence": 1.0
+      },
+      {
+        "from": "question",
+        "to": "uncertainty",
+        "delta": 0.3,
+        "resistance": 0.4,
+        "initial_U": 4.6,
+        "initial_F": 1.4,
+        "confidence": 1.0
+      },
+      {
+        "from": "assertion",
+        "to": "reference",
+        "delta": 0.2,
+        "resistance": 0.4,
+        "initial_U": 4.4,
+        "initial_F": 1.6,
+        "confidence": 1.0
+      },
+      {
+        "from": "emphasis",
+        "to": "heatmap",
+        "delta": 0.3,
+        "resistance": 0.4,
+        "initial_U": 4.55,
+        "initial_F": 2.45,
+        "confidence": 1.0
+      },
+      {
+        "from": "emphasis",
+        "to": "highlight",
+        "delta": 0.3,
+        "resistance": 0.4,
+        "initial_U": 3.6,
+        "initial_F": 2.4,
+        "confidence": 1.0
+      },
+      {
+        "from": "emphasis",
+        "to": "bar",
+        "delta": 0.4,
+        "resistance": 0.5,
+        "initial_U": 2.75,
+        "initial_F": 2.25,
+        "confidence": 1.0
+      },
+      {
+        "from": "hierarchy",
+        "to": "tree",
+        "delta": 0.3,
+        "resistance": 0.4,
+        "initial_U": 5.5,
+        "initial_F": 1.5,
+        "confidence": 1.0
+      },
+      {
+        "from": "hierarchy",
+        "to": "dashboard",
+        "delta": 0.4,
+        "resistance": 0.5,
+        "initial_U": 2.75,
+        "initial_F": 2.25,
+        "confidence": 1.0
+      },
+      {
+        "from": "sequence",
+        "to": "timeline",
+        "delta": 0.3,
+        "resistance": 0.4,
+        "initial_U": 5.5,
+        "initial_F": 1.5,
+        "confidence": 1.0
+      },
+      {
+        "from": "grouping",
+        "to": "dashboard",
+        "delta": 0.3,
+        "resistance": 0.4,
+        "initial_U": 4.475,
+        "initial_F": 2.025,
+        "confidence": 1.0
+      },
+      {
+        "from": "density",
+        "to": "heatmap",
+        "delta": 0.3,
+        "resistance": 0.4,
+        "initial_U": 4.4,
+        "initial_F": 1.6,
+        "confidence": 1.0
+      },
+      {
+        "from": "contrast",
+        "to": "highlight",
+        "delta": 0.3,
+        "resistance": 0.4,
+        "initial_U": 4.475,
+        "initial_F": 2.025,
+        "confidence": 1.0
+      },
+      {
+        "from": "contrast",
+        "to": "bar",
+        "delta": 0.3,
+        "resistance": 0.5,
+        "initial_U": 3.6,
+        "initial_F": 2.4,
+        "confidence": 1.0
+      },
+      {
+        "from": "label",
+        "to": "text",
+        "delta": 0.2,
+        "resistance": 0.3,
+        "initial_U": 5.5,
+        "initial_F": 1.5,
+        "confidence": 1.0
+      },
+      {
+        "from": "motion",
+        "to": "timeline",
+        "delta": 0.3,
+        "resistance": 0.4,
+        "initial_U": 4.475,
+        "initial_F": 2.025,
+        "confidence": 1.0
+      },
+      {
+        "from": "absence",
+        "to": "text",
+        "delta": 0.3,
+        "resistance": 0.4,
+        "initial_U": 3.6,
+        "initial_F": 2.4,
+        "confidence": 1.0
+      },
+      {
+        "from": "proximity",
+        "to": "dashboard",
+        "delta": 0.3,
+        "resistance": 0.5,
+        "initial_U": 3.6,
+        "initial_F": 2.4,
+        "confidence": 1.0
+      }
+    ]
+  }
+}

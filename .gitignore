@@ -40,8 +40,15 @@ experiments/results/
 # Bootstrap context (local AI session state)
 bootstrap.json
 
-# MemOS runtime data (session-specific, regenerable)
-memos/
+# MemOS runtime data (generated per-run, large)
+memos/runs/
+memos/sessions/
+memos/_beipackzettel/
+memos/_burnout/
+memos/_burnout_iterate/
+memos/_demo_persist/
+memos/_ezb/
+memos/_open_domain/
 
 # Provenance logs (runtime, per-run, regenerable)
 provenance/

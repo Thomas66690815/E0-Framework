@@ -2,7 +2,7 @@
   "_meta": {
     "purpose": "Session bootstrap for AI assistants resuming work on E₀-Framework",
     "usage": "Paste this file (or reference it) at the start of a new thread to restore full project context",
-    "last_updated": "2026-04-05",
+    "last_updated": "2026-04-06",
     "update_instruction": "After each commit, update state.latest_commit, state.test_count, and active_work"
   },
 
@@ -28,12 +28,14 @@
   },
 
   "state": {
-    "latest_commit": "C157",
-    "latest_commit_msg": "C157: Dream Equivalences → CouplingRouter — update_weights_from_dream auto-biases partner selection from dream quality signals, 15 new tests",
-    "test_count": 3811,
+    "latest_commit": "C166b",
+    "latest_commit_hash": "502413c",
+    "latest_commit_msg": "C166b: LLM-derived start/goal endpoints from task description",
+    "test_count": 4048,
     "test_failures": 0,
-    "module_count": "60 production + 9 benchmarks + 16 demos + 40 explorations + 100 test files + 8 canons",
-    "line_count": "~20200 production, ~97800 total"
+    "ci_status": "green (all 3 Python versions)",
+    "module_count": "74 production + 9 benchmarks + 17 demos + 48 explorations + 111 test files",
+    "line_count": "~28700 production, ~111000 total"
   },
 
   "conventions": {
@@ -103,6 +105,14 @@
       "12_curriculum": {
         "files": ["curriculum.py"],
         "purpose": "Hierarchical learning for canonical landscapes. CurriculumStrategy generates cumulative turns from derivation levels. EquilibriumDetector monitors T_s stability (replaces goal-reaching as stop). build_scoped_landscape creates sub-landscapes per turn. transfer_historization carries traces across turns. CurriculumRunner orchestrates end-to-end. C123."
+      },
+      "13_human_communication": {
+        "files": ["perception.py", "communication.py", "ui_emitter.py", "feedback.py", "ui_renderer.py", "visual_pretraining.py"],
+        "purpose": "E0 learns to communicate with humans. Perception Ontology (Gestalt primitives as landscape domain), Communication Intent (state → what to say), UI-Schema Emitter (Intent × Perception → UISpec), Human Feedback Loop (closes learning cycle), UI Renderer (UISpec → HTML). Visual pretraining: LLM evaluates rendering options, memo persistence. C158-C164."
+      },
+      "14_session_runner": {
+        "files": ["e0_session.py"],
+        "purpose": "Unified end-to-end pipeline: task → LLM-derived endpoints → Controller navigation → Perception → Intent → UISpec → HTML. CLI interface (--task/--start/--goal/--canon/--save). Mock mode without LLM. LLM derives start/goal states from task description when not provided. C165-C166b."
       }
     },
     "key_formulas": {
@@ -120,18 +130,36 @@
   },
 
   "commit_history_recent": [
-    { "hash": "PENDING", "id": "C154", "title": "DreamObserver Node Bridge Pipeline \u2014 propose_node_bridges structural transfer, make_dream_peer_fn node fallback, SleepWakeCycle.wire_peer_fns, confidence_floor, 32 new tests" },
-    { "hash": "PENDING", "id": "C153", "title": "SU(2) Perspective Diagnostic \u2014 perspective_check compares U(1) vs SU(2) rankings, PerspectiveReport, wired into cycle/run + DualReflectionReport, 35 new tests" },
-    { "hash": "PENDING", "id": "C152", "title": "Hybrid Mode in Sensitivity \u2014 hybrid_mode/use_su2 in E0Config, run_trial forwarding, 13 new tests" },
-    { "hash": "a55c6ce", "id": "C151", "title": "Honest Activation — amplitude/born excluded from Self-Graph in GREEDY mode, 10 new tests" },
-    { "hash": "PENDING", "id": "C150", "title": "Parameter Sensitivity — Self-Graph evaluates config choices, 28 tests" },
-    { "hash": "PENDING", "id": "C149", "title": "\u03bc/\u03b1 unification \u2014 all function-level defaults flow through DEFAULTS" },
-    { "hash": "PENDING", "id": "C148", "title": "Parameter Registry \u2014 E0Config frozen dataclass, DEFAULTS singleton, 15 modules wired" },
-    { "hash": "PENDING", "id": "C147", "title": "Self-Graph Demo \u2014 6-phase differential sampling, 21 tests" },    { "hash": "PENDING", "id": "C146", "title": "Observation Onboarding — step-by-step guide, all 8 Integration Stories done" },
-    { "hash": "PENDING", "id": "C145", "title": "README overhaul — all 15 demos, dead links fixed, 3590 tests, layers 12-13" },
-    { "hash": "PENDING", "id": "C144", "title": "Reflexion Demo — reactive vs. proactive vs. integrated on frontier domain" },
-    { "hash": "PENDING", "id": "C143", "title": "Curriculum Demo — level-by-level learning on ontodynamics canon" },
-    { "hash": "PENDING", "id": "C140", "title": "Bootstrap Domain Demo — cold-start pipeline, 2 paths, mock+live, ModeController" },
+    { "hash": "502413c", "id": "fix", "title": "CI: add scipy to dependencies, fix pyproject.toml structure, fix .gitignore encoding" },
+    { "hash": "50e2474", "id": "C166b", "title": "LLM-derived start/goal endpoints from task description" },
+    { "hash": "c01c7b8", "id": "C166", "title": "Task-aware intents — landscape + trace data flows into UI (12 tests, 4070 total)" },
+    { "hash": "e4a498c", "id": "C165", "title": "Unified session runner — end-to-end pipeline (15 tests, 4058 total)" },
+    { "hash": "5c952e8", "id": "C164b", "title": "Live LLM pretraining (252 evals, 75% success) + progress output" },
+    { "hash": "44b0191", "id": "C164", "title": "Learnable rendering selection + LLM pretraining + memo persistence (30 tests, 4043 total)" },
+    { "hash": "03d8c44", "id": "C163", "title": "UI Renderer — stateless UISpec → HTML (38 tests, 4013 total)" },
+    { "hash": "f9c5d01", "id": "C162", "title": "Human Communication Proof-of-Concept — end-to-end demo + integration (12 tests)" },
+    { "hash": "17a73d3", "id": "C161", "title": "Human Feedback Loop — closes perception learning cycle (30 tests)" },
+    { "hash": "84e66e8", "id": "C160", "title": "UI-Schema Emitter — (Intent × Perception) → UISpec (32 tests)" },
+    { "hash": "6d8e303", "id": "C159", "title": "Communication Intent — intent detection from E0 state (42 tests)" },
+    { "hash": "f35a4fc", "id": "C158", "title": "Perception Ontology — learnable perception domain (48 tests)" },
+    { "hash": "f333246", "id": "C157", "title": "Dream Equivalences → CouplingRouter — update_weights_from_dream (15 tests, 3811 total)" },
+    { "hash": "d589a24", "id": "C156", "title": "Curriculum ↔ Sleep-Wake Integration — dream consolidation between turns (14 tests)" },
+    { "hash": "ea7301a", "id": "C155", "title": "Auto-Tuning — closed-loop parameter optimization (25 tests)" },
+    { "hash": "ce6efcc", "id": "C154", "title": "DreamObserver Node Bridge Pipeline — structural transfer via node-level equivalences" },
+    { "hash": "9e93b10", "id": "C153", "title": "SU(2) Perspective Diagnostic — U(1)/SU(2) ranking comparison" },
+    { "hash": "4ed50f1", "id": "C152", "title": "Hybrid Mode in Sensitivity — hybrid_mode/use_su2 in E0Config" },
+    { "hash": "a55c6ce", "id": "C151", "title": "Honest Activation — amplitude/born excluded from Self-Graph in GREEDY mode" },
+    { "hash": "6f53153", "id": "C150", "title": "Parameter Sensitivity — Self-Graph evaluates config choices (28 tests)" },
+    { "hash": "d60565b", "id": "C149", "title": "μ/α unification — all function-level defaults flow through DEFAULTS" },
+    { "hash": "cd6acc8", "id": "C148", "title": "Parameter Registry — E0Config frozen dataclass, DEFAULTS singleton" },
+    { "hash": "890612c", "id": "C147", "title": "Self-Graph Demo — 6-phase differential sampling (21 tests)" },
+    { "hash": "fdb4035", "id": "C146", "title": "Observation Onboarding — step-by-step guide, all 8 Integration Stories done" },
+    { "hash": "05d0927", "id": "C145", "title": "README overhaul — all 15 demos, dead links fixed, 3590 tests" },
+    { "hash": "3119f7f", "id": "C144", "title": "Reflexion Demo — reactive vs. proactive vs. integrated on frontier domain" },
+    { "hash": "ceca1e6", "id": "C143", "title": "Curriculum Demo — level-by-level learning on ontodynamics canon" },
+    { "hash": "a2ad5ac", "id": "C142", "title": "Multiverse Demo — coupled domains with dream discovery" },
+    { "hash": "a7bb2d2", "id": "C141", "title": "Entropy/Sleep-Wake flags on bootstrap demo" },
+    { "hash": "d3adfe1", "id": "C140", "title": "Bootstrap Domain Demo — cold-start pipeline" },
     { "hash": "c9fa4ea", "id": "docs", "title": "C139 documentation update (Architecture, Registry, Stories, bootstrap)" },
     { "hash": "998f1f6", "id": "C139", "title": "DreamObserver + Hungarian/WL node equivalences wired into dream_cycle runtime" },
     { "hash": "d61a6a5", "id": "docs", "title": "Revise Integration Stories — reprioritize around C137 breakthrough" },
@@ -313,10 +341,28 @@
       "C147 Self-Graph Demo \u2014 demo_self_graph.py: 6-phase differential sampling, core vs modulation quality attribution. 21 tests.",
       "C148 Parameter Registry \u2014 E0Config frozen dataclass (45+ fields), DEFAULTS singleton, 15 production modules wired. 28 tests.",
       "C149 \u03bc/\u03b1 Unification \u2014 all function-level mu/inertia_alpha defaults flow through DEFAULTS. dream_alpha renamed inertia_alpha.",
-      "C150 Parameter Sensitivity \u2014 parameter_sensitivity.py: run_trial deep-copies landscape, attaches SelfGraph, runs controller, diagnoses. sensitivity_analysis compares configs. suggest_perturbations proposes variants for harmful/confused components. 28 tests."
+      "C150 Parameter Sensitivity — run_trial, sensitivity_analysis, suggest_perturbations. 28 tests.",
+      "C151 Honest Activation — amplitude/born excluded from Self-Graph in GREEDY mode. 10 tests.",
+      "C152 Hybrid Mode in Sensitivity — hybrid_mode/use_su2 in E0Config. 13 tests.",
+      "C153 SU(2) Perspective Diagnostic — perspective_check, PerspectiveReport. 35 tests.",
+      "C154 DreamObserver Node Bridge Pipeline — propose_node_bridges, make_dream_peer_fn node fallback. 32 tests.",
+      "C155 Auto-Tuning — closed-loop parameter optimization (diagnose → perturb → evaluate → adopt). 25 tests.",
+      "C156 Curriculum ↔ Sleep-Wake Integration — DreamObserver consolidation between curriculum turns. 14 tests.",
+      "C157 Dream Equivalences → CouplingRouter — update_weights_from_dream, DreamWeightReport. 15 tests.",
+      "C158 Perception Ontology — Gestalt primitives as learnable landscape domain. 48 tests.",
+      "C159 Communication Intent — intent detection from E0 controller state. 42 tests.",
+      "C160 UI-Schema Emitter — (Intent × Perception) → UISpec. 32 tests.",
+      "C161 Human Feedback Loop — closes perception learning cycle. 30 tests.",
+      "C162 Human Communication PoC — demo_human_communication.py end-to-end. 12 tests.",
+      "C163 UI Renderer — stateless UISpec → HTML. 38 tests.",
+      "C164 Learnable Rendering — visual_pretraining.py, LLM-based rendering selection, memo persistence. 30 tests.",
+      "C164b Live LLM Pretraining — 252 evals, 75% success rate.",
+      "C165 Unified Session Runner — e0_session.py end-to-end pipeline. 15 tests.",
+      "C166 Task-Aware Intents — landscape + trace data flows into UI. 12 tests.",
+      "C166b LLM-Derived Endpoints — start/goal states derived from task description. 9 tests."
     ],
-    "next_steps": ["C151+: Adaptive parameter control (auto-adopt best config from sensitivity analysis)", "Priority 5: Reflexion-backed session"],
-    "next_commit_id": "C151"
+    "next_steps": ["Infrastructure hardening: conftest.py, test coverage gaps, bootstrap.json/README alignment", "Multi-domain dream with non-language domains", "Asymmetric teaching: what if LLMs evaluate differently per language?", "Adaptive parameter control (auto-adopt from sensitivity analysis)"],
+    "next_commit_id": "C167"
   },
 
   "key_modules_quick_ref": {
@@ -327,9 +373,9 @@
     "cross_reflexion.py": "cross_propose_edges(landscape, donor, current, goal, coupling_discount=0.5, scoped=False) → CrossReflexionResult. scoped=True (C107): donor pattern from donor's scope, discount modulated by ℓ_donor. scoped_cross_reflexion_turn(): convenience TurnFn.",
     "historization.py": "Historization. .update(edge, outcome). .trace_quality(edge)→float. .trace_load(edge)→float. .inertia_factor(edge)→float",
     "primitives.py": "Edge(source, target), Outcome(SUCCESS|FAILURE)",
-    "client/": "React 19 + Cytoscape.js 3.30 + Recharts 2.15. Vite build. Components: GraphView (graph viz), ControlPanel (input/run), PeerDialog (Zentrale), HistoryTimeline, MetricsPanel. Hooks: useSession (lifecycle), useWebSocket (persistent connection). API client: api.js (REST + WS). Start: cd client && npm run dev.",
-    "server/routes_sessions.py": "13 REST endpoints: session CRUD, lifecycle (start/pause/resume/step), data retrieval (history/strategy/snapshot), canons, health. Module-level _manager set via set_manager().",
-    "server/ws_handler.py": "ConnectionManager (per-session WebSocket multiplexing). handle_websocket: event queue, peer_request push, pause/resume from client.",
+    "client/": "[LEGACY — superseded by C158-C166b session runner pipeline] React 19 + Cytoscape.js 3.30. Start: cd client && npm run dev.",
+    "server/routes_sessions.py": "[LEGACY — superseded by e0_session.py] 13 REST endpoints.",
+    "server/ws_handler.py": "[LEGACY] ConnectionManager (per-session WebSocket multiplexing).",
     "server/models.py": "12 Pydantic models for API validation: CreateSessionRequest/Response, StartRequest, SessionInfo, StepEventModel, WSMessage, CanonSummary, StrategyEntry, HealthResponse.",
     "server/main.py": "FastAPI app (E₀ Framework API v0.8.0). Mounts router + WebSocket at /sessions/{id}/ws. Start: py -3 -m uvicorn server.main:app --reload",
     "service.py": "ServiceSession(landscape, execute_fn, peer_bridge=). start/step/run_sync/pause/resume/snapshot/strategy. SessionManager: create_from_json/text/canon/landscape, get, remove, list_sessions. StepEvent: single event contract per cycle.",
@@ -338,7 +384,13 @@
     "peer_bridge.py": "PeerBridge(session_id, timeout=60). as_peer_fn() → sync callback. submit_response(target). is_waiting, pending_request.",
     "observation.py": "ObservationLandscape(landscape, depth=2). focus(node_id), move(node_id), defocus(). project() → subgraph dict. Scoped navigable projection of any E₀ Landscape.",
     "observation_controller.py": "ObservationController(session). navigate(action, node_id). snapshot() → GraphView-compatible dict. meta_snapshot() → scope/depth/focus state.",
-    "rendering_adapter.py": "render_observation(obs_ctrl) → dict with Cytoscape elements. Wraps under 'landscape' key for GraphView compatibility."
+    "rendering_adapter.py": "render_observation(obs_ctrl) → dict with Cytoscape elements. Wraps under 'landscape' key for GraphView compatibility.",
+    "e0_session.py": "run_session(task, start, goal, canon, save) → SessionResult. CLI: py -3 -m e0_controller.e0_session --task '...'. Full pipeline: LLM-derived endpoints → Controller → Perception → Intent → UISpec → HTML. _derive_endpoints() calls LLM when start/goal not provided. Mock mode: _mock_derive_endpoints().",
+    "perception.py": "PerceptionOntology — Gestalt primitives (proximity, emphasis, hierarchy, ...) as landscape domain. render_perception(controller_state) → PerceptionSnapshot.",
+    "communication.py": "CommunicationIntent — detect_intents(controller_state, perception) → list[Intent]. Maps internal state to human-facing communication goals.",
+    "ui_emitter.py": "UISchemaEmitter — emit(intents, perception) → UISpec. Combines intent and perception into structured UI specification.",
+    "ui_renderer.py": "render_ui(ui_spec) → str (HTML). Stateless rendering of UISpec to standalone HTML document.",
+    "visual_pretraining.py": "LLM-based rendering selection. pretrain_rendering(domain) evaluates visual options. Memo persistence for learned preferences."
   },
 
   "papers": {

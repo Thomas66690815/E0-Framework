@@ -1,10 +1,10 @@
 # E₀ Architecture Overview v4
 
 **Status:** Canonical reference  
-**Date:** 2026-04-05  
+**Date:** 2026-04-06  
 **Supersedes:** E0_ARCHITECTURE_OVERVIEW_v3.md (2026-04-02)  
-**Scope:** 64 production modules, 9 benchmarks, 16 demos, 37 explorations, 106 test files — ~25,700 production lines, 3975 tests
-**Latest:** C162 (Human Communication Proof-of-Concept — end-to-end: perception → intent → UISpec → feedback)
+**Scope:** 74 production modules, 9 benchmarks, 17 demos, 48 explorations, 112 test files — ~28,700 production lines, 4048 tests
+**Latest:** C166b (LLM-Derived Endpoints — task → LLM-derived start/goal → Controller → Perception → Intent → UISpec → HTML)
 **Papers:** P1 (Structural Interference), P2 (Spinor/Born), P3 (Non-Abelian), P4 (Reflexivity), P5 (Emergent Locality), P6 (Dream Mode)
 
 ---
@@ -62,6 +62,14 @@ E₀ is organized in eleven layers. Each layer depends only on layers above it.
 │  Layer 12 — HUMAN COMMUNICATION                         │
 │  Perception Ontology, Communication Intent,              │
 │  UI-Schema Emitter, Human Feedback Loop                  │
+├─────────────────────────────────────────────────────────┤
+│  Layer 13 — UI RENDERING + PRETRAINING                   │
+│  UI Renderer (UISpec → HTML), Visual Pretraining,        │
+│  LLM Rendering Selection, Memo Persistence               │
+├─────────────────────────────────────────────────────────┤
+│  Layer 14 — SESSION RUNNER                               │
+│  Unified Pipeline: task → LLM endpoints → Controller     │
+│  → Perception → Intent → UISpec → HTML                  │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -207,6 +215,19 @@ Explorations: `explore_gordian`, `explore_amplitude`, `explore_resonator`, `expl
 | `communication.py` | ~400 | Communication Intent: 6 intent types (uncertainty/decision/pattern/request/status/anomaly), `detect_intents()` from SelfGraph + StepResult + DreamObserver (C159) | — |
 | `ui_emitter.py` | ~300 | UI-Schema Emitter: (Intent × Perception) → UISpec with heuristic affinities + learned perception override, `emit_ui_spec()` (C160) | — |
 | `feedback.py` | ~160 | Human Feedback Loop: 6 HumanActions → Outcome, perception edge historization closes the learning cycle (C161) | — |
+
+### Layer 13 — UI Rendering + Pretraining (2 modules, ~850 lines)
+
+| Module | Lines | Purpose | Paper |
+|--------|------:|---------|-------|
+| `ui_renderer.py` | ~350 | Stateless UISpec → standalone HTML document. Component templates (table, alert, list, metric, text, chart). CSS generation. (C163) | — |
+| `visual_pretraining.py` | ~500 | LLM evaluates rendering options per perception primitive. Memo persistence for learned preferences. Learnable rendering selection. (C164) | — |
+
+### Layer 14 — Session Runner (1 module, ~400 lines)
+
+| Module | Lines | Purpose | Paper |
+|--------|------:|---------|-------|
+| `e0_session.py` | ~400 | Unified end-to-end pipeline: task → LLM-derived endpoints → Controller navigation → Perception → Intent → UISpec → HTML. CLI interface. Mock mode. (C165–C166b) | — |
 
 ### Applications (3 modules, 1,047 lines)
 
@@ -372,7 +393,7 @@ All three share the same controller core. They differ only in the final action s
 
 ## 8. Test Infrastructure
 
-**3975 tests**, 0 failures (2026-04-05) across **106 test files**.
+**4048 tests**, 0 failures (2026-04-06) across **112 test files**.
 
 | Category | Test Files | Tests |
 |----------|-----------|-------|
@@ -385,6 +406,8 @@ All three share the same controller core. They differ only in the final action s
 | Modulation & Locality (C98–C108) | 5 files | ~140 |
 | Dream Mode (L9, C109–C112, C134b–C139) | 1 file | 98 |
 | Human Communication (L12, C158–C162) | 5 files | 164 |
+| UI Rendering + Pretraining (L13, C163–C164) | 2 files | 68 |
+| Session Runner (L14, C165–C166b) | 1 file | 36 |
 
 ---
 
