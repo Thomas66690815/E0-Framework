@@ -24,7 +24,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install numpy pytest fastapi httpx uvicorn websockets
+          pip install numpy scipy pytest fastapi httpx uvicorn websockets
           pip install -e .
 
       - name: Run test suite

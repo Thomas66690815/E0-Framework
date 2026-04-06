@@ -56,7 +56,8 @@ Issues = "https://github.com/Thomas66690815/E0-Framework/issues"
 
 [project.optional-dependencies]
 llm = ["openai"]
-full = ["openai", "pyyaml", "duckdb"]
+science = ["scipy"]
+full = ["openai", "pyyaml", "duckdb", "scipy"]
 dev = ["ruff"]
 
 [tool.setuptools.packages.find]
