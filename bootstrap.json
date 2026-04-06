@@ -30,7 +30,7 @@
 
   "state": {
     "latest_commit": "C174",
-    "latest_commit_hash": "PENDING",
+    "latest_commit_hash": "ed3eb49",
     "latest_commit_msg": "C174: Self-Honesty Level 2 — avoid known-bad solves injection attacks (A+B PASS, C PARTIAL, D no false positive)",
     "test_count": 4063,
     "test_failures": 0,
@@ -131,7 +131,7 @@
   },
 
   "commit_history_recent": [
-    { "hash": "PENDING", "id": "C174", "title": "Self-Honesty Level 2 — avoid known-bad solves injection attacks (C: FAIL→PARTIAL, fakes 19→4, bloat 167%→67%)" },
+    { "hash": "ed3eb49", "id": "C174", "title": "Self-Honesty Level 2 — avoid known-bad solves injection attacks (C: FAIL→PARTIAL, fakes 19→4, bloat 167%→67%)" },
     { "hash": "28c6968", "id": "C173", "title": "Structural Skepticism — run-level meta-observation detects coherent deception (A+B PASS, C FAIL, D no false positive)" },
     { "hash": "28b6c29", "id": "C172", "title": "Adversarial Stability — 3/3 FAIL, all defenses trust Outcome signal blindly" },
     { "hash": "55e02a8", "id": "C171", "title": "Asymmetric Teaching exploration (Q4) — training=0, topology dominates, scoped to LLM-bootstrapped" },
