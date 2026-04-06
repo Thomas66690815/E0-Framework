@@ -24,7 +24,8 @@
     "ci_file": ".github/workflows/tests.yml",
     "ci_threshold": 2000,
     "os": "Windows",
-    "pytest_version": "9.0.2"
+    "pytest_version": "9.0.2",
+    "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
 
   "state": {
