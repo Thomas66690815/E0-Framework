@@ -29,14 +29,14 @@
   },
 
   "state": {
-    "latest_commit": "C168b",
-    "latest_commit_hash": "f4d487d",
-    "latest_commit_msg": "C168b: Compatibility-gated dreaming exploration",
+    "latest_commit": "C173",
+    "latest_commit_hash": "PENDING",
+    "latest_commit_msg": "C173: Structural Skepticism — meta-observation detects coherent deception (A+B PASS, C FAIL, D no false positive)",
     "test_count": 4063,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
-    "module_count": "71 production + 9 benchmarks + 17 demos + 49 explorations + 111 test files",
-    "line_count": "~29000 production, ~112000 total"
+    "module_count": "71 production + 9 benchmarks + 17 demos + 54 explorations + 111 test files",
+    "line_count": "~29000 production, ~114000 total"
   },
 
   "conventions": {
@@ -131,6 +131,12 @@
   },
 
   "commit_history_recent": [
+    { "hash": "PENDING", "id": "C173", "title": "Structural Skepticism — run-level meta-observation detects coherent deception (A+B PASS, C FAIL, D no false positive)" },
+    { "hash": "28b6c29", "id": "C172", "title": "Adversarial Stability — 3/3 FAIL, all defenses trust Outcome signal blindly" },
+    { "hash": "55e02a8", "id": "C171", "title": "Asymmetric Teaching exploration (Q4) — training=0, topology dominates, scoped to LLM-bootstrapped" },
+    { "hash": "1423a8b", "id": "C170", "title": "Partial structure matching (Q3) — 0% overlap, WL fingerprints too specific for subgraph matching" },
+    { "hash": "f0f8733", "id": "C169", "title": "Compatibility threshold calibration (Q1+Q2) — 36 pairs, gap=0.410, threshold 0.6 confirmed" },
+    { "hash": "7c3483c", "id": "docs", "title": "Documentation update for C167/C168/C168b" },
     { "hash": "f4d487d", "id": "C168b", "title": "Compatibility-gated dreaming exploration — 59% edge noise, 67% node noise filtered" },
     { "hash": "8398fc2", "id": "C168", "title": "Compatibility-gated dreaming — dream_compatibility(), is_dream_compatible(), gated DreamObserver (15 tests)" },
     { "hash": "8f11ab7", "id": "C167", "title": "Infrastructure hardening — bootstrap.json, conftest.py, docs alignment" },

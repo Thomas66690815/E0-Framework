@@ -11,7 +11,7 @@
 
 ## 1. Structural Layer Model
 
-E₀ is organized in eleven layers. Each layer depends only on layers above it.
+E₀ is organized in fourteen layers. Each layer depends only on layers above it.
 
 ```
 ┌─────────────────────────────────────────────────────────┐

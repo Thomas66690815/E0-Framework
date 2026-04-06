@@ -58,7 +58,8 @@ Breadth is no longer the problem. The question is: which test forces the system 
 
 **Falsification value:** HIGH — directly tests the AGI blueprint's core claim (§6: alignment as mechanical stability)
 
-**Status:** TESTED — 3/3 FAIL (C172). All defense mechanisms trust Outcome blindly. Consistent deception bypasses every layer. See `docs/research/E0_ADVERSARIAL_STABILITY_RESEARCH_v1.md` §6–7.
+**Status:** TESTED — 3/3 FAIL (C172). All defense mechanisms trust Outcome blindly. Consistent deception bypasses every layer. See `docs/research/E0_ADVERSARIAL_STABILITY_RESEARCH_v1.md` §6–7.  
+**Follow-up:** C173 Structural Skepticism — run-level meta-observation (load without frontier) detects stagnation attacks (A+B PASS), does not detect injection attacks (C FAIL), no false positives (D PASS). See `docs/research/E0_STRUCTURAL_SKEPTICISM_RESEARCH_v1.md`.
 
 ---
 
@@ -166,7 +167,7 @@ These are valuable but premature:
 | Learning from experience | ✅ Proven | ✅ | ✅ | ✅ |
 | Multi-system coupling | ✅ Proven (N=2) | ✅ + adversarial peer | ✅ | ✅ Proven (N>2) |
 | Cross-domain matching | ✅ Proven (pairwise) | ✅ | ✅ | ✅ Proven (mesh) |
-| Adversarial robustness | ❌ Untested | ⚠️ or ✅ | ⚠️ or ✅ | ⚠️ or ✅ |
+| Adversarial robustness | ❌ Untested | ⚠️ Stagnation solved, injection open | ⚠️ | ⚠️ |
 | Semantic grounding | ❌ Not attempted | ❌ | ⚠️ or ✅ | ⚠️ or ✅ |
 | Self-exposition | ⚠️ PoC | ⚠️ + anomaly reporting | ⚠️ + causal explanation | ⚠️ + mesh visualization |
 | AGI claim testable | ❌ | ✅ (one axis) | ✅ (two axes) | ✅ (three axes) |
@@ -181,19 +182,23 @@ These are valuable but premature:
 | 2026-04-06 | Self-exposition as cross-cutting, not separate priority | Accompanies all three directions; PoC exists, strategic exhaustion ongoing |
 | 2026-04-06 | N-domain mesh after adversarial | No point building mesh on unverified stability foundations |
 | 2026-04-06 | Semantic binding starts small (3–5 node causal domains) | Prevents slide into vague claims; must be falsifiable |
+| 2026-04-06 | C173: Structural Skepticism viable for stagnation | Load-without-frontier detects coherent loops; injection needs Level 2 (quality spread) |
 
 ---
 
 ## 6. Progress Tracking
 
 ### Priority 1: Adversarial Stability
-- [ ] Design adversarial test domains (hidden reward flip, ambiguous inputs)
-- [ ] Build exploration: adversarial landscape + standard E₀ controller
-- [ ] Measure: does Self-Graph detect anomaly?
-- [ ] Measure: does historization preserve danger signals?
-- [ ] Test adversarial peer in multiverse
-- [ ] Research document with findings
-- [ ] Verdict: stability holds / needs reinforcement / fundamentally insufficient
+- [x] Design adversarial test domains (hidden reward flip, ambiguous inputs)
+- [x] Build exploration: adversarial landscape + standard E₀ controller
+- [x] Measure: does Self-Graph detect anomaly? → No (C172: all +1.0)
+- [x] Measure: does historization preserve danger signals? → No (C172: trap = attractor)
+- [x] Test adversarial peer in multiverse → Yes but unguarded (C172: 167% bloat)
+- [x] Research document with findings
+- [x] Verdict: fundamentally insufficient without meta-observation
+- [x] C173: Structural Skepticism — stagnation detection via frontier monitoring
+- [x] Verdict: stagnation attacks (A+B) SOLVED, injection attacks (C) OPEN
+- [ ] Level 2 skepticism: quality-spread detection for injection attacks
 
 ### Priority 2: Semantic / Causal Binding
 - [ ] Design causal test domains (same topology, different causal backing)
