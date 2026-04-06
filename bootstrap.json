@@ -29,13 +29,13 @@
   },
 
   "state": {
-    "latest_commit": "C176",
-    "latest_commit_hash": "297416f",
-    "latest_commit_msg": "C176: Context Sensitivity — predecessor tracking + context_sensitivity() formalizes C175 implicit intervention (18 tests, CAUSAL=0.0 vs CONFOUNDED=2.0)",
-    "test_count": 4081,
+    "latest_commit": "C178",
+    "latest_commit_hash": "ac5338c",
+    "latest_commit_msg": "C178: Dream-Based Causal Transfer — 4D fingerprint (q, load, I, cs) prevents false cross-domain equivalences (17 tests, 4098 total)",
+    "test_count": 4098,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
-    "module_count": "71 production + 9 benchmarks + 17 demos + 54 explorations + 111 test files",
+    "module_count": "71 production + 9 benchmarks + 17 demos + 55 explorations + 113 test files",
     "line_count": "~29000 production, ~114000 total"
   },
 
@@ -93,7 +93,7 @@
       },
       "9_dream_mode": {
         "files": ["dream_mode.py", "explore_dream_mode.py"],
-        "purpose": "Passive cross-domain pattern recognition. EdgeFingerprint f(e)=(q,m,I), functional equivalence detection (quantile-based), DreamObserver (N domains, dream_cycle, feedback historization), bridge hypothesis generation (→ cross_propose_edges), make_dream_peer_fn (E0Controller integration). WL recursive fingerprints (9-dim→81-dim at depth-2), Hungarian optimal assignment (find_wl_node_equivalences_hungarian, scipy). **C139:** DreamObserver.dream_cycle() invokes node-level equivalences (hungarian/wl) alongside edge-EQ. _update_dream_landscape_nodes creates domain:node states. **C154:** node_equivalences_for query, propose_node_bridges (structural transfer from donor neighborhoods via node mapping), make_dream_peer_fn node-bridge fallback, confidence_floor (breaks cold-start chicken-and-egg), equivalences_for now filters out node states. **C168:** dream_compatibility() (mean WL distance as structural compatibility metric), is_dream_compatible() (threshold check), compatibility-gated dream_cycle() (skips incompatible domain pairs, reports compatibility_skipped/compatibility_scores). Empirical: EN↔DE=0.375 PASS, EN↔ONTO=0.870 SKIP, 59% edge noise filtered. C109-C112, C135-C139, C154, C168."
+        "purpose": "Passive cross-domain pattern recognition. EdgeFingerprint f(e)=(q,m,I,cs), functional equivalence detection (quantile-based), DreamObserver (N domains, dream_cycle, feedback historization), bridge hypothesis generation (→ cross_propose_edges), make_dream_peer_fn (E0Controller integration). WL recursive fingerprints (9-dim→81-dim at depth-2), Hungarian optimal assignment (find_wl_node_equivalences_hungarian, scipy). **C139:** DreamObserver.dream_cycle() invokes node-level equivalences (hungarian/wl) alongside edge-EQ. _update_dream_landscape_nodes creates domain:node states. **C154:** node_equivalences_for query, propose_node_bridges (structural transfer from donor neighborhoods via node mapping), make_dream_peer_fn node-bridge fallback, confidence_floor (breaks cold-start chicken-and-egg), equivalences_for now filters out node states. **C168:** dream_compatibility() (mean WL distance as structural compatibility metric), is_dream_compatible() (threshold check), compatibility-gated dream_cycle() (skips incompatible domain pairs, reports compatibility_skipped/compatibility_scores). **C178:** 4D fingerprint adds context_sensitivity to EdgeFingerprint and fingerprint_distance, preventing false equivalences between causal and confounded edges. Empirical: EN↔DE=0.375 PASS, EN↔ONTO=0.870 SKIP, 59% edge noise filtered. C109-C112, C135-C139, C154, C168, C178."
       },
       "10_structural_entropy": {
         "files": ["structural_entropy.py", "explore_structural_entropy.py"],
@@ -131,6 +131,7 @@
   },
 
   "commit_history_recent": [
+    { "hash": "ac5338c", "id": "C178", "title": "Dream-Based Causal Transfer — 4D fingerprint (q, load, I, cs) prevents false cross-domain equivalences (17 tests, 4098 total)" },
     { "hash": "5e5c362", "id": "C175", "title": "Causal Binding — implicit intervention discovery, natural path alternation detects confounds (4 PASS, 1 informative FAIL)" },
     { "hash": "ed3eb49", "id": "C174", "title": "Self-Honesty Level 2 — avoid known-bad solves injection attacks (C: FAIL→PARTIAL, fakes 19→4, bloat 167%→67%)" },
     { "hash": "28c6968", "id": "C173", "title": "Structural Skepticism — run-level meta-observation detects coherent deception (A+B PASS, C FAIL, D no false positive)" },

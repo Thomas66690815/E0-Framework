@@ -244,6 +244,7 @@ Only B→GOAL in the confounded domain is flagged. All other edges — in both d
 | S4: Fragile | Degradation detected | **PASS** | Trivial baseline confirmed |
 | S5: Transfer | Asymmetric portability | **PASS** | Causal q>0; confounded q<0 |
 | S6: Context Sensitivity | Isolate confound | **PASS** | CAUSAL=0.0, CONFOUNDED=2.0, only B→GOAL flagged |
+| S7: Dream Causal Transfer | cs in 4D fingerprint | **PASS** | B→GOAL excluded from equivalences, 4D distance 2× 3D, no false transfer to FRESH domain |
 
 ## 7. Architectural Implications
 
@@ -304,7 +305,7 @@ Both findings share the same epistemological principle: E₀ cannot access groun
 
 1. ~~**Context sensitivity metric:**~~ ✅ Done (C176). `context_quality()` and `context_sensitivity()` implemented, 18 tests, exploration S6 confirms perfect isolation.
 2. ~~**Larger topologies:**~~ ✅ Done (C177). 12 states, 17 edges, 3 confounds at depths 2-5 + 1 clean junction. All 3 confounds detected (cs=2.0), 0 false positives. Key discovery: greedy controller needs targeted intervention in deep topologies (recent_k=3 too short for 6-step paths).
-3. **Dream-based causal transfer:** Use broken equivalences as causal divergence signal in cross-domain proposals. Context sensitivity enables predecessor-aware transfer filtering.
+3. ~~**Dream-based causal transfer:**~~ ✅ Done (C178). 4D fingerprint (quality, load, inertia, context_sensitivity) in EdgeFingerprint and fingerprint_distance. CAUSAL B→GOAL cs=0.0, CONFOUNDED B→GOAL cs=2.0 — correctly excluded from dream equivalences. 4D distance (2.317) nearly doubles 3D (1.170). CONFOUNDED→FRESH 14.7× further than CAUSAL→FRESH.
 4. **Connection to Priority 3 (N-domain mesh):** Causal detection through implicit intervention scales with N — more domains = more alternative paths = more natural experiments.
 
 ### 7.7 Greedy Controller Exploration Limitations (C177)

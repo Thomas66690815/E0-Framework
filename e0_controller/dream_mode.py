@@ -32,12 +32,13 @@ from e0_controller.config import DEFAULTS
 
 @dataclass(frozen=True)
 class EdgeFingerprint:
-    """Historization profile of a single edge: (q, m, I)."""
+    """Historization profile of a single edge: (q, m, I, cs)."""
     domain: str
     edge: Edge
     quality: float      # trace_quality ∈ (-1, +1)
     load: float         # trace_load ∈ [0, ∞)
     inertia: float      # inertia_factor ∈ (1-α, 1]
+    context_sensitivity: float = 0.0  # C178: ∈ [0, 2]
 
 
 def edge_fingerprint(
@@ -56,6 +57,7 @@ def edge_fingerprint(
         quality=h.trace_quality(edge),
         load=h.trace_load(edge),
         inertia=h.inertia_factor(edge, alpha=alpha, mu=mu),
+        context_sensitivity=h.context_sensitivity(edge),
     )
 
 
@@ -86,6 +88,10 @@ def fingerprint_distance(
 
     Uses the m/(m+μ) sigmoid for trace_load normalization, ensuring
     scale-invariance across domains with different activity levels.
+
+    C178: Includes context_sensitivity as 4th dimension. Edges with
+    different context sensitivity are farther apart — confounded edges
+    won't match causal ones even if quality/load/inertia coincide.
     """
     dq = a.quality - b.quality
     # Normalize load via sigmoid (same as inertia_factor uses)
@@ -93,7 +99,8 @@ def fingerprint_distance(
     norm_b = b.load / (b.load + mu)
     dm = norm_a - norm_b
     di = a.inertia - b.inertia
-    return math.sqrt(dq * dq + dm * dm + di * di)
+    dcs = a.context_sensitivity - b.context_sensitivity
+    return math.sqrt(dq * dq + dm * dm + di * di + dcs * dcs)
 
 
 # ---------------------------------------------------------------------------
