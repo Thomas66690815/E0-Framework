@@ -188,6 +188,7 @@ These are valuable but premature:
 | 2026-04-06 | C176: Context Sensitivity Metric | Formalizes C175 finding: predecessor tracking + context_sensitivity() ∈ [0,2]. CAUSAL=0.0, CONFOUNDED=2.0 — only confounded edge flagged. Canon §5 validated: causality derived, not primitive. |
 | 2026-04-06 | C177: Larger Topology Confound Detection | 12 states, 17 edges, 3 confounds at depths 2-5: all detected (cs=2.0), 0 false positives. Greedy controller needs multi-start intervention in deep topologies (recent_k=3 too short). |
 | 2026-04-06 | C178: Dream-Based Causal Transfer | 4D fingerprint (q, load, I, cs) in EdgeFingerprint and fingerprint_distance. CONFOUNDED B→GOAL correctly excluded from dream equivalences. 4D distance (2.317) nearly doubles 3D (1.170). No false transfer to fresh domains. |
+| 2026-04-06 | C179: N-Domain Mesh N=3 | First N>2 integrated experiment (EN+DE+ONTO). EN↔DE form dream cluster (1755 eq), DE↔ONTO fully isolated (0 eq). Dynamic compatibility: EN↔ONTO shifts from 0.87 (SKIP) to 0.58 (PASS) post-navigation — WL fingerprints absorb trace data. Coupling weights stay at 1.0 (dream equivalences lack quality feedback). |
 
 ---
 
@@ -216,7 +217,7 @@ These are valuable but premature:
 - [x] Dream-based causal transfer (broken equivalences as divergence signal) — C178: 4D fingerprint (q, load, I, cs), B→GOAL excluded from equivalences, 4D distance nearly doubles 3D
 
 ### Priority 3: N-Domain Mesh
-- [ ] N=3 experiment (EN + DE + ONTO)
+- [x] N=3 experiment (EN + DE + ONTO) — C179: EN↔DE cluster (1755 eq), DE↔ONTO isolated (0 eq), compatibility gating works. Finding: EN↔ONTO compat shifts 0.87→0.58 post-navigation.
 - [ ] N=5 experiment (add COOK + PROJECT)
 - [ ] Measure cluster formation and coupling weight self-organization
 - [ ] Test dream transitivity (A↔B + B↔C → A↔C?)
