@@ -44,15 +44,15 @@ classifiers = [
     "Typing :: Typed",
 ]
 
+dependencies = [
+    "numpy",
+]
+
 [project.urls]
 Homepage = "https://github.com/Thomas66690815/E0-Framework"
 Repository = "https://github.com/Thomas66690815/E0-Framework"
 Documentation = "https://github.com/Thomas66690815/E0-Framework/tree/main/docs"
 Issues = "https://github.com/Thomas66690815/E0-Framework/issues"
-
-dependencies = [
-    "numpy",
-]
 
 [project.optional-dependencies]
 llm = ["openai"]
