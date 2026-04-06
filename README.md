@@ -206,6 +206,7 @@ Two systems that solve cold-start and hierarchical learning:
 - [Dream Mode Concept](docs/E0_DREAM_MODE_CONCEPT_v1.md) — cross-domain pattern recognition through passive observation (C109–C139, C168–C171)
 - [Multi-Domain Dream Analysis](docs/E0_MULTI_DOMAIN_DREAM_ANALYSIS_v1.md) — compatibility gating empirical analysis (C168–C171, all 4 questions closed)
 - [Asymmetric Teaching Research](docs/research/E0_ASYMMETRIC_TEACHING_RESEARCH_v1.md) — training effect=0, topology dominates (C171)
+- [Strategic Roadmap](docs/E0_STRATEGIC_ROADMAP_v1.md) — post-C171 priorities: adversarial stability → semantic binding → N-domain mesh
 - [Structural Entropy Design](docs/E0_STRUCTURAL_ENTROPY_DESIGN_v1.md) — forgetting as structural necessity (C114–C121)
 - [Language Learning Results](docs/E0_LANGUAGE_LEARNING_RESULTS_v1.md) — cross-domain translation via structural fingerprints (C124–C137)
 - [Observation UI Architecture](docs/E0_OBSERVATION_UI_ARCHITECTURE_v1.md) — O-Landscape projection and navigation (C94–C97)
