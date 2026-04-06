@@ -583,6 +583,52 @@ def is_dream_ready(
 
 
 # ---------------------------------------------------------------------------
+# Dream compatibility (C168)
+# ---------------------------------------------------------------------------
+
+def dream_compatibility(
+    landscape_a: Landscape,
+    landscape_b: Landscape,
+    *,
+    depth: int = 2,
+) -> float:
+    """Structural compatibility score between two domains.
+
+    Computes the mean WL node distance under Hungarian optimal assignment.
+    Lower values indicate higher compatibility — domains whose nodes occupy
+    similar structural roles with similar quality distributions.
+
+    Returns a float ≥ 0.  Empirically:
+      - < 0.5  → structurally compatible (near-isomorphic topology)
+      - 0.5–0.7 → borderline
+      - > 0.7  → structurally incompatible (dream matching is noise)
+
+    Returns float('inf') if either landscape has no states.
+    """
+    if not landscape_a.states or not landscape_b.states:
+        return float("inf")
+
+    eqs = find_wl_node_equivalences_hungarian(
+        landscape_a, landscape_b, depth=depth,
+    )
+    if not eqs:
+        return float("inf")
+
+    return sum(eq.distance for eq in eqs) / len(eqs)
+
+
+def is_dream_compatible(
+    landscape_a: Landscape,
+    landscape_b: Landscape,
+    *,
+    threshold: float = DEFAULTS.dream_compatibility_threshold,
+    depth: int = 2,
+) -> bool:
+    """Whether two domains are structurally compatible for cross-domain dreaming."""
+    return dream_compatibility(landscape_a, landscape_b, depth=depth) <= threshold
+
+
+# ---------------------------------------------------------------------------
 # Dream Landscape construction
 # ---------------------------------------------------------------------------
 
@@ -660,6 +706,9 @@ class DreamCycleResult:
     # C139: Node-level equivalences via WL + Hungarian
     node_equivalences_found: int = 0
     node_equivalences_new: int = 0
+    # C168: Compatibility-gated dreaming
+    compatibility_skipped: List[Tuple[str, str]] = field(default_factory=list)
+    compatibility_scores: Dict[Tuple[str, str], float] = field(default_factory=dict)
 
 
 class DreamObserver:
@@ -702,6 +751,7 @@ class DreamObserver:
         protected_fn: Optional[Any] = None,
         node_equivalence_method: Optional[str] = None,
         wl_depth: int = DEFAULTS.wl_depth,
+        compatibility_threshold: Optional[float] = None,
     ):
         self._domains: Dict[str, Landscape] = {}
         self._dream_landscape: Optional[Landscape] = None
@@ -720,6 +770,8 @@ class DreamObserver:
             raise ValueError(f"node_equivalence_method must be None, 'hungarian', or 'wl', got {node_equivalence_method!r}")
         self._node_eq_method = node_equivalence_method
         self._wl_depth = wl_depth
+        # C168: Compatibility-gated dreaming
+        self._compatibility_threshold = compatibility_threshold
 
     # -- Domain management --------------------------------------------------
 
@@ -750,14 +802,16 @@ class DreamObserver:
 
         Steps:
         1. Partition domains by readiness
-        2. Extract edge fingerprints + find equivalences (quantile-based)
-        3. (C139) If node_equivalence_method set: find node-level equivalences
+        2. (C168) Check pairwise compatibility — skip incompatible pairs
+        3. Extract edge fingerprints + find equivalences (quantile-based)
+        4. (C139) If node_equivalence_method set: find node-level equivalences
            via WL + Hungarian or WL + mutual-best
-        4. Update (or build) the Dream Landscape incrementally
-        5. If decay_enabled: consolidate each domain landscape (C119)
+        5. Update (or build) the Dream Landscape incrementally
+        6. If decay_enabled: consolidate each domain landscape (C119)
            — patterns are extracted BEFORE decay, then graphs are compressed
 
         Domains that are not dream-ready are skipped.
+        Domain pairs that are not structurally compatible are skipped (C168).
 
         Returns a DreamCycleResult summarizing the cycle.
         """
@@ -771,47 +825,63 @@ class DreamObserver:
             else:
                 skipped.append(name)
 
-        # Collect edge equivalences across all ready domain pairs
-        all_equivalences: List[Equivalence] = []
+        # C168: Build compatible pairs (skip structurally incompatible)
+        compatible_pairs: List[Tuple[str, str]] = []
+        compatibility_skipped: List[Tuple[str, str]] = []
+        compatibility_scores: Dict[Tuple[str, str], float] = {}
         for i, name_a in enumerate(ready):
             for name_b in ready[i + 1:]:
-                eqs = find_equivalences(
-                    self._domains[name_a],
-                    self._domains[name_b],
-                    domain_a=name_a,
-                    domain_b=name_b,
-                    mu=self._mu,
-                    alpha=self._alpha,
-                    quantile=self._quantile,
-                )
-                all_equivalences.extend(eqs)
+                if self._compatibility_threshold is not None:
+                    score = dream_compatibility(
+                        self._domains[name_a],
+                        self._domains[name_b],
+                        depth=self._wl_depth,
+                    )
+                    compatibility_scores[(name_a, name_b)] = score
+                    if score > self._compatibility_threshold:
+                        compatibility_skipped.append((name_a, name_b))
+                        continue
+                compatible_pairs.append((name_a, name_b))
+
+        # Collect edge equivalences across compatible domain pairs
+        all_equivalences: List[Equivalence] = []
+        for name_a, name_b in compatible_pairs:
+            eqs = find_equivalences(
+                self._domains[name_a],
+                self._domains[name_b],
+                domain_a=name_a,
+                domain_b=name_b,
+                mu=self._mu,
+                alpha=self._alpha,
+                quantile=self._quantile,
+            )
+            all_equivalences.extend(eqs)
 
         # Incremental update of Dream Landscape (edge equivalences)
         new_count = self._update_dream_landscape(all_equivalences)
 
         # C139: Node-level equivalences via WL fingerprints
         all_node_eqs: List[NodeEquivalence] = []
-        if self._node_eq_method is not None and len(ready) >= 2:
-            for i, name_a in enumerate(ready):
-                for name_b in ready[i + 1:]:
-                    if self._node_eq_method == "hungarian":
-                        node_eqs = find_wl_node_equivalences_hungarian(
-                            self._domains[name_a],
-                            self._domains[name_b],
-                            domain_a=name_a,
-                            domain_b=name_b,
-                            depth=self._wl_depth,
-                        )
-                    else:  # "wl" — mutual-best
-                        node_eqs = find_wl_node_equivalences(
-                            self._domains[name_a],
-                            self._domains[name_b],
-                            domain_a=name_a,
-                            domain_b=name_b,
-                            depth=self._wl_depth,
-                            quantile=self._quantile,
-                        )
-                    all_node_eqs.extend(node_eqs)
+        if self._node_eq_method is not None and len(compatible_pairs) >= 1:
+            for name_a, name_b in compatible_pairs:
+                if self._node_eq_method == "hungarian":
+                    node_eqs = find_wl_node_equivalences_hungarian(
+                        self._domains[name_a],
+                        self._domains[name_b],
+                        domain_a=name_a,
+                        domain_b=name_b,
+                        depth=self._wl_depth,
+                    )
+                else:  # "wl" — mutual-best
+                    node_eqs = find_wl_node_equivalences(
+                        self._domains[name_a],
+                        self._domains[name_b],
+                        domain_a=name_a,
+                        domain_b=name_b,
+                        depth=self._wl_depth,
+                        quantile=self._quantile,
+                    )
+                all_node_eqs.extend(node_eqs)
 
         node_new_count = self._update_dream_landscape_nodes(all_node_eqs)
 
@@ -850,6 +920,8 @@ class DreamObserver:
             decay_reports=decay_reports,
             node_equivalences_found=len(all_node_eqs),
             node_equivalences_new=node_new_count,
+            compatibility_skipped=compatibility_skipped,
+            compatibility_scores=compatibility_scores,
         )
 
     def _update_dream_landscape(self, equivalences: List[Equivalence]) -> int:
@@ -1106,6 +1178,9 @@ class DreamObserver:
             r = dream_readiness(landscape, self._alpha, self._mu)
             lines.append(f"  {name}: {len(landscape.edges)} edges, "
                          f"readiness={r:.3f}")
+
+        if self._compatibility_threshold is not None:
+            lines.append(f"  Compatibility threshold: {self._compatibility_threshold}")
 
         if self._dream_landscape:
             dl = self._dream_landscape

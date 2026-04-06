@@ -1,4 +1,4 @@
-"""Tests for Dream Mode — C109/C110/C111/C119/C139.
+"""Tests for Dream Mode — C109/C110/C111/C119/C139/C168.
 
 C109: Edge fingerprint extraction, distance metric, equivalence detection,
       dream readiness, Dream Landscape construction. P1 + P5 validated.
@@ -8,6 +8,7 @@ C111: Bridge hypothesis generation — propose_bridges(), dream_coupling_discoun
       make_dream_peer_fn(). P2 (acceleration) + P3 (self-correction) validated.
 C119: Dream Mode consolidation — structural decay during dream_cycle.
 C139: Node-level equivalences via Hungarian/WL in DreamObserver.dream_cycle().
+C168: Compatibility-gated dreaming — dream_compatibility(), is_dream_compatible().
 """
 
 import math
@@ -41,6 +42,8 @@ from e0_controller.dream_mode import (
     dream_coupling_discount,
     propose_bridges,
     make_dream_peer_fn,
+    dream_compatibility,
+    is_dream_compatible,
 )
 
 
@@ -1659,3 +1662,223 @@ class TestDreamDecayEnabled:
             assert len(result.decay_reports["d2"].removed_states) == 0
         # d2 states unchanged
         assert la2.states == states_d2_before
+
+
+# ═══════════════════════════════════════════════
+# Test: Dream Compatibility (C168)
+# ═══════════════════════════════════════════════
+
+def _build_chain_domain(n: int, delta: float = 0.5) -> Landscape:
+    """Linear chain: s0→s1→…→s(n-1) with uniform delta."""
+    L = Landscape()
+    for i in range(n - 1):
+        L.add_edge(f"s{i}", f"s{i+1}", delta=delta, resistance=1.0)
+    return L
+
+
+def _build_star_domain(n: int, delta: float = 0.5) -> Landscape:
+    """Star topology: hub→leaf_0, hub→leaf_1, …, hub→leaf_(n-2)."""
+    L = Landscape()
+    for i in range(n - 1):
+        L.add_edge("hub", f"leaf_{i}", delta=delta, resistance=1.0)
+    return L
+
+
+class TestDreamCompatibility:
+    """C168: dream_compatibility + is_dream_compatible + gated dreaming."""
+
+    def test_identical_landscapes_zero_distance(self):
+        """Reflexive compatibility = 0.0 (perfect match)."""
+        L = _build_simple_domain()
+        _inscribe(L, ["A", "B", "C", "GOAL"], Outcome.SUCCESS, 5)
+        score = dream_compatibility(L, L)
+        assert score == 0.0
+
+    def test_near_isomorphic_low_distance(self):
+        """Two chains of same length have low compatibility distance."""
+        L1 = _build_chain_domain(10, delta=0.5)
+        L2 = _build_chain_domain(10, delta=0.5)
+        _inscribe(L1, [f"s{i}" for i in range(10)], Outcome.SUCCESS, 5)
+        _inscribe(L2, [f"s{i}" for i in range(10)], Outcome.SUCCESS, 5)
+        score = dream_compatibility(L1, L2)
+        assert score < 0.5, f"Near-isomorphic chains should have low distance, got {score}"
+
+    def test_different_topology_higher_distance(self):
+        """Chain vs star of same node count should have higher distance."""
+        chain = _build_chain_domain(10, delta=0.5)
+        star = _build_star_domain(10, delta=0.5)
+        _inscribe(chain, [f"s{i}" for i in range(10)], Outcome.SUCCESS, 5)
+        _inscribe(star, ["hub"] + [f"leaf_{i}" for i in range(9)], Outcome.SUCCESS, 5)
+
+        iso_score = dream_compatibility(chain, chain)
+        cross_score = dream_compatibility(chain, star)
+        assert cross_score > iso_score, \
+            f"Chain↔star ({cross_score}) should exceed chain↔chain ({iso_score})"
+
+    def test_empty_landscape_returns_inf(self):
+        """Empty landscape has infinite incompatibility."""
+        L_empty = Landscape()
+        L_full = _build_simple_domain()
+        assert dream_compatibility(L_empty, L_full) == float("inf")
+        assert dream_compatibility(L_empty, L_empty) == float("inf")
+
+    def test_is_dream_compatible_threshold(self):
+        """is_dream_compatible respects threshold parameter."""
+        L = _build_simple_domain()
+        _inscribe(L, ["A", "B", "C", "GOAL"], Outcome.SUCCESS, 5)
+        # Reflexive is always compatible
+        assert is_dream_compatible(L, L, threshold=0.01)
+        # With threshold=0, only exact match works
+        assert is_dream_compatible(L, L, threshold=0.0)
+
+    def test_is_dream_compatible_rejects_different_topology(self):
+        """Structurally different domains are rejected at strict threshold."""
+        chain = _build_chain_domain(10, delta=0.5)
+        star = _build_star_domain(10, delta=0.3)
+        _inscribe(chain, [f"s{i}" for i in range(10)], Outcome.SUCCESS, 5)
+        _inscribe(star, ["hub"] + [f"leaf_{i}" for i in range(9)], Outcome.SUCCESS, 5)
+        # At strict threshold, different topologies should not be compatible
+        assert not is_dream_compatible(chain, star, threshold=0.01)
+
+    def test_non_negative(self):
+        """Compatibility score is always non-negative."""
+        L1 = _build_simple_domain()
+        L2 = _build_parallel_domain()
+        _inscribe(L1, ["A", "B", "C", "GOAL"], Outcome.SUCCESS, 3)
+        _inscribe(L2, ["S", "A", "G"], Outcome.SUCCESS, 3)
+        assert dream_compatibility(L1, L2) >= 0.0
+
+    def test_symmetry(self):
+        """dream_compatibility(A, B) == dream_compatibility(B, A)."""
+        L1 = _build_chain_domain(8, delta=0.4)
+        L2 = _build_chain_domain(8, delta=0.7)
+        _inscribe(L1, [f"s{i}" for i in range(8)], Outcome.SUCCESS, 5)
+        _inscribe(L2, [f"s{i}" for i in range(8)], Outcome.SUCCESS, 5)
+        ab = dream_compatibility(L1, L2)
+        ba = dream_compatibility(L2, L1)
+        assert abs(ab - ba) < 1e-10
+
+
+class TestCompatibilityGatedDreaming:
+    """C168: DreamObserver gates cross-domain matching by compatibility."""
+
+    def test_ungated_matches_all_pairs(self):
+        """Without compatibility_threshold, all ready pairs are matched."""
+        L1 = _build_simple_domain()
+        L2 = _build_simple_domain()
+        _inscribe(L1, ["A", "B", "C", "GOAL"], Outcome.SUCCESS, 5)
+        _inscribe(L2, ["A", "B", "C", "GOAL"], Outcome.SUCCESS, 5)
+
+        obs = DreamObserver(readiness_threshold=0.0)
+        obs.register("d1", L1)
+        obs.register("d2", L2)
+        result = obs.dream_cycle()
+
+        assert len(result.compatibility_skipped) == 0
+        assert result.equivalences_found > 0
+
+    def test_strict_threshold_skips_different(self):
+        """With strict threshold, structurally different domains are skipped."""
+        chain = _build_chain_domain(10, delta=0.5)
+        star = _build_star_domain(10, delta=0.3)
+        _inscribe(chain, [f"s{i}" for i in range(10)], Outcome.SUCCESS, 5)
+        _inscribe(star, ["hub"] + [f"leaf_{i}" for i in range(9)], Outcome.SUCCESS, 5)
+
+        obs = DreamObserver(
+            readiness_threshold=0.0,
+            compatibility_threshold=0.01,  # very strict
+        )
+        obs.register("chain", chain)
+        obs.register("star", star)
+        result = obs.dream_cycle()
+
+        assert ("chain", "star") in result.compatibility_skipped
+        assert result.equivalences_found == 0
+
+    def test_lenient_threshold_matches_all(self):
+        """With lenient threshold, even different domains pass."""
+        chain = _build_chain_domain(10, delta=0.5)
+        star = _build_star_domain(10, delta=0.3)
+        _inscribe(chain, [f"s{i}" for i in range(10)], Outcome.SUCCESS, 5)
+        _inscribe(star, ["hub"] + [f"leaf_{i}" for i in range(9)], Outcome.SUCCESS, 5)
+
+        obs = DreamObserver(
+            readiness_threshold=0.0,
+            compatibility_threshold=100.0,  # very lenient
+        )
+        obs.register("chain", chain)
+        obs.register("star", star)
+        result = obs.dream_cycle()
+
+        assert len(result.compatibility_skipped) == 0
+        assert result.equivalences_found > 0
+
+    def test_compatibility_scores_reported(self):
+        """DreamCycleResult includes compatibility scores."""
+        L1 = _build_simple_domain()
+        L2 = _build_simple_domain()
+        _inscribe(L1, ["A", "B", "C", "GOAL"], Outcome.SUCCESS, 5)
+        _inscribe(L2, ["A", "B", "C", "GOAL"], Outcome.SUCCESS, 5)
+
+        obs = DreamObserver(
+            readiness_threshold=0.0,
+            compatibility_threshold=1.0,
+        )
+        obs.register("d1", L1)
+        obs.register("d2", L2)
+        result = obs.dream_cycle()
+
+        assert ("d1", "d2") in result.compatibility_scores
+        assert isinstance(result.compatibility_scores[("d1", "d2")], float)
+
+    def test_three_domains_selective_gating(self):
+        """With 3 domains, only incompatible pairs are skipped."""
+        L1 = _build_chain_domain(8, delta=0.5)
+        L2 = _build_chain_domain(8, delta=0.5)
+        L3 = _build_star_domain(8, delta=0.3)
+        _inscribe(L1, [f"s{i}" for i in range(8)], Outcome.SUCCESS, 5)
+        _inscribe(L2, [f"s{i}" for i in range(8)], Outcome.SUCCESS, 5)
+        _inscribe(L3, ["hub"] + [f"leaf_{i}" for i in range(7)], Outcome.SUCCESS, 5)
+
+        obs = DreamObserver(
+            readiness_threshold=0.0,
+            compatibility_threshold=0.01,  # strict: only near-identical pass
+        )
+        obs.register("c1", L1)
+        obs.register("c2", L2)
+        obs.register("star", L3)
+        result = obs.dream_cycle()
+
+        # c1↔c2 should pass (near-identical chains)
+        assert ("c1", "c2") not in result.compatibility_skipped
+        # c1↔star and c2↔star should be skipped
+        assert len(result.compatibility_skipped) >= 1
+
+    def test_node_eq_respects_gating(self):
+        """Node-level equivalences also respect compatibility gating."""
+        chain = _build_chain_domain(10, delta=0.5)
+        star = _build_star_domain(10, delta=0.3)
+        _inscribe(chain, [f"s{i}" for i in range(10)], Outcome.SUCCESS, 5)
+        _inscribe(star, ["hub"] + [f"leaf_{i}" for i in range(9)], Outcome.SUCCESS, 5)
+
+        obs = DreamObserver(
+            readiness_threshold=0.0,
+            compatibility_threshold=0.01,
+            node_equivalence_method="hungarian",
+        )
+        obs.register("chain", chain)
+        obs.register("star", star)
+        result = obs.dream_cycle()
+
+        assert result.node_equivalences_found == 0
+        assert ("chain", "star") in result.compatibility_skipped
+
+    def test_summary_shows_threshold(self):
+        """summary() includes compatibility threshold."""
+        obs = DreamObserver(
+            readiness_threshold=0.0,
+            compatibility_threshold=0.6,
+        )
+        obs.register("d1", _build_simple_domain())
+        s = obs.summary()
+        assert "0.6" in s

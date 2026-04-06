@@ -148,6 +148,10 @@ class E0Config:
     # Base resistance for dream landscape edges.
     dream_base_resistance: float = 0.5
 
+    # C168: Mean WL distance threshold for cross-domain dreaming.
+    # Pairs with higher mean distance are skipped (structural noise).
+    dream_compatibility_threshold: float = 0.6
+
     # WL recursive fingerprint depth.
     wl_depth: int = 2
 
