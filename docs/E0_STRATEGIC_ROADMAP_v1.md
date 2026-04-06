@@ -184,6 +184,7 @@ These are valuable but premature:
 | 2026-04-06 | Semantic binding starts small (3–5 node causal domains) | Prevents slide into vague claims; must be falsifiable |
 | 2026-04-06 | C173: Structural Skepticism viable for stagnation | Load-without-frontier detects coherent loops; injection needs Level 2 (quality spread) |
 | 2026-04-06 | C174: Self-Honesty L2 solves injection attacks | "Truth is perspective. Self-honesty is structural." Avoid known-bad beats prefer known-good. Scenario C: FAIL → PARTIAL (goal reached, fakes 19→4, bloat 167%→67%) |
+| 2026-04-06 | C175: Causal binding — implicit intervention discovery | E₀'s natural path alternation functions as causal probing. Confound leaks through observation alone (S1 refuted). No explicit causal layer needed for detection. |
 
 ---
 
@@ -203,11 +204,13 @@ These are valuable but premature:
 - [x] Verdict: all 3 adversarial scenarios addressed (A+B PASS, C PARTIAL, D no false positive)
 
 ### Priority 2: Semantic / Causal Binding
-- [ ] Design causal test domains (same topology, different causal backing)
-- [ ] Introduce causal annotation layer (minimal extension to Edge)
-- [ ] Build exploration: structural twin edges with different causes
-- [ ] Measure: does historization differentiate?
-- [ ] Verdict: causal coherence emergent / needs explicit layer
+- [x] Design causal test domains (same topology, different causal backing)
+- [x] Build exploration: structural twin edges with different causes
+- [x] Measure: does historization differentiate? → YES, via implicit intervention (multi-path exploration)
+- [x] Verdict: causal detection emergent from topology + historization — no explicit layer needed for detection
+- [ ] Context sensitivity metric (quality variance by predecessor)
+- [ ] Larger topology test (10+ nodes, non-obvious confounds)
+- [ ] Dream-based causal transfer (broken equivalences as divergence signal)
 
 ### Priority 3: N-Domain Mesh
 - [ ] N=3 experiment (EN + DE + ONTO)
