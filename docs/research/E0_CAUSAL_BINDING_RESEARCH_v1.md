@@ -303,13 +303,28 @@ Both findings share the same epistemological principle: E₀ cannot access groun
 ### 7.6 Next Steps
 
 1. ~~**Context sensitivity metric:**~~ ✅ Done (C176). `context_quality()` and `context_sensitivity()` implemented, 18 tests, exploration S6 confirms perfect isolation.
-2. **Larger topologies:** Test with 10+ node domains where confounds are non-obvious.
+2. ~~**Larger topologies:**~~ ✅ Done (C177). 12 states, 17 edges, 3 confounds at depths 2-5 + 1 clean junction. All 3 confounds detected (cs=2.0), 0 false positives. Key discovery: greedy controller needs targeted intervention in deep topologies (recent_k=3 too short for 6-step paths).
 3. **Dream-based causal transfer:** Use broken equivalences as causal divergence signal in cross-domain proposals. Context sensitivity enables predecessor-aware transfer filtering.
 4. **Connection to Priority 3 (N-domain mesh):** Causal detection through implicit intervention scales with N — more domains = more alternative paths = more natural experiments.
 
+### 7.7 Greedy Controller Exploration Limitations (C177)
+
+The larger topology test revealed structural limitations of the greedy controller for confound detection:
+
+1. **Path locking:** With recent_k=3 (default), the controller tracks only the 3 most recently visited states. In a 6-step path (START→A→B→E→K→GOAL), early nodes (A, B) are pushed out of the recent window. No revisit penalty → controller locks onto one path indefinitely.
+
+2. **GOAL in _recent:** GOAL is always the last state visited. The controller's not_recent filter hard-excludes GOAL from neighbor selection at junction nodes (e.g., H has H→GOAL and H→F — GOAL is excluded, H→F always preferred).
+
+3. **No backtracking from downstream failure:** Each edge is judged independently. The controller doesn't learn that E→K → K→GOAL fails; E→K itself succeeds and keeps its positive quality.
+
+**Implication:** C175's implicit intervention (natural path alternation detects confounds) works only in shallow topologies (3-step paths). In deeper topologies, detection requires targeted multi-start intervention — the controller won't naturally explore all predecessor paths.
+
+This doesn't invalidate context_sensitivity — the metric is correct and precise. It reveals a **coverage prerequisite**: the metric needs predecessor diversity that the default greedy controller cannot provide in deep graphs.
+
 ## 8. Open Questions
 
-1. Does the intervention test generalize beyond the simple chain A→B→GOAL?
+1. ~~Does the intervention test generalize beyond the simple chain A→B→GOAL?~~ ✅ Yes (C177: 3 confounds at 3 different depths, all detected via multi-start intervention).
 2. Can multiverse coupling function as implicit intervention? (Domain 1 forces start at B via cross-reflexion → tests CONFOUNDED domain's B→GOAL)
-3. Is the canon's claim "causal ordering as derived consequence" validated or refuted by this experiment?
+3. ~~Is the canon's claim "causal ordering as derived consequence" validated or refuted by this experiment?~~ Validated with qualification: causality is derived from topology + historization, but detection requires sufficient path diversity (topological prerequisite) and exploration (behavioral prerequisite).
 4. Connection to C174: Self-honesty detects "known-bad" (failure history). Causal detection requires "known-fragile" (conditional failure). Is there a Level 3 skepticism here?
+5. Can Born sampling or amplitude overlay provide sufficient natural exploration for confound detection in deep topologies without manual intervention?
