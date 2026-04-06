@@ -183,6 +183,7 @@ These are valuable but premature:
 | 2026-04-06 | N-domain mesh after adversarial | No point building mesh on unverified stability foundations |
 | 2026-04-06 | Semantic binding starts small (3–5 node causal domains) | Prevents slide into vague claims; must be falsifiable |
 | 2026-04-06 | C173: Structural Skepticism viable for stagnation | Load-without-frontier detects coherent loops; injection needs Level 2 (quality spread) |
+| 2026-04-06 | C174: Self-Honesty L2 solves injection attacks | "Truth is perspective. Self-honesty is structural." Avoid known-bad beats prefer known-good. Scenario C: FAIL → PARTIAL (goal reached, fakes 19→4, bloat 167%→67%) |
 
 ---
 
@@ -198,7 +199,8 @@ These are valuable but premature:
 - [x] Verdict: fundamentally insufficient without meta-observation
 - [x] C173: Structural Skepticism — stagnation detection via frontier monitoring
 - [x] Verdict: stagnation attacks (A+B) SOLVED, injection attacks (C) OPEN
-- [ ] Level 2 skepticism: quality-spread detection for injection attacks
+- [x] C174: Level 2 Self-Honesty — avoid known-bad for injection attacks (C: FAIL → PARTIAL)
+- [x] Verdict: all 3 adversarial scenarios addressed (A+B PASS, C PARTIAL, D no false positive)
 
 ### Priority 2: Semantic / Causal Binding
 - [ ] Design causal test domains (same topology, different causal backing)

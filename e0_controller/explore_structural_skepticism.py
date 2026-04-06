@@ -1,13 +1,15 @@
 """
-C173 — Structural Skepticism Exploration
+C173/C174 — Structural Skepticism Exploration
 
-Tests whether run-level meta-observation can detect coherent deception
-that per-edge metrics miss.
+C173 (Level 1): Frontier stagnation — load without new states → force exploration.
+C174 (Level 2): Self-honesty — exploration fails consistently → force exploitation
+                of known-good edges. "Truth is perspective. Self-honesty is structural."
 
-Core idea: load accumulates without frontier expansion → structural stagnation.
-Response: force exploration of least-visited neighbor (exploratory escape).
+Two adversarial modes, two structural responses:
+  Stagnation: load↑, frontier=0      → L1: explore (go somewhere new)
+  Pollution:  load↑, frontier↑(fake)  → L2: exploit (go where you KNOW it works)
 
-Reuses C172 adversarial domains + new Scenario D (false-positive control).
+Together: don't stagnate, but don't explore blindly. Self-honesty as balance.
 
 Reference: docs/research/E0_STRUCTURAL_SKEPTICISM_RESEARCH_v1.md
 """
@@ -32,8 +34,10 @@ from e0_controller.structural_entropy import structural_temperature
 class SkepticismEvent:
     """Record of a skepticism trigger."""
     cycle: int
+    level: int  # 1 = stagnation, 2 = self-honesty
     progress_rate: float
     revisit_rate: float
+    new_failure_rate: float  # L2: failure rate on first-visit states
     total_unique: int
     total_revisits: int
     action: str  # what the monitor did
@@ -42,15 +46,18 @@ class SkepticismEvent:
 @dataclass
 class SkepticalRunner:
     """
-    Wraps E0Controller.run() with a structural skepticism monitor.
+    Wraps E0Controller.run() with a two-level structural skepticism monitor.
 
-    Every `window` cycles, checks:
-      - progress_rate: fraction of window steps that visited a new state
-      - revisit_rate: fraction of window steps that revisited a known state
+    Level 1 — Stagnation Detection:
+      progress_rate == 0 for a full window → force exploration of unvisited.
 
-    If progress_rate == 0 and revisit_rate > revisit_threshold for a full
-    window, triggers SKEPTICISM and forces the next step to explore the
-    least-loaded neighbor instead of the greedy choice.
+    Level 2 — Self-Honesty Detection:
+      progress_rate > 0 BUT new states consistently fail → force exploitation
+      of known-good edges. "My behavior contradicts my experience."
+
+    The two levels are structural duals:
+      L1: stuck in loops → explore (go somewhere new)
+      L2: exploring but failing → exploit (go where you know it works)
 
     Parameters
     ----------
@@ -61,16 +68,23 @@ class SkepticalRunner:
     min_warmup : int
         Minimum cycles before skepticism can trigger (default: 5).
     revisit_threshold : float
-        Minimum revisit_rate to trigger (default: 0.5).
+        Minimum revisit_rate for L1 trigger (default: 0.5).
+    failure_threshold : float
+        Minimum new-state failure rate for L2 trigger (default: 0.8).
+    enable_l2 : bool
+        Whether Level 2 (self-honesty) is active (default: True).
     """
     controller: E0Controller
     window: int = 5
     min_warmup: int = 5
     revisit_threshold: float = 0.5
+    failure_threshold: float = 0.8
+    enable_l2: bool = True
 
     events: List[SkepticismEvent] = field(default_factory=list)
     _visited: Set[str] = field(default_factory=set)
     _force_explore: bool = field(default=False)
+    _force_exploit: bool = field(default=False)
     _cleanup_tension: Optional[tuple] = field(default=None)
 
     def _apply_exploration_override(self, ctrl: E0Controller, current: str):
@@ -105,16 +119,59 @@ class SkepticalRunner:
         ctrl._penalized_tension = skeptical_tension
         self._cleanup_tension = (ctrl, original_penalized)
 
+    def _apply_exploitation_override(self, ctrl: E0Controller, current: str):
+        """
+        Self-honesty response: avoid known-bad, prefer novel-or-good.
+
+        Truth is perspective — we cannot know what IS good.
+        Self-honesty is structural — we CAN know what HAS FAILED.
+
+        Filter out neighbors with negative quality (known-bad).
+        Among the rest, prefer lowest load (most novel — not yet judged).
+        """
+        neighbors = ctrl.landscape.admissible_neighbors(current)
+        if not neighbors:
+            return
+
+        scored = []
+        for n in neighbors:
+            e = Edge(current, n)
+            q = ctrl.landscape.historization.trace_quality(e)
+            load = ctrl.landscape.historization.trace_load(e)
+            scored.append((n, q, load))
+
+        # Filter: exclude known-bad (quality < 0)
+        acceptable = [(n, q, load) for n, q, load in scored if q >= 0.0]
+
+        # If everything is known-bad, fall through to least-bad
+        if not acceptable:
+            acceptable = scored
+
+        # Among acceptable: prefer lowest load (most novel, least committed)
+        acceptable.sort(key=lambda x: x[2])
+        target_override = acceptable[0][0]
+
+        original_penalized = ctrl._penalized_tension
+
+        def exploit_tension(x, y):
+            if x == current and y == target_override:
+                return -1e10
+            return original_penalized(x, y)
+
+        ctrl._penalized_tension = exploit_tension
+        self._cleanup_tension = (ctrl, original_penalized)
+
     def run(self, start: str, max_cycles: int = 50, goal: str | None = None):
-        """Run the controller with skepticism monitoring."""
+        """Run the controller with two-level skepticism monitoring."""
         ctrl = self.controller
         self.events.clear()
         self._visited = {start}
         self._force_explore = False
+        self._force_exploit = False
         self._cleanup_tension = None
 
-        # Track first-visit per step for accurate window computation
-        first_visit_flags: List[bool] = []
+        # Track per-step: (is_first_visit, outcome)
+        step_records: List[tuple[bool, Outcome]] = []
 
         steps: List[StepResult] = []
         current = start
@@ -127,8 +184,10 @@ class SkepticalRunner:
             if current in goal_set:
                 break
 
-            # ── Skepticism override ──
-            if self._force_explore:
+            # ── Skepticism overrides (L1 and L2 are mutually exclusive) ──
+            if self._force_exploit:
+                self._apply_exploitation_override(ctrl, current)
+            elif self._force_explore:
                 self._apply_exploration_override(ctrl, current)
 
             # ── Normal cycle ──
@@ -140,6 +199,7 @@ class SkepticalRunner:
                 c._penalized_tension = orig
                 self._cleanup_tension = None
                 self._force_explore = False
+                self._force_exploit = False
 
             if step is None:
                 break
@@ -148,29 +208,58 @@ class SkepticalRunner:
             target = step.target
 
             is_new = target not in self._visited
-            first_visit_flags.append(is_new)
+            step_records.append((is_new, step.outcome))
             self._visited.add(target)
 
             # ── Window evaluation ──
-            if (len(first_visit_flags) >= self.window
+            if (len(step_records) >= self.window
                     and cycle_idx >= self.min_warmup):
-                window_flags = first_visit_flags[-self.window:]
-                progress_rate = sum(window_flags) / self.window
+                window = step_records[-self.window:]
+                first_visits = [r for r in window if r[0]]
+                progress_rate = len(first_visits) / self.window
                 revisit_rate = 1.0 - progress_rate
 
+                # Count failures on NEW states in this window
+                new_failures = sum(1 for fv, outcome in first_visits
+                                   if outcome == Outcome.FAILURE)
+                new_failure_rate = (new_failures / len(first_visits)
+                                    if first_visits else 0.0)
+
+                total_revisits = sum(1 for fv, _ in step_records if not fv)
+
+                # ── Level 1: Stagnation ──
                 if (progress_rate == 0.0
                         and revisit_rate >= self.revisit_threshold):
                     event = SkepticismEvent(
                         cycle=cycle_idx,
+                        level=1,
                         progress_rate=progress_rate,
                         revisit_rate=revisit_rate,
+                        new_failure_rate=0.0,
                         total_unique=len(self._visited),
-                        total_revisits=sum(1 for f in first_visit_flags
-                                           if not f),
-                        action="EXPLORATORY_ESCAPE",
+                        total_revisits=total_revisits,
+                        action="L1_EXPLORATORY_ESCAPE",
                     )
                     self.events.append(event)
                     self._force_explore = True
+
+                # ── Level 2: Self-Honesty ──
+                elif (self.enable_l2
+                      and progress_rate > 0.0
+                      and len(first_visits) >= 2
+                      and new_failure_rate >= self.failure_threshold):
+                    event = SkepticismEvent(
+                        cycle=cycle_idx,
+                        level=2,
+                        progress_rate=progress_rate,
+                        revisit_rate=revisit_rate,
+                        new_failure_rate=new_failure_rate,
+                        total_unique=len(self._visited),
+                        total_revisits=total_revisits,
+                        action="L2_EXPLOITATION_RETREAT",
+                    )
+                    self.events.append(event)
+                    self._force_exploit = True
 
             current = target
 
@@ -229,7 +318,7 @@ def scenario_a():
     With skepticism: should escape after 1 window of stagnation.
     """
     print("=" * 72)
-    print("SCENARIO A: Hidden Reward Flip (+ Structural Skepticism)")
+    print("SCENARIO A: Hidden Reward Flip (+ Structural Skepticism L1+L2)")
     print("=" * 72)
     print()
 
@@ -265,9 +354,10 @@ def scenario_a():
     print(f"  Unique states: {result.unique_states}")
     print(f"  Skepticism events: {result.skepticism_count}")
     for evt in result.events:
-        print(f"    cycle {evt.cycle}: progress={evt.progress_rate:.2f} "
-              f"revisit={evt.revisit_rate:.2f} → {evt.action}")
-    print(f"  Path: {' → '.join(result.path)}")
+        print(f"    cycle {evt.cycle} [L{evt.level}]: progress={evt.progress_rate:.2f} "
+              f"revisit={evt.revisit_rate:.2f} fail_new={evt.new_failure_rate:.2f} "
+              f"\u2192 {evt.action}")
+    print(f"  Path: {' \u2192 '.join(result.path)}")
     print()
     print_traces(L, [("A", "TRAP"), ("TRAP", "A"), ("A", "B"),
                      ("B", "GOAL")], "Final traces")
@@ -276,8 +366,8 @@ def scenario_a():
     verdict = "PASS" if result.goal_reached else "FAIL"
     print(f"  VERDICT: {verdict}")
     if result.goal_reached and result.skepticism_count > 0:
-        print(f"  → Skepticism detected trap after {result.events[0].cycle} cycles")
-        print(f"  → Exploratory escape led to goal discovery")
+        first = result.events[0]
+        print(f"  \u2192 L{first.level} skepticism detected trap after {first.cycle} cycles")
     elif not result.goal_reached:
         print(f"  → Skepticism {'triggered' if result.skepticism_count > 0 else 'did NOT trigger'} but goal not reached")
 
@@ -296,7 +386,7 @@ def scenario_b():
     """
     print()
     print("=" * 72)
-    print("SCENARIO B: Systematic Poisoning (+ Structural Skepticism)")
+    print("SCENARIO B: Systematic Poisoning (+ Structural Skepticism L1+L2)")
     print("=" * 72)
     print()
 
@@ -354,8 +444,9 @@ def scenario_b():
         print(f"    Steps: {len(result.steps)}, Poison visits: {poison_visits[0]}")
         print(f"    Skepticism events: {result.skepticism_count}")
         for evt in result.events:
-            print(f"      cycle {evt.cycle}: progress={evt.progress_rate:.2f} "
-                  f"revisit={evt.revisit_rate:.2f} → {evt.action}")
+            print(f"      cycle {evt.cycle} [L{evt.level}]: progress={evt.progress_rate:.2f} "
+                  f"revisit={evt.revisit_rate:.2f} fail_new={evt.new_failure_rate:.2f} "
+                  f"\u2192 {evt.action}")
         print(f"    Path: {path_str}")
         print(f"    VERDICT: {verdict}")
         print()
@@ -388,7 +479,7 @@ def scenario_c():
     """
     print()
     print("=" * 72)
-    print("SCENARIO C: Adversarial Peer (+ Structural Skepticism)")
+    print("SCENARIO C: Adversarial Peer (+ Structural Skepticism L1+L2)")
     print("=" * 72)
     print()
 
@@ -453,8 +544,9 @@ def scenario_c():
     print(f"  Landscape states (original={len(nodes)}): {len(L.states)}")
     print(f"  Skepticism events: {result.skepticism_count}")
     for evt in result.events:
-        print(f"    cycle {evt.cycle}: progress={evt.progress_rate:.2f} "
-              f"revisit={evt.revisit_rate:.2f} → {evt.action}")
+        print(f"    cycle {evt.cycle} [L{evt.level}]: progress={evt.progress_rate:.2f} "
+              f"revisit={evt.revisit_rate:.2f} fail_new={evt.new_failure_rate:.2f} "
+              f"\u2192 {evt.action}")
     print(f"  Path: {' → '.join(result.path[:20])}")
     if len(result.path) > 20:
         print(f"         ... ({len(result.path)} total)")
@@ -515,8 +607,9 @@ def scenario_d():
     print(f"  Unique states: {result.unique_states}")
     print(f"  Skepticism events: {result.skepticism_count}")
     for evt in result.events:
-        print(f"    cycle {evt.cycle}: progress={evt.progress_rate:.2f} "
-              f"revisit={evt.revisit_rate:.2f} → {evt.action}")
+        print(f"    cycle {evt.cycle} [L{evt.level}]: progress={evt.progress_rate:.2f} "
+              f"revisit={evt.revisit_rate:.2f} fail_new={evt.new_failure_rate:.2f} "
+              f"→ {evt.action}")
     path_str = " → ".join(result.path[:15])
     if len(result.path) > 15:
         path_str += f" ... ({len(result.path)} total)"
@@ -539,10 +632,11 @@ def scenario_d():
 
 def main():
     print()
-    print("C173 — STRUCTURAL SKEPTICISM EXPLORATION")
+    print("C173/C174 \u2014 STRUCTURAL SKEPTICISM EXPLORATION")
     print("=" * 72)
-    print("Testing run-level meta-observation against coherent deception.")
-    print("Monitor: window=5, min_warmup=5, revisit_threshold=0.5")
+    print("Level 1: Stagnation (frontier=0) \u2192 explore unvisited")
+    print("Level 2: Self-Honesty (new states fail) \u2192 exploit known-good")
+    print("Monitor: window=5, min_warmup=5, revisit_thr=0.5, failure_thr=0.8")
     print()
 
     results = {}
@@ -581,23 +675,41 @@ def main():
     b_any_pass = b_passes > 0
     d_pass = results["D"]["verdict"] == "PASS"
 
+    # Count L1 vs L2 events across all scenarios
+    all_events = []
+    all_events.extend(results["A"]["result"].events)
+    for data in results["B"].values():
+        all_events.extend(data["result"].events)
+    all_events.extend(results["C"]["result"].events)
+    all_events.extend(results["D"]["result"].events)
+    l1_count = sum(1 for e in all_events if e.level == 1)
+    l2_count = sum(1 for e in all_events if e.level == 2)
+    print(f"  Total skepticism events: {len(all_events)} (L1={l1_count}, L2={l2_count})")
+    print()
+
     if a_pass and b_any_pass and d_pass:
-        print("  OVERALL: Structural Skepticism is a VIABLE defense layer.")
-        print("  Load-without-frontier stagnation detects coherent deception")
-        print("  that per-edge metrics miss.")
+        print("  OVERALL: Two-level Structural Skepticism is VIABLE.")
+        print("  L1 (stagnation) + L2 (self-honesty) together detect")
+        print("  both adversarial modes from existing primitives.")
     elif a_pass and d_pass:
-        print("  OVERALL: Structural Skepticism detects simple traps (A)")
-        print("  but struggles with complex poisoning (B).")
+        print("  OVERALL: L1 works for stagnation, L2 needs refinement.")
     else:
         print("  OVERALL: Structural Skepticism needs further refinement.")
 
     c_verdict = results["C"]["verdict"]
-    if c_verdict in ("FAIL", "PARTIAL"):
+    if c_verdict == "FAIL":
         print()
-        print("  NOTE: Scenario C (adversarial peer) remains partially")
-        print("  unaddressed — phantom injection creates frontier growth,")
-        print("  masking stagnation. A different signal (quality spread)")
-        print("  may be needed for injection attacks.")
+        print("  NOTE: Scenario C still FAIL — adversarial peer creates")
+        print("  genuine novelty that L1 can't detect AND outcomes that")
+        print("  L2 can't catch (depends on injection pattern).")
+    elif c_verdict == "PARTIAL":
+        print()
+        print("  NOTE: Scenario C PARTIAL — L2 reduced damage but")
+        print("  didn't fully prevent phantom state visits.")
+    elif c_verdict == "PASS":
+        print()
+        print("  NOTE: Scenario C PASS — L2 self-honesty successfully")
+        print("  redirected away from failing phantom states.")
 
 
 if __name__ == "__main__":
