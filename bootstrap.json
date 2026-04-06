@@ -29,10 +29,10 @@
   },
 
   "state": {
-    "latest_commit": "C179",
-    "latest_commit_hash": "6658e87",
-    "latest_commit_msg": "C179: N-Domain Mesh N=3 — first N>2 integrated experiment, EN↔DE cluster, compatibility gating, dynamic boundary (14 tests, 4112 total)",
-    "test_count": 4112,
+    "latest_commit": "C180",
+    "latest_commit_hash": "86f1b25",
+    "latest_commit_msg": "C180: N-Domain Mesh N=5 — COOK+PROJ bootstrapped domains, ONTO bridge effect, dual cluster formation (28 tests, 4171 total)",
+    "test_count": 4171,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
     "module_count": "71 production + 9 benchmarks + 17 demos + 56 explorations + 114 test files",
