@@ -58,7 +58,7 @@ Breadth is no longer the problem. The question is: which test forces the system 
 
 **Falsification value:** HIGH — directly tests the AGI blueprint's core claim (§6: alignment as mechanical stability)
 
-**Status:** NOT STARTED
+**Status:** TESTED — 3/3 FAIL (C172). All defense mechanisms trust Outcome blindly. Consistent deception bypasses every layer. See `docs/research/E0_ADVERSARIAL_STABILITY_RESEARCH_v1.md` §6–7.
 
 ---
 
