@@ -194,14 +194,14 @@ Two systems that solve cold-start and hierarchical learning:
 
 ## Documentation quick links
 
-- [Architecture overview v4](docs/E0_ARCHITECTURE_OVERVIEW_v4.md) — 14-layer model with all 70+ production modules
+- [Architecture overview v5](docs/E0_ARCHITECTURE_OVERVIEW_v5.md) — 14-layer model with all 76 production modules
 - [Multiverse design](docs/E0_MULTIVERSE_DESIGN_v1.md) — C54–C63 architecture, coupling theorem, benchmarks
 - [Integration Stories](docs/E0_INTEGRATION_STORIES_v1.md) — prioritized demo + integration roadmap (C139–C144)
 - [Evidence & falsification status](docs/E0_EVIDENCE_AND_FALSIFICATION_STATUS_v1.md) — what is demonstrated vs open
 - [External validation / handoff note](docs/E0_EXTERNAL_VALIDATION_AND_HANDOFF_NOTE_v1.md) — package for reviewers or AI systems
 - [Phase 3q interference report](docs/E0_PHASE3Q_INTERFERENCE_REPORT_v1.md) — holonomy formula, goal_reaching geometry, Gordian Trap
 - [Paper 3: Non-Abelian Structure](docs/papers/E0_PAPER3_NON_ABELIAN_STRUCTURE_v1.md) — SU(2) transport, curvature modulation, topological invariants
-- [Test Registry v2](docs/E0_TEST_REGISTRY_v2.md) � complete per-file test inventory (4171 tests)
+- [Test Registry v2](docs/E0_TEST_REGISTRY_v2.md) � complete per-file test inventory (4171 tests)
 - [Empirical Insights](docs/E0_EMPIRICAL_INSIGHTS_v1.md) — what Chess (C72) reveals about E₀ as a whole
 - [Dream Mode Concept](docs/E0_DREAM_MODE_CONCEPT_v1.md) — cross-domain pattern recognition through passive observation (C109–C139, C168–C171)
 - [Multi-Domain Dream Analysis](docs/E0_MULTI_DOMAIN_DREAM_ANALYSIS_v1.md) — compatibility gating empirical analysis (C168–C171, all 4 questions closed)
@@ -359,7 +359,7 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 | Partial Matching (C170) | **Closed** (negative) | `e0_controller/explore_partial_matching.py` |
 | Asymmetric Teaching (C171) | **Closed** (topology dominates) | `e0_controller/explore_asymmetric_teaching.py` |
 
-**Tests:** 4171 total (pytest), 0 failures, 0 warnings, 41 conditional (live LLM � require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
+**Tests:** 4171 total (pytest), 0 failures, 0 warnings, 41 conditional (live LLM � require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
 
 ---
 
@@ -523,7 +523,7 @@ E0-Framework/
 │   └── research_brief/                 Domain-specific scenario data
 │
 ├── docs/                             Current essential documentation
-│   ├── E0_ARCHITECTURE_OVERVIEW_v4.md    14-layer module map (70+ modules)
+│   ├── E0_ARCHITECTURE_OVERVIEW_v5.md    14-layer module map (76 modules)
 │   ├── E0_MULTIVERSE_DESIGN_v1.md        Multiverse architecture (C54–C63)
 │   ├── E0_INTEGRATION_STORIES_v1.md      Integration roadmap (C139–C144)
 │   ├── E0_TEST_REGISTRY_v2.md            Complete test inventory (4171 tests)

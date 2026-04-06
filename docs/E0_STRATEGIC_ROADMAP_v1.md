@@ -2,7 +2,7 @@
 
 **Status:** Active — living document  
 **Created:** 2026-04-06  
-**Context:** Post-C171 panoramic review. All Multi-Domain Dream Analysis questions closed (Q1–Q4). 8 development arcs complete. 4063 tests, 0 failures, 171 commits.
+**Context:** Post-C180 panoramic review. All Multi-Domain Dream Analysis questions closed (Q1–Q4). 10 development arcs complete. 4171 tests, 0 failures, 180 commits.
 
 ---
 
@@ -89,7 +89,7 @@ Breadth is no longer the problem. The question is: which test forces the system 
 
 **Falsification value:** HIGH — determines whether semantic grounding is emergent or must be engineered
 
-**Status:** NOT STARTED
+**Status:** COMPLETE — C175–C178. Causal detection emergent from topology + historization (implicit intervention via multi-path exploration). Context sensitivity metric formalizes detection (C176: cs ∈ [0,2]). 4D dream fingerprints exclude confounded edges (C178). No explicit causal layer needed.
 
 ---
 
@@ -117,8 +117,8 @@ Breadth is no longer the problem. The question is: which test forces the system 
 
 **Falsification value:** MEDIUM — tests scalability, but failure would mean "needs engineering" not "fundamentally wrong"
 
-**Status:** NOT STARTED  
-**Prerequisite:** Priority 1 (adversarial) should be at least explored first
+**Status:** IN PROGRESS — C179–C180. N=3 validates cluster formation and compatibility gating. N=5 confirms dual cluster formation (EN↔DE + COOK↔PROJ), ONTO bridge effect. Remaining: transitivity and saturation tests.  
+**Prerequisite:** Priority 1 explored (C172–C174) — met.
 
 ---
 
@@ -161,16 +161,16 @@ These are valuable but premature:
 
 ## 4. Maturity Assessment
 
-| Dimension | Current | After Priority 1 | After Priority 2 | After Priority 3 |
-|-----------|---------|-------------------|-------------------|-------------------|
+| Dimension | Current (C180) | After Priority 1 | After Priority 2 | After Priority 3 |
+|-----------|----------------|-------------------|-------------------|-------------------|
 | Structural navigation | ✅ Proven | ✅ | ✅ | ✅ |
 | Learning from experience | ✅ Proven | ✅ | ✅ | ✅ |
-| Multi-system coupling | ✅ Proven (N=2) | ✅ + adversarial peer | ✅ | ✅ Proven (N>2) |
-| Cross-domain matching | ✅ Proven (pairwise) | ✅ | ✅ | ✅ Proven (mesh) |
-| Adversarial robustness | ❌ Untested | ⚠️ Stagnation solved, injection open | ⚠️ | ⚠️ |
-| Semantic grounding | ❌ Not attempted | ❌ | ⚠️ or ✅ | ⚠️ or ✅ |
+| Multi-system coupling | ✅ Proven (N=5) | ✅ + adversarial peer | ✅ | ✅ Proven (N>2) |
+| Cross-domain matching | ✅ Proven (mesh) | ✅ | ✅ | ✅ Proven (mesh) |
+| Adversarial robustness | ⚠️ Stagnation solved, injection partial | ⚠️ Stagnation solved, injection open | ⚠️ | ⚠️ |
+| Semantic grounding | ⚠️ Emergent (context sensitivity) | ❌ | ⚠️ or ✅ | ⚠️ or ✅ |
 | Self-exposition | ⚠️ PoC | ⚠️ + anomaly reporting | ⚠️ + causal explanation | ⚠️ + mesh visualization |
-| AGI claim testable | ❌ | ✅ (one axis) | ✅ (two axes) | ✅ (three axes) |
+| AGI claim testable | ✅ (two axes) | ✅ (one axis) | ✅ (two axes) | ✅ (three axes) |
 
 ---
 
@@ -189,6 +189,7 @@ These are valuable but premature:
 | 2026-04-06 | C177: Larger Topology Confound Detection | 12 states, 17 edges, 3 confounds at depths 2-5: all detected (cs=2.0), 0 false positives. Greedy controller needs multi-start intervention in deep topologies (recent_k=3 too short). |
 | 2026-04-06 | C178: Dream-Based Causal Transfer | 4D fingerprint (q, load, I, cs) in EdgeFingerprint and fingerprint_distance. CONFOUNDED B→GOAL correctly excluded from dream equivalences. 4D distance (2.317) nearly doubles 3D (1.170). No false transfer to fresh domains. |
 | 2026-04-06 | C179: N-Domain Mesh N=3 | First N>2 integrated experiment (EN+DE+ONTO). EN↔DE form dream cluster (1755 eq), DE↔ONTO fully isolated (0 eq). Dynamic compatibility: EN↔ONTO shifts from 0.87 (SKIP) to 0.58 (PASS) post-navigation — WL fingerprints absorb trace data. Coupling weights stay at 1.0 (dream equivalences lack quality feedback). |
+| 2026-04-07 | C180: N-Domain Mesh N=5 | Five domains (EN+DE+ONTO+COOK+PROJ). Dual cluster formation: EN↔DE + COOK↔PROJ. ONTO bridge effect (compat shifts >1.0 post-navigation). DE isolated from bootstrapped domains. 28 new tests, 4171 total. |
 
 ---
 
@@ -218,8 +219,8 @@ These are valuable but premature:
 
 ### Priority 3: N-Domain Mesh
 - [x] N=3 experiment (EN + DE + ONTO) — C179: EN↔DE cluster (1755 eq), DE↔ONTO isolated (0 eq), compatibility gating works. Finding: EN↔ONTO compat shifts 0.87→0.58 post-navigation.
-- [ ] N=5 experiment (add COOK + PROJECT)
-- [ ] Measure cluster formation and coupling weight self-organization
+- [x] N=5 experiment (add COOK + PROJECT) — C180: dual cluster formation (EN↔DE + COOK↔PROJ), ONTO bridge effect (compat >1.0), DE isolated from bootstrapped domains. 28 new tests, 4171 total.
+- [x] Measure cluster formation and coupling weight self-organization — C180: confirmed dual clusters, coupling weights require dream quality feedback to differentiate.
 - [ ] Test dream transitivity (A↔B + B↔C → A↔C?)
 - [ ] Find saturation point (at what N does quality collapse?)
 

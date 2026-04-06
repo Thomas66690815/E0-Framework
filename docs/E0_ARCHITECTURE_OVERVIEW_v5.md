@@ -1,10 +1,10 @@
-# E₀ Architecture Overview v4
+# E₀ Architecture Overview v5
 
 **Status:** Canonical reference  
-**Date:** 2026-04-06  
-**Supersedes:** E0_ARCHITECTURE_OVERVIEW_v3.md (2026-04-02)  
-**Scope:** 71 production modules, 9 benchmarks, 17 demos, 52 explorations, 111 test files — ~29,000 production lines, 4063 tests
-**Latest:** C171 (Asymmetric Teaching — training effect=0, topology dominates, asymmetry scoped to LLM-bootstrapped domains only)
+**Date:** 2026-04-07  
+**Supersedes:** E0_ARCHITECTURE_OVERVIEW_v4.md (2026-04-06)  
+**Scope:** 76 production modules, 10 benchmarks, 17 demos, 59 explorations, 118 test files — ~31,000 production lines, 4171 tests
+**Latest:** C180 (N=5 Domain Mesh — dual cluster formation EN↔DE + COOK↔PROJ, ONTO bridge effect, DE isolated from bootstrapped domains)
 **Papers:** P1 (Structural Interference), P2 (Spinor/Born), P3 (Non-Abelian), P4 (Reflexivity), P5 (Emergent Locality), P6 (Dream Mode)
 
 ---
@@ -33,7 +33,8 @@ E₀ is organized in fourteen layers. Each layer depends only on layers above it
 │  Layer 5 — REFLEXION                                    │
 │  Self-Graph, Dual Reflection, Reflexive Edge Proposal,   │
 │  Reflexive Action, Integrated Reflexion, Struct Mutation, │
-│  Scoped Reflexion (emergent locality)                    │
+│  Scoped Reflexion (emergent locality),                    │
+│  SU(2) Perspective Diagnostic                             │
 ├─────────────────────────────────────────────────────────┤
 │  Layer 6 — MULTI-SYSTEM                                 │
 │  Multiverse (Novelty Gate, Coupling), Cross-Reflexion,   │
@@ -42,7 +43,8 @@ E₀ is organized in fourteen layers. Each layer depends only on layers above it
 ├─────────────────────────────────────────────────────────┤
 │  Layer 7 — INFRASTRUCTURE                               │
 │  Session, MemOS, LLM Adapter, Bootstrapper, Provenance,  │
-│  Canon Loader/Bridge, Evaluation, Exploration Policy      │
+│  Canon Loader/Bridge, Evaluation, Exploration Policy,     │
+│  Config, Curriculum, Parameter Sensitivity                │
 ├─────────────────────────────────────────────────────────┤
 │  Layer 8 — OBSERVATION                                  │
 │  O-Landscape, Observation Controller, Rendering Adapter, │
@@ -111,7 +113,7 @@ E₀ is organized in fourteen layers. Each layer depends only on layers above it
 | `dynamic_horizon.py` | 129 | Pluggable horizon strategies: fixed, topology_adaptive, capped | — |
 | `exploration_policy.py` | 100 | Born warmup → exploit switch, convergence threshold (C41) | — |
 
-### Layer 5 — Reflexion (8 modules, 3,978 lines)
+### Layer 5 — Reflexion (11 modules, ~5,000 lines)
 
 | Module | Lines | Purpose | Paper |
 |--------|------:|---------|-------|
@@ -125,6 +127,7 @@ E₀ is organized in fourteen layers. Each layer depends only on layers above it
 | `reflection.py` | 791 | Reflection layer — bounded self-reference, 4 triggers (Phase 3g) | P4 |
 | `structural_mutation.py` | 693 | Bridge 4 — propose/apply/verify/revert topology (Stufe 2) | — |
 | `self_tuning.py` | 1,164 | Meta-landscape over parameters, tuning memory (B4) | — |
+| `perspective_diagnostic.py` | 171 | SU(2) perspective check: U(1) vs SU(2) ranking comparison, PerspectiveReport, fragile action detection. Controller + DualReflectionReport integration (C153) | P2, P3 |
 
 ### Layer 6 — Multi-System (5 modules, 1,720 lines)
 
@@ -137,7 +140,7 @@ E₀ is organized in fourteen layers. Each layer depends only on layers above it
 | `peer_bridge.py` | 133 | Peer function bridge: adapter between multiverse coupling and controller peer_fn | — |
 | C63 in `controller.py` | ~30 | OVERLOADED escalation, peer_fn, overload_index | — |
 
-### Layer 7 — Infrastructure (14 modules, 3,548+ lines)
+### Layer 7 — Infrastructure (17 modules, 4,499+ lines)
 
 | Module | Lines | Purpose | Paper |
 |--------|------:|---------|-------|
@@ -156,6 +159,9 @@ E₀ is organized in fourteen layers. Each layer depends only on layers above it
 | `mode_controller.py` | 146 | Learn/Execute/Combination auto-switch (C46) | — |
 | `envelope.py` | 154 | Typed, frozen controller config: E0Envelope | — |
 | `domain_invoice.py` | 197 | Invoice processing domain model (Phase 1b) | — |
+| `config.py` | 172 | E0Config central parameter registry: 45+ fields, frozen dataclass, DEFAULTS singleton. Single source of truth for all numerical defaults (C148) | — |
+| `curriculum.py` | 341 | Curriculum Navigator: hierarchical learning, CurriculumStrategy, EquilibriumDetector, build_scoped_landscape, transfer_historization, CurriculumRunner. DreamObserver integration (C156) | — |
+| `parameter_sensitivity.py` | 438 | Parameter sensitivity + auto-tuning: run_trial, sensitivity_analysis, suggest_perturbations, auto_tune, apply_config. Closed-loop parameter optimization (C150/C155) | — |
 
 ### Benchmarks (10 modules, ~3,600 lines)
 
@@ -172,11 +178,11 @@ E₀ is organized in fourteen layers. Each layer depends only on layers above it
 | `benchmark_scoped_reflexion.py` | 212 | 10 domains × GLOBAL vs SCOPED (C103) | P5 |
 | `validate_cross_domain.py` | 295 | Systematic demo comparison (Phase 3d) | — |
 
-### Demos (12) and Explorations (18)
+### Demos (17) and Explorations (59)
 
 Not listed individually — these are experimental tooling for interactive analysis.
-Demos: `demo_beipackzettel`, `demo_ezb_zinsentscheidung`, `demo_burnout_*`, `demo_invoice_llm`, `demo_greedy_trap`, `demo_open_domain`, `demo_research_brief`, `demo_incident_postmortem`, `demo_session_persist`, `demo_canon_exposition`, `demo_bootstrap_domain` (C140, `--entropy` C141), `demo_multiverse` (C142), `demo_curriculum` (C143, `--entropy`), `demo_reflexion` (C144, `--entropy`).
-Explorations: `explore_gordian`, `explore_amplitude`, `explore_resonator`, `explore_spinor`, `explore_topology_scan`, `explore_omega_uniqueness`, `explore_g5_edge_cases`, `explore_multigoal`, `explore_historization_gordian`, `explore_asymmetric_rho`, `explore_attractor_prediction`, `explore_attractor_universality`, `explore_convergence_speed`, `explore_dream_mode`, `explore_focus_narrowing`, `explore_landscape_scaling`, `explore_multi_attractor`, `explore_transfer_learning`, `explore_structural_entropy`.
+Demos: `demo_beipackzettel`, `demo_ezb_zinsentscheidung`, `demo_burnout_*`, `demo_invoice_llm`, `demo_greedy_trap`, `demo_open_domain`, `demo_research_brief`, `demo_incident_postmortem`, `demo_session_persist`, `demo_canon_exposition`, `demo_bootstrap_domain` (C140, `--entropy` C141), `demo_multiverse` (C142), `demo_curriculum` (C143, `--entropy`), `demo_reflexion` (C144, `--entropy`), `demo_self_graph`, `demo_human_communication` (C162).
+Explorations (59): Not listed individually. Covers Gordian analysis, amplitude/resonator/spinor/topology scans, G5 edge cases, attractor dynamics, dream mode, focus narrowing, structural entropy, language learning (C124–C138), adversarial stability (C172–C174), causal binding (C175–C178), compatibility calibration (C169), partial matching (C170), asymmetric teaching (C171), N-domain mesh (C179–C180), and SU(2) pretests.
 
 ### Layer 8 — Observation & Service (6 modules, 1,387 lines)
 
@@ -393,23 +399,24 @@ All three share the same controller core. They differ only in the final action s
 
 ## 8. Test Infrastructure
 
-**4063 tests**, 0 failures (2026-04-06) across **111 test files**.
+**4171 tests**, 0 failures (2026-04-07) across **118 test files**.
 
-**Explorations (C169–C171):** 3 new explorations closing all 4 open questions from Multi-Domain Dream Analysis — Q1/Q2 compatibility calibration, Q3 partial matching (negative), Q4 asymmetric teaching (training=0, topology dominates).
+**Recent explorations (C169–C180):** Compatibility calibration (C169), partial matching — negative (C170), asymmetric teaching — topology dominates (C171), adversarial stability (C172–C174), causal binding — emergent (C175–C178), N-domain mesh N=3 (C179), N=5 (C180).
 
 | Category | Test Files | Tests |
 |----------|-----------|-------|
 | Core (L1–L4) | ~25 files | ~1400 |
-| Reflexion (L5) | ~12 files | ~500 |
+| Reflexion (L5) | ~13 files | ~530 |
 | Multi-System (L6) | 3 files (multiverse, cross_reflexion, overload) | 69 |
-| Benchmarks | 9 files | ~400 |
-| Infrastructure (L7) | ~12 files | ~550 |
+| Benchmarks | 10 files | ~400 |
+| Infrastructure (L7) | ~15 files | ~600 |
 | Observation (L8) | 4 files | ~160 |
 | Modulation & Locality (C98–C108) | 5 files | ~140 |
-| Dream Mode (L9, C109–C112, C134b–C139) | 1 file | 98 |
+| Dream Mode (L9, C109–C112, C134b–C139) | 2 files | ~130 |
 | Human Communication (L12, C158–C162) | 5 files | 164 |
 | UI Rendering + Pretraining (L13, C163–C164) | 2 files | 68 |
 | Session Runner (L14, C165–C166b) | 1 file | 36 |
+| Causal + Mesh (C176–C180) | 3 files | ~55 |
 
 ---
 
