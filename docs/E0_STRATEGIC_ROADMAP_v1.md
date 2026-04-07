@@ -2,7 +2,7 @@
 
 **Status:** Active — living document  
 **Created:** 2026-04-06  
-**Context:** Post-C180 panoramic review. All Multi-Domain Dream Analysis questions closed (Q1–Q4). 10 development arcs complete. 4171 tests, 0 failures, 180 commits.
+**Context:** Post-C181 review. All Multi-Domain Dream Analysis questions closed (Q1–Q4). 10 development arcs complete. 4196 tests, 0 failures, 181 commits.
 
 ---
 
@@ -190,6 +190,7 @@ These are valuable but premature:
 | 2026-04-06 | C178: Dream-Based Causal Transfer | 4D fingerprint (q, load, I, cs) in EdgeFingerprint and fingerprint_distance. CONFOUNDED B→GOAL correctly excluded from dream equivalences. 4D distance (2.317) nearly doubles 3D (1.170). No false transfer to fresh domains. |
 | 2026-04-06 | C179: N-Domain Mesh N=3 | First N>2 integrated experiment (EN+DE+ONTO). EN↔DE form dream cluster (1755 eq), DE↔ONTO fully isolated (0 eq). Dynamic compatibility: EN↔ONTO shifts from 0.87 (SKIP) to 0.58 (PASS) post-navigation — WL fingerprints absorb trace data. Coupling weights stay at 1.0 (dream equivalences lack quality feedback). |
 | 2026-04-07 | C180: N-Domain Mesh N=5 | Five domains (EN+DE+ONTO+COOK+PROJ). Dual cluster formation: EN↔DE + COOK↔PROJ. ONTO bridge effect (compat shifts >1.0 post-navigation). DE isolated from bootstrapped domains. 28 new tests, 4171 total. |
+| 2026-04-07 | C181: Dream Transitivity | ONTO bridges incompatible clusters: EN↔COOK 17k+ transitive chains (zero direct eq). Compatibility threshold NOT transitive (EN↔ONTO PASS + ONTO↔COOK PASS ↛ EN↔COOK PASS). DE fully isolated through any bridge. 25 new tests, 4196 total. |
 
 ---
 
@@ -221,7 +222,7 @@ These are valuable but premature:
 - [x] N=3 experiment (EN + DE + ONTO) — C179: EN↔DE cluster (1755 eq), DE↔ONTO isolated (0 eq), compatibility gating works. Finding: EN↔ONTO compat shifts 0.87→0.58 post-navigation.
 - [x] N=5 experiment (add COOK + PROJECT) — C180: dual cluster formation (EN↔DE + COOK↔PROJ), ONTO bridge effect (compat >1.0), DE isolated from bootstrapped domains. 28 new tests, 4171 total.
 - [x] Measure cluster formation and coupling weight self-organization — C180: confirmed dual clusters, coupling weights require dream quality feedback to differentiate.
-- [ ] Test dream transitivity (A↔B + B↔C → A↔C?)
+- [x] Test dream transitivity (A↔B + B↔C → A↔C?) — C181: YES, ONTO bridges EN↔{COOK,PROJ} with 17k+ transitive chains. Compatibility threshold NOT transitive (edge-level yes, threshold-level no). DE stays fully isolated.
 - [ ] Find saturation point (at what N does quality collapse?)
 
 ### Cross-Cutting: Self-Exposition

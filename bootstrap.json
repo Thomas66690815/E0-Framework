@@ -2,7 +2,7 @@
   "_meta": {
     "purpose": "Session bootstrap for AI assistants resuming work on E₀-Framework",
     "usage": "Paste this file (or reference it) at the start of a new thread to restore full project context",
-    "last_updated": "2026-04-06",
+    "last_updated": "2026-04-07",
     "update_instruction": "After each commit, update state.latest_commit, state.test_count, and active_work"
   },
 
@@ -29,14 +29,14 @@
   },
 
   "state": {
-    "latest_commit": "C180",
-    "latest_commit_hash": "86f1b25",
-    "latest_commit_msg": "C180: N-Domain Mesh N=5 — COOK+PROJ bootstrapped domains, ONTO bridge effect, dual cluster formation (28 tests, 4171 total)",
-    "test_count": 4171,
+    "latest_commit": "C181",
+    "latest_commit_hash": "a88d3f9",
+    "latest_commit_msg": "C181: Dream Transitivity — ONTO bridges incompatible clusters via transitive chains (25 tests, 4196 total)",
+    "test_count": 4196,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
-    "module_count": "71 production + 9 benchmarks + 17 demos + 56 explorations + 114 test files",
-    "line_count": "~29000 production, ~114000 total"
+    "module_count": "76 production + 10 benchmarks + 17 demos + 60 explorations + 119 test files",
+    "line_count": "~31000 production, ~120000 total"
   },
 
   "conventions": {
@@ -131,6 +131,8 @@
   },
 
   "commit_history_recent": [
+    { "hash": "a88d3f9", "id": "C181", "title": "Dream Transitivity — ONTO bridges incompatible clusters, compatibility threshold NOT transitive (25 tests, 4196 total)" },
+    { "hash": "27a9c4f", "id": "C180", "title": "N-Domain Mesh N=5 — COOK+PROJ bootstrapped domains, dual cluster formation, ONTO bridge effect (28 tests, 4171 total)" },
     { "hash": "6658e87", "id": "C179", "title": "N-Domain Mesh N=3 — first N>2 integrated experiment, EN↔DE cluster, compatibility gating, dynamic boundary (14 tests, 4112 total)" },
     { "hash": "ac5338c", "id": "C178", "title": "Dream-Based Causal Transfer — 4D fingerprint (q, load, I, cs) prevents false cross-domain equivalences (17 tests, 4098 total)" },
     { "hash": "5e5c362", "id": "C175", "title": "Causal Binding — implicit intervention discovery, natural path alternation detects confounds (4 PASS, 1 informative FAIL)" },
