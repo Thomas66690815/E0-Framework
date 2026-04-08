@@ -1,0 +1,619 @@
+{
+  "created_at": "2026-04-08T07:05:43.089708+00:00",
+  "total_duration_s": 14.741,
+  "phases": [
+    {
+      "phase": "01_canon_training",
+      "canons_loaded": [
+        "english_basic",
+        "german_basic",
+        "ontodynamics"
+      ],
+      "duration_s": 0.015
+    },
+    {
+      "phase": "02_bootstrap",
+      "logistics": {
+        "states": 10,
+        "edges": 12
+      },
+      "research": {
+        "states": 10,
+        "edges": 12
+      },
+      "duration_s": 0.0
+    },
+    {
+      "phase": "03_graph_validation",
+      "logistics": {
+        "reachable": true,
+        "happy_path": [
+          "DEPOT",
+          "SORT",
+          "AUDIT"
+        ],
+        "happy_path_length": 2,
+        "traps": [],
+        "recovery_edges": 2
+      },
+      "research": {
+        "reachable": true,
+        "happy_path": [
+          "QUESTION",
+          "LITERATURE",
+          "HYPOTHESIS",
+          "EXPERIMENT",
+          "DATA",
+          "ANALYSIS",
+          "INTERPRET",
+          "PUBLISH",
+          "REVIEW"
+        ],
+        "happy_path_length": 8,
+        "traps": [],
+        "recovery_edges": 1
+      },
+      "duration_s": 0.0
+    },
+    {
+      "phase": "04_controller_runs",
+      "runs": 6,
+      "modes_tested": [
+        "GREEDY",
+        "AMPLITUDE_ON_DISAGREE",
+        "BORN_SAMPLING"
+      ],
+      "duration_s": 0.043
+    },
+    {
+      "phase": "05_amplitude",
+      "amplitude_details": {
+        "overlay_actions": 1,
+        "amplitude_choice": "SORT",
+        "deterministic_choice": "SORT",
+        "geometry": "goal_reaching",
+        "psi_u1_real": 0.8511066890738616,
+        "psi_u1_imag": 0.4059143370226057,
+        "psi_u1_abs": 0.9429470002003147,
+        "psi_su2_norm": 0.8891490451867726,
+        "omega_DEPOT_SORT": 0.21372234746110697,
+        "perspective_robust": null,
+        "perspective_agreement": null
+      },
+      "duration_s": 0.005
+    },
+    {
+      "phase": "06_self_graph",
+      "components": 8,
+      "healthy": 0,
+      "confused": 4,
+      "duration_s": 0.001
+    },
+    {
+      "phase": "07_reflexion",
+      "details": {
+        "flag_changes": false,
+        "edge_proposals": 0,
+        "edges_applied": 0,
+        "scope_center": "DEPOT",
+        "scope_radius": 2,
+        "scope_size": 6,
+        "scope_locality": 0.585
+      },
+      "duration_s": 0.0
+    },
+    {
+      "phase": "08_mutation",
+      "mutations": [
+        {
+          "type": "adjust_resistance",
+          "edge": "DEPOT\u2192SORT",
+          "old_value": 0.3,
+          "new_value": 0.44999999999999996,
+          "restored": 0.3,
+          "revert_success": true
+        }
+      ],
+      "duration_s": 0.0
+    },
+    {
+      "phase": "09_multiverse",
+      "details": {
+        "total_turns": 12,
+        "total_novelty": 3,
+        "novelty_rate": 0.25,
+        "converged": true,
+        "convergence_turn": 2,
+        "divergence_count": 3,
+        "novelty_edges_added": 12
+      },
+      "duration_s": 0.006
+    },
+    {
+      "phase": "10_cross_reflexion",
+      "details": {
+        "proposals": 5,
+        "edges_added": 5,
+        "frontier_node": "DEPOT",
+        "donor_name": "donor"
+      },
+      "duration_s": 0.0
+    },
+    {
+      "phase": "11_dream",
+      "details": {
+        "cycles": 3,
+        "domains_observed": [
+          "logistics",
+          "research",
+          "canon_english_basic",
+          "canon_german_basic",
+          "canon_ontodynamics"
+        ],
+        "total_equivalences_found": 14418,
+        "total_new_equivalences": 4806,
+        "dream_landscape_states": 396,
+        "dream_landscape_edges": 13330,
+        "readiness_logistics": 1.0,
+        "readiness_research": 0.998
+      },
+      "duration_s": 0.71
+    },
+    {
+      "phase": "12_sleep_wake",
+      "episodes": 8,
+      "slept": 8,
+      "duration_s": 13.852
+    },
+    {
+      "phase": "13_entropy",
+      "details": {
+        "T_s_logistics": 0.934,
+        "T_s_research": 0.916,
+        "dream_pressure_logistics": 0.157,
+        "dream_pressure_research": 0.155,
+        "should_dream_logistics": false,
+        "should_dream_research": false,
+        "inscription_novelty_DEPOT_SORT": 0.0,
+        "inscription_threshold_DEPOT_SORT": 0.0321
+      },
+      "duration_s": 0.0
+    },
+    {
+      "phase": "14_interface",
+      "perception_primitives": 22,
+      "intents_detected": 10,
+      "max_urgency": 0.9,
+      "ui_panels": 10,
+      "html_bytes": 17938,
+      "duration_s": 0.018
+    },
+    {
+      "phase": "15_session",
+      "session_id": "e2e_20260408_070557",
+      "provenance_stages": 4,
+      "duration_s": 0.076
+    }
+  ],
+  "canon_names": [
+    "english_basic",
+    "german_basic",
+    "ontodynamics"
+  ],
+  "logistics_states": 10,
+  "logistics_edges": 12,
+  "research_states": 10,
+  "research_edges": 12,
+  "controller_runs": [
+    {
+      "domain": "logistics",
+      "mode": "greedy",
+      "steps": 7.0,
+      "success_rate": 1.0,
+      "goal_reached": true,
+      "hybrid_override_count": 0.0,
+      "escalation_count": 0.0
+    },
+    {
+      "domain": "research",
+      "mode": "greedy",
+      "steps": 9.0,
+      "success_rate": 1.0,
+      "goal_reached": true,
+      "hybrid_override_count": 0.0,
+      "escalation_count": 0.0
+    },
+    {
+      "domain": "logistics",
+      "mode": "amplitude_on_disagree",
+      "steps": 2.0,
+      "success_rate": 0.5,
+      "goal_reached": true,
+      "hybrid_override_count": 1.0,
+      "escalation_count": 0.0
+    },
+    {
+      "domain": "research",
+      "mode": "amplitude_on_disagree",
+      "steps": 8.0,
+      "success_rate": 0.875,
+      "goal_reached": true,
+      "hybrid_override_count": 1.0,
+      "escalation_count": 0.0
+    },
+    {
+      "domain": "logistics",
+      "mode": "born_sampling",
+      "steps": 2.0,
+      "success_rate": 0.5,
+      "goal_reached": true,
+      "hybrid_override_count": 2.0,
+      "escalation_count": 0.0
+    },
+    {
+      "domain": "research",
+      "mode": "born_sampling",
+      "steps": 8.0,
+      "success_rate": 0.875,
+      "goal_reached": true,
+      "hybrid_override_count": 8.0,
+      "escalation_count": 0.0
+    }
+  ],
+  "amplitude_analysis": {
+    "overlay_actions": 1,
+    "amplitude_choice": "SORT",
+    "deterministic_choice": "SORT",
+    "geometry": "goal_reaching",
+    "psi_u1_real": 0.8511066890738616,
+    "psi_u1_imag": 0.4059143370226057,
+    "psi_u1_abs": 0.9429470002003147,
+    "psi_su2_norm": 0.8891490451867726,
+    "omega_DEPOT_SORT": 0.21372234746110697,
+    "perspective_robust": null,
+    "perspective_agreement": null
+  },
+  "self_graph_snapshot": {
+    "amplitude": {
+      "load": 6.0,
+      "quality": -0.6666666666665555,
+      "inertia": 0.9090909090908788
+    },
+    "born": {
+      "load": 0.0,
+      "quality": 0.0,
+      "inertia": 1.0
+    },
+    "realization": {
+      "load": 10.0,
+      "quality": 0.0,
+      "inertia": 0.6666666666666667
+    },
+    "historization": {
+      "load": 10.0,
+      "quality": 0.0,
+      "inertia": 0.6666666666666667
+    },
+    "inertia": {
+      "load": 10.0,
+      "quality": 0.0,
+      "inertia": 0.6666666666666667
+    },
+    "transition_field": {
+      "load": 10.0,
+      "quality": 0.0,
+      "inertia": 0.6666666666666667
+    },
+    "curvature": {
+      "load": 0.0,
+      "quality": 0.0,
+      "inertia": 1.0
+    },
+    "overlap": {
+      "load": 0.0,
+      "quality": 0.0,
+      "inertia": 1.0
+    }
+  },
+  "diagnosis": {
+    "healthy": [],
+    "confused": [
+      "realization",
+      "historization",
+      "inertia",
+      "transition_field"
+    ],
+    "harmful": [
+      "amplitude"
+    ],
+    "insufficient_data": [
+      "born",
+      "curvature",
+      "overlap"
+    ],
+    "deactivation_candidates": [],
+    "meta_actions": [
+      "Investigate realization: contradictory outcomes (quality=+0.000, load=10.0)",
+      "Investigate historization: contradictory outcomes (quality=+0.000, load=10.0)",
+      "Investigate inertia: contradictory outcomes (quality=+0.000, load=10.0)",
+      "Investigate transition_field: contradictory outcomes (quality=+0.000, load=10.0)"
+    ]
+  },
+  "reflexion_result": {
+    "flag_changes": false,
+    "edge_proposals": 0,
+    "edges_applied": 0,
+    "scope_center": "DEPOT",
+    "scope_radius": 2,
+    "scope_size": 6,
+    "scope_locality": 0.585
+  },
+  "mutations_applied": [
+    {
+      "type": "adjust_resistance",
+      "edge": "DEPOT\u2192SORT",
+      "old_value": 0.3,
+      "new_value": 0.44999999999999996,
+      "restored": 0.3,
+      "revert_success": true
+    }
+  ],
+  "multiverse_summary": {
+    "total_turns": 12,
+    "total_novelty": 3,
+    "novelty_rate": 0.25,
+    "converged": true,
+    "convergence_turn": 2,
+    "divergence_count": 3,
+    "novelty_edges_added": 12
+  },
+  "cross_reflexion": {
+    "proposals": 5,
+    "edges_added": 5,
+    "frontier_node": "DEPOT",
+    "donor_name": "donor"
+  },
+  "dream_result": {
+    "cycles": 3,
+    "domains_observed": [
+      "logistics",
+      "research",
+      "canon_english_basic",
+      "canon_german_basic",
+      "canon_ontodynamics"
+    ],
+    "total_equivalences_found": 14418,
+    "total_new_equivalences": 4806,
+    "dream_landscape_states": 396,
+    "dream_landscape_edges": 13330,
+    "readiness_logistics": 1.0,
+    "readiness_research": 0.998
+  },
+  "entropy_metrics": {
+    "T_s_logistics": 0.934,
+    "T_s_research": 0.916,
+    "dream_pressure_logistics": 0.157,
+    "dream_pressure_research": 0.155,
+    "should_dream_logistics": false,
+    "should_dream_research": false,
+    "inscription_novelty_DEPOT_SORT": 0.0,
+    "inscription_threshold_DEPOT_SORT": 0.0321
+  },
+  "ui_spec": {
+    "layout": "alert",
+    "generated_at": "2026-04-08T07:05:57.759896+00:00",
+    "context": "E2E multiverse exploration",
+    "panels": [
+      {
+        "intent": "uncertainty",
+        "perception": "emphasis",
+        "language_act": "uncertainty",
+        "data_source": "self_graph.component_health",
+        "suggested_visual": "bar",
+        "urgency": 0.8999999999999666,
+        "label": "Component 'amplitude' is harmful (quality=-0.667, load=6.0)",
+        "evidence": {
+          "status": "harmful",
+          "quality": -0.6666666666665555,
+          "load": 6.0,
+          "inertia": 0.9090909090908788,
+          "is_modulation": false
+        }
+      },
+      {
+        "intent": "uncertainty",
+        "perception": "emphasis",
+        "language_act": "uncertainty",
+        "data_source": "self_graph.component_health",
+        "suggested_visual": "bar",
+        "urgency": 0.6000000000000001,
+        "label": "Component 'realization' has contradictory outcomes (quality=+0.000, load=10.0)",
+        "evidence": {
+          "status": "confused",
+          "quality": 0.0,
+          "load": 10.0,
+          "inertia": 0.6666666666666667
+        }
+      },
+      {
+        "intent": "uncertainty",
+        "perception": "emphasis",
+        "language_act": "uncertainty",
+        "data_source": "self_graph.component_health",
+        "suggested_visual": "bar",
+        "urgency": 0.6000000000000001,
+        "label": "Component 'historization' has contradictory outcomes (quality=+0.000, load=10.0)",
+        "evidence": {
+          "status": "confused",
+          "quality": 0.0,
+          "load": 10.0,
+          "inertia": 0.6666666666666667
+        }
+      },
+      {
+        "intent": "uncertainty",
+        "perception": "emphasis",
+        "language_act": "uncertainty",
+        "data_source": "self_graph.component_health",
+        "suggested_visual": "bar",
+        "urgency": 0.6000000000000001,
+        "label": "Component 'inertia' has contradictory outcomes (quality=+0.000, load=10.0)",
+        "evidence": {
+          "status": "confused",
+          "quality": 0.0,
+          "load": 10.0,
+          "inertia": 0.6666666666666667
+        }
+      },
+      {
+        "intent": "uncertainty",
+        "perception": "emphasis",
+        "language_act": "uncertainty",
+        "data_source": "self_graph.component_health",
+        "suggested_visual": "bar",
+        "urgency": 0.6000000000000001,
+        "label": "Component 'transition_field' has contradictory outcomes (quality=+0.000, load=10.0)",
+        "evidence": {
+          "status": "confused",
+          "quality": 0.0,
+          "load": 10.0,
+          "inertia": 0.6666666666666667
+        }
+      },
+      {
+        "intent": "status",
+        "perception": "grouping",
+        "language_act": "enumeration",
+        "data_source": "self_graph.snapshot",
+        "suggested_visual": "dashboard",
+        "urgency": 0.6,
+        "label": "0/8 healthy, 4 confused, 1 harmful, 3 insufficient data",
+        "evidence": {
+          "healthy": [],
+          "confused": [
+            "realization",
+            "historization",
+            "inertia",
+            "transition_field"
+          ],
+          "harmful": [
+            "amplitude"
+          ],
+          "insufficient_data": [
+            "born",
+            "curvature",
+            "overlap"
+          ],
+          "meta_actions": [
+            "Investigate realization: contradictory outcomes (quality=+0.000, load=10.0)",
+            "Investigate historization: contradictory outcomes (quality=+0.000, load=10.0)",
+            "Investigate inertia: contradictory outcomes (quality=+0.000, load=10.0)",
+            "Investigate transition_field: contradictory outcomes (quality=+0.000, load=10.0)"
+          ]
+        }
+      },
+      {
+        "intent": "status",
+        "perception": "grouping",
+        "language_act": "enumeration",
+        "data_source": "self_graph.snapshot",
+        "suggested_visual": "dashboard",
+        "urgency": 0.5,
+        "label": "Task: 10 states, 23 edges. Goal pending. Path: (no path)",
+        "evidence": {
+          "task": "",
+          "states": [
+            "AUDIT",
+            "CUSTOMS",
+            "DELIVER",
+            "DEPOT",
+            "LOAD",
+            "RETURN",
+            "ROUTE_A",
+            "ROUTE_B",
+            "SORT",
+            "WAREHOUSE"
+          ],
+          "edge_count": 23,
+          "path": [],
+          "goal": "AUDIT",
+          "goal_reached": false,
+          "steps": 0,
+          "success_rate": 0.0,
+          "avg_tension": 0.0
+        }
+      },
+      {
+        "intent": "request",
+        "perception": "emphasis",
+        "language_act": "question",
+        "data_source": "self_graph.insufficient_data",
+        "suggested_visual": "bar",
+        "urgency": 0.3,
+        "label": "Component 'born' lacks data (load=0.0)",
+        "evidence": {
+          "status": "insufficient_data",
+          "load": 0.0
+        }
+      },
+      {
+        "intent": "request",
+        "perception": "emphasis",
+        "language_act": "question",
+        "data_source": "self_graph.insufficient_data",
+        "suggested_visual": "bar",
+        "urgency": 0.3,
+        "label": "Component 'curvature' lacks data (load=0.0)",
+        "evidence": {
+          "status": "insufficient_data",
+          "load": 0.0
+        }
+      },
+      {
+        "intent": "request",
+        "perception": "emphasis",
+        "language_act": "question",
+        "data_source": "self_graph.insufficient_data",
+        "suggested_visual": "bar",
+        "urgency": 0.3,
+        "label": "Component 'overlap' lacks data (load=0.0)",
+        "evidence": {
+          "status": "insufficient_data",
+          "load": 0.0
+        }
+      }
+    ]
+  },
+  "html_length": 17938,
+  "session_id": "e2e_20260408_070557",
+  "provenance_stages": 4,
+  "graph_quality_logistics": {
+    "reachable": true,
+    "happy_path": [
+      "DEPOT",
+      "SORT",
+      "AUDIT"
+    ],
+    "happy_path_length": 2,
+    "traps": [],
+    "recovery_edges": 2
+  },
+  "graph_quality_research": {
+    "reachable": true,
+    "happy_path": [
+      "QUESTION",
+      "LITERATURE",
+      "HYPOTHESIS",
+      "EXPERIMENT",
+      "DATA",
+      "ANALYSIS",
+      "INTERPRET",
+      "PUBLISH",
+      "REVIEW"
+    ],
+    "happy_path_length": 8,
+    "traps": [],
+    "recovery_edges": 1
+  },
+  "canon_self_bridge": "=== WHAT I BELIEVE (Canon Landscape) ===\nCanon: ontodynamics (v2.0)\nSource: canon/ontodynamics.txt + canon/e0-canon-plain.txt + canon/e0-agi-blueprint.md + implementation (C1-C121, 3464 tests)\nDescription: Complete E0 landscape. Layers 0-8: Ontodynamics canon (pre-physical primitives, derivation topology, Axiom A0, emergence). Layers 9-17: Implementation (navigation, modulation, reflexion, multiverse, observation, dream mode, structural entropy, sleep-wake cycle). Derivation order encoded in delta topology. Confidence values reflect empirical validation from 3464 tests across 94 test files.\n\nConcepts:\n  Level 0 (Primitive):\n    - Difference: Primitive, effective, directed, scaled. Entities are the result of stabilized difference.\n\n  Level 1 (Primitive):\n    - Local Realization: Difference can be realized partially, not only globally. Minimal condition for actuality.\n\n  Level 2 (Primitive):\n    - Connection: Elementary topological operation. Multiple difference components realized together.\n\n  Level 3 (Primitive):\n    - Gradual Overlap: Connections possess degree. Stability is an effect of sufficient overlap.\n    - Historization: Realized connections leave irreversible structural trace. The cost of reality.\n\n  Level 4 (Derived):\n    - State: A stabilized configuration of historized connections.\n    - Resistance: The integration cost of reconfiguring historized topology.\n    - Time: The ordering of realized transitions. Local, emergent, path-dependent.\n    - Path: Structural admissibility condition for transitions. A path exists iff total resistance is finite.\n\n  Level 5 (Derived):\n    - Rate: Effectiveness of realization relative to integration cost.\n    - Spacetime: The globally historized topology of realized connections.\n    - Mass: Persistent topological inertia from accumulated historization.\n    - Axiom A0 \u2014 Difference Minimization: If difference exists and a structurally admissible path with finite resistance is available, then transition is structurally more "
+}
