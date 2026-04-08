@@ -3,8 +3,8 @@
 **Status:** Canonical reference  
 **Date:** 2026-04-07  
 **Supersedes:** E0_ARCHITECTURE_OVERVIEW_v4.md (2026-04-06)  
-**Scope:** 76 production modules, 10 benchmarks, 17 demos, 60 explorations, 119 test files — ~31,000 production lines, 4196 tests
-**Latest:** C181 (Dream Transitivity — ONTO bridges incompatible clusters via transitive chains, compatibility threshold NOT transitive)
+**Scope:** 76 production modules, 10 benchmarks, 17 demos, 62 explorations, 121 test files — ~31,000 production lines, 4265 tests
+**Latest:** C183 (E2E Multiverse — full capability exercise across all 14 layers, 15-phase pipeline)
 **Papers:** P1 (Structural Interference), P2 (Spinor/Born), P3 (Non-Abelian), P4 (Reflexivity), P5 (Emergent Locality), P6 (Dream Mode)
 
 ---
@@ -182,7 +182,7 @@ E₀ is organized in fourteen layers. Each layer depends only on layers above it
 
 Not listed individually — these are experimental tooling for interactive analysis.
 Demos: `demo_beipackzettel`, `demo_ezb_zinsentscheidung`, `demo_burnout_*`, `demo_invoice_llm`, `demo_greedy_trap`, `demo_open_domain`, `demo_research_brief`, `demo_incident_postmortem`, `demo_session_persist`, `demo_canon_exposition`, `demo_bootstrap_domain` (C140, `--entropy` C141), `demo_multiverse` (C142), `demo_curriculum` (C143, `--entropy`), `demo_reflexion` (C144, `--entropy`), `demo_self_graph`, `demo_human_communication` (C162).
-Explorations (60): Not listed individually. Covers Gordian analysis, amplitude/resonator/spinor/topology scans, G5 edge cases, attractor dynamics, dream mode, focus narrowing, structural entropy, language learning (C124–C138), adversarial stability (C172–C174), causal binding (C175–C178), compatibility calibration (C169), partial matching (C170), asymmetric teaching (C171), N-domain mesh (C179–C180), dream transitivity (C181), and SU(2) pretests.
+Explorations (62): Not listed individually. Covers Gordian analysis, amplitude/resonator/spinor/topology scans, G5 edge cases, attractor dynamics, dream mode, focus narrowing, structural entropy, language learning (C124–C138), adversarial stability (C172–C174), causal binding (C175–C178), compatibility calibration (C169), partial matching (C170), asymmetric teaching (C171), N-domain mesh (C179–C180), dream transitivity (C181), saturation point (C182), E2E multiverse (C183), and SU(2) pretests.
 
 ### Layer 8 — Observation & Service (6 modules, 1,387 lines)
 
@@ -399,9 +399,9 @@ All three share the same controller core. They differ only in the final action s
 
 ## 8. Test Infrastructure
 
-**4196 tests**, 0 failures (2026-04-07) across **119 test files**.
+**4265 tests**, 0 failures (2026-04-08) across **121 test files**.
 
-**Recent explorations (C169–C181):** Compatibility calibration (C169), partial matching — negative (C170), asymmetric teaching — topology dominates (C171), adversarial stability (C172–C174), causal binding — emergent (C175–C178), N-domain mesh N=3 (C179), N=5 (C180), dream transitivity (C181).
+**Recent explorations (C169–C183):** Compatibility calibration (C169), partial matching — negative (C170), asymmetric teaching — topology dominates (C171), adversarial stability (C172–C174), causal binding — emergent (C175–C178), N-domain mesh N=3 (C179), N=5 (C180), dream transitivity (C181), saturation point (C182), E2E multiverse (C183).
 
 | Category | Test Files | Tests |
 |----------|-----------|-------|
@@ -417,6 +417,7 @@ All three share the same controller core. They differ only in the final action s
 | UI Rendering + Pretraining (L13, C163–C164) | 2 files | 68 |
 | Session Runner (L14, C165–C166b) | 1 file | 36 |
 | Causal + Mesh + Transitivity (C176–C181) | 4 files | ~80 |
+| Saturation + E2E (C182–C183) | 2 files | 69 |
 
 ---
 
