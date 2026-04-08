@@ -360,6 +360,8 @@ Run this example yourself: `python -m e0_controller.demo_greedy_trap`
 | Asymmetric Teaching (C171) | **Closed** (topology dominates) | `e0_controller/explore_asymmetric_teaching.py` |
 | Saturation Point (C182) | **Active** (34 tests) | `e0_controller/explore_saturation_point.py` |
 | E2E Multiverse (C183) | **Active** (35 tests) | `e0_controller/explore_e2e_multiverse.py` |
+| Real-World Validation (C184) | **Active** (exploration) | `e0_controller/explore_wikispeedia.py`, `explore_bpi2017.py` |
+| Traffic Simulation (C185) | **Active** (exploration) | `e0_controller/explore_traffic.py` |
 
 **Tests:** 4265 total (pytest), 0 failures, 0 warnings, 41 conditional (live LLM — require API key). See [`docs/E0_TEST_REGISTRY_v2.md`](docs/E0_TEST_REGISTRY_v2.md) for per-file details.
 
