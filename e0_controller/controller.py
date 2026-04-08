@@ -245,6 +245,7 @@ class E0Controller:
         overload_threshold: float = DEFAULTS.overload_threshold,
         focus_k: Optional[int] = None,
         inscription_threshold: bool = False,
+        epistemic_trust: bool = False,
     ):
         self.landscape = landscape
         self.execute_fn = execute_fn
@@ -272,6 +273,7 @@ class E0Controller:
         self.overload_threshold = overload_threshold  # C63: OI threshold
         self.focus_k = focus_k  # C82: focus narrowing limit
         self.inscription_threshold = inscription_threshold  # C118: Type 1 forgetting
+        self.epistemic_trust = epistemic_trust  # C186: doubt-aware δ_H
         self._focus_rng = random.Random(42)  # C82: deterministic but varied
         self._recent: List[str] = []   # sliding window of recent states
 
@@ -301,11 +303,19 @@ class E0Controller:
         return self.landscape.base_resistance(x, y)
 
     def _effective_resistance(self, x: str, y: str) -> float:
-        """R_eff = R₀ + δ_H, checking escalation overlay first."""
+        """R_eff = R₀ + δ_H, checking escalation overlay first.
+
+        C186: When epistemic_trust is enabled, uses δ_H_trusted (= δ_H · trust)
+        instead of raw δ_H. Trust decays for stale edges whose historization
+        has not been re-verified recently.
+        """
         r0 = self._get_base_resistance(x, y)
         if math.isinf(r0):
             return math.inf
-        dh = self.landscape.historization.delta_H(Edge(x, y))
+        if self.epistemic_trust:
+            dh = self.landscape.historization.delta_H_trusted(Edge(x, y))
+        else:
+            dh = self.landscape.historization.delta_H(Edge(x, y))
         return max(r0 + dh, 1e-10)
 
     def _effective_tension(self, x: str, y: str) -> float:

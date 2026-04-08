@@ -2,7 +2,7 @@
   "_meta": {
     "purpose": "Session bootstrap for AI assistants resuming work on E₀-Framework",
     "usage": "Paste this file (or reference it) at the start of a new thread to restore full project context",
-    "last_updated": "2026-04-07",
+    "last_updated": "2026-04-08",
     "update_instruction": "After each commit, update state.latest_commit, state.test_count, and active_work"
   },
 
@@ -29,10 +29,10 @@
   },
 
   "state": {
-    "latest_commit": "C185b",
-    "latest_commit_hash": "85a997c",
-    "latest_commit_msg": "C185b: River City — bridge topology exposes historization trap, overlay corrects +56% (4265 total)",
-    "test_count": 4265,
+    "latest_commit": "C186",
+    "latest_commit_hash": "666f4c0",
+    "latest_commit_msg": "C186: Epistemic Trust — self-calibrating doubt for historization (22 tests, 4287 total)",
+    "test_count": 4287,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
     "module_count": "76 production + 10 benchmarks + 17 demos + 65 explorations + 121 test files",
@@ -61,7 +61,7 @@
     "layers": {
       "1_primitives": {
         "files": ["primitives.py", "historization.py", "tension.py", "config.py"],
-        "purpose": "Edge, Outcome, Historization (U/F traces, decay), Tension (S_eff = Δ · R_eff), E0Config (central parameter registry)"
+        "purpose": "Edge, Outcome, Historization (U/F traces, decay, C186 epistemic trust: self-calibrating doubt per edge), Tension (S_eff = Δ · R_eff), E0Config (central parameter registry)"
       },
       "2_landscape": {
         "files": ["landscape.py"],
@@ -117,7 +117,7 @@
       }
     },
     "key_formulas": {
-      "effective_resistance": "R_eff(e) = R₀(e) + δ_H(U,F)",
+      "effective_resistance": "R_eff(e) = R₀(e) + δ_H(U,F) [or δ_H·trust(e) when epistemic_trust=True]",
       "effective_tension": "S_eff(x,y) = Δ(x,y) · R_eff(x,y)",
       "navigation": "argmin S_eff/(M_H·I) (greedy with overlap+inertia), with amplitude override when Δ·conf > threshold",
       "overload_index": "OI = N_admissible × (1 − mean|trace_quality|)",
@@ -130,8 +130,7 @@
     }
   },
 
-  "commit_history_recent": [
-    { "hash": "85a997c", "id": "C185b", "title": "River City \u2014 bridge topology exposes historization trap, overlay corrects +56% (4265 total)" },
+  "commit_history_recent": [    { "hash": "PENDING", "id": "C186", "title": "Epistemic Trust — self-calibrating doubt for historization (22 tests, 4287 total)" },    { "hash": "85a997c", "id": "C185b", "title": "River City \u2014 bridge topology exposes historization trap, overlay corrects +56% (4265 total)" },
     { "hash": "424c6bf", "id": "C185", "title": "Traffic simulation — first domain where interference measurably helps (4265 total)" },
     { "hash": "55074a2", "id": "C184", "title": "Real-world validation — Wikispeedia navigation + BPI 2017 loan workflow (4265 total)" },
     { "hash": "730c2d9", "id": "C183", "title": "E2E multiverse — full capability exercise across all 14 layers (35 tests, 4265 total)" },

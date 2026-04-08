@@ -373,6 +373,7 @@ def spawn_vehicles(
     strategy: Strategy,
     positions: Dict[str, str],
     bfs_table: Dict[Tuple[str, str], str],
+    epistemic_trust: bool = False,
 ) -> List[Vehicle]:
     """Create n vehicles at random positions with random goals."""
     vehicles = []
@@ -409,6 +410,7 @@ def spawn_vehicles(
                 hybrid_goals={goal},
                 hybrid_geometry="goal_reaching",
                 confidence_threshold=conf,
+                epistemic_trust=epistemic_trust,
             )
 
         vehicles.append(v)
@@ -455,13 +457,15 @@ def run_simulation(
     strategy: Strategy = Strategy.E0_FULL,
     bfs_table: Optional[Dict[Tuple[str, str], str]] = None,
     snapshot_interval: int = 50,
+    epistemic_trust: bool = False,
 ) -> SimResult:
     """Run tick-based traffic simulation."""
     if bfs_table is None:
         bfs_table = bfs_next_hop(city)
 
     positions: Dict[str, str] = {}
-    vehicles = spawn_vehicles(city, n_vehicles, strategy, positions, bfs_table)
+    vehicles = spawn_vehicles(city, n_vehicles, strategy, positions, bfs_table,
+                              epistemic_trust=epistemic_trust)
 
     all_trips: List[TripRecord] = []
     snapshots: List[TickSnapshot] = []
@@ -694,6 +698,7 @@ def spawn_commute_vehicles(
     positions: Dict[str, str],
     bfs_table: Dict[Tuple[str, str], str],
     river_row: int = 3,
+    epistemic_trust: bool = False,
 ) -> List[Vehicle]:
     """Create n vehicles that commute north → south (forced river crossing).
 
@@ -732,6 +737,7 @@ def spawn_commute_vehicles(
                 hybrid_goals={goal},
                 hybrid_geometry="goal_reaching",
                 confidence_threshold=conf,
+                epistemic_trust=epistemic_trust,
             )
         vehicles.append(v)
     return vehicles
@@ -939,39 +945,40 @@ def main_river_city():
     print(f"Seed-averaged results (5 seeds)\n")
 
     seeds = [42, 123, 2024, 7777, 31415]
+    strategies = [
+        ("Greedy", Strategy.GREEDY_DELTA, False),
+        ("E0_greedy", Strategy.E0_GREEDY, False),
+        ("E0_greedy+trust", Strategy.E0_GREEDY, True),
+        ("E0_conserv.", Strategy.E0_CONSERVATIVE, False),
+        ("E0_cons.+trust", Strategy.E0_CONSERVATIVE, True),
+    ]
     for n_veh in (10, 15, 20):
         print(f"--- {n_veh} vehicles, 1000 ticks ---")
-        totals: Dict[str, List[int]] = {
-            "Greedy": [], "E0_greedy": [], "E0_conservative": [],
-        }
-        overrides_all: List[int] = []
+        totals: Dict[str, List[int]] = {s[0]: [] for s in strategies}
         for seed in seeds:
-            for label, strat in [
-                ("Greedy", Strategy.GREEDY_DELTA),
-                ("E0_greedy", Strategy.E0_GREEDY),
-                ("E0_conservative", Strategy.E0_CONSERVATIVE),
-            ]:
+            for label, strat, trust in strategies:
                 random.seed(seed)
                 r = run_simulation(
                     city, n_vehicles=n_veh, n_ticks=1000,
                     strategy=strat, bfs_table=bfs_table,
+                    epistemic_trust=trust,
                 )
                 totals[label].append(r.trips_completed)
-                if strat == Strategy.E0_CONSERVATIVE:
-                    overrides_all.append(r.total_overrides)
         avgs = {k: sum(v) / len(v) for k, v in totals.items()}
-        intf = ((avgs["E0_conservative"] - avgs["E0_greedy"])
-                / max(avgs["E0_greedy"], 1) * 100)
-        print(f"  Greedy:       {avgs['Greedy']:.0f} trips (avg)")
-        print(f"  E0 greedy:    {avgs['E0_greedy']:.0f} trips")
-        print(f"  E0 conserv.:  {avgs['E0_conservative']:.0f} trips "
-              f"(interference {intf:+.0f}%, "
-              f"{sum(overrides_all)//len(overrides_all)} overrides avg)")
+        for label, _, _ in strategies:
+            print(f"  {label:20s} {avgs[label]:6.0f} trips (avg)")
+        # Trust gain for greedy
+        g_base = avgs["E0_greedy"]
+        g_trust = avgs["E0_greedy+trust"]
+        gain_g = (g_trust - g_base) / max(g_base, 1) * 100
+        print(f"  → Trust gain (greedy):     {gain_g:+.0f}%")
+        # Trust gain for conservative
+        c_base = avgs["E0_conserv."]
+        c_trust = avgs["E0_cons.+trust"]
+        gain_c = (c_trust - c_base) / max(c_base, 1) * 100
+        print(f"  → Trust gain (conserv.):   {gain_c:+.0f}%")
     print()
-    print("Key findings:")
-    print("  1. Interference massively helps: E0c vs E0g up to +56%")
-    print("  2. Overlay detects free bridge at depth 3, corrects historization trap")
-    print("  3. Historization persistence creates stale memory on bridge edges")
+    print("C186 validation: Does epistemic trust recover greedy from bridge trap?")
 
 
 if __name__ == "__main__":

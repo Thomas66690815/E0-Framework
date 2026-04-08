@@ -23,6 +23,23 @@ just when touched. Implemented as lazy catch-up: each edge stores τ_last
 ρ^(τ − τ_last) to account for the missed decay steps. This is mathematically
 identical to iterating all edges at every step, but O(1) per access.
 
+Epistemic Trust (C186):
+    E₀ doubts always. Historized knowledge is a hypothesis, not truth.
+    trust(e) = exp(−staleness(e) / τ_doubt(e))
+    where staleness = τ − τ_last(e)
+    and τ_doubt(e) = τ_base / (1 − stability(e) + ε)
+    stability(e) = confirmations(e) / (confirmations(e) + surprises(e) + 1)
+
+    confirmations/surprises are ρ-decayed alongside U/F.
+    A revisit "confirms" when the outcome matches the predicted direction
+    (q > 0 → SUCCESS, q < 0 → FAILURE), else it "surprises".
+    τ_base = median inter-visit interval (self-calibrating).
+
+    Result: stable edges (always confirmed) → trust stays high.
+    Volatile edges (often surprised) → trust decays fast.
+    Stale edges (never revisited) → trust drifts toward 0.
+    δ_H_trusted(e) = δ_H(e) · trust(e).
+
 Note on PARTIAL outcomes: The canonical spec defines only SUCCESS and FAILURE.
 PARTIAL (U += 0.5, F += 0.3) is a runtime convenience extension — operationally
 useful but not derived from the minimal canonical core.
@@ -30,6 +47,7 @@ useful but not derived from the minimal canonical core.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple, Optional
 
@@ -74,6 +92,11 @@ class Historization:
     _tau_last: Dict[Edge, int] = field(default_factory=dict)  # K2: last-update time per edge
     _log: List[TraceRecord] = field(default_factory=list)
 
+    # Epistemic Trust (C186)
+    _confirmations: Dict[Edge, float] = field(default_factory=dict)
+    _surprises: Dict[Edge, float] = field(default_factory=dict)
+    _inter_visit_intervals: List[int] = field(default_factory=list)  # recent intervals for τ_base
+
     # --- Lazy Global Decay (K2) ---
 
     def _effective_traces(self, edge: Edge) -> Tuple[float, float]:
@@ -110,11 +133,41 @@ class Historization:
         K2: Lazy catch-up is applied before the standard formula,
         so edges that haven't been touched for k steps first decay
         by ρ^k, then the single-step ρ + signal is applied.
+
+        C186: Epistemic trust — track confirmations/surprises on revisit.
+        A revisit = τ − τ_last > 1 (not the immediately next step).
+        Confirmation: outcome matches predicted direction (q > 0 → S, q < 0 → F).
+        Surprise: outcome contradicts predicted direction.
         """
         # Catch up missed decay steps (K2)
         u_prev, f_prev = self._effective_traces(edge)
         rs = self.rho_s if self.rho_s is not None else self.rho
         rf = self.rho_f if self.rho_f is not None else self.rho
+
+        # C186: Epistemic trust — track revisit confirmation/surprise
+        tau_last = self._tau_last.get(edge, -1)
+        gap = self._tau - tau_last if tau_last >= 0 else -1
+        if gap > 1 and (u_prev + f_prev) > 1e-12:
+            # This is a revisit of a previously-experienced edge
+            self._inter_visit_intervals.append(gap)
+            # Keep only recent intervals (sliding window)
+            if len(self._inter_visit_intervals) > 200:
+                self._inter_visit_intervals = self._inter_visit_intervals[-100:]
+            # Predict: existing q tells us what we expect
+            q_prev = (u_prev - f_prev) / (u_prev + f_prev + 1e-12)
+            predicted_success = q_prev >= 0.0
+            actual_success = (outcome == Outcome.SUCCESS or
+                              (outcome == Outcome.PARTIAL and q_prev >= 0.0))
+            # Decay old confirmations/surprises (same ρ as traces)
+            rho_trust = self.rho
+            old_conf = self._confirmations.get(edge, 0.0) * rho_trust ** gap
+            old_surp = self._surprises.get(edge, 0.0) * rho_trust ** gap
+            if predicted_success == actual_success:
+                self._confirmations[edge] = old_conf + 1.0
+                self._surprises[edge] = old_surp
+            else:
+                self._confirmations[edge] = old_conf
+                self._surprises[edge] = old_surp + 1.0
 
         if outcome == Outcome.SUCCESS:
             self._U[edge] = rs * u_prev + 1.0
@@ -145,6 +198,90 @@ class Historization:
         raw = self.lambda_f * f - self.lambda_s * u
         return max(-self.delta_max, min(raw, self.delta_max))
 
+    # --- Epistemic Trust (C186) ---
+
+    def stability(self, edge: Edge) -> float:
+        """
+        How stable is the learned knowledge about this edge?
+
+        stability(e) = confirmations / (confirmations + surprises + 1)
+
+        Returns float in [0, 1):
+            → 0: no revisit data, or every revisit surprised us
+            → ~1: many confirmations, few surprises (stable environment)
+
+        The +1 in the denominator is a Bayesian prior: without evidence,
+        stability is 0 (maximum doubt).
+        """
+        c = self._confirmations.get(edge, 0.0)
+        s = self._surprises.get(edge, 0.0)
+        # Apply lazy decay to confirmation/surprise counts
+        tau_last = self._tau_last.get(edge, self._tau)
+        gap = self._tau - tau_last
+        if gap > 0:
+            decay = self.rho ** gap
+            c *= decay
+            s *= decay
+        return c / (c + s + 1.0)
+
+    def _tau_base(self) -> float:
+        """Self-calibrating base doubt interval.
+
+        Median inter-visit interval across all recently observed edges.
+        Falls back to 10 when no revisit data exists (conservative default).
+        """
+        if not self._inter_visit_intervals:
+            return 10.0
+        sorted_ivs = sorted(self._inter_visit_intervals)
+        mid = len(sorted_ivs) // 2
+        if len(sorted_ivs) % 2 == 0:
+            return (sorted_ivs[mid - 1] + sorted_ivs[mid]) / 2.0
+        return float(sorted_ivs[mid])
+
+    def trust(self, edge: Edge) -> float:
+        """
+        Epistemic trust: how much should we believe δ_H for this edge?
+
+        trust(e) = exp(−staleness(e) / τ_doubt(e))
+
+        where:
+            staleness = τ − τ_last(e)
+            τ_doubt(e) = τ_base / (1 − stability(e) + ε)
+
+        Properties:
+            - Just visited (staleness=0): trust = 1.0
+            - Stable edge (high stability): τ_doubt large → trust decays slowly
+            - Volatile edge (low stability): τ_doubt small → trust decays fast
+            - Never-visited edge: trust = 1.0 (no basis for doubt)
+            - Virgin edge (no traces): trust = 1.0
+
+        Returns float in (0, 1].
+        """
+        u, f = self._effective_traces(edge)
+        if u + f < 1e-12:
+            return 1.0  # virgin edge — nothing to doubt
+        tau_last = self._tau_last.get(edge, self._tau)
+        staleness = self._tau - tau_last
+        if staleness <= 0:
+            return 1.0
+        stab = self.stability(edge)
+        tau_base = self._tau_base()
+        # τ_doubt: stable edges → large (slow doubt), volatile → small (fast doubt)
+        tau_doubt = tau_base / (1.0 - stab + 0.01)
+        return math.exp(-staleness / tau_doubt)
+
+    def delta_H_trusted(self, edge: Edge) -> float:
+        """
+        Doubt-aware historization correction.
+
+        δ_H_trusted(e) = δ_H(e) · trust(e)
+
+        Semantics: "I remember this edge was bad, but I'm not sure
+        that's still true." As trust decays, the historization
+        correction weakens, and the edge returns to its base resistance.
+        """
+        return self.delta_H(edge) * self.trust(edge)
+
     def record(self, edge: Edge, outcome: Outcome,
                r_eff_before: float, r_eff_after: float,
                predecessor: Optional[Edge] = None) -> None:
@@ -158,9 +295,10 @@ class Historization:
     def remove_edges(self, edges) -> None:
         """Clean up trace data for removed edges.
 
-        Deletes _U, _F, _tau_last entries. The _log is preserved —
-        historical events remain as a record of what happened, even
-        after the structure that produced them is gone.
+        Deletes _U, _F, _tau_last, _confirmations, _surprises entries.
+        The _log is preserved — historical events remain as a record
+        of what happened, even after the structure that produced them
+        is gone.
 
         Does not modify _tau.
         """
@@ -168,6 +306,8 @@ class Historization:
             self._U.pop(e, None)
             self._F.pop(e, None)
             self._tau_last.pop(e, None)
+            self._confirmations.pop(e, None)
+            self._surprises.pop(e, None)
 
     # --- Inspection ---
 
@@ -298,6 +438,8 @@ class Historization:
             "U": {e: v for e, v in self._U.items()},
             "F": {e: v for e, v in self._F.items()},
             "tau_last": {e: v for e, v in self._tau_last.items()},
+            "confirmations": {e: v for e, v in self._confirmations.items()},
+            "surprises": {e: v for e, v in self._surprises.items()},
         }
 
     @classmethod
@@ -324,6 +466,11 @@ class Historization:
             # Assume all edges were current at snapshot time
             all_edges = set(H._U.keys()) | set(H._F.keys())
             H._tau_last = {e: H._tau for e in all_edges}
+        # C186: backward compat — old snapshots without trust data
+        if "confirmations" in d:
+            H._confirmations = {edge_parser(k): v for k, v in d["confirmations"].items()}
+        if "surprises" in d:
+            H._surprises = {edge_parser(k): v for k, v in d["surprises"].items()}
         return H
 
     def summary(self) -> Dict[str, float]:

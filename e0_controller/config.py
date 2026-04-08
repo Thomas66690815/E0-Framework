@@ -84,6 +84,11 @@ class E0Config:
     # Historization correction clipping bound.
     delta_max: float = 3.0
 
+    # Epistemic trust (C186): doubt-aware δ_H.
+    # When True, δ_H is multiplied by trust(e) ∈ (0, 1] which decays
+    # for stale edges.  Self-calibrating from revisit statistics.
+    epistemic_trust: bool = False
+
     # ── Half-load constant (mu) ──────────────────────────────────
     # Used in 5 subsystems for sigmoid normalization.
     # Controls the "experience threshold" — at load=mu, the
