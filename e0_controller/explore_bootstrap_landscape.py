@@ -241,7 +241,14 @@ def extract_edges(bs, nodes):
             # Don't duplicate if a hand-curated edge already exists
             existing = {(e["from"], e["to"]) for e in edges}
             if (src, tgt) not in existing:
-                add(src, tgt, de.get("delta", 0.5), de.get("resistance", 1.0),
+                raw_delta = de.get("delta", 0.5)
+                # Semantic modulation: LLM-validated quality scales Δ.
+                # semantic_score 0.7 → keep 70% of Δ (real connection).
+                # semantic_score 0.3 → only 30% of Δ (artifact).
+                # No score yet → full Δ (awaiting validation).
+                sem = de.get("semantic_score")
+                effective_delta = raw_delta * sem if sem is not None else raw_delta
+                add(src, tgt, effective_delta, de.get("resistance", 1.0),
                     de.get("confidence", 0.5),
                     de.get("derivation", "discovered by exploration"))
 

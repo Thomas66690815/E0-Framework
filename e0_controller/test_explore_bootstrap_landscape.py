@@ -109,6 +109,47 @@ class TestParsing:
             assert src in nodes, f"Edge source '{src}' not in nodes"
             assert tgt in nodes, f"Edge target '{tgt}' not in nodes"
 
+    def test_semantic_modulation_scales_delta(self, bootstrap_data):
+        """Discovered edges with semantic_score have Δ scaled by that score."""
+        bs, nodes, edges = bootstrap_data
+        disc = bs.get("discovered_edges", {}).get("edges", [])
+        scored = [d for d in disc if "semantic_score" in d]
+        if not scored:
+            pytest.skip("No semantically scored edges")
+        for de in scored:
+            raw_delta = de["delta"]
+            sem = de["semantic_score"]
+            expected_delta = raw_delta * sem
+            # Find this edge in the extracted edges
+            matching = [e for e in edges
+                        if e["from"] == de["from"] and e["to"] == de["to"]]
+            if matching:
+                actual_delta = matching[0]["delta"]
+                assert abs(actual_delta - expected_delta) < 1e-6, \
+                    f"{de['from']}→{de['to']}: expected Δ={expected_delta:.3f}, got {actual_delta:.3f}"
+
+    def test_semantic_modulation_weakens_artifacts(self, bootstrap_data):
+        """Low semantic score (0.3) reduces Δ to ~30% of raw value."""
+        bs, nodes, edges = bootstrap_data
+        disc = bs.get("discovered_edges", {}).get("edges", [])
+        weak = [d for d in disc if d.get("semantic_score", 1.0) <= 0.3]
+        if not weak:
+            pytest.skip("No weak semantic edges")
+        for de in weak:
+            matching = [e for e in edges
+                        if e["from"] == de["from"] and e["to"] == de["to"]]
+            if matching:
+                assert matching[0]["delta"] < de["delta"] * 0.35, \
+                    f"Weak edge {de['from']}→{de['to']} should have reduced Δ"
+
+    def test_hand_curated_unaffected(self, bootstrap_data):
+        """Hand-curated edges (no semantic_score) keep their original Δ."""
+        _, nodes, edges = bootstrap_data
+        # GT-1→BT-2 is hand-curated with Δ=0.7
+        gt_bt = [e for e in edges if e["from"] == "GT-1" and e["to"] == "BT-2"]
+        assert gt_bt, "GT-1→BT-2 edge not found"
+        assert abs(gt_bt[0]["delta"] - 0.7) < 1e-6, "Hand-curated Δ was modified"
+
 
 # ---------------------------------------------------------------------------
 # Phase 2: Landscape construction
