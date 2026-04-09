@@ -1,4 +1,4 @@
-"""Tests for explore_bootstrap_landscape.py — C195/C196.
+"""Tests for explore_bootstrap_landscape.py — C195/C196/C199.
 
 Validates the structural mechanisms:
 1. bootstrap.json parsing (nodes, edges, traces)
@@ -6,6 +6,7 @@ Validates the structural mechanisms:
 3. Local vs global potential (the key insight)
 4. Structural creation from exploration paths
 5. Persistence cycle: discovered edges survive across sessions
+6. Executable transitions: navigation produces output
 """
 
 import json
@@ -27,6 +28,12 @@ from e0_controller.explore_bootstrap_landscape import (
     persist_discovered_edges,
     update_edge_confidence,
     llm_semantic_validation,
+    EXECUTION_TEMPLATES,
+    build_execution_context,
+    format_execution_task,
+    execute_bootstrap_transition,
+    persist_execution_results,
+    select_transitions_for_execution,
     BOOTSTRAP_PATH,
     MU,
 )
@@ -781,5 +788,160 @@ class TestLLMSemanticValidation:
             nodes = extract_nodes(bs)
             results = llm_semantic_validation(nodes, dry_run=True)
             assert results == []
+        finally:
+            mod.BOOTSTRAP_PATH = orig_path
+
+
+# ---------------------------------------------------------------------------
+# Phase H: Executable Transitions
+# ---------------------------------------------------------------------------
+
+
+class TestExecutableTransitions:
+    """Phase H: Navigation produces concrete output via LLM execution."""
+
+    def test_execution_templates_cover_all_node_types(self, bootstrap_data):
+        """Every node type in bootstrap.json has an execution template."""
+        _, nodes, _ = bootstrap_data
+        node_types = {n["type"] for n in nodes.values()}
+        for ntype in node_types:
+            assert ntype in EXECUTION_TEMPLATES, (
+                f"No execution template for node type '{ntype}'"
+            )
+
+    def test_format_execution_task_per_type(self, bootstrap_data):
+        """format_execution_task produces non-empty, type-specific prompts."""
+        _, nodes, _ = bootstrap_data
+        seen_types = set()
+        for nid, node in nodes.items():
+            ntype = node["type"]
+            if ntype in seen_types:
+                continue
+            seen_types.add(ntype)
+            task = format_execution_task(nodes, nid)
+            assert len(task) > 50, f"Task for {nid} ({ntype}) too short"
+            # Must contain the node's label
+            assert node["label"][:20] in task or ntype in task
+
+    def test_build_execution_context(self, bootstrap_data):
+        """build_execution_context includes project state and architecture."""
+        bs, nodes, _ = bootstrap_data
+        ctx = build_execution_context(bs, nodes, "HERE", "OPEN-1")
+        assert "E₀-Framework" in ctx
+        assert "Tests:" in ctx
+        assert "Architecture layers:" in ctx
+        assert "Open threads:" in ctx
+        assert "Gordian Traps" in ctx
+
+    def test_execute_bootstrap_transition_dry_run(self, bootstrap_data):
+        """dry_run returns preview without calling LLM."""
+        bs, nodes, _ = bootstrap_data
+        r = execute_bootstrap_transition(bs, nodes, "HERE", "OPEN-1", dry_run=True)
+        assert r["source"] == "HERE"
+        assert r["target"] == "OPEN-1"
+        assert r["outcome"] == "DRY_RUN"
+        assert r["target_type"] == "open_thread"
+        assert not r["actionable"]
+        assert "task_preview" in r
+        assert len(r["task_preview"]) > 0
+
+    def test_execute_dry_run_all_types(self, bootstrap_data):
+        """dry_run works for every node type."""
+        bs, nodes, _ = bootstrap_data
+        seen_types = set()
+        for nid, node in nodes.items():
+            ntype = node["type"]
+            if ntype in seen_types:
+                continue
+            seen_types.add(ntype)
+            r = execute_bootstrap_transition(bs, nodes, "HERE", nid, dry_run=True)
+            assert r["outcome"] == "DRY_RUN"
+            assert r["target_type"] == ntype
+
+    def test_select_transitions_prioritizes_open_threads(self, bootstrap_data):
+        """Selection prioritizes open_thread targets over others."""
+        _, nodes, edges = bootstrap_data
+        # Build a path that visits different node types
+        path = ["HERE", "OPEN-1", "L5", "GT-5", "BT-4", "OPEN-2", "L3"]
+        spec = build_spec(nodes, edges)
+        ls = bootstrap_landscape(spec)
+        inject_node_traces(ls, nodes)
+
+        selected = select_transitions_for_execution(path, nodes, ls)
+        # Open threads should appear before other types
+        assert len(selected) > 0
+        target_types = [nodes.get(tgt, {}).get("type") for _, tgt in selected]
+        # First entries should be open_thread (priority 3)
+        first_open = [t for t in target_types if t == "open_thread"]
+        assert len(first_open) >= 1, "At least one open_thread should be selected"
+
+    def test_select_transitions_deduplicates_targets(self, bootstrap_data):
+        """Selection doesn't execute the same target twice."""
+        _, nodes, edges = bootstrap_data
+        # Path with repeated visits to OPEN-1
+        path = ["HERE", "OPEN-1", "L5", "OPEN-1", "L3", "OPEN-1"]
+        spec = build_spec(nodes, edges)
+        ls = bootstrap_landscape(spec)
+        inject_node_traces(ls, nodes)
+
+        selected = select_transitions_for_execution(path, nodes, ls)
+        targets = [tgt for _, tgt in selected]
+        assert len(targets) == len(set(targets)), "Targets should be unique"
+
+    def test_select_transitions_max_limit(self, bootstrap_data):
+        """Selection respects max_executions limit."""
+        _, nodes, edges = bootstrap_data
+        path = ["HERE", "OPEN-1", "OPEN-2", "OPEN-3", "L3", "L5",
+                "GT-5", "BT-4", "L6", "L9"]
+        spec = build_spec(nodes, edges)
+        ls = bootstrap_landscape(spec)
+        inject_node_traces(ls, nodes)
+
+        selected = select_transitions_for_execution(
+            path, nodes, ls, max_executions=3
+        )
+        assert len(selected) <= 3
+
+    def test_persist_execution_results_dry_run(self, bootstrap_data):
+        """dry_run counts actionable results without writing."""
+        results = [
+            {"source": "HERE", "target": "OPEN-1", "target_type": "open_thread",
+             "outcome": "SUCCESS", "result": "analysis...", "confidence": 0.8,
+             "actionable": True},
+            {"source": "HERE", "target": "L5", "target_type": "arch_layer",
+             "outcome": "SUCCESS", "result": "assessment...", "confidence": 0.3,
+             "actionable": False},
+        ]
+        count = persist_execution_results(results, dry_run=True)
+        assert count == 1  # Only 1 actionable
+
+    def test_persist_execution_results_writes_to_file(self, tmp_path, bootstrap_data):
+        """Actionable results are written to bootstrap.json."""
+        import shutil
+        import e0_controller.explore_bootstrap_landscape as mod
+
+        tmp_bs = tmp_path / "bootstrap.json"
+        shutil.copy2(BOOTSTRAP_PATH, tmp_bs)
+
+        orig_path = mod.BOOTSTRAP_PATH
+        mod.BOOTSTRAP_PATH = str(tmp_bs)
+        try:
+            results = [
+                {"source": "HERE", "target": "OPEN-1", "target_type": "open_thread",
+                 "outcome": "SUCCESS", "result": "concrete next step: implement X",
+                 "confidence": 0.8, "actionable": True},
+            ]
+            count = persist_execution_results(results)
+            assert count == 1
+
+            with open(tmp_bs, encoding="utf-8") as f:
+                bs = json.load(f)
+            assert "execution_results" in bs
+            assert len(bs["execution_results"]["results"]) >= 1
+            entry = bs["execution_results"]["results"][-1]
+            assert entry["source"] == "HERE"
+            assert entry["target"] == "OPEN-1"
+            assert "executed_at" in entry
+            assert entry["confidence"] == 0.8
         finally:
             mod.BOOTSTRAP_PATH = orig_path

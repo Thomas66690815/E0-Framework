@@ -854,6 +854,289 @@ def llm_semantic_validation(nodes, dry_run=False):
         return []
 
 
+# ---------------------------------------------------------------------------
+# Phase H: Executable Transitions — navigation PRODUCES output
+# ---------------------------------------------------------------------------
+
+# Each node type has a specific execution template.
+# The template tells the LLM *what kind of work* this transition demands.
+EXECUTION_TEMPLATES = {
+    "open_thread": (
+        "Analyze this open research question in the E₀ framework.\n"
+        "Question: {label}\n\n"
+        "Based on the project context, produce:\n"
+        "1. What specifically is blocking resolution?\n"
+        "2. Which existing E₀ mechanisms (from the architecture layers) could help?\n"
+        "3. A concrete next step (code change, test, or experiment) that would make progress.\n"
+        "Be specific — reference actual module names and functions."
+    ),
+    "arch_layer": (
+        "Assess the implementation completeness of this E₀ architecture layer.\n"
+        "Layer: {label}\n"
+        "Files: {files}\n\n"
+        "Based on the project context:\n"
+        "1. What works well in this layer? (strongest tests/features)\n"
+        "2. What's missing or undertested?\n"
+        "3. One concrete improvement that would strengthen this layer.\n"
+        "Reference specific functions and test classes."
+    ),
+    "gordian_trap": (
+        "Evaluate whether this resolved Gordian Trap is still holding.\n"
+        "Trap: {label}\n"
+        "Resolution: {resolution}\n"
+        "Lesson: {lesson}\n\n"
+        "Based on the project context:\n"
+        "1. Has the resolution held? Any signs of recurrence?\n"
+        "2. Are there new areas where the same pattern could emerge?\n"
+        "3. One preventive action to strengthen the defense."
+    ),
+    "breakthrough": (
+        "Evaluate exploitation depth of this breakthrough.\n"
+        "Breakthrough: {label}\n"
+        "Built upon by: {built_upon_by}\n\n"
+        "Based on the project context:\n"
+        "1. Has this insight been fully exploited across all relevant domains?\n"
+        "2. Where else could it apply but hasn't been tried?\n"
+        "3. One concrete extension that would leverage this insight further."
+    ),
+    "working_principle": (
+        "Stress-test this working principle against recent project experience.\n"
+        "Principle: {label}\n"
+        "Confirmed: {U} times, Contradicted: {F} times\n\n"
+        "Based on the project context:\n"
+        "1. Does recent work confirm or challenge this principle?\n"
+        "2. What would FALSIFY it? Is that test missing?\n"
+        "3. One experiment that would stress-test this principle."
+    ),
+    "perspective_check": (
+        "Assess whether this perspective check is still catching real issues.\n"
+        "Check: {label}\n"
+        "Triggered: {U} times\n\n"
+        "Based on the project context:\n"
+        "1. When was this last useful? Is it still relevant?\n"
+        "2. What blind spot does it miss?\n"
+        "3. Should it be refined, replaced, or extended?"
+    ),
+    "current_state": (
+        "Assess the current project state and identify the highest-value next action.\n"
+        "State: {label}\n\n"
+        "Based on the project context:\n"
+        "1. What is the single most impactful thing to work on next?\n"
+        "2. What risk or technical debt is accumulating silently?\n"
+        "3. A concrete action item (with file/function references)."
+    ),
+}
+
+
+def build_execution_context(bs, nodes, src_id, tgt_id):
+    """Build rich context string for an executable transition.
+
+    Includes: project state, architecture summary, recent history,
+    and specific context for both source and target nodes.
+    """
+    state = bs.get("state", {})
+    ctx_parts = [
+        f"Project: E₀-Framework v{bs.get('project', {}).get('version', '?')}",
+        f"Tests: {state.get('test_count', '?')} passed, {state.get('test_failures', 0)} failures",
+        f"Latest commit: {state.get('latest_commit', '?')} — {state.get('latest_commit_msg', '?')}",
+        "",
+        "Architecture layers:",
+    ]
+
+    for layer_key, layer in bs.get("architecture", {}).get("layers", {}).items():
+        files = ", ".join(layer.get("files", [])[:3])
+        ctx_parts.append(f"  {layer_key}: {files}")
+
+    ctx_parts.append("")
+    ctx_parts.append("Open threads:")
+    for thread in bs.get("active_context", {}).get("open_threads", []):
+        ctx_parts.append(f"  - {thread}")
+
+    ctx_parts.append("")
+    ctx_parts.append("Gordian Traps (resolved mistakes with lessons):")
+    for gt in bs.get("reflexion", {}).get("gordian_traps", []):
+        ctx_parts.append(f"  - {gt['id']}: {gt.get('name', '?')} → {gt.get('lesson', '?')[:80]}")
+
+    ctx_parts.append("")
+    ctx_parts.append("Breakthroughs:")
+    for bt in bs.get("reflexion", {}).get("breakthroughs", []):
+        ctx_parts.append(f"  - {bt['id']}: {bt.get('name', '?')} — {bt.get('insight', '?')[:80]}")
+
+    return "\n".join(ctx_parts)
+
+
+def format_execution_task(nodes, tgt_id):
+    """Format the execution task for a target node using its type template."""
+    node = nodes.get(tgt_id, {})
+    ntype = node.get("type", "current_state")
+    template = EXECUTION_TEMPLATES.get(ntype, EXECUTION_TEMPLATES["current_state"])
+
+    # Build format kwargs from node data
+    kwargs = {
+        "label": node.get("label", tgt_id),
+        "files": ", ".join(node.get("files", [])),
+        "resolution": node.get("resolution", "n/a"),
+        "lesson": node.get("lesson", "n/a"),
+        "built_upon_by": ", ".join(node.get("built_upon_by", [])) or "none yet",
+        "U": node.get("U", 0),
+        "F": node.get("F", 0),
+    }
+    return template.format(**kwargs)
+
+
+def execute_bootstrap_transition(bs, nodes, src_id, tgt_id, dry_run=False):
+    """Execute a single bootstrap transition via LLM.
+
+    Returns dict with: source, target, task, outcome, result, confidence, actionable.
+    """
+    task = format_execution_task(nodes, tgt_id)
+    context = build_execution_context(bs, nodes, src_id, tgt_id)
+
+    src_node = nodes.get(src_id, {})
+    tgt_node = nodes.get(tgt_id, {})
+
+    if dry_run:
+        return {
+            "source": src_id,
+            "target": tgt_id,
+            "target_type": tgt_node.get("type", "?"),
+            "task_preview": task[:200],
+            "outcome": "DRY_RUN",
+            "result": f"Would execute: {src_id} → {tgt_id} ({tgt_node.get('type', '?')})",
+            "confidence": 0.0,
+            "actionable": False,
+        }
+
+    try:
+        from e0_controller.llm_adapter import (
+            E0LLMAdapter,
+            LLMConfig,
+            openai_call,
+        )
+
+        config = LLMConfig(
+            model="gpt-4.1-mini",
+            temperature=0.2,
+            max_tokens=2048,
+        )
+        adapter = E0LLMAdapter(config, openai_call)
+
+        result = adapter.execute_transition(
+            source=f"{src_id} ({src_node.get('label', '?')})",
+            target=f"{tgt_id} ({tgt_node.get('label', '?')})",
+            task=task,
+            scenario_block=context,
+        )
+
+        return {
+            "source": src_id,
+            "target": tgt_id,
+            "target_type": tgt_node.get("type", "?"),
+            "outcome": result.outcome.name,
+            "result": result.result,
+            "confidence": result.confidence,
+            "actionable": result.outcome == Outcome.SUCCESS and result.confidence >= 0.5,
+        }
+
+    except Exception as exc:
+        return {
+            "source": src_id,
+            "target": tgt_id,
+            "target_type": tgt_node.get("type", "?"),
+            "outcome": "ERROR",
+            "result": str(exc)[:200],
+            "confidence": 0.0,
+            "actionable": False,
+        }
+
+
+def persist_execution_results(results, dry_run=False):
+    """Persist execution results to bootstrap.json.
+
+    Results are stored under execution_results with timestamp.
+    Only actionable results are persisted (non-actionable = noise).
+
+    Returns number of results persisted.
+    """
+    actionable = [r for r in results if r.get("actionable")]
+    if not actionable or dry_run:
+        return len(actionable)
+
+    with open(BOOTSTRAP_PATH, encoding="utf-8") as f:
+        bs = json.load(f)
+
+    if "execution_results" not in bs:
+        bs["execution_results"] = {
+            "_comment": "Concrete outputs from LLM-executed bootstrap transitions.",
+            "results": [],
+        }
+
+    from datetime import datetime, timezone
+    timestamp = datetime.now(timezone.utc).isoformat()
+
+    for r in actionable:
+        entry = {
+            "source": r["source"],
+            "target": r["target"],
+            "target_type": r["target_type"],
+            "outcome": r["outcome"],
+            "result": r["result"][:500],  # Cap length
+            "confidence": r["confidence"],
+            "executed_at": timestamp,
+        }
+        bs["execution_results"]["results"].append(entry)
+
+    with open(BOOTSTRAP_PATH, "w", encoding="utf-8") as f:
+        json.dump(bs, f, indent=2, ensure_ascii=False)
+        f.write("\n")
+
+    return len(actionable)
+
+
+def select_transitions_for_execution(path, nodes, landscape, max_executions=5):
+    """Select the most valuable transitions from an exploration path.
+
+    Criteria for execution priority:
+    1. Transitions TO open threads (frontier — highest learning value)
+    2. Transitions TO architecture layers (concrete assessment)
+    3. Cross-type transitions (structural novelty)
+    4. Avoid duplicate targets (spread across different nodes)
+
+    Returns list of (source, target) pairs.
+    """
+    candidates = []
+    seen_targets = set()
+
+    for i in range(len(path) - 1):
+        src, tgt = path[i], path[i + 1]
+        if tgt in seen_targets:
+            continue
+        tgt_node = nodes.get(tgt, {})
+        tgt_type = tgt_node.get("type", "?")
+        src_type = nodes.get(src, {}).get("type", "?")
+
+        # Priority scoring
+        priority = 0
+        if tgt_type == "open_thread":
+            priority = 3  # Highest: frontier exploration
+        elif tgt_type == "arch_layer":
+            priority = 2  # Concrete assessment
+        elif tgt_type == "gordian_trap":
+            priority = 2  # Defense check
+        elif tgt_type == "breakthrough":
+            priority = 1  # Exploitation check
+        elif src_type != tgt_type:
+            priority = 1  # Cross-type novelty
+
+        if priority > 0:
+            candidates.append((priority, src, tgt))
+            seen_targets.add(tgt)
+
+    # Sort by priority (descending), take top N
+    candidates.sort(key=lambda x: -x[0])
+    return [(src, tgt) for _, src, tgt in candidates[:max_executions]]
+
+
 def run_transition_potential(landscape, nodes, edges):
     """Experiment 6: E₀ autonomously selects goals from transition potential."""
     from e0_controller.controller import HybridMode
@@ -1232,6 +1515,67 @@ def run_local_exploration(landscape, nodes, edges):
         print(f"    Would validate {len(results)} edges (skipped — dry run)")
     else:
         print(f"\n  Phase G: Skipped (use --llm to enable LLM semantic validation)")
+
+    # Phase H: Executable transitions — navigation PRODUCES output
+    # Each visited node is a potential execution target.
+    # The LLM performs the work implied by each transition and returns
+    # concrete, actionable output. U/F comes from actionability.
+    combined_path = path + path2
+    if "--llm" in sys.argv:
+        print(f"\n  Phase H: Executable transitions — navigation produces output")
+        print(f"  {'─'*60}")
+        print(f"  Selecting highest-value transitions from exploration path...")
+
+        selected = select_transitions_for_execution(combined_path, nodes, iter_landscape)
+        print(f"  Selected {len(selected)} transitions for execution:")
+        for src, tgt in selected:
+            ttype = nodes.get(tgt, {}).get("type", "?")
+            tlabel = nodes.get(tgt, {}).get("label", "?")[:45]
+            print(f"    {src:8s} → {tgt:8s}  [{ttype:20s}]  {tlabel}")
+
+        print(f"\n  Executing via LLM...")
+        bs_fresh = load_bootstrap()
+        exec_results = []
+        for src, tgt in selected:
+            r = execute_bootstrap_transition(bs_fresh, nodes, src, tgt)
+            exec_results.append(r)
+            marker = "✓" if r["actionable"] else "~" if r["outcome"] == "SUCCESS" else "✗"
+            print(f"\n    {marker} {src} → {tgt} ({r['target_type']})")
+            print(f"      Outcome: {r['outcome']}, Confidence: {r['confidence']:.2f}")
+            # Print result, indented and truncated
+            result_lines = r["result"][:400].split("\n")
+            for line in result_lines:
+                print(f"      {line}")
+
+            # Historize: actionable = SUCCESS, not actionable = FAILURE
+            from e0_controller.landscape import Edge as _Edge
+            edge = _Edge(src, tgt)
+            if iter_landscape.has_edge(src, tgt):
+                outcome = Outcome.SUCCESS if r["actionable"] else Outcome.FAILURE
+                iter_landscape.historization.update(edge, outcome)
+
+        # Persist actionable results
+        persisted_count = persist_execution_results(exec_results)
+        actionable_count = sum(1 for r in exec_results if r["actionable"])
+        print(f"\n  {'─'*60}")
+        print(f"  Execution summary:")
+        print(f"    Executed:   {len(exec_results)} transitions")
+        print(f"    Actionable: {actionable_count}")
+        print(f"    Persisted:  {persisted_count} results to bootstrap.json")
+
+    elif "--llm-dry" in sys.argv:
+        print(f"\n  Phase H: Executable transitions (DRY RUN)")
+        print(f"  {'─'*60}")
+        selected = select_transitions_for_execution(combined_path, nodes, iter_landscape)
+        print(f"  Would execute {len(selected)} transitions:")
+        bs_fresh = load_bootstrap()
+        for src, tgt in selected:
+            r = execute_bootstrap_transition(bs_fresh, nodes, src, tgt, dry_run=True)
+            ttype = nodes.get(tgt, {}).get("type", "?")
+            print(f"    {src:8s} → {tgt:8s}  [{ttype:20s}]")
+            print(f"      Task: {r['task_preview'][:120]}...")
+    else:
+        print(f"\n  Phase H: Skipped (use --llm to enable executable transitions)")
 
 
 # ---------------------------------------------------------------------------
