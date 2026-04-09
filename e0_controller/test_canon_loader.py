@@ -63,7 +63,7 @@ class TestLoadCanonSpec(unittest.TestCase):
     def test_load_ontodynamics(self):
         spec = load_canon_spec("ontodynamics")
         self.assertEqual(spec["name"], "ontodynamics")
-        self.assertEqual(spec["version"], "2.0")
+        self.assertEqual(spec["version"], "3.0")
 
     def test_has_nodes_and_edges(self):
         spec = load_canon_spec("ontodynamics")
@@ -94,7 +94,7 @@ class TestExtractInfo(unittest.TestCase):
 
     def test_name_and_version(self):
         self.assertEqual(self.info.name, "ontodynamics")
-        self.assertEqual(self.info.version, "2.0")
+        self.assertEqual(self.info.version, "3.0")
 
     def test_source_reference(self):
         self.assertIn("ontodynamics.txt", self.info.source)
@@ -102,10 +102,10 @@ class TestExtractInfo(unittest.TestCase):
         self.assertIn("e0-agi-blueprint.md", self.info.source)
 
     def test_node_count(self):
-        self.assertEqual(len(self.info.nodes), 51)
+        self.assertEqual(len(self.info.nodes), 63)
 
     def test_edge_count(self):
-        self.assertEqual(len(self.info.edges), 93)
+        self.assertEqual(len(self.info.edges), 131)
 
     def test_five_primitives(self):
         primitives = [n for n in self.info.nodes if n.is_primitive]
@@ -118,7 +118,7 @@ class TestExtractInfo(unittest.TestCase):
 
     def test_derived_concepts(self):
         derived = [n for n in self.info.nodes if not n.is_primitive]
-        self.assertEqual(len(derived), 46)
+        self.assertEqual(len(derived), 58)
         # Verify canonical derived concepts are present
         canonical_derived = {
             "state", "resistance", "time",
@@ -159,10 +159,10 @@ class TestExtractInfo(unittest.TestCase):
         self.assertEqual(levels["sleep_wake_cycle"], 17)
 
     def test_goal_states(self):
-        self.assertEqual(self.info.goal_states, ["negative_necessity", "sleep_wake_cycle"])
+        self.assertEqual(self.info.goal_states, ["negative_necessity", "sleep_wake_cycle", "canon_bootstrap_multiverse"])
 
     def test_necessary_consequences(self):
-        self.assertEqual(len(self.info.necessary_consequences), 15)
+        self.assertEqual(len(self.info.necessary_consequences), 18)
         self.assertIn("irreversibility", self.info.necessary_consequences)
         self.assertIn("transition_enforcement", self.info.necessary_consequences)
         self.assertIn("causal_ordering", self.info.necessary_consequences)
@@ -196,10 +196,10 @@ class TestToBootstrapperSpec(unittest.TestCase):
             self.assertIsInstance(n, str)
 
     def test_node_count_preserved(self):
-        self.assertEqual(len(self.bs_spec["nodes"]), 51)
+        self.assertEqual(len(self.bs_spec["nodes"]), 63)
 
     def test_edge_count_preserved(self):
-        self.assertEqual(len(self.bs_spec["edges"]), 93)
+        self.assertEqual(len(self.bs_spec["edges"]), 131)
 
     def test_edges_have_bootstrapper_fields(self):
         for e in self.bs_spec["edges"]:
@@ -251,12 +251,12 @@ class TestLoadCanon(unittest.TestCase):
             "domain_invariance", "negative_necessity",
         }
         self.assertTrue(canonical.issubset(states))
-        # v2 has implementation nodes too
-        self.assertEqual(len(states), 51)
+        # v3 has implementation nodes too
+        self.assertEqual(len(states), 63)
 
     def test_landscape_has_edges(self):
         edges = self.cl.landscape.edges
-        self.assertEqual(len(edges), 93)
+        self.assertEqual(len(edges), 131)
 
     def test_inertia_modulation_enabled(self):
         self.assertTrue(self.cl.landscape.inertia_modulation)
@@ -558,7 +558,7 @@ class TestFormatCanonSummary(unittest.TestCase):
         self.assertIn("ontodynamics", self.summary)
 
     def test_contains_version(self):
-        self.assertIn("v2.0", self.summary)
+        self.assertIn("v3.0", self.summary)
 
     def test_contains_primitive_tier(self):
         self.assertIn("Primitive", self.summary)

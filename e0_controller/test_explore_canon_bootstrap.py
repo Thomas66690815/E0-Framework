@@ -1,4 +1,4 @@
-"""Tests for explore_canon_bootstrap.py — C200.
+"""Tests for explore_canon_bootstrap.py — C200 + C201.
 
 Validates the Canon × Bootstrap multiverse mechanism:
 1. Static bridge mapping (Canon ↔ Bootstrap)
@@ -7,6 +7,7 @@ Validates the Canon × Bootstrap multiverse mechanism:
 4. Unified exploration with domain crossings
 5. LLM bridge discovery (dry_run)
 6. Cross-domain persistence
+7. Ontodynamics v3.0 (12 new nodes, 38 new edges)
 """
 
 import json
@@ -368,3 +369,111 @@ class TestCrossDomainPersistence:
             assert len(matching) == 1
         finally:
             mod.BOOTSTRAP_PATH = orig_path
+
+
+# ---------------------------------------------------------------------------
+# Phase 7: Ontodynamics v3.0
+# ---------------------------------------------------------------------------
+
+
+class TestOntodynamicsV3:
+    """Ontodynamics v3.0 — 12 new nodes for post-C122 concepts."""
+
+    def test_version(self):
+        cl = load_canon("ontodynamics")
+        assert cl.info.version == "3.0"
+
+    def test_node_count(self):
+        cl = load_canon("ontodynamics")
+        assert len(cl.info.nodes) == 63  # 51 + 12
+
+    def test_edge_count(self):
+        cl = load_canon("ontodynamics")
+        assert len(cl.info.edges) == 131  # 93 + 38
+
+    def test_new_nodes_present(self):
+        """All 12 new nodes exist."""
+        cl = load_canon("ontodynamics")
+        ids = {n.id for n in cl.info.nodes}
+        new_ids = {
+            "transition_potential", "epistemic_trust", "auto_tuning",
+            "shared_historization", "bootstrap_landscape",
+            "perception_ontology", "communication_intent",
+            "compatibility_gating", "wl_node_fingerprint",
+            "curriculum_navigator", "n_domain_mesh",
+            "canon_bootstrap_multiverse",
+        }
+        for nid in new_ids:
+            assert nid in ids, f"Missing new node: {nid}"
+
+    def test_derivation_levels(self):
+        """New nodes at correct derivation levels."""
+        cl = load_canon("ontodynamics")
+        level_map = {n.id: n.derivation_level for n in cl.info.nodes}
+        assert level_map["transition_potential"] == 9
+        assert level_map["epistemic_trust"] == 11
+        assert level_map["auto_tuning"] == 12
+        assert level_map["shared_historization"] == 13
+        assert level_map["bootstrap_landscape"] == 13
+        assert level_map["perception_ontology"] == 14
+        assert level_map["communication_intent"] == 14
+        assert level_map["compatibility_gating"] == 15
+        assert level_map["wl_node_fingerprint"] == 15
+        assert level_map["curriculum_navigator"] == 18
+        assert level_map["n_domain_mesh"] == 18
+        assert level_map["canon_bootstrap_multiverse"] == 18
+
+    def test_new_nodes_reachable(self):
+        """Each new node has at least one incoming edge."""
+        cl = load_canon("ontodynamics")
+        targets = {e.target for e in cl.info.edges}
+        new_ids = {
+            "transition_potential", "epistemic_trust", "auto_tuning",
+            "shared_historization", "bootstrap_landscape",
+            "perception_ontology", "communication_intent",
+            "compatibility_gating", "wl_node_fingerprint",
+            "curriculum_navigator", "n_domain_mesh",
+            "canon_bootstrap_multiverse",
+        }
+        for nid in new_ids:
+            assert nid in targets, f"New node {nid} has no incoming edge"
+
+    def test_goal_states_updated(self):
+        cl = load_canon("ontodynamics")
+        assert "canon_bootstrap_multiverse" in cl.info.goal_states
+        assert "negative_necessity" in cl.info.goal_states
+        assert "sleep_wake_cycle" in cl.info.goal_states
+
+    def test_necessary_consequences_extended(self):
+        cl = load_canon("ontodynamics")
+        nc = cl.info.necessary_consequences
+        assert "compatibility_gating" in nc
+        assert "parameter_self_tuning" in nc
+        assert "cooperative_knowledge_sharing" in nc
+
+    def test_mass_description_clarified(self):
+        """Level 5 mass node description now references trace_load."""
+        cl = load_canon("ontodynamics")
+        mass_node = next(n for n in cl.info.nodes if n.id == "mass")
+        assert "trace_load" in mass_node.description
+
+    def test_canon_bootstrap_bridge_covers_new_nodes(self):
+        """CANON_BOOTSTRAP_BRIDGE maps all 12 new Canon nodes."""
+        new_ids = {
+            "transition_potential", "epistemic_trust", "auto_tuning",
+            "shared_historization", "bootstrap_landscape",
+            "perception_ontology", "communication_intent",
+            "compatibility_gating", "wl_node_fingerprint",
+            "curriculum_navigator", "n_domain_mesh",
+            "canon_bootstrap_multiverse",
+        }
+        for nid in new_ids:
+            assert nid in CANON_BOOTSTRAP_BRIDGE, (
+                f"New node {nid} not in CANON_BOOTSTRAP_BRIDGE"
+            )
+
+    def test_unified_landscape_larger_with_v3(self, unified_data):
+        """Unified landscape has more nodes with v3.0 Canon."""
+        _, unified_nodes, _, _ = unified_data
+        canon_nodes = [n for n in unified_nodes if n.startswith("C:")]
+        assert len(canon_nodes) == 63  # v3.0: 63 Canon nodes

@@ -91,13 +91,13 @@ class TestCompatibilityMatrix:
         )
         assert score < 0.6
 
-    def test_en_onto_incompatible_pre_nav(self, trained_landscapes):
-        """EN↔ONTO are incompatible before navigation (score > 0.6)."""
+    def test_en_onto_compatible_with_v3(self, trained_landscapes):
+        """EN↔ONTO are compatible with v3.0 ontodynamics (score < 0.6)."""
         score = dream_compatibility(
             trained_landscapes["EN"]["landscape"],
             trained_landscapes["ONTO"]["landscape"],
         )
-        assert score > 0.6
+        assert score < 0.6
 
     def test_de_onto_incompatible(self, trained_landscapes):
         """DE↔ONTO are incompatible (score > 0.6)."""

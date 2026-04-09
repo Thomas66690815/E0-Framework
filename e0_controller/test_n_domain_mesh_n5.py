@@ -183,11 +183,11 @@ class TestPreNavCompatibility:
             all_landscapes["PROJ"]["landscape"])
         assert score < 0.3
 
-    def test_en_onto_incompatible_pre_nav(self, all_landscapes):
+    def test_en_onto_compatible_with_v3(self, all_landscapes):
         score = dream_compatibility(
             all_landscapes["EN"]["landscape"],
             all_landscapes["ONTO"]["landscape"])
-        assert score > COMPATIBILITY_THRESHOLD
+        assert score < COMPATIBILITY_THRESHOLD
 
     def test_cross_family_all_incompatible(self, all_landscapes):
         """All canon↔bootstrapped pairs incompatible pre-navigation."""
@@ -200,8 +200,8 @@ class TestPreNavCompatibility:
                 all_landscapes[b]["landscape"])
             assert score > COMPATIBILITY_THRESHOLD, f"{a}↔{b} = {score}"
 
-    def test_exactly_2_compatible_pairs(self, all_landscapes):
-        """Pre-navigation: only EN↔DE and COOK↔PROJ compatible."""
+    def test_exactly_3_compatible_pairs(self, all_landscapes):
+        """Pre-navigation: EN↔DE, EN↔ONTO, and COOK↔PROJ compatible."""
         compatible = []
         labels = list(all_landscapes.keys())
         for a, b in combinations(labels, 2):
@@ -210,8 +210,9 @@ class TestPreNavCompatibility:
                 all_landscapes[b]["landscape"])
             if score < COMPATIBILITY_THRESHOLD:
                 compatible.append(f"{a}↔{b}")
-        assert len(compatible) == 2
+        assert len(compatible) == 3
         assert "EN↔DE" in compatible
+        assert "EN↔ONTO" in compatible
         assert "COOK↔PROJ" in compatible
 
 

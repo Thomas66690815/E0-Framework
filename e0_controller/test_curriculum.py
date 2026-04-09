@@ -448,8 +448,8 @@ class TestOntodynamicsCurriculum:
         # First turn: core canonical concepts
         assert "difference" in turns[0].node_ids
 
-        # Last turn: all 51 nodes
-        assert len(turns[-1].node_ids) == 51
+        # Last turn: all 63 nodes
+        assert len(turns[-1].node_ids) == 63
 
     def test_ontodynamics_has_goals_per_turn(self):
         spec = load_canon_spec("ontodynamics")

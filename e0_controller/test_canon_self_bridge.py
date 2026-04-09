@@ -192,7 +192,7 @@ class TestBuildSelfExposition(unittest.TestCase):
     def test_contains_canon_summary(self):
         expo = build_self_exposition(self.cl)
         self.assertIn("ontodynamics", expo)
-        self.assertIn("v2.0", expo)
+        self.assertIn("v3.0", expo)
 
     def test_contains_coverage_ratio(self):
         expo = build_self_exposition(self.cl)

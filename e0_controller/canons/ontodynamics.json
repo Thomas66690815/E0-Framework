@@ -1,8 +1,8 @@
 {
   "name": "ontodynamics",
-  "version": "2.0",
-  "source": "canon/ontodynamics.txt + canon/e0-canon-plain.txt + canon/e0-agi-blueprint.md + implementation (C1-C121, 3464 tests)",
-  "description": "Complete E0 landscape. Layers 0-8: Ontodynamics canon (pre-physical primitives, derivation topology, Axiom A0, emergence). Layers 9-17: Implementation (navigation, modulation, reflexion, multiverse, observation, dream mode, structural entropy, sleep-wake cycle). Derivation order encoded in delta topology. Confidence values reflect empirical validation from 3464 tests across 94 test files.",
+  "version": "3.0",
+  "source": "canon/ontodynamics.txt + canon/e0-canon-plain.txt + canon/e0-agi-blueprint.md + implementation (C1-C200, 4439 tests)",
+  "description": "Complete E0 landscape. Layers 0-8: Ontodynamics canon (pre-physical primitives, derivation topology, Axiom A0, emergence). Layers 9-18: Implementation (navigation, modulation, reflexion, multiverse, observation, dream mode, structural entropy, sleep-wake cycle, perception, communication, curriculum, N-domain mesh, Canon×Bootstrap multiverse). Derivation order encoded in delta topology. Confidence values reflect empirical validation from 4439 tests across 123 test files.",
   "nodes": [
     {
       "id": "difference",
@@ -86,7 +86,7 @@
       "label": "Mass",
       "derivation_level": 5,
       "is_primitive": false,
-      "description": "Persistent topological inertia from accumulated historization."
+      "description": "Persistent topological inertia from accumulated historization. Abstract concept — operationalized as trace_load (m=U+F) at Level 11 and inertia_factor I(e) for navigation dampening."
     },
     {
       "id": "axiom_a0",
@@ -360,6 +360,90 @@
       "derivation_level": 17,
       "is_primitive": false,
       "description": "Automatic rhythm: wake (controller navigation builds experience) → check dream_pressure → sleep (dream_cycle consolidation + structural decay) → wake. Self-sustaining limit cycle: Learn → Heat → Dream → Cool → Learn. Validated by C121 (17 tests)."
+    },
+    {
+      "id": "transition_potential",
+      "label": "Transition Potential",
+      "derivation_level": 9,
+      "is_primitive": false,
+      "description": "T(e) = Δ(e) · 1/(1 + m(e)/μ). Exploration signal: maximize local T for autonomous navigation without explicit goals. Dual of S_eff: argmax T (explore high-Δ, low-experience) vs argmin S_eff (exploit known paths). Fresh edges dominate; well-explored edges saturate. Validated by C195-C199."
+    },
+    {
+      "id": "epistemic_trust",
+      "label": "Epistemic Trust",
+      "derivation_level": 11,
+      "is_primitive": false,
+      "description": "trust(e) = exp(−staleness/τ_doubt). Self-calibrating doubt: stability from confirmations, decay from surprises. τ_base self-calibrating from experience distribution. Modulates inscription decisions: high-trust signals inscribed at full weight, low-trust attenuated. Addresses signal reliability, not signal direction (which trace_quality handles). Validated by C186 (22 tests)."
+    },
+    {
+      "id": "auto_tuning",
+      "label": "Auto-Tuning",
+      "derivation_level": 12,
+      "is_primitive": false,
+      "description": "Closed-loop parameter optimization: diagnose → perturb → evaluate → adopt. Self-Graph evaluates config choices via COMPONENT_PARAMS. suggest_perturbations generates candidates. auto_tune() runs trial matrix. Parameter sensitivity analysis feeds back into Self-Graph quality signals. Validated by C150-C155 (25 tests)."
+    },
+    {
+      "id": "shared_historization",
+      "label": "Shared Historization",
+      "derivation_level": 13,
+      "is_primitive": false,
+      "description": "Cooperative knowledge sharing via shared Historization instance across agents. Same topology, same U/F traces. River City: +128-244% cooperative gain vs independent historization. Gordian Trap GT-1 resolution: competition → cooperation. Validated by C189 (14 tests)."
+    },
+    {
+      "id": "bootstrap_landscape",
+      "label": "Bootstrap Landscape",
+      "derivation_level": 13,
+      "is_primitive": false,
+      "description": "LLM-seeded landscape initialization from structured spec. Bootstrapper creates navigable landscape from external knowledge (LLM, files, existing domains). bootstrap.json → 41 nodes, 78 edges as navigable E₀ landscape. Transition potential T(e) drives goal-free exploration. Validated by C44 (bootstrapper), C195-C199 (bootstrap landscape, 51 tests)."
+    },
+    {
+      "id": "perception_ontology",
+      "label": "Perception Ontology",
+      "derivation_level": 14,
+      "is_primitive": false,
+      "description": "Gestalt primitives (figure-ground, proximity, closure, similarity, continuity) as learnable perception domain. Observation tells WHAT to look at; perception tells HOW to interpret what is seen. Domain-invariant visual attention model. Validated by C158 (48 tests)."
+    },
+    {
+      "id": "communication_intent",
+      "label": "Communication Intent",
+      "derivation_level": 14,
+      "is_primitive": false,
+      "description": "Intent detection from controller state + perception → UISpec → human feedback → learning cycle. Closes the human-in-the-loop: E₀ expresses what it needs, human responds, response is historized. Task-aware: landscape + trace data flows into UI generation. Validated by C159-C166b (147 tests)."
+    },
+    {
+      "id": "compatibility_gating",
+      "label": "Compatibility Gating",
+      "derivation_level": 15,
+      "is_primitive": false,
+      "description": "dream_compatibility threshold (0.6 calibrated, gap=0.410). Compatible domains share structural patterns; incompatible domains are gated from dream coupling. Prevents noise injection from structurally alien domains. NOT transitive: A~B and B~C does not imply A~C. Validated by C168-C169 (15 tests)."
+    },
+    {
+      "id": "wl_node_fingerprint",
+      "label": "WL Node Fingerprint",
+      "derivation_level": 15,
+      "is_primitive": false,
+      "description": "WL recursive neighborhood fingerprint (depth-2) + Hungarian optimal assignment for node equivalence. Domain-agnostic structural matching at node level. BT-1 breakthrough: matching strategy (Hungarian) matters more than features. 44/44 = 100% accuracy. Validated by C135-C137."
+    },
+    {
+      "id": "curriculum_navigator",
+      "label": "Curriculum Navigator",
+      "derivation_level": 18,
+      "is_primitive": false,
+      "description": "Hierarchical learning across derivation levels. Equilibrium detection → advance curriculum level. Scoped sub-landscapes for each stage. Historization transfer between curriculum stages preserves learned structure. Macro-orchestration of sleep-wake learning rhythm. Validated by C123, C156 (14 tests)."
+    },
+    {
+      "id": "n_domain_mesh",
+      "label": "N-Domain Mesh",
+      "derivation_level": 18,
+      "is_primitive": false,
+      "description": "N>2 domain coupling with cluster formation and saturation detection. Quality stabilizes at N≈7, per-domain cost decreases with mesh size. ONTO acts as bridge domain between incompatible clusters (dream transitivity). Saturation point: adding domains beyond capacity degrades quality. Validated by C179-C182 (101 tests)."
+    },
+    {
+      "id": "canon_bootstrap_multiverse",
+      "label": "Canon × Bootstrap Multiverse",
+      "derivation_level": 18,
+      "is_primitive": false,
+      "description": "Unified navigation across theory (Canon: 51 nodes) and practice (Bootstrap: 41 nodes). Semantic bridges connect what E₀ IS (Ontodynamics) with what E₀ DOES (project memory). 80% crossing rate: exploration oscillates between domains. Cross-domain interference signal. Validated by C200 (19 tests)."
     }
   ],
   "edges": [
@@ -1292,11 +1376,392 @@
       "initial_F": 1,
       "confidence": 0.6,
       "derivation": "Spacetime IS the globally historized topology. Its structure constrains and informs further historization."
+    },
+    {
+      "from": "difference",
+      "to": "transition_potential",
+      "delta": 0.3,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.9,
+      "derivation": "Δ(e) component of transition potential T(e)."
+    },
+    {
+      "from": "trace_load",
+      "to": "transition_potential",
+      "delta": 0.3,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.9,
+      "derivation": "m/(m+μ) dampening: well-explored edges have lower T."
+    },
+    {
+      "from": "adaptive_mu",
+      "to": "transition_potential",
+      "delta": 0.3,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.85,
+      "derivation": "μ parameter shared with inertia and dream_pressure."
+    },
+    {
+      "from": "transition_potential",
+      "to": "greedy_navigation",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.85,
+      "derivation": "argmax T as exploration mode, dual to argmin S_eff exploitation."
+    },
+    {
+      "from": "transition_potential",
+      "to": "bootstrap_landscape",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.85,
+      "derivation": "Bootstrap navigation driven by transition potential — goal-free."
+    },
+    {
+      "from": "historization",
+      "to": "epistemic_trust",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.85,
+      "derivation": "Staleness computed from historization trace age."
+    },
+    {
+      "from": "trace_quality",
+      "to": "epistemic_trust",
+      "delta": 0.3,
+      "resistance": 0.2,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.85,
+      "derivation": "Surprise = deviation between expected and actual quality."
+    },
+    {
+      "from": "epistemic_trust",
+      "to": "inscription_threshold",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.85,
+      "derivation": "Trust modulates inscription decisions: high-trust signals inscribed at full weight, low-trust signals attenuated."
+    },
+    {
+      "from": "self_graph",
+      "to": "auto_tuning",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.8,
+      "derivation": "Self-Graph diagnoses component health → parameter perturbation targets."
+    },
+    {
+      "from": "adaptive_mu",
+      "to": "auto_tuning",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.8,
+      "derivation": "μ and other parameters as tuning targets."
+    },
+    {
+      "from": "auto_tuning",
+      "to": "greedy_navigation",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.8,
+      "derivation": "Optimized config flows into navigation decisions."
+    },
+    {
+      "from": "multiverse",
+      "to": "shared_historization",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.85,
+      "derivation": "Multiple agents required for shared knowledge to make sense."
+    },
+    {
+      "from": "historization",
+      "to": "shared_historization",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.85,
+      "derivation": "The shared object IS the historization instance."
+    },
+    {
+      "from": "shared_historization",
+      "to": "cross_reflexion",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.8,
+      "derivation": "Shared traces improve cross-edge proposals — agents see same history."
+    },
+    {
+      "from": "operational_cycle",
+      "to": "bootstrap_landscape",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.85,
+      "derivation": "Bootstrap creates landscape that implements the operational cycle."
+    },
+    {
+      "from": "domain_invariance",
+      "to": "bootstrap_landscape",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.85,
+      "derivation": "Same bootstrapper works across domains (LLM, files, project memory)."
+    },
+    {
+      "from": "bootstrap_landscape",
+      "to": "multiverse",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.8,
+      "derivation": "Bootstrapped landscapes become universes in multiverse."
+    },
+    {
+      "from": "observation",
+      "to": "perception_ontology",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.8,
+      "derivation": "Observation (what to see) extended with perception (how to interpret)."
+    },
+    {
+      "from": "domain_invariance",
+      "to": "perception_ontology",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.8,
+      "derivation": "Gestalt primitives are domain-invariant perception structures."
+    },
+    {
+      "from": "perception_ontology",
+      "to": "communication_intent",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.8,
+      "derivation": "Perceive → express: perception determines what to communicate."
+    },
+    {
+      "from": "observation",
+      "to": "communication_intent",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.8,
+      "derivation": "Controller state observed → intent detected → UISpec generated."
+    },
+    {
+      "from": "communication_intent",
+      "to": "historization",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.75,
+      "derivation": "Human feedback received via UISpec is historized as experience."
+    },
+    {
+      "from": "dream_mode",
+      "to": "compatibility_gating",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.85,
+      "derivation": "Gates which domains may dream-couple. Threshold 0.6 calibrated."
+    },
+    {
+      "from": "functional_equivalence",
+      "to": "compatibility_gating",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.85,
+      "derivation": "Equivalence quality determines compatibility score."
+    },
+    {
+      "from": "compatibility_gating",
+      "to": "bridge_hypothesis",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.85,
+      "derivation": "Only compatible domains generate bridge hypotheses."
+    },
+    {
+      "from": "edge_fingerprint",
+      "to": "wl_node_fingerprint",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.85,
+      "derivation": "WL recursion aggregates edge fingerprints into node neighborhoods."
+    },
+    {
+      "from": "functional_equivalence",
+      "to": "wl_node_fingerprint",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.85,
+      "derivation": "Hungarian assignment finds optimal node matching from WL fingerprints."
+    },
+    {
+      "from": "wl_node_fingerprint",
+      "to": "bridge_hypothesis",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.8,
+      "derivation": "Node-level bridges more precise than edge-level functional equivalence."
+    },
+    {
+      "from": "sleep_wake_cycle",
+      "to": "curriculum_navigator",
+      "delta": 0.6,
+      "resistance": 0.5,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.75,
+      "derivation": "Curriculum orchestrates multiple sleep-wake cycles per learning stage."
+    },
+    {
+      "from": "scoped_reflexion",
+      "to": "curriculum_navigator",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.75,
+      "derivation": "Scoped sub-landscapes for each curriculum level."
+    },
+    {
+      "from": "curriculum_navigator",
+      "to": "historization",
+      "delta": 0.6,
+      "resistance": 0.5,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.75,
+      "derivation": "Historization transfer between curriculum stages preserves structure."
+    },
+    {
+      "from": "multiverse",
+      "to": "n_domain_mesh",
+      "delta": 0.6,
+      "resistance": 0.5,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.8,
+      "derivation": "N-domain mesh scales multiverse from 2 to N coupled domains."
+    },
+    {
+      "from": "compatibility_gating",
+      "to": "n_domain_mesh",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.8,
+      "derivation": "Compatibility determines which domains form clusters in the mesh."
+    },
+    {
+      "from": "coupling_router",
+      "to": "n_domain_mesh",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.8,
+      "derivation": "Router selects partners in large mesh. RECOVERY/EXPLORATION dual pressure."
+    },
+    {
+      "from": "multiverse",
+      "to": "canon_bootstrap_multiverse",
+      "delta": 0.6,
+      "resistance": 0.5,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.8,
+      "derivation": "Multiverse infrastructure enables theory-practice coupling."
+    },
+    {
+      "from": "bootstrap_landscape",
+      "to": "canon_bootstrap_multiverse",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.8,
+      "derivation": "Bootstrap landscape provides the practice side of the multiverse."
+    },
+    {
+      "from": "n_domain_mesh",
+      "to": "canon_bootstrap_multiverse",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.75,
+      "derivation": "N-domain mesh machinery enables Canon×Bootstrap unified exploration."
+    },
+    {
+      "from": "canon_bootstrap_multiverse",
+      "to": "reflexivity",
+      "delta": 0.8,
+      "resistance": 0.7,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.7,
+      "derivation": "E₀ navigates its own theory + practice simultaneously — peak reflexivity."
     }
   ],
   "goal_states": [
     "negative_necessity",
-    "sleep_wake_cycle"
+    "sleep_wake_cycle",
+    "canon_bootstrap_multiverse"
   ],
   "necessary_consequences": [
     "irreversibility",
@@ -1313,15 +1778,18 @@
     "self_regulating_forgetting",
     "autonomous_sleep_wake_rhythm",
     "cross_domain_pattern_transfer",
-    "modulation_never_harms"
+    "modulation_never_harms",
+    "compatibility_gating",
+    "parameter_self_tuning",
+    "cooperative_knowledge_sharing"
   ],
   "empirical_validation": {
-    "total_tests": 3464,
-    "test_files": 94,
-    "commits": 121,
+    "total_tests": 4439,
+    "test_files": 123,
+    "commits": 200,
     "papers": 6,
     "benchmark_domains": 14,
     "falsification_targets_resolved": "8/8",
-    "last_validated": "2026-04-03"
+    "last_validated": "2026-04-09"
   }
 }

@@ -46,7 +46,8 @@ from .reflexive_action import ReflexiveJournal
 CANON_PROCESS_MAP: Dict[str, List[str]] = {
     # Δ-detection: the amplitude module finds differences and constructs
     # the tension signal S_eff = Δ · R_eff.
-    "amplitude": ["difference", "tension"],
+    # transition_potential: T(e) = Δ · 1/(1+m/μ), exploration dual of S_eff.
+    "amplitude": ["difference", "tension", "transition_potential"],
     # State selection via A0 + realizability rate + overrides.
     # negative_necessity: A₀ IS negative necessity —
     # "if Δ>0 and path exists, non-transition is unstable."
@@ -61,18 +62,20 @@ CANON_PROCESS_MAP: Dict[str, List[str]] = {
     "realization": [
         "local_realization", "path", "state", "domain_invariance",
         "greedy_navigation", "escalation",
+        "bootstrap_landscape", "communication_intent",
     ],
     # THE central connection — operational historization IS the canon
     # primitive. time: τ is DEFINED as "ordering of historizations" —
     # historization._tau increments on every update().
     # trace_quality + trace_load: metrics derived from historization.
-    "historization": ["historization", "time", "trace_quality", "trace_load"],
+    "historization": ["historization", "time", "trace_quality", "trace_load",
+                       "epistemic_trust", "shared_historization"],
     # Resistance from accumulated structure + topological inertia.
     # structural_alignment: alignment via resistance (AGI Blueprint §6).
     # inertia_modulation + adaptive_mu: the concrete inertia mechanisms.
     "inertia": [
         "resistance", "mass", "structural_alignment",
-        "inertia_modulation", "adaptive_mu",
+        "inertia_modulation", "adaptive_mu", "auto_tuning",
     ],
     # The transition field: connecting differences via the operational
     # cycle. reflexivity: the cycle operating on its own structure.
@@ -83,11 +86,14 @@ CANON_PROCESS_MAP: Dict[str, List[str]] = {
         "connection", "operational_cycle",
         "reflexivity", "structural_admissibility",
         "reflexion_reactive", "reflexion_proactive", "scoped_reflexion",
+        "curriculum_navigator", "n_domain_mesh",
+        "canon_bootstrap_multiverse",
     ],
     # Curvature modulation → SU(2) phase geometry
-    "curvature": ["overlap", "su2_phase"],
+    "curvature": ["overlap", "su2_phase",
+                   "perception_ontology", "wl_node_fingerprint"],
     # Overlap modulation → graduated overlap M_H
-    "overlap": ["overlap", "overlap_modulation"],
+    "overlap": ["overlap", "overlap_modulation", "compatibility_gating"],
 }
 
 # Reverse map: canon node → which self-graph component(s) instantiate it

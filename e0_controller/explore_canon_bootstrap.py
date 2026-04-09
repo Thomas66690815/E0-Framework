@@ -81,6 +81,20 @@ CANON_BOOTSTRAP_BRIDGE = {
     "coupling_router": ["OPEN-1"],    # orchestrator pattern
     "asymmetric_coupling": ["OPEN-2"],  # adversarial stability
     "scoped_reflexion": ["OPEN-3"],   # longer loops need scoped reflexion
+
+    # v3.0: New Canon concepts (post-C122)
+    "transition_potential": ["L3"],     # T(e) drives controller exploration
+    "epistemic_trust": ["L1", "L3"],   # trust modulates primitives + controller
+    "auto_tuning": ["L5", "BT-4"],     # reflexion self-optimization, dual nature
+    "shared_historization": ["L6", "BT-3"],  # multiverse cooperation, cooperation BT
+    "bootstrap_landscape": ["L2", "HERE"],   # landscape init, project state
+    "perception_ontology": ["L8"],      # observation → perception
+    "communication_intent": ["L8"],     # observation → expression
+    "compatibility_gating": ["L9"],     # dream gating
+    "wl_node_fingerprint": ["L9", "BT-1"],  # dream matching, Hungarian BT
+    "curriculum_navigator": ["L11"],    # macro-orchestration ≈ sleep-wake
+    "n_domain_mesh": ["L6"],            # multiverse at scale
+    "canon_bootstrap_multiverse": ["HERE"],  # THIS exploration
 }
 
 

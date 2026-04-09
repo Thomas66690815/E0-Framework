@@ -81,7 +81,7 @@ class TestCoverageCorrection(unittest.TestCase):
         self.cov = canon_coverage(self.cl)
 
     def test_coverage_above_60_percent(self):
-        """Coverage should be >60% after honest mapping (33/51 in v2)."""
+        """Coverage should be >60% after honest mapping (45/63 in v3)."""
         self.assertGreater(self.cov["coverage_ratio"], 0.6)
 
     def test_spacetime_not_instantiated(self):
