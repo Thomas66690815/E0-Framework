@@ -40,6 +40,20 @@ Epistemic Trust (C186):
     Stale edges (never revisited) → trust drifts toward 0.
     δ_H_trusted(e) = δ_H(e) · trust(e).
 
+Surprise Dampening (C187):
+    "The bridge was full" ≠ "the bridge is bad."
+    When surprise_dampening=True, a surprising outcome (revisit where
+    actual contradicts predicted direction) is inscribed with weight 0.5
+    instead of 1.0.  This prevents transient events from overwriting
+    stable knowledge.  First-visit edges are always inscribed at full
+    weight (no expectation to violate).
+
+    classify_experience() diagnoses the domain character from accumulated
+    surprise/confirmation statistics:
+        'stable'      — low surprise rate (< 30%), outcomes match predictions
+        'volatile'    — high surprise rate (≥ 30%), many contradictions
+        'exploratory' — insufficient revisit data
+
 Note on PARTIAL outcomes: The canonical spec defines only SUCCESS and FAILURE.
 PARTIAL (U += 0.5, F += 0.3) is a runtime convenience extension — operationally
 useful but not derived from the minimal canonical core.
@@ -97,6 +111,9 @@ class Historization:
     _surprises: Dict[Edge, float] = field(default_factory=dict)
     _inter_visit_intervals: List[int] = field(default_factory=list)  # recent intervals for τ_base
 
+    # Surprise Dampening (C187)
+    surprise_dampening: bool = False  # when True, surprising outcomes get weight 0.5
+
     # --- Lazy Global Decay (K2) ---
 
     def _effective_traces(self, edge: Edge) -> Tuple[float, float]:
@@ -138,15 +155,23 @@ class Historization:
         A revisit = τ − τ_last > 1 (not the immediately next step).
         Confirmation: outcome matches predicted direction (q > 0 → S, q < 0 → F).
         Surprise: outcome contradicts predicted direction.
+
+        C187: Surprise dampening — surprising outcomes are inscribed with
+        reduced weight.  "The bridge was full" ≠ "the bridge is bad."
+        When surprise_dampening is True and a revisit surprises us,
+        the inscription weight is halved (0.5 instead of 1.0).
+        This prevents transient events (congestion, temporary blockage)
+        from overwriting stable knowledge.
         """
         # Catch up missed decay steps (K2)
         u_prev, f_prev = self._effective_traces(edge)
         rs = self.rho_s if self.rho_s is not None else self.rho
         rf = self.rho_f if self.rho_f is not None else self.rho
 
-        # C186: Epistemic trust — track revisit confirmation/surprise
+        # C186/C187: track revisit confirmation/surprise + dampening
         tau_last = self._tau_last.get(edge, -1)
         gap = self._tau - tau_last if tau_last >= 0 else -1
+        is_surprise = False
         if gap > 1 and (u_prev + f_prev) > 1e-12:
             # This is a revisit of a previously-experienced edge
             self._inter_visit_intervals.append(gap)
@@ -158,26 +183,30 @@ class Historization:
             predicted_success = q_prev >= 0.0
             actual_success = (outcome == Outcome.SUCCESS or
                               (outcome == Outcome.PARTIAL and q_prev >= 0.0))
+            is_surprise = (predicted_success != actual_success)
             # Decay old confirmations/surprises (same ρ as traces)
             rho_trust = self.rho
             old_conf = self._confirmations.get(edge, 0.0) * rho_trust ** gap
             old_surp = self._surprises.get(edge, 0.0) * rho_trust ** gap
-            if predicted_success == actual_success:
+            if not is_surprise:
                 self._confirmations[edge] = old_conf + 1.0
                 self._surprises[edge] = old_surp
             else:
                 self._confirmations[edge] = old_conf
                 self._surprises[edge] = old_surp + 1.0
 
+        # C187: Surprise dampening — transient events get reduced inscription
+        w = 0.5 if (is_surprise and self.surprise_dampening) else 1.0
+
         if outcome == Outcome.SUCCESS:
-            self._U[edge] = rs * u_prev + 1.0
+            self._U[edge] = rs * u_prev + w
             self._F[edge] = rf * f_prev
         elif outcome == Outcome.FAILURE:
             self._U[edge] = rs * u_prev
-            self._F[edge] = rf * f_prev + 1.0
+            self._F[edge] = rf * f_prev + w
         else:  # PARTIAL (runtime extension, not canonical)
-            self._U[edge] = rs * u_prev + 0.5
-            self._F[edge] = rf * f_prev + 0.3
+            self._U[edge] = rs * u_prev + 0.5 * w
+            self._F[edge] = rf * f_prev + 0.3 * w
 
         self._tau += 1
         self._tau_last[edge] = self._tau
@@ -281,6 +310,62 @@ class Historization:
         correction weakens, and the edge returns to its base resistance.
         """
         return self.delta_H(edge) * self.trust(edge)
+
+    # --- Experience Classification (C187) ---
+
+    def surprise_rate(self) -> float:
+        """Global fraction of surprising revisits.
+
+        Returns the ratio of total surprises to total revisit events
+        across all edges.  High surprise_rate = volatile/competitive
+        environment where outcomes contradict predictions.
+
+        Returns float in [0, 1].  0.0 when no revisit data exists.
+        """
+        total_conf = sum(self._confirmations.values())
+        total_surp = sum(self._surprises.values())
+        total = total_conf + total_surp
+        if total < 1e-12:
+            return 0.0
+        return total_surp / total
+
+    def classify_experience(self) -> str:
+        """Classify the domain character from accumulated experience.
+
+        Uses surprise_rate and surprise distribution to determine
+        what kind of environment the agent is navigating.
+
+        Returns one of:
+            'stable'      — low surprise_rate, outcomes match predictions
+            'volatile'    — high surprise_rate, many contradictions
+            'exploratory' — insufficient revisit data to classify
+
+        This is E₀'s domain-awareness: "What kind of problem am I in?"
+        The classification can inform strategy choices (overlay horizon,
+        exploration policy, inscription parameters) across rounds.
+        """
+        total_conf = sum(self._confirmations.values())
+        total_surp = sum(self._surprises.values())
+        total = total_conf + total_surp
+        if total < 3.0:
+            return "exploratory"
+        sr = total_surp / total
+        if sr > 0.3:
+            return "volatile"
+        return "stable"
+
+    def surprise_edges(self, top_k: int = 5) -> list:
+        """Return edges with highest surprise counts.
+
+        Useful for diagnosing WHERE surprises concentrate — if they
+        cluster at few edges, those are bottlenecks/congestion points.
+        If distributed, the domain is inherently stochastic.
+
+        Returns list of (edge, surprise_count) sorted descending.
+        """
+        items = [(e, s) for e, s in self._surprises.items() if s > 1e-12]
+        items.sort(key=lambda x: -x[1])
+        return items[:top_k]
 
     def record(self, edge: Edge, outcome: Outcome,
                r_eff_before: float, r_eff_after: float,

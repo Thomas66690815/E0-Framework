@@ -623,6 +623,7 @@ Born sampling (P ∝ I, choosing actions probabilistically from the amplitude-de
 | `test_saturation_point.py` | C182 (mesh saturation point, parametric templates, quality collapse) |
 | `test_e2e_multiverse.py` | C183 (E2E multiverse, 15-phase pipeline, all 14 layers) |
 | `test_epistemic_trust.py` | C186 (epistemic trust: stability, trust decay, self-calibrating τ_base, controller integration, snapshot persistence) |
+| `test_surprise_dampening.py` | C187 (surprise dampening: half-weight inscription for surprising outcomes, experience classification, surprise_rate, surprise_edges) |
 | `test_structural_entropy.py` | C115/C116/C117/C118/C121 |
 | `test_config.py` | C148 (E0Config parameter registry) |
 | `test_parameter_sensitivity.py` | C150/C155 (sensitivity analysis, auto-tuning) |
@@ -4068,7 +4069,8 @@ Hungarian+WL-D2 scales beyond the 44-node real canons, maintaining >99% accuracy
 | `test_saturation_point.py` | 34 | C182 |
 | `test_e2e_multiverse.py` | 35 | C183 |
 | `test_epistemic_trust.py` | 22 | C186 |
-| **Total** | **3920** | |
+| `test_surprise_dampening.py` | 18 | C187 |
+| **Total** | **3938** | |
 
 ---
 

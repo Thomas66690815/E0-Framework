@@ -89,6 +89,12 @@ class E0Config:
     # for stale edges.  Self-calibrating from revisit statistics.
     epistemic_trust: bool = False
 
+    # Surprise dampening (C187): transient-aware inscription.
+    # When True, surprising outcomes (revisit contradicts prediction)
+    # are inscribed with half weight.  Prevents congestion from
+    # overwriting stable knowledge.
+    surprise_dampening: bool = False
+
     # ── Half-load constant (mu) ──────────────────────────────────
     # Used in 5 subsystems for sigmoid normalization.
     # Controls the "experience threshold" — at load=mu, the

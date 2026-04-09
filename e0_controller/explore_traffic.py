@@ -374,6 +374,7 @@ def spawn_vehicles(
     positions: Dict[str, str],
     bfs_table: Dict[Tuple[str, str], str],
     epistemic_trust: bool = False,
+    surprise_dampening: bool = False,
 ) -> List[Vehicle]:
     """Create n vehicles at random positions with random goals."""
     vehicles = []
@@ -388,6 +389,7 @@ def spawn_vehicles(
         # Build E₀ internals if needed
         if strategy in (Strategy.E0_GREEDY, Strategy.E0_FULL, Strategy.E0_CONSERVATIVE):
             v.landscape = build_vehicle_landscape(city, goal)
+            v.landscape.historization.surprise_dampening = surprise_dampening
             if strategy == Strategy.E0_GREEDY:
                 mode = HybridMode.GREEDY
                 horizon = 0
@@ -458,6 +460,7 @@ def run_simulation(
     bfs_table: Optional[Dict[Tuple[str, str], str]] = None,
     snapshot_interval: int = 50,
     epistemic_trust: bool = False,
+    surprise_dampening: bool = False,
 ) -> SimResult:
     """Run tick-based traffic simulation."""
     if bfs_table is None:
@@ -465,7 +468,8 @@ def run_simulation(
 
     positions: Dict[str, str] = {}
     vehicles = spawn_vehicles(city, n_vehicles, strategy, positions, bfs_table,
-                              epistemic_trust=epistemic_trust)
+                              epistemic_trust=epistemic_trust,
+                              surprise_dampening=surprise_dampening)
 
     all_trips: List[TripRecord] = []
     snapshots: List[TickSnapshot] = []
@@ -699,6 +703,7 @@ def spawn_commute_vehicles(
     bfs_table: Dict[Tuple[str, str], str],
     river_row: int = 3,
     epistemic_trust: bool = False,
+    surprise_dampening: bool = False,
 ) -> List[Vehicle]:
     """Create n vehicles that commute north → south (forced river crossing).
 
@@ -715,6 +720,7 @@ def spawn_commute_vehicles(
         positions[v.name] = v.position
         if strategy in (Strategy.E0_GREEDY, Strategy.E0_FULL, Strategy.E0_CONSERVATIVE):
             v.landscape = build_vehicle_landscape(city, goal)
+            v.landscape.historization.surprise_dampening = surprise_dampening
             if strategy == Strategy.E0_GREEDY:
                 mode = HybridMode.GREEDY
                 horizon = 0
@@ -945,45 +951,103 @@ def main_river_city():
     print(f"Seed-averaged results (5 seeds)\n")
 
     seeds = [42, 123, 2024, 7777, 31415]
+    # (label, strategy, epistemic_trust, surprise_dampening)
     strategies = [
-        ("Greedy", Strategy.GREEDY_DELTA, False),
-        ("E0_greedy", Strategy.E0_GREEDY, False),
-        ("E0_greedy+trust", Strategy.E0_GREEDY, True),
-        ("E0_conserv.", Strategy.E0_CONSERVATIVE, False),
-        ("E0_cons.+trust", Strategy.E0_CONSERVATIVE, True),
+        ("Greedy", Strategy.GREEDY_DELTA, False, False),
+        ("E0_greedy", Strategy.E0_GREEDY, False, False),
+        ("E0_greedy+damp", Strategy.E0_GREEDY, False, True),
+        ("E0_conserv.", Strategy.E0_CONSERVATIVE, False, False),
+        ("E0_cons.+damp", Strategy.E0_CONSERVATIVE, False, True),
     ]
     for n_veh in (10, 15, 20):
         print(f"--- {n_veh} vehicles, 1000 ticks ---")
         totals: Dict[str, List[int]] = {s[0]: [] for s in strategies}
         for seed in seeds:
-            for label, strat, trust in strategies:
+            for label, strat, trust, damp in strategies:
                 random.seed(seed)
                 r = run_simulation(
                     city, n_vehicles=n_veh, n_ticks=1000,
                     strategy=strat, bfs_table=bfs_table,
                     epistemic_trust=trust,
+                    surprise_dampening=damp,
                 )
                 totals[label].append(r.trips_completed)
         avgs = {k: sum(v) / len(v) for k, v in totals.items()}
-        for label, _, _ in strategies:
+        for label, _, _, _ in strategies:
             print(f"  {label:20s} {avgs[label]:6.0f} trips (avg)")
-        # Trust gain for greedy
         g_base = avgs["E0_greedy"]
-        g_trust = avgs["E0_greedy+trust"]
-        gain_g = (g_trust - g_base) / max(g_base, 1) * 100
-        print(f"  → Trust gain (greedy):     {gain_g:+.0f}%")
-        # Trust gain for conservative
+        g_damp = avgs["E0_greedy+damp"]
+        gain_g = (g_damp - g_base) / max(g_base, 1) * 100
+        print(f"  → Dampening gain (greedy):     {gain_g:+.0f}%")
         c_base = avgs["E0_conserv."]
-        c_trust = avgs["E0_cons.+trust"]
-        gain_c = (c_trust - c_base) / max(c_base, 1) * 100
-        print(f"  → Trust gain (conserv.):   {gain_c:+.0f}%")
+        c_damp = avgs["E0_cons.+damp"]
+        gain_c = (c_damp - c_base) / max(c_base, 1) * 100
+        print(f"  → Dampening gain (conserv.):   {gain_c:+.0f}%")
     print()
-    print("C186 validation: Does epistemic trust recover greedy from bridge trap?")
+    print("C187 validation: Does surprise dampening help at bridge trap?")
+
+
+def main_river_city_multiround():
+    """Multi-round River City — measure learning effect across rounds.
+
+    E₀ is a baby: it starts at zero and must learn.  The fair comparison
+    is not "E₀ vs. trained Greedy in round 1" but "how fast does E₀
+    improve across rounds?"  Greedy has no memory, so it performs
+    identically in every round.  E₀ accumulates experience.
+
+    Round = same topology, fresh random positions/goals per round,
+    but PRESERVED historization (continuing knowledge).
+
+    C187 validation: Does surprise dampening accelerate learning?
+    """
+    city = CityGrid.build_river_city()
+    bfs_table = bfs_next_hop(city)
+
+    print("=== Multi-Round River City ===")
+    print("Each round: 500 ticks, 10 vehicles, historization preserved\n")
+
+    n_rounds = 5
+    ticks_per_round = 500
+    n_veh = 10
+
+    configs = [
+        ("Greedy", Strategy.GREEDY_DELTA, False, False),
+        ("E0_greedy", Strategy.E0_GREEDY, False, False),
+        ("E0_greedy+damp", Strategy.E0_GREEDY, False, True),
+        ("E0_conserv.", Strategy.E0_CONSERVATIVE, False, False),
+        ("E0_cons.+damp", Strategy.E0_CONSERVATIVE, False, True),
+    ]
+
+    seeds = [42, 123, 2024]
+    for label, strat, trust, damp in configs:
+        round_avgs = []
+        for rnd in range(n_rounds):
+            trips_this_round = []
+            for seed in seeds:
+                random.seed(seed + rnd * 1000)
+                r = run_simulation(
+                    city, n_vehicles=n_veh, n_ticks=ticks_per_round,
+                    strategy=strat, bfs_table=bfs_table,
+                    epistemic_trust=trust,
+                    surprise_dampening=damp,
+                )
+                trips_this_round.append(r.trips_completed)
+            round_avgs.append(sum(trips_this_round) / len(trips_this_round))
+        # Print learning curve
+        curve = " → ".join(f"{a:.0f}" for a in round_avgs)
+        improvement = (round_avgs[-1] - round_avgs[0]) / max(round_avgs[0], 1) * 100
+        print(f"  {label:20s}  {curve}  ({improvement:+.0f}% R1→R{n_rounds})")
+
+    print()
+    print("Key question: Does E₀ improve across rounds while Greedy stays flat?")
+    print("C187: Does surprise dampening accelerate the learning curve?")
 
 
 if __name__ == "__main__":
     import sys
     if "--river" in sys.argv:
         main_river_city()
+    elif "--multiround" in sys.argv:
+        main_river_city_multiround()
     else:
         main()

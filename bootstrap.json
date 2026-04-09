@@ -29,10 +29,10 @@
   },
 
   "state": {
-    "latest_commit": "C186",
-    "latest_commit_hash": "666f4c0",
-    "latest_commit_msg": "C186: Epistemic Trust — self-calibrating doubt for historization (22 tests, 4287 total)",
-    "test_count": 4287,
+    "latest_commit": "C187",
+    "latest_commit_hash": "0b26661",
+    "latest_commit_msg": "C187: Surprise Dampening — pre-inscription memory routing (18 tests, 4305 total)",
+    "test_count": 4305,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
     "module_count": "76 production + 10 benchmarks + 17 demos + 65 explorations + 121 test files",
@@ -61,7 +61,7 @@
     "layers": {
       "1_primitives": {
         "files": ["primitives.py", "historization.py", "tension.py", "config.py"],
-        "purpose": "Edge, Outcome, Historization (U/F traces, decay, C186 epistemic trust: self-calibrating doubt per edge), Tension (S_eff = Δ · R_eff), E0Config (central parameter registry)"
+        "purpose": "Edge, Outcome, Historization (U/F traces, decay, C186 epistemic trust, C187 surprise dampening: half-weight inscription for surprising outcomes + experience classification), Tension (S_eff = Δ · R_eff), E0Config (central parameter registry)"
       },
       "2_landscape": {
         "files": ["landscape.py"],
