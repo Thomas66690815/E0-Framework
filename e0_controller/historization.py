@@ -54,6 +54,15 @@ Surprise Dampening (C187):
         'volatile'    — high surprise rate (≥ 30%), many contradictions
         'exploratory' — insufficient revisit data
 
+Adaptive Observation (C188):
+    E₀ observes its own volatility and adapts.  adapt_from_experience()
+    reads classify_experience() and toggles surprise_dampening:
+        volatile    → enable dampening  (inscribe cautiously)
+        stable      → disable dampening (trust signals fully)
+        exploratory → no change         (wait for more data)
+    This closes the observation loop: Historization → classify →
+    adapt → inscription weight changes. The system learns *how to learn*.
+
 Note on PARTIAL outcomes: The canonical spec defines only SUCCESS and FAILURE.
 PARTIAL (U += 0.5, F += 0.3) is a runtime convenience extension — operationally
 useful but not derived from the minimal canonical core.
@@ -366,6 +375,29 @@ class Historization:
         items = [(e, s) for e, s in self._surprises.items() if s > 1e-12]
         items.sort(key=lambda x: -x[1])
         return items[:top_k]
+
+    def adapt_from_experience(self) -> bool:
+        """Observe own volatility and adapt surprise_dampening.
+
+        C188: The observation feedback loop — E₀ recognizes the nature
+        of its environment from accumulated experience and adapts its
+        inscription strategy accordingly.
+
+        Rules:
+            volatile    → enable dampening  (transient noise, inscribe cautiously)
+            stable      → disable dampening (signals are reliable, inscribe fully)
+            exploratory → no change         (insufficient data to decide)
+
+        Returns True if dampening state changed, False if unchanged.
+        """
+        domain_class = self.classify_experience()
+        if domain_class == "exploratory":
+            return False  # not enough data — hold current setting
+        should_dampen = (domain_class == "volatile")
+        if should_dampen == self.surprise_dampening:
+            return False  # already correct
+        self.surprise_dampening = should_dampen
+        return True
 
     def record(self, edge: Edge, outcome: Outcome,
                r_eff_before: float, r_eff_after: float,

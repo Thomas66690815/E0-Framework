@@ -269,7 +269,9 @@ class ObservationController:
         Depth levels (cumulative):
           topo  — nodes and edges exist (structure only)
           field — scalar field: Δ, R₀, R_eff, S_eff per edge
-          dyn   — dynamics: historization traces, trace_load, trace_quality
+          dyn   — dynamics: historization traces, trace_load, trace_quality,
+                  surprise metrics (C188: surprise_rate, domain_class,
+                  surprise_edges, surprise_dampening active flag)
           mech  — mechanism: (extension point for controller state)
           intf  — interference: (extension point for amplitude overlay)
 
@@ -344,6 +346,17 @@ class ObservationController:
                     "trace_quality": tq,
                 }
             result["dynamics"] = dyn_data
+
+            # C188: Surprise metrics — E₀ observes its own volatility
+            result["surprise_metrics"] = {
+                "surprise_rate": hist.surprise_rate(),
+                "domain_classification": hist.classify_experience(),
+                "surprise_dampening_active": hist.surprise_dampening,
+                "surprise_edges": [
+                    {"source": e.source, "target": e.target, "count": cnt}
+                    for e, cnt in hist.surprise_edges(5)
+                ],
+            }
 
         # ── Layer 3: Mechanism (extension point) ──
         if d_idx >= 3:

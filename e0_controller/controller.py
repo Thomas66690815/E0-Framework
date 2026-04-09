@@ -246,6 +246,7 @@ class E0Controller:
         focus_k: Optional[int] = None,
         inscription_threshold: bool = False,
         epistemic_trust: bool = False,
+        adaptive_dampening: bool = False,
     ):
         self.landscape = landscape
         self.execute_fn = execute_fn
@@ -274,6 +275,7 @@ class E0Controller:
         self.focus_k = focus_k  # C82: focus narrowing limit
         self.inscription_threshold = inscription_threshold  # C118: Type 1 forgetting
         self.epistemic_trust = epistemic_trust  # C186: doubt-aware δ_H
+        self.adaptive_dampening = adaptive_dampening  # C188: observation feedback loop
         self._focus_rng = random.Random(42)  # C82: deterministic but varied
         self._recent: List[str] = []   # sliding window of recent states
 
@@ -731,6 +733,10 @@ class E0Controller:
                     ),
                 )
                 self.self_graph.self_historize(components, outcome)
+
+        # C188: Adaptive observation — re-evaluate dampening after inscription
+        if self.adaptive_dampening and inscribed:
+            self.landscape.historization.adapt_from_experience()
 
         # Capture R_eff after
         r_eff_after = self._effective_resistance(current, target)

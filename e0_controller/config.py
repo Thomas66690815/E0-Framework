@@ -95,6 +95,10 @@ class E0Config:
     # overwriting stable knowledge.
     surprise_dampening: bool = False
 
+    # C188: When True, observe own volatility and toggle surprise_dampening
+    # dynamically (volatile → enable, stable → disable, exploratory → hold).
+    adaptive_dampening: bool = False
+
     # ── Half-load constant (mu) ──────────────────────────────────
     # Used in 5 subsystems for sigmoid normalization.
     # Controls the "experience threshold" — at load=mu, the

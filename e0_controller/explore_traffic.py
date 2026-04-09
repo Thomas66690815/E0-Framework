@@ -375,6 +375,7 @@ def spawn_vehicles(
     bfs_table: Dict[Tuple[str, str], str],
     epistemic_trust: bool = False,
     surprise_dampening: bool = False,
+    adaptive_dampening: bool = False,
 ) -> List[Vehicle]:
     """Create n vehicles at random positions with random goals."""
     vehicles = []
@@ -413,6 +414,7 @@ def spawn_vehicles(
                 hybrid_geometry="goal_reaching",
                 confidence_threshold=conf,
                 epistemic_trust=epistemic_trust,
+                adaptive_dampening=adaptive_dampening,
             )
 
         vehicles.append(v)
@@ -461,6 +463,7 @@ def run_simulation(
     snapshot_interval: int = 50,
     epistemic_trust: bool = False,
     surprise_dampening: bool = False,
+    adaptive_dampening: bool = False,
 ) -> SimResult:
     """Run tick-based traffic simulation."""
     if bfs_table is None:
@@ -469,7 +472,8 @@ def run_simulation(
     positions: Dict[str, str] = {}
     vehicles = spawn_vehicles(city, n_vehicles, strategy, positions, bfs_table,
                               epistemic_trust=epistemic_trust,
-                              surprise_dampening=surprise_dampening)
+                              surprise_dampening=surprise_dampening,
+                              adaptive_dampening=adaptive_dampening)
 
     all_trips: List[TripRecord] = []
     snapshots: List[TickSnapshot] = []
@@ -704,6 +708,7 @@ def spawn_commute_vehicles(
     river_row: int = 3,
     epistemic_trust: bool = False,
     surprise_dampening: bool = False,
+    adaptive_dampening: bool = False,
 ) -> List[Vehicle]:
     """Create n vehicles that commute north → south (forced river crossing).
 
@@ -744,6 +749,7 @@ def spawn_commute_vehicles(
                 hybrid_geometry="goal_reaching",
                 confidence_threshold=conf,
                 epistemic_trust=epistemic_trust,
+                adaptive_dampening=adaptive_dampening,
             )
         vehicles.append(v)
     return vehicles
@@ -951,40 +957,43 @@ def main_river_city():
     print(f"Seed-averaged results (5 seeds)\n")
 
     seeds = [42, 123, 2024, 7777, 31415]
-    # (label, strategy, epistemic_trust, surprise_dampening)
+    # (label, strategy, epistemic_trust, surprise_dampening, adaptive_dampening)
     strategies = [
-        ("Greedy", Strategy.GREEDY_DELTA, False, False),
-        ("E0_greedy", Strategy.E0_GREEDY, False, False),
-        ("E0_greedy+damp", Strategy.E0_GREEDY, False, True),
-        ("E0_conserv.", Strategy.E0_CONSERVATIVE, False, False),
-        ("E0_cons.+damp", Strategy.E0_CONSERVATIVE, False, True),
+        ("Greedy", Strategy.GREEDY_DELTA, False, False, False),
+        ("E0_greedy", Strategy.E0_GREEDY, False, False, False),
+        ("E0_greedy+damp", Strategy.E0_GREEDY, False, True, False),
+        ("E0_greedy+adapt", Strategy.E0_GREEDY, False, False, True),
+        ("E0_conserv.", Strategy.E0_CONSERVATIVE, False, False, False),
+        ("E0_cons.+damp", Strategy.E0_CONSERVATIVE, False, True, False),
+        ("E0_cons.+adapt", Strategy.E0_CONSERVATIVE, False, False, True),
     ]
     for n_veh in (10, 15, 20):
         print(f"--- {n_veh} vehicles, 1000 ticks ---")
         totals: Dict[str, List[int]] = {s[0]: [] for s in strategies}
         for seed in seeds:
-            for label, strat, trust, damp in strategies:
+            for label, strat, trust, damp, adapt in strategies:
                 random.seed(seed)
                 r = run_simulation(
                     city, n_vehicles=n_veh, n_ticks=1000,
                     strategy=strat, bfs_table=bfs_table,
                     epistemic_trust=trust,
                     surprise_dampening=damp,
+                    adaptive_dampening=adapt,
                 )
                 totals[label].append(r.trips_completed)
         avgs = {k: sum(v) / len(v) for k, v in totals.items()}
-        for label, _, _, _ in strategies:
+        for label, _, _, _, _ in strategies:
             print(f"  {label:20s} {avgs[label]:6.0f} trips (avg)")
         g_base = avgs["E0_greedy"]
-        g_damp = avgs["E0_greedy+damp"]
-        gain_g = (g_damp - g_base) / max(g_base, 1) * 100
-        print(f"  → Dampening gain (greedy):     {gain_g:+.0f}%")
+        g_adapt = avgs["E0_greedy+adapt"]
+        gain_ga = (g_adapt - g_base) / max(g_base, 1) * 100
+        print(f"  → Adaptive gain (greedy):      {gain_ga:+.0f}%")
         c_base = avgs["E0_conserv."]
-        c_damp = avgs["E0_cons.+damp"]
-        gain_c = (c_damp - c_base) / max(c_base, 1) * 100
-        print(f"  → Dampening gain (conserv.):   {gain_c:+.0f}%")
+        c_adapt = avgs["E0_cons.+adapt"]
+        gain_ca = (c_adapt - c_base) / max(c_base, 1) * 100
+        print(f"  → Adaptive gain (conserv.):    {gain_ca:+.0f}%")
     print()
-    print("C187 validation: Does surprise dampening help at bridge trap?")
+    print("C188 validation: Does adaptive observation outperform static dampening?")
 
 
 def main_river_city_multiround():
@@ -1010,16 +1019,19 @@ def main_river_city_multiround():
     ticks_per_round = 500
     n_veh = 10
 
+    # (label, strategy, epistemic_trust, surprise_dampening, adaptive_dampening)
     configs = [
-        ("Greedy", Strategy.GREEDY_DELTA, False, False),
-        ("E0_greedy", Strategy.E0_GREEDY, False, False),
-        ("E0_greedy+damp", Strategy.E0_GREEDY, False, True),
-        ("E0_conserv.", Strategy.E0_CONSERVATIVE, False, False),
-        ("E0_cons.+damp", Strategy.E0_CONSERVATIVE, False, True),
+        ("Greedy", Strategy.GREEDY_DELTA, False, False, False),
+        ("E0_greedy", Strategy.E0_GREEDY, False, False, False),
+        ("E0_greedy+damp", Strategy.E0_GREEDY, False, True, False),
+        ("E0_greedy+adapt", Strategy.E0_GREEDY, False, False, True),
+        ("E0_conserv.", Strategy.E0_CONSERVATIVE, False, False, False),
+        ("E0_cons.+damp", Strategy.E0_CONSERVATIVE, False, True, False),
+        ("E0_cons.+adapt", Strategy.E0_CONSERVATIVE, False, False, True),
     ]
 
     seeds = [42, 123, 2024]
-    for label, strat, trust, damp in configs:
+    for label, strat, trust, damp, adapt in configs:
         round_avgs = []
         for rnd in range(n_rounds):
             trips_this_round = []
@@ -1030,6 +1042,7 @@ def main_river_city_multiround():
                     strategy=strat, bfs_table=bfs_table,
                     epistemic_trust=trust,
                     surprise_dampening=damp,
+                    adaptive_dampening=adapt,
                 )
                 trips_this_round.append(r.trips_completed)
             round_avgs.append(sum(trips_this_round) / len(trips_this_round))
@@ -1040,7 +1053,7 @@ def main_river_city_multiround():
 
     print()
     print("Key question: Does E₀ improve across rounds while Greedy stays flat?")
-    print("C187: Does surprise dampening accelerate the learning curve?")
+    print("C188: Does adaptive observation outperform static dampening?")
 
 
 if __name__ == "__main__":

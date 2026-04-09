@@ -29,10 +29,10 @@
   },
 
   "state": {
-    "latest_commit": "C187",
-    "latest_commit_hash": "0b26661",
-    "latest_commit_msg": "C187: Surprise Dampening — pre-inscription memory routing (18 tests, 4305 total)",
-    "test_count": 4305,
+    "latest_commit": "C188",
+    "latest_commit_hash": "PENDING",
+    "latest_commit_msg": "C188: Adaptive Observation — E₀ observes volatility and adapts inscription (19 tests, 4324 total)",
+    "test_count": 4324,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
     "module_count": "76 production + 10 benchmarks + 17 demos + 65 explorations + 121 test files",
@@ -61,7 +61,7 @@
     "layers": {
       "1_primitives": {
         "files": ["primitives.py", "historization.py", "tension.py", "config.py"],
-        "purpose": "Edge, Outcome, Historization (U/F traces, decay, C186 epistemic trust, C187 surprise dampening: half-weight inscription for surprising outcomes + experience classification), Tension (S_eff = Δ · R_eff), E0Config (central parameter registry)"
+        "purpose": "Edge, Outcome, Historization (U/F traces, decay, C186 epistemic trust, C187 surprise dampening, C188 adaptive observation: adapt_from_experience closes feedback loop), Tension (S_eff = Δ · R_eff), E0Config (central parameter registry)"
       },
       "2_landscape": {
         "files": ["landscape.py"],
@@ -130,7 +130,9 @@
     }
   },
 
-  "commit_history_recent": [    { "hash": "PENDING", "id": "C186", "title": "Epistemic Trust — self-calibrating doubt for historization (22 tests, 4287 total)" },    { "hash": "85a997c", "id": "C185b", "title": "River City \u2014 bridge topology exposes historization trap, overlay corrects +56% (4265 total)" },
+  "commit_history_recent": [    { "hash": "PENDING", "id": "C188", "title": "Adaptive Observation — E₀ observes volatility and adapts inscription (19 tests, 4324 total)" },
+    { "hash": "0b26661", "id": "C187", "title": "Surprise Dampening — pre-inscription memory routing (18 tests, 4305 total)" },
+    { "hash": "PENDING", "id": "C186", "title": "Epistemic Trust — self-calibrating doubt for historization (22 tests, 4287 total)" },    { "hash": "85a997c", "id": "C185b", "title": "River City \u2014 bridge topology exposes historization trap, overlay corrects +56% (4265 total)" },
     { "hash": "424c6bf", "id": "C185", "title": "Traffic simulation — first domain where interference measurably helps (4265 total)" },
     { "hash": "55074a2", "id": "C184", "title": "Real-world validation — Wikispeedia navigation + BPI 2017 loan workflow (4265 total)" },
     { "hash": "730c2d9", "id": "C183", "title": "E2E multiverse — full capability exercise across all 14 layers (35 tests, 4265 total)" },
