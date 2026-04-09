@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "e0-framework"
-version = "0.7.0"
+version = "1.0.0"
 description = "E₀ Controller — Ontodynamic Action Selection via Amplitude Interference. A structural transition framework with deterministic controller, path-phase interference, SU(2) spinor transport, and multiverse architecture for reflexive decision systems."
 requires-python = ">=3.11"
-license = {text = "MIT"}
+license = {text = "CC-BY-4.0"}
 readme = "README.md"
 authors = [
     {name = "Thomas Wehner"},
@@ -31,9 +31,9 @@ keywords = [
     "human-ai-collaboration",
 ]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
+    "License :: Other/Proprietary License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",

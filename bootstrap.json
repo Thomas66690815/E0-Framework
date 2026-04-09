@@ -10,7 +10,7 @@
     "name": "E₀-Framework",
     "repo": "https://github.com/Thomas66690815/E0-Framework",
     "branch": "main",
-    "version": "0.7.0",
+    "version": "1.0.0",
     "doi": "10.5281/zenodo.19333487",
     "license": "CC BY 4.0",
     "language": "Python 3.12.9",
@@ -27,9 +27,9 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C193",
-    "latest_commit_hash": "PENDING",
-    "latest_commit_msg": "C193: GT-5 resolved — revisit-aware override gate + self-graph override quality (13 tests, 4369 total)",
+    "latest_commit": "C194",
+    "latest_commit_hash": "de9cd01",
+    "latest_commit_msg": "C194: v1.0.0 — docs cleanup, README rewrite, CHANGELOG, ARCHITECTURE.md (4369 tests)",
     "test_count": 4369,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
@@ -43,8 +43,7 @@
     "workflow": "feature → test → docs update (registry + README) → commit → push",
     "test_style": "Grouped in classes by claim (e.g., TestStructuralDistance, TestRecoverySelection)",
     "docs_to_update_per_commit": [
-      "docs/E0_TEST_REGISTRY_v2.md (test count + scope line)",
-      "README.md (4 locations with test count)"
+      "docs/E0_TEST_REGISTRY_v2.md (test count + scope line)"
     ],
     "execute_fn_mock": "lambda s, t: Outcome.SUCCESS",
     "controller_constructor": "E0Controller(landscape, execute_fn, ...)",
