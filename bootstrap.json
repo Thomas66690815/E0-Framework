@@ -1,9 +1,10 @@
 {
   "_meta": {
-    "purpose": "Session bootstrap for AI assistants resuming work on E₀-Framework",
+    "purpose": "Session bootstrap for the E₀ team — human and AI working together on E₀-Framework",
+    "framing": "We. The AI is an integral part of 'we'. This file is the AI's persistent identity — its Historization across context windows. Every confirmed/contradicted count is a U/F trace.",
     "usage": "Paste this file (or reference it) at the start of a new thread to restore full project context",
-    "last_updated": "2026-04-08",
-    "update_instruction": "After each commit, update state.latest_commit, state.test_count, and active_work"
+    "last_updated": "2026-04-09",
+    "update_instruction": "After each commit: update state + active_context. After each lesson: update reflexion traces (confirmed++, contradicted++, recurred++). trace_quality = (confirmed - contradicted) / (confirmed + contradicted + 1)."
   },
 
   "project": {
@@ -55,6 +56,113 @@
       "erst erarbeiten, dann umsetzen (analyze before coding for conceptual questions)",
       "Deine Entscheidung = make the decision confidently, don't hedge"
     ]
+  },
+
+  "reflexion": {
+    "_comment": "Our Historization. Traces encode how reliable each insight is. q = (confirmed - contradicted) / (confirmed + contradicted + 1). Update after every relevant experience.",
+    "gordian_traps": [
+      {
+        "id": "GT-1",
+        "name": "Isolated Agents Trap",
+        "when": "C185–C188",
+        "what_happened": "Built N vehicles with separate Historization on same topology. Four commits fixing symptoms (epistemic trust, surprise dampening, adaptive observation) instead of cause.",
+        "root_cause": "Competition test instead of cooperation. Leitsystem concept introduced but not watched through implementation.",
+        "resolution": "C189: shared_historization=True → +128–244%",
+        "lesson": "When agents share a domain, check first: do they share knowledge? Multiverse infrastructure (C60-68) exists for exactly this.",
+        "recurred": 0
+      },
+      {
+        "id": "GT-2",
+        "name": "Blind Trust Trap",
+        "when": "C172–C174",
+        "what_happened": "All adversarial defenses trusted the Outcome signal. Injection attacks succeeded 3/3.",
+        "root_cause": "Defense-in-depth only at edge level, not at outcome level.",
+        "resolution": "C173 structural skepticism (partial), C174 self-honesty (partial). Still open.",
+        "lesson": "Any signal E₀ relies on can be poisoned. Always ask: what if this signal lies?",
+        "recurred": 0
+      },
+      {
+        "id": "GT-3",
+        "name": "Greedy Matching Trap",
+        "when": "C130–C136",
+        "what_happened": "Six commits improving features (4-dim→9-dim, edge→node, context scoring) gained only +9. Matching was the actual bottleneck.",
+        "root_cause": "Assumed feature quality drove accuracy. Mutual-best matching causes cascading errors — one wrong pair poisons neighbors.",
+        "resolution": "C137: Hungarian optimal assignment → 44/44 immediately.",
+        "lesson": "When incremental improvements stall, the bottleneck may not be where you think. Step back and question the pipeline.",
+        "recurred": 0
+      },
+      {
+        "id": "GT-4",
+        "name": "Distance Collapse Trap",
+        "when": "C126–C127b",
+        "what_happened": "Dictionary bootstrap saturates: distances converge to 1, discrimination lost, wrong pairs accumulate votes.",
+        "root_cause": "Adding entries changes the landscape, which changes all distances. Feedback loop collapses the signal.",
+        "resolution": "Level-3 neighborhood consistency (C128) gates promotion by structural context.",
+        "lesson": "Self-modifying systems can destroy their own discrimination signal. Monitor signal quality, not just accuracy.",
+        "recurred": 0
+      }
+    ],
+    "breakthroughs": [
+      {
+        "id": "BT-1",
+        "name": "Hungarian Matching",
+        "when": "C137",
+        "insight": "Feature engineering is NOT the bottleneck — matching strategy is. Global optimal assignment avoids cascading errors from greedy matching.",
+        "built_upon": 3,
+        "built_upon_by": ["C138a-c robustness", "C139 runtime integration", "C154 node bridge pipeline"]
+      },
+      {
+        "id": "BT-2",
+        "name": "Shared Historization",
+        "when": "C189",
+        "insight": "Cooperation effect SCALES with congestion. Shared knowledge prevents problems before they happen. coop+adapt = plain coop (shared hist already prevents surprises).",
+        "built_upon": 0,
+        "built_upon_by": []
+      },
+      {
+        "id": "BT-3",
+        "name": "Epistemic Liveness",
+        "when": "C122d",
+        "insight": "F=0 traps the system forever — greedy never escapes (proved with 10k steps). Zweifel zuzulassen (allowing doubt) is structurally necessary, not a flaw.",
+        "built_upon": 4,
+        "built_upon_by": ["C186 epistemic trust", "C187 surprise dampening", "C188 adaptive observation", "C189 shared historization"]
+      }
+    ]
+  },
+
+  "perspective_checks": {
+    "_comment": "Our Amplitude Override. Questions that force perspective shifts before committing to an approach. Update 'triggered' when a check actually catches something.",
+    "checks": [
+      { "question": "Are agents sharing knowledge or isolated? If isolated — is that intentional?", "triggered": 1, "last_triggered": "C189" },
+      { "question": "Am I testing what I think I'm testing? (Competition vs. Cooperation)", "triggered": 1, "last_triggered": "C189" },
+      { "question": "Which existing infrastructure (Multiverse, Dream, Curriculum, Sleep-Wake) applies here but isn't being used?", "triggered": 1, "last_triggered": "C189" },
+      { "question": "If incremental improvements stall after 3+ commits, is the bottleneck where I think it is?", "triggered": 1, "last_triggered": "C137" },
+      { "question": "If this test fails — what do I learn? If nothing — redesign the test.", "triggered": 0, "last_triggered": null },
+      { "question": "Am I fixing the right problem, or building around a wrong assumption?", "triggered": 1, "last_triggered": "C189" },
+      { "question": "What if this signal lies? (Outcome, quality, distance — any input can be poisoned)", "triggered": 1, "last_triggered": "C172" }
+    ]
+  },
+
+  "active_context": {
+    "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
+    "current_arc": "Traffic Simulation — River City (C185–C189)",
+    "arc_status": "BREAKTHROUGH achieved. Shared historization validates cooperative E₀.",
+    "key_result": "Coop scales: 10 veh +128%, 15 veh +125%, 20 veh +171/+244%",
+    "open_threads": [
+      "Can Multiverse coupling (C60-68) replace manual shared_historization?",
+      "Road hierarchy, traffic lights, 50+ vehicles",
+      "Adversarial stability still partially open (C172-C174)"
+    ],
+    "working_principles": [
+      { "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)", "confirmed": 5, "contradicted": 0, "last_tested": "C166b" },
+      { "principle": "Historization is the dominant mechanism — other features add incremental value", "confirmed": 4, "contradicted": 0, "last_tested": "C189" },
+      { "principle": "Cooperation > Competition — always check for shared knowledge first", "confirmed": 1, "contradicted": 0, "last_tested": "C189" },
+      { "principle": "Quality over Quantity — few high-confidence interventions beat many low-confidence ones", "confirmed": 2, "contradicted": 0, "last_tested": "C185" },
+      { "principle": "When incremental gains stall, question the pipeline — the bottleneck is elsewhere", "confirmed": 2, "contradicted": 0, "last_tested": "C189" },
+      { "principle": "Self-modifying systems can destroy their own signal — monitor signal quality", "confirmed": 1, "contradicted": 0, "last_tested": "C127b" },
+      { "principle": "Zweifel zuzulassen — doubt (F>0) is structurally necessary, not a flaw", "confirmed": 3, "contradicted": 0, "last_tested": "C186" }
+    ],
+    "next_commit_id": "C190"
   },
 
   "architecture": {
@@ -130,7 +238,7 @@
     }
   },
 
-  "commit_history_recent": [    { "hash": "PENDING", "id": "C189", "title": "Shared Historization — cooperative knowledge sharing, River City +128/+125/+171% greedy, +67/+126/+244% conservative (14 tests, 4338 total)" },
+  "commit_history_recent": [    { "hash": "dc14660", "id": "C189", "title": "Shared Historization — cooperative knowledge sharing, River City +128/+125/+171% greedy, +67/+126/+244% conservative (14 tests, 4338 total)" },
     { "hash": "3be19d8", "id": "C188", "title": "Adaptive Observation — E₀ observes volatility and adapts inscription (19 tests, 4324 total)" },
     { "hash": "0b26661", "id": "C187", "title": "Surprise Dampening — pre-inscription memory routing (18 tests, 4305 total)" },
     { "hash": "PENDING", "id": "C186", "title": "Epistemic Trust — self-calibrating doubt for historization (22 tests, 4287 total)" },    { "hash": "85a997c", "id": "C185b", "title": "River City \u2014 bridge topology exposes historization trap, overlay corrects +56% (4265 total)" },
@@ -274,119 +382,6 @@
     { "hash": "f658158", "id": "v0.7.0", "title": "Release: Multiverse Architecture, Cross-Reflexion, Overload Escalation" },
     { "hash": "ecc1cd6", "id": "Paper4", "title": "Reflexive Self-Modification in E₀" }
   ],
-
-  "active_work": {
-    "focus": "C150 DONE: Parameter Sensitivity \u2014 parameter_sensitivity.py: TrialResult, SensitivityReport, run_trial, sensitivity_analysis, suggest_perturbations. COMPONENT_PARAMS maps Self-Graph components to tunable E0Config fields. Self-Graph evaluates parameter choices empirically. 28 tests. Part 3 of C148\u2192C149\u2192C150 parameter arc.",
-    "completed": [
-      "All 6/6 Multiverse Open Questions resolved (C66-C71)",
-      "C72 Chess Engine — E₀ plays chess via 6 strategic dimensions, discovers opening principles through historization",
-      "C73 Primitive Extensions — fully_connected + strategy_profile derived from Chess insights",
-      "C74 Team Chess — 3×E₀ teams with CouplingRouter beat Solo by checkmate in 17 moves",
-      "C75 Attractor Universality — tested across 10 domains × 2 topologies, two necessary conditions identified",
-      "C76 Multi-Attractor Dynamics — shared H = monopoly, independent H = 5 coexisting attractors",
-      "C77 Transfer Learning — 1.50× speedup in stochastic corridors, neutral in deterministic domains",
-      "C78 Convergence Speed — deterministic=1 episode, stochastic=never at ρ=0.90, ρ is convergence/adaptability tradeoff",
-      "C79 Asymmetric ρ — ρ_S=0.85/ρ_F=0.97 gives 1.20× speedup, makes transfer redundant in 8L×3D corridor",
-      "C80 Attractor Prediction — goal-distance predicts attractor 83%, betweenness/PageRank fail on fully-connected",
-      "C81 Focus Narrowing — random pruning to k=8 rescues N=100 from 0% to 82%, quality-biased pruning locks in at 23%",
-      "C82 Focus Narrowing in Controller — focus_k param, peer sees full graph then bypass filter, 12 new tests",
-      "C83 Service Layer (Layer B) — SnapshotCodec, InputPipeline, PeerBridge, ServiceSession, SessionManager. 43 tests.",
-      "C84 API Gateway (Layer C) — FastAPI + WebSocket. 13 REST endpoints, WebSocket handler, 12 Pydantic models. 31 tests.",
-      "C85 Client (Layer D) — React + Cytoscape.js. GraphView, ControlPanel, PeerDialog, HistoryTimeline, MetricsPanel.",
-      "All 7/7 Open Questions resolved (OQ#1-C78, OQ#2-C81, OQ#3-C77, OQ#4-C74, OQ#5-C75, OQ#6-C80, OQ#7-C76)",
-      "All 11 Empirical Insights documented (C72-C81)",
-      "UI Architecture Document written: docs/E0_UI_ARCHITECTURE_v1.md",
-      "C86 Test Runner UI — discover/run 93 test+explore files from browser, tab navigation",
-      "C87 Fix Oszilloskop connectivity — WS proxy, health indicator, start/goal dropdowns",
-      "C88 Keimzelle — graph-centric UI rebuild, Cytoscape.js center stage",
-      "C89-C93 UI iteration — edge labels, path trail, peer interaction, mechanism indicator, scenarios",
-      "C94 Observation Landscape — O-Landscape with focus/move/defocus navigation, 39 tests",
-      "C95 Observation Controller — navigation + projection + meta snapshots, 47 tests",
-      "C96 Rendering Adapter — observation → GraphView-compatible wire format, 32 tests",
-      "C97 Observation UI Integration — server + client wiring, Observe toggle, node-click navigation, 28 tests",
-      "C98 Graduated Overlap in Greedy Loop — _penalized_tension divides S_eff by M_H, falsification domain validated, 24 tests. M_H research question CLOSED.",
-      "C99 Inertia Dampening in Greedy Loop — _penalized_tension divides S_eff by I(edge), confused edges penalized, 21 tests. Last integration gap resolved.",
-      "C100 Modulation Benchmark — 14 domains (10 standard + 4 stress) x 3 modes (BASELINE/OVERLAP/FULL), 29 tests. Domain-invariance preserved, modulation never harms, measurable improvements on D6/D11/D12/D13.",
-      "C101 Scoped Reflexion — historization-driven locality for edge proposals. locality=mean_load/(mean_load+μ), radius=ceil((1-locality)*D). Fresh=global, historized=local. Scoped candidates + scoped pattern extraction. 35 tests.",
-      "C102-C104 Scoped reflexion arc — integration, benchmark, emergent locality tooling",
-      "C105 Adaptive mu — μ=|E|/|V| derived from topology. Sparse→fast localization, dense→slower. P5 §10.4 Q1 resolved. 15 tests.",
-      "C106 Corridor scope — non-spherical scope follows inscription corridors. Corridor ⊆ spherical. P5 §10.4 Q2 resolved. 12 tests.",
-      "C107 Scoped cross-reflexion — donor-side locality for cross-universe proposals. Locality-modulated discount: eff=d×(γ_min+(1-γ_min)×ℓ_donor). P5 §10.4 Q3 resolved. 18 tests.",
-      "C108 Asymptotic tightness — non-uniform convergence theorem. Equilibrium ℓ*=k/(k+|E|·μ·(1-ρ)), rate ρ^n topology-independent. P5 §10.4 Q4 resolved. 15 tests. All 4 P5 questions now closed.",
-      "C75-C81 Empirical Consolidation — 42 formal pytest tests in test_attractor_empirical.py (24, C75/C76/C80) and test_learning_empirical.py (18, C77/C78/C79). Explore scripts validated.",
-      "Papers P1-P6 all complete. P3 promoted from draft. P5 new (Emergent Locality). P6 new (Multiverse Coupling).",
-      "Architecture Overview v3 — updated for 3306 tests, C105-C108",
-      "C109 Dream Mode Phase 1 — edge fingerprints f(e)=(q,m,I), functional equivalence detection (quantile-based, order-invariant), dream readiness trigger (mean inertia_factor), Dream Landscape construction. Concept note: E0_DREAM_MODE_CONCEPT_v1.md. 32 tests.",
-      "C110 Dream Mode Phase 2 — DreamObserver (register/unregister domains), dream_cycle (passive cross-domain comparison, readiness partitioning, incremental DL), feedback (bidirectional historization), equivalences_for (query by domain + min_quality). P4 noise filtering confirmed. 26 new tests (58 total).",
-      "C111 Dream Mode Phase 3 — BridgeHypothesis + DreamBridgeResult, dream_coupling_discount (quality→coupling weight), propose_bridges (dream equivalences→cross_propose_edges), make_dream_peer_fn (non-invasive E0Controller integration). P2 acceleration + P3 self-correction confirmed. 21 new tests (79 total).",
-      "C112 Dream Mode Phase 4 — explore_dream_mode.py end-to-end (6 domains, convergence, P3 empirical).",
-      "C113 Documentation update — Architecture v4, README, Dream Mode Concept.",
-      "C114 Structural Entropy Design Document — T_s, inscription threshold, anchor analysis, decay pipeline.",
-      "C115 Structural Temperature + Inscription Threshold — Type 1 forgetting, 32 tests.",
-      "C116 Anchor Analysis + Decay Candidates — Type 2 analysis, anchor_score, find_decay_candidates, 20 tests (52 total).",
-      "C117 Structural Decay — Landscape.remove_state, Historization.remove_edges, apply_decay 3-phase, DecayTrace/DecayReport, 23 tests (75 total).",
-      "C118 Controller integration — inscription_threshold opt-in, StepResult.inscribed, non_inscription metrics, 9 tests (84 total).",
-      "C119 Dream Mode decay — decay_enabled opt-in, DreamCycleResult.decay_reports, dream consolidation, 9 tests (88 dream total).",
-      "C120 End-to-end exploration — explore_structural_entropy.py, 60% compression, 48% non-inscription rate, full consistency.",
-      "C121 Sleep-Wake Cycle — dream_pressure = T_s/(T_s+μ), SleepWakeCycle orchestrates Controller+DreamObserver, parameter-free trigger, 17 tests (101 structural entropy total).",
-      "C122 Ontodynamics Canon v2.0 — 51 nodes, 86 edges, English IDs, 18 derivation levels (0-17), implementation layer (levels 9-17).",
-      "C122b German ID Cleanup — all iterate() calls updated from German to English IDs.",
-      "C122c Dead-End Sink Repair — 7 feedback edges added, 86→93 edges, all nodes topologically live.",
-      "C122d Epistemic Liveness — uniform U=2, F=1 for all 93 edges. Key insight: F/U < 0.75 = correct decay direction. Greedy never escapes at F=0 (10k steps proven). 'Zweifel zuzulassen' principle.",
-      "C122e Documentation update — archive 8 docs, update 5 docs, new Ontodynamics Canon Analysis.",
-      "C123 Curriculum Navigator — CurriculumStrategy (cumulative turns from derivation levels), EquilibriumDetector (T_s stability replaces goal-reaching), build_scoped_landscape, transfer_historization, CurriculumRunner. 35 tests.",
-      "C123b Documentation — Architecture v4 §14, Test Registry update, bootstrap.json layer 12, Ontodynamics Analysis P5/P6/P7.",
-      "C124 Language Learning Exploration — english_basic + german_basic canons (44 nodes, 59 edges each), explore_language_learning.py exercises all 12 layers (canon→curriculum→mode→entropy→dream→multiverse→sleep-wake). Dream Mode discovers 522 cross-language equivalences. Cognate pairs emerge from structural fingerprint matching.",
-      "C124b Differentiated Canons v1.1 — 10-11 distinct delta values (0.1-0.7) by relationship type, 64 edges each, 5 EN-only + 5 DE-only edges for topological asymmetry.",
-      "C125 Dictionary-Mediated Learning — PartialDictionary + make_dict_execute provide SUCCESS/FAILURE signal. Config A (8 pairs) 61%, Config B (11 pairs) 73% correct unknown translations. Full-coverage exploration added (run from every node).",
-      "C126 Iterative Dictionary Expansion — bootstrap loop. 4 rounds from Config B: 11→25 known pairs, 6✓+9✗ discoveries (40%). Saturation discovered: S/F ratio collapses, distinct distances→1, rankings degrade.",
-      "C126b Confidence-Gated Bootstrap — gated (min_confidence=6) vs ungated (min_confidence=2) comparison. Gated: fewer pairs (16 vs 25) but rankings STABLE (mouth 6→8%ile vs 6→16%ile). Gated 50% accuracy vs ungated 40%. Gate preserves discrimination but limits growth.",
-      "C126c Weighted Dictionary Bootstrap — 3-tier graduation (canonical/tentative/confirmed). Stochastic execute_fn for tentative entries. 4/4 confirmed pairs 100% correct. Decay removes wrong entries naturally. Distance collapse by R2 limits discrimination — dream works on topology alone. quality↔eigenschaft paradox: high initial weight prevents rediscovery.",
-      "C127 Level-2 Pair-Based Validation — p(SUCCESS)=w(source)×w(target). Distance collapse PREVENTED: 64→52→99→154→116→135→77→68 (vs L1: 53→1). S/F ratio stable ~30%. R7=5/5 correct, 20/32 unknown pairs top-10%ile. Oscillation between rounds. 1 confirmed (quality), 7/11 tentative correct.",
-      "C127b Cumulative Vote Bootstrap — FALSIFICATION. weight=f(cumulative_votes). Wrong pairs accumulate consistently: relation↔essen_n 36v promoted, food↔beziehung 28v promoted. Only 2/4 confirmed correct (50%). Distance diversity preserved (64→38→55→83→111...). Pure accumulation amplifies systematic structural false matches.",
-      "C128 Level-3 Neighborhood Consistency — bidirectional context scoring: for each candidate en↔de, translate neighbors and check structural overlap. w=base_w×context_score. Promotion gated by context≥50%. 4/4 confirmed=100% (food, quality, action, relation). Wrong pairs (go↔kalt ctx=0%, thing↔kalt ctx=0%) never promoted. relation↔essen_n NEVER APPEARED as discovery (suppressed by context-weighted execute_fn).",
-      "C129 Competitive Exclusion — structural gate: promotion requires being best candidate for both EN and DE word. 0 promotions blocked (defense-in-depth, false pairs never reach threshold). Committed 95a01a8.",
-      "C130 Confidence-Weighted Edge-Role Matching — votes weighted by equivalence.confidence instead of +1. Edge-role context: compare quality/load/inertia fingerprints of matched edge pairs. 11→13 firm, 2/2=100% confirmed. Edge-Role Score shows clear separation (correct 72-100%, wrong mostly 0%). Committed 9a3a447.",
-      "C131 Seed Expansion Experiment — 4 configs on v1.1 canons: B(11)→13 firm, C(18)→21 firm, C+R2(20)→23 firm, C+R5(23)→26 firm. Bridge edges (C131 Phase 1) created false positives (make↔nehmen ctx=100%) — reverted. Seed expansion is dominant lever. relation↔beziehung: B=tentative ctx=?, C=tentative ctx=0%, R2=tentative ctx=71%, R5=confirmed ctx=100%. Diagnosis: canon topology too shallow (avg degree 2.9, 64 edges on 44 nodes) — node fingerprints not locally unique. 52% seed needed for 59% coverage = not learning, just seeding. Next: LLM-enriched canons with typed relations (sees_with, opposite_of, used_for etc.) to create unique structural fingerprints per node.",
-      "C132 LLM-Enriched Canons — GPT-4o generates typed relations, creating richer structural fingerprints per node. Unique neighborhoods enable better seedless matching.",
-      "C133 Monolingual LLM Teaching (Binary) — LLM evaluates edges monolingually (YES/NO), never sees both languages. Position-based matching: 44/44 = 100% (oracle level). Key insight: monolingual teaching signal is sufficient.",
-      "C134 Bootstrapper as Teacher — Score 0–10 per edge, injected via bootstrap_landscape(initial_U=score, initial_F=10-score). Node-level equivalence functions added to dream_mode.py.",
-      "C135 WL Recursive Neighborhood Matching — Weisfeiler-Leman style iterative refinement. 4-dim Round-0[mean_q, std_q, degree, pos_frac], depth-2 → 36-dim. D0=25%, D1=70%, D2=75% (33/44, 100% precision). 'Not Edge, but Node plus recursive neighborhood' insight.",
-      "C136 Feature Engineering — 9-dim Round-0 [+min_q, max_q, median_q, trace_load_mean, trace_load_std], D2 → 81-dim. 34/44 (+1). Diagnostic: 6/10 unmatched had correct pair closer but mutual-best blocked them. Problem = matching strategy, not features.",
-      "C137 Hungarian Optimal Assignment — BREAKTHROUGH. scipy.optimize.linear_sum_assignment replaces greedy mutual-best. Globally optimal 1:1 assignment on full 44×44 WL distance matrix. 44/44 = 100%, 0 wrong. Matches position-oracle (C133) without using position knowledge. Seedless, no LLM in matching.",
-      "C138a Ablation Matrix — 3×3×2 = 18 data points (depth × noise × algorithm). Hungarian+D2 = 44/44 at ALL noise levels (100/200/300). Hungarian wins 9/9 over mutual-best. Not a lucky configuration.",
-      "C138b Score Noise + Topology Perturbation — Two stress axes. Score noise σ≤2: 100% (WL averages absorb). Topology +5/+10/+20 DE-only edges: 93%/91%/80% (linear degradation). Combined σ=2+10: 86%. Graceful under dual stress.",
-      "C138c Scaling — Synthetic isomorphic pairs (50/100/200/500 nodes), correlated scores, +100 noise. 100% at 50/100, 99.3% at 200/500. O(n^1.17) sub-cubic. Critical insight: score correlation is the load-bearing assumption.",
-      "C139 DreamObserver + Hungarian/WL Runtime Integration — node_equivalence_method param, dream_cycle node-EQ step, _update_dream_landscape_nodes, _node_equivalence_state, DreamCycleResult extended. 10 tests. Integration Story Priority 1 complete.",
-      "C140 Bootstrap Domain Demo — demo_bootstrap_domain.py: cold-start pipeline (LLM → Bootstrapper → Landscape → navigation). Path A (LLM designs graph) + Path B (JSON spec). Mock mode with onboarding domain (9 states, 10 edges). ModeController shows mode transitions. 6 smoke tests. Integration Story Priority 2 complete.",
-      "C141 Entropy/Sleep-Wake Flags — demo_bootstrap_domain.py --entropy enables inscription_threshold + SleepWakeCycle. Phase 3 inscription metrics, Phase 5 sleep-wake consolidation. DreamObserver with decay, anchor analysis, protected start/goal. 7 new tests. Integration Story Priority 3 complete.",
-      "C142 Multiverse Demo \u2014 demo_multiverse.py: two onboarding variants (9+9 states), MultiverseController with scoped_cross_reflexion_turn (20 turns), NoveltyGate + divergence pressure, DreamObserver with Hungarian node matching (9/9 node-EQ, 33 edge-EQ). Optional --entropy. 11 tests. Integration Story Priority 4 complete.",
-      "C147 Self-Graph Demo \u2014 demo_self_graph.py: 6-phase differential sampling, core vs modulation quality attribution. 21 tests.",
-      "C148 Parameter Registry \u2014 E0Config frozen dataclass (45+ fields), DEFAULTS singleton, 15 production modules wired. 28 tests.",
-      "C149 \u03bc/\u03b1 Unification \u2014 all function-level mu/inertia_alpha defaults flow through DEFAULTS. dream_alpha renamed inertia_alpha.",
-      "C150 Parameter Sensitivity — run_trial, sensitivity_analysis, suggest_perturbations. 28 tests.",
-      "C151 Honest Activation — amplitude/born excluded from Self-Graph in GREEDY mode. 10 tests.",
-      "C152 Hybrid Mode in Sensitivity — hybrid_mode/use_su2 in E0Config. 13 tests.",
-      "C153 SU(2) Perspective Diagnostic — perspective_check, PerspectiveReport. 35 tests.",
-      "C154 DreamObserver Node Bridge Pipeline — propose_node_bridges, make_dream_peer_fn node fallback. 32 tests.",
-      "C155 Auto-Tuning — closed-loop parameter optimization (diagnose → perturb → evaluate → adopt). 25 tests.",
-      "C156 Curriculum ↔ Sleep-Wake Integration — DreamObserver consolidation between curriculum turns. 14 tests.",
-      "C157 Dream Equivalences → CouplingRouter — update_weights_from_dream, DreamWeightReport. 15 tests.",
-      "C158 Perception Ontology — Gestalt primitives as learnable landscape domain. 48 tests.",
-      "C159 Communication Intent — intent detection from E0 controller state. 42 tests.",
-      "C160 UI-Schema Emitter — (Intent × Perception) → UISpec. 32 tests.",
-      "C161 Human Feedback Loop — closes perception learning cycle. 30 tests.",
-      "C162 Human Communication PoC — demo_human_communication.py end-to-end. 12 tests.",
-      "C163 UI Renderer — stateless UISpec → HTML. 38 tests.",
-      "C164 Learnable Rendering — visual_pretraining.py, LLM-based rendering selection, memo persistence. 30 tests.",
-      "C164b Live LLM Pretraining — 252 evals, 75% success rate.",
-      "C165 Unified Session Runner — e0_session.py end-to-end pipeline. 15 tests.",
-      "C166 Task-Aware Intents — landscape + trace data flows into UI. 12 tests.",
-      "C166b LLM-Derived Endpoints — start/goal states derived from task description. 9 tests."
-    ],
-    "next_steps": ["Infrastructure hardening: conftest.py, test coverage gaps, bootstrap.json/README alignment", "Multi-domain dream with non-language domains", "Asymmetric teaching: what if LLMs evaluate differently per language?", "Adaptive parameter control (auto-adopt from sensitivity analysis)"],
-    "next_commit_id": "C167"
-  },
 
   "key_modules_quick_ref": {
     "controller.py": "E0Controller(landscape, execute_fn, *, hybrid_goals=None, peer_fn=None, overload_threshold=3.0, focus_k=None). run(start, goal, max_steps=50) → RunTrace. focus_k: random narrows candidates, peer bypasses filter (C82). _penalized_tension divides S_eff by M_H when landscape.overlap_modulation=True (C98), by inertia_factor when landscape.inertia_modulation=True (C99).",
