@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C191",
+    "latest_commit": "C191b",
     "latest_commit_hash": "PENDING",
-    "latest_commit_msg": "C191: 14-Layer Integration — 5 feedback loops + full integration test (18 tests, 4356 total)",
-    "test_count": 4356,
+    "latest_commit_msg": "C191b: Integration Value Measurement — amplitude (Layer 3) provides -50% steps, -60 traps vs greedy baseline (7 tests, 4363 total)",
+    "test_count": 4363,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
     "module_count": "76 production + 10 benchmarks + 17 demos + 65 explorations + 122 test files",
@@ -164,8 +164,8 @@
       },
       {
         "question": "If this test fails — what do I learn? If nothing — redesign the test.",
-        "triggered": 0,
-        "last_triggered": null
+        "triggered": 1,
+        "last_triggered": "C191b"
       },
       {
         "question": "Am I fixing the right problem, or building around a wrong assumption?",
@@ -182,10 +182,10 @@
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
     "current_arc": "14-Layer Integration (C191+)",
-    "arc_status": "FIRST INTEGRATION PROVEN. All 14 layers compose in one session.",
-    "key_result": "18 integration tests: 5 feedback loops + full 14-layer test, 1.06s",
+    "arc_status": "VALUE MEASURED. Amplitude (Layer 3) is the load-bearing integration layer: -50% steps, -60 traps.",
+    "key_result": "5-config comparison: GREEDY baseline (14 steps, 2 traps/run) vs AMPLITUDE+ (7 steps, 0 traps). Layers 5/9 add no measurable value for dead-end traps.",
     "open_threads": [
-      "Emergent value measurement: does composition outperform isolated layers?",
+      "Non-dead-end traps: design trap loops that amplitude can't catch → test higher layer value",
       "Orchestrator pattern: automatic wiring vs manual composition",
       "Adversarial stability still partially open (C172-C174)"
     ],
@@ -198,9 +198,9 @@
       },
       {
         "principle": "Historization is the dominant mechanism — other features add incremental value",
-        "confirmed": 4,
+        "confirmed": 5,
         "contradicted": 0,
-        "last_tested": "C189"
+        "last_tested": "C191b"
       },
       {
         "principle": "Cooperation > Competition — always check for shared knowledge first",
