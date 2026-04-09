@@ -70,7 +70,8 @@ class TestSelfGraphTopology:
 
     def test_total_edge_count(self):
         sg = SelfGraph()
-        expected = len(CORE_EDGES) + len(MODULATION_EDGES)
+        # +1 for the override self-loop (C193: amplitude → amplitude)
+        expected = len(CORE_EDGES) + len(MODULATION_EDGES) + 1
         assert len(sg.landscape._R0) == expected
 
 

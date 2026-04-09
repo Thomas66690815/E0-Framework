@@ -636,6 +636,21 @@ class E0Controller:
         if amp_choice in admissible:
             conf = overlay.override_confidence
             if conf >= self.confidence_threshold:
+                # C193: Revisit-aware override gate — amplitude must respect
+                # the same revisit window as greedy.  If amplitude wants to
+                # override to a recently-visited state, that's a loop-causing
+                # override → block it.  This prevents Historization corruption
+                # (one bad override can permanently reduce S_eff on loop edges).
+                # Requires self-graph: without self-reflection, amplitude is
+                # "blind" to its own harm (GT-5 persists by design).
+                if self.self_graph is not None and amp_choice in self._recent:
+                    return greedy_target, escalated, esc_type, overlay, False
+                # C193: Self-Graph health gate — learned long-term signal.
+                # If the self-graph has accumulated evidence that amplitude's
+                # overrides are net harmful, block even non-recent overrides.
+                if self.self_graph is not None:
+                    if self.self_graph.override_quality() < 0.0:
+                        return greedy_target, escalated, esc_type, overlay, False
                 return amp_choice, escalated, esc_type, overlay, True
 
         # Amplitude choice not admissible or below threshold — stay with greedy
@@ -733,6 +748,17 @@ class E0Controller:
                     ),
                 )
                 self.self_graph.self_historize(components, outcome)
+
+                # C193: Override reflection — inscribe on amplitude self-loop
+                # when amplitude overrode greedy.  Outcome = FAILURE if the
+                # override target was recently visited (loop-causing), else
+                # SUCCESS (the override led to a genuinely new state).
+                if overridden:
+                    override_outcome = (
+                        Outcome.FAILURE if target in self._recent
+                        else Outcome.SUCCESS
+                    )
+                    self.self_graph.inscribe_override(override_outcome)
 
         # C188: Adaptive observation — re-evaluate dampening after inscription
         if self.adaptive_dampening and inscribed:

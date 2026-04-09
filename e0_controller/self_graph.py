@@ -76,6 +76,11 @@ MODULATION_EDGES = [
     ("overlap", "transition_field"),
 ]
 
+# Override self-loop (C193): amplitude reflects on its own overrides.
+# Inscribed ONLY on override events — not part of normal self-historization.
+# trace_quality of this edge = net override effectiveness.
+OVERRIDE_EDGE = ("amplitude", "amplitude")
+
 # Default parameters for edge initialization (sourced from config registry)
 CORE_DELTA = DEFAULTS.sg_core_delta
 CORE_R0 = DEFAULTS.sg_core_R0
@@ -158,6 +163,9 @@ class SelfGraph:
             self._landscape.add_edge(src, tgt, CORE_DELTA, CORE_R0)
         for src, tgt in MODULATION_EDGES:
             self._landscape.add_edge(src, tgt, MODULATION_DELTA, MODULATION_R0)
+        # C193: Override self-loop — amplitude reflects on its own overrides
+        src, tgt = OVERRIDE_EDGE
+        self._landscape.add_edge(src, tgt, CORE_DELTA, CORE_R0)
 
     @property
     def landscape(self) -> Landscape:
@@ -242,6 +250,38 @@ class SelfGraph:
             for e in outgoing
         )
         return total / len(outgoing)
+
+    # --- Override Reflection (C193) ---
+
+    def inscribe_override(self, outcome: Outcome) -> None:
+        """Record an override event on the amplitude self-loop.
+
+        Called after amplitude overrides greedy's choice.  The outcome
+        reflects whether the override was *beneficial* (SUCCESS) or
+        *harmful* (FAILURE), not the transition outcome.
+
+        Criterion: if the override target was recently visited, the
+        override caused a revisit → FAILURE.  Otherwise → SUCCESS.
+
+        This edge is NOT part of normal self-historization — it only
+        accumulates data from override events, giving an undiluted
+        signal of override effectiveness.
+        """
+        edge = Edge(*OVERRIDE_EDGE)
+        self._landscape.historization.update(edge, outcome)
+
+    def override_quality(self) -> float:
+        """Quality of amplitude's override decisions.
+
+        Returns trace_quality on the override self-loop:
+          > 0 : overrides are net beneficial (keep overriding)
+          < 0 : overrides are net harmful (stop overriding)
+          = 0 : no data or balanced
+
+        The controller gates amplitude overrides on this value.
+        """
+        edge = Edge(*OVERRIDE_EDGE)
+        return self._landscape.historization.trace_quality(edge)
 
     # --- Snapshot (for MemOS / persistence) ---
 

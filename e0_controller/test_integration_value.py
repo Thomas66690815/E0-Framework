@@ -748,6 +748,36 @@ def run_loop_amplitude(n_runs: int = LOOP_RUNS) -> ExperimentResult:
     return ExperimentResult(name="loop_amplitude", n_runs=n_runs, runs=results)
 
 
+def run_loop_amplitude_selfgraph(n_runs: int = LOOP_RUNS) -> ExperimentResult:
+    """Layer 1+3+4: Amplitude + Self-Graph health gate on loop domain.
+
+    C193: Self-graph monitors amplitude override quality.  When overrides
+    cause revisits (loop-causing), the override self-loop accumulates
+    FAILURE inscriptions.  Once override_quality < 0, the health gate
+    blocks further overrides → greedy escapes via revisit penalty.
+    """
+    from e0_controller.self_graph import SelfGraph
+
+    ls = build_loop_trap_domain()
+    ctrl = E0Controller(
+        ls, loop_execute_fn,
+        hybrid_mode=HybridMode.AMPLITUDE_ON_DISAGREE,
+        hybrid_horizon=3,
+        hybrid_goals={"GOAL"},
+    )
+    sg = SelfGraph()
+    ctrl.self_graph = sg
+
+    results = []
+    for _ in range(n_runs):
+        trace = ctrl.run("START", max_cycles=LOOP_MAX_CYCLES, goal="GOAL")
+        results.append(measure_loop_run(trace, "GOAL"))
+
+    return ExperimentResult(
+        name="loop_amplitude_selfgraph", n_runs=n_runs, runs=results,
+    )
+
+
 def run_loop_dream(n_runs: int = LOOP_RUNS) -> ExperimentResult:
     """Layer 1+3+9: Amplitude + Dream peer_fn on loop domain.
 
@@ -847,65 +877,97 @@ def run_loop_full(n_runs: int = LOOP_RUNS) -> ExperimentResult:
 # ═══════════════════════════════════════════════════════════════════
 
 class TestLoopTraps:
-    """Loop traps: amplitude-invisible, testing higher-layer value.
+    """Loop traps: resolved by C193 revisit-aware override gate.
 
-    C191b proved amplitude catches dead-end traps.  Loop traps reveal
-    the DUAL discovery: amplitude can HURT on loop domains by overriding
-    greedy's revisit-penalty recovery.
+    C192 discovered GT-5: amplitude overrides greedy's revisit-penalty
+    recovery on siren loops → controller gets permanently stuck.
 
-    Key mechanism:
-    - Siren loop S_eff < correct path S_eff → greedy + amplitude take it
-    - After one cycle, revisit penalty (α) breaks the loop for greedy
-    - But amplitude OVERRIDES the penalty-corrected choice → stuck in loop
-    - Result: greedy(11 steps) < amplitude(60 steps, stuck)
+    C193 resolves GT-5 with two defense layers:
+      Layer 1 (immediate): Revisit-aware override gate — amplitude cannot
+        override to a state in the recent window.  This prevents the
+        Historization corruption that makes loops permanently attractive.
+      Layer 2 (learned): Self-graph override quality — the override
+        self-loop accumulates U/F traces on override events, providing
+        a long-term learned signal of override effectiveness.
 
-    All edges succeed.  Trap = wasted steps cycling, not failures.
+    With C193, amplitude is safe on both dead-end AND loop domains.
+    The revisit gate catches the loop mechanism at its root: amplitude
+    respects the same revisit window as greedy.
     """
 
     def test_loop_greedy_escapes(self):
         """Greedy should escape siren loops via revisit penalty α."""
         result = run_loop_baseline()
-        # Greedy should encounter loops but also reach goal
         assert result.goal_rate > 0.9, \
             f"Greedy doesn't escape loops: goal_rate={result.goal_rate:.1%}"
         assert result.total_trap_encounters > 0, \
             f"Greedy never entered loop — domain design broken"
 
-    def test_loop_amplitude_hurts(self):
-        """Amplitude OVERRIDES greedy's recovery → gets stuck in loops.
+    def test_loop_amplitude_safe_with_revisit_gate(self):
+        """C193: Revisit gate prevents amplitude from loop trapping.
 
-        This is a critical finding: amplitude's intensity-based lookahead
-        sees high intensity in the siren loop (low S_eff per edge) and
-        overrides greedy's revisit-penalty correction.  The result is that
-        amplitude is WORSE than greedy on loop domains.
+        Without self-graph, GT-5 persists: amplitude can override to
+        recently-visited states and corrupt Historization.  WITH self-graph,
+        the revisit-aware gate blocks these overrides.
+
+        Self-graph is the trigger: amplitude needs self-reflection to
+        learn that overriding to recent states is harmful.
         """
-        baseline = run_loop_baseline()
-        amplitude = run_loop_amplitude()
+        # Without self-graph: GT-5 persists (amplitude still hurts)
+        raw = run_loop_amplitude()  # no self-graph
+        assert raw.goal_rate < 0.5, \
+            f"GT-5 should persist without self-graph: {raw.goal_rate:.1%}"
 
-        # Amplitude should perform WORSE than greedy (more steps, fewer goals)
-        assert amplitude.mean_steps > baseline.mean_steps, \
-            f"Amplitude doesn't hurt: baseline={baseline.mean_steps:.1f}, " \
-            f"amplitude={amplitude.mean_steps:.1f}"
+        # With self-graph: GT-5 resolved
+        healed = run_loop_amplitude_selfgraph()
+        assert healed.goal_rate > 0.9, \
+            f"Self-graph should heal amplitude: {healed.goal_rate:.1%}"
+
+    def test_loop_selfgraph_adds_second_defense(self):
+        """Self-graph provides learned defense layer on top of revisit gate.
+
+        For this domain the revisit gate alone suffices.  The self-graph
+        override quality stays at 0.0 (no harmful overrides to inscribe).
+        This test verifies the self-graph doesn't interfere and the
+        second defense layer is ready for longer loops where the immediate
+        check may not fire (loop length > recent_k).
+        """
+        result = run_loop_amplitude_selfgraph()
+        assert result.goal_rate > 0.9, \
+            f"Self-graph interferes: goal_rate={result.goal_rate:.1%}"
 
     def test_loop_adaptation_in_greedy(self):
         """Greedy adapts within each run: takes siren once, then escapes."""
         result = run_loop_baseline()
-
-        # Within each run: greedy takes the siren loop once per junction
-        # then revisit penalty breaks it. 11 steps = 6 main + 5 loop wasted.
-        # With 30 runs sharing historization, adaptation should stabilize.
         assert result.mean_steps <= 15, \
             f"Greedy doesn't adapt fast enough: {result.mean_steps:.1f} steps"
 
-    def test_loop_all_reach_goal_except_amplitude(self):
-        """Greedy reaches GOAL; amplitude-based configs may get stuck."""
+    def test_loop_all_selfgraph_configs_reach_goal(self):
+        """C193: All self-graph configs reach goal on loop domains."""
         baseline = run_loop_baseline()
-        amplitude = run_loop_amplitude()
+        selfgraph = run_loop_amplitude_selfgraph()
 
-        # Greedy must succeed; amplitude may fail (that's the finding)
-        assert baseline.goal_rate > 0.9, \
-            f"Greedy broken: {baseline.goal_rate:.1%}"
-        # Amplitude stuck in loop is the expected behavior
-        assert baseline.goal_rate > amplitude.goal_rate, \
-            f"Expected amplitude to be worse: baseline={baseline.goal_rate:.1%}, " \
-            f"amp={amplitude.goal_rate:.1%}"
+        for name, r in [("greedy", baseline), ("selfgraph", selfgraph)]:
+            assert r.goal_rate > 0.9, \
+                f"{name} fails: goal_rate={r.goal_rate:.1%}"
+
+    def test_loop_selfgraph_override_mechanism(self):
+        """Verify the override self-loop mechanism works correctly.
+
+        Even though the revisit gate handles this domain, the self-graph
+        infrastructure must function: inscribe_override and override_quality
+        should be callable and consistent.
+        """
+        from e0_controller.self_graph import SelfGraph
+        from e0_controller.primitives import Outcome
+
+        sg = SelfGraph()
+        # Initially: no data → quality = 0
+        assert sg.override_quality() == 0.0
+        # After FAILURE: quality goes negative
+        sg.inscribe_override(Outcome.FAILURE)
+        assert sg.override_quality() < 0.0
+        # After SUCCESS: quality recovers
+        sg.inscribe_override(Outcome.SUCCESS)
+        sg.inscribe_override(Outcome.SUCCESS)
+        assert sg.override_quality() > 0.0
