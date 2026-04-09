@@ -29,10 +29,10 @@
   },
 
   "state": {
-    "latest_commit": "C188",
+    "latest_commit": "C189",
     "latest_commit_hash": "PENDING",
-    "latest_commit_msg": "C188: Adaptive Observation — E₀ observes volatility and adapts inscription (19 tests, 4324 total)",
-    "test_count": 4324,
+    "latest_commit_msg": "C189: Shared Historization — cooperative knowledge sharing, the Gordian Trap escape (14 tests, 4338 total)",
+    "test_count": 4338,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
     "module_count": "76 production + 10 benchmarks + 17 demos + 65 explorations + 121 test files",
@@ -130,7 +130,8 @@
     }
   },
 
-  "commit_history_recent": [    { "hash": "PENDING", "id": "C188", "title": "Adaptive Observation — E₀ observes volatility and adapts inscription (19 tests, 4324 total)" },
+  "commit_history_recent": [    { "hash": "PENDING", "id": "C189", "title": "Shared Historization — cooperative knowledge sharing, River City +128/+125/+171% greedy, +67/+126/+244% conservative (14 tests, 4338 total)" },
+    { "hash": "3be19d8", "id": "C188", "title": "Adaptive Observation — E₀ observes volatility and adapts inscription (19 tests, 4324 total)" },
     { "hash": "0b26661", "id": "C187", "title": "Surprise Dampening — pre-inscription memory routing (18 tests, 4305 total)" },
     { "hash": "PENDING", "id": "C186", "title": "Epistemic Trust — self-calibrating doubt for historization (22 tests, 4287 total)" },    { "hash": "85a997c", "id": "C185b", "title": "River City \u2014 bridge topology exposes historization trap, overlay corrects +56% (4265 total)" },
     { "hash": "424c6bf", "id": "C185", "title": "Traffic simulation — first domain where interference measurably helps (4265 total)" },

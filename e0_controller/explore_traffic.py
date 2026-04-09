@@ -43,6 +43,7 @@ from typing import Callable, Dict, List, Optional, Set, Tuple
 from e0_controller.landscape import Landscape
 from e0_controller.controller import E0Controller, HybridMode
 from e0_controller.primitives import Outcome, Edge
+from e0_controller.historization import Historization
 
 
 # ─────────────────────── Grid city ───────────────────────
@@ -191,13 +192,20 @@ def bfs_next_hop(city: CityGrid) -> Dict[Tuple[str, str], str]:
 
 # ─────────────────────── Landscape per vehicle ───────────────────────
 
-def build_vehicle_landscape(city: CityGrid, goal: str) -> Landscape:
+def build_vehicle_landscape(
+    city: CityGrid,
+    goal: str,
+    shared_hist: Optional["Historization"] = None,
+) -> Landscape:
     """Build a Landscape for one vehicle targeting goal.
 
-    All vehicles share the same topology but each gets its own
-    Historization (created automatically by Landscape()).
+    If shared_hist is provided, all vehicles sharing that instance
+    see each other's U/F traces — cooperative knowledge sharing.
+    Otherwise each gets its own Historization (isolated agents).
     """
     L = Landscape()
+    if shared_hist is not None:
+        L.historization = shared_hist
     for n in city.nodes:
         L.add_state(n)
     d_max = city.d_max or 1
@@ -376,8 +384,14 @@ def spawn_vehicles(
     epistemic_trust: bool = False,
     surprise_dampening: bool = False,
     adaptive_dampening: bool = False,
+    shared_historization: bool = False,
 ) -> List[Vehicle]:
-    """Create n vehicles at random positions with random goals."""
+    """Create n vehicles at random positions with random goals.
+
+    If shared_historization=True, all vehicles share one Historization
+    instance — cooperative knowledge sharing (Leitsystem).
+    """
+    shared_hist = Historization() if shared_historization else None
     vehicles = []
     for i in range(n):
         pos = random.choice(city.nodes)
@@ -389,7 +403,7 @@ def spawn_vehicles(
 
         # Build E₀ internals if needed
         if strategy in (Strategy.E0_GREEDY, Strategy.E0_FULL, Strategy.E0_CONSERVATIVE):
-            v.landscape = build_vehicle_landscape(city, goal)
+            v.landscape = build_vehicle_landscape(city, goal, shared_hist=shared_hist)
             v.landscape.historization.surprise_dampening = surprise_dampening
             if strategy == Strategy.E0_GREEDY:
                 mode = HybridMode.GREEDY
@@ -464,6 +478,7 @@ def run_simulation(
     epistemic_trust: bool = False,
     surprise_dampening: bool = False,
     adaptive_dampening: bool = False,
+    shared_historization: bool = False,
 ) -> SimResult:
     """Run tick-based traffic simulation."""
     if bfs_table is None:
@@ -473,7 +488,8 @@ def run_simulation(
     vehicles = spawn_vehicles(city, n_vehicles, strategy, positions, bfs_table,
                               epistemic_trust=epistemic_trust,
                               surprise_dampening=surprise_dampening,
-                              adaptive_dampening=adaptive_dampening)
+                              adaptive_dampening=adaptive_dampening,
+                              shared_historization=shared_historization)
 
     all_trips: List[TripRecord] = []
     snapshots: List[TickSnapshot] = []
@@ -709,12 +725,17 @@ def spawn_commute_vehicles(
     epistemic_trust: bool = False,
     surprise_dampening: bool = False,
     adaptive_dampening: bool = False,
+    shared_historization: bool = False,
 ) -> List[Vehicle]:
     """Create n vehicles that commute north → south (forced river crossing).
 
     Origin: random node in rows 0..river_row-1
     Goal:   random node in rows river_row+1..rows-1
+
+    If shared_historization=True, all vehicles share one Historization
+    instance — cooperative knowledge sharing.
     """
+    shared_hist = Historization() if shared_historization else None
     north = [nd for nd in city.nodes if parse_node(nd)[0] < river_row]
     south = [nd for nd in city.nodes if parse_node(nd)[0] > river_row]
     vehicles = []
@@ -724,7 +745,7 @@ def spawn_commute_vehicles(
         v = Vehicle(name=f"v{i}", position=pos, goal=goal, strategy=strategy)
         positions[v.name] = v.position
         if strategy in (Strategy.E0_GREEDY, Strategy.E0_FULL, Strategy.E0_CONSERVATIVE):
-            v.landscape = build_vehicle_landscape(city, goal)
+            v.landscape = build_vehicle_landscape(city, goal, shared_hist=shared_hist)
             v.landscape.historization.surprise_dampening = surprise_dampening
             if strategy == Strategy.E0_GREEDY:
                 mode = HybridMode.GREEDY
@@ -957,21 +978,27 @@ def main_river_city():
     print(f"Seed-averaged results (5 seeds)\n")
 
     seeds = [42, 123, 2024, 7777, 31415]
-    # (label, strategy, epistemic_trust, surprise_dampening, adaptive_dampening)
+    # (label, strategy, epistemic_trust, surprise_dampening, adaptive_dampening, shared_historization)
     strategies = [
-        ("Greedy", Strategy.GREEDY_DELTA, False, False, False),
-        ("E0_greedy", Strategy.E0_GREEDY, False, False, False),
-        ("E0_greedy+damp", Strategy.E0_GREEDY, False, True, False),
-        ("E0_greedy+adapt", Strategy.E0_GREEDY, False, False, True),
-        ("E0_conserv.", Strategy.E0_CONSERVATIVE, False, False, False),
-        ("E0_cons.+damp", Strategy.E0_CONSERVATIVE, False, True, False),
-        ("E0_cons.+adapt", Strategy.E0_CONSERVATIVE, False, False, True),
+        ("Greedy", Strategy.GREEDY_DELTA, False, False, False, False),
+        ("E0_greedy", Strategy.E0_GREEDY, False, False, False, False),
+        ("E0_greedy+damp", Strategy.E0_GREEDY, False, True, False, False),
+        ("E0_greedy+adapt", Strategy.E0_GREEDY, False, False, True, False),
+        ("E0_greedy+coop", Strategy.E0_GREEDY, False, False, False, True),
+        ("E0_greedy+coop+damp", Strategy.E0_GREEDY, False, True, False, True),
+        ("E0_greedy+coop+adapt", Strategy.E0_GREEDY, False, False, True, True),
+        ("E0_conserv.", Strategy.E0_CONSERVATIVE, False, False, False, False),
+        ("E0_cons.+damp", Strategy.E0_CONSERVATIVE, False, True, False, False),
+        ("E0_cons.+adapt", Strategy.E0_CONSERVATIVE, False, False, True, False),
+        ("E0_cons.+coop", Strategy.E0_CONSERVATIVE, False, False, False, True),
+        ("E0_cons.+coop+damp", Strategy.E0_CONSERVATIVE, False, True, False, True),
+        ("E0_cons.+coop+adapt", Strategy.E0_CONSERVATIVE, False, False, True, True),
     ]
     for n_veh in (10, 15, 20):
         print(f"--- {n_veh} vehicles, 1000 ticks ---")
         totals: Dict[str, List[int]] = {s[0]: [] for s in strategies}
         for seed in seeds:
-            for label, strat, trust, damp, adapt in strategies:
+            for label, strat, trust, damp, adapt, coop in strategies:
                 random.seed(seed)
                 r = run_simulation(
                     city, n_vehicles=n_veh, n_ticks=1000,
@@ -979,21 +1006,36 @@ def main_river_city():
                     epistemic_trust=trust,
                     surprise_dampening=damp,
                     adaptive_dampening=adapt,
+                    shared_historization=coop,
                 )
                 totals[label].append(r.trips_completed)
         avgs = {k: sum(v) / len(v) for k, v in totals.items()}
-        for label, _, _, _, _ in strategies:
-            print(f"  {label:20s} {avgs[label]:6.0f} trips (avg)")
+        for label, _, _, _, _, _ in strategies:
+            print(f"  {label:24s} {avgs[label]:6.0f} trips (avg)")
+        # Isolated gains
         g_base = avgs["E0_greedy"]
         g_adapt = avgs["E0_greedy+adapt"]
         gain_ga = (g_adapt - g_base) / max(g_base, 1) * 100
-        print(f"  → Adaptive gain (greedy):      {gain_ga:+.0f}%")
+        print(f"  → Adaptive gain (greedy, isolated):    {gain_ga:+.0f}%")
         c_base = avgs["E0_conserv."]
         c_adapt = avgs["E0_cons.+adapt"]
         gain_ca = (c_adapt - c_base) / max(c_base, 1) * 100
-        print(f"  → Adaptive gain (conserv.):    {gain_ca:+.0f}%")
+        print(f"  → Adaptive gain (conserv., isolated):  {gain_ca:+.0f}%")
+        # Cooperative gains
+        g_coop = avgs["E0_greedy+coop"]
+        gain_gc = (g_coop - g_base) / max(g_base, 1) * 100
+        print(f"  → Coop gain (greedy):                  {gain_gc:+.0f}%")
+        g_coop_adapt = avgs["E0_greedy+coop+adapt"]
+        gain_gca = (g_coop_adapt - g_base) / max(g_base, 1) * 100
+        print(f"  → Coop+adapt gain (greedy):            {gain_gca:+.0f}%")
+        c_coop = avgs["E0_cons.+coop"]
+        gain_cc = (c_coop - c_base) / max(c_base, 1) * 100
+        print(f"  → Coop gain (conserv.):                {gain_cc:+.0f}%")
+        c_coop_adapt = avgs["E0_cons.+coop+adapt"]
+        gain_cca = (c_coop_adapt - c_base) / max(c_base, 1) * 100
+        print(f"  → Coop+adapt gain (conserv.):          {gain_cca:+.0f}%")
     print()
-    print("C188 validation: Does adaptive observation outperform static dampening?")
+    print("C189 validation: Does shared historization unlock adaptive observation?")
 
 
 def main_river_city_multiround():
@@ -1019,19 +1061,23 @@ def main_river_city_multiround():
     ticks_per_round = 500
     n_veh = 10
 
-    # (label, strategy, epistemic_trust, surprise_dampening, adaptive_dampening)
+    # (label, strategy, epistemic_trust, surprise_dampening, adaptive_dampening, shared_historization)
     configs = [
-        ("Greedy", Strategy.GREEDY_DELTA, False, False, False),
-        ("E0_greedy", Strategy.E0_GREEDY, False, False, False),
-        ("E0_greedy+damp", Strategy.E0_GREEDY, False, True, False),
-        ("E0_greedy+adapt", Strategy.E0_GREEDY, False, False, True),
-        ("E0_conserv.", Strategy.E0_CONSERVATIVE, False, False, False),
-        ("E0_cons.+damp", Strategy.E0_CONSERVATIVE, False, True, False),
-        ("E0_cons.+adapt", Strategy.E0_CONSERVATIVE, False, False, True),
+        ("Greedy", Strategy.GREEDY_DELTA, False, False, False, False),
+        ("E0_greedy", Strategy.E0_GREEDY, False, False, False, False),
+        ("E0_greedy+damp", Strategy.E0_GREEDY, False, True, False, False),
+        ("E0_greedy+adapt", Strategy.E0_GREEDY, False, False, True, False),
+        ("E0_greedy+coop", Strategy.E0_GREEDY, False, False, False, True),
+        ("E0_greedy+coop+adapt", Strategy.E0_GREEDY, False, False, True, True),
+        ("E0_conserv.", Strategy.E0_CONSERVATIVE, False, False, False, False),
+        ("E0_cons.+damp", Strategy.E0_CONSERVATIVE, False, True, False, False),
+        ("E0_cons.+adapt", Strategy.E0_CONSERVATIVE, False, False, True, False),
+        ("E0_cons.+coop", Strategy.E0_CONSERVATIVE, False, False, False, True),
+        ("E0_cons.+coop+adapt", Strategy.E0_CONSERVATIVE, False, False, True, True),
     ]
 
     seeds = [42, 123, 2024]
-    for label, strat, trust, damp, adapt in configs:
+    for label, strat, trust, damp, adapt, coop in configs:
         round_avgs = []
         for rnd in range(n_rounds):
             trips_this_round = []
@@ -1043,17 +1089,18 @@ def main_river_city_multiround():
                     epistemic_trust=trust,
                     surprise_dampening=damp,
                     adaptive_dampening=adapt,
+                    shared_historization=coop,
                 )
                 trips_this_round.append(r.trips_completed)
             round_avgs.append(sum(trips_this_round) / len(trips_this_round))
         # Print learning curve
         curve = " → ".join(f"{a:.0f}" for a in round_avgs)
         improvement = (round_avgs[-1] - round_avgs[0]) / max(round_avgs[0], 1) * 100
-        print(f"  {label:20s}  {curve}  ({improvement:+.0f}% R1→R{n_rounds})")
+        print(f"  {label:24s}  {curve}  ({improvement:+.0f}% R1→R{n_rounds})")
 
     print()
     print("Key question: Does E₀ improve across rounds while Greedy stays flat?")
-    print("C188: Does adaptive observation outperform static dampening?")
+    print("C189: Does shared historization unlock cooperative learning + adaptive observation?")
 
 
 if __name__ == "__main__":
