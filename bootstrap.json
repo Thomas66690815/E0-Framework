@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C196",
-    "latest_commit_hash": "1385c59",
-    "latest_commit_msg": "C196: Persistence cycle — discovered edges survive across sessions (4401 tests)",
-    "test_count": 4401,
+    "latest_commit": "C197",
+    "latest_commit_hash": "743f04e",
+    "latest_commit_msg": "C197: Confidence update + LLM semantic validation (4407 tests)",
+    "test_count": 4407,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
     "module_count": "76 production + 10 benchmarks + 17 demos + 65 explorations + 122 test files",
@@ -252,7 +252,7 @@
         "last_tested": "C186"
       }
     ],
-    "next_commit_id": "C197"
+    "next_commit_id": "C198"
   },
   "structural_entropy": {
     "_comment": "Our forgetting protocol. Isomorphic to E₀'s structural entropy (C114-C121). Prevents bootstrap.json from growing without bound. Prune trigger is parameter-free: pressure = entries_since_last_prune / (entries_since_last_prune + μ). When pressure > 0.5 → prune. Check after each arc completion.",
@@ -657,180 +657,220 @@
         "to": "L3",
         "delta": 0.8,
         "resistance": 1.3,
-        "confidence": 0.5,
+        "confidence": 0.48,
         "derivation": "discovered via HERE → OPEN-2 → L3",
-        "discovered_at": "C196"
+        "discovered_at": "C196",
+        "semantic_score": 0.7,
+        "semantic_reason": "Current state likely relates to controller layer as it reflects system status and control logic."
       },
       {
         "from": "HERE",
         "to": "L13",
         "delta": 0.733,
         "resistance": 1.4,
-        "confidence": 0.5,
+        "confidence": 0.48,
         "derivation": "discovered via HERE → OPEN-2 → L3 → L13",
-        "discovered_at": "C196"
+        "discovered_at": "C196",
+        "semantic_score": 0.3,
+        "semantic_reason": "Current state to human communication layer is indirect; plausible but weak connection."
       },
       {
         "from": "OPEN-2",
         "to": "L13",
         "delta": 0.7,
         "resistance": 0.7,
-        "confidence": 0.5,
+        "confidence": 0.48,
         "derivation": "discovered via OPEN-2 → L3 → L13",
-        "discovered_at": "C196"
+        "discovered_at": "C196",
+        "semantic_score": 0.3,
+        "semantic_reason": "Open thread on adversarial stability has some relevance to human communication but connection is wea"
       },
       {
         "from": "OPEN-2",
         "to": "HERE",
         "delta": 0.5,
         "resistance": 0.8,
-        "confidence": 0.5,
+        "confidence": 0.6,
         "derivation": "discovered via OPEN-2 → L3 → L13 → HERE",
-        "discovered_at": "C196"
+        "discovered_at": "C196",
+        "semantic_score": 0.7,
+        "semantic_reason": "Open thread on adversarial stability relates back to current state as unresolved issues affect state"
       },
       {
         "from": "OPEN-2",
         "to": "OPEN-1",
         "delta": 0.575,
         "resistance": 1.5,
-        "confidence": 0.5,
+        "confidence": 0.48,
         "derivation": "discovered via OPEN-2 → L3 → L13 → HERE → OPEN-1",
-        "discovered_at": "C196"
+        "discovered_at": "C196",
+        "semantic_score": 0.7,
+        "semantic_reason": "Two open threads on related architectural problems plausibly connected."
       },
       {
         "from": "L3",
         "to": "OPEN-1",
         "delta": 0.5,
         "resistance": 0.9,
-        "confidence": 0.5,
+        "confidence": 0.6,
         "derivation": "discovered via L3 → L13 → HERE → OPEN-1",
-        "discovered_at": "C196"
+        "discovered_at": "C196",
+        "semantic_score": 0.7,
+        "semantic_reason": "Controller layer likely involved in orchestrator pattern issues, plausible connection."
       },
       {
         "from": "L13",
         "to": "OPEN-1",
         "delta": 0.45,
         "resistance": 0.8,
-        "confidence": 0.5,
+        "confidence": 0.48,
         "derivation": "discovered via L13 → HERE → OPEN-1",
-        "discovered_at": "C196"
+        "discovered_at": "C196",
+        "semantic_score": 0.3,
+        "semantic_reason": "Human communication layer to orchestrator pattern open thread is a weak connection."
       },
       {
         "from": "HERE",
         "to": "L6",
         "delta": 0.7,
         "resistance": 1.2,
-        "confidence": 0.5,
+        "confidence": 0.48,
         "derivation": "discovered via HERE → OPEN-1 → L6",
-        "discovered_at": "C196"
+        "discovered_at": "C196",
+        "semantic_score": 0.3,
+        "semantic_reason": "Current state to multiverse layer is an indirect connection, somewhat plausible but weak."
       },
       {
         "from": "HERE",
         "to": "L9",
         "delta": 0.633,
         "resistance": 1.3,
-        "confidence": 0.5,
+        "confidence": 0.48,
         "derivation": "discovered via HERE → OPEN-1 → L6 → L9",
-        "discovered_at": "C196"
+        "discovered_at": "C196",
+        "semantic_score": 0.3,
+        "semantic_reason": "Current state to dream mode layer is a weak/indirect connection."
       },
       {
         "from": "OPEN-1",
         "to": "L9",
         "delta": 0.55,
         "resistance": 0.6,
-        "confidence": 0.5,
+        "confidence": 0.48,
         "derivation": "discovered via OPEN-1 → L6 → L9",
-        "discovered_at": "C196"
+        "discovered_at": "C196",
+        "semantic_score": 0.3,
+        "semantic_reason": "Open thread on orchestrator pattern to dream mode layer is weakly connected."
       },
       {
         "from": "OPEN-1",
         "to": "HERE",
         "delta": 0.4,
         "resistance": 0.7,
-        "confidence": 0.5,
+        "confidence": 0.6,
         "derivation": "discovered via OPEN-1 → L6 → L9 → HERE",
-        "discovered_at": "C196"
+        "discovered_at": "C196",
+        "semantic_score": 0.7,
+        "semantic_reason": "Orchestrator pattern open thread relates back to current state, plausible connection."
       },
       {
         "from": "OPEN-1",
         "to": "OPEN-2",
         "delta": 0.5,
         "resistance": 1.4,
-        "confidence": 0.5,
+        "confidence": 0.6,
         "derivation": "discovered via OPEN-1 → L6 → L9 → HERE → OPEN-2",
-        "discovered_at": "C196"
+        "discovered_at": "C196",
+        "semantic_score": 0.7,
+        "semantic_reason": "Two open threads on related architectural issues likely connected."
       },
       {
         "from": "L6",
         "to": "OPEN-2",
         "delta": 0.467,
         "resistance": 0.9,
-        "confidence": 0.5,
+        "confidence": 0.48,
         "derivation": "discovered via L6 → L9 → HERE → OPEN-2",
-        "discovered_at": "C196"
+        "discovered_at": "C196",
+        "semantic_score": 0.3,
+        "semantic_reason": "Multiverse layer to adversarial stability open thread is a weak connection."
       },
       {
         "from": "L9",
         "to": "OPEN-2",
         "delta": 0.45,
         "resistance": 0.8,
-        "confidence": 0.5,
+        "confidence": 0.48,
         "derivation": "discovered via L9 → HERE → OPEN-2",
-        "discovered_at": "C196"
+        "discovered_at": "C196",
+        "semantic_score": 0.3,
+        "semantic_reason": "Dream mode layer to adversarial stability open thread is a weak connection."
       },
       {
         "from": "L3",
         "to": "OPEN-2",
         "delta": 0.5,
         "resistance": 2.3,
-        "confidence": 0.5,
+        "confidence": 0.6,
         "derivation": "discovered via L3 → OPEN-1 → OPEN-2",
-        "discovered_at": "C196"
+        "discovered_at": "C196",
+        "semantic_score": 0.7,
+        "semantic_reason": "Controller layer likely involved in adversarial stability issues, plausible connection."
       },
       {
         "from": "OPEN-1",
         "to": "L3",
         "delta": 0.65,
         "resistance": 2.0,
-        "confidence": 0.5,
+        "confidence": 0.6,
         "derivation": "discovered via OPEN-1 → OPEN-2 → L3",
-        "discovered_at": "C196"
+        "discovered_at": "C196",
+        "semantic_score": 0.7,
+        "semantic_reason": "Orchestrator pattern open thread relates to controller layer, plausible connection."
       },
       {
         "from": "OPEN-2",
         "to": "L6",
         "delta": 0.587,
         "resistance": 2.0,
-        "confidence": 0.5,
+        "confidence": 0.48,
         "derivation": "discovered via OPEN-2 → OPEN-1 → L6",
-        "discovered_at": "C196"
+        "discovered_at": "C196",
+        "semantic_score": 0.3,
+        "semantic_reason": "Adversarial stability open thread to multiverse layer is a weak connection."
       },
       {
         "from": "L6",
         "to": "OPEN-1",
         "delta": 0.589,
         "resistance": 2.4,
-        "confidence": 0.5,
+        "confidence": 0.6,
         "derivation": "discovered via L6 → OPEN-2 → L3 → OPEN-1",
-        "discovered_at": "C196"
+        "discovered_at": "C196",
+        "semantic_score": 0.7,
+        "semantic_reason": "Multiverse layer relates to orchestrator pattern open thread, plausible connection."
       },
       {
         "from": "OPEN-1",
         "to": "L13",
         "delta": 0.6,
         "resistance": 2.1,
-        "confidence": 0.5,
+        "confidence": 0.48,
         "derivation": "discovered via OPEN-1 → HERE → L3 → L13",
-        "discovered_at": "C196"
+        "discovered_at": "C196",
+        "semantic_score": 0.3,
+        "semantic_reason": "Orchestrator pattern open thread to human communication layer is a weak connection."
       },
       {
         "from": "L13",
         "to": "OPEN-2",
         "delta": 0.475,
         "resistance": 2.2,
-        "confidence": 0.5,
+        "confidence": 0.48,
         "derivation": "discovered via L13 → OPEN-1 → OPEN-2",
-        "discovered_at": "C196"
+        "discovered_at": "C196",
+        "semantic_score": 0.3,
+        "semantic_reason": "Human communication layer to adversarial stability open thread is a weak connection."
       }
     ]
   }

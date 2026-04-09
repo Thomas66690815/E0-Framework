@@ -686,6 +686,167 @@ def persist_discovered_edges(new_edges, nodes, existing_edges, dry_run=False):
     return filtered
 
 
+def update_edge_confidence(landscape, nodes, path, phase_label="E"):
+    """Update confidence of discovered edges based on actual usage.
+
+    After Phase E (or any exploration), we know which discovered edges
+    were actually used and what outcome they produced.
+
+    Meta-level semantics: the confidence tracks whether a shortcut
+    is USEFUL FOR NAVIGATION, not domain-level success/failure.
+    An edge that gets traversed is useful (the system chose it).
+    An edge that never gets traversed may be an artifact.
+
+    Rules:
+    - Traversed → confidence += 0.1 (capped at 1.0)
+    - Not traversed → confidence -= 0.02 (slow decay, floored at 0.0)
+
+    Returns dict of updated edges: {(from, to): new_confidence}
+    """
+    with open(BOOTSTRAP_PATH, encoding="utf-8") as f:
+        bs = json.load(f)
+
+    disc = bs.get("discovered_edges", {}).get("edges", [])
+    if not disc:
+        return {}
+
+    # Build lookup: which discovered edges were traversed?
+    traversed = set()
+    for i in range(len(path) - 1):
+        traversed.add((path[i], path[i + 1]))
+
+    updates = {}
+    for edge_info in disc:
+        key = (edge_info["from"], edge_info["to"])
+        old_conf = edge_info.get("confidence", 0.5)
+
+        if key in traversed:
+            # Traversed = the system found this edge useful enough to choose
+            new_conf = min(1.0, old_conf + 0.1)
+        else:
+            # Slow decay for unused edges — structural entropy
+            new_conf = max(0.0, old_conf - 0.02)
+
+        new_conf = round(new_conf, 3)
+        if new_conf != old_conf:
+            edge_info["confidence"] = new_conf
+            updates[key] = new_conf
+
+    if updates:
+        with open(BOOTSTRAP_PATH, "w", encoding="utf-8") as f:
+            json.dump(bs, f, indent=2, ensure_ascii=False)
+            f.write("\n")
+
+    return updates
+
+
+def llm_semantic_validation(nodes, dry_run=False):
+    """Ask LLM to judge semantic plausibility of discovered edges.
+
+    For each discovered edge, the LLM sees:
+    - Source node (type, label, context)
+    - Target node (type, label, context)
+    - Derivation path
+
+    And judges: "Is there a real conceptual connection?" → score 0.0–1.0
+
+    This is the LLM=Muscle pattern: E₀ proposes structure, LLM evaluates meaning.
+    """
+    with open(BOOTSTRAP_PATH, encoding="utf-8") as f:
+        bs = json.load(f)
+
+    disc = bs.get("discovered_edges", {}).get("edges", [])
+    if not disc:
+        return []
+
+    # Build edge descriptions for the LLM
+    edge_descriptions = []
+    for i, edge_info in enumerate(disc):
+        src_id, tgt_id = edge_info["from"], edge_info["to"]
+        src_node = nodes.get(src_id, {})
+        tgt_node = nodes.get(tgt_id, {})
+        desc = (
+            f"Edge {i+1}: {src_id} → {tgt_id}\n"
+            f"  Source: [{src_node.get('type', '?')}] {src_node.get('label', '?')}\n"
+            f"  Target: [{tgt_node.get('type', '?')}] {tgt_node.get('label', '?')}\n"
+            f"  Discovered via: {edge_info.get('derivation', '?')}\n"
+            f"  Current confidence: {edge_info.get('confidence', 0.5)}"
+        )
+        edge_descriptions.append(desc)
+
+    edges_text = "\n\n".join(edge_descriptions)
+
+    system = (
+        "You are evaluating structural connections in a software project's knowledge graph. "
+        "The graph has nodes of types: gordian_trap (resolved mistakes), breakthrough (key insights), "
+        "working_principle (confirmed lessons), perspective_check (review questions), "
+        "arch_layer (code architecture layers), open_thread (unresolved problems), "
+        "current_state (current project state). "
+        "Edges represent meaningful conceptual connections between these elements. "
+        "Some edges were discovered by automated exploration (path shortcuts) and may or may not "
+        "be semantically meaningful."
+    )
+
+    user = (
+        f"Rate each discovered edge for semantic plausibility. "
+        f"Does a real conceptual connection exist between source and target?\n\n"
+        f"Score each edge 0.0 to 1.0:\n"
+        f"  1.0 = strong, obvious connection (e.g., adversarial problem → controller layer)\n"
+        f"  0.7 = plausible connection (e.g., orchestrator problem → multiverse layer)\n"
+        f"  0.3 = weak/indirect connection (e.g., dream mode → adversarial stability)\n"
+        f"  0.0 = no real connection (artifact of path proximity)\n\n"
+        f"Edges to evaluate:\n\n{edges_text}\n\n"
+        f"Respond with ONLY a JSON array of objects, one per edge, like:\n"
+        f'[{{"edge": 1, "score": 0.7, "reason": "brief reason"}}]\n'
+        f"No other text."
+    )
+
+    if dry_run:
+        return [{"edge": i + 1, "score": 0.5, "reason": "dry_run"} for i in range(len(disc))]
+
+    try:
+        from e0_controller.llm_adapter import LLMConfig, openai_call
+
+        config = LLMConfig(
+            model="gpt-4.1-mini",
+            temperature=0.1,
+            max_tokens=2048,
+        )
+        response = openai_call(system, user, config)
+
+        # Parse JSON response
+        # Strip markdown fences if present
+        text = response.strip()
+        if text.startswith("```"):
+            text = text.split("\n", 1)[1] if "\n" in text else text[3:]
+            if text.endswith("```"):
+                text = text[:-3]
+            text = text.strip()
+
+        results = json.loads(text)
+
+        # Apply scores to bootstrap.json
+        updated = 0
+        for result in results:
+            idx = result.get("edge", 0) - 1
+            if 0 <= idx < len(disc):
+                score = max(0.0, min(1.0, float(result.get("score", 0.5))))
+                disc[idx]["semantic_score"] = round(score, 2)
+                disc[idx]["semantic_reason"] = result.get("reason", "")[:100]
+                updated += 1
+
+        if updated > 0:
+            with open(BOOTSTRAP_PATH, "w", encoding="utf-8") as f:
+                json.dump(bs, f, indent=2, ensure_ascii=False)
+                f.write("\n")
+
+        return results
+
+    except Exception as exc:
+        print(f"  LLM semantic validation failed: {exc}")
+        return []
+
+
 def run_transition_potential(landscape, nodes, edges):
     """Experiment 6: E₀ autonomously selects goals from transition potential."""
     from e0_controller.controller import HybridMode
@@ -1012,6 +1173,58 @@ def run_local_exploration(landscape, nodes, edges):
     print(f"    Combined unique states:  {all_unique} / {len(nodes)}")
     print(f"    Combined open threads:   {len(all_open)} / 3")
     print(f"    Full Phase E path: {' → '.join(path2)}")
+
+    # Phase F: Confidence update — discovered edges learn from usage
+    # Edges used in Phase E get confidence updated based on outcome.
+    # Unused edges slowly decay. This is Historization for the meta-level.
+    print(f"\n  Phase F: Confidence update (discovered edges learn from usage)")
+    print(f"  {'─'*60}")
+
+    conf_updates = update_edge_confidence(iter_landscape, nodes, path2)
+    if conf_updates:
+        used = sum(1 for k in conf_updates if k in {(path2[i], path2[i+1]) for i in range(len(path2)-1)})
+        decayed = len(conf_updates) - used
+        print(f"    Updated: {used} used edges, {decayed} decayed (unused)")
+        for (src, tgt), new_conf in sorted(conf_updates.items(), key=lambda x: -x[1]):
+            marker = "↑" if new_conf > 0.5 else ("↓" if new_conf < 0.48 else "→")
+            print(f"    {marker} {src:8s}→{tgt:8s}  confidence={new_conf:.3f}")
+    else:
+        print(f"    No updates (no discovered edges to track)")
+
+    # Phase G: LLM semantic validation — E₀=Skeleton, LLM=Muscle
+    # E₀ proposed the edges (structural). LLM judges meaning (semantic).
+    # Only runs when --llm flag is present (API costs).
+    if "--llm" in sys.argv:
+        print(f"\n  Phase G: LLM semantic validation")
+        print(f"  {'─'*60}")
+        print(f"  E₀ proposed {len(disc if 'disc' in dir() else [])} edges structurally.")
+        print(f"  LLM evaluates: 'Is there a real conceptual connection?'")
+
+        results = llm_semantic_validation(nodes)
+        if results:
+            for r in results:
+                idx = r.get("edge", 0) - 1
+                score = r.get("score", 0)
+                reason = r.get("reason", "")[:60]
+                marker = "✓" if score >= 0.6 else ("~" if score >= 0.3 else "✗")
+                print(f"    {marker} Edge {r['edge']:2d}: score={score:.1f}  {reason}")
+            # Summary
+            scores = [r.get("score", 0) for r in results]
+            good = sum(1 for s in scores if s >= 0.6)
+            weak = sum(1 for s in scores if 0.3 <= s < 0.6)
+            bad = sum(1 for s in scores if s < 0.3)
+            avg = sum(scores) / len(scores) if scores else 0
+            print(f"\n    Summary: {good} strong + {weak} weak + {bad} artifact = {len(scores)} total")
+            print(f"    Mean semantic score: {avg:.2f}")
+        else:
+            print(f"    LLM validation returned no results.")
+    elif "--llm-dry" in sys.argv:
+        print(f"\n  Phase G: LLM semantic validation (DRY RUN)")
+        print(f"  {'─'*60}")
+        results = llm_semantic_validation(nodes, dry_run=True)
+        print(f"    Would validate {len(results)} edges (skipped — dry run)")
+    else:
+        print(f"\n  Phase G: Skipped (use --llm to enable LLM semantic validation)")
 
 
 # ---------------------------------------------------------------------------
