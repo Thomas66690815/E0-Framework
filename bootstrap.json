@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C191b",
+    "latest_commit": "C192",
     "latest_commit_hash": "PENDING",
-    "latest_commit_msg": "C191b: Integration Value Measurement — amplitude (Layer 3) provides -50% steps, -60 traps vs greedy baseline (7 tests, 4363 total)",
-    "test_count": 4363,
+    "latest_commit_msg": "C192: Loop Traps — amplitude override trap discovered, integration value is domain-dependent (11 tests, 4367 total)",
+    "test_count": 4367,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
     "module_count": "76 production + 10 benchmarks + 17 demos + 65 explorations + 122 test files",
@@ -101,6 +101,16 @@
         "resolution": "Level-3 neighborhood consistency (C128) gates promotion by structural context.",
         "lesson": "Self-modifying systems can destroy their own discrimination signal. Monitor signal quality, not just accuracy.",
         "recurred": 0
+      },
+      {
+        "id": "GT-5",
+        "name": "Amplitude Override Trap",
+        "when": "C192",
+        "what_happened": "Amplitude overlay overrides greedy's revisit-penalty correction on loop domains. Greedy escapes siren loops in 11 steps; amplitude keeps the controller permanently trapped (60 steps, 0% goal rate).",
+        "root_cause": "Amplitude maximizes intensity within bounded horizon. Siren loops have low S_eff → high intensity → amplitude AGREES the loop is a good path and overrides greedy's learned correction.",
+        "resolution": "Discovered, not yet resolved. Potential fixes: loop detection in amplitude, confidence decay on repeated overrides, or self-graph detecting amplitude component as harmful.",
+        "lesson": "A mechanism that helps in one domain (dead-end traps) can HURT in another (loop traps). Integration value is domain-dependent. Never assume more layers = better.",
+        "recurred": 0
       }
     ],
     "breakthroughs": [
@@ -136,6 +146,14 @@
           "C188 adaptive observation",
           "C189 shared historization"
         ]
+      },
+      {
+        "id": "BT-4",
+        "name": "Dual Nature of Integration",
+        "when": "C191b–C192",
+        "insight": "Integration value is trap-type dependent. Dead-end traps: amplitude provides 2x improvement. Loop traps: amplitude HURTS (overrides greedy's recovery). No single layer dominates all domains.",
+        "built_upon": 0,
+        "built_upon_by": []
       }
     ]
   },
@@ -182,10 +200,10 @@
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
     "current_arc": "14-Layer Integration (C191+)",
-    "arc_status": "VALUE MEASURED. Amplitude (Layer 3) is the load-bearing integration layer: -50% steps, -60 traps.",
-    "key_result": "5-config comparison: GREEDY baseline (14 steps, 2 traps/run) vs AMPLITUDE+ (7 steps, 0 traps). Layers 5/9 add no measurable value for dead-end traps.",
+    "arc_status": "DUAL NATURE DISCOVERED. Amplitude helps with dead-ends (-50%) but HURTS on loops (override trap). Integration value is domain-dependent.",
+    "key_result": "Dead-end traps: amplitude 7 vs greedy 14 steps. Loop traps: greedy 11 vs amplitude 60 steps (stuck). GT-5 discovered.",
     "open_threads": [
-      "Non-dead-end traps: design trap loops that amplitude can't catch → test higher layer value",
+      "GT-5 resolution: loop detection in amplitude, confidence decay, or self-graph health monitoring",
       "Orchestrator pattern: automatic wiring vs manual composition",
       "Adversarial stability still partially open (C172-C174)"
     ],
@@ -233,7 +251,7 @@
         "last_tested": "C186"
       }
     ],
-    "next_commit_id": "C192"
+    "next_commit_id": "C193"
   },
   "structural_entropy": {
     "_comment": "Our forgetting protocol. Isomorphic to E₀'s structural entropy (C114-C121). Prevents bootstrap.json from growing without bound. Prune trigger is parameter-free: pressure = entries_since_last_prune / (entries_since_last_prune + μ). When pressure > 0.5 → prune. Check after each arc completion.",

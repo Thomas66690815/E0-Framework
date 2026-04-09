@@ -576,3 +576,336 @@ class TestEmergentValueMeasurement:
             f"Traps: baseline={baseline_traps}, full={full_traps} "
             f"({delta_traps:+d})"
         )
+
+
+# ═══════════════════════════════════════════════════════════════════
+# PART 2: Loop Traps — amplitude-invisible, higher-layer value
+# ═══════════════════════════════════════════════════════════════════
+#
+# C191b showed amplitude detects dead-end traps perfectly.
+# Loop traps test where HIGHER layers (historization adaptation,
+# dream cross-domain) add value that amplitude cannot provide.
+#
+# Key property: loop traps have all edges admissible, all succeed,
+# and have high amplitude intensity within the lookahead horizon.
+# Amplitude AGREES with greedy that the loop looks good.
+# Only experience (revisit penalty) or cross-domain knowledge (dream)
+# can break the loop.
+# ═══════════════════════════════════════════════════════════════════
+
+# Loop edges: succeed but waste steps cycling back to the junction
+LOOP_EDGES: Set[Tuple[str, str]] = {
+    ("HUB", "S1"), ("S1", "S2"), ("S2", "S3"), ("S3", "HUB"),   # Siren loop 1
+    ("MID", "L1"), ("L1", "L2"), ("L2", "MID"),                  # Siren loop 2
+}
+
+
+def loop_execute_fn(source: str, target: str) -> Outcome:
+    """All edges succeed — loops waste steps, not fail."""
+    return Outcome.SUCCESS
+
+
+def build_loop_trap_domain() -> Landscape:
+    """Domain with 2 siren loops that attract greedy + amplitude.
+
+    Key invariant: ALL edges succeed.  Loops waste steps, not fail.
+    This means historization δ_H does NOT grow (no FAILURE).
+    Only revisit penalty α and cross-domain dream knowledge help.
+
+    Topology:
+      Main path:   START → HUB → B → C → MID → E → GOAL  (6 edges)
+      Siren 1:     HUB → S1 → S2 → S3 → HUB  (4-node cycle at HUB)
+      Siren 2:     MID → L1 → L2 → MID        (3-node cycle at MID)
+      Extra exits:  HUB → X1, HUB → X2 (noise for OI)
+
+    S_eff budget (initial vs after revisit with α=2):
+      HUB→S1 = 0.20×0.15 = 0.030  < HUB→B = 0.30×0.25 = 0.075  (siren wins)
+      After revisit: 0.030 × (1+2) = 0.090 > 0.075               (B wins!)
+      MID→L1 = 0.20×0.15 = 0.030  < MID→E = 0.25×0.20 = 0.050  (siren wins)
+      After revisit: 0.030 × 3 = 0.090 > 0.050                   (E wins!)
+
+    This creates measurable adaptation: first visit takes the siren,
+    revisit penalty breaks it.  The question: HOW FAST do configs adapt?
+
+    Amplitude at h=3 from HUB via S1: I = exp(-2×0.090) = 0.835
+    Amplitude at h=3 from HUB via B:  I = exp(-2×0.175) = 0.705
+    → Amplitude still PREFERS the siren (higher I within horizon).
+
+    HUB has 5 neighbors → OI = 5 × 1.0 = 5.0 > 3.0 → Dream triggers.
+    """
+    ls = Landscape()
+
+    nodes = [
+        "START", "HUB", "B", "C", "MID", "E", "GOAL",
+        "S1", "S2", "S3",       # Siren loop 1
+        "L1", "L2",             # Siren loop 2
+        "X1", "X2", "X3",       # Noise exits for OI > threshold
+    ]
+    for n in nodes:
+        ls.add_state(n)
+
+    edges = [
+        # ── Main path (reliable, moderate S_eff) ──
+        ("START", "HUB",  0.35, 0.30),   # S_eff = 0.105
+        ("HUB",   "B",    0.30, 0.25),   # S_eff = 0.075
+        ("B",     "C",    0.25, 0.20),   # S_eff = 0.050
+        ("C",     "MID",  0.25, 0.20),   # S_eff = 0.050
+        ("MID",   "E",    0.25, 0.20),   # S_eff = 0.050
+        ("E",     "GOAL", 0.20, 0.15),   # S_eff = 0.030
+
+        # ── Siren loop 1 at HUB (deceptive: low S_eff, breakable by α) ──
+        ("HUB", "S1",  0.20, 0.15),      # S_eff = 0.030 < 0.075 (wins initially)
+        ("S1",  "S2",  0.20, 0.15),      # S_eff = 0.030
+        ("S2",  "S3",  0.20, 0.15),      # S_eff = 0.030
+        ("S3",  "HUB", 0.20, 0.15),      # S_eff = 0.030 (back to HUB)
+
+        # ── Siren loop 2 at MID ──
+        ("MID", "L1",  0.20, 0.15),      # S_eff = 0.030 < 0.050 (wins initially)
+        ("L1",  "L2",  0.20, 0.15),      # S_eff = 0.030
+        ("L2",  "MID", 0.20, 0.15),      # S_eff = 0.030 (back to MID)
+
+        # ── Noise exits from HUB (push OI > threshold for dream) ──
+        ("HUB", "X1",  0.40, 0.35),      # S_eff = 0.140
+        ("HUB", "X2",  0.45, 0.40),      # S_eff = 0.180
+        ("X1",  "X2",  0.30, 0.25),      # S_eff = 0.075
+        ("X2",  "X3",  0.35, 0.30),      # S_eff = 0.105
+        ("X3",  "B",   0.30, 0.25),      # S_eff = 0.075 (rejoin main)
+
+        # ── S3 also connects to B (so loop doesn't dead-end) ──
+        ("S3",  "B",   0.30, 0.25),      # S_eff = 0.075 (escape from loop)
+        # ── L2 also connects to E (escape from loop 2) ──
+        ("L2",  "E",   0.30, 0.25),      # S_eff = 0.075
+    ]
+
+    for src, tgt, delta, r0 in edges:
+        ls.add_edge(src, tgt, delta=delta, resistance=r0)
+
+    return ls
+
+
+def count_loop_visits(trace: RunTrace) -> int:
+    """Count steps spent in loop edges."""
+    count = 0
+    for step in trace.steps:
+        if (step.source, step.target) in LOOP_EDGES:
+            count += 1
+    return count
+
+
+def measure_loop_run(trace: RunTrace, goal: str) -> RunResult:
+    m = trace.metrics()
+    return RunResult(
+        goal_reached=bool(trace.path and trace.path[-1] == goal),
+        steps=int(m["steps"]),
+        trap_encounters=count_loop_visits(trace),
+        failure_count=0,  # all succeed in loop domain
+        success_rate=m["success_rate"],
+        revisits=int(m["revisit_count"]),
+        unique_states=int(m["unique_states"]),
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Loop trap experiment configurations
+# ═══════════════════════════════════════════════════════════════════
+
+LOOP_RUNS = 30
+LOOP_MAX_CYCLES = 60
+
+
+def run_loop_baseline(n_runs: int = LOOP_RUNS) -> ExperimentResult:
+    """Layer 1: Pure greedy on loop domain."""
+    ls = build_loop_trap_domain()
+    ctrl = E0Controller(ls, loop_execute_fn, hybrid_mode=HybridMode.GREEDY)
+
+    results = []
+    for _ in range(n_runs):
+        trace = ctrl.run("START", max_cycles=LOOP_MAX_CYCLES, goal="GOAL")
+        results.append(measure_loop_run(trace, "GOAL"))
+
+    return ExperimentResult(name="loop_baseline", n_runs=n_runs, runs=results)
+
+
+def run_loop_amplitude(n_runs: int = LOOP_RUNS) -> ExperimentResult:
+    """Layer 1+3: Amplitude overlay on loop domain.
+
+    Amplitude should NOT help here — loop edges have higher intensity
+    than the correct path within the lookahead horizon.
+    """
+    ls = build_loop_trap_domain()
+    ctrl = E0Controller(
+        ls, loop_execute_fn,
+        hybrid_mode=HybridMode.AMPLITUDE_ON_DISAGREE,
+        hybrid_horizon=3,
+        hybrid_goals={"GOAL"},
+    )
+
+    results = []
+    for _ in range(n_runs):
+        trace = ctrl.run("START", max_cycles=LOOP_MAX_CYCLES, goal="GOAL")
+        results.append(measure_loop_run(trace, "GOAL"))
+
+    return ExperimentResult(name="loop_amplitude", n_runs=n_runs, runs=results)
+
+
+def run_loop_dream(n_runs: int = LOOP_RUNS) -> ExperimentResult:
+    """Layer 1+3+9: Amplitude + Dream peer_fn on loop domain.
+
+    Dream should help: the reference domain has already learned the correct
+    path and can suggest it when OI triggers at the HUB junction.
+    """
+    from e0_controller.self_graph import SelfGraph
+    from e0_controller.dream_mode import DreamObserver, make_dream_peer_fn
+
+    ls1 = build_loop_trap_domain()
+    ls2 = build_loop_trap_domain()
+
+    # Pre-train reference domain: force it through the correct path
+    # by running many times (revisit penalty eventually breaks loop)
+    ctrl_ref = E0Controller(ls2, loop_execute_fn, hybrid_mode=HybridMode.GREEDY)
+    for _ in range(60):
+        ctrl_ref.run("START", max_cycles=LOOP_MAX_CYCLES, goal="GOAL")
+
+    observer = DreamObserver(readiness_threshold=0.0, quantile=0.3)
+    observer.register("primary", ls1)
+    observer.register("reference", ls2)
+    observer.dream_cycle()
+
+    peer_fn = make_dream_peer_fn(observer, "primary", "GOAL")
+
+    ctrl = E0Controller(
+        ls1, loop_execute_fn,
+        hybrid_mode=HybridMode.AMPLITUDE_ON_DISAGREE,
+        hybrid_horizon=3,
+        hybrid_goals={"GOAL"},
+        peer_fn=peer_fn,
+    )
+    sg = SelfGraph()
+    ctrl.self_graph = sg
+
+    results = []
+    for i in range(n_runs):
+        trace = ctrl.run("START", max_cycles=LOOP_MAX_CYCLES, goal="GOAL")
+        results.append(measure_loop_run(trace, "GOAL"))
+
+        if (i + 1) % 10 == 0:
+            observer.dream_cycle()
+
+    return ExperimentResult(name="loop_dream", n_runs=n_runs, runs=results)
+
+
+def run_loop_full(n_runs: int = LOOP_RUNS) -> ExperimentResult:
+    """Full integration on loop domain."""
+    from e0_controller.self_graph import SelfGraph
+    from e0_controller.dual_reflection import diagnose_self_graph
+    from e0_controller.integrated_reflexion import integrated_reflexion
+    from e0_controller.dream_mode import DreamObserver, make_dream_peer_fn
+    from e0_controller.structural_entropy import should_dream
+
+    ls1 = build_loop_trap_domain()
+    ls2 = build_loop_trap_domain()
+
+    ctrl_ref = E0Controller(ls2, loop_execute_fn, hybrid_mode=HybridMode.GREEDY)
+    for _ in range(60):
+        ctrl_ref.run("START", max_cycles=LOOP_MAX_CYCLES, goal="GOAL")
+
+    observer = DreamObserver(readiness_threshold=0.0, quantile=0.3)
+    observer.register("primary", ls1)
+    observer.register("reference", ls2)
+    observer.dream_cycle()
+
+    peer_fn = make_dream_peer_fn(observer, "primary", "GOAL")
+
+    ctrl = E0Controller(
+        ls1, loop_execute_fn,
+        hybrid_mode=HybridMode.AMPLITUDE_ON_DISAGREE,
+        hybrid_horizon=3,
+        hybrid_goals={"GOAL"},
+        peer_fn=peer_fn,
+    )
+    sg = SelfGraph()
+    ctrl.self_graph = sg
+
+    results = []
+    for i in range(n_runs):
+        trace = ctrl.run("START", max_cycles=LOOP_MAX_CYCLES, goal="GOAL")
+        results.append(measure_loop_run(trace, "GOAL"))
+
+        if (i + 1) % 5 == 0:
+            diagnosis = diagnose_self_graph(sg)
+            integrated_reflexion(ls1, "START", "GOAL", scoped=True)
+
+        if (i + 1) % 10 == 0:
+            if should_dream(ls1.historization, mu=3.0):
+                observer.dream_cycle()
+
+    return ExperimentResult(name="loop_full", n_runs=n_runs, runs=results)
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Loop trap tests
+# ═══════════════════════════════════════════════════════════════════
+
+class TestLoopTraps:
+    """Loop traps: amplitude-invisible, testing higher-layer value.
+
+    C191b proved amplitude catches dead-end traps.  Loop traps reveal
+    the DUAL discovery: amplitude can HURT on loop domains by overriding
+    greedy's revisit-penalty recovery.
+
+    Key mechanism:
+    - Siren loop S_eff < correct path S_eff → greedy + amplitude take it
+    - After one cycle, revisit penalty (α) breaks the loop for greedy
+    - But amplitude OVERRIDES the penalty-corrected choice → stuck in loop
+    - Result: greedy(11 steps) < amplitude(60 steps, stuck)
+
+    All edges succeed.  Trap = wasted steps cycling, not failures.
+    """
+
+    def test_loop_greedy_escapes(self):
+        """Greedy should escape siren loops via revisit penalty α."""
+        result = run_loop_baseline()
+        # Greedy should encounter loops but also reach goal
+        assert result.goal_rate > 0.9, \
+            f"Greedy doesn't escape loops: goal_rate={result.goal_rate:.1%}"
+        assert result.total_trap_encounters > 0, \
+            f"Greedy never entered loop — domain design broken"
+
+    def test_loop_amplitude_hurts(self):
+        """Amplitude OVERRIDES greedy's recovery → gets stuck in loops.
+
+        This is a critical finding: amplitude's intensity-based lookahead
+        sees high intensity in the siren loop (low S_eff per edge) and
+        overrides greedy's revisit-penalty correction.  The result is that
+        amplitude is WORSE than greedy on loop domains.
+        """
+        baseline = run_loop_baseline()
+        amplitude = run_loop_amplitude()
+
+        # Amplitude should perform WORSE than greedy (more steps, fewer goals)
+        assert amplitude.mean_steps > baseline.mean_steps, \
+            f"Amplitude doesn't hurt: baseline={baseline.mean_steps:.1f}, " \
+            f"amplitude={amplitude.mean_steps:.1f}"
+
+    def test_loop_adaptation_in_greedy(self):
+        """Greedy adapts within each run: takes siren once, then escapes."""
+        result = run_loop_baseline()
+
+        # Within each run: greedy takes the siren loop once per junction
+        # then revisit penalty breaks it. 11 steps = 6 main + 5 loop wasted.
+        # With 30 runs sharing historization, adaptation should stabilize.
+        assert result.mean_steps <= 15, \
+            f"Greedy doesn't adapt fast enough: {result.mean_steps:.1f} steps"
+
+    def test_loop_all_reach_goal_except_amplitude(self):
+        """Greedy reaches GOAL; amplitude-based configs may get stuck."""
+        baseline = run_loop_baseline()
+        amplitude = run_loop_amplitude()
+
+        # Greedy must succeed; amplitude may fail (that's the finding)
+        assert baseline.goal_rate > 0.9, \
+            f"Greedy broken: {baseline.goal_rate:.1%}"
+        # Amplitude stuck in loop is the expected behavior
+        assert baseline.goal_rate > amplitude.goal_rate, \
+            f"Expected amplitude to be worse: baseline={baseline.goal_rate:.1%}, " \
+            f"amp={amplitude.goal_rate:.1%}"
