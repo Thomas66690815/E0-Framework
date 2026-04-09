@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C194",
-    "latest_commit_hash": "de9cd01",
-    "latest_commit_msg": "C194: v1.0.0 — docs cleanup, README rewrite, CHANGELOG, ARCHITECTURE.md (4369 tests)",
-    "test_count": 4369,
+    "latest_commit": "C195",
+    "latest_commit_hash": "aa07f0c",
+    "latest_commit_msg": "C195: Transition Potential — local exploration creates structure (4392 tests)",
+    "test_count": 4392,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
     "module_count": "76 production + 10 benchmarks + 17 demos + 65 explorations + 122 test files",
@@ -198,9 +198,9 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "14-Layer Integration (C191+)",
-    "arc_status": "GT-5 RESOLVED. Self-graph enables amplitude to reflect on its own overrides. Two-layer defense: immediate revisit check + learned override quality. Amplitude now safe on both dead-end and loop domains.",
-    "key_result": "Dead-end traps: amplitude 2x better. Loop traps: with self-graph 100% goal rate (was 0%). Self-reflection is the key differentiator.",
+    "current_arc": "Transition Potential & Self-Navigation (C195+)",
+    "arc_status": "bootstrap.json loaded as Landscape (41 nodes, 56 edges). 7 experiments. Key finding: LOCAL transition potential (argmax T from current state) reaches open threads immediately — GLOBAL aggregation (Exp 6) causes hub-bias oscillation. Exploration creates 20 new edges (Phase D), enabling direct OPEN↔OPEN navigation that was topologically impossible before.",
+    "key_result": "T(e) = Δ(e) · 1/(1 + m(e)/μ). Action is always local. Same mechanism as amplitude overlay (look ahead) but inverted: argmax T (exploration) instead of argmin S_eff (exploitation). Open threads win locally because high Δ + low load. Phase E: 13/15 steps use NEW edges created by Phase D — autokatalytic structure creation.",
     "open_threads": [
       "Orchestrator pattern: automatic wiring vs manual composition",
       "Adversarial stability still partially open (C172-C174)",
@@ -250,7 +250,7 @@
         "last_tested": "C186"
       }
     ],
-    "next_commit_id": "C194"
+    "next_commit_id": "C196"
   },
   "structural_entropy": {
     "_comment": "Our forgetting protocol. Isomorphic to E₀'s structural entropy (C114-C121). Prevents bootstrap.json from growing without bound. Prune trigger is parameter-free: pressure = entries_since_last_prune / (entries_since_last_prune + μ). When pressure > 0.5 → prune. Check after each arc completion.",

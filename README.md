@@ -1,6 +1,6 @@
 # E₀ Framework
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19333487.svg)](https://doi.org/10.5281/zenodo.19333487)
+[![DOI](https://zenodo.org/badge/1136773155.svg)](https://doi.org/10.5281/zenodo.19333486)
 [![Tests](https://github.com/Thomas66690815/E0-Framework/actions/workflows/tests.yml/badge.svg)](https://github.com/Thomas66690815/E0-Framework/actions)
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC_BY_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 
