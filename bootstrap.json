@@ -27,13 +27,13 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C190c",
-    "latest_commit_hash": "0b4d027",
-    "latest_commit_msg": "C190c: Structural entropy for bootstrap.json — parameter-free prune protocol, first prune 144→39 entries",
-    "test_count": 4338,
+    "latest_commit": "C191",
+    "latest_commit_hash": "PENDING",
+    "latest_commit_msg": "C191: 14-Layer Integration — 5 feedback loops + full integration test (18 tests, 4356 total)",
+    "test_count": 4356,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
-    "module_count": "76 production + 10 benchmarks + 17 demos + 65 explorations + 121 test files",
+    "module_count": "76 production + 10 benchmarks + 17 demos + 65 explorations + 122 test files",
     "line_count": "~31000 production, ~125000 total"
   },
   "conventions": {
@@ -181,12 +181,12 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "Traffic Simulation — River City (C185–C189)",
-    "arc_status": "BREAKTHROUGH achieved. Shared historization validates cooperative E₀.",
-    "key_result": "Coop scales: 10 veh +128%, 15 veh +125%, 20 veh +171/+244%",
+    "current_arc": "14-Layer Integration (C191+)",
+    "arc_status": "FIRST INTEGRATION PROVEN. All 14 layers compose in one session.",
+    "key_result": "18 integration tests: 5 feedback loops + full 14-layer test, 1.06s",
     "open_threads": [
-      "Can Multiverse coupling (C60-68) replace manual shared_historization?",
-      "Road hierarchy, traffic lights, 50+ vehicles",
+      "Emergent value measurement: does composition outperform isolated layers?",
+      "Orchestrator pattern: automatic wiring vs manual composition",
       "Adversarial stability still partially open (C172-C174)"
     ],
     "working_principles": [
@@ -233,7 +233,7 @@
         "last_tested": "C186"
       }
     ],
-    "next_commit_id": "C191"
+    "next_commit_id": "C192"
   },
   "structural_entropy": {
     "_comment": "Our forgetting protocol. Isomorphic to E₀'s structural entropy (C114-C121). Prevents bootstrap.json from growing without bound. Prune trigger is parameter-free: pressure = entries_since_last_prune / (entries_since_last_prune + μ). When pressure > 0.5 → prune. Check after each arc completion.",
