@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C195",
-    "latest_commit_hash": "aa07f0c",
-    "latest_commit_msg": "C195: Transition Potential — local exploration creates structure (4392 tests)",
-    "test_count": 4392,
+    "latest_commit": "C196",
+    "latest_commit_hash": "1385c59",
+    "latest_commit_msg": "C196: Persistence cycle — discovered edges survive across sessions (4401 tests)",
+    "test_count": 4401,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
     "module_count": "76 production + 10 benchmarks + 17 demos + 65 explorations + 122 test files",
@@ -152,7 +152,9 @@
         "when": "C191b–C192",
         "insight": "Integration value is trap-type dependent. Dead-end traps: amplitude provides 2x improvement. Loop traps: amplitude HURTS without self-reflection. Self-graph enables self-correction. No single layer dominates all domains.",
         "built_upon": 1,
-        "built_upon_by": ["C193 override gate"]
+        "built_upon_by": [
+          "C193 override gate"
+        ]
       }
     ]
   },
@@ -250,7 +252,7 @@
         "last_tested": "C186"
       }
     ],
-    "next_commit_id": "C196"
+    "next_commit_id": "C197"
   },
   "structural_entropy": {
     "_comment": "Our forgetting protocol. Isomorphic to E₀'s structural entropy (C114-C121). Prevents bootstrap.json from growing without bound. Prune trigger is parameter-free: pressure = entries_since_last_prune / (entries_since_last_prune + μ). When pressure > 0.5 → prune. Check after each arc completion.",
@@ -646,5 +648,190 @@
     "status": "8/8 targets RESOLVED",
     "doc": "docs/E0_EVIDENCE_AND_FALSIFICATION_STATUS_v1.md",
     "date_resolved": "2026-03-31"
+  },
+  "discovered_edges": {
+    "_comment": "Edges discovered through E₀ self-navigation (C195+). Exploration traverses A→B→C and discovers potential direct A→C. Persisted here so the next session starts with richer topology. Each edge carries its derivation path for traceability.",
+    "edges": [
+      {
+        "from": "HERE",
+        "to": "L3",
+        "delta": 0.8,
+        "resistance": 1.3,
+        "confidence": 0.5,
+        "derivation": "discovered via HERE → OPEN-2 → L3",
+        "discovered_at": "C196"
+      },
+      {
+        "from": "HERE",
+        "to": "L13",
+        "delta": 0.733,
+        "resistance": 1.4,
+        "confidence": 0.5,
+        "derivation": "discovered via HERE → OPEN-2 → L3 → L13",
+        "discovered_at": "C196"
+      },
+      {
+        "from": "OPEN-2",
+        "to": "L13",
+        "delta": 0.7,
+        "resistance": 0.7,
+        "confidence": 0.5,
+        "derivation": "discovered via OPEN-2 → L3 → L13",
+        "discovered_at": "C196"
+      },
+      {
+        "from": "OPEN-2",
+        "to": "HERE",
+        "delta": 0.5,
+        "resistance": 0.8,
+        "confidence": 0.5,
+        "derivation": "discovered via OPEN-2 → L3 → L13 → HERE",
+        "discovered_at": "C196"
+      },
+      {
+        "from": "OPEN-2",
+        "to": "OPEN-1",
+        "delta": 0.575,
+        "resistance": 1.5,
+        "confidence": 0.5,
+        "derivation": "discovered via OPEN-2 → L3 → L13 → HERE → OPEN-1",
+        "discovered_at": "C196"
+      },
+      {
+        "from": "L3",
+        "to": "OPEN-1",
+        "delta": 0.5,
+        "resistance": 0.9,
+        "confidence": 0.5,
+        "derivation": "discovered via L3 → L13 → HERE → OPEN-1",
+        "discovered_at": "C196"
+      },
+      {
+        "from": "L13",
+        "to": "OPEN-1",
+        "delta": 0.45,
+        "resistance": 0.8,
+        "confidence": 0.5,
+        "derivation": "discovered via L13 → HERE → OPEN-1",
+        "discovered_at": "C196"
+      },
+      {
+        "from": "HERE",
+        "to": "L6",
+        "delta": 0.7,
+        "resistance": 1.2,
+        "confidence": 0.5,
+        "derivation": "discovered via HERE → OPEN-1 → L6",
+        "discovered_at": "C196"
+      },
+      {
+        "from": "HERE",
+        "to": "L9",
+        "delta": 0.633,
+        "resistance": 1.3,
+        "confidence": 0.5,
+        "derivation": "discovered via HERE → OPEN-1 → L6 → L9",
+        "discovered_at": "C196"
+      },
+      {
+        "from": "OPEN-1",
+        "to": "L9",
+        "delta": 0.55,
+        "resistance": 0.6,
+        "confidence": 0.5,
+        "derivation": "discovered via OPEN-1 → L6 → L9",
+        "discovered_at": "C196"
+      },
+      {
+        "from": "OPEN-1",
+        "to": "HERE",
+        "delta": 0.4,
+        "resistance": 0.7,
+        "confidence": 0.5,
+        "derivation": "discovered via OPEN-1 → L6 → L9 → HERE",
+        "discovered_at": "C196"
+      },
+      {
+        "from": "OPEN-1",
+        "to": "OPEN-2",
+        "delta": 0.5,
+        "resistance": 1.4,
+        "confidence": 0.5,
+        "derivation": "discovered via OPEN-1 → L6 → L9 → HERE → OPEN-2",
+        "discovered_at": "C196"
+      },
+      {
+        "from": "L6",
+        "to": "OPEN-2",
+        "delta": 0.467,
+        "resistance": 0.9,
+        "confidence": 0.5,
+        "derivation": "discovered via L6 → L9 → HERE → OPEN-2",
+        "discovered_at": "C196"
+      },
+      {
+        "from": "L9",
+        "to": "OPEN-2",
+        "delta": 0.45,
+        "resistance": 0.8,
+        "confidence": 0.5,
+        "derivation": "discovered via L9 → HERE → OPEN-2",
+        "discovered_at": "C196"
+      },
+      {
+        "from": "L3",
+        "to": "OPEN-2",
+        "delta": 0.5,
+        "resistance": 2.3,
+        "confidence": 0.5,
+        "derivation": "discovered via L3 → OPEN-1 → OPEN-2",
+        "discovered_at": "C196"
+      },
+      {
+        "from": "OPEN-1",
+        "to": "L3",
+        "delta": 0.65,
+        "resistance": 2.0,
+        "confidence": 0.5,
+        "derivation": "discovered via OPEN-1 → OPEN-2 → L3",
+        "discovered_at": "C196"
+      },
+      {
+        "from": "OPEN-2",
+        "to": "L6",
+        "delta": 0.587,
+        "resistance": 2.0,
+        "confidence": 0.5,
+        "derivation": "discovered via OPEN-2 → OPEN-1 → L6",
+        "discovered_at": "C196"
+      },
+      {
+        "from": "L6",
+        "to": "OPEN-1",
+        "delta": 0.589,
+        "resistance": 2.4,
+        "confidence": 0.5,
+        "derivation": "discovered via L6 → OPEN-2 → L3 → OPEN-1",
+        "discovered_at": "C196"
+      },
+      {
+        "from": "OPEN-1",
+        "to": "L13",
+        "delta": 0.6,
+        "resistance": 2.1,
+        "confidence": 0.5,
+        "derivation": "discovered via OPEN-1 → HERE → L3 → L13",
+        "discovered_at": "C196"
+      },
+      {
+        "from": "L13",
+        "to": "OPEN-2",
+        "delta": 0.475,
+        "resistance": 2.2,
+        "confidence": 0.5,
+        "derivation": "discovered via L13 → OPEN-1 → OPEN-2",
+        "discovered_at": "C196"
+      }
+    ]
   }
 }

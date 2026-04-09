@@ -1,12 +1,14 @@
-"""Tests for explore_bootstrap_landscape.py — C195.
+"""Tests for explore_bootstrap_landscape.py — C195/C196.
 
 Validates the structural mechanisms:
 1. bootstrap.json parsing (nodes, edges, traces)
 2. Transition potential formula: T(e) = Δ · 1/(1 + m/μ)
 3. Local vs global potential (the key insight)
 4. Structural creation from exploration paths
+5. Persistence cycle: discovered edges survive across sessions
 """
 
+import json
 import pytest
 from e0_controller.explore_bootstrap_landscape import (
     load_bootstrap,
@@ -21,6 +23,9 @@ from e0_controller.explore_bootstrap_landscape import (
     autonomous_goal,
     local_transition_potential,
     local_autonomous_step,
+    filter_discovered_edges,
+    persist_discovered_edges,
+    BOOTSTRAP_PATH,
     MU,
 )
 from e0_controller.bootstrapper import bootstrap_landscape
@@ -322,3 +327,182 @@ class TestStructuralCreation:
             # Transition potential should be positive
             tp = transition_potential(ls, Edge(src, tgt))
             assert tp > 0
+
+
+# ---------------------------------------------------------------------------
+# Phase 7: Persistence cycle — discovered_edges survive across sessions
+# ---------------------------------------------------------------------------
+
+
+class TestEdgeFilter:
+    """filter_discovered_edges selects structurally meaningful edges."""
+
+    def test_cross_type_passes(self, bootstrap_data):
+        """Cross-type edge (open_thread→arch_layer) passes filter."""
+        _, nodes, edges = bootstrap_data
+        candidates = [{
+            "from": "OPEN-1", "to": "L9",
+            "delta": 0.5, "resistance": 0.6,
+            "derivation": "test",
+        }]
+        result = filter_discovered_edges(candidates, nodes, edges)
+        assert len(result) == 1
+
+    def test_same_type_no_frontier_fails(self, bootstrap_data):
+        """Same-type non-frontier edge (L1→L3) gets filtered out
+        unless it's already missing from existing edges."""
+        _, nodes, edges = bootstrap_data
+        # L1→L3 might already exist — use a pair that exists
+        # Test with an edge between two layers that already exists
+        existing_pairs = {(e["from"], e["to"]) for e in edges}
+        for src_id, src in nodes.items():
+            for tgt_id, tgt in nodes.items():
+                if (src["type"] == tgt["type"] == "arch_layer"
+                        and src_id != tgt_id
+                        and (src_id, tgt_id) not in existing_pairs
+                        and src["type"] != "open_thread"):
+                    candidates = [{
+                        "from": src_id, "to": tgt_id,
+                        "delta": 0.5, "resistance": 0.6,
+                        "derivation": "test",
+                    }]
+                    result = filter_discovered_edges(candidates, nodes, edges)
+                    assert len(result) == 0, \
+                        f"Same-type {src_id}→{tgt_id} should be filtered"
+                    return
+        pytest.skip("No suitable same-type pair found")
+
+    def test_low_delta_filtered(self, bootstrap_data):
+        """Edge with Δ < 0.15 gets filtered out."""
+        _, nodes, edges = bootstrap_data
+        candidates = [{
+            "from": "OPEN-1", "to": "L9",
+            "delta": 0.1, "resistance": 0.6,
+            "derivation": "test",
+        }]
+        result = filter_discovered_edges(candidates, nodes, edges)
+        assert len(result) == 0
+
+    def test_duplicate_filtered(self, bootstrap_data):
+        """Edge that already exists in existing_edges gets filtered."""
+        _, nodes, edges = bootstrap_data
+        if edges:
+            e = edges[0]
+            candidates = [{
+                "from": e["from"], "to": e["to"],
+                "delta": 0.5, "resistance": 0.6,
+                "derivation": "test",
+            }]
+            result = filter_discovered_edges(candidates, nodes, edges)
+            assert len(result) == 0
+
+    def test_frontier_bridging_passes(self, bootstrap_data):
+        """open_thread→open_thread passes filter (frontier bridging)."""
+        _, nodes, edges = bootstrap_data
+        open_ids = [n for n, info in nodes.items() if info["type"] == "open_thread"]
+        if len(open_ids) < 2:
+            pytest.skip("Need at least 2 open threads")
+        candidates = [{
+            "from": open_ids[0], "to": open_ids[1],
+            "delta": 0.5, "resistance": 1.0,
+            "derivation": "test frontier",
+        }]
+        result = filter_discovered_edges(candidates, nodes, edges)
+        assert len(result) == 1
+
+    def test_self_loop_filtered(self, bootstrap_data):
+        """Self-referential edge gets filtered."""
+        _, nodes, edges = bootstrap_data
+        candidates = [{
+            "from": "OPEN-1", "to": "OPEN-1",
+            "delta": 0.5, "resistance": 0.6,
+            "derivation": "test",
+        }]
+        result = filter_discovered_edges(candidates, nodes, edges)
+        assert len(result) == 0
+
+
+class TestPersistenceCycle:
+    """The full cycle: explore → discover → persist → reload."""
+
+    def test_persist_dry_run(self, bootstrap_data):
+        """dry_run=True returns filtered edges without writing."""
+        _, nodes, edges = bootstrap_data
+        candidates = [{
+            "from": "OPEN-1", "to": "OPEN-2",
+            "delta": 0.58, "resistance": 1.5,
+            "confidence": 0.5,
+            "derivation": "discovered via OPEN-1 → L6 → L9 → HERE → OPEN-2",
+        }]
+        result = persist_discovered_edges(candidates, nodes, edges, dry_run=True)
+        assert len(result) == 1
+        assert result[0]["from"] == "OPEN-1"
+
+    def test_round_trip(self, bootstrap_data, tmp_path):
+        """Write edges → reload → edges appear in extracted graph."""
+        import shutil
+        bs_orig, nodes, edges = bootstrap_data
+
+        # Copy bootstrap.json to tmp dir
+        tmp_bs = tmp_path / "bootstrap.json"
+        shutil.copy2(BOOTSTRAP_PATH, tmp_bs)
+
+        # Manually write a discovered edge into the tmp copy
+        with open(tmp_bs, encoding="utf-8") as f:
+            bs = json.load(f)
+        bs["discovered_edges"] = {
+            "edges": [{
+                "from": "OPEN-1",
+                "to": "OPEN-2",
+                "delta": 0.58,
+                "resistance": 1.5,
+                "confidence": 0.5,
+                "derivation": "test round-trip edge",
+            }]
+        }
+        with open(tmp_bs, "w", encoding="utf-8") as f:
+            json.dump(bs, f, indent=2)
+
+        # Reload and extract
+        with open(tmp_bs, encoding="utf-8") as f:
+            bs_reloaded = json.load(f)
+        nodes2 = extract_nodes(bs_reloaded)
+        edges2 = extract_edges(bs_reloaded, nodes2)
+
+        # The discovered edge should appear
+        edge_pairs = [(e["from"], e["to"]) for e in edges2]
+        assert ("OPEN-1", "OPEN-2") in edge_pairs, \
+            "Discovered edge not found after round-trip"
+
+    def test_no_duplicate_on_rewrite(self, bootstrap_data, tmp_path):
+        """Persisting the same edge twice doesn't create duplicates."""
+        import shutil
+        bs_orig, nodes, edges = bootstrap_data
+
+        tmp_bs = tmp_path / "bootstrap.json"
+        shutil.copy2(BOOTSTRAP_PATH, tmp_bs)
+
+        # Patch BOOTSTRAP_PATH temporarily
+        import e0_controller.explore_bootstrap_landscape as mod
+        orig_path = mod.BOOTSTRAP_PATH
+        mod.BOOTSTRAP_PATH = str(tmp_bs)
+        try:
+            edge = {
+                "from": "OPEN-1", "to": "OPEN-2",
+                "delta": 0.58, "resistance": 1.5,
+                "confidence": 0.5,
+                "derivation": "test",
+            }
+            # Write once
+            persist_discovered_edges([edge], nodes, edges)
+            # Write again
+            persist_discovered_edges([edge], nodes, edges)
+
+            with open(tmp_bs, encoding="utf-8") as f:
+                bs = json.load(f)
+            discovered = bs.get("discovered_edges", {}).get("edges", [])
+            matching = [e for e in discovered
+                        if e["from"] == "OPEN-1" and e["to"] == "OPEN-2"]
+            assert len(matching) == 1, f"Expected 1, got {len(matching)} duplicates"
+        finally:
+            mod.BOOTSTRAP_PATH = orig_path

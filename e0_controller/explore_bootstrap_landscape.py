@@ -231,6 +231,20 @@ def extract_edges(bs, nodes):
         if nodes[nid]["type"] == "arch_layer":
             add(nid, "HERE", 0.1, 0.1, 0.95, f"{nid} operational → current state")
 
+    # --- Discovered edges from prior exploration runs ---
+    # These were persisted by Phase D of previous sessions.
+    # The topology grows across runs: exploration → persist → richer start.
+    discovered = bs.get("discovered_edges", {}).get("edges", [])
+    for de in discovered:
+        src, tgt = de.get("from", ""), de.get("to", "")
+        if src in nodes and tgt in nodes:
+            # Don't duplicate if a hand-curated edge already exists
+            existing = {(e["from"], e["to"]) for e in edges}
+            if (src, tgt) not in existing:
+                add(src, tgt, de.get("delta", 0.5), de.get("resistance", 1.0),
+                    de.get("confidence", 0.5),
+                    de.get("derivation", "discovered by exploration"))
+
     return edges
 
 
@@ -583,6 +597,95 @@ def local_autonomous_step(landscape, nodes, current, horizon=2):
     return best
 
 
+# ---------------------------------------------------------------------------
+# Phase 6: Persistence — discovered edges survive across sessions
+# ---------------------------------------------------------------------------
+
+
+def filter_discovered_edges(new_edges, nodes, existing_edges):
+    """Filter discovered edges for structural quality.
+
+    Not every path shortcut is meaningful. Criteria:
+    1. Connects different node TYPES (cross-type edges are structurally novel)
+    2. Or connects open_thread nodes (frontier bridging)
+    3. Minimum Δ threshold (too-small differences aren't actionable)
+    4. No self-referential edges (src == tgt)
+    5. No duplicates of existing edges
+    """
+    existing = {(e["from"], e["to"]) for e in existing_edges}
+    filtered = []
+
+    for edge_info in new_edges:
+        src, tgt = edge_info["from"], edge_info["to"]
+
+        # Basic validity
+        if src == tgt:
+            continue
+        if (src, tgt) in existing:
+            continue
+        if src not in nodes or tgt not in nodes:
+            continue
+        if edge_info.get("delta", 0) < 0.15:
+            continue
+
+        src_type = nodes[src]["type"]
+        tgt_type = nodes[tgt]["type"]
+
+        # Cross-type edges are structurally novel
+        cross_type = src_type != tgt_type
+
+        # Frontier bridging: open_thread↔open_thread or open_thread↔anything
+        frontier = src_type == "open_thread" or tgt_type == "open_thread"
+
+        if cross_type or frontier:
+            filtered.append(edge_info)
+            existing.add((src, tgt))  # prevent duplicates within batch
+
+    return filtered
+
+
+def persist_discovered_edges(new_edges, nodes, existing_edges, dry_run=False):
+    """Write discovered edges back to bootstrap.json.
+
+    This closes the loop: exploration → discovery → persistence → richer start.
+    Each edge carries its derivation path for traceability.
+
+    Returns the filtered edges that were (or would be) persisted.
+    """
+    filtered = filter_discovered_edges(new_edges, nodes, existing_edges)
+
+    if not filtered or dry_run:
+        return filtered
+
+    # Read current bootstrap.json
+    with open(BOOTSTRAP_PATH, encoding="utf-8") as f:
+        bs = json.load(f)
+
+    # Ensure section exists
+    if "discovered_edges" not in bs:
+        bs["discovered_edges"] = {
+            "_comment": "Edges discovered through E₀ self-navigation.",
+            "edges": [],
+        }
+
+    # Merge: don't duplicate edges already persisted
+    persisted = {(e["from"], e["to"]) for e in bs["discovered_edges"]["edges"]}
+    added = 0
+    for edge in filtered:
+        key = (edge["from"], edge["to"])
+        if key not in persisted:
+            bs["discovered_edges"]["edges"].append(edge)
+            persisted.add(key)
+            added += 1
+
+    if added > 0:
+        with open(BOOTSTRAP_PATH, "w", encoding="utf-8") as f:
+            json.dump(bs, f, indent=2, ensure_ascii=False)
+            f.write("\n")
+
+    return filtered
+
+
 def run_transition_potential(landscape, nodes, edges):
     """Experiment 6: E₀ autonomously selects goals from transition potential."""
     from e0_controller.controller import HybridMode
@@ -834,6 +937,28 @@ def run_local_exploration(landscape, nodes, edges):
     if not new_edges_added:
         print(f"  No new structure emerged — exploration was circular.")
         return
+
+    # Phase D.2: Persist structurally meaningful edges to bootstrap.json
+    # Filter: only cross-type or frontier-bridging edges survive.
+    # This closes the loop: exploration → persist → richer next session.
+    candidate_edges = []
+    for src, tgt, delta, r0, sub in new_edges_added:
+        candidate_edges.append({
+            "from": src,
+            "to": tgt,
+            "delta": round(delta, 3),
+            "resistance": round(r0, 3),
+            "confidence": 0.5,
+            "derivation": f"discovered via {' → '.join(sub)}",
+            "discovered_at": "C196",
+        })
+
+    persisted = persist_discovered_edges(candidate_edges, nodes, edges)
+    print(f"\n  Persisted to bootstrap.json: {len(persisted)} / {len(new_edges_added)} edges")
+    print(f"  (Filter: cross-type or frontier-bridging, Δ ≥ 0.15)")
+    if persisted:
+        for e in persisted:
+            print(f"    ✓ {e['from']:8s}→{e['to']:8s}  Δ={e['delta']:.3f}  {e['derivation'][:50]}")
 
     # Phase E: Re-explore with enriched topology
     # Now that new edges exist, does E₀ reach NEW territory?
