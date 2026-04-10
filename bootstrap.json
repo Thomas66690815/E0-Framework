@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C213",
-    "latest_commit_hash": "pending",
-    "latest_commit_msg": "C213: Interactive Text Session \u2014 REPL on real multi-domain landscape, 6 commands, dispatch + SessionState (36 tests, 4816 total)",
-    "test_count": 4816,
+    "latest_commit": "C214",
+    "latest_commit_hash": "84bdee4",
+    "latest_commit_msg": "C214: Feedback Loop \u2014 rate command + session-scoped perception, HumanAction historization, pretrained.json as seed (28 tests, 4844 total)",
+    "test_count": 4844,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
     "module_count": "76 production + 10 benchmarks + 17 demos + 68 explorations + 126 test files",
@@ -221,10 +221,10 @@
       "C214_feedback_loop": {
         "title": "Feedback Loop",
         "what": "User rates panels (helpful/not helpful). Feedback → Perception learns via C161 HumanAction. Perception becomes session-scoped instead of global. perception_pretrained.json becomes seed, not live state.",
-        "status": "NOT STARTED"
+        "status": "DONE (C214)"
       }
     },
-    "key_result": "Text as Surface arc COMPLETE. C208: 7 text renderers parallel to HTML (urgency→emphasis). C209: 8 evidence interpreters with signature dispatch (no LLM). C210: run_session(output_format=) + --format CLI + interpretation wiring. E₀ now has 3 output surfaces: HTML (browser), text (terminal), markdown (export).",
+    "key_result": "Living Communication arc COMPLETE (C211\u2013C214). C211: output polish (evidence dedup, label truncation, interpreter calibration). C212: learning cycle communication (7 intent types, round/summary output). C213: interactive text session (REPL, 6 commands, SessionState). C214: feedback loop (rate command, session-scoped perception, HumanAction historization). E\u2080 now has a complete closed-loop communication stack: observe \u2192 intend \u2192 render \u2192 rate \u2192 learn.",
     "open_threads": [
       "Orchestrator pattern: automatic wiring vs manual composition",
       "Adversarial stability still partially open (C172-C174)",
@@ -274,7 +274,7 @@
         "last_tested": "C186"
       }
     ],
-    "next_commit_id": "C214"
+    "next_commit_id": "C215"
   },
   "structural_entropy": {
     "_comment": "Our forgetting protocol. Isomorphic to E₀'s structural entropy (C114-C121). Prevents bootstrap.json from growing without bound. Prune trigger is parameter-free: pressure = entries_since_last_prune / (entries_since_last_prune + μ). When pressure > 0.5 → prune. Check after each arc completion.",

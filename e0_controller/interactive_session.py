@@ -1,13 +1,18 @@
-"""E₀ Interactive Text Session (C213).
+"""E₀ Interactive Text Session (C213, extended C214).
 
 REPL loop on the real multi-domain landscape. The user types commands,
 E₀ responds with structured communication through the full pipeline.
+
+C214 adds a feedback loop: the user rates panels (helpful / not helpful),
+and the session-scoped perception domain learns via HumanAction historization.
+perception_pretrained.json is loaded as seed; learning stays in-session.
 
 Commands:
   run [N]       — Execute the next N rounds (default: 1)
   status        — Show current landscape overview
   focus <domain> — Zoom into canon, bootstrap, or en
   why           — Explain the last round's decision
+  rate <i> helpful|not — Rate panel i from last output
   summary       — Full cycle summary so far
   help          — Show available commands
   quit / exit   — End session
@@ -42,6 +47,13 @@ from e0_controller.explore_learning_cycle_multidomain import (
     _domain_of,
     _pick_start_node,
 )
+from e0_controller.feedback import (
+    HumanAction,
+    FeedbackResult,
+    ingest_panel_feedback,
+)
+from e0_controller.perception import PerceptionDomain, build_perception_domain
+from e0_controller.ui_emitter import UISpec
 
 
 # ── Session State ──────────────────────────────────────────────────────
@@ -54,11 +66,13 @@ class SessionState:
     landscape: Any
     unified_nodes: Dict[str, Any]
     stats: Dict[str, int]
+    perception: Optional[PerceptionDomain] = None
     history: List[MultiDomainRoundResult] = field(default_factory=list)
     stagnation_streak: int = 0
     round_num: int = 0
     steps_per_round: int = 40
     output_format: str = "text"
+    last_spec: Optional[UISpec] = None
 
 
 # ── Commands ───────────────────────────────────────────────────────────
@@ -170,8 +184,10 @@ def cmd_status(state: SessionState) -> str:
 
     spec = emit_ui_spec(
         report,
+        state.perception,
         context=f"Status after {state.round_num} rounds",
     )
+    state.last_spec = spec
 
     title = f"E₀ Status — Round {state.round_num}"
     if state.output_format == "markdown":
@@ -314,8 +330,10 @@ def cmd_focus(state: SessionState, domain: str) -> str:
 
     spec = emit_ui_spec(
         report,
+        state.perception,
         context=f"Focus: {domain_label} domain",
     )
+    state.last_spec = spec
 
     title = f"E₀ Focus — {domain_label}"
     if state.output_format == "markdown":
@@ -403,6 +421,56 @@ def cmd_summary(state: SessionState) -> str:
     )
 
 
+# Rating → HumanAction mapping
+_RATING_ACTION = {
+    "helpful": HumanAction.CLICK,
+    "yes": HumanAction.CLICK,
+    "good": HumanAction.CLICK,
+    "+": HumanAction.CLICK,
+    "not": HumanAction.DISMISS,
+    "no": HumanAction.DISMISS,
+    "bad": HumanAction.DISMISS,
+    "-": HumanAction.DISMISS,
+    "confused": HumanAction.CONFUSION,
+    "?": HumanAction.CONFUSION,
+}
+
+
+def cmd_rate(state: SessionState, panel_idx: int, rating: str) -> str:
+    """Rate a panel from the last output. Feeds back into perception."""
+    if state.last_spec is None:
+        return "No output to rate yet. Run a command first."
+
+    if state.perception is None:
+        return "No perception domain loaded. Feedback unavailable."
+
+    panels = state.last_spec.panels
+    if panel_idx < 0 or panel_idx >= len(panels):
+        return (
+            f"Panel index {panel_idx} out of range. "
+            f"Valid: 0–{len(panels) - 1} ({len(panels)} panels)."
+        )
+
+    action = _RATING_ACTION.get(rating.lower())
+    if action is None:
+        return (
+            f"Unknown rating '{rating}'. "
+            f"Use: helpful / not / confused  (or +/-/?)"
+        )
+
+    panel = panels[panel_idx]
+    event = ingest_panel_feedback(state.perception, panel, action)
+
+    # Show what happened
+    profile = state.perception.profile(panel.perception)
+    return (
+        f"Rated panel {panel_idx} ({panel.label}): "
+        f"{action.value} → {event.outcome.value}\n"
+        f"  Perception '{panel.perception}': "
+        f"load={profile.trace_load:.1f}, quality={profile.quality:+.3f}"
+    )
+
+
 HELP_TEXT = """
 E₀ Interactive Session — Commands
 ──────────────────────────────────
@@ -410,6 +478,7 @@ E₀ Interactive Session — Commands
   status           Current landscape overview
   focus <domain>   Zoom into canon, bootstrap, or en
   why              Explain the last decision
+  rate <i> <rating> Rate panel i (helpful / not / confused)
   summary          Full cycle summary so far
   help             Show this help
   quit / exit      End session
@@ -427,13 +496,31 @@ def cmd_help() -> str:
 def build_session(
     steps_per_round: int = 40,
     output_format: str = "text",
+    perception_path: Optional[str] = None,
 ) -> SessionState:
-    """Build a fresh interactive session with the multi-domain landscape."""
+    """Build a fresh interactive session with the multi-domain landscape.
+
+    Loads perception_pretrained.json as seed (if it exists).
+    Perception evolves in-session only — the global file is never modified.
+    """
+    import os
+
     landscape, unified_nodes, stats = build_multidomain_landscape()
+
+    # Load perception seed (session-scoped copy — never written back)
+    _PERCEPTION_SEED = os.path.join("memos", "perception_pretrained.json")
+    seed = perception_path or _PERCEPTION_SEED
+    perception: Optional[PerceptionDomain] = None
+    if os.path.exists(seed):
+        perception = PerceptionDomain.from_saved(seed)
+    else:
+        perception = build_perception_domain()
+
     return SessionState(
         landscape=landscape,
         unified_nodes=unified_nodes,
         stats=stats,
+        perception=perception,
         steps_per_round=steps_per_round,
         output_format=output_format,
     )
@@ -482,6 +569,18 @@ def dispatch(state: SessionState, user_input: str) -> Optional[str]:
     if cmd == "summary":
         return cmd_summary(state)
 
+    if cmd == "rate":
+        if not arg:
+            return "Usage: rate <panel_index> <helpful|not|confused>"
+        rate_parts = arg.split(None, 1)
+        if len(rate_parts) < 2:
+            return "Usage: rate <panel_index> <helpful|not|confused>"
+        try:
+            idx = int(rate_parts[0])
+        except ValueError:
+            return f"Invalid panel index: '{rate_parts[0]}'. Must be a number."
+        return cmd_rate(state, idx, rate_parts[1])
+
     return f"Unknown command: '{cmd}'. Type 'help' for available commands."
 
 
@@ -504,6 +603,10 @@ def run_interactive(
           f"Bootstrap ({state.stats['bootstrap_nodes']}), "
           f"EN ({state.stats['en_nodes']})")
     print(f"  Format:    {output_format}")
+    if state.perception is not None:
+        snap = state.perception.snapshot()
+        print(f"  Perception: {len(state.perception.primitives)} primitives, "
+              f"load={snap.total_load:.0f} (session-scoped)")
     print(f"  Type 'help' for commands, 'quit' to exit.")
     print(f"{'═' * 60}\n")
 

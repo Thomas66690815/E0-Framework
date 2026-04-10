@@ -1,7 +1,8 @@
-"""Tests for E₀ Interactive Text Session (C213).
+"""Tests for E₀ Interactive Text Session (C213 + C214 Feedback Loop).
 
 Validates the REPL dispatch, session state management,
-and each command's output through the communication pipeline.
+each command's output through the communication pipeline,
+and the C214 feedback loop (rate command + session-scoped perception).
 """
 
 from __future__ import annotations
@@ -10,15 +11,19 @@ import pytest
 
 from e0_controller.interactive_session import (
     SessionState,
+    _RATING_ACTION,
     build_session,
     cmd_focus,
     cmd_help,
+    cmd_rate,
     cmd_run,
     cmd_status,
     cmd_summary,
     cmd_why,
     dispatch,
 )
+from e0_controller.feedback import HumanAction
+from e0_controller.perception import PerceptionDomain
 
 
 # ── Fixtures ───────────────────────────────────────────────────────────
@@ -268,7 +273,7 @@ class TestCmdHelp:
 
     def test_help_lists_commands(self):
         result = cmd_help()
-        for cmd in ("run", "status", "focus", "why", "summary", "help", "quit"):
+        for cmd in ("run", "status", "focus", "why", "rate", "summary", "help", "quit"):
             assert cmd in result
 
 
@@ -295,3 +300,231 @@ class TestMarkdownFormat:
         cmd_run(s, 1)
         result = cmd_focus(s, "canon")
         assert "# E₀ Focus" in result
+
+
+# ── C214: Perception in Session ────────────────────────────────────────
+
+
+class TestSessionPerception:
+    """Session-scoped perception domain."""
+
+    def test_session_has_perception(self):
+        s = build_session(steps_per_round=10)
+        assert s.perception is not None
+        assert isinstance(s.perception, PerceptionDomain)
+
+    def test_perception_has_primitives(self):
+        s = build_session(steps_per_round=10)
+        assert len(s.perception.primitives) >= 20
+
+    def test_perception_is_session_scoped(self):
+        """Two sessions get independent perception domains."""
+        s1 = build_session(steps_per_round=10)
+        s2 = build_session(steps_per_round=10)
+        assert s1.perception is not s2.perception
+        assert s1.perception.landscape is not s2.perception.landscape
+
+    def test_last_spec_initially_none(self):
+        s = build_session(steps_per_round=10)
+        assert s.last_spec is None
+
+    def test_status_sets_last_spec(self):
+        s = build_session(steps_per_round=10)
+        cmd_status(s)
+        assert s.last_spec is not None
+        assert len(s.last_spec.panels) > 0
+
+    def test_focus_sets_last_spec(self):
+        s = build_session(steps_per_round=15)
+        cmd_run(s, 1)
+        cmd_focus(s, "canon")
+        assert s.last_spec is not None
+
+
+# ── C214: Rate Command ─────────────────────────────────────────────────
+
+
+class TestCmdRate:
+    """Panel feedback via rate command."""
+
+    def test_rate_no_output(self):
+        s = build_session(steps_per_round=10)
+        result = cmd_rate(s, 0, "helpful")
+        assert "No output to rate" in result
+
+    def test_rate_helpful(self):
+        s = build_session(steps_per_round=10)
+        cmd_status(s)
+        result = cmd_rate(s, 0, "helpful")
+        assert "Rated panel 0" in result
+        assert "click" in result
+        assert "success" in result
+
+    def test_rate_not_helpful(self):
+        s = build_session(steps_per_round=10)
+        cmd_status(s)
+        result = cmd_rate(s, 0, "not")
+        assert "Rated panel 0" in result
+        assert "dismiss" in result
+        assert "failure" in result
+
+    def test_rate_confused(self):
+        s = build_session(steps_per_round=10)
+        cmd_status(s)
+        result = cmd_rate(s, 0, "confused")
+        assert "confusion" in result
+        assert "failure" in result
+
+    def test_rate_shorthand_plus(self):
+        s = build_session(steps_per_round=10)
+        cmd_status(s)
+        result = cmd_rate(s, 0, "+")
+        assert "click" in result
+
+    def test_rate_shorthand_minus(self):
+        s = build_session(steps_per_round=10)
+        cmd_status(s)
+        result = cmd_rate(s, 0, "-")
+        assert "dismiss" in result
+
+    def test_rate_out_of_range(self):
+        s = build_session(steps_per_round=10)
+        cmd_status(s)
+        result = cmd_rate(s, 999, "helpful")
+        assert "out of range" in result
+
+    def test_rate_negative_index(self):
+        s = build_session(steps_per_round=10)
+        cmd_status(s)
+        result = cmd_rate(s, -1, "helpful")
+        assert "out of range" in result
+
+    def test_rate_unknown_rating(self):
+        s = build_session(steps_per_round=10)
+        cmd_status(s)
+        result = cmd_rate(s, 0, "xyz")
+        assert "Unknown rating" in result
+
+    def test_rate_shows_perception_profile(self):
+        s = build_session(steps_per_round=10)
+        cmd_status(s)
+        result = cmd_rate(s, 0, "helpful")
+        assert "load=" in result
+        assert "quality=" in result
+
+
+# ── C214: Perception Learns from Feedback ──────────────────────────────
+
+
+class TestPerceptionLearning:
+    """Feedback changes perception trace_load and quality."""
+
+    def test_helpful_increases_quality(self):
+        s = build_session(steps_per_round=10)
+        cmd_status(s)
+        panel = s.last_spec.panels[0]
+        prim = panel.perception
+        profile_before = s.perception.profile(prim)
+
+        cmd_rate(s, 0, "helpful")
+        profile_after = s.perception.profile(prim)
+
+        # Quality should increase or stay same (SUCCESS inscribed)
+        assert profile_after.quality >= profile_before.quality
+
+    def test_not_helpful_decreases_quality(self):
+        s = build_session(steps_per_round=10)
+        cmd_status(s)
+        panel = s.last_spec.panels[0]
+        prim = panel.perception
+        profile_before = s.perception.profile(prim)
+
+        cmd_rate(s, 0, "not")
+        profile_after = s.perception.profile(prim)
+
+        # quality should decrease or stay same (FAILURE inscribed)
+        assert profile_after.quality <= profile_before.quality
+
+    def test_repeated_feedback_accumulates(self):
+        s = build_session(steps_per_round=10)
+        cmd_status(s)
+        panel = s.last_spec.panels[0]
+        prim = panel.perception
+        q_before = s.perception.profile(prim).quality
+
+        for _ in range(3):
+            cmd_rate(s, 0, "helpful")
+
+        q_after = s.perception.profile(prim).quality
+        assert q_after >= q_before
+
+    def test_feedback_does_not_affect_other_session(self):
+        """Perception is session-scoped — other sessions not affected."""
+        s1 = build_session(steps_per_round=10)
+        s2 = build_session(steps_per_round=10)
+
+        cmd_status(s1)
+        panel = s1.last_spec.panels[0]
+        prim = panel.perception
+
+        q2_before = s2.perception.profile(prim).quality
+        cmd_rate(s1, 0, "helpful")
+        cmd_rate(s1, 0, "helpful")
+        cmd_rate(s1, 0, "helpful")
+
+        q2_after = s2.perception.profile(prim).quality
+        assert q2_before == q2_after
+
+
+# ── C214: Rate via Dispatch ────────────────────────────────────────────
+
+
+class TestRateDispatch:
+    """Rate command through dispatch parser."""
+
+    def test_dispatch_rate(self):
+        s = build_session(steps_per_round=10)
+        cmd_status(s)
+        result = dispatch(s, "rate 0 helpful")
+        assert "Rated panel 0" in result
+
+    def test_dispatch_rate_no_args(self):
+        s = build_session(steps_per_round=10)
+        result = dispatch(s, "rate")
+        assert "Usage" in result
+
+    def test_dispatch_rate_missing_rating(self):
+        s = build_session(steps_per_round=10)
+        result = dispatch(s, "rate 0")
+        assert "Usage" in result
+
+    def test_dispatch_rate_invalid_index(self):
+        s = build_session(steps_per_round=10)
+        result = dispatch(s, "rate abc helpful")
+        assert "Invalid panel index" in result
+
+    def test_dispatch_rate_after_focus(self):
+        s = build_session(steps_per_round=15)
+        cmd_run(s, 1)
+        dispatch(s, "focus canon")
+        result = dispatch(s, "rate 0 +")
+        assert "Rated" in result
+
+
+# ── C214: Rating Map Coverage ──────────────────────────────────────────
+
+
+class TestRatingMap:
+    """All rating aliases map to the correct HumanAction."""
+
+    def test_helpful_aliases(self):
+        for alias in ("helpful", "yes", "good", "+"):
+            assert _RATING_ACTION[alias] == HumanAction.CLICK
+
+    def test_not_helpful_aliases(self):
+        for alias in ("not", "no", "bad", "-"):
+            assert _RATING_ACTION[alias] == HumanAction.DISMISS
+
+    def test_confused_aliases(self):
+        for alias in ("confused", "?"):
+            assert _RATING_ACTION[alias] == HumanAction.CONFUSION
