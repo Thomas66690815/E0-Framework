@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C210",
-    "latest_commit_hash": "0105eff",
-    "latest_commit_msg": "C210: Session Text Mode \u2014 output_format=html|text|markdown, --format CLI, interpretation wiring (23 tests, 4740 total)",
-    "test_count": 4740,
+    "latest_commit": "C211",
+    "latest_commit_hash": "pending",
+    "latest_commit_msg": "C211: Output Polish \u2014 drop_pct fraction fix, evidence deduplication, label truncation (14 new tests, 4754 total)",
+    "test_count": 4754,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
     "module_count": "76 production + 10 benchmarks + 17 demos + 68 explorations + 126 test files",
@@ -200,26 +200,31 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "Text as Surface — From Structure to Communication (C208–C210)",
-    "arc_status": "C208–C210 arc COMPLETE: Text as Surface. C208 text renderer (7 visual types), C209 evidence interpreter (8 signature-based templates), C210 session text mode (3-format dispatch + interpretation wiring). E₀ can now communicate via text, not just HTML.",
+    "current_arc": "Living Communication — E₀ on its Own Domain (C211–C214)",
+    "arc_status": "C208–C210 arc COMPLETE. E₀ can now communicate via text/markdown/HTML. First live text output showed redundancy, calibration bugs (drop_pct), and no connection to the real multi-domain learning cycle. This arc wires communication into E₀'s actual domain (148 nodes, 470 edges) where we can verify correctness.",
     "arc_plan": {
-      "C208_text_renderer": {
-        "title": "Text Renderer",
-        "what": "render_text(spec: UISpec) → str as parallel dispatcher to render_html(). 7 text renderers (heatmap→sparkline, tree→indented list, timeline→sequence, bar→progress, text→paragraph, highlight→boxed, dashboard→metric table). Urgency → emphasis mapping (⚠/bold/caps). Same UISpec, different surface.",
-        "status": "DONE"
+      "C211_output_polish": {
+        "title": "Output Polish",
+        "what": "Fix drop_pct bug (×100 for percent). Remove evidence redundancy (render once, not twice). Shorten panel labels (no full path as title). Calibrate interpreter templates (50% drop ≠ 'minor'). Make first text output clean and trustworthy.",
+        "status": "NOT STARTED"
       },
-      "C209_evidence_interpretation": {
-        "title": "Evidence Interpretation",
-        "what": "Template-based interpret_evidence() turns structured dicts into prose. Inscription-summary narrative, trace narrative, domain-crossing story. No LLM needed — C207 data provides the context (mode, role, domain).",
-        "status": "DONE"
+      "C212_learning_cycle_communication": {
+        "title": "Learning Cycle Communication",
+        "what": "Wire detect_intents() into run_multidomain_cycle(). After each round: RoundResult → Intents → UISpec → Text. New intent patterns for learning context: coverage stagnation, mode switch, domain progress, unexpected patterns. Complement _print_summary() with structured prose (both views coexist).",
+        "status": "NOT STARTED"
       },
-      "C210_session_text_mode": {
-        "title": "Session Text Mode",
-        "what": "run_session() gains --format text|html|markdown flag. Text-specific perception edges in learning pipeline. Text feedback loop. Markdown export for session transcripts.",
-        "status": "DONE"
+      "C213_interactive_text_session": {
+        "title": "Interactive Text Session",
+        "what": "REPL loop on real multi-domain landscape. User types → E₀ responds. Commands: run (next round), status (overview), focus <domain> (domain detail), why (explain last decision). Session persistence across interactions.",
+        "status": "NOT STARTED"
+      },
+      "C214_feedback_loop": {
+        "title": "Feedback Loop",
+        "what": "User rates panels (helpful/not helpful). Feedback → Perception learns via C161 HumanAction. Perception becomes session-scoped instead of global. perception_pretrained.json becomes seed, not live state.",
+        "status": "NOT STARTED"
       }
     },
-    "key_result": "Text as Surface arc COMPLETE. C208: 7 text renderers parallel to HTML (urgency\u2192emphasis). C209: 8 evidence interpreters with signature dispatch (no LLM). C210: run_session(output_format=) + --format CLI + interpretation wiring. E\u2080 now has 3 output surfaces: HTML (browser), text (terminal), markdown (export).",
+    "key_result": "Text as Surface arc COMPLETE. C208: 7 text renderers parallel to HTML (urgency→emphasis). C209: 8 evidence interpreters with signature dispatch (no LLM). C210: run_session(output_format=) + --format CLI + interpretation wiring. E₀ now has 3 output surfaces: HTML (browser), text (terminal), markdown (export).",
     "open_threads": [
       "Orchestrator pattern: automatic wiring vs manual composition",
       "Adversarial stability still partially open (C172-C174)",
@@ -269,7 +274,7 @@
         "last_tested": "C186"
       }
     ],
-    "next_commit_id": "C210"
+    "next_commit_id": "C212"
   },
   "structural_entropy": {
     "_comment": "Our forgetting protocol. Isomorphic to E₀'s structural entropy (C114-C121). Prevents bootstrap.json from growing without bound. Prune trigger is parameter-free: pressure = entries_since_last_prune / (entries_since_last_prune + μ). When pressure > 0.5 → prune. Check after each arc completion.",

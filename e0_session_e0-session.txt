@@ -1,0 +1,84 @@
+════════════════════════════════════════════════════════════
+  E₀ — e0-session
+════════════════════════════════════════════════════════════
+  Layout: alert · Panels: 6 · Max urgency: 0.80
+  2026-04-10T11:16:30.212689+00:00
+  Session 'e0-session': Analyze a competitor's product announcement and produce a st
+════════════════════════════════════════════════════════════
+
+[1] ‼ Analyze a competitor's product announcement and produce a structured briefing fo: 8 states, 7 edges. Goal REACHED. Path: RAW_ANNOUNCEMENT → STEP_PARSE → STEP_EXTRACT → STEP_CONTEXT → STEP_ASSESS → STEP_DRAFT → STEP_ASSEMBLE → BRIEFING_DELIVERED  (CRITICAL)
+    intent=status  perception=grouping  act=enumeration
+  task          Analyze a competitor's product announcement and produce a structured briefing for the executive team.
+  states        ['BRIEFING_DELIVERED', 'RAW_ANNOUNCEMENT', 'STEP_ASSEMBLE', 'STEP_ASSESS', 'STEP_CONTEXT', 'STEP_DRAFT', 'STEP_EXTRACT', 'STEP_PARSE']
+  edge_count    7
+  path          ['RAW_ANNOUNCEMENT', 'STEP_PARSE', 'STEP_EXTRACT', 'STEP_CONTEXT', 'STEP_ASSESS', 'STEP_DRAFT', 'STEP_ASSEMBLE', 'BRIEFING_DELIVERED']
+  goal          BRIEFING_DELIVERED
+  goal_reached  True
+    Evidence:
+    task: Analyze a competitor's product announcement and produce a structured briefing for the executive team.
+    states: ['BRIEFING_DELIVERED', 'RAW_ANNOUNCEMENT', 'STEP_ASSEMBLE', 'STEP_ASSESS', 'STEP_CONTEXT', 'STEP_DRAFT', 'STEP_EXTRACT', 'STEP_PARSE']
+    edge_count: 7
+    path: ['RAW_ANNOUNCEMENT', 'STEP_PARSE', 'STEP_EXTRACT', 'STEP_CONTEXT', 'STEP_ASSESS', 'STEP_DRAFT', 'STEP_ASSEMBLE', 'BRIEFING_DELIVERED']
+    goal: BRIEFING_DELIVERED
+    goal_reached: True
+    steps: 7
+    success_rate: 1.000
+    avg_tension: 0.336
+
+[2] ⚠ Path 'STEP_ASSEMBLE→BRIEFING_DELIVERED' is stabilizing (R_eff dropped 50%)  (warning)
+    intent=pattern  perception=grouping  act=reference
+  r_eff_before  0.300
+  r_eff_after   0.150
+  drop_pct      0.500
+    Evidence:
+    r_eff_before: 0.300
+    r_eff_after: 0.150
+    drop_pct: 0.500
+
+[3] ⚠ High tension at STEP_CONTEXT → STEP_ASSESS (S_eff=0.720, outcome=success)  (warning)
+    intent=decision  perception=hierarchy  act=assertion
+  ├─ source: STEP_CONTEXT
+  ├─ target: STEP_ASSESS
+  ├─ s_eff: 0.720
+  ├─ outcome: success
+  ├─ quality: 1.000
+  ├─ load: 0.729
+  └─ candidates: ['STEP_ASSESS']
+    Evidence:
+    source: STEP_CONTEXT
+    target: STEP_ASSESS
+    s_eff: 0.720
+    outcome: success
+    quality: 1.000
+    load: 0.729
+    candidates: ['STEP_ASSESS']
+
+[4] ▸ Component 'curvature' lacks data (load=0.0)  (notable)
+    intent=request  perception=emphasis  act=question
+  [█████████░░░░░░░░░░░░░░░░░░░░░] 0.30
+    Evidence:
+    status: insufficient_data
+    load: 0.000
+
+[5] ▸ Component 'overlap' lacks data (load=0.0)  (notable)
+    intent=request  perception=emphasis  act=question
+  [█████████░░░░░░░░░░░░░░░░░░░░░] 0.30
+    Evidence:
+    status: insufficient_data
+    load: 0.000
+
+[6] 6/8 healthy, 0 confused, 0 harmful, 2 insufficient data  (info)
+    intent=status  perception=grouping  act=enumeration
+  healthy            ['amplitude', 'born', 'realization', 'historization', 'inertia', 'transition_field']
+  confused           []
+  harmful            []
+  insufficient_data  ['curvature', 'overlap']
+  meta_actions       ['All assessed components are healthy']
+    Evidence:
+    healthy: ['amplitude', 'born', 'realization', 'historization', 'inertia', 'transition_field']
+    confused: []
+    harmful: []
+    insufficient_data: ['curvature', 'overlap']
+    meta_actions: ['All assessed components are healthy']
+
+════════════════════════════════════════════════════════════

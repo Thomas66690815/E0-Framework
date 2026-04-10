@@ -307,18 +307,21 @@ def _interpret_pattern(evidence: Dict[str, Any]) -> str:
     after = evidence.get("r_eff_after", 0.0)
     drop = evidence.get("drop_pct", 0.0)
 
-    if drop > 50:
+    # drop_pct is a fraction (0.5 = 50%), convert for display
+    drop_display = drop * 100
+
+    if drop > 0.5:
         impact = "dramatic"
-    elif drop > 20:
+    elif drop > 0.2:
         impact = "significant"
-    elif drop > 5:
+    elif drop > 0.05:
         impact = "moderate"
     else:
         impact = "minor"
 
     return (
         f"Resistance dropped from {before:.3f} to {after:.3f} "
-        f"(−{drop:.1f}%, a {impact} reduction)."
+        f"(\u2212{drop_display:.1f}%, a {impact} reduction)."
     )
 
 

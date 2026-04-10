@@ -260,7 +260,7 @@ class TestEvidenceDispatch:
         assert "A" in result and "B" in result
 
     def test_pattern_routed(self):
-        evidence = {"r_eff_before": 0.8, "r_eff_after": 0.3, "drop_pct": 62.5}
+        evidence = {"r_eff_before": 0.8, "r_eff_after": 0.3, "drop_pct": 0.625}
         result = interpret_evidence(evidence)
         assert "dropped" in result
 
@@ -362,13 +362,24 @@ class TestPatternEvidence:
     """Resistance drop patterns."""
 
     def test_dramatic_drop(self):
-        evidence = {"r_eff_before": 0.9, "r_eff_after": 0.2, "drop_pct": 78.0}
+        evidence = {"r_eff_before": 0.9, "r_eff_after": 0.2, "drop_pct": 0.78}
         result = _interpret_pattern(evidence)
         assert "dramatic" in result
         assert "0.900" in result
+        assert "\u221278.0%" in result
+
+    def test_significant_drop(self):
+        evidence = {"r_eff_before": 0.8, "r_eff_after": 0.6, "drop_pct": 0.25}
+        result = _interpret_pattern(evidence)
+        assert "significant" in result
+
+    def test_moderate_drop(self):
+        evidence = {"r_eff_before": 0.5, "r_eff_after": 0.45, "drop_pct": 0.10}
+        result = _interpret_pattern(evidence)
+        assert "moderate" in result
 
     def test_minor_drop(self):
-        evidence = {"r_eff_before": 0.5, "r_eff_after": 0.48, "drop_pct": 4.0}
+        evidence = {"r_eff_before": 0.5, "r_eff_after": 0.48, "drop_pct": 0.04}
         result = _interpret_pattern(evidence)
         assert "minor" in result
 
@@ -583,7 +594,7 @@ class TestEndToEnd:
             {"status": "confused", "quality": 0.0, "load": 5.0},
             {"status": "insufficient_data", "load": 1.0},
             {"source": "A", "target": "B", "outcome": "SUCCESS", "s_eff": 0.5},
-            {"r_eff_before": 0.8, "r_eff_after": 0.3, "drop_pct": 62.5},
+            {"r_eff_before": 0.8, "r_eff_after": 0.3, "drop_pct": 0.625},
             {"healthy": ["a"], "confused": ["b"]},
             {"task": "T", "goal_reached": True, "states": [], "edge_count": 0,
              "steps": 1, "success_rate": 1.0, "avg_tension": 0.1},

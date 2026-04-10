@@ -36,6 +36,9 @@ from e0_controller.text_renderer import (
     render_markdown,
     render_to_text_file,
     _TEXT_RENDERERS,
+    _truncate_label,
+    _EVIDENCE_IN_VISUAL,
+    _LABEL_MAX_LEN,
 )
 
 
@@ -285,6 +288,64 @@ class TestPanelRendering:
         p = _make_panel(evidence={})
         result = _render_panel_text(p, 0)
         assert "Evidence:" not in result
+
+    def test_panel_evidence_suppressed_for_dashboard(self):
+        p = _make_panel(suggested_visual="dashboard", evidence={"q": 0.5})
+        result = _render_panel_text(p, 0)
+        assert "Evidence:" not in result
+
+    def test_panel_evidence_suppressed_for_tree(self):
+        p = _make_panel(suggested_visual="tree", evidence={"a": 1, "b": 2})
+        result = _render_panel_text(p, 0)
+        assert "Evidence:" not in result
+
+    def test_panel_evidence_suppressed_for_heatmap(self):
+        p = _make_panel(suggested_visual="heatmap", evidence={"x": 1})
+        result = _render_panel_text(p, 0)
+        assert "Evidence:" not in result
+
+    def test_panel_evidence_suppressed_for_timeline(self):
+        p = _make_panel(suggested_visual="timeline", evidence={"step": "go"})
+        result = _render_panel_text(p, 0)
+        assert "Evidence:" not in result
+
+    def test_panel_evidence_shown_for_bar(self):
+        p = _make_panel(suggested_visual="bar", evidence={"count": 3})
+        result = _render_panel_text(p, 0)
+        assert "Evidence:" in result
+
+    def test_panel_evidence_shown_for_highlight(self):
+        p = _make_panel(suggested_visual="highlight", evidence={"err": 1})
+        result = _render_panel_text(p, 0)
+        assert "Evidence:" in result
+
+    def test_panel_evidence_in_visual_set(self):
+        assert _EVIDENCE_IN_VISUAL == {"dashboard", "tree", "timeline", "heatmap"}
+
+
+class TestLabelTruncation:
+    """Long label truncation."""
+
+    def test_short_label_unchanged(self):
+        assert _truncate_label("Short") == "Short"
+
+    def test_exact_length_unchanged(self):
+        label = "x" * _LABEL_MAX_LEN
+        assert _truncate_label(label) == label
+
+    def test_long_label_truncated(self):
+        label = "A" * 120
+        result = _truncate_label(label)
+        assert len(result) == _LABEL_MAX_LEN
+        assert result.endswith("\u2026")
+
+    def test_panel_truncates_long_label(self):
+        long_label = "X" * 120
+        p = _make_panel(label=long_label)
+        result = _render_panel_text(p, 0)
+        header_line = result.split("\n")[0]
+        assert "\u2026" in header_line
+        assert len(long_label) > _LABEL_MAX_LEN  # sanity
 
 
 # ── Full Document: render_text ─────────────────────────────────────────

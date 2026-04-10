@@ -181,22 +181,39 @@ def _render_visual_text(panel: UIPanel) -> str:
 # 4. Panel Rendering
 # ──────────────────────────────────────────────
 
+_LABEL_MAX_LEN = 80
+
+
+def _truncate_label(label: str, max_len: int = _LABEL_MAX_LEN) -> str:
+    """Truncate long labels with ellipsis."""
+    if len(label) <= max_len:
+        return label
+    return label[:max_len - 1] + "\u2026"
+
+
+# Visual types that already render evidence data in their output.
+# For these, skip the separate Evidence: block to avoid redundancy.
+_EVIDENCE_IN_VISUAL = {"dashboard", "tree", "timeline", "heatmap"}
+
+
 def _render_panel_text(panel: UIPanel, index: int) -> str:
     """Render a single panel as a text block."""
     prefix = urgency_prefix(panel.urgency)
     label = urgency_label(panel.urgency)
 
-    header = f"[{index + 1}] {prefix}{panel.label}  ({label})"
+    header = f"[{index + 1}] {prefix}{_truncate_label(panel.label)}  ({label})"
     tags = f"    intent={panel.intent}  perception={panel.perception}  act={panel.language_act}"
 
     visual = _render_visual_text(panel)
 
     parts = [header, tags, visual]
 
-    evidence = _format_evidence(panel.evidence)
-    if evidence:
-        parts.append(f"    Evidence:")
-        parts.append(evidence)
+    # Only show evidence block when the visual doesn't already display it
+    if panel.suggested_visual not in _EVIDENCE_IN_VISUAL:
+        evidence = _format_evidence(panel.evidence)
+        if evidence:
+            parts.append(f"    Evidence:")
+            parts.append(evidence)
 
     return "\n".join(parts)
 
