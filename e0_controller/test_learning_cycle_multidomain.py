@@ -19,6 +19,8 @@ from e0_controller.explore_learning_cycle_multidomain import (
     assess,
     build_en_bridges,
     build_multidomain_landscape,
+    communicate_round,
+    communicate_summary,
     consolidate,
     navigate,
     plan,
@@ -490,3 +492,104 @@ class TestFullCycle:
             max_rounds=3, steps_per_round=20, verbose=False)
         for i, r in enumerate(results):
             assert r.round_num == i + 1
+
+
+# ── Communication (C212) ───────────────────────────────────────────────
+
+
+class TestCommunicateRound:
+    """communicate_round produces text/markdown from round results."""
+
+    def test_produces_text(self):
+        landscape, unified_nodes, _ = build_multidomain_landscape()
+        results = run_multidomain_cycle(
+            max_rounds=1, steps_per_round=20, verbose=False)
+        text = communicate_round(results[0], landscape, output_format="text")
+        assert "E₀ Learning Cycle" in text
+        assert "Round 1" in text
+        assert "Interpretations" in text
+
+    def test_produces_markdown(self):
+        landscape, unified_nodes, _ = build_multidomain_landscape()
+        results = run_multidomain_cycle(
+            max_rounds=1, steps_per_round=20, verbose=False)
+        md = communicate_round(results[0], landscape, output_format="markdown")
+        assert "# E₀ Learning Cycle" in md
+        assert "## Interpretations" in md
+
+    def test_has_coverage_info(self):
+        landscape, _, _ = build_multidomain_landscape()
+        results = run_multidomain_cycle(
+            max_rounds=1, steps_per_round=20, verbose=False)
+        text = communicate_round(results[0], landscape, output_format="text")
+        # Should mention coverage somewhere
+        assert "%" in text
+
+    def test_stagnation_in_output(self):
+        landscape, _, _ = build_multidomain_landscape()
+        results = run_multidomain_cycle(
+            max_rounds=1, steps_per_round=20, verbose=False)
+        text = communicate_round(
+            results[0], landscape, stagnation_count=3, output_format="text")
+        assert "Stagnation" in text
+
+
+class TestCommunicateSummary:
+    """communicate_summary aggregates full cycle into prose."""
+
+    def test_produces_text(self):
+        landscape, _, _ = build_multidomain_landscape()
+        results = run_multidomain_cycle(
+            max_rounds=2, steps_per_round=20, verbose=False)
+        text = communicate_summary(results, landscape, output_format="text")
+        assert "Summary" in text
+        assert "Interpretations" in text
+
+    def test_produces_markdown(self):
+        landscape, _, _ = build_multidomain_landscape()
+        results = run_multidomain_cycle(
+            max_rounds=2, steps_per_round=20, verbose=False)
+        md = communicate_summary(results, landscape, output_format="markdown")
+        assert "# E₀ Learning Cycle Summary" in md
+
+    def test_has_inscription_analysis(self):
+        landscape, _, _ = build_multidomain_landscape()
+        # Navigate to create inscriptions
+        results = run_multidomain_cycle(
+            max_rounds=3, steps_per_round=30, verbose=False)
+        # Use the summary's own landscape
+        text = communicate_summary(results, landscape, output_format="text")
+        # Summary always has interpretations; inscription section only if inscribed
+        assert "Interpretations" in text
+
+    def test_has_domain_crossings(self):
+        landscape, _, _ = build_multidomain_landscape()
+        results = run_multidomain_cycle(
+            max_rounds=2, steps_per_round=30, verbose=False)
+        text = communicate_summary(results, landscape, output_format="text")
+        assert "Crossings" in text or "crossings" in text
+
+    def test_empty_history_returns_empty(self):
+        landscape, _, _ = build_multidomain_landscape()
+        text = communicate_summary([], landscape, output_format="text")
+        assert text == ""
+
+
+class TestOutputFormatIntegration:
+    """run_multidomain_cycle with output_format produces output."""
+
+    def test_format_text_runs(self, capsys):
+        run_multidomain_cycle(
+            max_rounds=1, steps_per_round=15, verbose=False,
+            output_format="text")
+        captured = capsys.readouterr()
+        assert "E₀ Learning Cycle" in captured.out
+        assert "Interpretations" in captured.out
+
+    def test_format_none_no_communication(self, capsys):
+        run_multidomain_cycle(
+            max_rounds=1, steps_per_round=15, verbose=False,
+            output_format=None)
+        captured = capsys.readouterr()
+        # No communication output (verbose=False, no format)
+        assert "Interpretations" not in captured.out

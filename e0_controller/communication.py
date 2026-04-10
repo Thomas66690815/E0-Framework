@@ -612,3 +612,208 @@ def detect_intents(
 
     all_intents.sort(key=lambda i: i.urgency, reverse=True)
     return IntentReport(intents=all_intents)
+
+
+# ──────────────────────────────────────────────
+# 8. Learning Cycle Round Intents (C212)
+# ──────────────────────────────────────────────
+
+
+def detect_round_intents(
+    *,
+    round_num: int,
+    mode: str,
+    reason: str,
+    steps: int,
+    coverage_before: float,
+    coverage_after: float,
+    coverage_delta: float,
+    T_s_before: float,
+    T_s_after: float,
+    domain_crossings: int,
+    crossing_rate: float,
+    canon_coverage: float,
+    bootstrap_coverage: float,
+    en_coverage: float,
+    new_edges: int,
+    total_nodes: int = 0,
+    visited_nodes: int = 0,
+    en_canon_crossings: int = 0,
+    en_bootstrap_crossings: int = 0,
+    canon_bootstrap_crossings: int = 0,
+    stagnation_count: int = 0,
+    inscription_stats: Optional[Dict[str, Any]] = None,
+) -> IntentReport:
+    """Detect communication intents from a learning cycle round.
+
+    Translates multi-domain round results into CommunicationIntents
+    that the evidence interpreters can render as prose. Evidence dicts
+    are shaped to match existing interpreter signatures.
+
+    Returns:
+        IntentReport with round-specific intents, sorted by urgency.
+    """
+    intents: List[CommunicationIntent] = []
+
+    # ── 1. Round Decision (DECISION) ──────────────────
+    intents.append(CommunicationIntent(
+        type=IntentType.DECISION,
+        urgency=0.3,
+        subject=f"round_{round_num}",
+        summary=(
+            f"Round {round_num}: chose '{mode}' "
+            f"({steps} steps). {reason}"
+        ),
+        evidence={
+            "source": f"round_{round_num}",
+            "target": mode,
+            "outcome": "SUCCESS" if coverage_delta > 0 else "FAILURE",
+            "s_eff": 1.0 - coverage_after,
+            "steps": steps,
+            "reason": reason,
+        },
+    ))
+
+    # ── 2. Coverage Pattern (PATTERN) ─────────────────
+    # Model coverage growth as resistance drop:
+    # R_eff = 1 - coverage (the "resistance to full coverage")
+    r_before = 1.0 - coverage_before
+    r_after = 1.0 - coverage_after
+    if r_before > 0:
+        drop_pct = (r_before - r_after) / r_before
+    else:
+        drop_pct = 0.0
+
+    cov_urgency = 0.3 if coverage_delta > 0.01 else 0.6
+    intents.append(CommunicationIntent(
+        type=IntentType.PATTERN,
+        urgency=cov_urgency,
+        subject="coverage",
+        summary=(
+            f"Coverage {coverage_before:.1%} → {coverage_after:.1%} "
+            f"({visited_nodes}/{total_nodes} nodes). "
+            f"Resistance to full coverage dropped {drop_pct:.0%}."
+        ),
+        evidence={
+            "r_eff_before": round(r_before, 4),
+            "r_eff_after": round(r_after, 4),
+            "drop_pct": round(drop_pct, 4),
+        },
+    ))
+
+    # ── 3. Domain Balance (STATUS) ────────────────────
+    coverages = {
+        "Canon": canon_coverage,
+        "Bootstrap": bootstrap_coverage,
+        "EN": en_coverage,
+    }
+    max_cov = max(coverages.values())
+    min_cov = min(coverages.values())
+    imbalance = max_cov - min_cov
+    weakest = min(coverages, key=coverages.get)
+
+    balance_urgency = min(1.0, 0.2 + imbalance)
+    intents.append(CommunicationIntent(
+        type=IntentType.STATUS,
+        urgency=balance_urgency,
+        subject="domain_balance",
+        summary=(
+            f"Canon {canon_coverage:.0%}, "
+            f"Bootstrap {bootstrap_coverage:.0%}, "
+            f"EN {en_coverage:.0%}"
+            + (f" — {weakest} lagging" if imbalance > 0.15 else "")
+        ),
+        evidence={
+            "task": "Multi-domain learning",
+            "goal_reached": coverage_after > 0.9,
+            "states": [],
+            "edge_count": total_nodes,
+            "steps": steps,
+            "success_rate": coverage_after,
+            "avg_tension": T_s_after,
+            "canon_coverage": round(canon_coverage, 4),
+            "bootstrap_coverage": round(bootstrap_coverage, 4),
+            "en_coverage": round(en_coverage, 4),
+        },
+    ))
+
+    # ── 4. Cross-Domain Activity (PATTERN) ────────────
+    if steps > 0:
+        intents.append(CommunicationIntent(
+            type=IntentType.PATTERN,
+            urgency=0.3 if crossing_rate > 0.3 else 0.5,
+            subject="domain_crossings",
+            summary=(
+                f"{domain_crossings} domain crossings in {steps} steps "
+                f"({crossing_rate:.0%}): "
+                f"EN↔Canon {en_canon_crossings}, "
+                f"EN↔Boot {en_bootstrap_crossings}, "
+                f"C↔B {canon_bootstrap_crossings}"
+            ),
+            evidence={
+                "domain_crossings": domain_crossings,
+                "crossing_rate": round(crossing_rate, 4),
+                "en_canon": en_canon_crossings,
+                "en_bootstrap": en_bootstrap_crossings,
+                "canon_bootstrap": canon_bootstrap_crossings,
+                "steps": steps,
+            },
+        ))
+
+    # ── 5. Structural Temperature (UNCERTAINTY) ──────
+    T_s_delta = T_s_after - T_s_before
+    if T_s_after > 0.5:
+        t_urgency = min(1.0, 0.4 + T_s_after * 0.3)
+        intents.append(CommunicationIntent(
+            type=IntentType.UNCERTAINTY,
+            urgency=t_urgency,
+            subject="structural_temperature",
+            summary=(
+                f"Structural temperature T_s={T_s_after:.3f} "
+                f"(Δ={T_s_delta:+.3f})"
+            ),
+            evidence={
+                "status": "confused" if T_s_after > 1.0 else "uncertain",
+                "quality": -T_s_after,
+                "load": float(steps),
+            },
+        ))
+
+    # ── 6. Stagnation Warning (REQUEST) ───────────────
+    if stagnation_count >= 2:
+        intents.append(CommunicationIntent(
+            type=IntentType.REQUEST,
+            urgency=min(1.0, 0.6 + stagnation_count * 0.1),
+            subject="stagnation",
+            summary=(
+                f"Stagnation: {stagnation_count} rounds with no "
+                f"coverage progress. Current coverage: {coverage_after:.1%}"
+            ),
+            evidence={
+                "state": f"round_{round_num}",
+                "admissible_neighbors": [],
+                "goal": f"coverage > 90% (current: {coverage_after:.1%})",
+                "stagnation_count": stagnation_count,
+            },
+        ))
+
+    # ── 7. New Edges (ANOMALY if many) ────────────────
+    if new_edges > 5:
+        intents.append(CommunicationIntent(
+            type=IntentType.ANOMALY,
+            urgency=0.4,
+            subject="new_shortcuts",
+            summary=(
+                f"Discovered {new_edges} new shortcut edges "
+                f"during navigation"
+            ),
+            evidence={
+                "own_state": f"round_{round_num}",
+                "partner_state": "shortcut_discovery",
+                "trace_quality": coverage_delta,
+                "new_edges": new_edges,
+            },
+        ))
+
+    intents.sort(key=lambda i: i.urgency, reverse=True)
+    return IntentReport(intents=intents)

@@ -35,6 +35,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from e0_controller.bootstrapper import bootstrap_landscape
 from e0_controller.canon_loader import load_canon, load_canon_spec
+from e0_controller.communication import detect_round_intents
 from e0_controller.explore_bootstrap_landscape import (
     BOOTSTRAP_PATH,
     build_spec,
@@ -763,6 +764,184 @@ def build_multidomain_landscape(fresh_en: bool = True, fresh_canon: bool = True
     return landscape, unified_nodes, stats
 
 
+# ── Communication (C212) ───────────────────────────────────────────────
+
+
+def communicate_round(
+    result: MultiDomainRoundResult,
+    landscape,
+    stagnation_count: int = 0,
+    output_format: str = "text",
+) -> str:
+    """Generate communication output for a single learning round.
+
+    Translates round results through the full communication pipeline:
+    detect_round_intents → emit_ui_spec → render (text or markdown).
+
+    Returns the rendered output string.
+    """
+    from e0_controller.ui_emitter import emit_ui_spec
+    from e0_controller.text_renderer import render_text, render_markdown
+    from e0_controller.evidence_interpreter import interpret_panel
+
+    a_before = result.assessment_before
+    a_after = result.assessment_after
+
+    stats = landscape.historization.inscription_stats()
+
+    report = detect_round_intents(
+        round_num=result.round_num,
+        mode=result.mode,
+        reason=result.reason,
+        steps=result.steps,
+        coverage_before=a_before.coverage,
+        coverage_after=a_after.coverage,
+        coverage_delta=result.coverage_delta,
+        T_s_before=a_before.T_s,
+        T_s_after=a_after.T_s,
+        domain_crossings=result.domain_crossings,
+        crossing_rate=result.crossing_rate,
+        canon_coverage=a_after.canon_coverage,
+        bootstrap_coverage=a_after.bootstrap_coverage,
+        en_coverage=a_after.en_coverage,
+        new_edges=result.new_edges,
+        total_nodes=a_after.total_nodes,
+        visited_nodes=a_after.visited_nodes,
+        en_canon_crossings=result.en_canon_crossings,
+        en_bootstrap_crossings=result.en_bootstrap_crossings,
+        canon_bootstrap_crossings=result.canon_bootstrap_crossings,
+        stagnation_count=stagnation_count,
+        inscription_stats=stats,
+    )
+
+    spec = emit_ui_spec(
+        report,
+        context=f"Learning Cycle Round {result.round_num}: {result.mode}",
+    )
+
+    title = f"E₀ Learning Cycle — Round {result.round_num}"
+
+    if output_format == "markdown":
+        text = render_markdown(spec, title=title)
+    else:
+        text = render_text(spec, title=title)
+
+    # Append interpretations
+    interp_parts = []
+    sep = "\n## Interpretations\n" if output_format == "markdown" else "\n--- Interpretations ---"
+    interp_parts.append(sep)
+    for panel in spec.panels:
+        if output_format == "markdown":
+            interp_parts.append(f"### {panel.label}\n")
+        interp_parts.append(interpret_panel(panel))
+    text += "\n".join(interp_parts)
+
+    return text
+
+
+def communicate_summary(
+    history: List[MultiDomainRoundResult],
+    landscape,
+    output_format: str = "text",
+) -> str:
+    """Generate communication output for the full learning cycle summary.
+
+    Aggregates all rounds into a single IntentReport and renders it.
+    """
+    from e0_controller.ui_emitter import emit_ui_spec
+    from e0_controller.text_renderer import render_text, render_markdown
+    from e0_controller.evidence_interpreter import (
+        interpret_panel,
+        interpret_inscription_stats,
+        interpret_domain_crossings,
+    )
+
+    if not history:
+        return ""
+
+    first = history[0].assessment_before
+    last = history[-1].assessment_after
+
+    # Aggregate crossings
+    total_crossings = sum(r.domain_crossings for r in history)
+    total_en_canon = sum(r.en_canon_crossings for r in history)
+    total_en_bs = sum(r.en_bootstrap_crossings for r in history)
+    total_cb = sum(r.canon_bootstrap_crossings for r in history)
+    total_steps = sum(r.steps for r in history)
+    total_new_edges = sum(r.new_edges for r in history)
+
+    r_before = 1.0 - first.coverage
+    r_after = 1.0 - last.coverage
+    drop_pct = (r_before - r_after) / r_before if r_before > 0 else 0.0
+
+    report = detect_round_intents(
+        round_num=len(history),
+        mode="summary",
+        reason=f"{len(history)} rounds completed",
+        steps=total_steps,
+        coverage_before=first.coverage,
+        coverage_after=last.coverage,
+        coverage_delta=last.coverage - first.coverage,
+        T_s_before=first.T_s,
+        T_s_after=last.T_s,
+        domain_crossings=total_crossings,
+        crossing_rate=total_crossings / max(1, total_steps),
+        canon_coverage=last.canon_coverage,
+        bootstrap_coverage=last.bootstrap_coverage,
+        en_coverage=last.en_coverage,
+        new_edges=total_new_edges,
+        total_nodes=last.total_nodes,
+        visited_nodes=last.visited_nodes,
+        en_canon_crossings=total_en_canon,
+        en_bootstrap_crossings=total_en_bs,
+        canon_bootstrap_crossings=total_cb,
+        stagnation_count=0,
+    )
+
+    spec = emit_ui_spec(
+        report,
+        context=f"Learning Cycle Summary — {len(history)} rounds",
+    )
+
+    title = f"E₀ Learning Cycle Summary ({len(history)} rounds)"
+
+    if output_format == "markdown":
+        text = render_markdown(spec, title=title)
+    else:
+        text = render_text(spec, title=title)
+
+    # Append interpretations + inscription stats + crossing narrative
+    parts = []
+    sep = "\n## Interpretations\n" if output_format == "markdown" else "\n--- Interpretations ---"
+    parts.append(sep)
+    for panel in spec.panels:
+        if output_format == "markdown":
+            parts.append(f"### {panel.label}\n")
+        parts.append(interpret_panel(panel))
+
+    stats = landscape.historization.inscription_stats()
+    if stats.get("total_inscriptions", 0) > 0:
+        sep2 = "\n## Inscription Analysis\n" if output_format == "markdown" else "\n--- Inscription Analysis ---"
+        parts.append(sep2)
+        parts.append(interpret_inscription_stats(stats))
+
+    crossings_data = {
+        "en_canon": total_en_canon,
+        "en_bootstrap": total_en_bs,
+        "canon_bootstrap": total_cb,
+        "total": total_crossings,
+        "steps": total_steps,
+    }
+    crossing_text = interpret_domain_crossings(crossings_data)
+    if crossing_text:
+        sep3 = "\n## Domain Crossings\n" if output_format == "markdown" else "\n--- Domain Crossings ---"
+        parts.append(sep3)
+        parts.append(crossing_text)
+
+    text += "\n".join(parts)
+    return text
+
+
 # ── Outer Loop ──────────────────────────────────────────────────────────
 
 
@@ -771,6 +950,7 @@ def run_multidomain_cycle(
     steps_per_round: int = 40,
     persist: bool = False,
     verbose: bool = True,
+    output_format: Optional[str] = None,
 ) -> List[MultiDomainRoundResult]:
     """Run iterative learning across Canon + Bootstrap + EN.
 
@@ -778,6 +958,12 @@ def run_multidomain_cycle(
     Each round's navigation enriches the shared historization.
     Cross-domain bridges allow knowledge transfer: Canon insights
     help Bootstrap navigation, EN vocabulary connects to both.
+
+    Args:
+        output_format: If "text" or "markdown", each round and the
+            summary produce communication output through the full
+            pipeline (detect_round_intents → emit_ui_spec → render).
+            If None, only verbose print output (legacy behavior).
 
     Returns list of MultiDomainRoundResult.
     """
@@ -901,9 +1087,25 @@ def run_multidomain_cycle(
             if verbose:
                 print(f"\n  ⚠ Stagnation: {stagnation_streak} rounds with no progress")
 
+        # Communication output per round (C212)
+        if output_format in ("text", "markdown"):
+            round_text = communicate_round(
+                result, landscape,
+                stagnation_count=stagnation_streak,
+                output_format=output_format,
+            )
+            print(round_text)
+
     # Summary
     if verbose and history:
         _print_summary(history, landscape)
+
+    # Communication summary (C212)
+    if output_format in ("text", "markdown") and history:
+        summary_text = communicate_summary(
+            history, landscape, output_format=output_format,
+        )
+        print(summary_text)
 
     return history
 
@@ -999,13 +1201,21 @@ def main():
                         help="Write results to learning_state.json")
     parser.add_argument("--quiet", action="store_true",
                         help="Suppress progress output")
+    parser.add_argument("--format", dest="fmt", default=None,
+                        choices=["text", "markdown", "md"],
+                        help="Communication output format (text or markdown)")
     args = parser.parse_args()
+
+    fmt = args.fmt
+    if fmt == "md":
+        fmt = "markdown"
 
     run_multidomain_cycle(
         max_rounds=args.rounds,
         steps_per_round=args.steps,
         persist=args.persist,
         verbose=not args.quiet,
+        output_format=fmt,
     )
 
 

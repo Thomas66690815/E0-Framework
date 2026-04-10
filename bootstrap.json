@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C211",
+    "latest_commit": "C212",
     "latest_commit_hash": "pending",
-    "latest_commit_msg": "C211: Output Polish \u2014 drop_pct fraction fix, evidence deduplication, label truncation (14 new tests, 4754 total)",
-    "test_count": 4754,
+    "latest_commit_msg": "C212: Learning Cycle Communication \u2014 detect_round_intents, communicate_round/summary, --format CLI (26 new tests, 4780 total)",
+    "test_count": 4780,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
     "module_count": "76 production + 10 benchmarks + 17 demos + 68 explorations + 126 test files",
@@ -205,13 +205,13 @@
     "arc_plan": {
       "C211_output_polish": {
         "title": "Output Polish",
-        "what": "Fix drop_pct bug (×100 for percent). Remove evidence redundancy (render once, not twice). Shorten panel labels (no full path as title). Calibrate interpreter templates (50% drop ≠ 'minor'). Make first text output clean and trustworthy.",
-        "status": "NOT STARTED"
+        "what": "drop_pct fraction→percentage fix, evidence deduplication (_EVIDENCE_IN_VISUAL), label truncation (_truncate_label), interpreter calibration.",
+        "status": "DONE (C211)"
       },
       "C212_learning_cycle_communication": {
         "title": "Learning Cycle Communication",
-        "what": "Wire detect_intents() into run_multidomain_cycle(). After each round: RoundResult → Intents → UISpec → Text. New intent patterns for learning context: coverage stagnation, mode switch, domain progress, unexpected patterns. Complement _print_summary() with structured prose (both views coexist).",
-        "status": "NOT STARTED"
+        "what": "detect_round_intents() translates round data → CommunicationIntents (7 types: decision, coverage, balance, crossings, T_s, stagnation, shortcuts). communicate_round() + communicate_summary() wire full pipeline. --format text|markdown CLI.",
+        "status": "DONE (C212)"
       },
       "C213_interactive_text_session": {
         "title": "Interactive Text Session",
@@ -274,7 +274,7 @@
         "last_tested": "C186"
       }
     ],
-    "next_commit_id": "C212"
+    "next_commit_id": "C213"
   },
   "structural_entropy": {
     "_comment": "Our forgetting protocol. Isomorphic to E₀'s structural entropy (C114-C121). Prevents bootstrap.json from growing without bound. Prune trigger is parameter-free: pressure = entries_since_last_prune / (entries_since_last_prune + μ). When pressure > 0.5 → prune. Check after each arc completion.",

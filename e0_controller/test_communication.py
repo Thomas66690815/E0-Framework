@@ -19,6 +19,7 @@ from e0_controller.communication import (
     detect_dream_intents,
     detect_intents,
     detect_landscape_intents,
+    detect_round_intents,
     detect_self_graph_intents,
     detect_status_intent,
     detect_step_intents,
@@ -684,3 +685,148 @@ class TestUnifiedWithLandscape:
         subjects = {s.subject for s in status_intents}
         assert "self_graph" in subjects
         assert "task_landscape" in subjects
+
+
+# ──────────────────────────────────────────────
+# Round Intents (C212)
+# ──────────────────────────────────────────────
+
+
+def _round_kwargs(**overrides):
+    """Default kwargs for detect_round_intents."""
+    defaults = dict(
+        round_num=3,
+        mode="explore",
+        reason="Frontier of 20 unvisited nodes",
+        steps=40,
+        coverage_before=0.4,
+        coverage_after=0.55,
+        coverage_delta=0.15,
+        T_s_before=0.3,
+        T_s_after=0.25,
+        domain_crossings=12,
+        crossing_rate=0.3,
+        canon_coverage=0.6,
+        bootstrap_coverage=0.7,
+        en_coverage=0.4,
+        new_edges=3,
+        total_nodes=148,
+        visited_nodes=81,
+    )
+    defaults.update(overrides)
+    return defaults
+
+
+class TestRoundIntents:
+    """detect_round_intents produces well-structured IntentReport."""
+
+    def test_returns_intent_report(self):
+        report = detect_round_intents(**_round_kwargs())
+        assert isinstance(report, IntentReport)
+        assert report.count >= 3  # decision + coverage + balance at minimum
+
+    def test_has_decision_intent(self):
+        report = detect_round_intents(**_round_kwargs())
+        decisions = report.by_type(IntentType.DECISION)
+        assert len(decisions) >= 1
+        assert "explore" in decisions[0].summary
+
+    def test_has_coverage_pattern(self):
+        report = detect_round_intents(**_round_kwargs())
+        patterns = report.by_type(IntentType.PATTERN)
+        cov = [p for p in patterns if p.subject == "coverage"]
+        assert len(cov) == 1
+        assert "40.0%" in cov[0].summary or "55.0%" in cov[0].summary
+
+    def test_coverage_evidence_has_drop_pct(self):
+        report = detect_round_intents(**_round_kwargs())
+        patterns = report.by_type(IntentType.PATTERN)
+        cov = [p for p in patterns if p.subject == "coverage"][0]
+        assert "r_eff_before" in cov.evidence
+        assert "r_eff_after" in cov.evidence
+        assert "drop_pct" in cov.evidence
+        # 40% → 55%: r_eff = 0.6 → 0.45, drop_pct ≈ 0.25
+        assert 0.2 < cov.evidence["drop_pct"] < 0.3
+
+    def test_has_domain_balance_status(self):
+        report = detect_round_intents(**_round_kwargs())
+        statuses = report.by_type(IntentType.STATUS)
+        balance = [s for s in statuses if s.subject == "domain_balance"]
+        assert len(balance) == 1
+        assert "Canon" in balance[0].summary
+
+    def test_domain_imbalance_higher_urgency(self):
+        # EN far behind → higher urgency
+        report = detect_round_intents(**_round_kwargs(
+            canon_coverage=0.9, bootstrap_coverage=0.8, en_coverage=0.2,
+        ))
+        balance = [s for s in report.by_type(IntentType.STATUS)
+                   if s.subject == "domain_balance"][0]
+        assert balance.urgency > 0.5
+        assert "lagging" in balance.summary
+
+    def test_has_crossing_pattern(self):
+        report = detect_round_intents(**_round_kwargs())
+        patterns = report.by_type(IntentType.PATTERN)
+        xing = [p for p in patterns if p.subject == "domain_crossings"]
+        assert len(xing) == 1
+        assert "12 domain crossings" in xing[0].summary
+
+    def test_high_T_s_produces_uncertainty(self):
+        report = detect_round_intents(**_round_kwargs(
+            T_s_before=0.8, T_s_after=1.2,
+        ))
+        uncerts = report.by_type(IntentType.UNCERTAINTY)
+        assert len(uncerts) >= 1
+        assert "T_s" in uncerts[0].summary
+
+    def test_low_T_s_no_uncertainty(self):
+        report = detect_round_intents(**_round_kwargs(
+            T_s_before=0.1, T_s_after=0.15,
+        ))
+        uncerts = report.by_type(IntentType.UNCERTAINTY)
+        assert len(uncerts) == 0
+
+    def test_stagnation_produces_request(self):
+        report = detect_round_intents(**_round_kwargs(
+            stagnation_count=3,
+            coverage_delta=0.0,
+        ))
+        requests = report.by_type(IntentType.REQUEST)
+        assert len(requests) == 1
+        assert "Stagnation" in requests[0].summary
+
+    def test_no_stagnation_no_request(self):
+        report = detect_round_intents(**_round_kwargs(stagnation_count=0))
+        requests = report.by_type(IntentType.REQUEST)
+        assert len(requests) == 0
+
+    def test_many_new_edges_produces_anomaly(self):
+        report = detect_round_intents(**_round_kwargs(new_edges=10))
+        anomalies = report.by_type(IntentType.ANOMALY)
+        assert len(anomalies) == 1
+        assert "10 new shortcut" in anomalies[0].summary
+
+    def test_few_new_edges_no_anomaly(self):
+        report = detect_round_intents(**_round_kwargs(new_edges=2))
+        anomalies = report.by_type(IntentType.ANOMALY)
+        assert len(anomalies) == 0
+
+    def test_sorted_by_urgency_descending(self):
+        report = detect_round_intents(**_round_kwargs())
+        urgencies = [i.urgency for i in report.intents]
+        assert urgencies == sorted(urgencies, reverse=True)
+
+    def test_zero_steps_no_crossing_pattern(self):
+        report = detect_round_intents(**_round_kwargs(steps=0))
+        patterns = report.by_type(IntentType.PATTERN)
+        xing = [p for p in patterns if p.subject == "domain_crossings"]
+        assert len(xing) == 0
+
+    def test_full_coverage_goal_reached(self):
+        report = detect_round_intents(**_round_kwargs(
+            coverage_after=0.95,
+        ))
+        statuses = report.by_type(IntentType.STATUS)
+        balance = [s for s in statuses if s.subject == "domain_balance"][0]
+        assert balance.evidence["goal_reached"] is True
