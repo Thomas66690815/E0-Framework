@@ -1,9 +1,10 @@
-"""Tests for E₀ Interactive Text Session (C213 + C214 + C216).
+"""Tests for E₀ Interactive Text Session (C213 + C214 + C216 + C217).
 
 Validates the REPL dispatch, session state management,
 each command's output through the communication pipeline,
 the C214 feedback loop (rate command + session-scoped perception),
-and C216 transition detail (detail + inspect commands).
+C216 transition detail (detail + inspect commands),
+and C217 Human Peer Input (task command + node matching).
 """
 
 from __future__ import annotations
@@ -13,6 +14,7 @@ import pytest
 from e0_controller.interactive_session import (
     SessionState,
     _RATING_ACTION,
+    _match_nodes,
     _quality_bar,
     build_session,
     cmd_detail,
@@ -23,6 +25,7 @@ from e0_controller.interactive_session import (
     cmd_run,
     cmd_status,
     cmd_summary,
+    cmd_task,
     cmd_why,
     dispatch,
 )
@@ -733,3 +736,169 @@ class TestDetailInspectDispatch:
         s = build_session(steps_per_round=10)
         result = dispatch(s, "inspect C:only_one")
         assert "Usage" in result
+
+
+# ── C217: Node Matching ─────────────────────────────────────────────────
+
+
+class TestMatchNodes:
+    """Token-to-nodeID structural matching."""
+
+    def test_exact_concept_match(self):
+        s = build_session(steps_per_round=10)
+        matches = _match_nodes("historization", s.landscape)
+        node_ids = [n for n, _ in matches]
+        assert any("historization" in n.lower() for n in node_ids)
+
+    def test_partial_concept_match(self):
+        s = build_session(steps_per_round=10)
+        matches = _match_nodes("tension", s.landscape)
+        node_ids = [n for n, _ in matches]
+        assert any("tension" in n.lower() for n in node_ids)
+
+    def test_no_match_for_gibberish(self):
+        s = build_session(steps_per_round=10)
+        matches = _match_nodes("xyzzyplugh", s.landscape)
+        assert len(matches) == 0
+
+    def test_short_tokens_ignored(self):
+        """Words ≤2 chars are dropped to avoid noise."""
+        s = build_session(steps_per_round=10)
+        matches = _match_nodes("a b c", s.landscape)
+        assert len(matches) == 0
+
+    def test_relevance_sorted(self):
+        s = build_session(steps_per_round=10)
+        matches = _match_nodes("trace quality", s.landscape)
+        if len(matches) >= 2:
+            assert matches[0][1] >= matches[1][1]
+
+    def test_multi_word_match_higher_relevance(self):
+        """A query matching multiple concept parts scores higher."""
+        s = build_session(steps_per_round=10)
+        single = _match_nodes("trace", s.landscape)
+        multi = _match_nodes("trace quality", s.landscape)
+        # The best match for "trace quality" should be >= best for "trace"
+        if single and multi:
+            assert multi[0][1] >= single[0][1]
+
+    def test_substring_fallback(self):
+        """Longer tokens match via substring if no exact word overlap."""
+        s = build_session(steps_per_round=10)
+        matches = _match_nodes("historiz", s.landscape)
+        # "historiz" is 8 chars, should substring-match "historization"
+        assert len(matches) > 0
+
+    def test_case_insensitive(self):
+        s = build_session(steps_per_round=10)
+        upper = _match_nodes("HISTORIZATION", s.landscape)
+        lower = _match_nodes("historization", s.landscape)
+        assert len(upper) == len(lower)
+
+    def test_empty_input(self):
+        s = build_session(steps_per_round=10)
+        matches = _match_nodes("", s.landscape)
+        assert len(matches) == 0
+
+
+# ── C217: Task Command ─────────────────────────────────────────────────
+
+
+class TestCmdTask:
+    """Human Peer Input via free-text task."""
+
+    def test_task_empty_input(self):
+        s = build_session(steps_per_round=10)
+        result = cmd_task(s, "")
+        assert "Usage" in result
+
+    def test_task_no_match_shows_gap(self):
+        s = build_session(steps_per_round=10)
+        result = cmd_task(s, "xyzzyplugh frobnicator")
+        assert "Structural Gap" in result
+        assert "0 matches" in result
+        assert "LLM peer" in result or "C218" in result
+
+    def test_task_with_known_concept(self):
+        s = build_session(steps_per_round=15)
+        result = cmd_task(s, "historization and inscription")
+        assert "Structural Matching" in result
+        assert "matching node" in result
+        assert "Navigation" in result
+
+    def test_task_creates_round(self):
+        s = build_session(steps_per_round=15)
+        before = len(s.history)
+        cmd_task(s, "tension and landscape")
+        assert len(s.history) == before + 1
+
+    def test_task_mode_is_task(self):
+        s = build_session(steps_per_round=15)
+        cmd_task(s, "historization")
+        assert s.history[-1].mode == "task"
+
+    def test_task_reason_contains_query(self):
+        s = build_session(steps_per_round=15)
+        cmd_task(s, "tension exploration")
+        assert "tension" in s.history[-1].reason.lower()
+
+    def test_task_shows_coverage(self):
+        s = build_session(steps_per_round=15)
+        result = cmd_task(s, "inscription")
+        assert "Coverage" in result
+
+    def test_task_shows_connectivity(self):
+        """When multiple nodes match, connectivity section appears."""
+        s = build_session(steps_per_round=15)
+        result = cmd_task(s, "historization inscription")
+        assert "Connectivity" in result
+
+    def test_task_shows_visited_matches(self):
+        s = build_session(steps_per_round=20)
+        result = cmd_task(s, "historization")
+        # Either visited or not reached should appear
+        assert "Visited" in result or "Not reached" in result
+
+    def test_task_long_query_truncated(self):
+        s = build_session(steps_per_round=15)
+        long_text = "word " * 30 + "historization"
+        cmd_task(s, long_text)
+        # Reason should be truncated
+        assert len(s.history[-1].reason) < 200
+
+    def test_task_increments_round(self):
+        s = build_session(steps_per_round=15)
+        before = s.round_num
+        cmd_task(s, "tension")
+        assert s.round_num == before + 1
+
+
+# ── C217: Task via Dispatch ────────────────────────────────────────────
+
+
+class TestTaskDispatch:
+    """Task command through the dispatch parser."""
+
+    def test_dispatch_task(self):
+        s = build_session(steps_per_round=15)
+        result = dispatch(s, "task historization")
+        assert "Structural Matching" in result
+
+    def test_dispatch_task_no_arg(self):
+        s = build_session(steps_per_round=10)
+        result = dispatch(s, "task")
+        assert "Usage" in result
+
+    def test_dispatch_task_multi_word(self):
+        s = build_session(steps_per_round=15)
+        result = dispatch(s, "task trace quality and tension")
+        assert "matching node" in result
+
+    def test_dispatch_task_unknown(self):
+        s = build_session(steps_per_round=10)
+        result = dispatch(s, "task completely unknown gibberish words")
+        assert "Structural Gap" in result
+
+    def test_help_includes_task(self):
+        result = cmd_help()
+        assert "task" in result

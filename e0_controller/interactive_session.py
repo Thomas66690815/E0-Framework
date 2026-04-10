@@ -1,4 +1,4 @@
-"""E₀ Interactive Text Session (C213, extended C214/C216).
+"""E₀ Interactive Text Session (C213, extended C214/C216/C217).
 
 REPL loop on the real multi-domain landscape. The user types commands,
 E₀ responds with structured communication through the full pipeline.
@@ -11,8 +11,14 @@ C216 adds transition-level detail: `detail` shows the last round edge by
 edge, `inspect <source> <target>` shows the full inscription narrative
 for a single edge.
 
+C217 adds Human Peer Input: `task <text>` accepts free-text differences.
+E₀ matches against landscape structure (node IDs via token overlap).
+If matches found → shows connectivity + navigates. If not → signals that
+LLM peer structuring is needed (C218 hook).
+
 Commands:
   run [N]       — Execute the next N rounds (default: 1)
+  task <text>   — Introduce a difference in natural language
   status        — Show current landscape overview
   focus <domain> — Zoom into canon, bootstrap, or en
   why           — Explain the last round's decision
@@ -614,6 +620,205 @@ def cmd_inspect(state: SessionState, source: str, target: str) -> str:
     return "\n".join(lines)
 
 
+# ── C217: Human Peer Input ─────────────────────────────────────────────
+
+
+def _match_nodes(
+    text: str, landscape: Any,
+) -> List[Tuple[str, float]]:
+    """Match free text against landscape node IDs.
+
+    Tokenizes the query and scores each node by token↔concept overlap.
+    Returns (node_id, relevance) pairs sorted by relevance descending.
+    Relevance = |matched concept parts| / |total concept parts|.
+    """
+    raw = text.lower()
+    tokens = set(raw.split())
+    # Drop very short tokens (articles, prepositions)
+    tokens = {t for t in tokens if len(t) > 2}
+    if not tokens:
+        return []
+
+    results: List[Tuple[str, float]] = []
+    for node_id in sorted(landscape.states):
+        # Extract concept name after prefix (C:, B:, EN:)
+        if ":" in node_id:
+            concept = node_id.split(":", 1)[1].lower()
+        else:
+            concept = node_id.lower()
+
+        parts = set(concept.replace("_", " ").replace("-", " ").split())
+
+        # Exact word overlap
+        overlap = len(parts & tokens)
+
+        # Substring fallback for longer tokens (≥4 chars)
+        if overlap == 0:
+            for token in tokens:
+                if len(token) >= 4 and (token in concept or concept in token):
+                    overlap = 0.5
+                    break
+
+        if overlap > 0:
+            relevance = overlap / max(1, len(parts))
+            results.append((node_id, relevance))
+
+    results.sort(key=lambda x: (-x[1], x[0]))
+    return results
+
+
+def cmd_task(state: SessionState, text: str) -> str:
+    """Process a user-provided difference as natural text.
+
+    E₀ matches text against known landscape structure (node IDs).
+    If matches found → shows connectivity + navigates from anchor.
+    If not → reports structural gap (C218 hook for LLM peer).
+    """
+    if not text.strip():
+        return "Usage: task <your question or observation in natural language>"
+
+    matches = _match_nodes(text, state.landscape)
+
+    if not matches:
+        node_count = len(list(state.landscape.states))
+        return (
+            "── Structural Gap ──\n"
+            f"  Query: \"{text}\"\n"
+            f"  Landscape: {node_count} nodes searched, 0 matches.\n"
+            "\n"
+            "  E₀ cannot resolve this input structurally.\n"
+            "  External structuring needed (LLM peer → C218)."
+        )
+
+    top = matches[:8]
+    hist = state.landscape.historization
+    lines = [
+        "── Structural Matching ──",
+        f"  Query: \"{text}\"",
+        f"  {len(matches)} matching node(s):",
+        "",
+    ]
+
+    for node_id, rel in top:
+        domain = _domain_of(node_id)
+        active_count = sum(
+            1 for e in state.landscape.edges
+            if (e.source == node_id or e.target == node_id)
+            and hist.trace_load(e) > 0
+        )
+        lines.append(
+            f"  {node_id:<35s} [{domain:>9s}]  "
+            f"relevance={rel:.2f}  ({active_count} active edges)"
+        )
+
+    if len(matches) > 8:
+        lines.append(f"  ... and {len(matches) - 8} more")
+
+    # ── Connectivity between top matches ──
+    if len(top) >= 2:
+        lines.append("")
+        lines.append("── Connectivity ──")
+        connections = []
+        for src_id, _ in top[:5]:
+            for tgt_id, _ in top[:5]:
+                if src_id == tgt_id:
+                    continue
+                edge = Edge(src_id, tgt_id)
+                m = hist.trace_load(edge)
+                if m > 0:
+                    q = hist.trace_quality(edge)
+                    connections.append((src_id, tgt_id, q, m))
+
+        if connections:
+            for src, tgt, q, m in connections[:6]:
+                bar = _quality_bar(q)
+                lines.append(
+                    f"  {src} → {tgt}  q={q:+.3f} {bar}  m={m:.1f}"
+                )
+        else:
+            lines.append("  No direct connections between matched nodes.")
+            lines.append("  These concepts exist but aren't linked yet.")
+
+    # ── Navigate from anchor ──
+    anchor = top[0][0]
+    lines.append("")
+    lines.append("── Navigation ──")
+
+    state.round_num += 1
+    a_before = assess(state.landscape, state.unified_nodes)
+
+    nav = navigate(
+        state.landscape, state.unified_nodes,
+        "explore", state.steps_per_round,
+        start=anchor,
+    )
+    validate_confidence(nav["path"])
+    a_after = assess(state.landscape, state.unified_nodes)
+    coverage_delta = a_after.coverage - a_before.coverage
+
+    reason_short = text[:60] + ("…" if len(text) > 60 else "")
+    result = MultiDomainRoundResult(
+        round_num=state.round_num,
+        mode="task",
+        reason=f"User task: \"{reason_short}\"",
+        steps=nav["steps"],
+        assessment_before=a_before,
+        assessment_after=a_after,
+        path=nav["path"],
+        new_edges=len(nav["new_edges"]),
+        domain_crossings=nav["domain_crossings"],
+        crossing_rate=nav["crossing_rate"],
+        coverage_delta=coverage_delta,
+        T_s_delta=a_after.T_s - a_before.T_s,
+        en_canon_crossings=nav["en_canon_crossings"],
+        en_bootstrap_crossings=nav["en_bootstrap_crossings"],
+        canon_bootstrap_crossings=nav["canon_bootstrap_crossings"],
+        type_usage=nav.get("type_usage", {}),
+    )
+    state.history.append(result)
+    consolidate(result, nav["new_edges"], dry_run=True)
+
+    # Stagnation tracking
+    if coverage_delta <= 0.001:
+        state.stagnation_streak += 1
+    else:
+        state.stagnation_streak = 0
+
+    path = nav["path"]
+    visited_matches = [n for n, _ in top if n in path]
+
+    lines.append(f"  Anchor: {anchor}")
+    lines.append(
+        f"  Steps: {nav['steps']}  "
+        f"Crossings: {nav['domain_crossings']}"
+    )
+    lines.append(
+        f"  Coverage: {a_before.coverage:.1%} → {a_after.coverage:.1%} "
+        f"(Δ={coverage_delta:+.1%})"
+    )
+
+    if visited_matches:
+        lines.append(
+            f"  Visited matched nodes: {', '.join(visited_matches)}"
+        )
+    unvisited = [n for n, _ in top if n not in path]
+    if unvisited:
+        lines.append(
+            f"  Not reached: {', '.join(unvisited[:5])}"
+        )
+
+    # Communication output for the navigation
+    text_out = communicate_round(
+        result, state.landscape,
+        stagnation_count=state.stagnation_streak,
+        output_format=state.output_format,
+    )
+    lines.append("")
+    lines.append(text_out)
+
+    return "\n".join(lines)
+
+
 # Rating → HumanAction mapping
 _RATING_ACTION = {
     "helpful": HumanAction.CLICK,
@@ -668,6 +873,7 @@ HELP_TEXT = """
 E₀ Interactive Session — Commands
 ──────────────────────────────────
   run [N]          Execute next N rounds (default: 1)
+  task <text>      Introduce a difference in natural language
   status           Current landscape overview
   focus <domain>   Zoom into canon, bootstrap, or en
   why              Explain the last decision
@@ -749,6 +955,11 @@ def dispatch(state: SessionState, user_input: str) -> Optional[str]:
             except ValueError:
                 return f"Invalid count: '{arg}'. Usage: run [N]"
         return cmd_run(state, n)
+
+    if cmd == "task":
+        if not arg:
+            return "Usage: task <your question or observation in natural language>"
+        return cmd_task(state, arg)
 
     if cmd == "status":
         return cmd_status(state)
