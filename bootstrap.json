@@ -27,14 +27,14 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C203",
-    "latest_commit_hash": "a92d056",
-    "latest_commit_msg": "C203: Learning State Separation — discovered_edges + cross_domain_bridges → learning_state.json (4484 tests)",
-    "test_count": 4484,
+    "latest_commit": "C204",
+    "latest_commit_hash": "159fa1c",
+    "latest_commit_msg": "C204: Multi-Domain Learning Cycle — EN as third domain, 148 nodes, EN 13.6%→81.8% (38 tests, 4522 total)",
+    "test_count": 4522,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
-    "module_count": "76 production + 10 benchmarks + 17 demos + 67 explorations + 124 test files",
-    "line_count": "~31500 production, ~126000 total"
+    "module_count": "76 production + 10 benchmarks + 17 demos + 68 explorations + 125 test files",
+    "line_count": "~32100 production, ~127000 total"
   },
   "conventions": {
     "user_language": "German (user speaks German, code/docs in English)",
@@ -200,9 +200,9 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "Learning Cycle — E₀ Iterative Self-Improvement (C202)",
-    "arc_status": "Implemented ASSESS→PLAN→NAVIGATE→VALIDATE→CONSOLIDATE outer loop. Three key design decisions: (1) persistent landscape across rounds (traces accumulate), (2) frontier-adjacent start nodes (navigation aims at unknown territory), (3) exploration bonus (2× T for unvisited targets + revisit penalty). Coverage: 71.2%→96.2% in 4 rounds, Canon: 57.1%→98.4%, T_s halved (0.095→0.049). Stagnation detection triggers LLM mode after 3 stalled rounds.",
-    "key_result": "E₀ learns itself iteratively: 104-node unified landscape explored to 96.2% coverage. Natural learning curve with diminishing returns (R1:+8.7%, R2:+5.8%, R3:+7.7%, R4:+2.9%). Canon coverage jumped from 57.1% to 98.4%. 302 shortcut edges created. Greedy argmax T + exploration bonus is the right mechanism for self-directed learning.",
+    "current_arc": "Multi-Domain Learning Cycle — EN as Third Domain (C204)",
+    "arc_status": "Extended C202 learning cycle to 3 domains: Canon (63 nodes) + Bootstrap (41) + EN (44) = 148 nodes, 470 edges. 42 EN bridges (16 EN↔Canon + 4 EN↔Bootstrap, bidirectional). explore_en mode auto-triggered when EN coverage lags >20%. Coverage: 54.1%→82.4% in 8 rounds (EN: 13.6%→81.8%, Canon: 57.1%→76.2%, Bootstrap: 92.7%→92.7%). 291 domain crossings across 3 domains.",
+    "key_result": "E₀ learns a NEW domain (English) through the same mechanism that learned its own theory (Canon) and implementation (Bootstrap). EN went from 13.6% to 81.8% in 8 rounds. Cross-domain bridges are the mechanism: EN↔Canon semantic mappings (thing→difference, action→local_realization, self→historization) pull navigation through unfamiliar territory. explore_en mode catches up lagging domains automatically.",
     "open_threads": [
       "Orchestrator pattern: automatic wiring vs manual composition",
       "Adversarial stability still partially open (C172-C174)",
@@ -252,7 +252,7 @@
         "last_tested": "C186"
       }
     ],
-    "next_commit_id": "C204"
+    "next_commit_id": "C205"
   },
   "structural_entropy": {
     "_comment": "Our forgetting protocol. Isomorphic to E₀'s structural entropy (C114-C121). Prevents bootstrap.json from growing without bound. Prune trigger is parameter-free: pressure = entries_since_last_prune / (entries_since_last_prune + μ). When pressure > 0.5 → prune. Check after each arc completion.",
