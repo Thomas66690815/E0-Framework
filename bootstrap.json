@@ -3,7 +3,7 @@
     "purpose": "Session bootstrap for the E₀ team — human and AI working together on E₀-Framework",
     "framing": "We. The AI is an integral part of 'we'. This file is the AI's persistent identity — its Historization across context windows. Every confirmed/contradicted count is a U/F trace.",
     "usage": "Paste this file (or reference it) at the start of a new thread to restore full project context",
-    "last_updated": "2026-04-09",
+    "last_updated": "2026-04-10",
     "update_instruction": "After each commit: update state + active_context. After each lesson: update reflexion traces (confirmed++, contradicted++, recurred++). trace_quality = (confirmed - contradicted) / (confirmed + contradicted + 1)."
   },
   "project": {
@@ -27,13 +27,13 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C201",
-    "latest_commit_hash": "e35b731",
-    "latest_commit_msg": "C201: Ontodynamics v3.0 — 12 new concepts, 38 new edges, 93.3% crossing rate (4450 tests)",
-    "test_count": 4450,
+    "latest_commit": "C202",
+    "latest_commit_hash": "1dcf334",
+    "latest_commit_msg": "C202: Learning Cycle — iterative self-improvement, 71.2%→96.2% coverage in 4 rounds (4484 tests)",
+    "test_count": 4484,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
-    "module_count": "76 production + 10 benchmarks + 17 demos + 66 explorations + 123 test files",
+    "module_count": "76 production + 10 benchmarks + 17 demos + 67 explorations + 124 test files",
     "line_count": "~31500 production, ~126000 total"
   },
   "conventions": {
@@ -200,9 +200,9 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "Ontodynamics v3.0 & Canon Coverage (C201)",
-    "arc_status": "Ontodynamics Canon updated from v2.0 (51 nodes, 93 edges) to v3.0 (63 nodes, 131 edges, levels 0-18). 12 new concepts spanning transition_potential, epistemic_trust, auto_tuning, shared_historization, bootstrap_landscape, perception_ontology, communication_intent, compatibility_gating, wl_node_fingerprint, curriculum_navigator, n_domain_mesh, canon_bootstrap_multiverse. Canon coverage mapping updated: 45/63 = 71.4%. All downstream tests adapted.",
-    "key_result": "v3.0 unified landscape: 104 nodes, 301 edges, 92 bridges. 93.3% crossing rate (was 80% with v2.0). 37 Canon concepts reachable from B:HERE (was 26). EN↔ONTO now dream-compatible (score 0.54 < 0.6), creating richer cross-domain bridging.",
+    "current_arc": "Learning Cycle — E₀ Iterative Self-Improvement (C202)",
+    "arc_status": "Implemented ASSESS→PLAN→NAVIGATE→VALIDATE→CONSOLIDATE outer loop. Three key design decisions: (1) persistent landscape across rounds (traces accumulate), (2) frontier-adjacent start nodes (navigation aims at unknown territory), (3) exploration bonus (2× T for unvisited targets + revisit penalty). Coverage: 71.2%→96.2% in 4 rounds, Canon: 57.1%→98.4%, T_s halved (0.095→0.049). Stagnation detection triggers LLM mode after 3 stalled rounds.",
+    "key_result": "E₀ learns itself iteratively: 104-node unified landscape explored to 96.2% coverage. Natural learning curve with diminishing returns (R1:+8.7%, R2:+5.8%, R3:+7.7%, R4:+2.9%). Canon coverage jumped from 57.1% to 98.4%. 302 shortcut edges created. Greedy argmax T + exploration bonus is the right mechanism for self-directed learning.",
     "open_threads": [
       "Orchestrator pattern: automatic wiring vs manual composition",
       "Adversarial stability still partially open (C172-C174)",
@@ -252,7 +252,7 @@
         "last_tested": "C186"
       }
     ],
-    "next_commit_id": "C202"
+    "next_commit_id": "C203"
   },
   "structural_entropy": {
     "_comment": "Our forgetting protocol. Isomorphic to E₀'s structural entropy (C114-C121). Prevents bootstrap.json from growing without bound. Prune trigger is parameter-free: pressure = entries_since_last_prune / (entries_since_last_prune + μ). When pressure > 0.5 → prune. Check after each arc completion.",
