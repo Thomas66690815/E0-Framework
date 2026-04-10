@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C206",
-    "latest_commit_hash": "f20febd",
-    "latest_commit_msg": "C206: Typed Navigation — relation_type/bridge_type influence scoring, 12 types active, coverage +2.1% (23 tests, 4571 total)",
-    "test_count": 4571,
+    "latest_commit": "C208",
+    "latest_commit_hash": "b1fc749",
+    "latest_commit_msg": "C208: Text Renderer — render_text/render_markdown parallel to render_html, 7 text renderers, urgency mapping (57 tests, 4659 total)",
+    "test_count": 4659,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
     "module_count": "76 production + 10 benchmarks + 17 demos + 68 explorations + 126 test files",
@@ -200,26 +200,26 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "Rich Transitions — From Topology to Meaning (C205–C207)",
-    "arc_status": "C204 exposed the gap: E₀ navigates EN topology but edges carry only δ+R₀. Relation types (is_a, part_of, enables), derivations, and confidence are dropped when edges enter the Landscape. Three stages planned to close this gap.",
+    "current_arc": "Text as Surface — From Structure to Communication (C208–C210)",
+    "arc_status": "C205–C207 arc complete: edges carry metadata, typed navigation works, inscription has context. The UI pipeline (C158–C166) produces HTML but no text output. UISpec is already format-agnostic — text rendering is a parallel dispatcher, not a redesign.",
     "arc_plan": {
-      "C205_edge_metadata": {
-        "title": "Edge Metadata in Landscape",
-        "what": "Add _meta: Dict[Edge, Dict] to Landscape. Canon relation_type, derivation, confidence, bridge_type survive the pipeline. No mechanism change — just memory.",
-        "status": "DONE — 100% coverage: 470/470 edges carry metadata, 12 relation types, 2 bridge types"
+      "C208_text_renderer": {
+        "title": "Text Renderer",
+        "what": "render_text(spec: UISpec) → str as parallel dispatcher to render_html(). 7 text renderers (heatmap→sparkline, tree→indented list, timeline→sequence, bar→progress, text→paragraph, highlight→boxed, dashboard→metric table). Urgency → emphasis mapping (⚠/bold/caps). Same UISpec, different surface.",
+        "status": "DONE"
       },
-      "C206_typed_navigation": {
-        "title": "Typed Navigation",
-        "what": "RELATION_TYPE_BONUS (10 types: enables=1.4 → opposite_of=0.85) + BRIDGE_TYPE_BONUS (en_semantic=1.25, static=1.15) multiply into navigate() scoring. type_usage tracking in MultiDomainRoundResult. Coverage 82.4%→84.5%, EN↔Canon crossings 75→104.",
-        "status": "DONE — 23 tests, 12 relation types + 2 bridge types active in navigate() scoring"
+      "C209_evidence_interpretation": {
+        "title": "Evidence Interpretation",
+        "what": "Template-based interpret_evidence() turns structured dicts into prose. Inscription-summary narrative, trace narrative, domain-crossing story. No LLM needed — C207 data provides the context (mode, role, domain).",
+        "status": "NOT STARTED"
       },
-      "C207_contextual_inscription": {
-        "title": "Contextual Inscription",
-        "what": "InscriptionContext dataclass (tau, edge, outcome, mode, relation_type, bridge_type, source_domain, target_domain, role, revisit_count, step). inscribe() on Historization calls update() + stores context. edge_inscriptions(), inscription_summary(), inscription_stats() query methods. Controller greedy loop + multidomain navigate() wired. 4-round run: 176 inscriptions, 140 edges, 129 bridge + 45 exploration + 2 revisit.",
-        "status": "DONE \u2014 31 tests, Layer 2 contextual content implemented"
+      "C210_session_text_mode": {
+        "title": "Session Text Mode",
+        "what": "run_session() gains --format text|html|markdown flag. Text-specific perception edges in learning pipeline. Text feedback loop. Markdown export for session transcripts.",
+        "status": "NOT STARTED"
       }
     },
-    "key_result": "Rich Transitions arc COMPLETE. C205: metadata storage (470/470 edges). C206: typed navigation (+2.1% coverage, +39% crossings). C207: contextual inscription (each traversal carries mode, relation_type, domain, role). Layer 2 now has content, not just magnitude. Edges build narrative traces: how they were used, not just how often.",
+    "key_result": "Rich Transitions arc COMPLETE. C205: metadata storage (470/470 edges). C206: typed navigation (+2.1% coverage, +39% crossings). C207: contextual inscription (each traversal carries mode, relation_type, domain, role). Layer 2 now has content, not just magnitude. Ready for text surface.",
     "open_threads": [
       "Orchestrator pattern: automatic wiring vs manual composition",
       "Adversarial stability still partially open (C172-C174)",
@@ -269,7 +269,7 @@
         "last_tested": "C186"
       }
     ],
-    "next_commit_id": "C208"
+    "next_commit_id": "C209"
   },
   "structural_entropy": {
     "_comment": "Our forgetting protocol. Isomorphic to E₀'s structural entropy (C114-C121). Prevents bootstrap.json from growing without bound. Prune trigger is parameter-free: pressure = entries_since_last_prune / (entries_since_last_prune + μ). When pressure > 0.5 → prune. Check after each arc completion.",
