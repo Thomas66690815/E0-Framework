@@ -1,8 +1,9 @@
-"""Tests for E₀ Interactive Text Session (C213 + C214 Feedback Loop).
+"""Tests for E₀ Interactive Text Session (C213 + C214 + C216).
 
 Validates the REPL dispatch, session state management,
 each command's output through the communication pipeline,
-and the C214 feedback loop (rate command + session-scoped perception).
+the C214 feedback loop (rate command + session-scoped perception),
+and C216 transition detail (detail + inspect commands).
 """
 
 from __future__ import annotations
@@ -12,9 +13,12 @@ import pytest
 from e0_controller.interactive_session import (
     SessionState,
     _RATING_ACTION,
+    _quality_bar,
     build_session,
+    cmd_detail,
     cmd_focus,
     cmd_help,
+    cmd_inspect,
     cmd_rate,
     cmd_run,
     cmd_status,
@@ -273,7 +277,8 @@ class TestCmdHelp:
 
     def test_help_lists_commands(self):
         result = cmd_help()
-        for cmd in ("run", "status", "focus", "why", "rate", "summary", "help", "quit"):
+        for cmd in ("run", "status", "focus", "why", "detail", "inspect",
+                     "rate", "summary", "help", "quit"):
             assert cmd in result
 
 
@@ -528,3 +533,203 @@ class TestRatingMap:
     def test_confused_aliases(self):
         for alias in ("confused", "?"):
             assert _RATING_ACTION[alias] == HumanAction.CONFUSION
+
+
+# ── C216: Quality Bar ──────────────────────────────────────────────────
+
+
+class TestQualityBar:
+    """ASCII quality indicator."""
+
+    def test_positive_quality(self):
+        bar = _quality_bar(1.0)
+        assert "██████████" in bar
+
+    def test_negative_quality(self):
+        bar = _quality_bar(-1.0)
+        assert "░░░░░░░░░░" in bar
+
+    def test_zero_quality(self):
+        bar = _quality_bar(0.0)
+        assert "█████" in bar  # half filled
+        assert "░░░░░" in bar
+
+    def test_bar_has_brackets(self):
+        bar = _quality_bar(0.5)
+        assert bar.startswith("[")
+        assert bar.endswith("]")
+
+
+# ── C216: Detail Command ──────────────────────────────────────────────
+
+
+class TestCmdDetail:
+    """Transition-level detail view."""
+
+    def test_detail_no_history(self):
+        s = build_session(steps_per_round=10)
+        result = cmd_detail(s)
+        assert "No rounds" in result
+
+    def test_detail_after_run(self):
+        s = build_session(steps_per_round=15)
+        cmd_run(s, 1)
+        result = cmd_detail(s)
+        assert "Round 1" in result
+        assert "Transition Detail" in result
+        assert "→" in result
+
+    def test_detail_shows_quality(self):
+        s = build_session(steps_per_round=15)
+        cmd_run(s, 1)
+        result = cmd_detail(s)
+        assert "q=" in result
+
+    def test_detail_shows_load(self):
+        s = build_session(steps_per_round=15)
+        cmd_run(s, 1)
+        result = cmd_detail(s)
+        assert "m=" in result
+
+    def test_detail_shows_inertia(self):
+        s = build_session(steps_per_round=15)
+        cmd_run(s, 1)
+        result = cmd_detail(s)
+        assert "I=" in result
+
+    def test_detail_shows_crossings(self):
+        s = build_session(steps_per_round=15)
+        cmd_run(s, 1)
+        result = cmd_detail(s)
+        assert "transitions" in result
+
+    def test_detail_specific_round(self):
+        s = build_session(steps_per_round=15)
+        cmd_run(s, 3)
+        result = cmd_detail(s, round_num=1)
+        assert "Round 1" in result
+
+    def test_detail_invalid_round(self):
+        s = build_session(steps_per_round=15)
+        cmd_run(s, 1)
+        result = cmd_detail(s, round_num=99)
+        assert "not found" in result
+
+    def test_detail_quality_bar(self):
+        s = build_session(steps_per_round=15)
+        cmd_run(s, 1)
+        result = cmd_detail(s)
+        assert "[" in result  # quality bar brackets
+
+    def test_detail_markdown(self):
+        s = build_session(steps_per_round=15, output_format="markdown")
+        cmd_run(s, 1)
+        result = cmd_detail(s)
+        assert "| #" in result  # markdown table header
+        assert "Transition" in result
+
+
+# ── C216: Inspect Command ─────────────────────────────────────────────
+
+
+class TestCmdInspect:
+    """Deep edge inspection."""
+
+    def test_inspect_no_inscriptions(self):
+        s = build_session(steps_per_round=10)
+        result = cmd_inspect(s, "NONEXISTENT_A", "NONEXISTENT_B")
+        assert "no inscriptions" in result
+
+    def test_inspect_after_run(self):
+        s = build_session(steps_per_round=15)
+        cmd_run(s, 1)
+        # Inspect first edge from path
+        path = s.history[-1].path
+        result = cmd_inspect(s, path[0], path[1])
+        assert "Edge:" in result
+        assert "trace_load" in result
+        assert "quality" in result
+
+    def test_inspect_shows_inertia(self):
+        s = build_session(steps_per_round=15)
+        cmd_run(s, 1)
+        path = s.history[-1].path
+        result = cmd_inspect(s, path[0], path[1])
+        assert "inertia" in result
+
+    def test_inspect_shows_domains(self):
+        s = build_session(steps_per_round=15)
+        cmd_run(s, 1)
+        path = s.history[-1].path
+        result = cmd_inspect(s, path[0], path[1])
+        assert "Domains:" in result or "Domain" in result
+
+    def test_inspect_shows_inscriptions(self):
+        s = build_session(steps_per_round=15)
+        cmd_run(s, 1)
+        path = s.history[-1].path
+        result = cmd_inspect(s, path[0], path[1])
+        assert "Inscriptions:" in result
+
+    def test_inspect_suggests_reverse(self):
+        """When edge has no inscriptions but reverse does."""
+        s = build_session(steps_per_round=15)
+        cmd_run(s, 2)
+        # Find an edge from path
+        path = s.history[-1].path
+        src, tgt = path[0], path[1]
+        # Try reversed
+        result = cmd_inspect(s, tgt, src)
+        # Should either show data or suggest reverse
+        assert "Edge:" in result or "Did you mean" in result
+
+    def test_inspect_shows_recent_inscriptions(self):
+        s = build_session(steps_per_round=20)
+        cmd_run(s, 2)
+        path = s.history[-1].path
+        result = cmd_inspect(s, path[0], path[1])
+        # Should show τ= entries if there are inscriptions
+        if "Recent" in result:
+            assert "τ=" in result
+
+
+# ── C216: Detail + Inspect via Dispatch ────────────────────────────────
+
+
+class TestDetailInspectDispatch:
+    """Commands through dispatch parser."""
+
+    def test_dispatch_detail(self):
+        s = build_session(steps_per_round=15)
+        cmd_run(s, 1)
+        result = dispatch(s, "detail")
+        assert "Round 1" in result
+
+    def test_dispatch_detail_with_round(self):
+        s = build_session(steps_per_round=15)
+        cmd_run(s, 2)
+        result = dispatch(s, "detail 1")
+        assert "Round 1" in result
+
+    def test_dispatch_detail_invalid(self):
+        s = build_session(steps_per_round=15)
+        cmd_run(s, 1)
+        result = dispatch(s, "detail abc")
+        assert "Invalid round number" in result
+
+    def test_dispatch_inspect(self):
+        s = build_session(steps_per_round=15)
+        cmd_run(s, 1)
+        path = s.history[-1].path
+        result = dispatch(s, f"inspect {path[0]} {path[1]}")
+        assert "Edge:" in result or "no inscriptions" in result
+
+    def test_dispatch_inspect_no_args(self):
+        s = build_session(steps_per_round=10)
+        result = dispatch(s, "inspect")
+        assert "Usage" in result
+
+    def test_dispatch_inspect_one_arg(self):
+        s = build_session(steps_per_round=10)
+        result = dispatch(s, "inspect C:only_one")
+        assert "Usage" in result

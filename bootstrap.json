@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C215",
-    "latest_commit_hash": "9b3ca34",
-    "latest_commit_msg": "C215: Interactive Browser Session \u2014 local HTTP server with HTML panel rendering, inline feedback buttons, command input (21 tests, 4865 total)",
-    "test_count": 4865,
+    "latest_commit": "C216",
+    "latest_commit_hash": "60237aa",
+    "latest_commit_msg": "C216: Transition Detail \u2014 cmd_detail (edge-by-edge path view with quality bars), cmd_inspect (deep edge narrative with inscription history), _quality_bar helper (27 tests, 4892 total)",
+    "test_count": 4892,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
     "module_count": "76 production + 10 benchmarks + 17 demos + 68 explorations + 126 test files",
@@ -274,7 +274,7 @@
         "last_tested": "C186"
       }
     ],
-    "next_commit_id": "C216"
+    "next_commit_id": "C217"
   },
   "structural_entropy": {
     "_comment": "Our forgetting protocol. Isomorphic to E₀'s structural entropy (C114-C121). Prevents bootstrap.json from growing without bound. Prune trigger is parameter-free: pressure = entries_since_last_prune / (entries_since_last_prune + μ). When pressure > 0.5 → prune. Check after each arc completion.",
@@ -435,6 +435,11 @@
     }
   },
   "commit_history_recent": [
+    {
+      "hash": "60237aa",
+      "id": "C216",
+      "title": "Transition Detail \u2014 cmd_detail (edge-by-edge path view), cmd_inspect (deep edge narrative), _quality_bar helper (27 tests, 4892 total)"
+    },
     {
       "hash": "dc14660",
       "id": "C189",

@@ -1,4 +1,4 @@
-"""E₀ Interactive Text Session (C213, extended C214).
+"""E₀ Interactive Text Session (C213, extended C214/C216).
 
 REPL loop on the real multi-domain landscape. The user types commands,
 E₀ responds with structured communication through the full pipeline.
@@ -7,11 +7,17 @@ C214 adds a feedback loop: the user rates panels (helpful / not helpful),
 and the session-scoped perception domain learns via HumanAction historization.
 perception_pretrained.json is loaded as seed; learning stays in-session.
 
+C216 adds transition-level detail: `detail` shows the last round edge by
+edge, `inspect <source> <target>` shows the full inscription narrative
+for a single edge.
+
 Commands:
   run [N]       — Execute the next N rounds (default: 1)
   status        — Show current landscape overview
   focus <domain> — Zoom into canon, bootstrap, or en
   why           — Explain the last round's decision
+  detail [N]    — Show last round edge by edge (or round N)
+  inspect <src> <tgt> — Deep view of a single edge
   rate <i> helpful|not — Rate panel i from last output
   summary       — Full cycle summary so far
   help          — Show available commands
@@ -53,6 +59,7 @@ from e0_controller.feedback import (
     ingest_panel_feedback,
 )
 from e0_controller.perception import PerceptionDomain, build_perception_domain
+from e0_controller.primitives import Edge
 from e0_controller.ui_emitter import UISpec
 
 
@@ -421,6 +428,192 @@ def cmd_summary(state: SessionState) -> str:
     )
 
 
+def cmd_detail(state: SessionState, round_num: Optional[int] = None) -> str:
+    """Show the last round's path edge by edge.
+
+    Each transition is displayed with: source→target, domain info,
+    trace_quality, trace_load, inertia_factor, edge role/type.
+    """
+    if not state.history:
+        return "No rounds executed yet. Use 'run' first."
+
+    if round_num is not None:
+        matches = [r for r in state.history if r.round_num == round_num]
+        if not matches:
+            return (
+                f"Round {round_num} not found. "
+                f"Available: {', '.join(str(r.round_num) for r in state.history)}"
+            )
+        result = matches[0]
+    else:
+        result = state.history[-1]
+
+    path = result.path
+    if len(path) < 2:
+        return f"Round {result.round_num}: path too short ({len(path)} nodes)."
+
+    hist = state.landscape.historization
+    lines = [
+        f"Round {result.round_num} — Transition Detail",
+        f"{'─' * 60}",
+        f"  Mode: {result.mode} · {result.steps} steps · "
+        f"{result.domain_crossings} crossings",
+        "",
+    ]
+
+    md = state.output_format == "markdown"
+    if md:
+        lines = [
+            f"## Round {result.round_num} — Transition Detail",
+            f"Mode: {result.mode} · {result.steps} steps · "
+            f"{result.domain_crossings} crossings",
+            "",
+            "| # | Transition | Cross | Quality | Load | Inertia | Type |",
+            "|---|-----------|-------|---------|------|---------|------|",
+        ]
+
+    for i in range(len(path) - 1):
+        src, tgt = path[i], path[i + 1]
+        edge = Edge(src, tgt)
+        q = hist.trace_quality(edge)
+        m = hist.trace_load(edge)
+        inertia = hist.inertia_factor(edge)
+        meta = state.landscape.edge_meta(src, tgt)
+        rel_type = meta.get("relation_type", "")
+        bridge = meta.get("bridge_type", "")
+        cross = _domain_of(src) != _domain_of(tgt)
+
+        type_label = rel_type or bridge or "—"
+        cross_label = "✗" if cross else ""
+
+        if md:
+            q_str = f"{q:+.3f}"
+            m_str = f"{m:.1f}"
+            i_str = f"{inertia:.3f}"
+            lines.append(
+                f"| {i + 1} | `{src}` → `{tgt}` | {cross_label} | "
+                f"{q_str} | {m_str} | {i_str} | {type_label} |"
+            )
+        else:
+            cross_tag = " [CROSS]" if cross else ""
+            q_bar = _quality_bar(q)
+            lines.append(
+                f"  {i + 1:>3}. {src} → {tgt}{cross_tag}"
+            )
+            lines.append(
+                f"       q={q:+.3f} {q_bar}  m={m:.1f}  I={inertia:.3f}"
+                f"  {type_label}"
+            )
+
+    # Summary line
+    lines.append("")
+    crossings = sum(
+        1 for i in range(len(path) - 1)
+        if _domain_of(path[i]) != _domain_of(path[i + 1])
+    )
+    lines.append(
+        f"  {len(path) - 1} transitions, {crossings} domain crossings"
+    )
+
+    return "\n".join(lines)
+
+
+def _quality_bar(q: float, width: int = 10) -> str:
+    """Small ASCII quality indicator: [████░░░░░░] for q in [-1,+1]."""
+    normalized = (q + 1) / 2  # 0..1
+    filled = int(round(normalized * width))
+    return "[" + "█" * filled + "░" * (width - filled) + "]"
+
+
+def cmd_inspect(state: SessionState, source: str, target: str) -> str:
+    """Deep inspection of a single edge's inscription narrative."""
+    hist = state.landscape.historization
+    edge = Edge(source, target)
+
+    m = hist.trace_load(edge)
+    q = hist.trace_quality(edge)
+    inertia = hist.inertia_factor(edge)
+
+    if m == 0:
+        # Try reverse direction
+        rev = Edge(target, source)
+        if hist.trace_load(rev) > 0:
+            return (
+                f"Edge {source}→{target} has no inscriptions.\n"
+                f"Did you mean: {target}→{source}? "
+                f"(load={hist.trace_load(rev):.1f})"
+            )
+        return f"Edge {source}→{target} has no inscriptions (load=0)."
+
+    meta = state.landscape.edge_meta(source, target)
+    summary = hist.inscription_summary(edge)
+
+    lines = [
+        f"Edge: {source} → {target}",
+        f"{'─' * 60}",
+        f"  Domains:     {_domain_of(source)} → {_domain_of(target)}"
+        + (" [CROSS-DOMAIN]" if _domain_of(source) != _domain_of(target) else ""),
+        f"  trace_load:  {m:.2f}",
+        f"  quality:     {q:+.4f}  {_quality_bar(q)}",
+        f"  inertia:     {inertia:.4f}",
+    ]
+
+    # Metadata
+    if meta:
+        rel = meta.get("relation_type", "")
+        bridge = meta.get("bridge_type", "")
+        if rel:
+            lines.append(f"  relation:    {rel}")
+        if bridge:
+            lines.append(f"  bridge:      {bridge}")
+
+    lines.append("")
+
+    # Inscription narrative
+    count = summary.get("count", 0)
+    lines.append(f"  Inscriptions: {count}")
+
+    if count > 0:
+        sr = summary.get("success_rate", 0)
+        lines.append(f"  Success rate: {sr:.0%}")
+
+        modes = summary.get("modes", {})
+        if modes:
+            mode_parts = [f"{k}={v}" for k, v in sorted(modes.items())]
+            lines.append(f"  Modes:        {', '.join(mode_parts)}")
+
+        roles = summary.get("roles", {})
+        if roles:
+            role_parts = [f"{k}={v}" for k, v in sorted(roles.items())]
+            lines.append(f"  Roles:        {', '.join(role_parts)}")
+
+        rel_types = summary.get("relation_types", {})
+        if rel_types:
+            type_parts = [f"{k}={v}" for k, v in sorted(rel_types.items())]
+            lines.append(f"  Types:        {', '.join(type_parts)}")
+
+        dp = summary.get("domain_pairs", {})
+        if dp:
+            dp_parts = [f"{k}={v}" for k, v in sorted(dp.items())]
+            lines.append(f"  Domain flow:  {', '.join(dp_parts)}")
+
+    # Recent inscriptions (last 5)
+    contexts = hist.edge_inscriptions(edge)
+    if contexts:
+        lines.append("")
+        recent = contexts[-5:]
+        lines.append(f"  Recent inscriptions (last {len(recent)} of {len(contexts)}):")
+        for ctx in recent:
+            outcome_sym = "✓" if ctx.outcome.value == "success" else "✗"
+            role = ctx.role or "—"
+            lines.append(
+                f"    τ={ctx.tau:>4}  {outcome_sym} {ctx.mode or '—':12s} "
+                f"role={role:12s} step={ctx.step}"
+            )
+
+    return "\n".join(lines)
+
+
 # Rating → HumanAction mapping
 _RATING_ACTION = {
     "helpful": HumanAction.CLICK,
@@ -478,6 +671,8 @@ E₀ Interactive Session — Commands
   status           Current landscape overview
   focus <domain>   Zoom into canon, bootstrap, or en
   why              Explain the last decision
+  detail [N]       Last round's path edge by edge (or round N)
+  inspect <s> <t>  Deep view of edge s→t
   rate <i> <rating> Rate panel i (helpful / not / confused)
   summary          Full cycle summary so far
   help             Show this help
@@ -568,6 +763,23 @@ def dispatch(state: SessionState, user_input: str) -> Optional[str]:
 
     if cmd == "summary":
         return cmd_summary(state)
+
+    if cmd == "detail":
+        round_n = None
+        if arg:
+            try:
+                round_n = int(arg)
+            except ValueError:
+                return f"Invalid round number: '{arg}'. Usage: detail [N]"
+        return cmd_detail(state, round_n)
+
+    if cmd == "inspect":
+        if not arg:
+            return "Usage: inspect <source> <target>"
+        inspect_parts = arg.split()
+        if len(inspect_parts) < 2:
+            return "Usage: inspect <source> <target>"
+        return cmd_inspect(state, inspect_parts[0], inspect_parts[1])
 
     if cmd == "rate":
         if not arg:
