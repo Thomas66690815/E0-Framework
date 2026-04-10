@@ -190,6 +190,8 @@ class MultiDomainRoundResult:
     en_canon_crossings: int
     en_bootstrap_crossings: int
     canon_bootstrap_crossings: int
+    # C206: which edge types were traversed
+    type_usage: Dict[str, int] = field(default_factory=dict)
 
 
 # ── Phase 1: ASSESS ────────────────────────────────────────────────────
@@ -312,6 +314,27 @@ def plan(assessment: MultiDomainAssessment, round_num: int,
 
 # ── Phase 3: NAVIGATE ──────────────────────────────────────────────────
 
+# C206: Relation-type scoring — navigation prefers structurally informative edges.
+# These are multiplicative bonuses applied to transition potential.
+# Values > 1.0 attract navigation, < 1.0 repel.
+RELATION_TYPE_BONUS = {
+    "enables":     1.4,   # Opens new capabilities → exploration sweet spot
+    "is_a":        1.3,   # Hierarchical climb → structured learning
+    "part_of":     1.2,   # Decomposition → understanding structure
+    "acts_on":     1.15,  # Active relationship → concrete grounding
+    "agent":       1.15,  # Who/what acts → context enrichment
+    "instrument":  1.1,   # Tool relationship → practical knowledge
+    "co_occurs":   1.0,   # Neutral coexistence
+    "located_in":  1.0,   # Spatial — neutral for abstract navigation
+    "property_of": 1.0,   # Attribute — neutral
+    "opposite_of": 0.85,  # Contrast — informative but risky (tension)
+}
+
+BRIDGE_TYPE_BONUS = {
+    "en_semantic":  1.25,  # Cross-domain semantic bridge → highly valued
+    "static":       1.15,  # Proven structural bridge → moderately valued
+}
+
 
 def _domain_of(node_id: str) -> str:
     """Return domain prefix: 'canon', 'bootstrap', or 'en'."""
@@ -321,6 +344,25 @@ def _domain_of(node_id: str) -> str:
         return "en"
     else:
         return "bootstrap"
+
+
+def _edge_type_bonus(landscape, source: str, target: str) -> float:
+    """Compute multiplicative bonus from edge metadata (C206).
+
+    Reads relation_type and bridge_type from edge metadata.
+    Returns a multiplier (1.0 = neutral, >1.0 = preferred, <1.0 = avoided).
+    """
+    meta = landscape.edge_meta(source, target)
+    if not meta:
+        return 1.0
+    bonus = 1.0
+    rt = meta.get("relation_type", "")
+    if rt:
+        bonus *= RELATION_TYPE_BONUS.get(rt, 1.0)
+    bt = meta.get("bridge_type", "")
+    if bt:
+        bonus *= BRIDGE_TYPE_BONUS.get(bt, 1.0)
+    return bonus
 
 
 def _pick_start_node(landscape, unified_nodes, mode: str) -> str:
@@ -368,6 +410,7 @@ def navigate(landscape, unified_nodes, mode: str, steps: int,
     visited_count: Dict[str, int] = {}
     crossings = {"en_canon": 0, "en_bootstrap": 0, "canon_bootstrap": 0}
     total_crossings = 0
+    type_usage: Dict[str, int] = {}  # C206: track which edge types were chosen
 
     for step in range(steps):
         visited_count[current] = visited_count.get(current, 0) + 1
@@ -378,7 +421,7 @@ def navigate(landscape, unified_nodes, mode: str, steps: int,
         if not potentials:
             break
 
-        # Apply exploration bonus
+        # Apply exploration bonus + type-aware scoring (C206)
         scored = {}
         cur_domain = _domain_of(current)
         for nbr, tp in potentials.items():
@@ -391,6 +434,8 @@ def navigate(landscape, unified_nodes, mode: str, steps: int,
             # In explore_en mode, extra bonus for EN territory
             if mode == "explore_en" and nbr_domain == "en":
                 bonus *= 1.3
+            # C206: relation-type and bridge-type bonus
+            bonus *= _edge_type_bonus(landscape, current, nbr)
             # Revisit penalty
             revisit_penalty = 1.0 / (1.0 + visited_count.get(nbr, 0))
             scored[nbr] = tp * bonus * revisit_penalty
@@ -398,6 +443,13 @@ def navigate(landscape, unified_nodes, mode: str, steps: int,
         nbr = max(scored, key=scored.get)
         if scored[nbr] <= 0:
             break
+
+        # C206: record which type was chosen
+        meta = landscape.edge_meta(current, nbr)
+        for key in ("relation_type", "bridge_type"):
+            val = meta.get(key, "")
+            if val:
+                type_usage[val] = type_usage.get(val, 0) + 1
 
         # Track crossing type
         src_domain = _domain_of(current)
@@ -441,6 +493,7 @@ def navigate(landscape, unified_nodes, mode: str, steps: int,
         "en_bootstrap_crossings": crossings["en_bootstrap"],
         "canon_bootstrap_crossings": crossings["canon_bootstrap"],
         "new_edges": new_edges,
+        "type_usage": type_usage,
     }
 
 
@@ -797,6 +850,7 @@ def run_multidomain_cycle(
             en_canon_crossings=nav["en_canon_crossings"],
             en_bootstrap_crossings=nav["en_bootstrap_crossings"],
             canon_bootstrap_crossings=nav["canon_bootstrap_crossings"],
+            type_usage=nav.get("type_usage", {}),
         )
         history.append(result)
 
@@ -876,6 +930,16 @@ def _print_summary(history: List[MultiDomainRoundResult]) -> None:
               f"{a.T_s:6.3f} {a.canon_coverage:6.1%} "
               f"{a.bootstrap_coverage:6.1%} {a.en_coverage:6.1%} "
               f"{r.domain_crossings:4d}")
+
+    # C206: Aggregate type usage across all rounds
+    agg_types: Dict[str, int] = {}
+    for r in history:
+        for t, c in r.type_usage.items():
+            agg_types[t] = agg_types.get(t, 0) + c
+    if agg_types:
+        print(f"\n  Edge types traversed (C206):")
+        for t, c in sorted(agg_types.items(), key=lambda x: -x[1]):
+            print(f"    {t:20s} {c:4d}")
 
     print(f"{'=' * 65}")
 
