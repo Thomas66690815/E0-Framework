@@ -28,6 +28,8 @@ from e0_controller.explore_bootstrap_landscape import (
     extract_edges,
     build_spec,
     inject_node_traces,
+    load_learning_state,
+    save_learning_state,
     local_transition_potential,
     local_autonomous_step,
     transition_potential,
@@ -451,36 +453,33 @@ def run_unified_exploration(landscape, unified_nodes, max_steps=30):
 
 
 def persist_cross_domain_edges(bridges, dry_run=False):
-    """Persist cross-domain bridge edges to bootstrap.json.
+    """Persist cross-domain bridge edges to learning_state.json.
 
     Stored under cross_domain_bridges section.
     """
     if not bridges or dry_run:
         return len(bridges)
 
-    with open(BOOTSTRAP_PATH, encoding="utf-8") as f:
-        bs = json.load(f)
+    ls = load_learning_state()
 
-    if "cross_domain_bridges" not in bs:
-        bs["cross_domain_bridges"] = {
+    if "cross_domain_bridges" not in ls:
+        ls["cross_domain_bridges"] = {
             "_comment": "Edges connecting Canon (theory) and Bootstrap (practice).",
             "bridges": [],
         }
 
     existing = {(b["from"], b["to"])
-                for b in bs["cross_domain_bridges"]["bridges"]}
+                for b in ls["cross_domain_bridges"]["bridges"]}
     added = 0
     for bridge in bridges:
         key = (bridge["from"], bridge["to"])
         if key not in existing:
-            bs["cross_domain_bridges"]["bridges"].append(bridge)
+            ls["cross_domain_bridges"]["bridges"].append(bridge)
             existing.add(key)
             added += 1
 
     if added > 0:
-        with open(BOOTSTRAP_PATH, "w", encoding="utf-8") as f:
-            json.dump(bs, f, indent=2, ensure_ascii=False)
-            f.write("\n")
+        save_learning_state(ls)
 
     return added
 

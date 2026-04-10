@@ -34,7 +34,9 @@ from e0_controller.explore_bootstrap_landscape import (
     execute_bootstrap_transition,
     persist_execution_results,
     select_transitions_for_execution,
+    load_learning_state,
     BOOTSTRAP_PATH,
+    LEARNING_STATE_PATH,
     MU,
 )
 from e0_controller.bootstrapper import bootstrap_landscape
@@ -119,7 +121,8 @@ class TestParsing:
     def test_semantic_modulation_scales_delta(self, bootstrap_data):
         """Discovered edges with semantic_score have Δ scaled by that score."""
         bs, nodes, edges = bootstrap_data
-        disc = bs.get("discovered_edges", {}).get("edges", [])
+        ls = load_learning_state()
+        disc = ls.get("discovered_edges", {}).get("edges", [])
         scored = [d for d in disc if "semantic_score" in d]
         if not scored:
             pytest.skip("No semantically scored edges")
@@ -138,7 +141,8 @@ class TestParsing:
     def test_semantic_modulation_weakens_artifacts(self, bootstrap_data):
         """Low semantic score (0.3) reduces Δ to ~30% of raw value."""
         bs, nodes, edges = bootstrap_data
-        disc = bs.get("discovered_edges", {}).get("edges", [])
+        ls = load_learning_state()
+        disc = ls.get("discovered_edges", {}).get("edges", [])
         weak = [d for d in disc if d.get("semantic_score", 1.0) <= 0.3]
         if not weak:
             pytest.skip("No weak semantic edges")
@@ -525,52 +529,53 @@ class TestPersistenceCycle:
 
     def test_round_trip(self, bootstrap_data, tmp_path):
         """Write edges → reload → edges appear in extracted graph."""
-        import shutil
+        import e0_controller.explore_bootstrap_landscape as mod
+
         bs_orig, nodes, edges = bootstrap_data
 
-        # Copy bootstrap.json to tmp dir
-        tmp_bs = tmp_path / "bootstrap.json"
-        shutil.copy2(BOOTSTRAP_PATH, tmp_bs)
-
-        # Manually write a discovered edge into the tmp copy
-        with open(tmp_bs, encoding="utf-8") as f:
-            bs = json.load(f)
-        bs["discovered_edges"] = {
-            "edges": [{
-                "from": "OPEN-1",
-                "to": "OPEN-2",
-                "delta": 0.58,
-                "resistance": 1.5,
-                "confidence": 0.5,
-                "derivation": "test round-trip edge",
-            }]
+        # Create a tmp learning_state.json with a discovered edge
+        tmp_ls = tmp_path / "learning_state.json"
+        ls_data = {
+            "_meta": {"source": "test"},
+            "discovered_edges": {
+                "edges": [{
+                    "from": "OPEN-1",
+                    "to": "OPEN-2",
+                    "delta": 0.58,
+                    "resistance": 1.5,
+                    "confidence": 0.5,
+                    "derivation": "test round-trip edge",
+                }]
+            }
         }
-        with open(tmp_bs, "w", encoding="utf-8") as f:
-            json.dump(bs, f, indent=2)
+        with open(tmp_ls, "w", encoding="utf-8") as f:
+            json.dump(ls_data, f, indent=2)
 
-        # Reload and extract
-        with open(tmp_bs, encoding="utf-8") as f:
-            bs_reloaded = json.load(f)
-        nodes2 = extract_nodes(bs_reloaded)
-        edges2 = extract_edges(bs_reloaded, nodes2)
+        orig_path = mod.LEARNING_STATE_PATH
+        mod.LEARNING_STATE_PATH = str(tmp_ls)
+        try:
+            # Reload and extract (extract_edges reads from LEARNING_STATE_PATH)
+            edges2 = extract_edges(bs_orig, nodes)
 
-        # The discovered edge should appear
-        edge_pairs = [(e["from"], e["to"]) for e in edges2]
-        assert ("OPEN-1", "OPEN-2") in edge_pairs, \
-            "Discovered edge not found after round-trip"
+            # The discovered edge should appear
+            edge_pairs = [(e["from"], e["to"]) for e in edges2]
+            assert ("OPEN-1", "OPEN-2") in edge_pairs, \
+                "Discovered edge not found after round-trip"
+        finally:
+            mod.LEARNING_STATE_PATH = orig_path
 
     def test_no_duplicate_on_rewrite(self, bootstrap_data, tmp_path):
         """Persisting the same edge twice doesn't create duplicates."""
-        import shutil
         bs_orig, nodes, edges = bootstrap_data
 
-        tmp_bs = tmp_path / "bootstrap.json"
-        shutil.copy2(BOOTSTRAP_PATH, tmp_bs)
+        tmp_ls = tmp_path / "learning_state.json"
+        with open(tmp_ls, "w", encoding="utf-8") as f:
+            json.dump({"_meta": {"source": "test"}}, f, indent=2)
 
-        # Patch BOOTSTRAP_PATH temporarily
+        # Patch LEARNING_STATE_PATH temporarily
         import e0_controller.explore_bootstrap_landscape as mod
-        orig_path = mod.BOOTSTRAP_PATH
-        mod.BOOTSTRAP_PATH = str(tmp_bs)
+        orig_path = mod.LEARNING_STATE_PATH
+        mod.LEARNING_STATE_PATH = str(tmp_ls)
         try:
             edge = {
                 "from": "OPEN-1", "to": "OPEN-2",
@@ -578,19 +583,19 @@ class TestPersistenceCycle:
                 "confidence": 0.5,
                 "derivation": "test",
             }
-            # Write once
-            persist_discovered_edges([edge], nodes, edges)
+            # Write once (pass empty existing_edges to bypass graph-level filter)
+            persist_discovered_edges([edge], nodes, [])
             # Write again
-            persist_discovered_edges([edge], nodes, edges)
+            persist_discovered_edges([edge], nodes, [])
 
-            with open(tmp_bs, encoding="utf-8") as f:
-                bs = json.load(f)
-            discovered = bs.get("discovered_edges", {}).get("edges", [])
+            with open(tmp_ls, encoding="utf-8") as f:
+                ls = json.load(f)
+            discovered = ls.get("discovered_edges", {}).get("edges", [])
             matching = [e for e in discovered
                         if e["from"] == "OPEN-1" and e["to"] == "OPEN-2"]
             assert len(matching) == 1, f"Expected 1, got {len(matching)} duplicates"
         finally:
-            mod.BOOTSTRAP_PATH = orig_path
+            mod.LEARNING_STATE_PATH = orig_path
 
 
 class TestConfidenceUpdate:
@@ -598,73 +603,68 @@ class TestConfidenceUpdate:
 
     def test_used_edge_confidence_rises(self, bootstrap_data, tmp_path):
         """Edge traversed → confidence increases (meta-level: system chose this edge)."""
-        import shutil
         import e0_controller.explore_bootstrap_landscape as mod
         from e0_controller.bootstrapper import bootstrap_landscape
 
         bs_orig, nodes, edges = bootstrap_data
 
-        tmp_bs = tmp_path / "bootstrap.json"
-        shutil.copy2(BOOTSTRAP_PATH, tmp_bs)
-
-        # Write a discovered edge
-        with open(tmp_bs, encoding="utf-8") as f:
-            bs = json.load(f)
-        bs["discovered_edges"] = {
-            "edges": [{
-                "from": "HERE", "to": "L3",
-                "delta": 0.8, "resistance": 1.3,
-                "confidence": 0.5,
-                "derivation": "test edge",
-            }]
+        tmp_ls = tmp_path / "learning_state.json"
+        ls_data = {
+            "_meta": {"source": "test"},
+            "discovered_edges": {
+                "edges": [{
+                    "from": "HERE", "to": "L3",
+                    "delta": 0.8, "resistance": 1.3,
+                    "confidence": 0.5,
+                    "derivation": "test edge",
+                }]
+            }
         }
-        with open(tmp_bs, "w", encoding="utf-8") as f:
-            json.dump(bs, f, indent=2)
+        with open(tmp_ls, "w", encoding="utf-8") as f:
+            json.dump(ls_data, f, indent=2)
 
         spec = build_spec(nodes, edges)
         landscape = bootstrap_landscape(spec)
         inject_node_traces(landscape, nodes)
 
-        orig_path = mod.BOOTSTRAP_PATH
-        mod.BOOTSTRAP_PATH = str(tmp_bs)
+        orig_path = mod.LEARNING_STATE_PATH
+        mod.LEARNING_STATE_PATH = str(tmp_ls)
         try:
             # Path that uses HERE→L3
             updates = update_edge_confidence(landscape, nodes, ["HERE", "L3", "HERE"])
             assert ("HERE", "L3") in updates
             assert updates[("HERE", "L3")] > 0.5  # confidence rose
         finally:
-            mod.BOOTSTRAP_PATH = orig_path
+            mod.LEARNING_STATE_PATH = orig_path
 
     def test_unused_edge_decays(self, bootstrap_data, tmp_path):
         """Edge NOT traversed → slow confidence decay."""
-        import shutil
         import e0_controller.explore_bootstrap_landscape as mod
         from e0_controller.bootstrapper import bootstrap_landscape
 
         _, nodes, edges = bootstrap_data
 
-        tmp_bs = tmp_path / "bootstrap.json"
-        shutil.copy2(BOOTSTRAP_PATH, tmp_bs)
-
-        with open(tmp_bs, encoding="utf-8") as f:
-            bs = json.load(f)
-        bs["discovered_edges"] = {
-            "edges": [{
-                "from": "OPEN-1", "to": "L9",
-                "delta": 0.55, "resistance": 0.6,
-                "confidence": 0.5,
-                "derivation": "test unused edge",
-            }]
+        tmp_ls = tmp_path / "learning_state.json"
+        ls_data = {
+            "_meta": {"source": "test"},
+            "discovered_edges": {
+                "edges": [{
+                    "from": "OPEN-1", "to": "L9",
+                    "delta": 0.55, "resistance": 0.6,
+                    "confidence": 0.5,
+                    "derivation": "test unused edge",
+                }]
+            }
         }
-        with open(tmp_bs, "w", encoding="utf-8") as f:
-            json.dump(bs, f, indent=2)
+        with open(tmp_ls, "w", encoding="utf-8") as f:
+            json.dump(ls_data, f, indent=2)
 
         spec = build_spec(nodes, edges)
         landscape = bootstrap_landscape(spec)
         inject_node_traces(landscape, nodes)
 
-        orig_path = mod.BOOTSTRAP_PATH
-        mod.BOOTSTRAP_PATH = str(tmp_bs)
+        orig_path = mod.LEARNING_STATE_PATH
+        mod.LEARNING_STATE_PATH = str(tmp_ls)
         try:
             # Path that does NOT use OPEN-1→L9
             updates = update_edge_confidence(landscape, nodes, ["HERE", "OPEN-2", "HERE"])
@@ -672,86 +672,82 @@ class TestConfidenceUpdate:
             assert updates[("OPEN-1", "L9")] < 0.5  # decayed
             assert updates[("OPEN-1", "L9")] == 0.48  # exactly 0.5 - 0.02
         finally:
-            mod.BOOTSTRAP_PATH = orig_path
+            mod.LEARNING_STATE_PATH = orig_path
 
     def test_traversed_open_thread_edge_rises(self, bootstrap_data, tmp_path):
         """Edge to open_thread traversed → confidence rises (exploration success)."""
-        import shutil
         import e0_controller.explore_bootstrap_landscape as mod
         from e0_controller.bootstrapper import bootstrap_landscape
 
         _, nodes, edges = bootstrap_data
 
-        tmp_bs = tmp_path / "bootstrap.json"
-        shutil.copy2(BOOTSTRAP_PATH, tmp_bs)
-
-        with open(tmp_bs, encoding="utf-8") as f:
-            bs = json.load(f)
-        bs["discovered_edges"] = {
-            "edges": [{
-                "from": "HERE", "to": "OPEN-2",
-                "delta": 0.8, "resistance": 0.7,
-                "confidence": 0.5,
-                "derivation": "test open thread edge",
-            }]
+        tmp_ls = tmp_path / "learning_state.json"
+        ls_data = {
+            "_meta": {"source": "test"},
+            "discovered_edges": {
+                "edges": [{
+                    "from": "HERE", "to": "OPEN-2",
+                    "delta": 0.8, "resistance": 0.7,
+                    "confidence": 0.5,
+                    "derivation": "test open thread edge",
+                }]
+            }
         }
-        with open(tmp_bs, "w", encoding="utf-8") as f:
-            json.dump(bs, f, indent=2)
+        with open(tmp_ls, "w", encoding="utf-8") as f:
+            json.dump(ls_data, f, indent=2)
 
         spec = build_spec(nodes, edges)
         landscape = bootstrap_landscape(spec)
         inject_node_traces(landscape, nodes)
 
-        orig_path = mod.BOOTSTRAP_PATH
-        mod.BOOTSTRAP_PATH = str(tmp_bs)
+        orig_path = mod.LEARNING_STATE_PATH
+        mod.LEARNING_STATE_PATH = str(tmp_ls)
         try:
             # Traversing to open_thread = exploration success → confidence rises
             updates = update_edge_confidence(landscape, nodes, ["HERE", "OPEN-2"])
             assert ("HERE", "OPEN-2") in updates
             assert updates[("HERE", "OPEN-2")] > 0.5  # rose, not dropped
         finally:
-            mod.BOOTSTRAP_PATH = orig_path
+            mod.LEARNING_STATE_PATH = orig_path
 
     def test_confidence_persists_to_file(self, bootstrap_data, tmp_path):
-        """Updated confidence is written back to bootstrap.json."""
-        import shutil
+        """Updated confidence is written back to learning_state.json."""
         import e0_controller.explore_bootstrap_landscape as mod
         from e0_controller.bootstrapper import bootstrap_landscape
 
         _, nodes, edges = bootstrap_data
 
-        tmp_bs = tmp_path / "bootstrap.json"
-        shutil.copy2(BOOTSTRAP_PATH, tmp_bs)
-
-        with open(tmp_bs, encoding="utf-8") as f:
-            bs = json.load(f)
-        bs["discovered_edges"] = {
-            "edges": [{
-                "from": "HERE", "to": "L3",
-                "delta": 0.8, "resistance": 1.3,
-                "confidence": 0.5,
-                "derivation": "persist test",
-            }]
+        tmp_ls = tmp_path / "learning_state.json"
+        ls_data = {
+            "_meta": {"source": "test"},
+            "discovered_edges": {
+                "edges": [{
+                    "from": "HERE", "to": "L3",
+                    "delta": 0.8, "resistance": 1.3,
+                    "confidence": 0.5,
+                    "derivation": "persist test",
+                }]
+            }
         }
-        with open(tmp_bs, "w", encoding="utf-8") as f:
-            json.dump(bs, f, indent=2)
+        with open(tmp_ls, "w", encoding="utf-8") as f:
+            json.dump(ls_data, f, indent=2)
 
         spec = build_spec(nodes, edges)
         landscape = bootstrap_landscape(spec)
         inject_node_traces(landscape, nodes)
 
-        orig_path = mod.BOOTSTRAP_PATH
-        mod.BOOTSTRAP_PATH = str(tmp_bs)
+        orig_path = mod.LEARNING_STATE_PATH
+        mod.LEARNING_STATE_PATH = str(tmp_ls)
         try:
             update_edge_confidence(landscape, nodes, ["HERE", "L3"])
 
             # Reread and verify
-            with open(tmp_bs, encoding="utf-8") as f:
+            with open(tmp_ls, encoding="utf-8") as f:
                 reloaded = json.load(f)
             edge = reloaded["discovered_edges"]["edges"][0]
             assert edge["confidence"] == 0.6  # 0.5 + 0.1
         finally:
-            mod.BOOTSTRAP_PATH = orig_path
+            mod.LEARNING_STATE_PATH = orig_path
 
 
 class TestLLMSemanticValidation:
@@ -770,26 +766,25 @@ class TestLLMSemanticValidation:
 
     def test_dry_run_no_edges(self, tmp_path):
         """No discovered edges → empty results."""
-        import shutil
         import e0_controller.explore_bootstrap_landscape as mod
 
-        tmp_bs = tmp_path / "bootstrap.json"
-        shutil.copy2(BOOTSTRAP_PATH, tmp_bs)
+        tmp_ls = tmp_path / "learning_state.json"
+        ls_data = {
+            "_meta": {"source": "test"},
+            "discovered_edges": {"edges": []}
+        }
+        with open(tmp_ls, "w", encoding="utf-8") as f:
+            json.dump(ls_data, f, indent=2)
 
-        with open(tmp_bs, encoding="utf-8") as f:
-            bs = json.load(f)
-        bs["discovered_edges"] = {"edges": []}
-        with open(tmp_bs, "w", encoding="utf-8") as f:
-            json.dump(bs, f, indent=2)
-
-        orig_path = mod.BOOTSTRAP_PATH
-        mod.BOOTSTRAP_PATH = str(tmp_bs)
+        orig_path = mod.LEARNING_STATE_PATH
+        mod.LEARNING_STATE_PATH = str(tmp_ls)
         try:
+            bs = load_bootstrap()
             nodes = extract_nodes(bs)
             results = llm_semantic_validation(nodes, dry_run=True)
             assert results == []
         finally:
-            mod.BOOTSTRAP_PATH = orig_path
+            mod.LEARNING_STATE_PATH = orig_path
 
 
 # ---------------------------------------------------------------------------
@@ -916,15 +911,15 @@ class TestExecutableTransitions:
         assert count == 1  # Only 1 actionable
 
     def test_persist_execution_results_writes_to_file(self, tmp_path, bootstrap_data):
-        """Actionable results are written to bootstrap.json."""
-        import shutil
+        """Actionable results are written to learning_state.json."""
         import e0_controller.explore_bootstrap_landscape as mod
 
-        tmp_bs = tmp_path / "bootstrap.json"
-        shutil.copy2(BOOTSTRAP_PATH, tmp_bs)
+        tmp_ls = tmp_path / "learning_state.json"
+        with open(tmp_ls, "w", encoding="utf-8") as f:
+            json.dump({"_meta": {"source": "test"}}, f, indent=2)
 
-        orig_path = mod.BOOTSTRAP_PATH
-        mod.BOOTSTRAP_PATH = str(tmp_bs)
+        orig_path = mod.LEARNING_STATE_PATH
+        mod.LEARNING_STATE_PATH = str(tmp_ls)
         try:
             results = [
                 {"source": "HERE", "target": "OPEN-1", "target_type": "open_thread",
@@ -934,14 +929,14 @@ class TestExecutableTransitions:
             count = persist_execution_results(results)
             assert count == 1
 
-            with open(tmp_bs, encoding="utf-8") as f:
-                bs = json.load(f)
-            assert "execution_results" in bs
-            assert len(bs["execution_results"]["results"]) >= 1
-            entry = bs["execution_results"]["results"][-1]
+            with open(tmp_ls, encoding="utf-8") as f:
+                ls = json.load(f)
+            assert "execution_results" in ls
+            assert len(ls["execution_results"]["results"]) >= 1
+            entry = ls["execution_results"]["results"][-1]
             assert entry["source"] == "HERE"
             assert entry["target"] == "OPEN-1"
             assert "executed_at" in entry
             assert entry["confidence"] == 0.8
         finally:
-            mod.BOOTSTRAP_PATH = orig_path
+            mod.LEARNING_STATE_PATH = orig_path

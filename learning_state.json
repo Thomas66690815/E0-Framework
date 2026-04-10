@@ -1,0 +1,777 @@
+{
+  "_meta": {
+    "purpose": "Learning state for E₀ self-navigation. Separated from bootstrap.json (C203) to keep identity file lean.",
+    "created": "2026-04-10",
+    "source": "Extracted from bootstrap.json discovered_edges + cross_domain_bridges"
+  },
+  "discovered_edges": {
+    "_comment": "Edges discovered through E₀ self-navigation (C195+). Exploration traverses A→B→C and discovers potential direct A→C. Persisted here so the next session starts with richer topology. Each edge carries its derivation path for traceability.",
+    "edges": [
+      {
+        "from": "HERE",
+        "to": "L3",
+        "delta": 0.8,
+        "resistance": 1.3,
+        "confidence": 0.46,
+        "derivation": "discovered via HERE → OPEN-2 → L3",
+        "discovered_at": "C196",
+        "semantic_score": 0.7,
+        "semantic_reason": "Current state likely relates to controller layer as it reflects system status and control logic."
+      },
+      {
+        "from": "HERE",
+        "to": "L13",
+        "delta": 0.733,
+        "resistance": 1.4,
+        "confidence": 0.46,
+        "derivation": "discovered via HERE → OPEN-2 → L3 → L13",
+        "discovered_at": "C196",
+        "semantic_score": 0.3,
+        "semantic_reason": "Current state to human communication layer is indirect; plausible but weak connection."
+      },
+      {
+        "from": "OPEN-2",
+        "to": "L13",
+        "delta": 0.7,
+        "resistance": 0.7,
+        "confidence": 0.46,
+        "derivation": "discovered via OPEN-2 → L3 → L13",
+        "discovered_at": "C196",
+        "semantic_score": 0.3,
+        "semantic_reason": "Open thread on adversarial stability has some relevance to human communication but connection is wea"
+      },
+      {
+        "from": "OPEN-2",
+        "to": "HERE",
+        "delta": 0.5,
+        "resistance": 0.8,
+        "confidence": 0.58,
+        "derivation": "discovered via OPEN-2 → L3 → L13 → HERE",
+        "discovered_at": "C196",
+        "semantic_score": 0.7,
+        "semantic_reason": "Open thread on adversarial stability relates back to current state as unresolved issues affect state"
+      },
+      {
+        "from": "OPEN-2",
+        "to": "OPEN-1",
+        "delta": 0.575,
+        "resistance": 1.5,
+        "confidence": 0.46,
+        "derivation": "discovered via OPEN-2 → L3 → L13 → HERE → OPEN-1",
+        "discovered_at": "C196",
+        "semantic_score": 0.7,
+        "semantic_reason": "Two open threads on related architectural problems plausibly connected."
+      },
+      {
+        "from": "L3",
+        "to": "OPEN-1",
+        "delta": 0.5,
+        "resistance": 0.9,
+        "confidence": 0.58,
+        "derivation": "discovered via L3 → L13 → HERE → OPEN-1",
+        "discovered_at": "C196",
+        "semantic_score": 0.7,
+        "semantic_reason": "Controller layer likely involved in orchestrator pattern issues, plausible connection."
+      },
+      {
+        "from": "L13",
+        "to": "OPEN-1",
+        "delta": 0.45,
+        "resistance": 0.8,
+        "confidence": 0.46,
+        "derivation": "discovered via L13 → HERE → OPEN-1",
+        "discovered_at": "C196",
+        "semantic_score": 0.3,
+        "semantic_reason": "Human communication layer to orchestrator pattern open thread is a weak connection."
+      },
+      {
+        "from": "HERE",
+        "to": "L6",
+        "delta": 0.7,
+        "resistance": 1.2,
+        "confidence": 0.46,
+        "derivation": "discovered via HERE → OPEN-1 → L6",
+        "discovered_at": "C196",
+        "semantic_score": 0.3,
+        "semantic_reason": "Current state to multiverse layer is an indirect connection, somewhat plausible but weak."
+      },
+      {
+        "from": "HERE",
+        "to": "L9",
+        "delta": 0.633,
+        "resistance": 1.3,
+        "confidence": 0.46,
+        "derivation": "discovered via HERE → OPEN-1 → L6 → L9",
+        "discovered_at": "C196",
+        "semantic_score": 0.3,
+        "semantic_reason": "Current state to dream mode layer is a weak/indirect connection."
+      },
+      {
+        "from": "OPEN-1",
+        "to": "L9",
+        "delta": 0.55,
+        "resistance": 0.6,
+        "confidence": 0.46,
+        "derivation": "discovered via OPEN-1 → L6 → L9",
+        "discovered_at": "C196",
+        "semantic_score": 0.3,
+        "semantic_reason": "Open thread on orchestrator pattern to dream mode layer is weakly connected."
+      },
+      {
+        "from": "OPEN-1",
+        "to": "HERE",
+        "delta": 0.4,
+        "resistance": 0.7,
+        "confidence": 0.7,
+        "derivation": "discovered via OPEN-1 → L6 → L9 → HERE",
+        "discovered_at": "C196",
+        "semantic_score": 0.7,
+        "semantic_reason": "Orchestrator pattern open thread relates back to current state, plausible connection."
+      },
+      {
+        "from": "OPEN-1",
+        "to": "OPEN-2",
+        "delta": 0.5,
+        "resistance": 1.4,
+        "confidence": 0.7,
+        "derivation": "discovered via OPEN-1 → L6 → L9 → HERE → OPEN-2",
+        "discovered_at": "C196",
+        "semantic_score": 0.7,
+        "semantic_reason": "Two open threads on related architectural issues likely connected."
+      },
+      {
+        "from": "L6",
+        "to": "OPEN-2",
+        "delta": 0.467,
+        "resistance": 0.9,
+        "confidence": 0.46,
+        "derivation": "discovered via L6 → L9 → HERE → OPEN-2",
+        "discovered_at": "C196",
+        "semantic_score": 0.3,
+        "semantic_reason": "Multiverse layer to adversarial stability open thread is a weak connection."
+      },
+      {
+        "from": "L9",
+        "to": "OPEN-2",
+        "delta": 0.45,
+        "resistance": 0.8,
+        "confidence": 0.46,
+        "derivation": "discovered via L9 → HERE → OPEN-2",
+        "discovered_at": "C196",
+        "semantic_score": 0.3,
+        "semantic_reason": "Dream mode layer to adversarial stability open thread is a weak connection."
+      },
+      {
+        "from": "L3",
+        "to": "OPEN-2",
+        "delta": 0.5,
+        "resistance": 2.3,
+        "confidence": 0.58,
+        "derivation": "discovered via L3 → OPEN-1 → OPEN-2",
+        "discovered_at": "C196",
+        "semantic_score": 0.7,
+        "semantic_reason": "Controller layer likely involved in adversarial stability issues, plausible connection."
+      },
+      {
+        "from": "OPEN-1",
+        "to": "L3",
+        "delta": 0.65,
+        "resistance": 2.0,
+        "confidence": 0.58,
+        "derivation": "discovered via OPEN-1 → OPEN-2 → L3",
+        "discovered_at": "C196",
+        "semantic_score": 0.7,
+        "semantic_reason": "Orchestrator pattern open thread relates to controller layer, plausible connection."
+      },
+      {
+        "from": "OPEN-2",
+        "to": "L6",
+        "delta": 0.587,
+        "resistance": 2.0,
+        "confidence": 0.46,
+        "derivation": "discovered via OPEN-2 → OPEN-1 → L6",
+        "discovered_at": "C196",
+        "semantic_score": 0.3,
+        "semantic_reason": "Adversarial stability open thread to multiverse layer is a weak connection."
+      },
+      {
+        "from": "L6",
+        "to": "OPEN-1",
+        "delta": 0.589,
+        "resistance": 2.4,
+        "confidence": 0.7,
+        "derivation": "discovered via L6 → OPEN-2 → L3 → OPEN-1",
+        "discovered_at": "C196",
+        "semantic_score": 0.7,
+        "semantic_reason": "Multiverse layer relates to orchestrator pattern open thread, plausible connection."
+      },
+      {
+        "from": "OPEN-1",
+        "to": "L13",
+        "delta": 0.6,
+        "resistance": 2.1,
+        "confidence": 0.46,
+        "derivation": "discovered via OPEN-1 → HERE → L3 → L13",
+        "discovered_at": "C196",
+        "semantic_score": 0.3,
+        "semantic_reason": "Orchestrator pattern open thread to human communication layer is a weak connection."
+      },
+      {
+        "from": "L13",
+        "to": "OPEN-2",
+        "delta": 0.475,
+        "resistance": 2.2,
+        "confidence": 0.46,
+        "derivation": "discovered via L13 → OPEN-1 → OPEN-2",
+        "discovered_at": "C196",
+        "semantic_score": 0.3,
+        "semantic_reason": "Human communication layer to adversarial stability open thread is a weak connection."
+      },
+      {
+        "from": "OPEN-1",
+        "to": "L5",
+        "delta": 0.593,
+        "resistance": 1.9,
+        "confidence": 0.6,
+        "derivation": "discovered via OPEN-1 → HERE → OPEN-2 → L5",
+        "discovered_at": "C196"
+      },
+      {
+        "from": "L5",
+        "to": "OPEN-1",
+        "delta": 0.456,
+        "resistance": 2.5,
+        "confidence": 0.6,
+        "derivation": "discovered via L5 → L6 → OPEN-1",
+        "discovered_at": "C196"
+      }
+    ]
+  },
+  "cross_domain_bridges": {
+    "_comment": "Edges connecting Canon (theory) and Bootstrap (practice).",
+    "bridges": [
+      {
+        "from": "C:difference",
+        "to": "B:L1",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: difference → L1",
+        "bridge_type": "static"
+      },
+      {
+        "from": "B:L1",
+        "to": "C:difference",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: L1 → difference",
+        "bridge_type": "static"
+      },
+      {
+        "from": "C:local_realization",
+        "to": "B:L3",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: local_realization → L3",
+        "bridge_type": "static"
+      },
+      {
+        "from": "B:L3",
+        "to": "C:local_realization",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: L3 → local_realization",
+        "bridge_type": "static"
+      },
+      {
+        "from": "C:connection",
+        "to": "B:L2",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: connection → L2",
+        "bridge_type": "static"
+      },
+      {
+        "from": "B:L2",
+        "to": "C:connection",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: L2 → connection",
+        "bridge_type": "static"
+      },
+      {
+        "from": "C:overlap",
+        "to": "B:L4",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: overlap → L4",
+        "bridge_type": "static"
+      },
+      {
+        "from": "B:L4",
+        "to": "C:overlap",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: L4 → overlap",
+        "bridge_type": "static"
+      },
+      {
+        "from": "C:historization",
+        "to": "B:L1",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: historization → L1",
+        "bridge_type": "static"
+      },
+      {
+        "from": "B:L1",
+        "to": "C:historization",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: L1 → historization",
+        "bridge_type": "static"
+      },
+      {
+        "from": "C:historization",
+        "to": "B:L2",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: historization → L2",
+        "bridge_type": "static"
+      },
+      {
+        "from": "B:L2",
+        "to": "C:historization",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: L2 → historization",
+        "bridge_type": "static"
+      },
+      {
+        "from": "C:tension",
+        "to": "B:L3",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: tension → L3",
+        "bridge_type": "static"
+      },
+      {
+        "from": "B:L3",
+        "to": "C:tension",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: L3 → tension",
+        "bridge_type": "static"
+      },
+      {
+        "from": "C:resistance",
+        "to": "B:L1",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: resistance → L1",
+        "bridge_type": "static"
+      },
+      {
+        "from": "B:L1",
+        "to": "C:resistance",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: L1 → resistance",
+        "bridge_type": "static"
+      },
+      {
+        "from": "C:axiom_a0",
+        "to": "B:WP-2",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: axiom_a0 → WP-2",
+        "bridge_type": "static"
+      },
+      {
+        "from": "B:WP-2",
+        "to": "C:axiom_a0",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: WP-2 → axiom_a0",
+        "bridge_type": "static"
+      },
+      {
+        "from": "C:reflexivity",
+        "to": "B:L5",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: reflexivity → L5",
+        "bridge_type": "static"
+      },
+      {
+        "from": "B:L5",
+        "to": "C:reflexivity",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: L5 → reflexivity",
+        "bridge_type": "static"
+      },
+      {
+        "from": "C:domain_invariance",
+        "to": "B:WP-1",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: domain_invariance → WP-1",
+        "bridge_type": "static"
+      },
+      {
+        "from": "B:WP-1",
+        "to": "C:domain_invariance",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: WP-1 → domain_invariance",
+        "bridge_type": "static"
+      },
+      {
+        "from": "C:structural_alignment",
+        "to": "B:WP-4",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: structural_alignment → WP-4",
+        "bridge_type": "static"
+      },
+      {
+        "from": "B:WP-4",
+        "to": "C:structural_alignment",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: WP-4 → structural_alignment",
+        "bridge_type": "static"
+      },
+      {
+        "from": "C:negative_necessity",
+        "to": "B:WP-7",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: negative_necessity → WP-7",
+        "bridge_type": "static"
+      },
+      {
+        "from": "B:WP-7",
+        "to": "C:negative_necessity",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: WP-7 → negative_necessity",
+        "bridge_type": "static"
+      },
+      {
+        "from": "C:multiverse",
+        "to": "B:L6",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: multiverse → L6",
+        "bridge_type": "static"
+      },
+      {
+        "from": "B:L6",
+        "to": "C:multiverse",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: L6 → multiverse",
+        "bridge_type": "static"
+      },
+      {
+        "from": "C:cross_reflexion",
+        "to": "B:L6",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: cross_reflexion → L6",
+        "bridge_type": "static"
+      },
+      {
+        "from": "B:L6",
+        "to": "C:cross_reflexion",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: L6 → cross_reflexion",
+        "bridge_type": "static"
+      },
+      {
+        "from": "C:dream_mode",
+        "to": "B:L9",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: dream_mode → L9",
+        "bridge_type": "static"
+      },
+      {
+        "from": "B:L9",
+        "to": "C:dream_mode",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: L9 → dream_mode",
+        "bridge_type": "static"
+      },
+      {
+        "from": "C:structural_temperature",
+        "to": "B:L10",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: structural_temperature → L10",
+        "bridge_type": "static"
+      },
+      {
+        "from": "B:L10",
+        "to": "C:structural_temperature",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: L10 → structural_temperature",
+        "bridge_type": "static"
+      },
+      {
+        "from": "C:sleep_wake_cycle",
+        "to": "B:L11",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: sleep_wake_cycle → L11",
+        "bridge_type": "static"
+      },
+      {
+        "from": "B:L11",
+        "to": "C:sleep_wake_cycle",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: L11 → sleep_wake_cycle",
+        "bridge_type": "static"
+      },
+      {
+        "from": "C:observation",
+        "to": "B:L8",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: observation → L8",
+        "bridge_type": "static"
+      },
+      {
+        "from": "B:L8",
+        "to": "C:observation",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: L8 → observation",
+        "bridge_type": "static"
+      },
+      {
+        "from": "C:greedy_navigation",
+        "to": "B:L3",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: greedy_navigation → L3",
+        "bridge_type": "static"
+      },
+      {
+        "from": "B:L3",
+        "to": "C:greedy_navigation",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: L3 → greedy_navigation",
+        "bridge_type": "static"
+      },
+      {
+        "from": "C:amplitude_override",
+        "to": "B:L4",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: amplitude_override → L4",
+        "bridge_type": "static"
+      },
+      {
+        "from": "B:L4",
+        "to": "C:amplitude_override",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: L4 → amplitude_override",
+        "bridge_type": "static"
+      },
+      {
+        "from": "C:exploration_policy",
+        "to": "B:L4",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: exploration_policy → L4",
+        "bridge_type": "static"
+      },
+      {
+        "from": "B:L4",
+        "to": "C:exploration_policy",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: L4 → exploration_policy",
+        "bridge_type": "static"
+      },
+      {
+        "from": "C:mass",
+        "to": "B:GT-4",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: mass → GT-4",
+        "bridge_type": "static"
+      },
+      {
+        "from": "B:GT-4",
+        "to": "C:mass",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: GT-4 → mass",
+        "bridge_type": "static"
+      },
+      {
+        "from": "C:operational_cycle",
+        "to": "B:BT-4",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: operational_cycle → BT-4",
+        "bridge_type": "static"
+      },
+      {
+        "from": "B:BT-4",
+        "to": "C:operational_cycle",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: BT-4 → operational_cycle",
+        "bridge_type": "static"
+      },
+      {
+        "from": "C:self_graph",
+        "to": "B:BT-4",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: self_graph → BT-4",
+        "bridge_type": "static"
+      },
+      {
+        "from": "B:BT-4",
+        "to": "C:self_graph",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: BT-4 → self_graph",
+        "bridge_type": "static"
+      },
+      {
+        "from": "C:self_graph",
+        "to": "B:GT-5",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: self_graph → GT-5",
+        "bridge_type": "static"
+      },
+      {
+        "from": "B:GT-5",
+        "to": "C:self_graph",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: GT-5 → self_graph",
+        "bridge_type": "static"
+      },
+      {
+        "from": "C:coupling_router",
+        "to": "B:OPEN-1",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: coupling_router → OPEN-1",
+        "bridge_type": "static"
+      },
+      {
+        "from": "B:OPEN-1",
+        "to": "C:coupling_router",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: OPEN-1 → coupling_router",
+        "bridge_type": "static"
+      },
+      {
+        "from": "C:asymmetric_coupling",
+        "to": "B:OPEN-2",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: asymmetric_coupling → OPEN-2",
+        "bridge_type": "static"
+      },
+      {
+        "from": "B:OPEN-2",
+        "to": "C:asymmetric_coupling",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: OPEN-2 → asymmetric_coupling",
+        "bridge_type": "static"
+      },
+      {
+        "from": "C:scoped_reflexion",
+        "to": "B:OPEN-3",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: scoped_reflexion → OPEN-3",
+        "bridge_type": "static"
+      },
+      {
+        "from": "B:OPEN-3",
+        "to": "C:scoped_reflexion",
+        "delta": 0.6,
+        "resistance": 0.5,
+        "confidence": 0.7,
+        "derivation": "static bridge: OPEN-3 → scoped_reflexion",
+        "bridge_type": "static"
+      }
+    ]
+  }
+}

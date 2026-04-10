@@ -29,6 +29,7 @@ from e0_controller.explore_bootstrap_landscape import (
     extract_edges,
     build_spec,
     inject_node_traces,
+    load_learning_state,
 )
 from e0_controller.bootstrapper import bootstrap_landscape
 from e0_controller.canon_loader import load_canon
@@ -298,23 +299,17 @@ class TestCrossDomainPersistence:
         assert count == 1
 
     def test_persist_writes_to_file(self, tmp_path):
-        """Bridges are written to bootstrap.json."""
+        """Bridges are written to learning_state.json."""
         import shutil
-        import e0_controller.explore_canon_bootstrap as mod
+        import e0_controller.explore_bootstrap_landscape as bl_mod
 
-        tmp_bs = tmp_path / "bootstrap.json"
-        shutil.copy2(BOOTSTRAP_PATH, tmp_bs)
+        tmp_ls = tmp_path / "learning_state.json"
+        # Create a minimal learning_state.json
+        with open(tmp_ls, "w", encoding="utf-8") as f:
+            json.dump({"_meta": {"source": "test"}}, f, indent=2)
 
-        # Clear any existing bridges in the copy
-        with open(tmp_bs, encoding="utf-8") as f:
-            bs = json.load(f)
-        bs.pop("cross_domain_bridges", None)
-        with open(tmp_bs, "w", encoding="utf-8") as f:
-            json.dump(bs, f, indent=2, ensure_ascii=False)
-            f.write("\n")
-
-        orig_path = mod.BOOTSTRAP_PATH
-        mod.BOOTSTRAP_PATH = str(tmp_bs)
+        orig_path = bl_mod.LEARNING_STATE_PATH
+        bl_mod.LEARNING_STATE_PATH = str(tmp_ls)
         try:
             bridges = [
                 {"from": "C:tension", "to": "B:L3", "delta": 0.5,
@@ -324,34 +319,27 @@ class TestCrossDomainPersistence:
             count = persist_cross_domain_edges(bridges)
             assert count == 1
 
-            with open(tmp_bs, encoding="utf-8") as f:
-                bs = json.load(f)
-            assert "cross_domain_bridges" in bs
-            assert len(bs["cross_domain_bridges"]["bridges"]) >= 1
-            entry = bs["cross_domain_bridges"]["bridges"][-1]
+            with open(tmp_ls, encoding="utf-8") as f:
+                ls = json.load(f)
+            assert "cross_domain_bridges" in ls
+            assert len(ls["cross_domain_bridges"]["bridges"]) >= 1
+            entry = ls["cross_domain_bridges"]["bridges"][-1]
             assert entry["from"] == "C:tension"
             assert entry["to"] == "B:L3"
         finally:
-            mod.BOOTSTRAP_PATH = orig_path
+            bl_mod.LEARNING_STATE_PATH = orig_path
 
     def test_no_duplicate_persist(self, tmp_path):
         """Same bridge is not persisted twice."""
-        import shutil
-        import e0_controller.explore_canon_bootstrap as mod
+        import e0_controller.explore_bootstrap_landscape as bl_mod
 
-        tmp_bs = tmp_path / "bootstrap.json"
-        shutil.copy2(BOOTSTRAP_PATH, tmp_bs)
+        tmp_ls = tmp_path / "learning_state.json"
+        # Create a minimal learning_state.json
+        with open(tmp_ls, "w", encoding="utf-8") as f:
+            json.dump({"_meta": {"source": "test"}}, f, indent=2)
 
-        # Clear any existing bridges in the copy
-        with open(tmp_bs, encoding="utf-8") as f:
-            bs = json.load(f)
-        bs.pop("cross_domain_bridges", None)
-        with open(tmp_bs, "w", encoding="utf-8") as f:
-            json.dump(bs, f, indent=2, ensure_ascii=False)
-            f.write("\n")
-
-        orig_path = mod.BOOTSTRAP_PATH
-        mod.BOOTSTRAP_PATH = str(tmp_bs)
+        orig_path = bl_mod.LEARNING_STATE_PATH
+        bl_mod.LEARNING_STATE_PATH = str(tmp_ls)
         try:
             bridges = [
                 {"from": "C:overlap", "to": "B:L4", "delta": 0.4,
@@ -362,13 +350,13 @@ class TestCrossDomainPersistence:
             assert count1 == 1
             assert count2 == 0
 
-            with open(tmp_bs, encoding="utf-8") as f:
-                bs = json.load(f)
-            matching = [b for b in bs["cross_domain_bridges"]["bridges"]
+            with open(tmp_ls, encoding="utf-8") as f:
+                ls = json.load(f)
+            matching = [b for b in ls["cross_domain_bridges"]["bridges"]
                         if b["from"] == "C:overlap" and b["to"] == "B:L4"]
             assert len(matching) == 1
         finally:
-            mod.BOOTSTRAP_PATH = orig_path
+            bl_mod.LEARNING_STATE_PATH = orig_path
 
 
 # ---------------------------------------------------------------------------

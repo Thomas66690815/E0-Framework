@@ -32,12 +32,28 @@ from e0_controller.primitives import Outcome
 # ---------------------------------------------------------------------------
 
 BOOTSTRAP_PATH = os.path.join(os.path.dirname(__file__), "..", "bootstrap.json")
+LEARNING_STATE_PATH = os.path.join(os.path.dirname(__file__), "..", "learning_state.json")
 
 
 def load_bootstrap():
     """Load and return the raw bootstrap.json."""
     with open(BOOTSTRAP_PATH, encoding="utf-8") as f:
         return json.load(f)
+
+
+def load_learning_state():
+    """Load and return learning_state.json (discovered edges, bridges, history)."""
+    if not os.path.exists(LEARNING_STATE_PATH):
+        return {"discovered_edges": {"edges": []}, "cross_domain_bridges": {"bridges": []}}
+    with open(LEARNING_STATE_PATH, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def save_learning_state(ls):
+    """Write learning_state.json."""
+    with open(LEARNING_STATE_PATH, "w", encoding="utf-8") as f:
+        json.dump(ls, f, indent=2, ensure_ascii=False)
+        f.write("\n")
 
 
 def extract_nodes(bs):
@@ -232,9 +248,10 @@ def extract_edges(bs, nodes):
             add(nid, "HERE", 0.1, 0.1, 0.95, f"{nid} operational → current state")
 
     # --- Discovered edges from prior exploration runs ---
-    # These were persisted by Phase D of previous sessions.
+    # These live in learning_state.json (separated from bootstrap.json in C203).
     # The topology grows across runs: exploration → persist → richer start.
-    discovered = bs.get("discovered_edges", {}).get("edges", [])
+    ls = load_learning_state()
+    discovered = ls.get("discovered_edges", {}).get("edges", [])
     for de in discovered:
         src, tgt = de.get("from", ""), de.get("to", "")
         if src in nodes and tgt in nodes:
@@ -652,7 +669,7 @@ def filter_discovered_edges(new_edges, nodes, existing_edges):
 
 
 def persist_discovered_edges(new_edges, nodes, existing_edges, dry_run=False):
-    """Write discovered edges back to bootstrap.json.
+    """Write discovered edges to learning_state.json.
 
     This closes the loop: exploration → discovery → persistence → richer start.
     Each edge carries its derivation path for traceability.
@@ -664,31 +681,28 @@ def persist_discovered_edges(new_edges, nodes, existing_edges, dry_run=False):
     if not filtered or dry_run:
         return filtered
 
-    # Read current bootstrap.json
-    with open(BOOTSTRAP_PATH, encoding="utf-8") as f:
-        bs = json.load(f)
+    # Read current learning_state.json
+    ls = load_learning_state()
 
     # Ensure section exists
-    if "discovered_edges" not in bs:
-        bs["discovered_edges"] = {
+    if "discovered_edges" not in ls:
+        ls["discovered_edges"] = {
             "_comment": "Edges discovered through E₀ self-navigation.",
             "edges": [],
         }
 
     # Merge: don't duplicate edges already persisted
-    persisted = {(e["from"], e["to"]) for e in bs["discovered_edges"]["edges"]}
+    persisted = {(e["from"], e["to"]) for e in ls["discovered_edges"]["edges"]}
     added = 0
     for edge in filtered:
         key = (edge["from"], edge["to"])
         if key not in persisted:
-            bs["discovered_edges"]["edges"].append(edge)
+            ls["discovered_edges"]["edges"].append(edge)
             persisted.add(key)
             added += 1
 
     if added > 0:
-        with open(BOOTSTRAP_PATH, "w", encoding="utf-8") as f:
-            json.dump(bs, f, indent=2, ensure_ascii=False)
-            f.write("\n")
+        save_learning_state(ls)
 
     return filtered
 
@@ -710,10 +724,9 @@ def update_edge_confidence(landscape, nodes, path, phase_label="E"):
 
     Returns dict of updated edges: {(from, to): new_confidence}
     """
-    with open(BOOTSTRAP_PATH, encoding="utf-8") as f:
-        bs = json.load(f)
+    ls = load_learning_state()
 
-    disc = bs.get("discovered_edges", {}).get("edges", [])
+    disc = ls.get("discovered_edges", {}).get("edges", [])
     if not disc:
         return {}
 
@@ -740,9 +753,7 @@ def update_edge_confidence(landscape, nodes, path, phase_label="E"):
             updates[key] = new_conf
 
     if updates:
-        with open(BOOTSTRAP_PATH, "w", encoding="utf-8") as f:
-            json.dump(bs, f, indent=2, ensure_ascii=False)
-            f.write("\n")
+        save_learning_state(ls)
 
     return updates
 
@@ -759,10 +770,9 @@ def llm_semantic_validation(nodes, dry_run=False):
 
     This is the LLM=Muscle pattern: E₀ proposes structure, LLM evaluates meaning.
     """
-    with open(BOOTSTRAP_PATH, encoding="utf-8") as f:
-        bs = json.load(f)
+    ls = load_learning_state()
 
-    disc = bs.get("discovered_edges", {}).get("edges", [])
+    disc = ls.get("discovered_edges", {}).get("edges", [])
     if not disc:
         return []
 
@@ -843,9 +853,7 @@ def llm_semantic_validation(nodes, dry_run=False):
                 updated += 1
 
         if updated > 0:
-            with open(BOOTSTRAP_PATH, "w", encoding="utf-8") as f:
-                json.dump(bs, f, indent=2, ensure_ascii=False)
-                f.write("\n")
+            save_learning_state(ls)
 
         return results
 
@@ -1062,11 +1070,10 @@ def persist_execution_results(results, dry_run=False):
     if not actionable or dry_run:
         return len(actionable)
 
-    with open(BOOTSTRAP_PATH, encoding="utf-8") as f:
-        bs = json.load(f)
+    ls = load_learning_state()
 
-    if "execution_results" not in bs:
-        bs["execution_results"] = {
+    if "execution_results" not in ls:
+        ls["execution_results"] = {
             "_comment": "Concrete outputs from LLM-executed bootstrap transitions.",
             "results": [],
         }
@@ -1084,11 +1091,9 @@ def persist_execution_results(results, dry_run=False):
             "confidence": r["confidence"],
             "executed_at": timestamp,
         }
-        bs["execution_results"]["results"].append(entry)
+        ls["execution_results"]["results"].append(entry)
 
-    with open(BOOTSTRAP_PATH, "w", encoding="utf-8") as f:
-        json.dump(bs, f, indent=2, ensure_ascii=False)
-        f.write("\n")
+    save_learning_state(ls)
 
     return len(actionable)
 

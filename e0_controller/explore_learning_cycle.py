@@ -39,6 +39,8 @@ from e0_controller.explore_bootstrap_landscape import (
     filter_discovered_edges,
     inject_node_traces,
     load_bootstrap,
+    load_learning_state,
+    save_learning_state,
     local_autonomous_step,
     local_transition_potential,
     transition_potential,
@@ -419,10 +421,9 @@ def validate_confidence(landscape, path) -> Dict[Tuple[str, str], float]:
 
     Returns dict of {(from, to): new_confidence}.
     """
-    with open(BOOTSTRAP_PATH, encoding="utf-8") as f:
-        bs = json.load(f)
+    ls = load_learning_state()
 
-    disc = bs.get("discovered_edges", {}).get("edges", [])
+    disc = ls.get("discovered_edges", {}).get("edges", [])
     if not disc:
         return {}
 
@@ -452,10 +453,9 @@ def prune_low_confidence_edges(threshold: float = 0.05) -> int:
 
     Returns number of pruned edges.
     """
-    with open(BOOTSTRAP_PATH, encoding="utf-8") as f:
-        bs = json.load(f)
+    ls = load_learning_state()
 
-    disc = bs.get("discovered_edges", {}).get("edges", [])
+    disc = ls.get("discovered_edges", {}).get("edges", [])
     if not disc:
         return 0
 
@@ -470,7 +470,7 @@ def prune_low_confidence_edges(threshold: float = 0.05) -> int:
 
 def consolidate(round_result: RoundResult, new_edges: List[Dict],
                 dry_run: bool = False) -> Dict[str, Any]:
-    """Write round results to bootstrap.json.
+    """Write round results to learning_state.json.
 
     Persists: new discovered edges, learning history entry.
     Returns summary of what was written.
@@ -482,29 +482,28 @@ def consolidate(round_result: RoundResult, new_edges: List[Dict],
             "dry_run": True,
         }
 
-    with open(BOOTSTRAP_PATH, encoding="utf-8") as f:
-        bs = json.load(f)
+    ls = load_learning_state()
 
     # Persist new shortcut edges
-    if "discovered_edges" not in bs:
-        bs["discovered_edges"] = {
+    if "discovered_edges" not in ls:
+        ls["discovered_edges"] = {
             "_comment": "Edges discovered through E₀ self-navigation.",
             "edges": [],
         }
 
-    existing = {(e["from"], e["to"]) for e in bs["discovered_edges"]["edges"]}
+    existing = {(e["from"], e["to"]) for e in ls["discovered_edges"]["edges"]}
     added = 0
     for edge in new_edges:
         # Only persist cross-type or structurally novel edges
         key = (edge["from"], edge["to"])
         if key not in existing:
-            bs["discovered_edges"]["edges"].append(edge)
+            ls["discovered_edges"]["edges"].append(edge)
             existing.add(key)
             added += 1
 
     # Persist learning history
-    if "learning_history" not in bs:
-        bs["learning_history"] = {
+    if "learning_history" not in ls:
+        ls["learning_history"] = {
             "_comment": "Accumulated learning cycle metrics (C202).",
             "rounds": [],
         }
@@ -527,16 +526,14 @@ def consolidate(round_result: RoundResult, new_edges: List[Dict],
         "llm_round": round_result.llm_round,
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
-    bs["learning_history"]["rounds"].append(history_entry)
+    ls["learning_history"]["rounds"].append(history_entry)
 
-    with open(BOOTSTRAP_PATH, "w", encoding="utf-8") as f:
-        json.dump(bs, f, indent=2, ensure_ascii=False)
-        f.write("\n")
+    save_learning_state(ls)
 
     return {
         "new_edges_persisted": added,
         "round_recorded": True,
-        "total_discovered": len(bs["discovered_edges"]["edges"]),
+        "total_discovered": len(ls["discovered_edges"]["edges"]),
     }
 
 
