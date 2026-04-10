@@ -203,7 +203,8 @@ def bootstrap_landscape(spec: Dict[str, Any]) -> Landscape:
 
     # Add edges
     for es in edge_specs:
-        ls.add_edge(es.source, es.target, es.delta, es.resistance)
+        ls.add_edge(es.source, es.target, es.delta, es.resistance,
+                     confidence=es.confidence)
 
     # Inject initial traces
     for es in edge_specs:

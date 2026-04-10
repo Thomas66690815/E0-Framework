@@ -286,6 +286,31 @@ def build_spec(nodes, edges):
     return spec
 
 
+def inject_edge_metadata(landscape, edges):
+    """Inject metadata from edge dicts into landscape (C205).
+
+    Edge dicts may carry relation_type, derivation, bridge_type, confidence,
+    and other semantic fields that the bootstrapper doesn't pass through.
+    This function reads them back into the landscape's metadata layer.
+    """
+    META_KEYS = ("relation_type", "type", "derivation", "bridge_type",
+                 "confidence", "semantic_score", "semantic_reason",
+                 "discovered_at")
+    for e in edges:
+        src = e.get("from", "")
+        tgt = e.get("to", "")
+        if not landscape.has_edge(src, tgt):
+            continue
+        meta = {}
+        for key in META_KEYS:
+            if key in e:
+                # Normalize "type" → "relation_type"
+                store_key = "relation_type" if key == "type" else key
+                meta[store_key] = e[key]
+        if meta:
+            landscape.set_edge_meta(src, tgt, **meta)
+
+
 def inject_node_traces(landscape, nodes):
     """Inject the existing U/F traces from bootstrap.json into the Landscape.
 
@@ -1612,6 +1637,7 @@ def main():
     spec = build_spec(nodes, edges)
     landscape = bootstrap_landscape(spec)
     inject_node_traces(landscape, nodes)
+    inject_edge_metadata(landscape, edges)
 
     # Phase 3: Report
     landscape_report(landscape, nodes)

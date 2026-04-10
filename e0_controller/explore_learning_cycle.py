@@ -37,6 +37,7 @@ from e0_controller.explore_bootstrap_landscape import (
     extract_edges,
     extract_nodes,
     filter_discovered_edges,
+    inject_edge_metadata,
     inject_node_traces,
     load_bootstrap,
     load_learning_state,
@@ -572,6 +573,7 @@ def build_landscape(fresh_canon: bool = True) -> Tuple[Any, Dict, List[Dict]]:
     spec = build_spec(unified_nodes, unified_edges)
     landscape = bootstrap_landscape(spec)
     inject_node_traces(landscape, unified_nodes)
+    inject_edge_metadata(landscape, unified_edges)
 
     return landscape, unified_nodes, static_bridges
 

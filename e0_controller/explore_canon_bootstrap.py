@@ -27,6 +27,7 @@ from e0_controller.explore_bootstrap_landscape import (
     extract_nodes,
     extract_edges,
     build_spec,
+    inject_edge_metadata,
     inject_node_traces,
     load_learning_state,
     save_learning_state,
@@ -317,14 +318,17 @@ def build_unified_landscape(canon_info, canon_landscape, bootstrap_nodes,
 
     # Bridge edges (already prefixed)
     for bridge in bridges:
-        all_edges.append({
+        edge_dict = {
             "from": bridge["from"],
             "to": bridge["to"],
             "delta": bridge["delta"],
             "resistance": bridge["resistance"],
             "confidence": bridge.get("confidence", 0.6),
             "derivation": bridge.get("derivation", "bridge edge"),
-        })
+        }
+        if "bridge_type" in bridge:
+            edge_dict["bridge_type"] = bridge["bridge_type"]
+        all_edges.append(edge_dict)
 
     return all_nodes, all_edges
 
@@ -546,6 +550,7 @@ def main():
     spec = build_spec(unified_nodes, unified_edges)
     landscape = bootstrap_landscape(spec)
     inject_node_traces(landscape, unified_nodes)
+    inject_edge_metadata(landscape, unified_edges)
 
     # Phase 5: Interference measurement
     print("\n  Phase 5: Interference measurement...")

@@ -34,13 +34,14 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 from e0_controller.bootstrapper import bootstrap_landscape
-from e0_controller.canon_loader import load_canon
+from e0_controller.canon_loader import load_canon, load_canon_spec
 from e0_controller.explore_bootstrap_landscape import (
     BOOTSTRAP_PATH,
     build_spec,
     extract_edges,
     extract_nodes,
     filter_discovered_edges,
+    inject_edge_metadata,
     inject_node_traces,
     load_bootstrap,
     load_learning_state,
@@ -638,17 +639,25 @@ def build_multidomain_landscape(fresh_en: bool = True, fresh_canon: bool = True
         }
         en_node_count += 1
 
-    # Add EN intra-domain edges
+    # Add EN intra-domain edges (with relation type from raw spec)
     en_edge_count = 0
+    en_spec = load_canon_spec("english_basic_enriched")
+    en_edge_types = {}
+    for e in en_spec.get("edges", []):
+        en_edge_types[(e["from"], e["to"])] = e.get("type", "")
     for edge_info in en.info.edges:
-        unified_edges.append({
+        edge_dict = {
             "from": f"EN:{edge_info.source}",
             "to": f"EN:{edge_info.target}",
             "delta": 0.3,
             "resistance": 0.2,
             "confidence": 0.9,
             "derivation": f"EN intra: {edge_info.derivation}",
-        })
+        }
+        rtype = en_edge_types.get((edge_info.source, edge_info.target), "")
+        if rtype:
+            edge_dict["relation_type"] = rtype
+        unified_edges.append(edge_dict)
         en_edge_count += 1
 
     # Build EN↔Canon and EN↔Bootstrap bridges
@@ -666,6 +675,7 @@ def build_multidomain_landscape(fresh_en: bool = True, fresh_canon: bool = True
     spec = build_spec(unified_nodes, unified_edges)
     landscape = bootstrap_landscape(spec)
     inject_node_traces(landscape, unified_nodes)
+    inject_edge_metadata(landscape, unified_edges)
 
     stats = {
         "canon_nodes": sum(1 for n in unified_nodes if n.startswith("C:")),

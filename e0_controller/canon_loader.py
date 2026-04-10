@@ -187,6 +187,32 @@ def _to_bootstrapper_spec(spec: Dict[str, Any]) -> Dict[str, Any]:
 
 
 # ──────────────────────────────────────────────
+# 5b. Edge Metadata Injection (C205)
+# ──────────────────────────────────────────────
+
+def _inject_edge_metadata(landscape: Landscape, spec: dict) -> None:
+    """Inject relation type and derivation from canon spec into landscape.
+
+    Called after bootstrap_landscape() to enrich edges with the semantic
+    information that the bootstrapper doesn't carry.
+    """
+    for e in spec.get("edges", []):
+        src = e.get("from", "")
+        tgt = e.get("to", "")
+        if not landscape.has_edge(src, tgt):
+            continue
+        meta = {}
+        if "type" in e:
+            meta["relation_type"] = e["type"]
+        if "derivation" in e:
+            meta["derivation"] = e["derivation"]
+        if "confidence" in e:
+            meta["confidence"] = e["confidence"]
+        if meta:
+            landscape.set_edge_meta(src, tgt, **meta)
+
+
+# ──────────────────────────────────────────────
 # 6. Main Loader
 # ──────────────────────────────────────────────
 
@@ -209,6 +235,10 @@ def load_canon(name: str) -> CanonLandscape:
     info = _extract_info(spec)
     bs_spec = _to_bootstrapper_spec(spec)
     landscape = bootstrap_landscape(bs_spec)
+
+    # Inject canon edge metadata (C205: relation type, derivation, confidence)
+    _inject_edge_metadata(landscape, spec)
+
     return CanonLandscape(landscape=landscape, info=info)
 
 

@@ -45,6 +45,7 @@ class Landscape:
     _states: Set[str] = field(default_factory=set)
     _delta: Dict[Edge, float] = field(default_factory=dict)   # Δ(x→y)
     _R0: Dict[Edge, float] = field(default_factory=dict)      # R₀(x→y)
+    _metadata: Dict[Edge, dict] = field(default_factory=dict)  # edge metadata (C205)
 
     # Dynamic structure
     historization: Historization = field(default_factory=Historization)
@@ -74,11 +75,12 @@ class Landscape:
         self._states.add(name)
 
     def add_edge(self, source: str, target: str,
-                 delta: float, resistance: float) -> None:
+                 delta: float, resistance: float, **metadata) -> None:
         """
         Add a directed transition with its Δ and R₀.
 
         Both states are auto-registered if not already present.
+        Optional keyword arguments are stored as edge metadata (C205).
         """
         if delta < 0:
             raise ValueError(f"Δ must be ≥ 0, got {delta}")
@@ -89,6 +91,8 @@ class Landscape:
         edge = Edge(source, target)
         self._delta[edge] = delta
         self._R0[edge] = resistance
+        if metadata:
+            self._metadata[edge] = metadata
 
     @classmethod
     def fully_connected(
@@ -140,6 +144,7 @@ class Landscape:
             raise KeyError(f"Edge {source}→{target} does not exist")
         del self._delta[edge]
         del self._R0[edge]
+        self._metadata.pop(edge, None)
         # Invalidate modulation caches
         self._invalidate_caches()
 
@@ -159,6 +164,7 @@ class Landscape:
         for edge in incident:
             del self._delta[edge]
             del self._R0[edge]
+            self._metadata.pop(edge, None)
         self._states.discard(state)
         self._invalidate_caches()
         return incident
@@ -202,6 +208,19 @@ class Landscape:
     def has_edge(self, source: str, target: str) -> bool:
         """Check whether a directed edge exists."""
         return Edge(source, target) in self._R0
+
+    def edge_meta(self, source: str, target: str) -> dict:
+        """Return metadata dict for an edge, or empty dict if none."""
+        return self._metadata.get(Edge(source, target), {})
+
+    def set_edge_meta(self, source: str, target: str, **kw) -> None:
+        """Merge keyword arguments into an edge's metadata."""
+        edge = Edge(source, target)
+        if edge not in self._R0:
+            raise KeyError(f"Edge {source}→{target} does not exist")
+        meta = self._metadata.get(edge, {})
+        meta.update(kw)
+        self._metadata[edge] = meta
 
     def would_orphan(self, source: str, target: str) -> Set[str]:
         """Return states that would become unreachable if edge is removed.

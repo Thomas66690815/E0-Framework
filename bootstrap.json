@@ -27,14 +27,14 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C204",
-    "latest_commit_hash": "159fa1c",
-    "latest_commit_msg": "C204: Multi-Domain Learning Cycle — EN as third domain, 148 nodes, EN 13.6%→81.8% (38 tests, 4522 total)",
-    "test_count": 4522,
+    "latest_commit": "C205",
+    "latest_commit_hash": "5f29e46",
+    "latest_commit_msg": "C205: Edge Metadata in Landscape — relation_type, derivation, confidence, bridge_type survive pipeline (26 tests, 4548 total)",
+    "test_count": 4548,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
-    "module_count": "76 production + 10 benchmarks + 17 demos + 68 explorations + 125 test files",
-    "line_count": "~32100 production, ~127000 total"
+    "module_count": "76 production + 10 benchmarks + 17 demos + 68 explorations + 126 test files",
+    "line_count": "~32300 production, ~127400 total"
   },
   "conventions": {
     "user_language": "German (user speaks German, code/docs in English)",
@@ -200,9 +200,26 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "Multi-Domain Learning Cycle — EN as Third Domain (C204)",
-    "arc_status": "Extended C202 learning cycle to 3 domains: Canon (63 nodes) + Bootstrap (41) + EN (44) = 148 nodes, 470 edges. 42 EN bridges (16 EN↔Canon + 4 EN↔Bootstrap, bidirectional). explore_en mode auto-triggered when EN coverage lags >20%. Coverage: 54.1%→82.4% in 8 rounds (EN: 13.6%→81.8%, Canon: 57.1%→76.2%, Bootstrap: 92.7%→92.7%). 291 domain crossings across 3 domains.",
-    "key_result": "E₀ learns a NEW domain (English) through the same mechanism that learned its own theory (Canon) and implementation (Bootstrap). EN went from 13.6% to 81.8% in 8 rounds. Cross-domain bridges are the mechanism: EN↔Canon semantic mappings (thing→difference, action→local_realization, self→historization) pull navigation through unfamiliar territory. explore_en mode catches up lagging domains automatically.",
+    "current_arc": "Rich Transitions — From Topology to Meaning (C205–C207)",
+    "arc_status": "C204 exposed the gap: E₀ navigates EN topology but edges carry only δ+R₀. Relation types (is_a, part_of, enables), derivations, and confidence are dropped when edges enter the Landscape. Three stages planned to close this gap.",
+    "arc_plan": {
+      "C205_edge_metadata": {
+        "title": "Edge Metadata in Landscape",
+        "what": "Add _meta: Dict[Edge, Dict] to Landscape. Canon relation_type, derivation, confidence, bridge_type survive the pipeline. No mechanism change — just memory.",
+        "status": "DONE — 100% coverage: 470/470 edges carry metadata, 12 relation types, 2 bridge types"
+      },
+      "C206_typed_navigation": {
+        "title": "Typed Navigation",
+        "what": "Controller uses edge metadata for navigation decisions: prefer enables-edges for exploration, avoid constrains-edges under high T_s, climb is_a hierarchies, drill into part_of trees. Cross-domain bridge types weighted specifically.",
+        "status": "NOT STARTED"
+      },
+      "C207_contextual_inscription": {
+        "title": "Contextual Inscription",
+        "what": "Inscription carries WHAT was inscribed, not just U/F counts. Each edge builds a narrative trace: traversal context (mode, round), role (bridge, shortcut, exploration), co-traversed edges. Inscription in the Ontodynamics sense — Layer 2 actually implemented.",
+        "status": "NOT STARTED"
+      }
+    },
+    "key_result": "C204 proved E₀ learns any structured domain (EN 13.6%→81.8%). But transitions are semantically hollow — is_a and part_of are indistinguishable to the controller. The rich source data (relation types, derivations, confidence) must survive into the Landscape.",
     "open_threads": [
       "Orchestrator pattern: automatic wiring vs manual composition",
       "Adversarial stability still partially open (C172-C174)",
@@ -252,7 +269,7 @@
         "last_tested": "C186"
       }
     ],
-    "next_commit_id": "C205"
+    "next_commit_id": "C206"
   },
   "structural_entropy": {
     "_comment": "Our forgetting protocol. Isomorphic to E₀'s structural entropy (C114-C121). Prevents bootstrap.json from growing without bound. Prune trigger is parameter-free: pressure = entries_since_last_prune / (entries_since_last_prune + μ). When pressure > 0.5 → prune. Check after each arc completion.",
