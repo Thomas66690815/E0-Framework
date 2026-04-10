@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C208",
-    "latest_commit_hash": "b1fc749",
-    "latest_commit_msg": "C208: Text Renderer — render_text/render_markdown parallel to render_html, 7 text renderers, urgency mapping (57 tests, 4659 total)",
-    "test_count": 4659,
+    "latest_commit": "C209",
+    "latest_commit_hash": "72562d6",
+    "latest_commit_msg": "C209: Evidence Interpreter \u2014 template-based prose from structured evidence, 8 interpreters + signature dispatch, inscription narratives (58 tests, 4717 total)",
+    "test_count": 4717,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
     "module_count": "76 production + 10 benchmarks + 17 demos + 68 explorations + 126 test files",
@@ -211,7 +211,7 @@
       "C209_evidence_interpretation": {
         "title": "Evidence Interpretation",
         "what": "Template-based interpret_evidence() turns structured dicts into prose. Inscription-summary narrative, trace narrative, domain-crossing story. No LLM needed — C207 data provides the context (mode, role, domain).",
-        "status": "NOT STARTED"
+        "status": "DONE"
       },
       "C210_session_text_mode": {
         "title": "Session Text Mode",
@@ -269,7 +269,7 @@
         "last_tested": "C186"
       }
     ],
-    "next_commit_id": "C209"
+    "next_commit_id": "C210"
   },
   "structural_entropy": {
     "_comment": "Our forgetting protocol. Isomorphic to E₀'s structural entropy (C114-C121). Prevents bootstrap.json from growing without bound. Prune trigger is parameter-free: pressure = entries_since_last_prune / (entries_since_last_prune + μ). When pressure > 0.5 → prune. Check after each arc completion.",
