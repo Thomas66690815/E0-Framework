@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C209",
-    "latest_commit_hash": "72562d6",
-    "latest_commit_msg": "C209: Evidence Interpreter \u2014 template-based prose from structured evidence, 8 interpreters + signature dispatch, inscription narratives (58 tests, 4717 total)",
-    "test_count": 4717,
+    "latest_commit": "C210",
+    "latest_commit_hash": "0105eff",
+    "latest_commit_msg": "C210: Session Text Mode \u2014 output_format=html|text|markdown, --format CLI, interpretation wiring (23 tests, 4740 total)",
+    "test_count": 4740,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
     "module_count": "76 production + 10 benchmarks + 17 demos + 68 explorations + 126 test files",
@@ -201,7 +201,7 @@
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
     "current_arc": "Text as Surface — From Structure to Communication (C208–C210)",
-    "arc_status": "C205–C207 arc complete: edges carry metadata, typed navigation works, inscription has context. The UI pipeline (C158–C166) produces HTML but no text output. UISpec is already format-agnostic — text rendering is a parallel dispatcher, not a redesign.",
+    "arc_status": "C208–C210 arc COMPLETE: Text as Surface. C208 text renderer (7 visual types), C209 evidence interpreter (8 signature-based templates), C210 session text mode (3-format dispatch + interpretation wiring). E₀ can now communicate via text, not just HTML.",
     "arc_plan": {
       "C208_text_renderer": {
         "title": "Text Renderer",
@@ -216,10 +216,10 @@
       "C210_session_text_mode": {
         "title": "Session Text Mode",
         "what": "run_session() gains --format text|html|markdown flag. Text-specific perception edges in learning pipeline. Text feedback loop. Markdown export for session transcripts.",
-        "status": "NOT STARTED"
+        "status": "DONE"
       }
     },
-    "key_result": "Rich Transitions arc COMPLETE. C205: metadata storage (470/470 edges). C206: typed navigation (+2.1% coverage, +39% crossings). C207: contextual inscription (each traversal carries mode, relation_type, domain, role). Layer 2 now has content, not just magnitude. Ready for text surface.",
+    "key_result": "Text as Surface arc COMPLETE. C208: 7 text renderers parallel to HTML (urgency\u2192emphasis). C209: 8 evidence interpreters with signature dispatch (no LLM). C210: run_session(output_format=) + --format CLI + interpretation wiring. E\u2080 now has 3 output surfaces: HTML (browser), text (terminal), markdown (export).",
     "open_threads": [
       "Orchestrator pattern: automatic wiring vs manual composition",
       "Adversarial stability still partially open (C172-C174)",

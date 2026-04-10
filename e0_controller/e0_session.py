@@ -36,6 +36,12 @@ Usage:
 
     # Skip browser:
     py -3 -m e0_controller.e0_session --mock --no-browser
+
+    # Text output (no browser):
+    py -3 -m e0_controller.e0_session --mock --format text
+
+    # Markdown export:
+    py -3 -m e0_controller.e0_session --mock --format markdown
 """
 
 from __future__ import annotations
@@ -56,6 +62,8 @@ from .scenario_loader import ScenarioPacket, load_scenario, find_scenario
 from .self_graph import SelfGraph
 from .ui_emitter import emit_ui_spec, UISpec
 from .ui_renderer import render_and_open, render_to_file
+from .text_renderer import render_text, render_markdown, render_to_text_file
+from .evidence_interpreter import interpret_panel
 
 from . import (
     Landscape,
@@ -129,9 +137,16 @@ class E0SessionResult:
     goal_reached: bool
     intent_report: IntentReport
     ui_spec: UISpec
-    html_path: Optional[Path]
+    output_path: Optional[Path]
+    output_format: str
     perception_saved: Optional[Path]
     resumed: bool
+    text_output: Optional[str] = None
+
+    @property
+    def html_path(self) -> Optional[Path]:
+        """Backward-compatible alias."""
+        return self.output_path if self.output_format == "html" else None
 
     def summary(self) -> str:
         lines = [
@@ -141,9 +156,10 @@ class E0SessionResult:
             f"Goal: {'REACHED' if self.goal_reached else 'MISSED'}",
             f"Intents: {len(self.intent_report.intents)}",
             f"UI Panels: {self.ui_spec.panel_count}",
+            f"Format: {self.output_format}",
         ]
-        if self.html_path:
-            lines.append(f"HTML: {self.html_path}")
+        if self.output_path:
+            lines.append(f"Output: {self.output_path}")
         if self.perception_saved:
             lines.append(f"Perception saved: {self.perception_saved}")
         if self.resumed:
@@ -223,6 +239,7 @@ def run_session(
     open_browser: bool = True,
     max_iterations: int = 5,
     resume: bool = False,
+    output_format: str = "html",
 ) -> E0SessionResult:
     """Run a complete E0 session: bootstrap → navigate → communicate → save.
 
@@ -239,6 +256,7 @@ def run_session(
         open_browser: Open the rendered UI in the default browser.
         max_iterations: Maximum iteration rounds.
         resume: Resume a previous session from disk.
+        output_format: "html" (default), "text", or "markdown".
 
     Returns:
         E0SessionResult with full pipeline output.
@@ -357,20 +375,49 @@ def run_session(
                f"{panel.perception:10s} via {panel.suggested_visual:10s} "
                f"({panel.language_act}) urgency={panel.urgency:.2f}")
 
-    # ── 6. Render UI ─────────────────────────────────────
-    _print(f"\n[6] Rendering")
-    html_path = None
-    html_file = f"e0_session_{session_id}.html"
-    if open_browser:
-        html_path = render_and_open(
-            spec, html_file,
-            title=f"E₀ — {session_id}",
-        )
-        _print(f"    Opened: {html_path}")
+    # ── 6. Render output ─────────────────────────────────
+    _print(f"\n[6] Rendering ({output_format})")
+    output_path = None
+    text_output = None
+    title = f"E₀ — {session_id}"
+
+    if output_format == "text":
+        text_output = render_text(spec, title=title)
+        # Append panel interpretations
+        interp_lines = ["\n--- Interpretations ---"]
+        for panel in spec.panels:
+            interp_lines.append(interpret_panel(panel))
+            interp_lines.append("")
+        text_output += "\n".join(interp_lines)
+        out_file = f"e0_session_{session_id}.txt"
+        output_path = render_to_text_file(spec, out_file, title=title, fmt="text")
+        _print(f"    Written: {output_path}")
+        _print(text_output)
+    elif output_format == "markdown":
+        text_output = render_markdown(spec, title=title)
+        # Append panel interpretations as section
+        interp_lines = ["\n## Interpretations\n"]
+        for panel in spec.panels:
+            interp_lines.append(f"### {panel.label}\n")
+            interp_lines.append(interpret_panel(panel))
+            interp_lines.append("")
+        text_output += "\n".join(interp_lines)
+        out_file = f"e0_session_{session_id}.md"
+        output_path = render_to_text_file(spec, out_file, title=title, fmt="markdown")
+        _print(f"    Written: {output_path}")
     else:
-        html_path = render_to_file(spec, html_file,
-                                   title=f"E₀ — {session_id}")
-        _print(f"    Written: {html_path}")
+        # HTML (default)
+        html_file = f"e0_session_{session_id}.html"
+        if open_browser:
+            output_path = render_and_open(
+                spec, html_file, title=title,
+            )
+            _print(f"    Opened: {output_path}")
+        else:
+            output_path = render_to_file(
+                spec, html_file, title=title,
+            )
+            _print(f"    Written: {output_path}")
 
     # ── 7. Save perception ───────────────────────────────
     _print(f"\n[7] Saving State")
@@ -389,9 +436,11 @@ def run_session(
         goal_reached=goal_reached,
         intent_report=report,
         ui_spec=spec,
-        html_path=html_path,
+        output_path=output_path,
+        output_format=output_format,
         perception_saved=save_path,
         resumed=was_resumed,
+        text_output=text_output,
     )
 
 
@@ -542,6 +591,7 @@ def main() -> None:
     use_mock = "--mock" in args
     no_browser = "--no-browser" in args
     do_resume = "--resume" in args
+    output_format = "html"
 
     task = DEFAULT_TASK
     start: Optional[str] = None
@@ -562,6 +612,12 @@ def main() -> None:
             explicit_goal = True
         elif arg == "--session" and i + 1 < len(args):
             session_id = args[i + 1]
+        elif arg == "--format" and i + 1 < len(args):
+            fmt = args[i + 1].lower()
+            if fmt in ("text", "html", "markdown", "md"):
+                output_format = "markdown" if fmt == "md" else fmt
+            else:
+                print(f"Warning: Unknown format '{fmt}', using html.")
         elif arg == "--scenario" and i + 1 < len(args):
             sc_arg = args[i + 1]
             if os.path.isfile(sc_arg):
@@ -602,6 +658,7 @@ def main() -> None:
         scenario=scenario,
         open_browser=not no_browser,
         resume=do_resume,
+        output_format=output_format,
     )
 
 
