@@ -464,7 +464,7 @@ def navigate(landscape, unified_nodes, mode: str, steps: int,
             elif pair == ("bootstrap", "canon"):
                 crossings["canon_bootstrap"] += 1
 
-        # Historize
+        # Historize with contextual inscription (C207)
         if landscape.has_edge(current, nbr):
             edge = Edge(current, nbr)
             node_info = unified_nodes.get(nbr, {})
@@ -475,7 +475,27 @@ def navigate(landscape, unified_nodes, mode: str, steps: int,
                 outcome = Outcome.FAILURE
             else:
                 outcome = Outcome.SUCCESS
-            landscape.historization.update(edge, outcome)
+
+            # C207: classify traversal role
+            rc = visited_count.get(nbr, 0)
+            if src_domain != tgt_domain:
+                role = "bridge"
+            elif rc > 0:
+                role = "revisit"
+            else:
+                role = "exploration"
+
+            landscape.historization.inscribe(
+                edge, outcome,
+                mode=mode,
+                relation_type=meta.get("relation_type", ""),
+                bridge_type=meta.get("bridge_type", ""),
+                source_domain=src_domain,
+                target_domain=tgt_domain,
+                role=role,
+                revisit_count=rc,
+                step=step,
+            )
 
         globally_visited.add(nbr)
         path.append(nbr)
@@ -883,12 +903,13 @@ def run_multidomain_cycle(
 
     # Summary
     if verbose and history:
-        _print_summary(history)
+        _print_summary(history, landscape)
 
     return history
 
 
-def _print_summary(history: List[MultiDomainRoundResult]) -> None:
+def _print_summary(history: List[MultiDomainRoundResult],
+                   landscape=None) -> None:
     """Print multi-domain learning cycle summary."""
     print(f"\n{'=' * 65}")
     print(f"  MULTI-DOMAIN LEARNING CYCLE SUMMARY")
@@ -940,6 +961,23 @@ def _print_summary(history: List[MultiDomainRoundResult]) -> None:
         print(f"\n  Edge types traversed (C206):")
         for t, c in sorted(agg_types.items(), key=lambda x: -x[1]):
             print(f"    {t:20s} {c:4d}")
+
+    # C207: Contextual inscription stats
+    if landscape is not None:
+        stats = landscape.historization.inscription_stats()
+        if stats["total_inscriptions"] > 0:
+            print(f"\n  Contextual Inscription (C207):")
+            print(f"    Total inscriptions: {stats['total_inscriptions']}")
+            print(f"    Inscribed edges:    {stats['inscribed_edges']}")
+            print(f"    Domain crossings:   {stats['domain_crossing_count']}")
+            if stats["role_totals"]:
+                print(f"    Roles:")
+                for role, c in sorted(stats["role_totals"].items(), key=lambda x: -x[1]):
+                    print(f"      {role:20s} {c:4d}")
+            if stats["mode_totals"]:
+                print(f"    Modes:")
+                for m, c in sorted(stats["mode_totals"].items(), key=lambda x: -x[1]):
+                    print(f"      {m:20s} {c:4d}")
 
     print(f"{'=' * 65}")
 

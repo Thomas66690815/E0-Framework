@@ -85,7 +85,7 @@ __all__ = [
     # Tension / Coherence
     "tension", "path_tension", "coherence",
     # Historization
-    "Historization", "TraceRecord",
+    "Historization", "TraceRecord", "InscriptionContext",
     # Landscape
     "Landscape",
     # Controller
@@ -163,7 +163,7 @@ __all__ = [
 ]
 
 from .primitives import Edge, Outcome, TransportRegime
-from .historization import Historization, TraceRecord
+from .historization import Historization, TraceRecord, InscriptionContext
 from .tension import tension, path_tension, coherence
 from .landscape import Landscape
 from .controller import E0Controller, StepResult, RunTrace, EscalationType, HybridMode

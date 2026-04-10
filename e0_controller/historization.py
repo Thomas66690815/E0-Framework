@@ -90,6 +90,38 @@ class TraceRecord:
 
 
 @dataclass
+class InscriptionContext:
+    """Contextual inscription — WHAT was inscribed, not just U/F counts.
+
+    Layer 2 (Ontodynamics §4) stores structural traces. Before C207,
+    only magnitude (trace_load) and direction (trace_quality) survived.
+    InscriptionContext preserves the full traversal context:
+
+    - mode: navigation strategy (explore, explore_en, greedy, ...)
+    - relation_type: semantic edge type (is_a, enables, part_of, ...)
+    - bridge_type: cross-domain bridge type (static, en_semantic)
+    - source_domain / target_domain: which domains were connected
+    - role: structural role of this traversal (bridge, exploration, revisit)
+    - revisit_count: how many times the target was visited before
+    - step: step number within the current round
+
+    Together these build a narrative trace: each edge accumulates
+    a history of HOW it was used, not just how often.
+    """
+    tau: int
+    edge: Edge
+    outcome: Outcome
+    mode: str = ""
+    relation_type: str = ""
+    bridge_type: str = ""
+    source_domain: str = ""
+    target_domain: str = ""
+    role: str = ""           # bridge, exploration, revisit, shortcut
+    revisit_count: int = 0
+    step: int = 0
+
+
+@dataclass
 class Historization:
     """
     Separated Success/Failure trace management.
@@ -122,6 +154,9 @@ class Historization:
 
     # Surprise Dampening (C187)
     surprise_dampening: bool = False  # when True, surprising outcomes get weight 0.5
+
+    # Contextual Inscription (C207)
+    _inscriptions: Dict[Edge, List[InscriptionContext]] = field(default_factory=dict)
 
     # --- Lazy Global Decay (K2) ---
 
@@ -399,6 +434,118 @@ class Historization:
         self.surprise_dampening = should_dampen
         return True
 
+    # --- Contextual Inscription (C207) ---
+
+    def inscribe(self, edge: Edge, outcome: Outcome, **context) -> None:
+        """Inscribe a transition with full context — Layer 2 content.
+
+        Calls update() for U/F traces, then stores the traversal context
+        as an InscriptionContext. This makes inscription carry WHAT was
+        inscribed, not just the outcome.
+
+        Keyword arguments map directly to InscriptionContext fields:
+            mode, relation_type, bridge_type, source_domain, target_domain,
+            role, revisit_count, step
+
+        Backward-compatible: callers that only need U/F can still use
+        update() directly. inscribe() is the rich version.
+        """
+        self.update(edge, outcome)
+        ctx = InscriptionContext(
+            tau=self._tau, edge=edge, outcome=outcome,
+            mode=context.get("mode", ""),
+            relation_type=context.get("relation_type", ""),
+            bridge_type=context.get("bridge_type", ""),
+            source_domain=context.get("source_domain", ""),
+            target_domain=context.get("target_domain", ""),
+            role=context.get("role", ""),
+            revisit_count=context.get("revisit_count", 0),
+            step=context.get("step", 0),
+        )
+        self._inscriptions.setdefault(edge, []).append(ctx)
+
+    def edge_inscriptions(self, edge: Edge) -> List[InscriptionContext]:
+        """All contextual inscription events for an edge."""
+        return list(self._inscriptions.get(edge, []))
+
+    def inscription_summary(self, edge: Edge) -> Dict:
+        """Aggregate inscription narrative for an edge.
+
+        Returns dict with:
+            count: total inscriptions
+            modes: {mode: count}
+            relation_types: {type: count}
+            roles: {role: count}
+            domain_pairs: {(src, tgt): count}
+            success_rate: fraction of SUCCESS outcomes
+            last_tau: most recent inscription time
+        """
+        contexts = self._inscriptions.get(edge, [])
+        if not contexts:
+            return {"count": 0}
+
+        modes: Dict[str, int] = {}
+        relation_types: Dict[str, int] = {}
+        roles: Dict[str, int] = {}
+        domain_pairs: Dict[str, int] = {}
+        successes = 0
+
+        for ctx in contexts:
+            if ctx.mode:
+                modes[ctx.mode] = modes.get(ctx.mode, 0) + 1
+            if ctx.relation_type:
+                relation_types[ctx.relation_type] = relation_types.get(ctx.relation_type, 0) + 1
+            if ctx.role:
+                roles[ctx.role] = roles.get(ctx.role, 0) + 1
+            if ctx.source_domain and ctx.target_domain:
+                pair = f"{ctx.source_domain}→{ctx.target_domain}"
+                domain_pairs[pair] = domain_pairs.get(pair, 0) + 1
+            if ctx.outcome == Outcome.SUCCESS:
+                successes += 1
+
+        return {
+            "count": len(contexts),
+            "modes": modes,
+            "relation_types": relation_types,
+            "roles": roles,
+            "domain_pairs": domain_pairs,
+            "success_rate": successes / len(contexts),
+            "last_tau": contexts[-1].tau,
+        }
+
+    def inscription_stats(self) -> Dict:
+        """Global inscription statistics across all edges.
+
+        Returns dict with:
+            total_inscriptions: total across all edges
+            inscribed_edges: number of edges with at least one inscription
+            role_totals: {role: total_count}
+            mode_totals: {mode: total_count}
+            domain_crossing_count: inscriptions where source != target domain
+        """
+        total = 0
+        role_totals: Dict[str, int] = {}
+        mode_totals: Dict[str, int] = {}
+        crossing_count = 0
+
+        for edge, contexts in self._inscriptions.items():
+            total += len(contexts)
+            for ctx in contexts:
+                if ctx.mode:
+                    mode_totals[ctx.mode] = mode_totals.get(ctx.mode, 0) + 1
+                if ctx.role:
+                    role_totals[ctx.role] = role_totals.get(ctx.role, 0) + 1
+                if ctx.source_domain and ctx.target_domain and ctx.source_domain != ctx.target_domain:
+                    crossing_count += 1
+
+        return {
+            "total_inscriptions": total,
+            "inscribed_edges": len(self._inscriptions),
+            "role_totals": role_totals,
+            "mode_totals": mode_totals,
+            "domain_crossing_count": crossing_count,
+        }
+
     def record(self, edge: Edge, outcome: Outcome,
                r_eff_before: float, r_eff_after: float,
                predecessor: Optional[Edge] = None) -> None:
@@ -412,7 +559,8 @@ class Historization:
     def remove_edges(self, edges) -> None:
         """Clean up trace data for removed edges.
 
-        Deletes _U, _F, _tau_last, _confirmations, _surprises entries.
+        Deletes _U, _F, _tau_last, _confirmations, _surprises,
+        _inscriptions entries.
         The _log is preserved — historical events remain as a record
         of what happened, even after the structure that produced them
         is gone.
@@ -425,6 +573,7 @@ class Historization:
             self._tau_last.pop(e, None)
             self._confirmations.pop(e, None)
             self._surprises.pop(e, None)
+            self._inscriptions.pop(e, None)
 
     # --- Inspection ---
 

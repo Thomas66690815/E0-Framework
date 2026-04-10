@@ -28,7 +28,7 @@
   },
   "state": {
     "latest_commit": "C206",
-    "latest_commit_hash": "623170d",
+    "latest_commit_hash": "f20febd",
     "latest_commit_msg": "C206: Typed Navigation — relation_type/bridge_type influence scoring, 12 types active, coverage +2.1% (23 tests, 4571 total)",
     "test_count": 4571,
     "test_failures": 0,
@@ -215,11 +215,11 @@
       },
       "C207_contextual_inscription": {
         "title": "Contextual Inscription",
-        "what": "Inscription carries WHAT was inscribed, not just U/F counts. Each edge builds a narrative trace: traversal context (mode, round), role (bridge, shortcut, exploration), co-traversed edges. Inscription in the Ontodynamics sense — Layer 2 actually implemented.",
-        "status": "NOT STARTED"
+        "what": "InscriptionContext dataclass (tau, edge, outcome, mode, relation_type, bridge_type, source_domain, target_domain, role, revisit_count, step). inscribe() on Historization calls update() + stores context. edge_inscriptions(), inscription_summary(), inscription_stats() query methods. Controller greedy loop + multidomain navigate() wired. 4-round run: 176 inscriptions, 140 edges, 129 bridge + 45 exploration + 2 revisit.",
+        "status": "DONE \u2014 31 tests, Layer 2 contextual content implemented"
       }
     },
-    "key_result": "C205 stored metadata, C206 uses it: enables-edges (1.4×) get preferred, opposite_of (0.85×) gets suppressed. Coverage +2.1% (84.5%), EN↔Canon crossings +39% (104 vs 75). 12 relation types + 2 bridge types actively influence navigation. Next: C207 contextual inscription — what was inscribed, not just U/F counts.",
+    "key_result": "Rich Transitions arc COMPLETE. C205: metadata storage (470/470 edges). C206: typed navigation (+2.1% coverage, +39% crossings). C207: contextual inscription (each traversal carries mode, relation_type, domain, role). Layer 2 now has content, not just magnitude. Edges build narrative traces: how they were used, not just how often.",
     "open_threads": [
       "Orchestrator pattern: automatic wiring vs manual composition",
       "Adversarial stability still partially open (C172-C174)",
@@ -269,7 +269,7 @@
         "last_tested": "C186"
       }
     ],
-    "next_commit_id": "C207"
+    "next_commit_id": "C208"
   },
   "structural_entropy": {
     "_comment": "Our forgetting protocol. Isomorphic to E₀'s structural entropy (C114-C121). Prevents bootstrap.json from growing without bound. Prune trigger is parameter-free: pressure = entries_since_last_prune / (entries_since_last_prune + μ). When pressure > 0.5 → prune. Check after each arc completion.",

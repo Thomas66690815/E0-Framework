@@ -720,8 +720,14 @@ class E0Controller:
             inscribed = True  # default: always inscribe (backward-compat)
 
         if inscribed:
-            # Historize (Function 7)
-            self.landscape.historization.update(edge, outcome)
+            # Historize (Function 7) + C207 contextual inscription
+            meta = self.landscape.edge_meta(current, target)
+            self.landscape.historization.inscribe(
+                edge, outcome,
+                mode="greedy",
+                relation_type=meta.get("relation_type", ""),
+                bridge_type=meta.get("bridge_type", ""),
+            )
             self.landscape.historization.record(
                 edge, outcome, r_eff_before,
                 self._effective_resistance(current, target),
