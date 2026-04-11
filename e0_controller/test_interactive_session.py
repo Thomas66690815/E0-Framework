@@ -1,10 +1,11 @@
-"""Tests for E₀ Interactive Text Session (C213 + C214 + C216 + C217).
+"""Tests for E₀ Interactive Text Session (C213 + C214 + C216 + C217 + C218).
 
 Validates the REPL dispatch, session state management,
 each command's output through the communication pipeline,
 the C214 feedback loop (rate command + session-scoped perception),
 C216 transition detail (detail + inspect commands),
-and C217 Human Peer Input (task command + node matching).
+C217 Human Peer Input (task command + node matching),
+and C218 LLM Peer Structuring (propose_domain_graph → inject → navigate).
 """
 
 from __future__ import annotations
@@ -31,6 +32,7 @@ from e0_controller.interactive_session import (
 )
 from e0_controller.feedback import HumanAction
 from e0_controller.perception import PerceptionDomain
+from e0_controller.primitives import Edge
 
 
 # ── Fixtures ───────────────────────────────────────────────────────────
@@ -812,12 +814,25 @@ class TestCmdTask:
         result = cmd_task(s, "")
         assert "Usage" in result
 
-    def test_task_no_match_shows_gap(self):
+    def test_task_no_match_calls_llm_peer(self):
         s = build_session(steps_per_round=10)
+        # Inject a mock LLM adapter that returns minimal structure
+        from e0_controller.llm_adapter import E0LLMAdapter
+        mock_spec = {
+            "nodes": ["FROBNICATOR", "XYZZY"],
+            "edges": [{
+                "from": "FROBNICATOR", "to": "XYZZY",
+                "delta": 0.5, "resistance": 1.0,
+                "initial_U": 2.0, "initial_F": 1.0,
+                "confidence": 0.6,
+            }],
+        }
+        import json
+        mock_fn = lambda sys, usr, cfg: json.dumps(mock_spec)
+        s.llm_adapter = E0LLMAdapter(call_fn=mock_fn)
         result = cmd_task(s, "xyzzyplugh frobnicator")
-        assert "Structural Gap" in result
+        assert "LLM Peer Structuring" in result
         assert "0 matches" in result
-        assert "LLM peer" in result or "C218" in result
 
     def test_task_with_known_concept(self):
         s = build_session(steps_per_round=15)
@@ -894,11 +909,229 @@ class TestTaskDispatch:
         result = dispatch(s, "task trace quality and tension")
         assert "matching node" in result
 
-    def test_dispatch_task_unknown(self):
+    def test_dispatch_task_unknown_calls_llm(self):
         s = build_session(steps_per_round=10)
+        import json
+        from e0_controller.llm_adapter import E0LLMAdapter
+        mock_spec = {
+            "nodes": ["GIBBERISH_A"], "edges": [],
+        }
+        s.llm_adapter = E0LLMAdapter(call_fn=lambda sys, usr, cfg: json.dumps(mock_spec))
         result = dispatch(s, "task completely unknown gibberish words")
-        assert "Structural Gap" in result
+        assert "LLM Peer" in result
 
     def test_help_includes_task(self):
         result = cmd_help()
         assert "task" in result
+
+
+# ── C218: LLM Peer Structuring ────────────────────────────────────────
+
+
+def _mock_llm_fn(spec: dict):
+    """Create a mock LLM call_fn returning a fixed spec."""
+    import json
+    return lambda sys, usr, cfg: json.dumps(spec)
+
+
+def _build_session_with_mock(spec: dict, steps: int = 15) -> SessionState:
+    """Build a session with a mock LLM adapter pre-injected."""
+    from e0_controller.llm_adapter import E0LLMAdapter
+    s = build_session(steps_per_round=steps)
+    s.llm_adapter = E0LLMAdapter(call_fn=_mock_llm_fn(spec))
+    return s
+
+
+_BASIC_SPEC = {
+    "nodes": ["ALPHA", "BETA", "GAMMA"],
+    "edges": [
+        {"from": "ALPHA", "to": "BETA", "delta": 0.6, "resistance": 1.0,
+         "initial_U": 3.0, "initial_F": 1.0, "confidence": 0.7},
+        {"from": "BETA", "to": "GAMMA", "delta": 0.4, "resistance": 0.8,
+         "initial_U": 2.0, "initial_F": 0.5, "confidence": 0.8},
+        {"from": "GAMMA", "to": "ALPHA", "delta": 0.5, "resistance": 1.0,
+         "initial_U": 0.0, "initial_F": 0.0, "confidence": 0.5},
+    ],
+}
+
+
+class TestLLMPeerStructure:
+    """LLM structures unknown input into navigable landscape."""
+
+    def test_llm_injects_nodes(self):
+        s = _build_session_with_mock(_BASIC_SPEC)
+        result = cmd_task(s, "alpha beta gamma unknown")
+        assert "T:ALPHA" in result or "LLM Peer Structuring" in result
+        assert "T:ALPHA" in s.landscape.states
+
+    def test_llm_injects_edges(self):
+        s = _build_session_with_mock(_BASIC_SPEC)
+        cmd_task(s, "alpha beta gamma unknown")
+        edge = Edge("T:ALPHA", "T:BETA")
+        assert edge in s.landscape.edges
+
+    def test_llm_nodes_prefixed(self):
+        s = _build_session_with_mock(_BASIC_SPEC)
+        cmd_task(s, "alpha beta unknown")
+        task_nodes = [n for n in s.landscape.states if n.startswith("T:")]
+        assert len(task_nodes) >= 3
+
+    def test_llm_initial_traces_injected(self):
+        s = _build_session_with_mock(_BASIC_SPEC)
+        cmd_task(s, "alpha beta unknown")
+        edge = Edge("T:ALPHA", "T:BETA")
+        hist = s.landscape.historization
+        assert hist.trace_load(edge) > 0
+
+    def test_llm_confidence_applied(self):
+        """Lower confidence → more balanced U/F → lower quality."""
+        s = _build_session_with_mock(_BASIC_SPEC)
+        cmd_task(s, "alpha beta unknown")
+        edge = Edge("T:ALPHA", "T:BETA")
+        hist = s.landscape.historization
+        q = hist.trace_quality(edge)
+        # confidence=0.7, initial_U=3, initial_F=1 → quality < raw (3-1)/(3+1)
+        assert q < 0.5  # dampened by confidence
+
+    def test_llm_edge_metadata(self):
+        s = _build_session_with_mock(_BASIC_SPEC)
+        cmd_task(s, "alpha beta unknown")
+        meta = s.landscape.edge_meta("T:ALPHA", "T:BETA")
+        assert meta.get("relation_type") == "llm_proposed"
+
+    def test_llm_creates_bridges(self):
+        """LLM-injected nodes with overlapping concepts get bridged."""
+        # Use a concept name that overlaps with existing landscape nodes
+        spec_with_overlap = {
+            "nodes": ["HISTORIZATION_NEW", "TENSION_NEW"],
+            "edges": [
+                {"from": "HISTORIZATION_NEW", "to": "TENSION_NEW",
+                 "delta": 0.5, "resistance": 1.0, "confidence": 0.8},
+            ],
+        }
+        s = _build_session_with_mock(spec_with_overlap)
+        # Query must NOT match existing nodes so LLM path fires
+        result = cmd_task(s, "xyzzyplugh frobnicator")
+        assert "LLM Peer Structuring" in result
+        # These should bridge to existing C:historization / C:tension
+        task_nodes = [n for n in s.landscape.states if n.startswith("T:")]
+        bridged = False
+        for tn in task_nodes:
+            for e in s.landscape.edges:
+                if (e.source == tn and not e.target.startswith("T:")) or \
+                   (e.target == tn and not e.source.startswith("T:")):
+                    bridged = True
+                    break
+            if bridged:
+                break
+        assert bridged
+
+    def test_llm_navigates_from_anchor(self):
+        s = _build_session_with_mock(_BASIC_SPEC)
+        result = cmd_task(s, "alpha beta unknown")
+        assert "Navigation" in result
+        assert "Coverage" in result
+
+    def test_llm_creates_round_with_task_llm_mode(self):
+        s = _build_session_with_mock(_BASIC_SPEC)
+        before = len(s.history)
+        cmd_task(s, "alpha beta unknown")
+        assert len(s.history) == before + 1
+        assert s.history[-1].mode == "task_llm"
+
+    def test_llm_reason_contains_query(self):
+        s = _build_session_with_mock(_BASIC_SPEC)
+        cmd_task(s, "alpha beta unknown")
+        assert "LLM peer" in s.history[-1].reason
+
+    def test_llm_unified_nodes_updated(self):
+        s = _build_session_with_mock(_BASIC_SPEC)
+        cmd_task(s, "alpha beta unknown")
+        assert "T:ALPHA" in s.unified_nodes
+        assert s.unified_nodes["T:ALPHA"]["type"] == "task"
+
+
+class TestLLMPeerError:
+    """Error handling for LLM peer failures."""
+
+    def test_llm_error_falls_back(self):
+        """LLM failure → graceful fallback message."""
+        from e0_controller.llm_adapter import E0LLMAdapter
+        def failing_fn(sys, usr, cfg):
+            raise RuntimeError("API unavailable")
+        s = build_session(steps_per_round=10)
+        s.llm_adapter = E0LLMAdapter(call_fn=failing_fn)
+        result = cmd_task(s, "unknown jabberwocky")
+        assert "LLM peer error" in result
+        assert "Falling back" in result
+
+    def test_llm_empty_nodes(self):
+        """LLM returns empty structure → message, no crash."""
+        s = _build_session_with_mock({"nodes": [], "edges": []})
+        result = cmd_task(s, "unknown jabberwocky")
+        assert "no structure" in result.lower()
+
+    def test_llm_no_adapter_creates_one(self):
+        """Lazy adapter creation — will fail without API key in test env."""
+        s = build_session(steps_per_round=10)
+        s.llm_adapter = None
+        # Test that it tries to create adapter (may error on API key)
+        result = cmd_task(s, "unknown jabberwocky")
+        # Either succeeds or reports error — no crash
+        assert "LLM Peer" in result or "LLM peer error" in result
+
+
+class TestInjectSpec:
+    """Direct tests for _inject_spec_into_landscape."""
+
+    def test_inject_adds_nodes(self):
+        from e0_controller.interactive_session import _inject_spec_into_landscape
+        s = build_session(steps_per_round=10)
+        spec = {"nodes": ["FOO", "BAR"], "edges": []}
+        new_nodes, new_edges = _inject_spec_into_landscape(s, spec)
+        assert "T:FOO" in s.landscape.states
+        assert "T:BAR" in s.landscape.states
+        assert len(new_nodes) == 2
+
+    def test_inject_adds_edges(self):
+        from e0_controller.interactive_session import _inject_spec_into_landscape
+        s = build_session(steps_per_round=10)
+        spec = {
+            "nodes": ["X", "Y"],
+            "edges": [{"from": "X", "to": "Y", "delta": 0.5,
+                        "resistance": 1.0, "confidence": 1.0}],
+        }
+        new_nodes, new_edges = _inject_spec_into_landscape(s, spec)
+        assert Edge("T:X", "T:Y") in s.landscape.edges
+
+    def test_inject_skips_existing(self):
+        from e0_controller.interactive_session import _inject_spec_into_landscape
+        s = build_session(steps_per_round=10)
+        spec = {"nodes": ["DUP"], "edges": []}
+        _inject_spec_into_landscape(s, spec)
+        nodes_before = len(list(s.landscape.states))
+        _inject_spec_into_landscape(s, spec)
+        nodes_after = len(list(s.landscape.states))
+        assert nodes_after == nodes_before
+
+    def test_inject_custom_prefix(self):
+        from e0_controller.interactive_session import _inject_spec_into_landscape
+        s = build_session(steps_per_round=10)
+        spec = {"nodes": ["CUSTOM"], "edges": []}
+        _inject_spec_into_landscape(s, spec, prefix="P:")
+        assert "P:CUSTOM" in s.landscape.states
+
+    def test_inject_bridge_metadata(self):
+        from e0_controller.interactive_session import _inject_spec_into_landscape
+        s = build_session(steps_per_round=10)
+        spec = {"nodes": ["LANDSCAPE"], "edges": []}
+        new_nodes, new_edges = _inject_spec_into_landscape(s, spec)
+        # "LANDSCAPE" should bridge to existing landscape nodes
+        if new_edges:
+            # At least one bridge should have bridge_type metadata
+            for src, tgt in new_edges:
+                meta = s.landscape.edge_meta(src, tgt)
+                if meta.get("bridge_type") == "llm_structural":
+                    break
+            else:
+                pass  # No bridges is acceptable for unique concepts

@@ -13,8 +13,12 @@ for a single edge.
 
 C217 adds Human Peer Input: `task <text>` accepts free-text differences.
 E₀ matches against landscape structure (node IDs via token overlap).
-If matches found → shows connectivity + navigates. If not → signals that
-LLM peer structuring is needed (C218 hook).
+If matches found → shows connectivity + navigates. If not → calls LLM peer.
+
+C218 adds LLM Peer Structuring: when E₀ structural matching finds 0 hits,
+the LLM adapter proposes a domain graph (nodes/edges). The result is injected
+into the live landscape with T: prefix, bridged to existing structure, and
+navigated from the new anchor.
 
 Commands:
   run [N]       — Execute the next N rounds (default: 1)
@@ -65,7 +69,7 @@ from e0_controller.feedback import (
     ingest_panel_feedback,
 )
 from e0_controller.perception import PerceptionDomain, build_perception_domain
-from e0_controller.primitives import Edge
+from e0_controller.primitives import Edge, Outcome
 from e0_controller.ui_emitter import UISpec
 
 
@@ -86,6 +90,7 @@ class SessionState:
     steps_per_round: int = 40
     output_format: str = "text"
     last_spec: Optional[UISpec] = None
+    llm_adapter: Optional[Any] = None  # E0LLMAdapter, lazy-init
 
 
 # ── Commands ───────────────────────────────────────────────────────────
@@ -667,12 +672,253 @@ def _match_nodes(
     return results
 
 
+def _get_llm_adapter(state: SessionState) -> Any:
+    """Lazy-init the LLM adapter on first use."""
+    if state.llm_adapter is not None:
+        return state.llm_adapter
+    from e0_controller.llm_adapter import E0LLMAdapter
+    state.llm_adapter = E0LLMAdapter()
+    return state.llm_adapter
+
+
+def _inject_spec_into_landscape(
+    state: SessionState, spec: Dict[str, Any], prefix: str = "T:",
+) -> Tuple[List[str], List[Tuple[str, str]]]:
+    """Inject LLM-proposed nodes/edges into the live landscape.
+
+    Prefixes nodes with `prefix` to distinguish LLM-generated structure
+    from the existing Canon/Bootstrap/EN domains.
+
+    Returns (new_node_ids, new_edge_pairs).
+    """
+    from e0_controller.bootstrapper import _inject_traces, _apply_confidence
+
+    landscape = state.landscape
+    hist = landscape.historization
+    new_nodes: List[str] = []
+    new_edges: List[Tuple[str, str]] = []
+
+    # Add nodes
+    for raw_name in spec.get("nodes", []):
+        node_id = f"{prefix}{raw_name}"
+        if node_id not in landscape.states:
+            landscape.add_state(node_id)
+            state.unified_nodes[node_id] = {
+                "type": "task",
+                "description": raw_name,
+                "U": 0.0,
+                "F": 0.0,
+            }
+            new_nodes.append(node_id)
+
+    # Add edges
+    for e in spec.get("edges", []):
+        src = f"{prefix}{e['from']}"
+        tgt = f"{prefix}{e['to']}"
+        if src not in landscape.states or tgt not in landscape.states:
+            continue
+
+        edge = Edge(src, tgt)
+        # Skip if edge already exists
+        if edge in landscape.edges:
+            continue
+
+        delta = e.get("delta", 0.5)
+        resistance = e.get("resistance", 1.0)
+        confidence = e.get("confidence", 1.0)
+        landscape.add_edge(
+            src, tgt, delta, resistance,
+            relation_type="llm_proposed", confidence=confidence,
+        )
+        new_edges.append((src, tgt))
+
+        # Inject conservative initial traces
+        initial_U = e.get("initial_U", 0.0)
+        initial_F = e.get("initial_F", 0.0)
+        if initial_U > 0 or initial_F > 0:
+            U_adj, F_adj = _apply_confidence(initial_U, initial_F, confidence)
+            _inject_traces(hist, edge, U_adj, F_adj)
+
+    # Bridge: connect to existing landscape via best structural match
+    bridges = _create_bridges(state, new_nodes, text_hint="")
+    new_edges.extend(bridges)
+
+    return new_nodes, new_edges
+
+
+def _create_bridges(
+    state: SessionState,
+    new_nodes: List[str],
+    text_hint: str = "",
+) -> List[Tuple[str, str]]:
+    """Connect new LLM-generated nodes to existing landscape structure.
+
+    For each new node, finds the closest existing node by concept overlap
+    and creates a bidirectional bridge edge.
+    """
+    bridges: List[Tuple[str, str]] = []
+    existing = [n for n in state.landscape.states if not n.startswith("T:")]
+
+    for new_id in new_nodes:
+        concept = new_id.split(":", 1)[1].lower() if ":" in new_id else new_id.lower()
+        concept_parts = set(concept.replace("_", " ").replace("-", " ").split())
+
+        best_match = ""
+        best_score = 0.0
+        for existing_id in existing:
+            if ":" in existing_id:
+                ex_concept = existing_id.split(":", 1)[1].lower()
+            else:
+                ex_concept = existing_id.lower()
+            ex_parts = set(ex_concept.replace("_", " ").replace("-", " ").split())
+
+            overlap = len(concept_parts & ex_parts)
+            if overlap == 0:
+                for cp in concept_parts:
+                    for ep in ex_parts:
+                        if len(cp) >= 4 and (cp in ep or ep in cp):
+                            overlap = 0.3
+                            break
+                    if overlap > 0:
+                        break
+
+            if overlap > best_score:
+                best_score = overlap
+                best_match = existing_id
+
+        if best_match and best_score > 0:
+            # Bidirectional bridge
+            state.landscape.add_edge(
+                new_id, best_match, 0.4, 1.2,
+                relation_type="task_bridge", bridge_type="llm_structural",
+            )
+            state.landscape.add_edge(
+                best_match, new_id, 0.4, 1.2,
+                relation_type="task_bridge", bridge_type="llm_structural",
+            )
+            bridges.append((new_id, best_match))
+            bridges.append((best_match, new_id))
+
+    return bridges
+
+
+def _llm_peer_structure(state: SessionState, text: str) -> str:
+    """LLM peer: structure free text into navigable landscape nodes/edges.
+
+    Called when E₀ structural matching finds 0 matches. The LLM
+    proposes a domain graph, which is injected into the live landscape.
+    """
+    lines = [
+        "── LLM Peer Structuring ──",
+        f"  Query: \"{text}\"",
+        f"  E₀ structural matching: 0 matches",
+        f"  Invoking LLM peer...",
+        "",
+    ]
+
+    try:
+        adapter = _get_llm_adapter(state)
+        spec = adapter.propose_domain_graph(text)
+    except Exception as exc:
+        lines.append(f"  LLM peer error: {exc}")
+        lines.append("")
+        lines.append("  Falling back to structural gap report.")
+        node_count = len(list(state.landscape.states))
+        lines.append(
+            f"  Landscape: {node_count} nodes searched, 0 matches."
+        )
+        return "\n".join(lines)
+
+    if not spec.get("nodes"):
+        lines.append("  LLM returned no structure.")
+        return "\n".join(lines)
+
+    new_nodes, new_edges = _inject_spec_into_landscape(state, spec)
+
+    lines.append(f"  LLM proposed: {len(spec['nodes'])} nodes, "
+                 f"{len(spec['edges'])} edges")
+    lines.append(f"  Injected: {len(new_nodes)} new nodes, "
+                 f"{len(new_edges)} new edges (incl. bridges)")
+
+    if new_nodes:
+        for nid in new_nodes[:6]:
+            lines.append(f"    + {nid}")
+        if len(new_nodes) > 6:
+            lines.append(f"    ... and {len(new_nodes) - 6} more")
+
+    # Navigate from injected structure
+    anchor = new_nodes[0] if new_nodes else None
+    if anchor:
+        lines.append("")
+        lines.append("── Navigation from LLM structure ──")
+
+        state.round_num += 1
+        a_before = assess(state.landscape, state.unified_nodes)
+
+        nav = navigate(
+            state.landscape, state.unified_nodes,
+            "explore", state.steps_per_round,
+            start=anchor,
+        )
+        validate_confidence(nav["path"])
+        a_after = assess(state.landscape, state.unified_nodes)
+        coverage_delta = a_after.coverage - a_before.coverage
+
+        reason_short = text[:60] + ("…" if len(text) > 60 else "")
+        result = MultiDomainRoundResult(
+            round_num=state.round_num,
+            mode="task_llm",
+            reason=f"LLM peer: \"{reason_short}\"",
+            steps=nav["steps"],
+            assessment_before=a_before,
+            assessment_after=a_after,
+            path=nav["path"],
+            new_edges=len(nav["new_edges"]),
+            domain_crossings=nav["domain_crossings"],
+            crossing_rate=nav["crossing_rate"],
+            coverage_delta=coverage_delta,
+            T_s_delta=a_after.T_s - a_before.T_s,
+            en_canon_crossings=nav["en_canon_crossings"],
+            en_bootstrap_crossings=nav["en_bootstrap_crossings"],
+            canon_bootstrap_crossings=nav["canon_bootstrap_crossings"],
+            type_usage=nav.get("type_usage", {}),
+        )
+        state.history.append(result)
+        consolidate(result, nav["new_edges"], dry_run=True)
+
+        if coverage_delta <= 0.001:
+            state.stagnation_streak += 1
+        else:
+            state.stagnation_streak = 0
+
+        lines.append(f"  Anchor: {anchor}")
+        lines.append(
+            f"  Steps: {nav['steps']}  "
+            f"Crossings: {nav['domain_crossings']}"
+        )
+        lines.append(
+            f"  Coverage: {a_before.coverage:.1%} → {a_after.coverage:.1%} "
+            f"(Δ={coverage_delta:+.1%})"
+        )
+
+        text_out = communicate_round(
+            result, state.landscape,
+            stagnation_count=state.stagnation_streak,
+            output_format=state.output_format,
+        )
+        lines.append("")
+        lines.append(text_out)
+
+    return "\n".join(lines)
+
+
 def cmd_task(state: SessionState, text: str) -> str:
     """Process a user-provided difference as natural text.
 
     E₀ matches text against known landscape structure (node IDs).
     If matches found → shows connectivity + navigates from anchor.
-    If not → reports structural gap (C218 hook for LLM peer).
+    If not → calls LLM peer to structure the input, injects into
+    live landscape, then navigates.
     """
     if not text.strip():
         return "Usage: task <your question or observation in natural language>"
@@ -680,15 +926,8 @@ def cmd_task(state: SessionState, text: str) -> str:
     matches = _match_nodes(text, state.landscape)
 
     if not matches:
-        node_count = len(list(state.landscape.states))
-        return (
-            "── Structural Gap ──\n"
-            f"  Query: \"{text}\"\n"
-            f"  Landscape: {node_count} nodes searched, 0 matches.\n"
-            "\n"
-            "  E₀ cannot resolve this input structurally.\n"
-            "  External structuring needed (LLM peer → C218)."
-        )
+        # ── C218: LLM Peer Structuring ──
+        return _llm_peer_structure(state, text)
 
     top = matches[:8]
     hist = state.landscape.historization

@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C217",
-    "latest_commit_hash": "4abf402",
-    "latest_commit_msg": "C217: Human Peer Input \u2014 cmd_task (free-text \u2192 structural matching \u2192 navigate), _match_nodes (token\u2194nodeID overlap), structural gap signal for LLM peer (25 tests, 4917 total)",
-    "test_count": 4917,
+    "latest_commit": "C218",
+    "latest_commit_hash": "4258f5f",
+    "latest_commit_msg": "C218: LLM Peer Structuring \u2014 when E\u2080 structural matching fails, LLM proposes domain graph, injects into live landscape with T: prefix, bridges to existing structure, navigates (19 tests, 4936 total)",
+    "test_count": 4936,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
     "module_count": "76 production + 10 benchmarks + 17 demos + 68 explorations + 126 test files",
@@ -274,7 +274,7 @@
         "last_tested": "C186"
       }
     ],
-    "next_commit_id": "C218"
+    "next_commit_id": "C219"
   },
   "structural_entropy": {
     "_comment": "Our forgetting protocol. Isomorphic to E₀'s structural entropy (C114-C121). Prevents bootstrap.json from growing without bound. Prune trigger is parameter-free: pressure = entries_since_last_prune / (entries_since_last_prune + μ). When pressure > 0.5 → prune. Check after each arc completion.",
@@ -436,7 +436,12 @@
   },
   "commit_history_recent": [
     {
-      "hash": "4abf402",
+      "hash": "4258f5f",
+      "id": "C218",
+      "title": "LLM Peer Structuring \u2014 propose_domain_graph \u2192 inject into live landscape (T: prefix) \u2192 bridge \u2192 navigate (19 tests, 4936 total)"
+    },
+    {
+      "hash": "18053e5",
       "id": "C217",
       "title": "Human Peer Input \u2014 cmd_task (free-text \u2192 structural matching \u2192 navigate), _match_nodes, structural gap signal (25 tests, 4917 total)"
     },
