@@ -1258,15 +1258,36 @@ def build_session(
     steps_per_round: int = 40,
     output_format: str = "text",
     perception_path: Optional[str] = None,
+    self_knowledge_path: Optional[str] = None,
 ) -> SessionState:
-    """Build a fresh interactive session with the multi-domain landscape.
+    """Build an interactive session with the multi-domain landscape.
 
-    Loads perception_pretrained.json as seed (if it exists).
-    Perception evolves in-session only — the global file is never modified.
+    If a self-knowledge seed exists (C220), loads it as warm start
+    instead of building from scratch.  Perception is loaded separately.
+
+    Args:
+        self_knowledge_path: Explicit path to seed JSON.
+            If None, builds fresh (no auto-detection).
     """
     import os
 
-    landscape, unified_nodes, stats = build_multidomain_landscape()
+    if self_knowledge_path and os.path.exists(self_knowledge_path):
+        from e0_controller.explore_self_knowledge import load_seed
+        landscape, unified_nodes, meta = load_seed(self_knowledge_path)
+        stats = {
+            "total_nodes": meta["node_count"],
+            "total_edges": meta["edge_count"],
+            "canon_nodes": sum(1 for n in unified_nodes if n.startswith("C:")),
+            "bootstrap_nodes": sum(1 for n in unified_nodes
+                                   if n.startswith("B:")),
+            "en_nodes": sum(1 for n in unified_nodes
+                            if n.startswith("EN:")),
+            "canon_bootstrap_bridges": 0,   # not tracked in seed
+            "en_bridges": 0,                # not tracked in seed
+            "seed": self_knowledge_path,
+        }
+    else:
+        landscape, unified_nodes, stats = build_multidomain_landscape()
 
     # Load perception seed (session-scoped copy — never written back)
     _PERCEPTION_SEED = os.path.join("memos", "perception_pretrained.json")

@@ -37,9 +37,11 @@ def _parse_edge(key: str) -> Edge:
 
 def _encode_historization_dict(hist: dict) -> dict:
     """Convert Edge-keyed dicts inside historization snapshot to string keys."""
+    # All sub-dicts that use Edge namedtuples as keys
+    _EDGE_KEYED = {"U", "F", "tau_last", "confirmations", "surprises"}
     result = {}
     for k, v in hist.items():
-        if k in ("U", "F", "tau_last") and isinstance(v, dict):
+        if k in _EDGE_KEYED and isinstance(v, dict):
             result[k] = {
                 _edge_key(e) if isinstance(e, tuple) else str(e): val
                 for e, val in v.items()
