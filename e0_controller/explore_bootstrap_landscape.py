@@ -72,6 +72,7 @@ def extract_nodes(bs):
         nodes[nid] = {
             "type": "gordian_trap",
             "label": gt.get("name", nid),
+            "description": gt.get("lesson", ""),
             "U": 1.0 if resolved else 0.0,  # Did we learn from this?
             "F": float(recurred) + (0.0 if resolved else 1.0),
             "lesson": gt.get("lesson", ""),
@@ -85,6 +86,7 @@ def extract_nodes(bs):
         nodes[nid] = {
             "type": "breakthrough",
             "label": bt.get("insight", nid)[:60],
+            "description": bt.get("insight", ""),
             "U": float(built) + 1.0,  # The breakthrough itself + what was built on it
             "F": 0.0,  # Breakthroughs don't fail (they're retrospective)
             "built_upon_by": bt.get("built_upon_by", []),
@@ -100,6 +102,7 @@ def extract_nodes(bs):
         nodes[nid] = {
             "type": "working_principle",
             "label": wp.get("principle", nid)[:60],
+            "description": wp.get("principle", ""),
             "U": float(confirmed),
             "F": float(contradicted),
         }
@@ -113,6 +116,7 @@ def extract_nodes(bs):
         nodes[nid] = {
             "type": "perspective_check",
             "label": pc.get("question", nid)[:60],
+            "description": pc.get("question", ""),
             "U": float(triggered),  # Triggered = it caught something = success
             "F": 0.0,
         }
@@ -124,6 +128,7 @@ def extract_nodes(bs):
         nodes[nid] = {
             "type": "arch_layer",
             "label": layer_name,
+            "description": ", ".join(layer.get("files", [])),
             "U": 1.0,  # All layers exist and work (4369 tests confirm)
             "F": 0.0,
             "files": layer.get("files", []),
@@ -137,6 +142,7 @@ def extract_nodes(bs):
         nodes[nid] = {
             "type": "open_thread",
             "label": thread[:60],
+            "description": thread,
             "U": 0.0,  # Not resolved
             "F": 0.0,  # Not yet attempted in current form
         }
@@ -146,6 +152,7 @@ def extract_nodes(bs):
     nodes["HERE"] = {
         "type": "current_state",
         "label": f"C{194} — v1.0.0",
+        "description": state.get("latest_commit_msg", ""),
         "U": float(state.get("test_count", 0)) / 1000.0,  # Normalized success signal
         "F": float(state.get("test_failures", 0)),
     }

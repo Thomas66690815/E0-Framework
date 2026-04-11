@@ -278,6 +278,7 @@ def build_unified_landscape(canon_info, canon_landscape, bootstrap_nodes,
         all_nodes[nid] = {
             "type": "canon_concept",
             "label": n.description[:60] if n.description else n.id,
+            "description": n.description or "",
             "derivation_level": n.derivation_level,
             "is_primitive": n.is_primitive,
             "domain": "canon",

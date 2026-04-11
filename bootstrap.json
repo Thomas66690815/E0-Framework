@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C218",
-    "latest_commit_hash": "4258f5f",
-    "latest_commit_msg": "C218: LLM Peer Structuring \u2014 when E\u2080 structural matching fails, LLM proposes domain graph, injects into live landscape with T: prefix, bridges to existing structure, navigates (19 tests, 4936 total)",
-    "test_count": 4936,
+    "latest_commit": "C219",
+    "latest_commit_hash": "616dd41",
+    "latest_commit_msg": "C219: Semantic Surface + 3-Tier Task Processing \u2014 enrich all nodes with descriptions, match against labels+descriptions (not just IDs), three-tier routing: Known Concept / Connection / LLM Peer. Free-text dispatch (no 'task' prefix needed). Human input = \u0394 that creates structure (27 tests, 4963 total)",
+    "test_count": 4963,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
     "module_count": "76 production + 10 benchmarks + 17 demos + 68 explorations + 126 test files",
@@ -200,8 +200,8 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "Living Communication — E₀ on its Own Domain (C211–C214)",
-    "arc_status": "C208–C210 arc COMPLETE. E₀ can now communicate via text/markdown/HTML. First live text output showed redundancy, calibration bugs (drop_pct), and no connection to the real multi-domain learning cycle. This arc wires communication into E₀'s actual domain (148 nodes, 470 edges) where we can verify correctness.",
+    "current_arc": "Peer Communication — Human \u2194 E\u2080 \u2194 LLM (C215\u2013C219+)",
+    "arc_status": "C215: browser UI. C216: transition detail. C217: human peer input (structural matching). C218: LLM peer structuring (propose graph, inject, navigate). C219: semantic surface (descriptions on all nodes) + 3-tier task processing (Known Concept / Connection / LLM Peer). Human input = \u0394 that creates landscape structure.",
     "arc_plan": {
       "C211_output_polish": {
         "title": "Output Polish",

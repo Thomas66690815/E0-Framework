@@ -705,6 +705,7 @@ def build_multidomain_landscape(fresh_en: bool = True, fresh_canon: bool = True
         unified_nodes[nid] = {
             "type": "en_vocabulary",
             "label": n.description[:60] if n.description else n.id,
+            "description": n.description or "",
             "derivation_level": n.derivation_level,
             "is_primitive": n.is_primitive,
             "domain": "en",

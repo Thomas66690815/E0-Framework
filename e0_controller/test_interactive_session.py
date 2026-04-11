@@ -1,11 +1,12 @@
-"""Tests for E₀ Interactive Text Session (C213 + C214 + C216 + C217 + C218).
+"""Tests for E₀ Interactive Text Session (C213–C219).
 
 Validates the REPL dispatch, session state management,
 each command's output through the communication pipeline,
 the C214 feedback loop (rate command + session-scoped perception),
 C216 transition detail (detail + inspect commands),
 C217 Human Peer Input (task command + node matching),
-and C218 LLM Peer Structuring (propose_domain_graph → inject → navigate).
+C218 LLM Peer Structuring (propose_domain_graph → inject → navigate),
+and C219 Semantic Surface + 3-Tier Task Processing.
 """
 
 from __future__ import annotations
@@ -17,6 +18,9 @@ from e0_controller.interactive_session import (
     _RATING_ACTION,
     _match_nodes,
     _quality_bar,
+    _task_connection,
+    _task_known_path,
+    _task_navigate,
     build_session,
     cmd_detail,
     cmd_focus,
@@ -95,9 +99,12 @@ class TestDispatch:
         result = dispatch(session, "?")
         assert "run" in result
 
-    def test_unknown_command(self, session):
-        result = dispatch(session, "foobar")
-        assert "Unknown command" in result
+    def test_unknown_command_becomes_task(self, session):
+        """Unrecognized input is treated as free-text task."""
+        s = build_session(steps_per_round=15)
+        result = dispatch(s, "foobar")
+        # Either matches structurally or calls LLM peer
+        assert "Structural Matching" in result or "LLM Peer" in result
 
     def test_run_invalid_count(self, session):
         s = build_session(steps_per_round=10)
@@ -850,7 +857,7 @@ class TestCmdTask:
     def test_task_mode_is_task(self):
         s = build_session(steps_per_round=15)
         cmd_task(s, "historization")
-        assert s.history[-1].mode == "task"
+        assert s.history[-1].mode in ("task", "task_connect")
 
     def test_task_reason_contains_query(self):
         s = build_session(steps_per_round=15)
@@ -920,9 +927,9 @@ class TestTaskDispatch:
         result = dispatch(s, "task completely unknown gibberish words")
         assert "LLM Peer" in result
 
-    def test_help_includes_task(self):
+    def test_help_includes_freetext_hint(self):
         result = cmd_help()
-        assert "task" in result
+        assert "just type any text" in result
 
 
 # ── C218: LLM Peer Structuring ────────────────────────────────────────
@@ -1135,3 +1142,217 @@ class TestInjectSpec:
                     break
             else:
                 pass  # No bridges is acceptable for unique concepts
+
+
+# ── C219: Semantic Surface + 3-Tier Task Processing ───────────────────
+
+
+class TestSemanticSurface:
+    """Verify that unified_nodes carry descriptions from all domains."""
+
+    def test_canon_nodes_have_description(self):
+        s = build_session(steps_per_round=10)
+        canon = {k: v for k, v in s.unified_nodes.items() if k.startswith("C:")}
+        assert len(canon) > 0
+        with_desc = sum(1 for v in canon.values() if v.get("description"))
+        assert with_desc == len(canon), f"Only {with_desc}/{len(canon)} canon nodes have descriptions"
+
+    def test_en_nodes_have_description(self):
+        s = build_session(steps_per_round=10)
+        en = {k: v for k, v in s.unified_nodes.items() if k.startswith("EN:")}
+        assert len(en) > 0
+        with_desc = sum(1 for v in en.values() if v.get("description"))
+        assert with_desc > 0, "EN nodes should have descriptions"
+
+    def test_bootstrap_gt_has_description(self):
+        s = build_session(steps_per_round=10)
+        gt1 = s.unified_nodes.get("B:GT-1", {})
+        assert gt1.get("description"), "GT-1 should have a lesson as description"
+
+    def test_bootstrap_bt_has_description(self):
+        s = build_session(steps_per_round=10)
+        bt1 = s.unified_nodes.get("B:BT-1", {})
+        assert bt1.get("description"), "BT-1 should have insight as description"
+
+    def test_bootstrap_wp_has_description(self):
+        s = build_session(steps_per_round=10)
+        wp = {k: v for k, v in s.unified_nodes.items() if k.startswith("B:WP-")}
+        assert len(wp) > 0
+        with_desc = sum(1 for v in wp.values() if v.get("description"))
+        assert with_desc > 0
+
+
+class TestMatchNodesWithDescriptions:
+    """Verify that _match_nodes searches descriptions when provided."""
+
+    def test_match_via_description_keyword(self):
+        s = build_session(steps_per_round=10)
+        # "primitive" appears in canon descriptions but not in node IDs
+        matches = _match_nodes("primitive", s.landscape, s.unified_nodes)
+        assert len(matches) > 0, "Should match via description content"
+
+    def test_match_description_scores_lower_than_id(self):
+        s = build_session(steps_per_round=10)
+        # "historization" should match C:historization by ID (high score)
+        # and other nodes only via description (lower score)
+        matches = _match_nodes("historization", s.landscape, s.unified_nodes)
+        top = matches[0]
+        assert top[0] == "C:historization"
+        assert top[1] >= 0.8
+
+    def test_no_descriptions_still_works(self):
+        """When unified_nodes not passed, ID-only matching still works."""
+        s = build_session(steps_per_round=10)
+        matches = _match_nodes("tension", s.landscape)
+        assert any(nid == "C:tension" for nid, _ in matches)
+
+    def test_what_is_e0_finds_matches(self):
+        """'what is e0' should now find matches via descriptions."""
+        s = build_session(steps_per_round=10)
+        matches = _match_nodes("what is e0", s.landscape, s.unified_nodes)
+        assert len(matches) > 0, "Semantic matching should find something for 'what is e0'"
+
+    def test_tension_resistance_both_match(self):
+        s = build_session(steps_per_round=10)
+        matches = _match_nodes(
+            "how does tension relate to resistance",
+            s.landscape, s.unified_nodes,
+        )
+        ids = [nid for nid, _ in matches]
+        assert "C:tension" in ids
+        assert "C:resistance" in ids
+
+
+class TestThreeTierRouting:
+    """Verify that cmd_task routes to correct tier based on matches."""
+
+    def test_tier1_known_concept(self):
+        """Single dominant match → Known Concept output."""
+        s = build_session(steps_per_round=15)
+        result = dispatch(s, "difference")
+        assert "Known Concept" in result or "Structural Matching" in result
+
+    def test_tier2_connection(self):
+        """Multiple matches → Structural Matching + Connectivity."""
+        s = build_session(steps_per_round=15)
+        result = dispatch(s, "how does tension relate to resistance")
+        assert "Structural Matching" in result
+        assert "Connectivity" in result
+
+    def test_tier2_creates_edges(self):
+        """Multiple unconnected matches → creates new connections."""
+        s = build_session(steps_per_round=15)
+        result = dispatch(s, "how does tension relate to resistance")
+        # Should either find existing or create new connections
+        assert "Connectivity" in result
+
+    def test_tier3_llm_fallback(self):
+        """No matches → LLM Peer Structuring."""
+        s = build_session(steps_per_round=15)
+        result = dispatch(s, "xyzzyplugh frobnicator zazzle")
+        assert "LLM Peer" in result
+
+    def test_freetext_dispatch(self):
+        """Unrecognized input treated as task."""
+        s = build_session(steps_per_round=15)
+        result = dispatch(s, "what are the core primitives")
+        # Should trigger matching (not "Unknown command")
+        assert "Unknown command" not in result
+
+    def test_navigation_output(self):
+        """All tiers produce navigation output."""
+        s = build_session(steps_per_round=15)
+        result = dispatch(s, "historization")
+        assert "Navigation" in result
+        assert "Coverage" in result
+
+
+class TestTaskKnownPath:
+    """Tier 1: Known Concept — single strong match."""
+
+    def test_shows_label(self):
+        s = build_session(steps_per_round=15)
+        result = _task_known_path(s, "difference", ("C:difference", 1.0))
+        assert "Known Concept" in result
+        assert "Navigation" in result
+
+    def test_shows_neighborhood(self):
+        s = build_session(steps_per_round=15)
+        # Run first to build some traces
+        cmd_run(s)
+        result = _task_known_path(s, "difference", ("C:difference", 1.0))
+        # Should mention the concept
+        assert "C:difference" in result
+
+    def test_increments_round(self):
+        s = build_session(steps_per_round=15)
+        before = s.round_num
+        _task_known_path(s, "difference", ("C:difference", 1.0))
+        assert s.round_num == before + 1
+
+
+class TestTaskConnection:
+    """Tier 2: Connection — multiple matches create edges."""
+
+    def test_creates_human_structural_edge(self):
+        s = build_session(steps_per_round=15)
+        matches = [("C:tension", 1.0), ("C:resistance", 1.0)]
+        result = _task_connection(s, "tension and resistance", matches)
+        assert "Connectivity" in result
+
+    def test_shows_existing_connections(self):
+        s = build_session(steps_per_round=15)
+        # Run to build some history
+        cmd_run(s)
+        matches = [("C:tension", 1.0), ("C:resistance", 1.0)]
+        result = _task_connection(s, "tension resistance", matches)
+        # Should show connectivity section
+        assert "Connectivity" in result
+
+    def test_bidirectional_edges_created(self):
+        s = build_session(steps_per_round=15)
+        # Pick two nodes that are NOT connected
+        n1 = "C:dream_mode"
+        n2 = "C:epistemic_trust"
+        matches = [(n1, 0.8), (n2, 0.8)]
+        result = _task_connection(s, "dream mode epistemic trust", matches)
+        # Check edges were created
+        e_fwd = Edge(n1, n2)
+        e_rev = Edge(n2, n1)
+        assert e_fwd in s.landscape.edges or e_rev in s.landscape.edges
+
+    def test_connection_mode_in_history(self):
+        s = build_session(steps_per_round=15)
+        matches = [("C:dream_mode", 0.8), ("C:novelty_gate", 0.8)]
+        _task_connection(s, "dream mode novelty gate", matches)
+        last = s.history[-1]
+        assert last.mode in ("task", "task_connect")
+
+    def test_visited_unvisited_tracking(self):
+        s = build_session(steps_per_round=15)
+        matches = [("C:tension", 1.0), ("C:resistance", 1.0)]
+        result = _task_connection(s, "tension resistance", matches)
+        # Output should reference visited/not-reached status
+        assert "Visited" in result or "Not reached" in result
+
+
+class TestTaskNavigate:
+    """Shared navigation helper."""
+
+    def test_returns_three_values(self):
+        s = build_session(steps_per_round=10)
+        nav_lines, comm_out, path = _task_navigate(s, "test", "C:difference")
+        assert isinstance(nav_lines, str)
+        assert isinstance(comm_out, str)
+        assert isinstance(path, list)
+
+    def test_coverage_in_output(self):
+        s = build_session(steps_per_round=10)
+        nav_lines, _, _ = _task_navigate(s, "test", "C:difference")
+        assert "Coverage" in nav_lines
+
+    def test_appends_to_history(self):
+        s = build_session(steps_per_round=10)
+        before = len(s.history)
+        _task_navigate(s, "test", "C:difference")
+        assert len(s.history) == before + 1

@@ -629,13 +629,17 @@ def cmd_inspect(state: SessionState, source: str, target: str) -> str:
 
 
 def _match_nodes(
-    text: str, landscape: Any,
+    text: str,
+    landscape: Any,
+    unified_nodes: Optional[Dict[str, Any]] = None,
 ) -> List[Tuple[str, float]]:
-    """Match free text against landscape node IDs.
+    """Match free text against landscape node IDs AND descriptions.
 
-    Tokenizes the query and scores each node by token↔concept overlap.
+    Tokenizes the query and scores each node by token overlap with:
+    1. Node concept name (from ID after prefix)
+    2. Node label/description (from unified_nodes metadata)
+
     Returns (node_id, relevance) pairs sorted by relevance descending.
-    Relevance = |matched concept parts| / |total concept parts|.
     """
     raw = text.lower()
     tokens = set(raw.split())
@@ -644,7 +648,9 @@ def _match_nodes(
     if not tokens:
         return []
 
+    node_meta = unified_nodes or {}
     results: List[Tuple[str, float]] = []
+
     for node_id in sorted(landscape.states):
         # Extract concept name after prefix (C:, B:, EN:)
         if ":" in node_id:
@@ -654,18 +660,35 @@ def _match_nodes(
 
         parts = set(concept.replace("_", " ").replace("-", " ").split())
 
-        # Exact word overlap
-        overlap = len(parts & tokens)
+        # Exact word overlap on concept name
+        id_overlap = len(parts & tokens)
+
+        # Also match against label and description
+        meta = node_meta.get(node_id, {})
+        label = str(meta.get("label", "")).lower()
+        desc = str(meta.get("description", "")).lower()
+        semantic = f"{label} {desc}"
+        sem_words = set(semantic.replace("_", " ").replace("-", " ").split())
+        sem_words = {w for w in sem_words if len(w) > 2}
+        sem_overlap = len(sem_words & tokens)
+
+        # Best of: ID match or semantic match (weighted lower)
+        overlap = id_overlap + sem_overlap * 0.5
 
         # Substring fallback for longer tokens (≥4 chars)
         if overlap == 0:
             for token in tokens:
-                if len(token) >= 4 and (token in concept or concept in token):
-                    overlap = 0.5
-                    break
+                if len(token) >= 4:
+                    if token in concept or concept in token:
+                        overlap = 0.5
+                        break
+                    if token in semantic:
+                        overlap = 0.3
+                        break
 
         if overlap > 0:
-            relevance = overlap / max(1, len(parts))
+            total_parts = max(1, len(parts))
+            relevance = overlap / total_parts
             results.append((node_id, relevance))
 
     results.sort(key=lambda x: (-x[1], x[0]))
@@ -915,74 +938,40 @@ def _llm_peer_structure(state: SessionState, text: str) -> str:
 def cmd_task(state: SessionState, text: str) -> str:
     """Process a user-provided difference as natural text.
 
-    E₀ matches text against known landscape structure (node IDs).
-    If matches found → shows connectivity + navigates from anchor.
-    If not → calls LLM peer to structure the input, injects into
-    live landscape, then navigates.
+    Three-tier matching:
+    1. Single strong match (≥0.8) → known path, navigate directly
+    2. Multiple matches → check/create connections, navigate
+    3. No matches → LLM peer structures the input (C218)
     """
     if not text.strip():
         return "Usage: task <your question or observation in natural language>"
 
-    matches = _match_nodes(text, state.landscape)
+    matches = _match_nodes(text, state.landscape, state.unified_nodes)
 
     if not matches:
-        # ── C218: LLM Peer Structuring ──
+        # ── Tier 3: LLM Peer Structuring (C218) ──
         return _llm_peer_structure(state, text)
 
     top = matches[:8]
+    best_rel = top[0][1]
     hist = state.landscape.historization
-    lines = [
-        "── Structural Matching ──",
-        f"  Query: \"{text}\"",
-        f"  {len(matches)} matching node(s):",
-        "",
-    ]
 
-    for node_id, rel in top:
-        domain = _domain_of(node_id)
-        active_count = sum(
-            1 for e in state.landscape.edges
-            if (e.source == node_id or e.target == node_id)
-            and hist.trace_load(e) > 0
-        )
-        lines.append(
-            f"  {node_id:<35s} [{domain:>9s}]  "
-            f"relevance={rel:.2f}  ({active_count} active edges)"
-        )
+    # ── Tier 1: Strong single match — known concept ──
+    if best_rel >= 0.8 and (len(top) < 2 or top[1][1] < 0.5):
+        return _task_known_path(state, text, top[0])
 
-    if len(matches) > 8:
-        lines.append(f"  ... and {len(matches) - 8} more")
-
-    # ── Connectivity between top matches ──
+    # ── Tier 2: Multiple matches — check/create connections ──
     if len(top) >= 2:
-        lines.append("")
-        lines.append("── Connectivity ──")
-        connections = []
-        for src_id, _ in top[:5]:
-            for tgt_id, _ in top[:5]:
-                if src_id == tgt_id:
-                    continue
-                edge = Edge(src_id, tgt_id)
-                m = hist.trace_load(edge)
-                if m > 0:
-                    q = hist.trace_quality(edge)
-                    connections.append((src_id, tgt_id, q, m))
+        return _task_connection(state, text, top)
 
-        if connections:
-            for src, tgt, q, m in connections[:6]:
-                bar = _quality_bar(q)
-                lines.append(
-                    f"  {src} → {tgt}  q={q:+.3f} {bar}  m={m:.1f}"
-                )
-        else:
-            lines.append("  No direct connections between matched nodes.")
-            lines.append("  These concepts exist but aren't linked yet.")
+    # Single weak match — still navigate from it
+    return _task_known_path(state, text, top[0])
 
-    # ── Navigate from anchor ──
-    anchor = top[0][0]
-    lines.append("")
-    lines.append("── Navigation ──")
 
+def _task_navigate(
+    state: SessionState, text: str, anchor: str, mode: str = "task",
+) -> Tuple[str, MultiDomainRoundResult]:
+    """Shared navigation from anchor. Returns (output_lines, round_result)."""
     state.round_num += 1
     a_before = assess(state.landscape, state.unified_nodes)
 
@@ -998,7 +987,7 @@ def cmd_task(state: SessionState, text: str) -> str:
     reason_short = text[:60] + ("…" if len(text) > 60 else "")
     result = MultiDomainRoundResult(
         round_num=state.round_num,
-        mode="task",
+        mode=mode,
         reason=f"User task: \"{reason_short}\"",
         steps=nav["steps"],
         assessment_before=a_before,
@@ -1017,43 +1006,173 @@ def cmd_task(state: SessionState, text: str) -> str:
     state.history.append(result)
     consolidate(result, nav["new_edges"], dry_run=True)
 
-    # Stagnation tracking
     if coverage_delta <= 0.001:
         state.stagnation_streak += 1
     else:
         state.stagnation_streak = 0
 
-    path = nav["path"]
-    visited_matches = [n for n, _ in top if n in path]
-
-    lines.append(f"  Anchor: {anchor}")
-    lines.append(
+    lines = [
+        f"  Anchor: {anchor}",
         f"  Steps: {nav['steps']}  "
-        f"Crossings: {nav['domain_crossings']}"
-    )
-    lines.append(
+        f"Crossings: {nav['domain_crossings']}",
         f"  Coverage: {a_before.coverage:.1%} → {a_after.coverage:.1%} "
-        f"(Δ={coverage_delta:+.1%})"
-    )
+        f"(Δ={coverage_delta:+.1%})",
+    ]
 
-    if visited_matches:
-        lines.append(
-            f"  Visited matched nodes: {', '.join(visited_matches)}"
-        )
-    unvisited = [n for n, _ in top if n not in path]
-    if unvisited:
-        lines.append(
-            f"  Not reached: {', '.join(unvisited[:5])}"
-        )
-
-    # Communication output for the navigation
     text_out = communicate_round(
         result, state.landscape,
         stagnation_count=state.stagnation_streak,
         output_format=state.output_format,
     )
+
+    return "\n".join(lines), text_out, nav["path"]
+
+
+def _task_known_path(
+    state: SessionState,
+    text: str,
+    match: Tuple[str, float],
+) -> str:
+    """Tier 1: Strong match on a known concept — navigate from it."""
+    node_id, rel = match
+    domain = _domain_of(node_id)
+    meta = state.unified_nodes.get(node_id, {})
+    label = meta.get("label", "")
+    hist = state.landscape.historization
+
+    lines = [
+        "── Known Concept ──",
+        f"  Query: \"{text}\"",
+        f"  Match: {node_id} (relevance={rel:.2f})",
+    ]
+    if label:
+        lines.append(f"  Label: {label}")
+    lines.append(f"  Domain: {domain}")
+
+    # Show neighborhood
+    neighbors = []
+    for edge in state.landscape.edges:
+        if edge.source == node_id:
+            m = hist.trace_load(edge)
+            if m > 0:
+                q = hist.trace_quality(edge)
+                neighbors.append((edge.target, q, m))
+    neighbors.sort(key=lambda x: -x[2])
+
+    if neighbors:
+        lines.append(f"  Neighborhood ({len(neighbors)} outgoing):")
+        for tgt, q, m in neighbors[:6]:
+            bar = _quality_bar(q)
+            lines.append(f"    → {tgt}  q={q:+.3f} {bar}  m={m:.1f}")
+        if len(neighbors) > 6:
+            lines.append(f"    ... and {len(neighbors) - 6} more")
+
     lines.append("")
-    lines.append(text_out)
+    lines.append("── Navigation ──")
+    nav_lines, comm_out, path = _task_navigate(state, text, node_id)
+    lines.append(nav_lines)
+    lines.append("")
+    lines.append(comm_out)
+
+    return "\n".join(lines)
+
+
+def _task_connection(
+    state: SessionState,
+    text: str,
+    matches: List[Tuple[str, float]],
+) -> str:
+    """Tier 2: Multiple matches — check existing connections, create if needed."""
+    hist = state.landscape.historization
+    top = matches[:5]
+
+    lines = [
+        "── Structural Matching ──",
+        f"  Query: \"{text}\"",
+        f"  {len(matches)} matching node(s):",
+        "",
+    ]
+
+    for node_id, rel in matches[:8]:
+        domain = _domain_of(node_id)
+        meta = state.unified_nodes.get(node_id, {})
+        label = meta.get("label", "")
+        label_str = f"  ({label})" if label else ""
+        lines.append(
+            f"  {node_id:<35s} [{domain:>9s}]  "
+            f"relevance={rel:.2f}{label_str}"
+        )
+    if len(matches) > 8:
+        lines.append(f"  ... and {len(matches) - 8} more")
+
+    # ── Check connectivity between top matches ──
+    lines.append("")
+    lines.append("── Connectivity ──")
+    existing = []
+    missing = []
+    for i, (src_id, _) in enumerate(top):
+        for j, (tgt_id, _) in enumerate(top):
+            if i >= j:
+                continue
+            edge = Edge(src_id, tgt_id)
+            m = hist.trace_load(edge)
+            if m > 0:
+                q = hist.trace_quality(edge)
+                existing.append((src_id, tgt_id, q, m))
+            else:
+                # Check reverse
+                rev = Edge(tgt_id, src_id)
+                m_rev = hist.trace_load(rev)
+                if m_rev > 0:
+                    q_rev = hist.trace_quality(rev)
+                    existing.append((tgt_id, src_id, q_rev, m_rev))
+                else:
+                    missing.append((src_id, tgt_id))
+
+    if existing:
+        lines.append("  Existing connections:")
+        for src, tgt, q, m in existing[:6]:
+            bar = _quality_bar(q)
+            lines.append(
+                f"    {src} → {tgt}  q={q:+.3f} {bar}  m={m:.1f}"
+            )
+
+    # ── Create missing connections (the Δ becomes structure) ──
+    created = []
+    if missing:
+        lines.append(f"  Creating {len(missing)} new connection(s):")
+        for src_id, tgt_id in missing:
+            state.landscape.add_edge(
+                src_id, tgt_id, 0.4, 1.0,
+                relation_type="human_structural",
+            )
+            state.landscape.add_edge(
+                tgt_id, src_id, 0.4, 1.0,
+                relation_type="human_structural",
+            )
+            created.append((src_id, tgt_id))
+            lines.append(f"    + {src_id} ↔ {tgt_id}")
+
+    if not existing and not missing:
+        lines.append("  Single-node matches only.")
+
+    # ── Navigate from anchor ──
+    anchor = top[0][0]
+    lines.append("")
+    lines.append("── Navigation ──")
+    mode = "task_connect" if created else "task"
+    nav_lines, comm_out, path = _task_navigate(state, text, anchor, mode)
+    lines.append(nav_lines)
+
+    visited = [n for n, _ in matches[:8] if n in path]
+    unvisited = [n for n, _ in matches[:8] if n not in path]
+    if visited:
+        lines.append(f"  Visited matched nodes: {', '.join(visited)}")
+    if unvisited:
+        lines.append(f"  Not reached: {', '.join(unvisited[:5])}")
+
+    lines.append("")
+    lines.append(comm_out)
 
     return "\n".join(lines)
 
@@ -1112,7 +1231,6 @@ HELP_TEXT = """
 E₀ Interactive Session — Commands
 ──────────────────────────────────
   run [N]          Execute next N rounds (default: 1)
-  task <text>      Introduce a difference in natural language
   status           Current landscape overview
   focus <domain>   Zoom into canon, bootstrap, or en
   why              Explain the last decision
@@ -1122,6 +1240,9 @@ E₀ Interactive Session — Commands
   summary          Full cycle summary so far
   help             Show this help
   quit / exit      End session
+
+  Or just type any text — E₀ will try to match it structurally,
+  and call the LLM peer if needed.
 """
 
 
@@ -1243,7 +1364,8 @@ def dispatch(state: SessionState, user_input: str) -> Optional[str]:
             return f"Invalid panel index: '{rate_parts[0]}'. Must be a number."
         return cmd_rate(state, idx, rate_parts[1])
 
-    return f"Unknown command: '{cmd}'. Type 'help' for available commands."
+    # Unrecognized command → treat entire input as free-text task
+    return cmd_task(state, raw)
 
 
 def run_interactive(
