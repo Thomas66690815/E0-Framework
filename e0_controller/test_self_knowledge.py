@@ -74,10 +74,15 @@ class TestLearnSelf:
         _, _, _, result = learned
         assert result.bootstrap_coverage > 0.90
 
-    def test_en_coverage(self, learned):
-        """EN domain gets explored."""
+    def test_en_coverage_excluded(self, learned):
+        """EN domain is excluded by default — coverage is 0."""
         _, _, _, result = learned
-        assert result.en_coverage > 0.60
+        assert result.en_coverage == 0.0
+
+    def test_mech_coverage(self, learned):
+        """Mechanism domain reaches meaningful coverage."""
+        _, _, _, result = learned
+        assert result.mech_coverage > 0.60
 
     def test_shortcut_edges_created(self, learned):
         """Navigation discovers shortcut edges."""
@@ -145,12 +150,12 @@ class TestExportSeed:
         with open(seed_path) as f:
             data = json.load(f)
         nodes = data["unified_nodes"]
-        assert len(nodes) > 100  # 148 expected
-        # Check a few expected prefixes exist
+        assert len(nodes) > 100  # 124 expected (C+B+M, no EN)
+        # Check expected prefixes (EN excluded by default)
         prefixes = {k.split(":")[0] for k in nodes}
         assert "C" in prefixes
         assert "B" in prefixes
-        assert "EN" in prefixes
+        assert "M" in prefixes
 
     def test_edge_meta_present(self, seed_path):
         """Edge metadata is included (at least some entries)."""

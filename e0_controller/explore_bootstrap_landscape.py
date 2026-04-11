@@ -260,6 +260,13 @@ def extract_edges(bs, nodes):
     add("HERE", "GT-5", 0.2, 0.1, 0.95, "just resolved GT-5")
     add("HERE", "BT-4", 0.2, 0.1, 0.95, "just discovered dual nature")
     add("HERE", "L5", 0.2, 0.1, 0.95, "just worked on reflexion layer")
+    add("HERE", "GT-2", 0.3, 0.2, 0.8, "blind trust trap was project lesson")
+
+    # --- WP → Layer/HERE: Principles influence architecture ---
+    add("WP-5", "L7", 0.3, 0.2, 0.85, "pipeline thinking → LLM integration layer")
+    add("WP-5", "HERE", 0.2, 0.2, 0.8, "pipeline thinking informs current work")
+    add("WP-6", "L5", 0.3, 0.2, 0.85, "signal monitoring → reflexion layer")
+    add("WP-6", "HERE", 0.2, 0.2, 0.8, "signal monitoring informs current work")
 
     # --- Layer → HERE: All layers are operational from current state ---
     for nid in nodes:

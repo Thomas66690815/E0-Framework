@@ -795,14 +795,15 @@ def build_mech_bridges(mech_info, unified_nodes) -> List[Dict]:
 
 def build_multidomain_landscape(fresh_en: bool = True, fresh_canon: bool = True,
                                 fresh_mech: bool = True,
+                                include_en: bool = True,
                                 ) -> Tuple[Any, Dict, Dict[str, int]]:
-    """Build unified Canon + Bootstrap + EN + Mechanism landscape.
+    """Build unified Canon + Bootstrap + (optional EN) + Mechanism landscape.
 
-    Four domains in one navigable space:
+    Domains:
     - Canon (C:): Ontodynamics theory — what E₀ IS
     - Bootstrap (B:): Project memory — what E₀ DOES
-    - EN (EN:): English vocabulary — what E₀ can LEARN about
     - Mechanism (M:): Functional subsystems — HOW E₀ works
+    - EN (EN:): English vocabulary — optional, for language tasks
 
     Returns (landscape, unified_nodes, stats).
     """
@@ -812,9 +813,6 @@ def build_multidomain_landscape(fresh_en: bool = True, fresh_canon: bool = True,
     bs_nodes = extract_nodes(bs)
     bs_edges = extract_edges(bs, bs_nodes)
 
-    # Load EN domain
-    en = load_canon("english_basic_enriched")
-
     # Build Canon↔Bootstrap bridges (C200 infrastructure)
     cb_bridges = build_static_bridges(cl.info, bs_nodes)
 
@@ -823,46 +821,49 @@ def build_multidomain_landscape(fresh_en: bool = True, fresh_canon: bool = True,
         cl.info, cl.landscape, bs_nodes, bs_edges, cb_bridges,
     )
 
-    # Add EN nodes with EN: prefix
+    # EN domain — optional (C223: skip for self-knowledge seed)
     en_node_count = 0
-    for n in en.info.nodes:
-        nid = f"EN:{n.id}"
-        unified_nodes[nid] = {
-            "type": "en_vocabulary",
-            "label": n.description[:60] if n.description else n.id,
-            "description": n.description or "",
-            "derivation_level": n.derivation_level,
-            "is_primitive": n.is_primitive,
-            "domain": "en",
-            "U": 0.0 if fresh_en else 1.0,
-            "F": 0.0,
-        }
-        en_node_count += 1
+    en_bridges: List[Dict] = []
+    if include_en:
+        en = load_canon("english_basic_enriched")
 
-    # Add EN intra-domain edges (with relation type from raw spec)
-    en_edge_count = 0
-    en_spec = load_canon_spec("english_basic_enriched")
-    en_edge_types = {}
-    for e in en_spec.get("edges", []):
-        en_edge_types[(e["from"], e["to"])] = e.get("type", "")
-    for edge_info in en.info.edges:
-        edge_dict = {
-            "from": f"EN:{edge_info.source}",
-            "to": f"EN:{edge_info.target}",
-            "delta": 0.3,
-            "resistance": 0.2,
-            "confidence": 0.9,
-            "derivation": f"EN intra: {edge_info.derivation}",
-        }
-        rtype = en_edge_types.get((edge_info.source, edge_info.target), "")
-        if rtype:
-            edge_dict["relation_type"] = rtype
-        unified_edges.append(edge_dict)
-        en_edge_count += 1
+        # Add EN nodes with EN: prefix
+        for n in en.info.nodes:
+            nid = f"EN:{n.id}"
+            unified_nodes[nid] = {
+                "type": "en_vocabulary",
+                "label": n.description[:60] if n.description else n.id,
+                "description": n.description or "",
+                "derivation_level": n.derivation_level,
+                "is_primitive": n.is_primitive,
+                "domain": "en",
+                "U": 0.0 if fresh_en else 1.0,
+                "F": 0.0,
+            }
+            en_node_count += 1
 
-    # Build EN↔Canon and EN↔Bootstrap bridges
-    en_bridges = build_en_bridges(en.info, unified_nodes)
-    unified_edges.extend(en_bridges)
+        # Add EN intra-domain edges (with relation type from raw spec)
+        en_spec = load_canon_spec("english_basic_enriched")
+        en_edge_types = {}
+        for e in en_spec.get("edges", []):
+            en_edge_types[(e["from"], e["to"])] = e.get("type", "")
+        for edge_info in en.info.edges:
+            edge_dict = {
+                "from": f"EN:{edge_info.source}",
+                "to": f"EN:{edge_info.target}",
+                "delta": 0.3,
+                "resistance": 0.2,
+                "confidence": 0.9,
+                "derivation": f"EN intra: {edge_info.derivation}",
+            }
+            rtype = en_edge_types.get((edge_info.source, edge_info.target), "")
+            if rtype:
+                edge_dict["relation_type"] = rtype
+            unified_edges.append(edge_dict)
+
+        # Build EN↔Canon and EN↔Bootstrap bridges
+        en_bridges = build_en_bridges(en.info, unified_nodes)
+        unified_edges.extend(en_bridges)
 
     # ── M: Mechanism domain (C221) ──────────────────────────────────────
     mech = load_canon("mechanism_e0")

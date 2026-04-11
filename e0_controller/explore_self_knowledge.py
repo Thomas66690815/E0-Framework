@@ -1,9 +1,12 @@
-"""C220: Self-Knowledge Seed — E₀ learns itself, exports as warm start.
+"""C220/C223: Self-Knowledge Seed — E₀ learns itself, exports as warm start.
 
 Runs the full learning cycle until E₀ has traversed its own domain
-(Canon + Bootstrap + EN) with high coverage.  Exports the resulting
-landscape — including all traces, shortcuts, and metadata — as a JSON
-file that can be loaded as a warm-start seed for new sessions.
+(Canon + Bootstrap + Mechanism) with high coverage.  EN vocabulary is
+excluded by default — self-knowledge doesn't need generic English words.
+
+Exports the resulting landscape — including all traces, shortcuts, and
+metadata — as a JSON file that can be loaded as a warm-start seed for
+new sessions.
 
 The seed eliminates the cold-start problem: instead of starting from
 ~54 % coverage with empty traces, a new session begins with E₀ already
@@ -44,6 +47,7 @@ class SelfKnowledgeResult:
     final_coverage: float
     canon_coverage: float
     bootstrap_coverage: float
+    mech_coverage: float
     en_coverage: float
     total_nodes: int
     total_edges: int
@@ -59,6 +63,7 @@ def learn_self(
     steps_per_round: int = 60,
     target_coverage: float = 0.95,
     verbose: bool = True,
+    include_en: bool = False,
 ) -> Tuple[object, Dict, Dict[str, int], SelfKnowledgeResult]:
     """Run E₀ on its own domain until convergence.
 
@@ -66,9 +71,14 @@ def learn_self(
     Phase 2 — Targeted passes for remaining uncovered nodes.
     Phase 3 — Direct inscription for any truly unreachable nodes.
 
+    By default, EN vocabulary is excluded (self-knowledge doesn't need
+    generic English words). Pass include_en=True to include it.
+
     Returns (landscape, unified_nodes, stats, result).
     """
-    landscape, unified_nodes, stats = build_multidomain_landscape()
+    landscape, unified_nodes, stats = build_multidomain_landscape(
+        include_en=include_en,
+    )
     initial_edges = landscape.edge_count()
 
     history: List[MultiDomainRoundResult] = []
@@ -77,9 +87,11 @@ def learn_self(
 
     if verbose:
         print(f"\n{'=' * 65}")
-        print(f"  E₀ SELF-KNOWLEDGE LEARNING (C220)")
+        print(f"  E₀ SELF-KNOWLEDGE LEARNING (C223)")
         print(f"{'=' * 65}")
         print(f"  Nodes: {stats['total_nodes']}, Edges: {stats['total_edges']}")
+        domains = "C+B+M" + ("+EN" if include_en else "")
+        print(f"  Domains: {domains}")
         print(f"  Target: {target_coverage:.0%} coverage")
 
     # ── Phase 1: Standard learning cycle ──
@@ -92,8 +104,9 @@ def learn_self(
                   f"cov={a_before.coverage:.1%}  "
                   f"C={a_before.canon_coverage:.1%}  "
                   f"B={a_before.bootstrap_coverage:.1%}  "
-                  f"EN={a_before.en_coverage:.1%}  "
-                  f"frontier={a_before.frontier_size}")
+                  f"M={a_before.mech_coverage:.1%}  "
+                  + (f"EN={a_before.en_coverage:.1%}  " if include_en else "")
+                  + f"frontier={a_before.frontier_size}")
 
         if a_before.coverage >= target_coverage and a_before.frontier_size == 0:
             converged = True
@@ -135,6 +148,9 @@ def learn_self(
             en_bootstrap_crossings=nav["en_bootstrap_crossings"],
             canon_bootstrap_crossings=nav["canon_bootstrap_crossings"],
             type_usage=nav.get("type_usage", {}),
+            mech_canon_crossings=nav.get("mech_canon_crossings", 0),
+            mech_bootstrap_crossings=nav.get("mech_bootstrap_crossings", 0),
+            mech_en_crossings=nav.get("mech_en_crossings", 0),
         )
         history.append(result)
 
@@ -163,6 +179,7 @@ def learn_self(
         final_coverage=final_a.coverage,
         canon_coverage=final_a.canon_coverage,
         bootstrap_coverage=final_a.bootstrap_coverage,
+        mech_coverage=final_a.mech_coverage,
         en_coverage=final_a.en_coverage,
         total_nodes=final_a.total_nodes,
         total_edges=landscape.edge_count(),
@@ -298,10 +315,11 @@ def export_seed(landscape, unified_nodes, stats, result: SelfKnowledgeResult,
             "purpose": "E\u2080 self-knowledge seed \u2014 warm start for "
                        "interactive sessions",
             "created": time.strftime("%Y-%m-%dT%H:%M:%S"),
-            "commit": "C220",
+            "commit": "C223",
             "coverage": round(result.final_coverage, 4),
             "canon_coverage": round(result.canon_coverage, 4),
             "bootstrap_coverage": round(result.bootstrap_coverage, 4),
+            "mech_coverage": round(result.mech_coverage, 4),
             "en_coverage": round(result.en_coverage, 4),
             "node_count": result.total_nodes,
             "edge_count": result.total_edges,
