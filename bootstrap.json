@@ -27,9 +27,9 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C221",
-    "latest_commit_hash": "cd8d25a",
-    "latest_commit_msg": "C221: Mechanism Domain (M:) \u2014 E\u2080 learns HOW it works. 20 mechanism nodes (Historization Engine through Curriculum Navigator), 43 typed intra-edges (enables/feeds/triggers/constrains), 108 cross-domain bridges to Canon and Bootstrap. 4-domain unified landscape: 168 nodes, 621 edges. Per-domain assessment + crossing tracking for M:. (15 tests, 5005 total)",
+    "latest_commit": "C222",
+    "latest_commit_hash": "26f3d0f",
+    "latest_commit_msg": "C222: PC Orphan Fix \u2014 all perspective checks connected. 3 GT\u2192PC + 7 PC\u2192WP edges. Bootstrap max coverage 92.7%\u2192100%. 631 edges (was 621). 0 new tests, 5005 total.",
     "test_count": 5005,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",

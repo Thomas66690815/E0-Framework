@@ -194,6 +194,18 @@ def extract_edges(bs, nodes):
     add("GT-1", "PC-1", 0.5, 0.3, 0.8, "isolated agents → 'sharing knowledge or isolated?'")
     add("GT-1", "PC-3", 0.5, 0.3, 0.8, "isolated agents → 'existing infrastructure unused?'")
     add("GT-3", "PC-4", 0.5, 0.3, 0.8, "greedy matching → 'stall after 3+ commits?'")
+    add("GT-1", "PC-2", 0.5, 0.3, 0.8, "isolated agents (C189) → 'testing what I think?'")
+    add("GT-5", "PC-5", 0.5, 0.3, 0.8, "override trap → 'if test fails, what do I learn?'")
+    add("GT-3", "PC-6", 0.5, 0.3, 0.8, "greedy matching → 'fixing the right problem?'")
+
+    # --- PC → WP: Perspective checks flow into principles ---
+    add("PC-1", "WP-3", 0.4, 0.2, 0.8, "'sharing knowledge?' reinforces cooperation principle")
+    add("PC-2", "WP-4", 0.4, 0.2, 0.8, "'testing what I think?' reinforces quality > quantity")
+    add("PC-3", "WP-5", 0.4, 0.2, 0.8, "'infrastructure unused?' reinforces pipeline thinking")
+    add("PC-4", "WP-5", 0.4, 0.2, 0.8, "'stall after 3+ commits?' reinforces pipeline thinking")
+    add("PC-5", "WP-7", 0.4, 0.2, 0.8, "'what do I learn from failure?' reinforces doubt")
+    add("PC-6", "WP-6", 0.4, 0.2, 0.8, "'wrong assumption?' reinforces signal monitoring")
+    add("PC-7", "WP-6", 0.4, 0.2, 0.8, "'signal lies?' reinforces signal monitoring")
 
     # --- GT → WP: Traps that became principles ---
     add("GT-1", "WP-3", 0.6, 0.2, 0.9, "isolated agents → cooperation > competition")
