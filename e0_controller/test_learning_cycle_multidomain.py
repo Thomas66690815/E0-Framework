@@ -14,10 +14,13 @@ import pytest
 from e0_controller.explore_learning_cycle_multidomain import (
     EN_CANON_BRIDGE,
     EN_BOOTSTRAP_BRIDGE,
+    MECH_CANON_BRIDGE,
+    MECH_BOOTSTRAP_BRIDGE,
     MultiDomainAssessment,
     MultiDomainRoundResult,
     assess,
     build_en_bridges,
+    build_mech_bridges,
     build_multidomain_landscape,
     communicate_round,
     communicate_summary,
@@ -42,7 +45,7 @@ from e0_controller.explore_bootstrap_landscape import (
 
 @pytest.fixture(scope="module")
 def multidomain():
-    """Build the 3-domain landscape once for all tests."""
+    """Build the 4-domain landscape once for all tests."""
     landscape, unified_nodes, stats = build_multidomain_landscape()
     return landscape, unified_nodes, stats
 
@@ -171,6 +174,9 @@ class TestDomainOf:
         """Nodes without recognized prefix default to bootstrap."""
         assert _domain_of("UNKNOWN:x") == "bootstrap"
 
+    def test_mechanism(self):
+        assert _domain_of("M:dream_mode") == "mechanism"
+
 
 # ---------------------------------------------------------------------------
 # Phase 1: Assessment
@@ -181,13 +187,15 @@ class TestAssessment:
     """Per-domain coverage tracking works."""
 
     def test_assessment_has_three_domains(self, multidomain):
-        """Assessment tracks canon, bootstrap, and EN separately."""
+        """Assessment tracks canon, bootstrap, EN, and M: separately."""
         landscape, nodes, _ = multidomain
         a = assess(landscape, nodes)
         assert a.canon_nodes >= 50
         assert a.bootstrap_nodes >= 35
         assert a.en_nodes >= 40
-        assert a.canon_nodes + a.bootstrap_nodes + a.en_nodes == a.total_nodes
+        assert a.mech_nodes >= 15
+        assert (a.canon_nodes + a.bootstrap_nodes
+                + a.en_nodes + a.mech_nodes) == a.total_nodes
 
     def test_en_starts_low_coverage(self, multidomain):
         """EN coverage starts low (no traces = low coverage)."""
@@ -197,10 +205,11 @@ class TestAssessment:
         assert a.en_coverage <= a.bootstrap_coverage
 
     def test_coverage_sums_coherent(self, multidomain):
-        """visited_nodes = canon_visited + bootstrap_visited + en_visited."""
+        """visited_nodes = sum of per-domain visited."""
         landscape, nodes, _ = multidomain
         a = assess(landscape, nodes)
-        domain_sum = a.canon_visited + a.bootstrap_visited + a.en_visited
+        domain_sum = (a.canon_visited + a.bootstrap_visited
+                      + a.en_visited + a.mech_visited)
         assert domain_sum == a.visited_nodes, \
             f"Mismatch: {domain_sum} vs {a.visited_nodes}"
 
@@ -319,7 +328,10 @@ class TestNavigation:
         result = navigate(landscape, nodes, "explore", 30, start="B:HERE")
         pair_sum = (result["en_canon_crossings"]
                     + result["en_bootstrap_crossings"]
-                    + result["canon_bootstrap_crossings"])
+                    + result["canon_bootstrap_crossings"]
+                    + result["mech_canon_crossings"]
+                    + result["mech_bootstrap_crossings"]
+                    + result["mech_en_crossings"])
         assert pair_sum == result["domain_crossings"]
 
     def test_shortcut_edges_created(self, multidomain):
@@ -593,3 +605,125 @@ class TestOutputFormatIntegration:
         captured = capsys.readouterr()
         # No communication output (verbose=False, no format)
         assert "Interpretations" not in captured.out
+
+
+# ---------------------------------------------------------------------------
+# Phase 7: Mechanism Domain (C221)
+# ---------------------------------------------------------------------------
+
+
+class TestMechanismDomain:
+    """M: domain is integrated into the unified landscape."""
+
+    def test_mech_nodes_present(self, multidomain):
+        _, nodes, stats = multidomain
+        m_nodes = [n for n in nodes if n.startswith("M:")]
+        assert len(m_nodes) == 20
+        assert stats["mech_nodes"] == 20
+
+    def test_mech_nodes_have_mechanism_type(self, multidomain):
+        _, nodes, _ = multidomain
+        for nid, meta in nodes.items():
+            if nid.startswith("M:"):
+                assert meta["type"] == "mechanism"
+                assert meta["domain"] == "mechanism"
+
+    def test_mech_nodes_start_fresh(self, multidomain):
+        _, nodes, _ = multidomain
+        for nid, meta in nodes.items():
+            if nid.startswith("M:"):
+                assert meta["U"] == 0.0
+
+    def test_key_mechanisms_exist(self, multidomain):
+        _, nodes, _ = multidomain
+        expected = [
+            "M:historization_engine", "M:greedy_navigation",
+            "M:dream_mode", "M:multiverse", "M:coupling_router",
+            "M:reflexive_edge_proposal", "M:curriculum_navigator",
+        ]
+        for nid in expected:
+            assert nid in nodes, f"{nid} missing from landscape"
+
+    def test_mech_bridges_count(self, multidomain):
+        _, _, stats = multidomain
+        assert stats["mech_bridges"] > 0
+        # All bidirectional: must be even
+        assert stats["mech_bridges"] % 2 == 0
+
+    def test_total_nodes_includes_mech(self, multidomain):
+        _, _, stats = multidomain
+        assert stats["total_nodes"] == (
+            stats["canon_nodes"] + stats["bootstrap_nodes"]
+            + stats["en_nodes"] + stats["mech_nodes"]
+        )
+
+
+class TestMechBridges:
+    """Mechanism bridges connect M: to Canon and Bootstrap."""
+
+    def test_all_canon_bridge_targets_exist(self, multidomain):
+        _, nodes, _ = multidomain
+        for targets in MECH_CANON_BRIDGE.values():
+            for t in targets:
+                assert t in nodes, f"Canon bridge target {t} missing"
+
+    def test_all_bootstrap_bridge_targets_exist(self, multidomain):
+        _, nodes, _ = multidomain
+        for targets in MECH_BOOTSTRAP_BRIDGE.values():
+            for t in targets:
+                tgt = t if t.startswith("B:") else f"B:{t}"
+                assert tgt in nodes, f"Bootstrap bridge target {tgt} missing"
+
+    def test_bridges_are_bidirectional(self, multidomain):
+        landscape, nodes, _ = multidomain
+        # Check a known bridge: M:historization_engine → C:historization
+        fwd = landscape.edge_meta("M:historization_engine", "C:historization")
+        rev = landscape.edge_meta("C:historization", "M:historization_engine")
+        assert fwd is not None, "Forward bridge missing"
+        assert rev is not None, "Reverse bridge missing"
+        assert fwd.get("bridge_type") == "mech_semantic"
+        assert rev.get("bridge_type") == "mech_semantic"
+
+    def test_bridge_type_is_mech_semantic(self, multidomain):
+        landscape, nodes, _ = multidomain
+        # Sample a few bridges
+        pairs = [
+            ("M:dream_mode", "C:dream_mode"),
+            ("M:multiverse", "B:GT-1"),
+        ]
+        for src, tgt in pairs:
+            meta = landscape.edge_meta(src, tgt)
+            assert meta is not None, f"Bridge {src}→{tgt} missing"
+            assert meta.get("bridge_type") == "mech_semantic"
+
+
+class TestMechIntraEdges:
+    """Mechanism intra-domain edges have relation types."""
+
+    def test_intra_edges_have_types(self, multidomain):
+        landscape, _, _ = multidomain
+        # historization_engine enables greedy_navigation
+        meta = landscape.edge_meta("M:historization_engine", "M:greedy_navigation")
+        assert meta is not None, "M:historization_engine → M:greedy_navigation missing"
+        assert meta.get("relation_type") == "enables"
+
+    def test_feeds_type_present(self, multidomain):
+        landscape, _, _ = multidomain
+        # greedy_navigation feeds historization_engine
+        meta = landscape.edge_meta("M:greedy_navigation", "M:historization_engine")
+        assert meta is not None
+        assert meta.get("relation_type") == "feeds"
+
+    def test_triggers_type_present(self, multidomain):
+        landscape, _, _ = multidomain
+        # escalation triggers multiverse
+        meta = landscape.edge_meta("M:escalation", "M:multiverse")
+        assert meta is not None
+        assert meta.get("relation_type") == "triggers"
+
+    def test_constrains_type_present(self, multidomain):
+        landscape, _, _ = multidomain
+        # amplitude_overlay constrains greedy_navigation
+        meta = landscape.edge_meta("M:amplitude_overlay", "M:greedy_navigation")
+        assert meta is not None
+        assert meta.get("relation_type") == "constrains"

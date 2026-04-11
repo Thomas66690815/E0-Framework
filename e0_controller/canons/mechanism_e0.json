@@ -1,0 +1,623 @@
+{
+  "name": "mechanism_e0",
+  "version": "1.0",
+  "source": "Code analysis + architecture documentation (C1–C220, 4990 tests)",
+  "description": "E₀'s functional mechanisms — HOW E₀ works, not just WHAT it is (Canon) or WHAT it learned (Bootstrap). 20 mechanisms across 6 functional layers: Navigation, Reflexion, Multi-System, Consolidation, Communication, Orchestration. Typed edges encode operational relationships: enables, triggers, feeds, constrains, part_of.",
+  "nodes": [
+    {
+      "id": "historization_engine",
+      "label": "Historization Engine",
+      "derivation_level": 0,
+      "is_primitive": true,
+      "description": "Records success/failure traces on every traversed edge (U/F). Asymmetric decay rates (λ_s, λ_f). Computes trace_quality q=(U−F)/(U+F+ε) and trace_load m=U+F. Every other mechanism reads from or writes to historization."
+    },
+    {
+      "id": "greedy_navigation",
+      "label": "Greedy Navigation",
+      "derivation_level": 1,
+      "is_primitive": false,
+      "description": "Core decision loop: enumerate admissible edges, compute penalized tension S_eff=Δ·R_eff/(M_H·I), select minimum. Deterministic, local, operates on a single landscape. Falls back to escalation when no admissible edge exists."
+    },
+    {
+      "id": "amplitude_overlay",
+      "label": "Amplitude Overlay",
+      "derivation_level": 1,
+      "is_primitive": false,
+      "description": "Sums path amplitudes Ψ(p)=e^{-S(p)}·e^{iΘ(p)} over bounded-horizon continuations. Computes intensity I∝|Ψ|² per action. Analysis-only layer — provides alternative ranking (Born sampling) without modifying controller state."
+    },
+    {
+      "id": "escalation",
+      "label": "Escalation Recovery",
+      "derivation_level": 1,
+      "is_primitive": false,
+      "description": "Detects four frontier types: DEAD_END (no edges), FILTERED (all filtered by historization), EXHAUSTED (max steps), OVERLOADED (OI > threshold). Routes to edge proposal, amplitude boost, or peer consultation depending on frontier type."
+    },
+    {
+      "id": "overlap_modulation",
+      "label": "Overlap Modulation",
+      "derivation_level": 2,
+      "is_primitive": false,
+      "description": "M_H(x→y) = max(0.2, Σ_z √(v(x,z)·v(z,y))). Greedy divides S_eff by M_H. Rewards well-connected paths. Validated empirically: modulation never harms across 14 domains."
+    },
+    {
+      "id": "inertia_modulation",
+      "label": "Inertia Modulation",
+      "derivation_level": 2,
+      "is_primitive": false,
+      "description": "I(e) = 1 − α·(m/(m+μ))·(1−|q|). Penalizes confused edges (|q|≈0 with high load), rewards edges with clear signal. Divides S_eff to steer navigation away from indecisive territory."
+    },
+    {
+      "id": "reflexive_edge_proposal",
+      "label": "Reflexive Edge Proposal",
+      "derivation_level": 3,
+      "is_primitive": false,
+      "description": "When stuck at a frontier: extracts Δ/R₀ patterns from successful edges, proposes hypothesis edges with confidence-scaled parameters. Stufe 1 (reactive: only on stuck) and Stufe 2 (proactive: anticipates frontiers). Proposed edges persist only if execution succeeds."
+    },
+    {
+      "id": "self_graph",
+      "label": "Self-Graph",
+      "derivation_level": 3,
+      "is_primitive": false,
+      "description": "Treats E₀'s own operational cycle (amplitude→born→realization→historization→inertia→transition_field) as a navigable landscape. After each step, records which components participated and the outcome. Reveals which components are effective (high |q|) vs confused (q≈0)."
+    },
+    {
+      "id": "dual_reflection",
+      "label": "Dual Reflection",
+      "derivation_level": 3,
+      "is_primitive": false,
+      "description": "Harvests self-graph to diagnose component health: healthy, confused, harmful, or inactive. Recommends deactivation of modulation components (curvature, overlap) when they show persistently negative quality despite sufficient trace load."
+    },
+    {
+      "id": "auto_tuning",
+      "label": "Auto-Tuning",
+      "derivation_level": 4,
+      "is_primitive": false,
+      "description": "Closed-loop parameter optimization: diagnose (self-graph) → perturb (suggest_perturbations) → evaluate (trial matrix) → adopt (apply_config). Uses COMPONENT_PARAMS to scope which parameters each component controls."
+    },
+    {
+      "id": "multiverse",
+      "label": "Multiverse Coupling",
+      "derivation_level": 4,
+      "is_primitive": false,
+      "description": "Orchestrates N≥2 coupled E₀ systems with independent landscapes. NoveltyGate: convergence without structural novelty = FAILURE (R_eff rises). Prevents consensus-induced stagnation. Implements Coupling Theorem: closed system cannot escape traps."
+    },
+    {
+      "id": "coupling_router",
+      "label": "Coupling Router",
+      "derivation_level": 4,
+      "is_primitive": false,
+      "description": "Dynamic partner selection for N>2 universes. RECOVERY mode: argmax trace_quality (best partner). EXPLORATION mode: argmax Δ (most different partner). Self-historizing coupling quality via CouplingSelfGraph."
+    },
+    {
+      "id": "cross_reflexion",
+      "label": "Cross-Reflexion",
+      "derivation_level": 4,
+      "is_primitive": false,
+      "description": "When Universe A is stuck, Universe B's experience informs hypothesis edges in A. Extracts Δ/R₀ medians from donor, generates new edges with coupling_discount (0.5). Scoped variant uses donor-side locality for targeted proposals."
+    },
+    {
+      "id": "dream_mode",
+      "label": "Dream Mode",
+      "derivation_level": 5,
+      "is_primitive": false,
+      "description": "Passive cross-domain pattern recognition. Computes edge fingerprints f(e)=(q,m,I), finds functional equivalences via Hungarian matching + WL recursive neighborhoods. Never mutates any domain. Feeds bridge hypotheses to cross-reflexion."
+    },
+    {
+      "id": "structural_entropy",
+      "label": "Structural Entropy",
+      "derivation_level": 5,
+      "is_primitive": false,
+      "description": "Two-type forgetting: (1) Non-inscription when outcome matches prediction (novelty < threshold). (2) Structural decay: low-anchor edges removed when dormant > τ. Prevents unbounded landscape growth and noise accumulation."
+    },
+    {
+      "id": "sleep_wake_cycle",
+      "label": "Sleep-Wake Cycle",
+      "derivation_level": 5,
+      "is_primitive": false,
+      "description": "Parameter-free oscillator: wake (navigate, build experience, T_s rises) → check dream_pressure=T_s/(T_s+μ) → sleep (dream_cycle consolidation + structural decay, T_s drops) → wake. Self-sustaining limit cycle."
+    },
+    {
+      "id": "perception_ontology",
+      "label": "Perception Ontology",
+      "derivation_level": 6,
+      "is_primitive": false,
+      "description": "Models human perception as learnable landscape: 10 visual + 5 language + 7 rendering primitives. Edges encode natural support (emphasis→contrast). Historization reveals which presentation strategies work. Perception tells HOW to interpret; observation tells WHAT to look at."
+    },
+    {
+      "id": "communication_intent",
+      "label": "Communication Intent",
+      "derivation_level": 6,
+      "is_primitive": false,
+      "description": "Detects 6 intent types from controller state: uncertainty (confused component), decision (transition chosen), pattern (trace growth), request (blocked), status (summary), anomaly (unexpected equivalence). Each intent carries urgency, subject, evidence."
+    },
+    {
+      "id": "observation_landscape",
+      "label": "Observation Landscape",
+      "derivation_level": 6,
+      "is_primitive": false,
+      "description": "Treats information about E₀'s running state as navigable domain. States encode scope (global/local) × depth (topology/field/dynamics/mechanics/interference). Same navigation primitives as any domain — E₀ observes itself the same way it observes anything."
+    },
+    {
+      "id": "curriculum_navigator",
+      "label": "Curriculum Navigator",
+      "derivation_level": 7,
+      "is_primitive": false,
+      "description": "Decomposes large landscapes into cumulative learning turns using derivation hierarchy. Detects equilibrium (T_s stable) as turn-completion signal. Transfers historization across turns. Optional dream consolidation between turns for knowledge stabilization."
+    }
+  ],
+  "edges": [
+    {
+      "from": "historization_engine",
+      "to": "greedy_navigation",
+      "type": "enables",
+      "delta": 0.4,
+      "resistance": 0.2,
+      "initial_U": 3,
+      "initial_F": 0,
+      "confidence": 1.0,
+      "derivation": "Greedy reads R_eff = R₀ + δ_H(U,F) from historization on every step."
+    },
+    {
+      "from": "historization_engine",
+      "to": "amplitude_overlay",
+      "type": "enables",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 3,
+      "initial_F": 0,
+      "confidence": 0.95,
+      "derivation": "Amplitude paths weighted by historized resistance."
+    },
+    {
+      "from": "historization_engine",
+      "to": "inertia_modulation",
+      "type": "enables",
+      "delta": 0.3,
+      "resistance": 0.2,
+      "initial_U": 3,
+      "initial_F": 0,
+      "confidence": 1.0,
+      "derivation": "Inertia factor I(e) computed from trace_load and trace_quality."
+    },
+    {
+      "from": "historization_engine",
+      "to": "overlap_modulation",
+      "type": "enables",
+      "delta": 0.3,
+      "resistance": 0.2,
+      "initial_U": 3,
+      "initial_F": 0,
+      "confidence": 1.0,
+      "derivation": "M_H reads edge velocities from historized traversals."
+    },
+    {
+      "from": "greedy_navigation",
+      "to": "historization_engine",
+      "type": "feeds",
+      "delta": 0.4,
+      "resistance": 0.2,
+      "initial_U": 3,
+      "initial_F": 0,
+      "confidence": 1.0,
+      "derivation": "Every greedy step inscribes outcome (SUCCESS/FAILURE) back into historization."
+    },
+    {
+      "from": "greedy_navigation",
+      "to": "escalation",
+      "type": "triggers",
+      "delta": 0.5,
+      "resistance": 0.3,
+      "initial_U": 3,
+      "initial_F": 0,
+      "confidence": 0.95,
+      "derivation": "No admissible edge triggers escalation: DEAD_END, FILTERED, EXHAUSTED, or OVERLOADED."
+    },
+    {
+      "from": "overlap_modulation",
+      "to": "greedy_navigation",
+      "type": "feeds",
+      "delta": 0.3,
+      "resistance": 0.2,
+      "initial_U": 3,
+      "initial_F": 0,
+      "confidence": 0.9,
+      "derivation": "Greedy divides S_eff by M_H — well-connected paths preferred."
+    },
+    {
+      "from": "inertia_modulation",
+      "to": "greedy_navigation",
+      "type": "feeds",
+      "delta": 0.3,
+      "resistance": 0.2,
+      "initial_U": 3,
+      "initial_F": 0,
+      "confidence": 0.9,
+      "derivation": "Greedy divides S_eff by I(e) — confused edges penalized."
+    },
+    {
+      "from": "amplitude_overlay",
+      "to": "greedy_navigation",
+      "type": "constrains",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 1,
+      "confidence": 0.8,
+      "derivation": "High-Δ amplitude override can override greedy selection. Born sampling breaks determinism."
+    },
+    {
+      "from": "escalation",
+      "to": "reflexive_edge_proposal",
+      "type": "triggers",
+      "delta": 0.5,
+      "resistance": 0.3,
+      "initial_U": 3,
+      "initial_F": 0,
+      "confidence": 0.9,
+      "derivation": "DEAD_END or FILTERED frontier triggers local edge proposal."
+    },
+    {
+      "from": "escalation",
+      "to": "multiverse",
+      "type": "triggers",
+      "delta": 0.6,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 0,
+      "confidence": 0.85,
+      "derivation": "OVERLOADED escalation requests peer consultation from coupled universe."
+    },
+    {
+      "from": "historization_engine",
+      "to": "reflexive_edge_proposal",
+      "type": "enables",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 3,
+      "initial_F": 0,
+      "confidence": 0.9,
+      "derivation": "Edge proposals extract Δ/R₀ patterns from high-quality historized edges."
+    },
+    {
+      "from": "reflexive_edge_proposal",
+      "to": "greedy_navigation",
+      "type": "feeds",
+      "delta": 0.5,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 0,
+      "confidence": 0.85,
+      "derivation": "Proposed edges expand the landscape — new paths for greedy to use."
+    },
+    {
+      "from": "greedy_navigation",
+      "to": "self_graph",
+      "type": "feeds",
+      "delta": 0.5,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 0,
+      "confidence": 0.9,
+      "derivation": "After each step, records which components participated and outcome."
+    },
+    {
+      "from": "amplitude_overlay",
+      "to": "self_graph",
+      "type": "feeds",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 0,
+      "confidence": 0.9,
+      "derivation": "Override events tracked: amplitude→amplitude edge accumulates U/F."
+    },
+    {
+      "from": "self_graph",
+      "to": "dual_reflection",
+      "type": "enables",
+      "delta": 0.4,
+      "resistance": 0.2,
+      "initial_U": 3,
+      "initial_F": 0,
+      "confidence": 0.95,
+      "derivation": "Dual reflection harvests self-graph trace data for component diagnosis."
+    },
+    {
+      "from": "dual_reflection",
+      "to": "greedy_navigation",
+      "type": "constrains",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 0,
+      "confidence": 0.85,
+      "derivation": "Recommends deactivation of harmful modulations — changes controller behavior."
+    },
+    {
+      "from": "dual_reflection",
+      "to": "auto_tuning",
+      "type": "enables",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 0,
+      "confidence": 0.8,
+      "derivation": "Component health diagnosis informs which parameters to perturb."
+    },
+    {
+      "from": "auto_tuning",
+      "to": "greedy_navigation",
+      "type": "constrains",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 0,
+      "confidence": 0.8,
+      "derivation": "Adopted parameter changes alter navigation behavior (thresholds, modes)."
+    },
+    {
+      "from": "self_graph",
+      "to": "auto_tuning",
+      "type": "feeds",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 0,
+      "confidence": 0.85,
+      "derivation": "COMPONENT_PARAMS for sensitivity analysis derived from self-graph components."
+    },
+    {
+      "from": "multiverse",
+      "to": "cross_reflexion",
+      "type": "enables",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 3,
+      "initial_F": 0,
+      "confidence": 0.9,
+      "derivation": "Cross-reflexion requires multiple universes to transfer experience between."
+    },
+    {
+      "from": "multiverse",
+      "to": "coupling_router",
+      "type": "enables",
+      "delta": 0.3,
+      "resistance": 0.2,
+      "initial_U": 3,
+      "initial_F": 0,
+      "confidence": 0.9,
+      "derivation": "Router selects which universe pairs communicate."
+    },
+    {
+      "from": "coupling_router",
+      "to": "cross_reflexion",
+      "type": "feeds",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 0,
+      "confidence": 0.9,
+      "derivation": "Router selects donor universe; cross-reflexion executes the transfer."
+    },
+    {
+      "from": "cross_reflexion",
+      "to": "reflexive_edge_proposal",
+      "type": "feeds",
+      "delta": 0.5,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 0,
+      "confidence": 0.85,
+      "derivation": "Donor patterns parameterize edge proposals with coupling_discount."
+    },
+    {
+      "from": "historization_engine",
+      "to": "dream_mode",
+      "type": "enables",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 3,
+      "initial_F": 0,
+      "confidence": 0.95,
+      "derivation": "Edge fingerprints f(e)=(q,m,I) computed from historization data."
+    },
+    {
+      "from": "dream_mode",
+      "to": "cross_reflexion",
+      "type": "feeds",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 0,
+      "confidence": 0.8,
+      "derivation": "Bridge hypotheses from dream equivalences → cross-propose_edges."
+    },
+    {
+      "from": "dream_mode",
+      "to": "coupling_router",
+      "type": "feeds",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 0,
+      "confidence": 0.8,
+      "derivation": "Dream quality signals auto-bias partner selection weights."
+    },
+    {
+      "from": "historization_engine",
+      "to": "structural_entropy",
+      "type": "enables",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 3,
+      "initial_F": 0,
+      "confidence": 0.9,
+      "derivation": "T_s computed from historization frequencies. Anchor scores from trace_quality + trace_load."
+    },
+    {
+      "from": "structural_entropy",
+      "to": "historization_engine",
+      "type": "constrains",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 0,
+      "confidence": 0.85,
+      "derivation": "Inscription threshold gates what gets inscribed. Decay removes edges from historization."
+    },
+    {
+      "from": "structural_entropy",
+      "to": "sleep_wake_cycle",
+      "type": "triggers",
+      "delta": 0.4,
+      "resistance": 0.2,
+      "initial_U": 3,
+      "initial_F": 0,
+      "confidence": 0.95,
+      "derivation": "T_s drives dream_pressure = T_s/(T_s+μ). Pressure > 0.5 triggers sleep."
+    },
+    {
+      "from": "sleep_wake_cycle",
+      "to": "dream_mode",
+      "type": "triggers",
+      "delta": 0.4,
+      "resistance": 0.2,
+      "initial_U": 3,
+      "initial_F": 0,
+      "confidence": 0.95,
+      "derivation": "Sleep phase runs dream_cycle: consolidation + bridge proposal."
+    },
+    {
+      "from": "sleep_wake_cycle",
+      "to": "structural_entropy",
+      "type": "triggers",
+      "delta": 0.4,
+      "resistance": 0.2,
+      "initial_U": 3,
+      "initial_F": 0,
+      "confidence": 0.95,
+      "derivation": "Sleep phase runs structural decay — prunes low-anchor edges."
+    },
+    {
+      "from": "sleep_wake_cycle",
+      "to": "greedy_navigation",
+      "type": "triggers",
+      "delta": 0.4,
+      "resistance": 0.2,
+      "initial_U": 3,
+      "initial_F": 0,
+      "confidence": 0.95,
+      "derivation": "Wake phase: controller navigates, builds experience, T_s rises."
+    },
+    {
+      "from": "greedy_navigation",
+      "to": "communication_intent",
+      "type": "feeds",
+      "delta": 0.5,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 0,
+      "confidence": 0.9,
+      "derivation": "Step outcomes, frontier state, and trace patterns → intent detection."
+    },
+    {
+      "from": "self_graph",
+      "to": "communication_intent",
+      "type": "feeds",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 0,
+      "confidence": 0.85,
+      "derivation": "Component health data → uncertainty and anomaly intents."
+    },
+    {
+      "from": "communication_intent",
+      "to": "perception_ontology",
+      "type": "feeds",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 0,
+      "confidence": 0.85,
+      "derivation": "UI-Schema Emitter maps intents to perception primitives → UISpec."
+    },
+    {
+      "from": "perception_ontology",
+      "to": "historization_engine",
+      "type": "feeds",
+      "delta": 0.5,
+      "resistance": 0.4,
+      "initial_U": 2,
+      "initial_F": 0,
+      "confidence": 0.8,
+      "derivation": "Human feedback (rate command) historizes perception edges — closes the learning loop."
+    },
+    {
+      "from": "greedy_navigation",
+      "to": "observation_landscape",
+      "type": "feeds",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 0,
+      "confidence": 0.9,
+      "derivation": "Navigation state projected into O-Landscape for self-observation."
+    },
+    {
+      "from": "observation_landscape",
+      "to": "communication_intent",
+      "type": "feeds",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 0,
+      "confidence": 0.8,
+      "derivation": "Observation depth/scope informs what to communicate about."
+    },
+    {
+      "from": "curriculum_navigator",
+      "to": "greedy_navigation",
+      "type": "constrains",
+      "delta": 0.5,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 0,
+      "confidence": 0.9,
+      "derivation": "Curriculum scopes sub-landscapes per learning turn — constrains navigation domain."
+    },
+    {
+      "from": "structural_entropy",
+      "to": "curriculum_navigator",
+      "type": "feeds",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 0,
+      "confidence": 0.9,
+      "derivation": "T_s equilibrium detection signals turn completion."
+    },
+    {
+      "from": "curriculum_navigator",
+      "to": "sleep_wake_cycle",
+      "type": "triggers",
+      "delta": 0.4,
+      "resistance": 0.3,
+      "initial_U": 2,
+      "initial_F": 0,
+      "confidence": 0.8,
+      "derivation": "Optional dream consolidation between curriculum turns (C156)."
+    },
+    {
+      "from": "historization_engine",
+      "to": "curriculum_navigator",
+      "type": "enables",
+      "delta": 0.4,
+      "resistance": 0.2,
+      "initial_U": 3,
+      "initial_F": 0,
+      "confidence": 0.9,
+      "derivation": "Historization transfer: traces carry forward into expanded sub-landscapes."
+    }
+  ]
+}

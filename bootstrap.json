@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C220",
-    "latest_commit_hash": "pending",
-    "latest_commit_msg": "C220: Self-Knowledge Seed \u2014 E\u2080 learns itself to 98% coverage, exports as warm-start JSON. 3-phase learning: standard cycle \u2192 targeted passes \u2192 direct inscription. Snapshot codec fix: confirmations/surprises Edge keys. build_session warm start via self_knowledge_path (27 tests, 4990 total)",
-    "test_count": 4990,
+    "latest_commit": "C221",
+    "latest_commit_hash": "cd8d25a",
+    "latest_commit_msg": "C221: Mechanism Domain (M:) \u2014 E\u2080 learns HOW it works. 20 mechanism nodes (Historization Engine through Curriculum Navigator), 43 typed intra-edges (enables/feeds/triggers/constrains), 108 cross-domain bridges to Canon and Bootstrap. 4-domain unified landscape: 168 nodes, 621 edges. Per-domain assessment + crossing tracking for M:. (15 tests, 5005 total)",
+    "test_count": 5005,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
     "module_count": "77 production + 10 benchmarks + 17 demos + 69 explorations + 127 test files",

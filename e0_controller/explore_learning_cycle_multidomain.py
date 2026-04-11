@@ -169,11 +169,15 @@ class MultiDomainAssessment:
     canon_visited: int
     bootstrap_visited: int
     en_visited: int
+    # M: Mechanism domain (C221)
+    mech_coverage: float = 0.0
+    mech_nodes: int = 0
+    mech_visited: int = 0
 
 
 @dataclass
 class MultiDomainRoundResult:
-    """Result of one learning round across 3 domains."""
+    """Result of one learning round across 4 domains."""
 
     round_num: int
     mode: str
@@ -193,6 +197,10 @@ class MultiDomainRoundResult:
     canon_bootstrap_crossings: int
     # C206: which edge types were traversed
     type_usage: Dict[str, int] = field(default_factory=dict)
+    # C221: Mechanism crossings
+    mech_canon_crossings: int = 0
+    mech_bootstrap_crossings: int = 0
+    mech_en_crossings: int = 0
 
 
 # ── Phase 1: ASSESS ────────────────────────────────────────────────────
@@ -235,10 +243,12 @@ def assess(landscape, unified_nodes) -> MultiDomainAssessment:
     canon_all = {n for n in landscape.states if n.startswith("C:")}
     bootstrap_all = {n for n in landscape.states if n.startswith("B:")}
     en_all = {n for n in landscape.states if n.startswith("EN:")}
+    mech_all = {n for n in landscape.states if n.startswith("M:")}
 
     canon_vis = len(visited & canon_all)
     bootstrap_vis = len(visited & bootstrap_all)
     en_vis = len(visited & en_all)
+    mech_vis = len(visited & mech_all)
 
     T_s = structural_temperature(hist)
 
@@ -260,6 +270,9 @@ def assess(landscape, unified_nodes) -> MultiDomainAssessment:
         canon_visited=canon_vis,
         bootstrap_visited=bootstrap_vis,
         en_visited=en_vis,
+        mech_coverage=mech_vis / max(1, len(mech_all)),
+        mech_nodes=len(mech_all),
+        mech_visited=mech_vis,
     )
 
 
@@ -338,11 +351,13 @@ BRIDGE_TYPE_BONUS = {
 
 
 def _domain_of(node_id: str) -> str:
-    """Return domain prefix: 'canon', 'bootstrap', or 'en'."""
+    """Return domain prefix: 'canon', 'bootstrap', 'en', or 'mechanism'."""
     if node_id.startswith("C:"):
         return "canon"
     elif node_id.startswith("EN:"):
         return "en"
+    elif node_id.startswith("M:"):
+        return "mechanism"
     else:
         return "bootstrap"
 
@@ -409,7 +424,8 @@ def navigate(landscape, unified_nodes, mode: str, steps: int,
     current = start
     path = [current]
     visited_count: Dict[str, int] = {}
-    crossings = {"en_canon": 0, "en_bootstrap": 0, "canon_bootstrap": 0}
+    crossings = {"en_canon": 0, "en_bootstrap": 0, "canon_bootstrap": 0,
+                  "mech_canon": 0, "mech_bootstrap": 0, "mech_en": 0}
     total_crossings = 0
     type_usage: Dict[str, int] = {}  # C206: track which edge types were chosen
 
@@ -464,6 +480,12 @@ def navigate(landscape, unified_nodes, mode: str, steps: int,
                 crossings["en_bootstrap"] += 1
             elif pair == ("bootstrap", "canon"):
                 crossings["canon_bootstrap"] += 1
+            elif pair == ("canon", "mechanism"):
+                crossings["mech_canon"] += 1
+            elif pair == ("bootstrap", "mechanism"):
+                crossings["mech_bootstrap"] += 1
+            elif pair == ("en", "mechanism"):
+                crossings["mech_en"] += 1
 
         # Historize with contextual inscription (C207)
         if landscape.has_edge(current, nbr):
@@ -513,6 +535,9 @@ def navigate(landscape, unified_nodes, mode: str, steps: int,
         "en_canon_crossings": crossings["en_canon"],
         "en_bootstrap_crossings": crossings["en_bootstrap"],
         "canon_bootstrap_crossings": crossings["canon_bootstrap"],
+        "mech_canon_crossings": crossings["mech_canon"],
+        "mech_bootstrap_crossings": crossings["mech_bootstrap"],
+        "mech_en_crossings": crossings["mech_en"],
         "new_edges": new_edges,
         "type_usage": type_usage,
     }
@@ -651,9 +676,13 @@ def consolidate(round_result: MultiDomainRoundResult, new_edges: List[Dict],
         "en_canon_crossings": round_result.en_canon_crossings,
         "en_bootstrap_crossings": round_result.en_bootstrap_crossings,
         "canon_bootstrap_crossings": round_result.canon_bootstrap_crossings,
+        "mech_canon_crossings": round_result.mech_canon_crossings,
+        "mech_bootstrap_crossings": round_result.mech_bootstrap_crossings,
+        "mech_en_crossings": round_result.mech_en_crossings,
         "canon_coverage": round(a.canon_coverage, 4),
         "bootstrap_coverage": round(a.bootstrap_coverage, 4),
         "en_coverage": round(a.en_coverage, 4),
+        "mech_coverage": round(a.mech_coverage, 4),
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
     ls["multidomain_history"]["rounds"].append(history_entry)
@@ -667,17 +696,113 @@ def consolidate(round_result: MultiDomainRoundResult, new_edges: List[Dict],
     }
 
 
+# ── M: ↔ Canon Bridges ─────────────────────────────────────────────────
+
+# Mechanism nodes → Canon theory concepts they implement.
+# Each mechanism IS the implementation of one or more Canon concepts.
+MECH_CANON_BRIDGE = {
+    "historization_engine":      ["C:historization", "C:trace_quality", "C:trace_load"],
+    "greedy_navigation":         ["C:greedy_navigation", "C:tension"],
+    "amplitude_overlay":         ["C:amplitude_override", "C:born_sampling"],
+    "escalation":                ["C:escalation"],
+    "overlap_modulation":        ["C:overlap_modulation"],
+    "inertia_modulation":        ["C:inertia_modulation"],
+    "reflexive_edge_proposal":   ["C:reflexion_reactive", "C:reflexion_proactive"],
+    "self_graph":                ["C:self_graph"],
+    "dual_reflection":           ["C:reflexivity"],
+    "auto_tuning":               ["C:auto_tuning"],
+    "multiverse":                ["C:multiverse", "C:novelty_gate"],
+    "coupling_router":           ["C:coupling_router", "C:asymmetric_coupling"],
+    "cross_reflexion":           ["C:cross_reflexion", "C:scoped_reflexion"],
+    "dream_mode":                ["C:dream_mode", "C:edge_fingerprint",
+                                  "C:functional_equivalence", "C:bridge_hypothesis"],
+    "structural_entropy":        ["C:structural_temperature", "C:inscription_threshold",
+                                  "C:anchor_analysis", "C:structural_decay"],
+    "sleep_wake_cycle":          ["C:sleep_wake_cycle", "C:dream_pressure"],
+    "perception_ontology":       ["C:perception_ontology"],
+    "communication_intent":      ["C:communication_intent"],
+    "observation_landscape":     ["C:observation"],
+    "curriculum_navigator":      ["C:curriculum_navigator"],
+}
+
+# Mechanism nodes → Bootstrap items they relate to.
+MECH_BOOTSTRAP_BRIDGE = {
+    "historization_engine":      ["B:WP-1"],   # "Historization is dominant"
+    "greedy_navigation":         ["B:L4"],     # Controller layer
+    "amplitude_overlay":         ["B:GT-5"],   # Amplitude Override Trap
+    "escalation":                ["B:L4"],     # Controller layer
+    "reflexive_edge_proposal":   ["B:GT-3"],   # Greedy Matching Trap → reflexion solved it
+    "self_graph":                ["B:L5"],     # Reflexion layer
+    "dual_reflection":           ["B:L5"],     # Reflexion layer
+    "auto_tuning":               ["B:L7"],     # Infrastructure layer
+    "multiverse":                ["B:GT-1"],   # Isolated Agents Trap
+    "coupling_router":           ["B:L6"],     # Multi-System layer
+    "cross_reflexion":           ["B:L6"],     # Multi-System layer
+    "dream_mode":                ["B:BT-4", "B:L9"],  # Dual Nature breakthrough + Dream layer
+    "structural_entropy":        ["B:L10"],    # Structural Entropy layer
+    "sleep_wake_cycle":          ["B:L11"],    # Sleep-Wake layer
+    "perception_ontology":       ["B:L12"],    # Human Communication layer
+    "communication_intent":      ["B:L12"],    # Human Communication layer
+    "observation_landscape":     ["B:L8"],     # Observation layer
+    "curriculum_navigator":      ["B:L7"],     # Infrastructure layer
+}
+
+
+def build_mech_bridges(mech_info, unified_nodes) -> List[Dict]:
+    """Build cross-domain bridges from M: nodes to Canon and Bootstrap.
+
+    Each bridge is bidirectional: M:x → C:y and C:y → M:x.
+    """
+    bridges = []
+
+    def _add(src, tgt, delta=0.4, resistance=0.3, derivation=""):
+        if src in unified_nodes and tgt in unified_nodes:
+            bridges.append({
+                "from": src, "to": tgt,
+                "delta": delta, "resistance": resistance,
+                "confidence": 0.7,
+                "derivation": derivation or f"Mechanism bridge: {src} → {tgt}",
+                "bridge_type": "mech_semantic",
+            })
+            bridges.append({
+                "from": tgt, "to": src,
+                "delta": delta, "resistance": resistance,
+                "confidence": 0.7,
+                "derivation": derivation or f"Mechanism bridge: {tgt} → {src}",
+                "bridge_type": "mech_semantic",
+            })
+
+    # M: → C: bridges
+    for mech_id, canon_targets in MECH_CANON_BRIDGE.items():
+        m_id = f"M:{mech_id}"
+        for target in canon_targets:
+            _add(m_id, target, 0.4, 0.3,
+                 f"Mechanism '{mech_id}' implements Canon concept {target}")
+
+    # M: → B: bridges
+    for mech_id, bs_targets in MECH_BOOTSTRAP_BRIDGE.items():
+        m_id = f"M:{mech_id}"
+        for target in bs_targets:
+            tgt = target if target.startswith("B:") else f"B:{target}"
+            _add(m_id, tgt, 0.5, 0.4,
+                 f"Mechanism '{mech_id}' relates to Bootstrap {target}")
+
+    return bridges
+
+
 # ── Landscape Construction ──────────────────────────────────────────────
 
 
-def build_multidomain_landscape(fresh_en: bool = True, fresh_canon: bool = True
+def build_multidomain_landscape(fresh_en: bool = True, fresh_canon: bool = True,
+                                fresh_mech: bool = True,
                                 ) -> Tuple[Any, Dict, Dict[str, int]]:
-    """Build unified Canon + Bootstrap + EN landscape.
+    """Build unified Canon + Bootstrap + EN + Mechanism landscape.
 
-    Three domains in one navigable space:
+    Four domains in one navigable space:
     - Canon (C:): Ontodynamics theory — what E₀ IS
     - Bootstrap (B:): Project memory — what E₀ DOES
     - EN (EN:): English vocabulary — what E₀ can LEARN about
+    - Mechanism (M:): Functional subsystems — HOW E₀ works
 
     Returns (landscape, unified_nodes, stats).
     """
@@ -739,6 +864,48 @@ def build_multidomain_landscape(fresh_en: bool = True, fresh_canon: bool = True
     en_bridges = build_en_bridges(en.info, unified_nodes)
     unified_edges.extend(en_bridges)
 
+    # ── M: Mechanism domain (C221) ──────────────────────────────────────
+    mech = load_canon("mechanism_e0")
+    mech_node_count = 0
+    for n in mech.info.nodes:
+        nid = f"M:{n.id}"
+        unified_nodes[nid] = {
+            "type": "mechanism",
+            "label": n.description[:60] if n.description else n.id,
+            "description": n.description or "",
+            "derivation_level": n.derivation_level,
+            "is_primitive": n.is_primitive,
+            "domain": "mechanism",
+            "U": 0.0 if fresh_mech else 1.0,
+            "F": 0.0,
+        }
+        mech_node_count += 1
+
+    # Mechanism intra-domain edges (with relation type from spec)
+    mech_edge_count = 0
+    mech_spec = load_canon_spec("mechanism_e0")
+    mech_edge_types = {}
+    for e in mech_spec.get("edges", []):
+        mech_edge_types[(e["from"], e["to"])] = e.get("type", "")
+    for edge_info in mech.info.edges:
+        edge_dict = {
+            "from": f"M:{edge_info.source}",
+            "to": f"M:{edge_info.target}",
+            "delta": 0.3,
+            "resistance": 0.2,
+            "confidence": 0.9,
+            "derivation": f"M intra: {edge_info.derivation}",
+        }
+        rtype = mech_edge_types.get((edge_info.source, edge_info.target), "")
+        if rtype:
+            edge_dict["relation_type"] = rtype
+        unified_edges.append(edge_dict)
+        mech_edge_count += 1
+
+    # Mechanism↔Canon and Mechanism↔Bootstrap bridges
+    mech_bridges = build_mech_bridges(mech.info, unified_nodes)
+    unified_edges.extend(mech_bridges)
+
     # Zero Canon traces for fresh exploration
     if fresh_canon:
         for nid in unified_nodes:
@@ -756,9 +923,11 @@ def build_multidomain_landscape(fresh_en: bool = True, fresh_canon: bool = True
         "canon_nodes": sum(1 for n in unified_nodes if n.startswith("C:")),
         "bootstrap_nodes": sum(1 for n in unified_nodes if n.startswith("B:")),
         "en_nodes": en_node_count,
+        "mech_nodes": mech_node_count,
         "total_nodes": len(unified_nodes),
         "canon_bootstrap_bridges": len(cb_bridges),
         "en_bridges": len(en_bridges),
+        "mech_bridges": len(mech_bridges),
         "total_edges": len(unified_edges),
     }
 
@@ -1031,6 +1200,9 @@ def run_multidomain_cycle(
             print(f"    EN↔Canon:     {nav['en_canon_crossings']}")
             print(f"    EN↔Bootstrap: {nav['en_bootstrap_crossings']}")
             print(f"    C↔B:          {nav['canon_bootstrap_crossings']}")
+            print(f"    M↔Canon:      {nav['mech_canon_crossings']}")
+            print(f"    M↔Bootstrap:  {nav['mech_bootstrap_crossings']}")
+            print(f"    M↔EN:         {nav['mech_en_crossings']}")
             print(f"    New edges:    {len(nav['new_edges'])}")
 
         # Phase 4: VALIDATE
@@ -1058,6 +1230,9 @@ def run_multidomain_cycle(
             en_bootstrap_crossings=nav["en_bootstrap_crossings"],
             canon_bootstrap_crossings=nav["canon_bootstrap_crossings"],
             type_usage=nav.get("type_usage", {}),
+            mech_canon_crossings=nav.get("mech_canon_crossings", 0),
+            mech_bootstrap_crossings=nav.get("mech_bootstrap_crossings", 0),
+            mech_en_crossings=nav.get("mech_en_crossings", 0),
         )
         history.append(result)
 
@@ -1124,6 +1299,9 @@ def _print_summary(history: List[MultiDomainRoundResult],
     total_en_canon = sum(r.en_canon_crossings for r in history)
     total_en_bs = sum(r.en_bootstrap_crossings for r in history)
     total_cb = sum(r.canon_bootstrap_crossings for r in history)
+    total_mc = sum(r.mech_canon_crossings for r in history)
+    total_mb = sum(r.mech_bootstrap_crossings for r in history)
+    total_me = sum(r.mech_en_crossings for r in history)
 
     first = history[0].assessment_before
     last = history[-1].assessment_after
@@ -1135,6 +1313,9 @@ def _print_summary(history: List[MultiDomainRoundResult],
     print(f"    EN↔Canon:     {total_en_canon}")
     print(f"    EN↔Bootstrap: {total_en_bs}")
     print(f"    Canon↔Boot:   {total_cb}")
+    print(f"    M↔Canon:      {total_mc}")
+    print(f"    M↔Bootstrap:  {total_mb}")
+    print(f"    M↔EN:         {total_me}")
     print()
     print(f"  Coverage:       {first.coverage:.1%} → {last.coverage:.1%} "
           f"(Δ={last.coverage - first.coverage:+.1%})")
@@ -1142,6 +1323,7 @@ def _print_summary(history: List[MultiDomainRoundResult],
     print(f"  Canon:          {first.canon_coverage:.1%} → {last.canon_coverage:.1%}")
     print(f"  Bootstrap:      {first.bootstrap_coverage:.1%} → {last.bootstrap_coverage:.1%}")
     print(f"  EN:             {first.en_coverage:.1%} → {last.en_coverage:.1%}")
+    print(f"  Mechanism:      {first.mech_coverage:.1%} → {last.mech_coverage:.1%}")
 
     print(f"\n  Round-by-round:")
     print(f"  {'#':>3} {'Mode':>10} {'Stps':>5} {'Cov':>6} {'ΔCov':>6} "
