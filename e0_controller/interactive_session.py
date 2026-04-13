@@ -1239,6 +1239,7 @@ E₀ Interactive Session — Commands
   inspect <s> <t>  Deep view of edge s→t
   rate <i> <rating> Rate panel i (helpful / not / confused)
   save [path]      Save session state to disk
+  regenerate       Regenerate seed from current session + discoveries
   summary          Full cycle summary so far
   help             Show this help
   quit / exit      End session (auto-saves)
@@ -1492,6 +1493,136 @@ def cmd_save(state: SessionState, path: Optional[str] = None) -> str:
     )
 
 
+# ── Seed Regeneration (C227) ──────────────────────────────────────────
+
+
+def regenerate_seed(
+    state: SessionState,
+    confidence_threshold: float = 0.4,
+    path: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Regenerate the self-knowledge seed from the current session.
+
+    Three-step process:
+      1. Materialize qualifying discovered_edges from learning_state.json
+         into the session landscape (edges with confidence ≥ threshold
+         that don't already exist).
+      2. Re-assess to compute fresh coverage stats.
+      3. Export via export_seed format (full snapshot).
+
+    This closes the multi-session learning loop: Session A navigates,
+    discovers edges → learning_state.json. Session B loads seed, runs
+    more rounds. regenerate_seed folds A's + B's discoveries back into
+    the seed so Session C starts with the union.
+
+    Returns a result dict with stats about the regeneration.
+    """
+    from e0_controller.explore_bootstrap_landscape import load_learning_state
+    from e0_controller.explore_self_knowledge import (
+        SEED_PATH, SelfKnowledgeResult, export_seed,
+    )
+
+    path = path or SEED_PATH
+    landscape = state.landscape
+
+    # ── Step 1: Materialize discovered edges ──
+    ls = load_learning_state()
+    discovered = ls.get("discovered_edges", {}).get("edges", [])
+    materialized = 0
+    skipped_existing = 0
+    skipped_low_conf = 0
+
+    for edge_spec in discovered:
+        src = edge_spec.get("from", "")
+        tgt = edge_spec.get("to", "")
+        conf = edge_spec.get("confidence", 0.0)
+
+        if conf < confidence_threshold:
+            skipped_low_conf += 1
+            continue
+
+        if not (src in landscape.states and tgt in landscape.states):
+            continue  # nodes not in this landscape
+
+        if landscape.has_edge(src, tgt):
+            skipped_existing += 1
+            continue
+
+        delta = edge_spec.get("delta", 0.5)
+        resistance = edge_spec.get("resistance", 1.0)
+        landscape.add_edge(
+            src, tgt,
+            delta=delta,
+            resistance=resistance,
+            relation_type="discovered",
+        )
+        materialized += 1
+
+    # ── Step 2: Re-assess ──
+    a = assess(landscape, state.unified_nodes)
+
+    # ── Step 3: Export ──
+    result = SelfKnowledgeResult(
+        rounds=state.round_num,
+        targeted_passes=0,
+        final_coverage=a.coverage,
+        canon_coverage=a.canon_coverage,
+        bootstrap_coverage=a.bootstrap_coverage,
+        mech_coverage=a.mech_coverage,
+        en_coverage=a.en_coverage,
+        total_nodes=a.total_nodes,
+        total_edges=landscape.edge_count(),
+        shortcut_edges_created=materialized,
+        converged=a.coverage >= 0.95,
+    )
+
+    seed_stats = {
+        "total_nodes": a.total_nodes,
+        "total_edges": landscape.edge_count(),
+        "canon_nodes": a.canon_nodes,
+        "bootstrap_nodes": a.bootstrap_nodes,
+        "en_nodes": a.en_nodes,
+    }
+
+    saved_path = export_seed(
+        landscape, state.unified_nodes, seed_stats, result, path,
+    )
+
+    return {
+        "path": saved_path,
+        "materialized_edges": materialized,
+        "skipped_existing": skipped_existing,
+        "skipped_low_confidence": skipped_low_conf,
+        "total_discovered": len(discovered),
+        "coverage": round(a.coverage, 4),
+        "canon_coverage": round(a.canon_coverage, 4),
+        "bootstrap_coverage": round(a.bootstrap_coverage, 4),
+        "mech_coverage": round(a.mech_coverage, 4),
+        "en_coverage": round(a.en_coverage, 4),
+        "total_nodes": a.total_nodes,
+        "total_edges": landscape.edge_count(),
+    }
+
+
+def cmd_regenerate(state: SessionState, path: Optional[str] = None) -> str:
+    """Regenerate the self-knowledge seed and return status."""
+    result = regenerate_seed(state, path=path)
+    lines = [
+        f"Seed regenerated: {result['path']}",
+        f"  Coverage: {result['coverage']:.1%} "
+        f"(Canon {result['canon_coverage']:.1%}, "
+        f"Bootstrap {result['bootstrap_coverage']:.1%}, "
+        f"Mech {result['mech_coverage']:.1%})",
+        f"  Nodes: {result['total_nodes']}, "
+        f"Edges: {result['total_edges']}",
+        f"  Discovered edges materialized: "
+        f"{result['materialized_edges']}/{result['total_discovered']} "
+        f"(skipped: {result['skipped_existing']} existing, "
+        f"{result['skipped_low_confidence']} low confidence)",
+    ]
+    return "\n".join(lines)
+
+
 def cmd_help() -> str:
     """Show help text."""
     return HELP_TEXT.strip()
@@ -1659,6 +1790,9 @@ def dispatch(state: SessionState, user_input: str) -> Optional[str]:
 
     if cmd == "save":
         return cmd_save(state, arg if arg else None)
+
+    if cmd == "regenerate":
+        return cmd_regenerate(state, arg if arg else None)
 
     # Unrecognized command → treat entire input as free-text task
     return cmd_task(state, raw)

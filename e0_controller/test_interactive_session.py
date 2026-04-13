@@ -1,4 +1,4 @@
-"""Tests for E₀ Interactive Text Session (C213–C226).
+"""Tests for E₀ Interactive Text Session (C213–C227).
 
 Validates the REPL dispatch, session state management,
 each command's output through the communication pipeline,
@@ -8,8 +8,10 @@ C217 Human Peer Input (task command + node matching),
 C218 LLM Peer Structuring (propose_domain_graph → inject → navigate),
 C219 Semantic Surface + 3-Tier Task Processing,
 C225 Session Persistence (save/load/auto-detect),
-and C226 Session History + Server Lifecycle (history round-trip,
-perception write-back, server auto-save).
+C226 Session History + Server Lifecycle (history round-trip,
+perception write-back, server auto-save),
+and C227 Seed Regeneration (regenerate_seed, cmd_regenerate,
+discovered_edge materialization, multi-session learning loop).
 """
 
 from __future__ import annotations
@@ -37,6 +39,7 @@ from e0_controller.interactive_session import (
     cmd_help,
     cmd_inspect,
     cmd_rate,
+    cmd_regenerate,
     cmd_run,
     cmd_save,
     cmd_status,
@@ -45,6 +48,7 @@ from e0_controller.interactive_session import (
     cmd_why,
     dispatch,
     load_session,
+    regenerate_seed,
     save_session,
 )
 from e0_controller.feedback import HumanAction
@@ -1760,3 +1764,222 @@ class TestServerAutoSave:
         import e0_controller.interactive_server as srv
         assert hasattr(srv, "save_session")
         assert callable(srv.save_session)
+
+
+# ── C227: Seed Regeneration ────────────────────────────────────────────
+
+
+class TestRegenerateSeed:
+    """C227: regenerate_seed folds session + discoveries into a new seed."""
+
+    def test_regenerate_creates_file(self, session, tmp_path):
+        """regenerate_seed writes a valid seed file."""
+        path = str(tmp_path / "regen_seed.json")
+        result = regenerate_seed(session, path=path)
+        assert os.path.exists(result["path"])
+
+    def test_regenerate_returns_stats(self, session, tmp_path):
+        """Result dict contains all required keys."""
+        path = str(tmp_path / "regen_stats.json")
+        result = regenerate_seed(session, path=path)
+        for key in ["path", "materialized_edges", "skipped_existing",
+                     "skipped_low_confidence", "total_discovered",
+                     "coverage", "total_nodes", "total_edges"]:
+            assert key in result, f"Missing key: {key}"
+
+    def test_regenerate_valid_seed_format(self, session, tmp_path):
+        """Output file is a valid seed loadable by load_seed."""
+        from e0_controller.explore_self_knowledge import load_seed
+        path = str(tmp_path / "regen_valid.json")
+        regenerate_seed(session, path=path)
+        landscape, unified_nodes, meta = load_seed(path)
+        assert len(landscape.states) > 100
+        assert len(unified_nodes) > 100
+
+    def test_regenerate_coverage_in_meta(self, session, tmp_path):
+        """Seed meta has coverage stats."""
+        import json
+        path = str(tmp_path / "regen_meta.json")
+        regenerate_seed(session, path=path)
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        assert "coverage" in data["meta"]
+        assert data["meta"]["coverage"] > 0.5
+
+    def test_regenerate_after_run(self, session, tmp_path):
+        """Seed regenerated after rounds has higher edge count."""
+        s = build_session(steps_per_round=10)
+        edges_before = s.landscape.edge_count()
+        cmd_run(s, 2)
+        path = str(tmp_path / "regen_run.json")
+        result = regenerate_seed(s, path=path)
+        assert result["total_edges"] >= edges_before
+
+
+class TestRegenerateMaterialization:
+    """C227: discovered_edges from learning_state.json get materialized."""
+
+    def test_materializes_discovered_edges(self, session, tmp_path, monkeypatch):
+        """Qualifying discovered_edges are added to landscape."""
+        import e0_controller.explore_bootstrap_landscape as ebl
+        import json
+
+        # Create a fake learning_state with discoverable edges
+        # Pick two nodes that exist but aren't connected
+        nodes = list(session.landscape.states)[:2]
+        src, tgt = nodes[0], nodes[1]
+
+        ls = {
+            "discovered_edges": {
+                "edges": [{
+                    "from": src, "to": tgt,
+                    "delta": 0.5, "resistance": 1.0,
+                    "confidence": 0.8,
+                }]
+            }
+        }
+        ls_path = str(tmp_path / "learning_state.json")
+        with open(ls_path, "w", encoding="utf-8") as f:
+            json.dump(ls, f)
+        monkeypatch.setattr(ebl, "LEARNING_STATE_PATH", ls_path)
+
+        had_edge_before = session.landscape.has_edge(src, tgt)
+        path = str(tmp_path / "regen_mat.json")
+        result = regenerate_seed(session, path=path)
+
+        if had_edge_before:
+            assert result["skipped_existing"] >= 1
+        else:
+            assert result["materialized_edges"] >= 1
+            assert session.landscape.has_edge(src, tgt)
+
+    def test_skips_low_confidence(self, session, tmp_path, monkeypatch):
+        """Edges below confidence threshold are skipped."""
+        import e0_controller.explore_bootstrap_landscape as ebl
+        import json
+
+        nodes = list(session.landscape.states)[:2]
+        ls = {
+            "discovered_edges": {
+                "edges": [{
+                    "from": nodes[0], "to": nodes[1],
+                    "delta": 0.5, "resistance": 1.0,
+                    "confidence": 0.1,  # Below default 0.4
+                }]
+            }
+        }
+        ls_path = str(tmp_path / "learning_state.json")
+        with open(ls_path, "w", encoding="utf-8") as f:
+            json.dump(ls, f)
+        monkeypatch.setattr(ebl, "LEARNING_STATE_PATH", ls_path)
+
+        path = str(tmp_path / "regen_skip.json")
+        result = regenerate_seed(session, path=path)
+        assert result["skipped_low_confidence"] >= 1
+
+    def test_empty_learning_state(self, session, tmp_path, monkeypatch):
+        """No crash when learning_state has no discovered_edges."""
+        import e0_controller.explore_bootstrap_landscape as ebl
+        import json
+
+        ls = {}
+        ls_path = str(tmp_path / "learning_state_empty.json")
+        with open(ls_path, "w", encoding="utf-8") as f:
+            json.dump(ls, f)
+        monkeypatch.setattr(ebl, "LEARNING_STATE_PATH", ls_path)
+
+        path = str(tmp_path / "regen_empty.json")
+        result = regenerate_seed(session, path=path)
+        assert result["materialized_edges"] == 0
+        assert result["total_discovered"] == 0
+
+    def test_custom_confidence_threshold(self, session, tmp_path, monkeypatch):
+        """Custom confidence_threshold filters correctly."""
+        import e0_controller.explore_bootstrap_landscape as ebl
+        import json
+
+        nodes = list(session.landscape.states)[:2]
+        ls = {
+            "discovered_edges": {
+                "edges": [{
+                    "from": nodes[0], "to": nodes[1],
+                    "delta": 0.5, "resistance": 1.0,
+                    "confidence": 0.3,
+                }]
+            }
+        }
+        ls_path = str(tmp_path / "learning_state.json")
+        with open(ls_path, "w", encoding="utf-8") as f:
+            json.dump(ls, f)
+        monkeypatch.setattr(ebl, "LEARNING_STATE_PATH", ls_path)
+
+        # With threshold=0.5 → skip
+        path1 = str(tmp_path / "regen_high.json")
+        s1 = build_session(steps_per_round=10)
+        r1 = regenerate_seed(s1, confidence_threshold=0.5, path=path1)
+        assert r1["skipped_low_confidence"] >= 1
+
+        # With threshold=0.2 → materialize (if edge didn't exist)
+        s2 = build_session(steps_per_round=10)
+        path2 = str(tmp_path / "regen_low.json")
+        r2 = regenerate_seed(s2, confidence_threshold=0.2, path=path2)
+        # At least the threshold changed the outcome
+        assert r2["skipped_low_confidence"] < r1["skipped_low_confidence"] or \
+               r2["materialized_edges"] > r1["materialized_edges"] or \
+               r2["skipped_existing"] > r1["skipped_existing"]
+
+
+class TestCmdRegenerate:
+    """C227: cmd_regenerate returns formatted output."""
+
+    def test_cmd_regenerate_output(self, session, tmp_path):
+        """cmd_regenerate returns a human-readable summary."""
+        path = str(tmp_path / "cmd_regen.json")
+        output = cmd_regenerate(session, path=path)
+        assert "Seed regenerated" in output
+        assert "Coverage" in output
+        assert "Discovered edges materialized" in output
+
+    def test_dispatch_regenerate(self, session, tmp_path):
+        """dispatch routes 'regenerate' to cmd_regenerate."""
+        path = str(tmp_path / "dispatch_regen.json")
+        output = dispatch(session, f"regenerate {path}")
+        assert "Seed regenerated" in output
+
+    def test_regenerate_in_help(self):
+        """Help text includes regenerate command."""
+        text = cmd_help()
+        assert "regenerate" in text.lower()
+
+
+class TestMultiSessionLoop:
+    """C227: Integration test — multi-session learning cycle."""
+
+    def test_session_a_to_b_learning_carries(self, tmp_path):
+        """Session A runs + saves. Session B loads + sees A's round count."""
+        # Session A
+        s_a = build_session(steps_per_round=10)
+        cmd_run(s_a, 2)
+        session_path = str(tmp_path / "session_a.json")
+        save_session(s_a, session_path)
+
+        # Session B loads A's session
+        s_b = load_session(session_path)
+        assert s_b.round_num == 2
+        assert len(s_b.history) == 2
+
+        # Session B runs further
+        cmd_run(s_b, 1)
+        assert s_b.round_num == 3
+        assert len(s_b.history) == 3
+
+        # Regenerate seed from B's combined state
+        seed_path = str(tmp_path / "combined_seed.json")
+        result = regenerate_seed(s_b, path=seed_path)
+        assert result["coverage"] > 0
+        assert os.path.exists(seed_path)
+
+        # Session C loads the regenerated seed
+        from e0_controller.explore_self_knowledge import load_seed
+        landscape_c, unified_c, meta_c = load_seed(seed_path)
+        assert len(landscape_c.states) == len(s_b.landscape.states)
