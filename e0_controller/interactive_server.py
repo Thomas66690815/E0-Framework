@@ -27,6 +27,7 @@ from e0_controller.interactive_session import (
     build_session,
     cmd_rate,
     dispatch,
+    save_session,
 )
 from e0_controller.ui_emitter import UIPanel, UISpec
 from e0_controller.ui_renderer import (
@@ -442,7 +443,9 @@ def run_server(
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print("\n  Server stopped.")
+        print("\n  Auto-saving session...")
+        save_session(state, write_back_perception=True)
+        print("  Server stopped.")
     finally:
         server.server_close()
 

@@ -1,4 +1,4 @@
-"""Tests for E₀ Interactive Text Session (C213–C225).
+"""Tests for E₀ Interactive Text Session (C213–C226).
 
 Validates the REPL dispatch, session state management,
 each command's output through the communication pipeline,
@@ -7,7 +7,9 @@ C216 transition detail (detail + inspect commands),
 C217 Human Peer Input (task command + node matching),
 C218 LLM Peer Structuring (propose_domain_graph → inject → navigate),
 C219 Semantic Surface + 3-Tier Task Processing,
-and C225 Session Persistence (save/load/auto-detect).
+C225 Session Persistence (save/load/auto-detect),
+and C226 Session History + Server Lifecycle (history round-trip,
+perception write-back, server auto-save).
 """
 
 from __future__ import annotations
@@ -20,8 +22,12 @@ from e0_controller.interactive_session import (
     SESSION_STATE_PATH,
     SessionState,
     _RATING_ACTION,
+    _assessment_to_dict,
+    _dict_to_assessment,
+    _dict_to_round,
     _match_nodes,
     _quality_bar,
+    _round_to_dict,
     _task_connection,
     _task_known_path,
     _task_navigate,
@@ -1393,7 +1399,7 @@ class TestSaveSession:
         with open(path, encoding="utf-8") as f:
             data = json.load(f)
         meta = data["meta"]
-        assert meta["version"] == "1.0"
+        assert meta["version"] == "1.1"
         assert "round_num" in meta
         assert "saved_at" in meta
 
@@ -1525,3 +1531,232 @@ class TestConsolidateNotDry:
         s = build_session(steps_per_round=10)
         cmd_run(s, 1)
         assert os.path.exists(ls_path)
+
+
+# ── C226: Session History + Server Lifecycle ───────────────────────────
+
+
+class TestHistoryRoundTrip:
+    """C226: History survives save→load cycle."""
+
+    def test_save_contains_history(self, session, tmp_path):
+        """Saved JSON includes history array."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 2)
+        path = str(tmp_path / "hist_save.json")
+        save_session(s, path)
+        import json
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        assert "history" in data
+        assert len(data["history"]) == 2
+
+    def test_history_entry_fields(self, session, tmp_path):
+        """Each history entry has required fields."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        path = str(tmp_path / "hist_fields.json")
+        save_session(s, path)
+        import json
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        entry = data["history"][0]
+        for field in ["round_num", "mode", "reason", "steps", "path",
+                      "coverage_delta", "T_s_delta", "assessment_before",
+                      "assessment_after", "domain_crossings"]:
+            assert field in entry, f"Missing field: {field}"
+
+    def test_assessment_fields(self, session, tmp_path):
+        """Assessment dicts have all required fields."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        path = str(tmp_path / "hist_assess.json")
+        save_session(s, path)
+        import json
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        a = data["history"][0]["assessment_after"]
+        for field in ["total_nodes", "coverage", "T_s", "canon_coverage",
+                      "bootstrap_coverage", "en_coverage", "mech_coverage"]:
+            assert field in a, f"Missing assessment field: {field}"
+
+    def test_load_restores_history(self, session, tmp_path):
+        """load_session restores history with correct count."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 3)
+        path = str(tmp_path / "hist_load.json")
+        save_session(s, path)
+        restored = load_session(path)
+        assert len(restored.history) == 3
+
+    def test_restored_history_types(self, session, tmp_path):
+        """Restored history entries are MultiDomainRoundResult objects."""
+        from e0_controller.explore_learning_cycle_multidomain import (
+            MultiDomainRoundResult,
+            MultiDomainAssessment,
+        )
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        path = str(tmp_path / "hist_types.json")
+        save_session(s, path)
+        restored = load_session(path)
+        r = restored.history[0]
+        assert isinstance(r, MultiDomainRoundResult)
+        assert isinstance(r.assessment_before, MultiDomainAssessment)
+        assert isinstance(r.assessment_after, MultiDomainAssessment)
+
+    def test_restored_history_values(self, session, tmp_path):
+        """Restored history preserves scalar values."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        original = s.history[0]
+        path = str(tmp_path / "hist_values.json")
+        save_session(s, path)
+        restored = load_session(path)
+        r = restored.history[0]
+        assert r.round_num == original.round_num
+        assert r.mode == original.mode
+        assert r.steps == original.steps
+        assert r.domain_crossings == original.domain_crossings
+
+    def test_summary_after_reload(self, session, tmp_path):
+        """cmd_summary works on a reloaded session."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 2)
+        path = str(tmp_path / "hist_summary.json")
+        save_session(s, path)
+        restored = load_session(path)
+        output = cmd_summary(restored)
+        assert "2 rounds" in output.lower() or "summary" in output.lower()
+
+    def test_detail_after_reload(self, session, tmp_path):
+        """cmd_detail works on a reloaded session."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        path = str(tmp_path / "hist_detail.json")
+        save_session(s, path)
+        restored = load_session(path)
+        output = cmd_detail(restored)
+        assert "Round" in output
+
+    def test_backward_compat_no_history(self, session, tmp_path):
+        """Loading a v1.0 file without history key gives empty list."""
+        import json
+        s = build_session(steps_per_round=10)
+        path = str(tmp_path / "v1_compat.json")
+        save_session(s, path)
+        # Remove history key to simulate v1.0
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        del data["history"]
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f)
+        restored = load_session(path)
+        assert restored.history == []
+
+
+class TestRoundDictCodec:
+    """C226: _round_to_dict / _dict_to_round codec."""
+
+    def test_codec_round_trip(self):
+        """Encode→decode preserves round result."""
+        from e0_controller.explore_learning_cycle_multidomain import (
+            MultiDomainRoundResult,
+            MultiDomainAssessment,
+        )
+        a = MultiDomainAssessment(
+            total_nodes=100, total_edges=200, visited_nodes=50,
+            coverage=0.5, frontier_size=10, T_s=1.5, mean_quality=0.3,
+            stale_edges=2, canon_coverage=0.4, bootstrap_coverage=0.6,
+            en_coverage=0.3, canon_nodes=30, bootstrap_nodes=20,
+            en_nodes=50, canon_visited=12, bootstrap_visited=12,
+            en_visited=15, mech_coverage=0.2, mech_nodes=10,
+            mech_visited=2,
+        )
+        r = MultiDomainRoundResult(
+            round_num=7, mode="explore", reason="low coverage",
+            steps=40, assessment_before=a, assessment_after=a,
+            path=["A", "B", "C"], new_edges=3, domain_crossings=2,
+            crossing_rate=0.05, coverage_delta=0.02, T_s_delta=-0.1,
+            en_canon_crossings=1, en_bootstrap_crossings=0,
+            canon_bootstrap_crossings=1,
+        )
+        d = _round_to_dict(r)
+        r2 = _dict_to_round(d)
+        assert r2.round_num == 7
+        assert r2.mode == "explore"
+        assert r2.path == ["A", "B", "C"]
+        assert r2.assessment_after.coverage == 0.5
+
+    def test_assessment_codec(self):
+        """Encode→decode preserves assessment."""
+        from e0_controller.explore_learning_cycle_multidomain import (
+            MultiDomainAssessment,
+        )
+        a = MultiDomainAssessment(
+            total_nodes=50, total_edges=100, visited_nodes=25,
+            coverage=0.5, frontier_size=5, T_s=2.0, mean_quality=0.4,
+            stale_edges=1, canon_coverage=0.6, bootstrap_coverage=0.5,
+            en_coverage=0.4, canon_nodes=20, bootstrap_nodes=15,
+            en_nodes=15, canon_visited=12, bootstrap_visited=8,
+            en_visited=5, mech_coverage=0.1, mech_nodes=5,
+            mech_visited=1,
+        )
+        d = _assessment_to_dict(a)
+        a2 = _dict_to_assessment(d)
+        assert a2.total_nodes == 50
+        assert a2.coverage == 0.5
+        assert a2.mech_coverage == 0.1
+
+
+class TestPerceptionWriteBack:
+    """C226: save_session can write back perception_pretrained.json."""
+
+    def test_write_back_off_by_default(self, session, tmp_path, monkeypatch):
+        """Default save does NOT write perception_pretrained.json."""
+        seed_path = str(tmp_path / "perception_pretrained.json")
+        import e0_controller.interactive_session as mod
+        monkeypatch.setattr(mod, "_PERCEPTION_SEED", seed_path)
+        save_path = str(tmp_path / "session.json")
+        save_session(session, save_path)
+        assert not os.path.exists(seed_path)
+
+    def test_write_back_on(self, session, tmp_path, monkeypatch):
+        """write_back_perception=True writes perception_pretrained.json."""
+        seed_path = str(tmp_path / "perception_pretrained.json")
+        import e0_controller.interactive_session as mod
+        monkeypatch.setattr(mod, "_PERCEPTION_SEED", seed_path)
+        save_path = str(tmp_path / "session_wb.json")
+        save_session(session, save_path, write_back_perception=True)
+        assert os.path.exists(seed_path)
+
+    def test_write_back_valid_json(self, session, tmp_path, monkeypatch):
+        """Written perception file is valid and loadable."""
+        seed_path = str(tmp_path / "perception_pretrained.json")
+        import e0_controller.interactive_session as mod
+        monkeypatch.setattr(mod, "_PERCEPTION_SEED", seed_path)
+        save_path = str(tmp_path / "session_wb2.json")
+        save_session(session, save_path, write_back_perception=True)
+        restored = PerceptionDomain.from_saved(seed_path)
+        assert len(restored.primitives) == len(session.perception.primitives)
+
+    def test_write_back_no_perception(self, tmp_path, monkeypatch):
+        """No crash when perception is None."""
+        seed_path = str(tmp_path / "perception_pretrained.json")
+        import e0_controller.interactive_session as mod
+        monkeypatch.setattr(mod, "_PERCEPTION_SEED", seed_path)
+        s = build_session(steps_per_round=10)
+        s.perception = None
+        save_path = str(tmp_path / "session_nop.json")
+        save_session(s, save_path, write_back_perception=True)
+        assert not os.path.exists(seed_path)
+
+
+class TestServerAutoSave:
+    """C226: interactive_server imports save_session."""
+
+    def test_save_session_imported(self):
+        """Server module has save_session in its namespace."""
+        import e0_controller.interactive_server as srv
+        assert hasattr(srv, "save_session")
+        assert callable(srv.save_session)

@@ -1248,9 +1248,91 @@ E₀ Interactive Session — Commands
 """
 
 
-# ── Session Persistence (C225) ─────────────────────────────────────────
+# ── Session Persistence (C225, extended C226) ─────────────────────────
 
 SESSION_STATE_PATH = os.path.join("memos", "session_state.json")
+_PERCEPTION_SEED = os.path.join("memos", "perception_pretrained.json")
+
+
+def _assessment_to_dict(a: "MultiDomainAssessment") -> dict:
+    """Serialize a MultiDomainAssessment to a lightweight dict."""
+    return {
+        "total_nodes": a.total_nodes,
+        "total_edges": a.total_edges,
+        "visited_nodes": a.visited_nodes,
+        "coverage": round(a.coverage, 6),
+        "frontier_size": a.frontier_size,
+        "T_s": round(a.T_s, 6),
+        "mean_quality": round(a.mean_quality, 6),
+        "stale_edges": a.stale_edges,
+        "canon_coverage": round(a.canon_coverage, 6),
+        "bootstrap_coverage": round(a.bootstrap_coverage, 6),
+        "en_coverage": round(a.en_coverage, 6),
+        "canon_nodes": a.canon_nodes,
+        "bootstrap_nodes": a.bootstrap_nodes,
+        "en_nodes": a.en_nodes,
+        "canon_visited": a.canon_visited,
+        "bootstrap_visited": a.bootstrap_visited,
+        "en_visited": a.en_visited,
+        "mech_coverage": round(a.mech_coverage, 6),
+        "mech_nodes": a.mech_nodes,
+        "mech_visited": a.mech_visited,
+    }
+
+
+def _dict_to_assessment(d: dict) -> "MultiDomainAssessment":
+    """Restore a MultiDomainAssessment from a serialized dict."""
+    return MultiDomainAssessment(**d)
+
+
+def _round_to_dict(result: "MultiDomainRoundResult") -> dict:
+    """Serialize a round result for persistence (lightweight, no live refs)."""
+    return {
+        "round_num": result.round_num,
+        "mode": result.mode,
+        "reason": result.reason,
+        "steps": result.steps,
+        "path": result.path,
+        "new_edges": result.new_edges,
+        "domain_crossings": result.domain_crossings,
+        "crossing_rate": round(result.crossing_rate, 4),
+        "coverage_delta": round(result.coverage_delta, 4),
+        "T_s_delta": round(result.T_s_delta, 3),
+        "en_canon_crossings": result.en_canon_crossings,
+        "en_bootstrap_crossings": result.en_bootstrap_crossings,
+        "canon_bootstrap_crossings": result.canon_bootstrap_crossings,
+        "mech_canon_crossings": result.mech_canon_crossings,
+        "mech_bootstrap_crossings": result.mech_bootstrap_crossings,
+        "mech_en_crossings": result.mech_en_crossings,
+        "type_usage": result.type_usage,
+        "assessment_before": _assessment_to_dict(result.assessment_before),
+        "assessment_after": _assessment_to_dict(result.assessment_after),
+    }
+
+
+def _dict_to_round(d: dict) -> "MultiDomainRoundResult":
+    """Restore a MultiDomainRoundResult from a serialized dict."""
+    return MultiDomainRoundResult(
+        round_num=d["round_num"],
+        mode=d["mode"],
+        reason=d["reason"],
+        steps=d["steps"],
+        path=d.get("path", []),
+        new_edges=d["new_edges"],
+        domain_crossings=d["domain_crossings"],
+        crossing_rate=d.get("crossing_rate", 0.0),
+        coverage_delta=d["coverage_delta"],
+        T_s_delta=d["T_s_delta"],
+        en_canon_crossings=d.get("en_canon_crossings", 0),
+        en_bootstrap_crossings=d.get("en_bootstrap_crossings", 0),
+        canon_bootstrap_crossings=d.get("canon_bootstrap_crossings", 0),
+        mech_canon_crossings=d.get("mech_canon_crossings", 0),
+        mech_bootstrap_crossings=d.get("mech_bootstrap_crossings", 0),
+        mech_en_crossings=d.get("mech_en_crossings", 0),
+        type_usage=d.get("type_usage", {}),
+        assessment_before=_dict_to_assessment(d["assessment_before"]),
+        assessment_after=_dict_to_assessment(d["assessment_after"]),
+    )
 
 
 def _perception_to_dict(perception: "PerceptionDomain") -> dict:
@@ -1279,11 +1361,17 @@ def _perception_to_dict(perception: "PerceptionDomain") -> dict:
     }
 
 
-def save_session(state: SessionState, path: Optional[str] = None) -> str:
+def save_session(state: SessionState, path: Optional[str] = None,
+                 write_back_perception: bool = False) -> str:
     """Save session state to JSON for later resume.
 
     Persists the full landscape (all traces), unified node metadata,
-    edge metadata, perception domain, and session bookkeeping.
+    edge metadata, perception domain, round history, and session
+    bookkeeping.
+
+    C226: History is serialized as lightweight dicts (no live Assessment
+    refs). write_back_perception updates perception_pretrained.json so
+    perception learning survives across sessions.
 
     Returns the absolute path of the written file.
     """
@@ -1307,9 +1395,12 @@ def save_session(state: SessionState, path: Optional[str] = None) -> str:
     if state.perception:
         perception_data = _perception_to_dict(state.perception)
 
+    # History (C226: lightweight round dicts)
+    history_data = [_round_to_dict(r) for r in state.history]
+
     data = {
         "meta": {
-            "version": "1.0",
+            "version": "1.1",
             "purpose": "E₀ session state — resume learning across restarts",
             "saved_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
             "round_num": state.round_num,
@@ -1323,11 +1414,16 @@ def save_session(state: SessionState, path: Optional[str] = None) -> str:
         "unified_nodes": state.unified_nodes,
         "edge_meta": edge_meta,
         "perception": perception_data,
+        "history": history_data,
     }
 
     os.makedirs(os.path.dirname(os.path.abspath(path)) or ".", exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
+
+    # C226: Write-back perception learning
+    if write_back_perception and state.perception:
+        state.perception.save_state(_PERCEPTION_SEED)
 
     return os.path.abspath(path)
 
@@ -1335,8 +1431,9 @@ def save_session(state: SessionState, path: Optional[str] = None) -> str:
 def load_session(path: str) -> SessionState:
     """Load session state from a saved JSON file.
 
-    Restores landscape, unified_nodes, perception, and session metadata.
-    History is NOT restored (it depends on assessment dataclasses).
+    Restores landscape, unified_nodes, perception, history, and session
+    metadata. C226: History is fully restored from lightweight dicts —
+    summary, detail, and why commands work after reload.
 
     Returns a ready-to-use SessionState.
     """
@@ -1368,11 +1465,15 @@ def load_session(path: str) -> SessionState:
         p_landscape = bootstrap_landscape(pdata["spec"])
         perception = PerceptionDomain(p_landscape, pdata["spec"]["nodes"])
 
+    # Restore history (C226)
+    history = [_dict_to_round(d) for d in data.get("history", [])]
+
     return SessionState(
         landscape=landscape,
         unified_nodes=unified_nodes,
         stats=stats,
         perception=perception,
+        history=history,
         round_num=meta.get("round_num", 0),
         stagnation_streak=meta.get("stagnation_streak", 0),
         steps_per_round=meta.get("steps_per_round", 40),
@@ -1382,7 +1483,7 @@ def load_session(path: str) -> SessionState:
 
 def cmd_save(state: SessionState, path: Optional[str] = None) -> str:
     """Save session state and return confirmation."""
-    saved_path = save_session(state, path)
+    saved_path = save_session(state, path, write_back_perception=True)
     return (
         f"Session saved: {saved_path}\n"
         f"  Rounds: {state.round_num}, "
@@ -1599,7 +1700,7 @@ def run_interactive(
             user_input = input("E₀> ")
         except (EOFError, KeyboardInterrupt):
             print("\n  Auto-saving session...")
-            save_session(state)
+            save_session(state, write_back_perception=True)
             print("Session ended.")
             break
 
@@ -1610,7 +1711,7 @@ def run_interactive(
                       f"Final coverage: "
                       f"{state.history[-1].assessment_after.coverage:.1%}")
             print("  Auto-saving session...")
-            save_session(state)
+            save_session(state, write_back_perception=True)
             print("Session ended.")
             break
 
