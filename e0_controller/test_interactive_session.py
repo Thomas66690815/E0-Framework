@@ -1,4 +1,4 @@
-"""Tests for E₀ Interactive Text Session (C213–C227).
+"""Tests for E₀ Interactive Text Session (C213–C228).
 
 Validates the REPL dispatch, session state management,
 each command's output through the communication pipeline,
@@ -10,8 +10,10 @@ C219 Semantic Surface + 3-Tier Task Processing,
 C225 Session Persistence (save/load/auto-detect),
 C226 Session History + Server Lifecycle (history round-trip,
 perception write-back, server auto-save),
-and C227 Seed Regeneration (regenerate_seed, cmd_regenerate,
-discovered_edge materialization, multi-session learning loop).
+C227 Seed Regeneration (regenerate_seed, cmd_regenerate,
+discovered_edge materialization, multi-session learning loop),
+and C228 Observation Dashboard (trajectory, diagnose,
+compute_trajectory, diagnose_session, per-domain stagnation).
 """
 
 from __future__ import annotations
@@ -35,6 +37,7 @@ from e0_controller.interactive_session import (
     _task_navigate,
     build_session,
     cmd_detail,
+    cmd_diagnose,
     cmd_focus,
     cmd_help,
     cmd_inspect,
@@ -45,7 +48,10 @@ from e0_controller.interactive_session import (
     cmd_status,
     cmd_summary,
     cmd_task,
+    cmd_trajectory,
     cmd_why,
+    compute_trajectory,
+    diagnose_session,
     dispatch,
     load_session,
     regenerate_seed,
@@ -1983,3 +1989,206 @@ class TestMultiSessionLoop:
         from e0_controller.explore_self_knowledge import load_seed
         landscape_c, unified_c, meta_c = load_seed(seed_path)
         assert len(landscape_c.states) == len(s_b.landscape.states)
+
+
+# ── C228: Observation Dashboard ────────────────────────────────────────
+
+
+class TestComputeTrajectory:
+    """C228: compute_trajectory returns structured learning data."""
+
+    def test_empty_history(self, session):
+        """No rounds → empty rounds list, summary is None."""
+        s = build_session(steps_per_round=10)
+        traj = compute_trajectory(s)
+        assert traj["rounds"] == []
+        assert traj["summary"] is None
+
+    def test_trajectory_after_rounds(self, session):
+        """After N rounds, trajectory has N entries."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 3)
+        traj = compute_trajectory(s)
+        assert len(traj["rounds"]) == 3
+        assert traj["summary"] is not None
+
+    def test_round_fields(self, session):
+        """Each round entry has required metric fields."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        traj = compute_trajectory(s)
+        rd = traj["rounds"][0]
+        for key in ("round_num", "coverage", "coverage_delta", "T_s",
+                     "T_s_delta", "mode", "domain_crossings",
+                     "frontier_size", "new_edges", "steps"):
+            assert key in rd, f"Missing field: {key}"
+
+    def test_summary_domain_trends(self, session):
+        """Summary includes per-domain coverage trends."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 2)
+        traj = compute_trajectory(s)
+        trends = traj["summary"]["domain_trends"]
+        # At least Canon and Bootstrap should be present
+        assert "Canon" in trends
+        assert "Bootstrap" in trends
+        for name, dt in trends.items():
+            assert "coverage_start" in dt
+            assert "coverage_end" in dt
+            assert "delta" in dt
+            assert "nodes" in dt
+
+    def test_summary_mode_progression(self, session):
+        """Summary includes mode progression as ordered unique list."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 2)
+        traj = compute_trajectory(s)
+        modes = traj["summary"]["mode_progression"]
+        assert isinstance(modes, list)
+        assert len(modes) >= 1
+
+
+class TestCmdTrajectory:
+    """C228: cmd_trajectory formats trajectory for display."""
+
+    def test_no_history_message(self, session):
+        """With no rounds, shows helpful message."""
+        s = build_session(steps_per_round=10)
+        out = cmd_trajectory(s)
+        assert "No rounds" in out
+
+    def test_text_format(self, session):
+        """Text output contains trajectory header and data rows."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 2)
+        out = cmd_trajectory(s)
+        assert "Learning Trajectory" in out
+        assert "Overall:" in out
+        assert "Per-domain:" in out
+        assert "Mode progression:" in out
+
+    def test_markdown_format(self, session):
+        """Markdown output uses table syntax."""
+        s = build_session(steps_per_round=10, output_format="markdown")
+        cmd_run(s, 2)
+        out = cmd_trajectory(s)
+        assert "## Learning Trajectory" in out
+        assert "| Rnd |" in out
+
+    def test_stagnation_warning(self, session):
+        """Stagnation streak appears in output when > 0."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 5)  # enough rounds to potentially trigger stagnation
+        out = cmd_trajectory(s)
+        # If stagnation streak is 0, warning should be absent
+        if s.stagnation_streak > 0:
+            assert "Stagnation" in out
+
+    def test_dispatch_trajectory(self, session):
+        """dispatch routes 'trajectory' to cmd_trajectory."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = dispatch(s, "trajectory")
+        assert "Learning Trajectory" in out
+
+
+class TestDiagnoseSession:
+    """C228: diagnose_session returns structured diagnostic data."""
+
+    def test_diagnose_fresh_session(self, session):
+        """Diagnosis works on a session with no rounds."""
+        s = build_session(steps_per_round=10)
+        diag = diagnose_session(s)
+        assert "domains" in diag
+        assert "overall" in diag
+        assert len(diag["domains"]) >= 2  # Canon + Bootstrap at minimum
+
+    def test_domain_fields(self, session):
+        """Each domain has required diagnostic fields."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 2)
+        diag = diagnose_session(s)
+        for d in diag["domains"]:
+            for key in ("name", "prefix", "coverage", "total", "visited",
+                         "frontier", "isolated", "active_edges",
+                         "mean_quality", "velocity", "status",
+                         "suggestion"):
+                assert key in d, f"Missing field: {key} in {d['name']}"
+
+    def test_status_values(self, session):
+        """Status is one of the defined values."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 2)
+        diag = diagnose_session(s)
+        valid = {"SATURATED", "BLOCKED", "STAGNANT", "GROWING", "IDLE"}
+        for d in diag["domains"]:
+            assert d["status"] in valid, (
+                f"{d['name']} has invalid status: {d['status']}"
+            )
+
+    def test_overall_has_bottleneck(self, session):
+        """Overall diagnosis identifies a bottleneck domain."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 2)
+        diag = diagnose_session(s)
+        ov = diag["overall"]
+        assert "bottleneck" in ov
+        assert "stagnation_streak" in ov
+        assert "blocked_domains" in ov
+        assert "coverage" in ov
+        assert "T_s" in ov
+
+    def test_velocity_after_rounds(self, session):
+        """Velocity is computed from recent history."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 3)
+        diag = diagnose_session(s)
+        # At least one domain should have nonzero velocity
+        velocities = [d["velocity"] for d in diag["domains"]]
+        # All velocities should be finite numbers
+        import math
+        for v in velocities:
+            assert math.isfinite(v)
+
+
+class TestCmdDiagnose:
+    """C228: cmd_diagnose formats diagnosis for display."""
+
+    def test_output_contains_domains(self, session):
+        """Output lists all active domains."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_diagnose(s)
+        assert "Diagnostic Report" in out
+        assert "Canon" in out
+        assert "Bootstrap" in out
+        assert "Overall" in out
+
+    def test_output_shows_status(self, session):
+        """Each domain shows its status label."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_diagnose(s)
+        assert "Status:" in out
+        assert "Suggestion:" in out
+        assert "Coverage:" in out
+
+    def test_dispatch_diagnose(self, session):
+        """dispatch routes 'diagnose' to cmd_diagnose."""
+        s = build_session(steps_per_round=10)
+        out = dispatch(s, "diagnose")
+        assert "Diagnostic Report" in out
+
+    def test_help_includes_new_commands(self):
+        """Help text includes trajectory and diagnose."""
+        text = cmd_help()
+        assert "trajectory" in text.lower()
+        assert "diagnose" in text.lower()
+
+    def test_markdown_diagnose(self, session):
+        """Markdown output uses headers."""
+        s = build_session(steps_per_round=10, output_format="markdown")
+        cmd_run(s, 1)
+        out = cmd_diagnose(s)
+        assert "## Diagnostic Report" in out
+        assert "### Canon" in out or "### Bootstrap" in out

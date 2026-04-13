@@ -1,4 +1,4 @@
-"""E₀ Interactive Text Session (C213, extended C214/C216/C217).
+"""E₀ Interactive Text Session (C213, extended C214/C216/C217/C228).
 
 REPL loop on the real multi-domain landscape. The user types commands,
 E₀ responds with structured communication through the full pipeline.
@@ -20,11 +20,17 @@ the LLM adapter proposes a domain graph (nodes/edges). The result is injected
 into the live landscape with T: prefix, bridged to existing structure, and
 navigated from the new anchor.
 
+C228 adds Observation Dashboard: `trajectory` shows coverage/T_s/mode
+progression over rounds as a table. `diagnose` performs per-domain
+stagnation analysis with bottleneck identification and escalation hints.
+
 Commands:
   run [N]       — Execute the next N rounds (default: 1)
   task <text>   — Introduce a difference in natural language
   status        — Show current landscape overview
   focus <domain> — Zoom into canon, bootstrap, or en
+  trajectory    — Coverage/T_s/mode over time
+  diagnose      — Per-domain stagnation analysis
   why           — Explain the last round's decision
   detail [N]    — Show last round edge by edge (or round N)
   inspect <src> <tgt> — Deep view of a single edge
@@ -438,6 +444,411 @@ def cmd_summary(state: SessionState) -> str:
         state.history, state.landscape,
         output_format=state.output_format,
     )
+
+
+# ── C228: Observation Dashboard ────────────────────────────────────────
+
+# Mapping from state prefix to assessment attribute prefix
+_DOMAIN_ATTR = {
+    "C:": "canon",
+    "B:": "bootstrap",
+    "EN:": "en",
+    "M:": "mech",
+}
+
+# Ordered domain list for consistent output
+_DOMAINS = [
+    ("C:", "Canon"),
+    ("B:", "Bootstrap"),
+    ("EN:", "EN"),
+    ("M:", "Mechanism"),
+]
+
+
+def compute_trajectory(state: SessionState) -> Dict[str, Any]:
+    """Compute learning trajectory data from session history.
+
+    Returns a structured dict with per-round metrics and overall trends.
+    Designed for both display (cmd_trajectory) and programmatic use
+    (C229+ escalation logic).
+    """
+    if not state.history:
+        return {"rounds": [], "summary": None}
+
+    rounds = []
+    for r in state.history:
+        a = r.assessment_after
+        rounds.append({
+            "round_num": r.round_num,
+            "coverage": a.coverage,
+            "coverage_delta": r.coverage_delta,
+            "T_s": a.T_s,
+            "T_s_delta": r.T_s_delta,
+            "mode": r.mode,
+            "domain_crossings": r.domain_crossings,
+            "frontier_size": a.frontier_size,
+            "new_edges": r.new_edges,
+            "steps": r.steps,
+        })
+
+    first_a = state.history[0].assessment_before
+    last_a = state.history[-1].assessment_after
+
+    # Per-domain trajectory
+    domain_trends = {}
+    for prefix, name in _DOMAINS:
+        attr = _DOMAIN_ATTR[prefix]
+        c_before = getattr(first_a, f"{attr}_coverage")
+        c_after = getattr(last_a, f"{attr}_coverage")
+        nodes = getattr(last_a, f"{attr}_nodes")
+        if nodes > 0:
+            domain_trends[name] = {
+                "coverage_start": c_before,
+                "coverage_end": c_after,
+                "delta": c_after - c_before,
+                "nodes": nodes,
+            }
+
+    # Mode progression
+    modes = [r.mode for r in state.history]
+    unique_modes = list(dict.fromkeys(modes))
+
+    return {
+        "rounds": rounds,
+        "summary": {
+            "total_rounds": len(state.history),
+            "coverage_start": first_a.coverage,
+            "coverage_end": last_a.coverage,
+            "coverage_delta": last_a.coverage - first_a.coverage,
+            "T_s_start": first_a.T_s,
+            "T_s_end": last_a.T_s,
+            "mode_progression": unique_modes,
+            "stagnation_streak": state.stagnation_streak,
+            "domain_trends": domain_trends,
+        },
+    }
+
+
+def cmd_trajectory(state: SessionState) -> str:
+    """Show learning trajectory: coverage/T_s/mode over rounds."""
+    traj = compute_trajectory(state)
+    if not traj["rounds"]:
+        return "No rounds executed yet. Use 'run' first."
+
+    md = state.output_format == "markdown"
+
+    if md:
+        lines = [
+            "## Learning Trajectory",
+            "",
+            "| Rnd | Coverage | \u0394Cov | T_s | \u0394T_s | Mode | Cross | Front |",
+            "|----:|--------:|------:|-----:|------:|------|------:|------:|",
+        ]
+    else:
+        lines = [
+            "Learning Trajectory",
+            "\u2550" * 70,
+            f"{'Rnd':>4} {'Coverage':>8} {'\u0394Cov':>7} {'T_s':>6} "
+            f"{'\u0394T_s':>7} {'Mode':<10} {'Cross':>5} {'Front':>5}",
+            "\u2500" * 70,
+        ]
+
+    for rd in traj["rounds"]:
+        cov = f"{rd['coverage']:.1%}"
+        dcov = f"{rd['coverage_delta']:+.1%}"
+        ts = f"{rd['T_s']:.3f}"
+        dts = f"{rd['T_s_delta']:+.3f}"
+        mode = rd["mode"][:10]
+        cross = str(rd["domain_crossings"])
+        front = str(rd["frontier_size"])
+
+        if md:
+            lines.append(
+                f"| {rd['round_num']} | {cov} | {dcov} | {ts} | "
+                f"{dts} | {mode} | {cross} | {front} |"
+            )
+        else:
+            lines.append(
+                f"{rd['round_num']:>4} {cov:>8} {dcov:>7} {ts:>6} "
+                f"{dts:>7} {mode:<10} {cross:>5} {front:>5}"
+            )
+
+    # Summary
+    s = traj["summary"]
+    lines.append("")
+    lines.append(
+        f"  Overall: {s['coverage_start']:.1%} \u2192 {s['coverage_end']:.1%} "
+        f"(\u0394={s['coverage_delta']:+.1%} in {s['total_rounds']} rounds)"
+    )
+
+    # Per-domain trends
+    if s["domain_trends"]:
+        lines.append("")
+        lines.append("  Per-domain:")
+        for name, dt in s["domain_trends"].items():
+            trend = (
+                "\u2191" if dt["delta"] > 0.005
+                else ("\u2192" if dt["delta"] > -0.005 else "\u2193")
+            )
+            lines.append(
+                f"    {name:12s} {dt['coverage_start']:.1%} \u2192 "
+                f"{dt['coverage_end']:.1%} "
+                f"(\u0394={dt['delta']:+.1%}) {trend}"
+            )
+
+    # Mode progression
+    lines.append("")
+    lines.append(f"  Mode progression: {' \u2192 '.join(s['mode_progression'])}")
+
+    if s["stagnation_streak"] > 0:
+        lines.append(
+            f"  \u26a0 Stagnation streak: {s['stagnation_streak']} rounds"
+        )
+
+    return "\n".join(lines)
+
+
+def diagnose_session(state: SessionState) -> Dict[str, Any]:
+    """Per-domain stagnation analysis with bottleneck identification.
+
+    Returns structured diagnostic data for each domain:
+      - coverage, frontier, isolated nodes, velocity, status, suggestion
+    Plus overall diagnosis with bottleneck identification.
+
+    Domain status values:
+      SATURATED — coverage ≥ 95%, fully explored
+      BLOCKED   — unvisited nodes exist but no reachable frontier
+      STAGNANT  — frontier exists but velocity ≈ 0 for ≥ 3 rounds
+      GROWING   — positive velocity, learning is progressing
+      IDLE      — no history yet
+    """
+    a = assess(state.landscape, state.unified_nodes)
+    hist = state.landscape.historization
+
+    # Compute visited set (global, once)
+    visited_set: set = set()
+    for e in state.landscape.edges:
+        if hist.trace_load(e) > 0:
+            visited_set.add(e.source)
+            visited_set.add(e.target)
+
+    domain_results = []
+
+    for prefix, name in _DOMAINS:
+        attr = _DOMAIN_ATTR[prefix]
+        coverage = getattr(a, f"{attr}_coverage")
+        total = getattr(a, f"{attr}_nodes")
+        vis = getattr(a, f"{attr}_visited")
+
+        if total == 0:
+            continue
+
+        # Domain-specific edges and quality distribution
+        all_states = {n for n in state.landscape.states
+                      if n.startswith(prefix)}
+        domain_visited = visited_set & all_states
+        unvisited = all_states - visited_set
+
+        qualities: List[float] = []
+        loads: List[float] = []
+        for e in state.landscape.edges:
+            if e.source.startswith(prefix) or e.target.startswith(prefix):
+                m = hist.trace_load(e)
+                if m > 0:
+                    qualities.append(hist.trace_quality(e))
+                    loads.append(m)
+
+        # Frontier: reachable from visited, not yet visited, in this domain
+        frontier: set = set()
+        for e in state.landscape.edges:
+            if (e.source in visited_set
+                    and e.target in unvisited
+                    and e.target in all_states):
+                frontier.add(e.target)
+
+        # Isolated: unvisited and not in frontier
+        isolated = unvisited - frontier
+
+        # Recent velocity (last 5 rounds)
+        recent_deltas: List[float] = []
+        if state.history:
+            for r in state.history[-5:]:
+                before_cov = getattr(
+                    r.assessment_before, f"{attr}_coverage",
+                )
+                after_cov = getattr(
+                    r.assessment_after, f"{attr}_coverage",
+                )
+                recent_deltas.append(after_cov - before_cov)
+        velocity = (
+            sum(recent_deltas) / len(recent_deltas)
+            if recent_deltas else 0.0
+        )
+
+        # Confused edges: high load, low quality
+        mean_q = (
+            sum(qualities) / len(qualities) if qualities else 0.0
+        )
+        mean_m = sum(loads) / len(loads) if loads else 0.0
+        confused = sum(
+            1 for q, m in zip(qualities, loads)
+            if m > 3 and abs(q) < 0.2
+        )
+
+        # Determine status and suggestion
+        if coverage >= 0.95:
+            status = "SATURATED"
+            suggestion = "fully explored"
+        elif len(frontier) == 0 and len(unvisited) > 0:
+            status = "BLOCKED"
+            suggestion = (
+                "no reachable frontier — needs new edges "
+                "(teach / dream / task)"
+            )
+        elif velocity <= 0.001 and len(state.history) >= 3:
+            status = "STAGNANT"
+            if confused > len(qualities) * 0.3:
+                suggestion = (
+                    "many confused edges — try dream or curriculum"
+                )
+            elif len(frontier) < 3:
+                suggestion = (
+                    "thin frontier — try focus or LLM teaching"
+                )
+            else:
+                suggestion = (
+                    "has frontier but not advancing — "
+                    "try different mode or focus"
+                )
+        elif velocity > 0:
+            status = "GROWING"
+            suggestion = "continue current approach"
+        else:
+            status = "IDLE"
+            suggestion = "no history yet — run rounds"
+
+        domain_results.append({
+            "name": name,
+            "prefix": prefix,
+            "coverage": coverage,
+            "total": total,
+            "visited": vis,
+            "frontier": len(frontier),
+            "isolated": len(isolated),
+            "active_edges": len(qualities),
+            "mean_quality": round(mean_q, 4),
+            "mean_load": round(mean_m, 2),
+            "confused_edges": confused,
+            "velocity": round(velocity, 6),
+            "status": status,
+            "suggestion": suggestion,
+        })
+
+    # Overall: bottleneck is lowest-coverage domain that isn't saturated
+    active = [d for d in domain_results if d["coverage"] < 0.95]
+    bottleneck = (
+        min(active, key=lambda d: d["coverage"])["name"]
+        if active else None
+    )
+    blocked = [d["name"] for d in domain_results if d["status"] == "BLOCKED"]
+
+    return {
+        "domains": domain_results,
+        "overall": {
+            "coverage": a.coverage,
+            "T_s": round(a.T_s, 4),
+            "frontier_size": a.frontier_size,
+            "stagnation_streak": state.stagnation_streak,
+            "bottleneck": bottleneck,
+            "blocked_domains": blocked,
+        },
+    }
+
+
+def cmd_diagnose(state: SessionState) -> str:
+    """Per-domain stagnation analysis with escalation hints."""
+    diag = diagnose_session(state)
+    md = state.output_format == "markdown"
+
+    if md:
+        lines = ["## Diagnostic Report", ""]
+    else:
+        lines = ["Diagnostic Report", "\u2550" * 60]
+
+    for d in diag["domains"]:
+        if md:
+            lines.append(f"### {d['name']} ({d['prefix']})")
+        else:
+            lines.append(f"\n  {d['name']} ({d['prefix']})")
+            lines.append(f"  {'\u2500' * 40}")
+
+        indent = "  " if md else "    "
+        lines.append(
+            f"{indent}Coverage:      {d['coverage']:.1%} "
+            f"({d['visited']}/{d['total']})"
+        )
+        lines.append(f"{indent}Frontier:      {d['frontier']} nodes")
+        if d["isolated"] > 0:
+            lines.append(
+                f"{indent}Isolated:      {d['isolated']} unreachable nodes"
+            )
+        lines.append(
+            f"{indent}Active edges:  {d['active_edges']} "
+            f"(mean q={d['mean_quality']:+.3f}, "
+            f"mean m={d['mean_load']:.1f})"
+        )
+        if d["confused_edges"] > 0:
+            lines.append(
+                f"{indent}Confused:      {d['confused_edges']} edges "
+                f"(high load, low quality)"
+            )
+        if state.history:
+            lines.append(
+                f"{indent}Velocity:      "
+                f"{d['velocity']:+.4f}/round (last "
+                f"{min(5, len(state.history))})"
+            )
+        lines.append(f"{indent}Status:        {d['status']}")
+        lines.append(f"{indent}Suggestion:    {d['suggestion']}")
+
+    # Overall
+    ov = diag["overall"]
+    if md:
+        lines.append("")
+        lines.append("### Overall")
+    else:
+        lines.append(f"\n{'\u2500' * 60}")
+        lines.append("  Overall Diagnosis:")
+
+    indent = "  " if md else "    "
+    lines.append(
+        f"{indent}Coverage: {ov['coverage']:.1%}  "
+        f"T_s: {ov['T_s']:.3f}  "
+        f"Frontier: {ov['frontier_size']}"
+    )
+    if ov["bottleneck"]:
+        lines.append(f"{indent}Bottleneck: {ov['bottleneck']}")
+    if ov["stagnation_streak"] > 0:
+        lines.append(
+            f"{indent}\u26a0 Stagnation: "
+            f"{ov['stagnation_streak']} consecutive rounds"
+        )
+        if ov["stagnation_streak"] >= 3:
+            lines.append(
+                f"{indent}\u2192 Consider: focus <weakest_domain>, "
+                f"dream, or teach new material"
+            )
+    if ov["blocked_domains"]:
+        lines.append(
+            f"{indent}\u26a0 Blocked domains: "
+            f"{', '.join(ov['blocked_domains'])}"
+        )
+        lines.append(
+            f"{indent}\u2192 These need new structure "
+            f"(teach / dream / manual edges)"
+        )
+
+    return "\n".join(lines)
 
 
 def cmd_detail(state: SessionState, round_num: Optional[int] = None) -> str:
@@ -1234,6 +1645,8 @@ E₀ Interactive Session — Commands
   run [N]          Execute next N rounds (default: 1)
   status           Current landscape overview
   focus <domain>   Zoom into canon, bootstrap, or en
+  trajectory       Coverage/T_s/mode progression over rounds
+  diagnose         Per-domain stagnation analysis + bottleneck
   why              Explain the last decision
   detail [N]       Last round's path edge by edge (or round N)
   inspect <s> <t>  Deep view of edge s→t
@@ -1758,6 +2171,12 @@ def dispatch(state: SessionState, user_input: str) -> Optional[str]:
 
     if cmd == "summary":
         return cmd_summary(state)
+
+    if cmd == "trajectory":
+        return cmd_trajectory(state)
+
+    if cmd == "diagnose":
+        return cmd_diagnose(state)
 
     if cmd == "detail":
         round_n = None

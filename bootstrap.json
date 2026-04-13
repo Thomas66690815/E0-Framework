@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C227",
-    "latest_commit_hash": "66a09e3",
-    "latest_commit_msg": "C227: Seed Regeneration \u2014 multi-session learning loop closed. regenerate_seed materializes discovered_edges, re-assesses, exports enriched seed. 5053 tests.",
-    "test_count": 5053,
+    "latest_commit": "C228",
+    "latest_commit_hash": "15383ff",
+    "latest_commit_msg": "C228: Observation Dashboard \u2014 trajectory + diagnose commands. compute_trajectory (structured learning metrics), diagnose_session (per-domain stagnation: SATURATED/BLOCKED/STAGNANT/GROWING/IDLE, bottleneck ID, velocity, escalation hints). 20 tests, 5073 total.",
+    "test_count": 5073,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
     "module_count": "77 production + 10 benchmarks + 17 demos + 69 explorations + 127 test files",
@@ -221,36 +221,43 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "Session Persistence + Learning Lifecycle (C225–C227)",
-    "arc_status": "C225: Session Persistence (save/load/auto-detect/auto-save). C226: Session History + Server Lifecycle (history round-trip, perception write-back, server auto-save). C227: Seed Regeneration (multi-session learning loop). ARC COMPLETE.",
+    "current_arc": "E\u2080 Learning Observatory (C228\u2013C232)",
+    "arc_status": "C228: Observation Dashboard (trajectory + diagnose). C229\u2013C232 planned.",
     "arc_plan": {
-      "C211_output_polish": {
-        "title": "Output Polish",
-        "what": "drop_pct fraction→percentage fix, evidence deduplication (_EVIDENCE_IN_VISUAL), label truncation (_truncate_label), interpreter calibration.",
-        "status": "DONE (C211)"
+      "C228_observation_dashboard": {
+        "title": "Observation Dashboard",
+        "what": "trajectory command: coverage/T_s/mode table over rounds with per-domain trends. diagnose command: per-domain stagnation analysis (SATURATED/BLOCKED/STAGNANT/GROWING/IDLE), bottleneck identification, velocity tracking, escalation hints. compute_trajectory + diagnose_session data APIs for downstream use.",
+        "status": "DONE (C228)"
       },
-      "C212_learning_cycle_communication": {
-        "title": "Learning Cycle Communication",
-        "what": "detect_round_intents() translates round data → CommunicationIntents (7 types: decision, coverage, balance, crossings, T_s, stagnation, shortcuts). communicate_round() + communicate_summary() wire full pipeline. --format text|markdown CLI.",
-        "status": "DONE (C212)"
+      "C229_stagnation_escalation": {
+        "title": "Stagnation Escalation",
+        "what": "On stagnation, don\u2019t just stop \u2014 escalate through levels: focus shift \u2192 dream \u2192 curriculum \u2192 LLM consult \u2192 human hint \u2192 accept. Each level measured.",
+        "status": "PLANNED"
       },
-      "C213_interactive_text_session": {
-        "title": "Interactive Text Session",
-        "what": "REPL on real multi-domain landscape. SessionState holds landscape/history/stagnation across interactions. 6 commands: run [N], status, focus <domain>, why, summary, help/quit. dispatch() parser. Domain aliases (c/boot/en). Full pipeline per command.",
-        "status": "DONE (C213)"
+      "C230_teaching_pipeline": {
+        "title": "Teaching Pipeline",
+        "what": "teach command: text/concept \u2192 LLM structuring \u2192 landscape extension \u2192 immediate exploration.",
+        "status": "PLANNED"
       },
-      "C214_feedback_loop": {
-        "title": "Feedback Loop",
-        "what": "User rates panels (helpful/not helpful). Feedback → Perception learns via C161 HumanAction. Perception becomes session-scoped instead of global. perception_pretrained.json becomes seed, not live state.",
-        "status": "DONE (C214)"
+      "C231_session_journal": {
+        "title": "Session Journal",
+        "what": "Structured per-session log: what ran, metrics snapshots, human annotations. Cross-session comparable trajectory.",
+        "status": "PLANNED"
+      },
+      "C232_meta_reflection": {
+        "title": "Meta-Reflection",
+        "what": "E\u2080 uses self-graph to analyze own learning trajectory: where does it systematically stagnate?",
+        "status": "PLANNED"
       }
     },
-    "key_result": "C227: Seed Regeneration closes the multi-session learning loop. Session A\u2192save\u2192Session B\u2192run\u2192regenerate_seed\u2192Session C starts with A+B knowledge. Discovered edges materialized with confidence gating (\u22650.4). Arc C225\u2013C227 complete: E\u2080 can persist, resume, learn across sessions, and fold learning into seeds.",
+    "key_result": "C228: Observation Dashboard. trajectory shows round-by-round learning metrics (coverage, T_s, mode, crossings, frontier). diagnose performs per-domain analysis with status classification and bottleneck identification. Both return structured data (compute_trajectory + diagnose_session) for programmatic use in C229+ escalation.",
     "open_threads": [
-      "Orchestrator pattern: automatic wiring vs manual composition",
-      "Adversarial stability still partially open (C172-C174)",
-      "Longer loops (length > recent_k): self-graph override quality provides defense, but needs testing"
+      "Stagnation escalation: diagnose identifies problems, C229 will make reactions automatic",
+      "Teaching pipeline: how to inject new material into live landscape",
+      "Session journal: structured cross-session trajectory",
+      "Adversarial stability still partially open (C172-C174)"
     ],
+    "next_commit_id": "C229",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
