@@ -55,7 +55,8 @@
       "Bottom-up: feature → test → formalize (never top-down schema first)",
       "Values honesty about circularity and premature abstraction",
       "erst erarbeiten, dann umsetzen (analyze before coding for conceptual questions)",
-      "Deine Entscheidung = make the decision confidently, don't hedge"
+      "Deine Entscheidung = make the decision confidently, don't hedge",
+      "Steuerung durch Subtraktion: user gives constraints (what NOT to do), not specifications. Don't wait for positive instructions — fill the remaining space with structure and evidence."
     ]
   },
   "reflexion": {
@@ -195,6 +196,11 @@
         "question": "What if this signal lies? (Outcome, quality, distance — any input can be poisoned)",
         "triggered": 1,
         "last_triggered": "C172"
+      },
+      {
+        "question": "Am I hedging or deciding? If >2 caveats — cut to 1 and commit to a position.",
+        "triggered": 1,
+        "last_triggered": "C224"
       }
     ]
   },
@@ -272,9 +278,15 @@
         "confirmed": 3,
         "contradicted": 0,
         "last_tested": "C186"
+      },
+      {
+        "principle": "Verify before assert — run measurements before making claims, even for 'obvious' numbers",
+        "confirmed": 4,
+        "contradicted": 0,
+        "last_tested": "C224"
       }
     ],
-    "next_commit_id": "C224"
+    "next_commit_id": "C225"
   },
   "structural_entropy": {
     "_comment": "Our forgetting protocol. Isomorphic to E₀'s structural entropy (C114-C121). Prevents bootstrap.json from growing without bound. Prune trigger is parameter-free: pressure = entries_since_last_prune / (entries_since_last_prune + μ). When pressure > 0.5 → prune. Check after each arc completion.",
