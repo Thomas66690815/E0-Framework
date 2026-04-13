@@ -51,6 +51,7 @@ from e0_controller.interactive_session import (
     cmd_status,
     cmd_summary,
     cmd_task,
+    cmd_teach,
     cmd_trajectory,
     cmd_why,
     compute_trajectory,
@@ -60,6 +61,7 @@ from e0_controller.interactive_session import (
     load_session,
     regenerate_seed,
     save_session,
+    teach_concept,
 )
 from e0_controller.feedback import HumanAction
 from e0_controller.perception import PerceptionDomain
@@ -2343,3 +2345,137 @@ class TestAutoEscalation:
             or "saturation" in out.lower()
             or s.stagnation_streak < 3  # was resolved
         )
+
+
+# ── C230: Teaching Pipeline ──────────────────────────────────────────────────
+
+_TEACH_SPEC = {
+    "nodes": ["CONCEPT_A", "CONCEPT_B", "CONCEPT_C", "CONCEPT_D"],
+    "edges": [
+        {"from": "CONCEPT_A", "to": "CONCEPT_B", "delta": 0.5,
+         "resistance": 1.0, "initial_U": 4.0, "initial_F": 1.0,
+         "confidence": 0.8},
+        {"from": "CONCEPT_B", "to": "CONCEPT_C", "delta": 0.4,
+         "resistance": 0.9, "initial_U": 3.0, "initial_F": 0.5,
+         "confidence": 0.7},
+        {"from": "CONCEPT_C", "to": "CONCEPT_D", "delta": 0.6,
+         "resistance": 1.1, "initial_U": 2.0, "initial_F": 1.0,
+         "confidence": 0.6},
+        {"from": "CONCEPT_D", "to": "CONCEPT_A", "delta": 0.3,
+         "resistance": 0.8, "initial_U": 5.0, "initial_F": 0.5,
+         "confidence": 0.9},
+    ],
+}
+
+
+class TestTeachConcept:
+    """C230: teach_concept returns structured result."""
+
+    def test_returns_dict(self):
+        """teach_concept returns a dict with required keys."""
+        s = _build_session_with_mock(_TEACH_SPEC)
+        result = teach_concept(s, "alpha beta unknown concept")
+        assert isinstance(result, dict)
+        for key in (
+            "nodes_added", "edges_added", "coverage_before",
+            "coverage_after", "coverage_delta", "rounds_run",
+            "domain_crossings", "absorbed", "total_new_edges",
+        ):
+            assert key in result, f"missing key: {key}"
+
+    def test_nodes_have_l_prefix(self):
+        """Injected nodes use L: prefix."""
+        s = _build_session_with_mock(_TEACH_SPEC)
+        result = teach_concept(s, "alpha beta unknown concept")
+        assert len(result["nodes_added"]) >= 1
+        for nid in result["nodes_added"]:
+            assert nid.startswith("L:"), f"expected L: prefix, got {nid}"
+
+    def test_coverage_non_negative(self):
+        """Coverage delta is non-negative (new material can't decrease it)."""
+        s = _build_session_with_mock(_TEACH_SPEC)
+        result = teach_concept(s, "alpha beta unknown concept")
+        assert result["coverage_delta"] >= 0.0
+
+    def test_runs_multiple_passes(self):
+        """teach_concept runs multiple exploration passes."""
+        s = _build_session_with_mock(_TEACH_SPEC)
+        result = teach_concept(s, "alpha beta unknown concept")
+        assert result["rounds_run"] >= 1
+
+    def test_history_grows(self):
+        """Teaching adds rounds to session history."""
+        s = _build_session_with_mock(_TEACH_SPEC)
+        before = len(s.history)
+        teach_concept(s, "alpha beta unknown concept")
+        assert len(s.history) > before
+
+    def test_teach_mode_in_history(self):
+        """History entries from teach use mode='teach'."""
+        s = _build_session_with_mock(_TEACH_SPEC)
+        before = len(s.history)
+        teach_concept(s, "alpha beta unknown concept")
+        for r in s.history[before:]:
+            assert r.mode == "teach"
+
+    def test_absorbed_leq_total(self):
+        """Absorbed edges cannot exceed total new edges."""
+        s = _build_session_with_mock(_TEACH_SPEC)
+        result = teach_concept(s, "alpha beta unknown concept")
+        assert result["absorbed"] <= result["total_new_edges"]
+
+
+class TestCmdTeach:
+    """C230: cmd_teach provides formatted output."""
+
+    def test_output_is_string(self):
+        """cmd_teach returns a non-empty string."""
+        s = _build_session_with_mock(_TEACH_SPEC)
+        out = cmd_teach(s, "alpha beta unknown concept")
+        assert isinstance(out, str)
+        assert len(out) > 0
+
+    def test_output_header(self):
+        """Output starts with 'Teaching Pipeline'."""
+        s = _build_session_with_mock(_TEACH_SPEC)
+        out = cmd_teach(s, "alpha beta unknown concept")
+        assert "Teaching Pipeline" in out
+
+    def test_output_shows_nodes(self):
+        """Output lists injected nodes."""
+        s = _build_session_with_mock(_TEACH_SPEC)
+        out = cmd_teach(s, "alpha beta unknown concept")
+        assert "L:" in out
+
+    def test_output_shows_coverage(self):
+        """Output includes coverage metrics."""
+        s = _build_session_with_mock(_TEACH_SPEC)
+        out = cmd_teach(s, "alpha beta unknown concept")
+        assert "Coverage:" in out
+
+    def test_output_shows_absorption(self):
+        """Output includes absorption report."""
+        s = _build_session_with_mock(_TEACH_SPEC)
+        out = cmd_teach(s, "alpha beta unknown concept")
+        assert "Absorbed:" in out
+
+
+class TestTeachDispatch:
+    """C230: dispatch routes 'teach' to cmd_teach."""
+
+    def test_dispatch_teach(self):
+        """dispatch('teach X') calls cmd_teach."""
+        s = _build_session_with_mock(_TEACH_SPEC)
+        out = dispatch(s, "teach alpha beta unknown concept")
+        assert "Teaching Pipeline" in out
+
+    def test_dispatch_teach_no_arg(self):
+        """dispatch('teach') without arg returns usage hint."""
+        s = build_session(steps_per_round=10)
+        out = dispatch(s, "teach")
+        assert "Usage:" in out
+
+    def test_help_includes_teach(self):
+        """Help text includes 'teach' command."""
+        text = cmd_help()
+        assert "teach" in text.lower()

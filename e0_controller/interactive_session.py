@@ -1,4 +1,4 @@
-"""E₀ Interactive Text Session (C213, extended C214/C216/C217/C228/C229).
+"""E₀ Interactive Text Session (C213, extended C214/C216/C217/C228/C229/C230).
 
 REPL loop on the real multi-domain landscape. The user types commands,
 E₀ responds with structured communication through the full pipeline.
@@ -29,9 +29,15 @@ through 6 levels instead of stopping: focus shift → exploration boost →
 bridge creation → edge proposal → accept limit. Each level is measured.
 `escalate` command triggers manual escalation.
 
+C230 adds Teaching Pipeline: `teach <concept>` explicitly teaches E₀ new
+material. Always invokes LLM structuring (L: prefix), injects with
+persistent consolidation (dry_run=False), runs multiple exploration passes
+to absorb the material, and reports what was learned.
+
 Commands:
   run [N]       — Execute the next N rounds (default: 1)
   task <text>   — Introduce a difference in natural language
+  teach <text>  — Explicitly teach E₀ a new concept
   status        — Show current landscape overview
   focus <domain> — Zoom into canon, bootstrap, or en
   trajectory    — Coverage/T_s/mode over time
@@ -1706,6 +1712,212 @@ def _llm_peer_structure(state: SessionState, text: str) -> str:
     return "\n".join(lines)
 
 
+# ── C230: Teaching Pipeline ────────────────────────────────────────────
+
+_TEACH_EXPLORE_ROUNDS = 3  # exploration passes after injection
+
+
+def teach_concept(
+    state: SessionState, text: str,
+) -> Dict[str, Any]:
+    """Teach E₀ a new concept via LLM structuring + persistent exploration.
+
+    Unlike task (which matches existing structure first), teach always
+    invokes LLM structuring to create new landscape material and then
+    runs multiple exploration passes with persistent consolidation.
+
+    Returns structured result:
+      nodes_added: list[str] — new node IDs injected (L: prefix)
+      edges_added: list[tuple] — new edge pairs
+      coverage_before: float — coverage before teaching
+      coverage_after: float — coverage after exploration
+      coverage_delta: float — improvement
+      rounds_run: int — exploration passes completed
+      domain_crossings: int — total crossings across passes
+      absorbed: int — edges visited (trace_load > 0) from new material
+      total_new_edges: int — total new edges in injected subgraph
+    """
+    a_start = assess(state.landscape, state.unified_nodes)
+
+    # LLM structuring
+    try:
+        adapter = _get_llm_adapter(state)
+        spec = adapter.propose_domain_graph(text)
+    except Exception as exc:
+        return {
+            "error": str(exc),
+            "nodes_added": [],
+            "edges_added": [],
+            "coverage_before": a_start.coverage,
+            "coverage_after": a_start.coverage,
+            "coverage_delta": 0.0,
+            "rounds_run": 0,
+            "domain_crossings": 0,
+            "absorbed": 0,
+            "total_new_edges": 0,
+        }
+
+    if not spec.get("nodes"):
+        return {
+            "error": "LLM returned no structure",
+            "nodes_added": [],
+            "edges_added": [],
+            "coverage_before": a_start.coverage,
+            "coverage_after": a_start.coverage,
+            "coverage_delta": 0.0,
+            "rounds_run": 0,
+            "domain_crossings": 0,
+            "absorbed": 0,
+            "total_new_edges": 0,
+        }
+
+    # Inject with L: prefix (Learned)
+    new_nodes, new_edges = _inject_spec_into_landscape(
+        state, spec, prefix="L:",
+    )
+
+    # Multi-round exploration to absorb the material
+    total_crossings = 0
+    rounds_run = 0
+
+    for i in range(_TEACH_EXPLORE_ROUNDS):
+        anchor = new_nodes[i % len(new_nodes)] if new_nodes else None
+        if not anchor:
+            break
+
+        state.round_num += 1
+        a_before = assess(state.landscape, state.unified_nodes)
+
+        nav = navigate(
+            state.landscape, state.unified_nodes,
+            "explore", state.steps_per_round, start=anchor,
+        )
+        validate_confidence(nav["path"])
+
+        a_after = assess(state.landscape, state.unified_nodes)
+        coverage_delta = a_after.coverage - a_before.coverage
+
+        reason_short = text[:60] + ("…" if len(text) > 60 else "")
+        result = MultiDomainRoundResult(
+            round_num=state.round_num,
+            mode="teach",
+            reason=f"teach: \"{reason_short}\" (pass {i + 1})",
+            steps=nav["steps"],
+            assessment_before=a_before,
+            assessment_after=a_after,
+            path=nav["path"],
+            new_edges=len(nav["new_edges"]),
+            domain_crossings=nav["domain_crossings"],
+            crossing_rate=nav["crossing_rate"],
+            coverage_delta=coverage_delta,
+            T_s_delta=a_after.T_s - a_before.T_s,
+            en_canon_crossings=nav["en_canon_crossings"],
+            en_bootstrap_crossings=nav["en_bootstrap_crossings"],
+            canon_bootstrap_crossings=nav["canon_bootstrap_crossings"],
+            type_usage=nav.get("type_usage", {}),
+        )
+        state.history.append(result)
+
+        # Persistent consolidation — taught material sticks
+        consolidate(result, nav["new_edges"], dry_run=False)
+
+        total_crossings += nav["domain_crossings"]
+        rounds_run += 1
+
+        if coverage_delta <= 0.001:
+            state.stagnation_streak += 1
+        else:
+            state.stagnation_streak = 0
+
+    # Measure absorption: how many new edges got visited?
+    hist = state.landscape.historization
+    absorbed = 0
+    for src, tgt in new_edges:
+        e = Edge(src, tgt)
+        if e in state.landscape.edges and hist.trace_load(e) > 0:
+            absorbed += 1
+
+    a_end = assess(state.landscape, state.unified_nodes)
+
+    return {
+        "nodes_added": new_nodes,
+        "edges_added": new_edges,
+        "coverage_before": round(a_start.coverage, 6),
+        "coverage_after": round(a_end.coverage, 6),
+        "coverage_delta": round(a_end.coverage - a_start.coverage, 6),
+        "rounds_run": rounds_run,
+        "domain_crossings": total_crossings,
+        "absorbed": absorbed,
+        "total_new_edges": len(new_edges),
+    }
+
+
+def cmd_teach(state: SessionState, text: str) -> str:
+    """Explicitly teach E₀ a new concept.
+
+    Always invokes LLM structuring, injects with persistent traces,
+    and runs multiple exploration passes to absorb the material.
+    """
+    lines = [
+        "Teaching Pipeline",
+        "═" * 50,
+        f"  Concept: \"{text}\"",
+        "  Invoking LLM peer for structuring...",
+        "",
+    ]
+
+    result = teach_concept(state, text)
+
+    if result.get("error"):
+        lines.append(f"  Error: {result['error']}")
+        return "\n".join(lines)
+
+    lines.append(
+        f"  Injected: {len(result['nodes_added'])} nodes, "
+        f"{result['total_new_edges']} edges (L: prefix)"
+    )
+    if result["nodes_added"]:
+        for nid in result["nodes_added"][:6]:
+            lines.append(f"    + {nid}")
+        if len(result["nodes_added"]) > 6:
+            lines.append(
+                f"    ... and {len(result['nodes_added']) - 6} more"
+            )
+
+    lines.append("")
+    lines.append(
+        f"  Exploration: {result['rounds_run']} passes, "
+        f"{result['domain_crossings']} domain crossings"
+    )
+    lines.append(
+        f"  Coverage: {result['coverage_before']:.1%} → "
+        f"{result['coverage_after']:.1%} "
+        f"(Δ={result['coverage_delta']:+.1%})"
+    )
+
+    if result["total_new_edges"] > 0:
+        pct = result["absorbed"] / result["total_new_edges"]
+        lines.append(
+            f"  Absorbed: {result['absorbed']}/{result['total_new_edges']} "
+            f"edges visited ({pct:.0%})"
+        )
+    else:
+        lines.append("  Absorbed: 0 edges (no new edges injected)")
+
+    lines.append("")
+    if result["coverage_delta"] > 0.01:
+        lines.append("  ✓ Material successfully integrated.")
+    elif result["coverage_delta"] > 0.001:
+        lines.append("  ~ Partial integration. Consider running more rounds.")
+    else:
+        lines.append(
+            "  ✗ Minimal coverage change. Material may overlap "
+            "with existing knowledge."
+        )
+
+    return "\n".join(lines)
+
+
 def cmd_task(state: SessionState, text: str) -> str:
     """Process a user-provided difference as natural text.
 
@@ -2002,6 +2214,7 @@ HELP_TEXT = """
 E₀ Interactive Session — Commands
 ──────────────────────────────────
   run [N]          Execute next N rounds (default: 1)
+  teach <concept>  Teach E₀ new material (LLM → inject → explore)
   status           Current landscape overview
   focus <domain>   Zoom into canon, bootstrap, or en
   trajectory       Coverage/T_s/mode progression over rounds
@@ -2517,6 +2730,11 @@ def dispatch(state: SessionState, user_input: str) -> Optional[str]:
         if not arg:
             return "Usage: task <your question or observation in natural language>"
         return cmd_task(state, arg)
+
+    if cmd == "teach":
+        if not arg:
+            return "Usage: teach <concept or domain to learn>"
+        return cmd_teach(state, arg)
 
     if cmd == "status":
         return cmd_status(state)
