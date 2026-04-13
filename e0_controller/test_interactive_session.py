@@ -1,4 +1,4 @@
-"""Tests for E₀ Interactive Text Session (C213–C231).
+"""Tests for E₀ Interactive Text Session (C213–C232).
 
 Validates the REPL dispatch, session state management,
 each command's output through the communication pipeline,
@@ -17,8 +17,10 @@ compute_trajectory, diagnose_session, per-domain stagnation),
 C229 Stagnation Escalation (escalate, cmd_escalate,
 auto-escalation in cmd_run, 5-level progressive response),
 C230 Teaching Pipeline (teach_concept, cmd_teach),
-and C231 Session Journal (record_journal_event, save_journal,
-load_journal, cmd_journal, _metrics_snapshot, cross-session merge).
+C231 Session Journal (record_journal_event, save_journal,
+load_journal, cmd_journal, _metrics_snapshot, cross-session merge),
+and C232 Meta-Reflection (meta_reflect, cmd_reflect,
+stagnation patterns, mode effectiveness, recommendations).
 """
 
 from __future__ import annotations
@@ -53,6 +55,7 @@ from e0_controller.interactive_session import (
     cmd_inspect,
     cmd_journal,
     cmd_rate,
+    cmd_reflect,
     cmd_regenerate,
     cmd_run,
     cmd_save,
@@ -68,6 +71,7 @@ from e0_controller.interactive_session import (
     escalate,
     load_journal,
     load_session,
+    meta_reflect,
     record_journal_event,
     regenerate_seed,
     save_journal,
@@ -2699,3 +2703,175 @@ class TestJournalDispatch:
     def test_help_includes_journal(self):
         text = cmd_help()
         assert "journal" in text.lower()
+
+
+# ── C232: Meta-Reflection ────────────────────────────────────────────────────
+
+
+class TestMetaReflect:
+    """C232: meta_reflect returns structured analysis."""
+
+    def test_returns_dict(self, session):
+        """meta_reflect returns a dict with required keys."""
+        cmd_run(session, 2)
+        ref = meta_reflect(session)
+        assert isinstance(ref, dict)
+
+    def test_has_required_keys(self, session):
+        """Result contains all expected sections."""
+        ref = meta_reflect(session)
+        for key in (
+            "stagnation_episodes", "mode_effectiveness",
+            "domain_trajectories", "escalation_summary",
+            "teach_summary", "patterns", "recommendations",
+            "overall",
+        ):
+            assert key in ref, f"missing key: {key}"
+
+    def test_mode_effectiveness_populated(self, session):
+        """Mode effectiveness contains at least one entry after running."""
+        ref = meta_reflect(session)
+        assert len(ref["mode_effectiveness"]) >= 1
+
+    def test_mode_entries_have_fields(self, session):
+        """Each mode entry has required fields."""
+        ref = meta_reflect(session)
+        for me in ref["mode_effectiveness"]:
+            for field in ("mode", "rounds", "avg_delta",
+                          "stagnation_rate", "avg_crossings"):
+                assert field in me, f"missing field: {field}"
+
+    def test_domain_trajectories_four_domains(self, session):
+        """All four domains are tracked."""
+        ref = meta_reflect(session)
+        for name in ("Canon", "Bootstrap", "EN", "Mechanism"):
+            assert name in ref["domain_trajectories"]
+
+    def test_domain_trajectory_fields(self, session):
+        """Domain trajectory entries have expected fields."""
+        ref = meta_reflect(session)
+        for name, dt in ref["domain_trajectories"].items():
+            for field in ("coverage_start", "coverage_end", "status",
+                          "velocity", "confused_edges", "frontier"):
+                assert field in dt, f"missing field: {field} in {name}"
+
+    def test_overall_section(self, session):
+        """Overall section has total_rounds and coverage."""
+        ref = meta_reflect(session)
+        ov = ref["overall"]
+        assert ov["total_rounds"] >= 2
+        assert 0.0 <= ov["coverage"] <= 1.0
+
+    def test_patterns_nonempty(self, session):
+        """Patterns list is always non-empty (at least 'healthy')."""
+        ref = meta_reflect(session)
+        assert len(ref["patterns"]) >= 1
+
+    def test_recommendations_nonempty(self, session):
+        """Recommendations list is always non-empty."""
+        ref = meta_reflect(session)
+        assert len(ref["recommendations"]) >= 1
+
+    def test_escalation_summary(self, session):
+        """Escalation summary has correct structure."""
+        ref = meta_reflect(session)
+        esc = ref["escalation_summary"]
+        assert "total" in esc
+        assert "resolved" in esc
+        assert isinstance(esc["total"], int)
+
+    def test_teach_summary(self, session):
+        """Teach summary has correct structure."""
+        ref = meta_reflect(session)
+        ts = ref["teach_summary"]
+        assert "total" in ts
+        assert "total_nodes_added" in ts
+
+    def test_records_journal_event(self):
+        """meta_reflect records a 'reflect' journal event."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        before = len(s.journal)
+        meta_reflect(s)
+        reflect_events = [
+            e for e in s.journal[before:]
+            if e["event_type"] == "reflect"
+        ]
+        assert len(reflect_events) == 1
+
+
+class TestMetaReflectStagnation:
+    """C232: stagnation detection in meta_reflect."""
+
+    def test_stagnation_episodes_list(self, session):
+        """Stagnation episodes is a list of dicts."""
+        ref = meta_reflect(session)
+        assert isinstance(ref["stagnation_episodes"], list)
+
+    def test_stagnation_episode_fields(self):
+        """Each episode has start/end/length/modes."""
+        s = build_session(steps_per_round=10)
+        # Run enough rounds that some may stagnate
+        cmd_run(s, 5)
+        ref = meta_reflect(s)
+        for ep in ref["stagnation_episodes"]:
+            assert "start" in ep
+            assert "end" in ep
+            assert "length" in ep
+            assert "modes" in ep
+            assert ep["length"] >= 1
+
+
+class TestCmdReflect:
+    """C232: cmd_reflect provides formatted output."""
+
+    def test_output_is_string(self, session):
+        """cmd_reflect returns a non-empty string."""
+        out = cmd_reflect(session)
+        assert isinstance(out, str)
+        assert len(out) > 0
+
+    def test_output_has_header(self, session):
+        """Output contains 'Meta-Reflection'."""
+        out = cmd_reflect(session)
+        assert "Meta-Reflection" in out
+
+    def test_output_has_mode_section(self, session):
+        """Output contains mode effectiveness."""
+        out = cmd_reflect(session)
+        assert "Mode Effectiveness" in out
+
+    def test_output_has_domain_section(self, session):
+        """Output contains domain trajectories."""
+        out = cmd_reflect(session)
+        assert "Domain Trajectories" in out
+
+    def test_output_has_patterns(self, session):
+        """Output shows identified patterns."""
+        out = cmd_reflect(session)
+        assert "Patterns" in out
+
+    def test_output_has_recommendations(self, session):
+        """Output shows recommendations."""
+        out = cmd_reflect(session)
+        assert "Recommendations" in out
+
+    def test_no_history_message(self):
+        """With no history, returns help message."""
+        s = build_session(steps_per_round=10)
+        out = cmd_reflect(s)
+        assert "No history" in out
+
+
+class TestReflectDispatch:
+    """C232: dispatch routes 'reflect' command."""
+
+    def test_dispatch_reflect(self, session):
+        """dispatch('reflect') returns meta-reflection."""
+        out = dispatch(session, "reflect")
+        assert "Meta-Reflection" in out or "No history" in out
+
+    def test_help_includes_reflect(self):
+        """Help text includes 'reflect' command."""
+        text = cmd_help()
+        assert "reflect" in text.lower()

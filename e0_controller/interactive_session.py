@@ -1,4 +1,4 @@
-"""E₀ Interactive Text Session (C213, extended C214/C216/C217/C228–C231).
+"""E₀ Interactive Text Session (C213, extended C214/C216/C217/C228–C232).
 
 REPL loop on the real multi-domain landscape. The user types commands,
 E₀ responds with structured communication through the full pipeline.
@@ -40,6 +40,11 @@ for rounds, teach, and escalation. `journal note <text>` adds human
 annotations. Journal persists to memos/session_journal.json and accumulates
 across sessions.
 
+C232 adds Meta-Reflection: `reflect` synthesizes trajectory, domain diagnosis,
+escalation history, and journal events to identify systematic stagnation
+patterns. Reports mode effectiveness, domain trajectories, stagnation
+episodes, and generates actionable recommendations.
+
 Commands:
   run [N]       — Execute the next N rounds (default: 1)
   task <text>   — Introduce a difference in natural language
@@ -50,6 +55,7 @@ Commands:
   diagnose      — Per-domain stagnation analysis
   escalate      — Manually trigger stagnation escalation
   journal [note <text>] — Session journal: view or annotate
+  reflect       — Meta-reflection: analyze learning patterns
   why           — Explain the last round's decision
   detail [N]    — Show last round edge by edge (or round N)
   inspect <src> <tgt> — Deep view of a single edge
@@ -2178,6 +2184,385 @@ def _format_journal(
     return "\n".join(lines)
 
 
+# ── C232: Meta-Reflection ──────────────────────────────────────────────
+
+
+def meta_reflect(state: SessionState) -> Dict[str, Any]:
+    """Analyze the learning trajectory for systematic stagnation patterns.
+
+    Synthesizes three data sources:
+      1. Trajectory: per-round coverage/mode/domain dynamics
+      2. Diagnosis: current domain stagnation status
+      3. Journal: event history for pattern extraction
+
+    Returns a structured reflection with identified patterns,
+    correlations, and actionable recommendations.
+    """
+    traj = compute_trajectory(state)
+    diag = diagnose_session(state)
+    rounds = traj["rounds"]
+
+    # ── 1. Stagnation episodes: consecutive Δcov ≤ 0.001 ──
+    episodes: List[Dict[str, Any]] = []
+    current_ep: Optional[Dict[str, Any]] = None
+    for r in rounds:
+        if r["coverage_delta"] <= 0.001:
+            if current_ep is None:
+                current_ep = {
+                    "start": r["round_num"],
+                    "end": r["round_num"],
+                    "length": 1,
+                    "modes": [r["mode"]],
+                }
+            else:
+                current_ep["end"] = r["round_num"]
+                current_ep["length"] += 1
+                current_ep["modes"].append(r["mode"])
+        else:
+            if current_ep is not None:
+                episodes.append(current_ep)
+                current_ep = None
+    if current_ep is not None:
+        episodes.append(current_ep)
+
+    # ── 2. Mode effectiveness: mode → avg coverage_delta ──
+    mode_stats: Dict[str, Dict[str, Any]] = {}
+    for r in rounds:
+        m = r["mode"]
+        if m not in mode_stats:
+            mode_stats[m] = {"deltas": [], "crossings": [], "rounds": 0}
+        mode_stats[m]["deltas"].append(r["coverage_delta"])
+        mode_stats[m]["crossings"].append(r["domain_crossings"])
+        mode_stats[m]["rounds"] += 1
+
+    mode_effectiveness: List[Dict[str, Any]] = []
+    for mode, ms in sorted(mode_stats.items()):
+        avg_delta = sum(ms["deltas"]) / len(ms["deltas"]) if ms["deltas"] else 0
+        avg_cross = sum(ms["crossings"]) / len(ms["crossings"]) if ms["crossings"] else 0
+        stagnant_count = sum(1 for d in ms["deltas"] if d <= 0.001)
+        mode_effectiveness.append({
+            "mode": mode,
+            "rounds": ms["rounds"],
+            "avg_delta": round(avg_delta, 6),
+            "avg_crossings": round(avg_cross, 2),
+            "stagnant_rounds": stagnant_count,
+            "stagnation_rate": round(stagnant_count / ms["rounds"], 3)
+                               if ms["rounds"] > 0 else 0,
+        })
+
+    # ── 3. Domain trajectory: coverage over time per domain ──
+    domain_names = ["Canon", "Bootstrap", "EN", "Mechanism"]
+    domain_attrs = ["canon", "bootstrap", "en", "mech"]
+    domain_trajectories: Dict[str, Dict[str, Any]] = {}
+    for name, attr in zip(domain_names, domain_attrs):
+        dt = traj["summary"]["domain_trends"].get(name, {})
+        d_diag = next((d for d in diag["domains"] if d["name"] == name), None)
+        domain_trajectories[name] = {
+            "coverage_start": dt.get("coverage_start", 0),
+            "coverage_end": dt.get("coverage_end", 0),
+            "delta": dt.get("delta", 0),
+            "status": d_diag["status"] if d_diag else "UNKNOWN",
+            "velocity": d_diag["velocity"] if d_diag else 0,
+            "confused_edges": d_diag["confused_edges"] if d_diag else 0,
+            "frontier": d_diag["frontier"] if d_diag else 0,
+            "isolated": d_diag["isolated"] if d_diag else 0,
+        }
+
+    # ── 4. Escalation history from journal ──
+    escalation_events = [
+        e for e in state.journal if e.get("event_type") == "escalate"
+    ]
+    escalation_summary: Dict[str, Any] = {
+        "total": len(escalation_events),
+        "resolved": sum(
+            1 for e in escalation_events
+            if e.get("detail", {}).get("resolved", False)
+        ),
+        "levels_reached": [
+            e.get("detail", {}).get("level", 0) for e in escalation_events
+        ],
+    }
+
+    # ── 5. Teaching history from journal ──
+    teach_events = [
+        e for e in state.journal if e.get("event_type") == "teach"
+    ]
+    teach_summary: Dict[str, Any] = {
+        "total": len(teach_events),
+        "total_nodes_added": sum(
+            e.get("detail", {}).get("nodes_added", 0) for e in teach_events
+        ),
+        "avg_coverage_delta": round(
+            sum(e.get("detail", {}).get("coverage_delta", 0)
+                for e in teach_events) / len(teach_events), 6
+        ) if teach_events else 0,
+    }
+
+    # ── 6. Pattern identification ──
+    patterns: List[str] = []
+
+    # Pattern: persistent stagnation
+    long_eps = [ep for ep in episodes if ep["length"] >= 3]
+    if long_eps:
+        longest = max(long_eps, key=lambda e: e["length"])
+        patterns.append(
+            f"Persistent stagnation: {longest['length']} rounds "
+            f"(R{longest['start']}–R{longest['end']}) in modes "
+            f"{', '.join(set(longest['modes']))}"
+        )
+
+    # Pattern: mode ineffectiveness
+    for me in mode_effectiveness:
+        if me["rounds"] >= 3 and me["stagnation_rate"] > 0.6:
+            patterns.append(
+                f"Mode '{me['mode']}' is largely ineffective: "
+                f"{me['stagnation_rate']:.0%} stagnation rate "
+                f"over {me['rounds']} rounds"
+            )
+
+    # Pattern: blocked domains
+    blocked = [
+        name for name, dt in domain_trajectories.items()
+        if dt["status"] == "BLOCKED"
+    ]
+    if blocked:
+        patterns.append(
+            f"Blocked domains: {', '.join(blocked)} — "
+            f"need new edges (teach/dream/task)"
+        )
+
+    # Pattern: confused edges
+    total_confused = sum(
+        dt["confused_edges"] for dt in domain_trajectories.values()
+    )
+    if total_confused > 5:
+        worst = max(domain_trajectories.items(),
+                    key=lambda x: x[1]["confused_edges"])
+        patterns.append(
+            f"{total_confused} confused edges total, "
+            f"worst in {worst[0]} ({worst[1]['confused_edges']})"
+        )
+
+    # Pattern: escalation exhaustion
+    if (escalation_summary["total"] >= 2
+            and escalation_summary["resolved"] == 0):
+        patterns.append(
+            "Escalation exhausted: "
+            f"{escalation_summary['total']} attempts, none resolved"
+        )
+
+    # Pattern: teaching effectiveness
+    if teach_summary["total"] >= 2 and teach_summary["avg_coverage_delta"] < 0.001:
+        patterns.append(
+            "Teaching has low impact: "
+            f"{teach_summary['total']} teaches with avg Δ={teach_summary['avg_coverage_delta']:.4f}"
+        )
+
+    # Pattern: coverage plateau
+    if (rounds and len(rounds) >= 5
+            and traj["summary"]["coverage_delta"] < 0.01):
+        patterns.append(
+            f"Coverage plateau: only {traj['summary']['coverage_delta']:+.3%} "
+            f"over {traj['summary']['total_rounds']} rounds"
+        )
+
+    # ── 7. Recommendations ──
+    recommendations: List[str] = []
+
+    # Based on blocked domains
+    for name in blocked:
+        dt = domain_trajectories[name]
+        if dt["isolated"] > 0:
+            recommendations.append(
+                f"Teach new material bridging into {name} "
+                f"({dt['isolated']} isolated nodes)"
+            )
+
+    # Based on mode ineffectiveness
+    ineffective_modes = [
+        me["mode"] for me in mode_effectiveness
+        if me["rounds"] >= 3 and me["stagnation_rate"] > 0.6
+    ]
+    if ineffective_modes and "explore" in ineffective_modes:
+        recommendations.append(
+            "Exploration is stagnating — try targeted teaching "
+            "or manual focus on weak domains"
+        )
+
+    # Based on confused edges
+    if total_confused > 5:
+        recommendations.append(
+            "Dream consolidation (sleep-wake cycle) may resolve "
+            f"{total_confused} confused edges"
+        )
+
+    # Based on frontier availability
+    growing_domains = [
+        name for name, dt in domain_trajectories.items()
+        if dt["status"] == "GROWING"
+    ]
+    if not growing_domains and rounds:
+        recommendations.append(
+            "No domains currently growing — consider escalation "
+            "or teaching new material"
+        )
+
+    # Based on escalation history
+    if escalation_summary["total"] == 0 and state.stagnation_streak >= 2:
+        recommendations.append(
+            "Stagnation detected but no escalation attempted — try 'escalate'"
+        )
+
+    if not patterns:
+        patterns.append("No problematic patterns detected — learning is healthy")
+    if not recommendations:
+        recommendations.append("Continue current approach — trajectory is positive")
+
+    # Record journal event
+    record_journal_event(state, "reflect", {
+        "patterns_found": len(patterns),
+        "recommendations": len(recommendations),
+        "stagnation_episodes": len(episodes),
+    })
+
+    return {
+        "stagnation_episodes": episodes,
+        "mode_effectiveness": mode_effectiveness,
+        "domain_trajectories": domain_trajectories,
+        "escalation_summary": escalation_summary,
+        "teach_summary": teach_summary,
+        "patterns": patterns,
+        "recommendations": recommendations,
+        "overall": {
+            "total_rounds": traj["summary"]["total_rounds"],
+            "coverage": traj["summary"]["coverage_end"],
+            "coverage_delta": traj["summary"]["coverage_delta"],
+            "stagnation_streak": state.stagnation_streak,
+        },
+    }
+
+
+def cmd_reflect(state: SessionState) -> str:
+    """Meta-reflection: analyze learning trajectory for systematic patterns."""
+    if not state.history:
+        return "No history yet. Run some rounds first."
+
+    ref = meta_reflect(state)
+    md = state.output_format == "markdown"
+
+    if md:
+        lines = ["## Meta-Reflection", ""]
+    else:
+        lines = ["Meta-Reflection", "\u2550" * 60]
+
+    # Overview
+    ov = ref["overall"]
+    lines.append(
+        f"  {ov['total_rounds']} rounds  "
+        f"coverage={ov['coverage']:.1%}  "
+        f"Δ={ov['coverage_delta']:+.3%}  "
+        f"stagnation={ov['stagnation_streak']}"
+    )
+    lines.append("")
+
+    # Mode effectiveness
+    if md:
+        lines.append("### Mode Effectiveness")
+    else:
+        lines.append("  Mode Effectiveness")
+        lines.append("  " + "\u2500" * 40)
+    for me in ref["mode_effectiveness"]:
+        bar = "\u2588" * max(1, int(me["avg_delta"] * 500))
+        stag_pct = f"{me['stagnation_rate']:.0%}"
+        lines.append(
+            f"    {me['mode']:12s}  {me['rounds']:2d} rounds  "
+            f"avg\u0394={me['avg_delta']:+.4f}  "
+            f"stag={stag_pct:>4s}  "
+            f"cross={me['avg_crossings']:.1f}"
+        )
+    lines.append("")
+
+    # Domain trajectories
+    if md:
+        lines.append("### Domain Trajectories")
+    else:
+        lines.append("  Domain Trajectories")
+        lines.append("  " + "\u2500" * 40)
+    for name, dt in ref["domain_trajectories"].items():
+        status_icon = {
+            "SATURATED": "\u2713", "GROWING": "\u25b2",
+            "STAGNANT": "\u25ac", "BLOCKED": "\u2716",
+            "IDLE": "\u00b7",
+        }.get(dt["status"], "?")
+        lines.append(
+            f"    {status_icon} {name:12s}  "
+            f"{dt['coverage_start']:.1%}\u2192{dt['coverage_end']:.1%}  "
+            f"v={dt['velocity']:+.4f}  "
+            f"frontier={dt['frontier']}  "
+            f"confused={dt['confused_edges']}"
+        )
+    lines.append("")
+
+    # Stagnation episodes
+    if ref["stagnation_episodes"]:
+        if md:
+            lines.append("### Stagnation Episodes")
+        else:
+            lines.append("  Stagnation Episodes")
+            lines.append("  " + "\u2500" * 40)
+        for ep in ref["stagnation_episodes"]:
+            modes = ", ".join(set(ep["modes"]))
+            marker = " \u26a0" if ep["length"] >= 3 else ""
+            lines.append(
+                f"    R{ep['start']:>3d}\u2013R{ep['end']:>3d}  "
+                f"{ep['length']} rounds  [{modes}]{marker}"
+            )
+        lines.append("")
+
+    # Escalation + Teaching summaries
+    esc = ref["escalation_summary"]
+    teach = ref["teach_summary"]
+    if esc["total"] > 0 or teach["total"] > 0:
+        if md:
+            lines.append("### Interventions")
+        else:
+            lines.append("  Interventions")
+            lines.append("  " + "\u2500" * 40)
+        if esc["total"] > 0:
+            lines.append(
+                f"    Escalations: {esc['total']} "
+                f"({esc['resolved']} resolved)"
+            )
+        if teach["total"] > 0:
+            lines.append(
+                f"    Teaches: {teach['total']} "
+                f"(+{teach['total_nodes_added']} nodes, "
+                f"avg \u0394={teach['avg_coverage_delta']:+.4f})"
+            )
+        lines.append("")
+
+    # Patterns
+    if md:
+        lines.append("### Identified Patterns")
+    else:
+        lines.append("  Identified Patterns")
+        lines.append("  " + "\u2500" * 40)
+    for p in ref["patterns"]:
+        lines.append(f"    \u25cf {p}")
+    lines.append("")
+
+    # Recommendations
+    if md:
+        lines.append("### Recommendations")
+    else:
+        lines.append("  Recommendations")
+        lines.append("  " + "\u2500" * 40)
+    for r in ref["recommendations"]:
+        lines.append(f"    \u25b8 {r}")
+
+    return "\n".join(lines)
+
+
 def cmd_task(state: SessionState, text: str) -> str:
     """Process a user-provided difference as natural text.
 
@@ -2481,6 +2866,7 @@ E₀ Interactive Session — Commands
   diagnose         Per-domain stagnation analysis + bottleneck
   escalate         Manually trigger stagnation escalation (levels 1—5)
   journal [note]   Session journal: view events or annotate
+  reflect          Meta-reflection: analyze learning patterns
   why              Explain the last decision
   detail [N]       Last round's path edge by edge (or round N)
   inspect <s> <t>  Deep view of edge s→t
@@ -3032,6 +3418,9 @@ def dispatch(state: SessionState, user_input: str) -> Optional[str]:
 
     if cmd == "journal":
         return cmd_journal(state, arg if arg else None)
+
+    if cmd == "reflect":
+        return cmd_reflect(state)
 
     if cmd == "detail":
         round_n = None
