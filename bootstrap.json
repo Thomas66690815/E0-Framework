@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C230",
-    "latest_commit_hash": "810c543",
-    "latest_commit_msg": "C230: Teaching Pipeline \u2014 teach command: text \u2192 LLM structuring \u2192 L: inject \u2192 multi-pass explore \u2192 absorption report. teach_concept + cmd_teach + dispatch. 15 tests, 5103 total.",
-    "test_count": 5103,
+    "latest_commit": "C231",
+    "latest_commit_hash": "542a136",
+    "latest_commit_msg": "C231: Session Journal \u2014 structured per-session log with metrics snapshots, human annotations, cross-session trajectory. record_journal_event + save/load_journal + cmd_journal + _format_journal. 27 tests, 5130 total.",
+    "test_count": 5130,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
     "module_count": "77 production + 10 benchmarks + 17 demos + 69 explorations + 127 test files",
@@ -222,7 +222,7 @@
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
     "current_arc": "E\u2080 Learning Observatory (C228\u2013C232)",
-    "arc_status": "C228\u2013C230 done. C231\u2013C232 planned.",
+    "arc_status": "C228\u2013C231 done. C232 planned.",
     "arc_plan": {
       "C228_observation_dashboard": {
         "title": "Observation Dashboard",
@@ -242,7 +242,7 @@
       "C231_session_journal": {
         "title": "Session Journal",
         "what": "Structured per-session log: what ran, metrics snapshots, human annotations. Cross-session comparable trajectory.",
-        "status": "PLANNED"
+        "status": "DONE (C231)"
       },
       "C232_meta_reflection": {
         "title": "Meta-Reflection",
@@ -250,14 +250,14 @@
         "status": "PLANNED"
       }
     },
-    "key_result": "C230: Teaching Pipeline. teach command always invokes LLM structuring (L: prefix), injects with persistent consolidation (dry_run=False), runs 3 exploration passes to absorb material, reports nodes/edges added, coverage delta, and absorption rate. Unlike task (which matches existing structure first), teach always creates new material.",
+    "key_result": "C231: Session Journal. Event-based journal records session_start/round/teach/escalate/note/session_end with automatic metrics snapshots. Cross-session accumulation in memos/session_journal.json with deduplication. cmd_journal provides current-session view, cross-session trajectory, and human annotations. Wired into cmd_run, cmd_teach, cmd_escalate, build_session, and save_session.",
     "open_threads": [
       "Stagnation escalation: diagnose identifies problems, C229 will make reactions automatic",
       "Teaching pipeline: how to inject new material into live landscape",
       "Session journal: structured cross-session trajectory",
       "Adversarial stability still partially open (C172-C174)"
     ],
-    "next_commit_id": "C231",
+    "next_commit_id": "C232",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",

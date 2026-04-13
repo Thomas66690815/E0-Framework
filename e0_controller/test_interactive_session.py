@@ -1,4 +1,4 @@
-"""Tests for E₀ Interactive Text Session (C213–C229).
+"""Tests for E₀ Interactive Text Session (C213–C231).
 
 Validates the REPL dispatch, session state management,
 each command's output through the communication pipeline,
@@ -14,17 +14,23 @@ C227 Seed Regeneration (regenerate_seed, cmd_regenerate,
 discovered_edge materialization, multi-session learning loop),
 C228 Observation Dashboard (trajectory, diagnose,
 compute_trajectory, diagnose_session, per-domain stagnation),
-and C229 Stagnation Escalation (escalate, cmd_escalate,
-auto-escalation in cmd_run, 5-level progressive response).
+C229 Stagnation Escalation (escalate, cmd_escalate,
+auto-escalation in cmd_run, 5-level progressive response),
+C230 Teaching Pipeline (teach_concept, cmd_teach),
+and C231 Session Journal (record_journal_event, save_journal,
+load_journal, cmd_journal, _metrics_snapshot, cross-session merge).
 """
 
 from __future__ import annotations
 
+import json
 import os
+import tempfile
 
 import pytest
 
 from e0_controller.interactive_session import (
+    JOURNAL_PATH,
     SESSION_STATE_PATH,
     SessionState,
     _RATING_ACTION,
@@ -32,6 +38,7 @@ from e0_controller.interactive_session import (
     _dict_to_assessment,
     _dict_to_round,
     _match_nodes,
+    _metrics_snapshot,
     _quality_bar,
     _round_to_dict,
     _task_connection,
@@ -44,6 +51,7 @@ from e0_controller.interactive_session import (
     cmd_focus,
     cmd_help,
     cmd_inspect,
+    cmd_journal,
     cmd_rate,
     cmd_regenerate,
     cmd_run,
@@ -58,8 +66,11 @@ from e0_controller.interactive_session import (
     diagnose_session,
     dispatch,
     escalate,
+    load_journal,
     load_session,
+    record_journal_event,
     regenerate_seed,
+    save_journal,
     save_session,
     teach_concept,
 )
@@ -2479,3 +2490,212 @@ class TestTeachDispatch:
         """Help text includes 'teach' command."""
         text = cmd_help()
         assert "teach" in text.lower()
+
+
+# ── C231: Session Journal ────────────────────────────────────────────────────
+
+
+class TestMetricsSnapshot:
+    """C231: _metrics_snapshot returns a well-structured dict."""
+
+    def test_returns_dict(self):
+        s = build_session(steps_per_round=10)
+        snap = _metrics_snapshot(s)
+        assert isinstance(snap, dict)
+
+    def test_has_coverage(self):
+        s = build_session(steps_per_round=10)
+        snap = _metrics_snapshot(s)
+        assert "coverage" in snap
+        assert 0.0 <= snap["coverage"] <= 1.0
+
+    def test_has_domain_coverages(self):
+        s = build_session(steps_per_round=10)
+        snap = _metrics_snapshot(s)
+        for key in ("canon_coverage", "bootstrap_coverage", "en_coverage"):
+            assert key in snap
+
+    def test_has_stagnation_streak(self):
+        s = build_session(steps_per_round=10)
+        snap = _metrics_snapshot(s)
+        assert snap["stagnation_streak"] == 0
+
+
+class TestRecordJournalEvent:
+    """C231: record_journal_event creates well-formed entries."""
+
+    def test_returns_entry_dict(self):
+        s = build_session(steps_per_round=10)
+        entry = record_journal_event(s, "round", {"mode": "exploit"})
+        assert isinstance(entry, dict)
+
+    def test_required_keys(self):
+        s = build_session(steps_per_round=10)
+        entry = record_journal_event(s, "round")
+        for key in ("timestamp", "session_id", "event_type", "round_num", "metrics"):
+            assert key in entry, f"missing key: {key}"
+
+    def test_event_type_preserved(self):
+        s = build_session(steps_per_round=10)
+        entry = record_journal_event(s, "teach", {"concept": "test"})
+        assert entry["event_type"] == "teach"
+
+    def test_detail_attached(self):
+        s = build_session(steps_per_round=10)
+        entry = record_journal_event(s, "note", {"text": "hello"})
+        assert entry["detail"]["text"] == "hello"
+
+    def test_appends_to_journal(self):
+        s = build_session(steps_per_round=10)
+        before = len(s.journal)
+        record_journal_event(s, "round")
+        assert len(s.journal) == before + 1
+
+    def test_session_id_set(self):
+        s = build_session(steps_per_round=10)
+        entry = record_journal_event(s, "round")
+        assert entry["session_id"] == s.session_id
+        assert len(s.session_id) > 0
+
+
+class TestSaveLoadJournal:
+    """C231: save_journal and load_journal round-trip."""
+
+    def test_round_trip(self):
+        s = build_session(steps_per_round=10)
+        record_journal_event(s, "session_start")
+        record_journal_event(s, "round", {"mode": "explore"})
+        with tempfile.TemporaryDirectory() as td:
+            path = os.path.join(td, "journal.json")
+            save_journal(s, path=path)
+            loaded = load_journal(path=path)
+        assert len(loaded) == 2
+        assert loaded[0]["event_type"] == "session_start"
+
+    def test_cross_session_merge(self):
+        """Two sessions are merged into a single file."""
+        with tempfile.TemporaryDirectory() as td:
+            path = os.path.join(td, "journal.json")
+            # Session 1
+            s1 = build_session(steps_per_round=10)
+            s1.session_id = "SES_001"
+            s1.journal.clear()
+            record_journal_event(s1, "session_start")
+            save_journal(s1, path=path)
+            # Session 2 (different session_id to avoid dedup)
+            s2 = build_session(steps_per_round=10)
+            s2.session_id = "SES_002"
+            s2.journal.clear()
+            record_journal_event(s2, "session_start")
+            record_journal_event(s2, "round")
+            save_journal(s2, path=path)
+            loaded = load_journal(path=path)
+        # Both sessions' entries present
+        assert len(loaded) >= 3
+
+    def test_deduplication(self):
+        """Saving the same session twice does not double entries."""
+        s = build_session(steps_per_round=10)
+        record_journal_event(s, "session_start")
+        with tempfile.TemporaryDirectory() as td:
+            path = os.path.join(td, "journal.json")
+            save_journal(s, path=path)
+            save_journal(s, path=path)
+            loaded = load_journal(path=path)
+        assert len(loaded) == 1
+
+    def test_load_nonexistent(self):
+        """Loading from a nonexistent path returns empty list."""
+        loaded = load_journal(path="/nonexistent/path/journal.json")
+        assert loaded == []
+
+    def test_saved_format(self):
+        """Saved file has version and entries keys."""
+        s = build_session(steps_per_round=10)
+        record_journal_event(s, "round")
+        with tempfile.TemporaryDirectory() as td:
+            path = os.path.join(td, "journal.json")
+            save_journal(s, path=path)
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        assert data["version"] == "1.0"
+        assert "entries" in data
+
+
+class TestCmdJournal:
+    """C231: cmd_journal dispatches correctly."""
+
+    def test_empty_journal_message(self):
+        s = build_session(steps_per_round=10)
+        s.journal.clear()
+        out = cmd_journal(s, None)
+        assert "No journal entries" in out
+
+    def test_shows_entries_after_record(self):
+        s = build_session(steps_per_round=10)
+        record_journal_event(s, "round", {"mode": "explore"})
+        out = cmd_journal(s, None)
+        assert "Session Journal" in out
+        assert "●" in out  # round icon
+
+    def test_note_recording(self):
+        s = build_session(steps_per_round=10)
+        out = cmd_journal(s, "note This is a test annotation")
+        assert "✓" in out
+        assert len(s.journal) >= 2  # session_start + note
+
+    def test_note_appears_in_output(self):
+        s = build_session(steps_per_round=10)
+        cmd_journal(s, "note Remember this insight")
+        out = cmd_journal(s, None)
+        assert "Remember this insight" in out
+
+    def test_note_empty_returns_usage(self):
+        s = build_session(steps_per_round=10)
+        out = cmd_journal(s, "note ")
+        assert "Usage:" in out
+
+    def test_all_mode(self):
+        s = build_session(steps_per_round=10)
+        record_journal_event(s, "round")
+        out = cmd_journal(s, "all")
+        assert "Cross-Session" in out or "Session Journal" in out
+
+    def test_summary_line(self):
+        s = build_session(steps_per_round=10)
+        record_journal_event(s, "round")
+        record_journal_event(s, "round")
+        out = cmd_journal(s, None)
+        assert "entries" in out
+
+
+class TestSessionIdField:
+    """C231: SessionState carries session_id."""
+
+    def test_session_id_nonempty(self):
+        s = build_session(steps_per_round=10)
+        assert isinstance(s.session_id, str)
+        assert len(s.session_id) > 0
+
+    def test_session_start_recorded(self):
+        s = build_session(steps_per_round=10)
+        assert len(s.journal) >= 1
+        assert s.journal[0]["event_type"] == "session_start"
+
+
+class TestJournalDispatch:
+    """C231: dispatch routes 'journal' command."""
+
+    def test_dispatch_journal(self):
+        s = build_session(steps_per_round=10)
+        out = dispatch(s, "journal")
+        assert "Journal" in out or "journal" in out or "No journal" in out
+
+    def test_dispatch_journal_note(self):
+        s = build_session(steps_per_round=10)
+        out = dispatch(s, "journal note Test from dispatch")
+        assert "✓" in out
+
+    def test_help_includes_journal(self):
+        text = cmd_help()
+        assert "journal" in text.lower()

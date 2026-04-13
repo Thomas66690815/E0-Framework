@@ -1,4 +1,4 @@
-"""E₀ Interactive Text Session (C213, extended C214/C216/C217/C228/C229/C230).
+"""E₀ Interactive Text Session (C213, extended C214/C216/C217/C228–C231).
 
 REPL loop on the real multi-domain landscape. The user types commands,
 E₀ responds with structured communication through the full pipeline.
@@ -34,6 +34,12 @@ material. Always invokes LLM structuring (L: prefix), injects with
 persistent consolidation (dry_run=False), runs multiple exploration passes
 to absorb the material, and reports what was learned.
 
+C231 adds Session Journal: structured per-session log with metrics snapshots,
+human annotations, and cross-session trajectory. Events are auto-recorded
+for rounds, teach, and escalation. `journal note <text>` adds human
+annotations. Journal persists to memos/session_journal.json and accumulates
+across sessions.
+
 Commands:
   run [N]       — Execute the next N rounds (default: 1)
   task <text>   — Introduce a difference in natural language
@@ -43,6 +49,7 @@ Commands:
   trajectory    — Coverage/T_s/mode over time
   diagnose      — Per-domain stagnation analysis
   escalate      — Manually trigger stagnation escalation
+  journal [note <text>] — Session journal: view or annotate
   why           — Explain the last round's decision
   detail [N]    — Show last round edge by edge (or round N)
   inspect <src> <tgt> — Deep view of a single edge
@@ -59,6 +66,7 @@ Usage:
 from __future__ import annotations
 
 import os
+import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -110,6 +118,8 @@ class SessionState:
     output_format: str = "text"
     last_spec: Optional[UISpec] = None
     llm_adapter: Optional[Any] = None  # E0LLMAdapter, lazy-init
+    session_id: str = ""  # C231: unique session identifier
+    journal: List[Dict[str, Any]] = field(default_factory=list)  # C231
 
 
 # ── Commands ───────────────────────────────────────────────────────────
@@ -192,6 +202,14 @@ def cmd_run(state: SessionState, n: int = 1) -> str:
                     "  ✗ All escalation levels exhausted — structural limit."
                 )
             parts.append("\n".join(esc_lines))
+
+        # Journal: record round event (C231)
+        record_journal_event(state, "round", {
+            "mode": mode,
+            "coverage_delta": round(coverage_delta, 6),
+            "steps": nav["steps"],
+            "domain_crossings": nav["domain_crossings"],
+        })
 
         # Communication output
         text = communicate_round(
@@ -1183,6 +1201,13 @@ def cmd_escalate(state: SessionState) -> str:
     """Manually trigger stagnation escalation."""
     result = escalate(state)
 
+    # Journal: record escalation event (C231)
+    record_journal_event(state, "escalate", {
+        "level": result["level"],
+        "resolved": result["resolved"],
+        "coverage_delta": result["coverage_delta"],
+    })
+
     lines = [
         "Stagnation Escalation",
         "\u2550" * 50,
@@ -1872,6 +1897,13 @@ def cmd_teach(state: SessionState, text: str) -> str:
         lines.append(f"  Error: {result['error']}")
         return "\n".join(lines)
 
+    # Journal: record teach event (C231)
+    record_journal_event(state, "teach", {
+        "concept": text[:80],
+        "nodes_added": len(result["nodes_added"]),
+        "coverage_delta": result["coverage_delta"],
+    })
+
     lines.append(
         f"  Injected: {len(result['nodes_added'])} nodes, "
         f"{result['total_new_edges']} edges (L: prefix)"
@@ -1913,6 +1945,234 @@ def cmd_teach(state: SessionState, text: str) -> str:
         lines.append(
             "  ✗ Minimal coverage change. Material may overlap "
             "with existing knowledge."
+        )
+
+    return "\n".join(lines)
+
+
+# ── C231: Session Journal ──────────────────────────────────────────────
+
+JOURNAL_PATH = os.path.join("memos", "session_journal.json")
+
+
+def _metrics_snapshot(state: SessionState) -> Dict[str, Any]:
+    """Take a lightweight metrics snapshot for a journal entry."""
+    a = assess(state.landscape, state.unified_nodes)
+    return {
+        "coverage": round(a.coverage, 4),
+        "T_s": round(a.T_s, 4),
+        "frontier_size": a.frontier_size,
+        "visited_nodes": a.visited_nodes,
+        "total_nodes": a.total_nodes,
+        "canon_coverage": round(a.canon_coverage, 4),
+        "bootstrap_coverage": round(a.bootstrap_coverage, 4),
+        "en_coverage": round(a.en_coverage, 4),
+        "mech_coverage": round(a.mech_coverage, 4),
+        "stagnation_streak": state.stagnation_streak,
+    }
+
+
+def record_journal_event(
+    state: SessionState,
+    event_type: str,
+    detail: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Record a journal event with automatic metrics snapshot.
+
+    Event types: session_start, round, teach, escalate, note, session_end.
+    Returns the created entry.
+    """
+    entry = {
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "session_id": state.session_id,
+        "event_type": event_type,
+        "round_num": state.round_num,
+        "metrics": _metrics_snapshot(state),
+    }
+    if detail:
+        entry["detail"] = detail
+
+    state.journal.append(entry)
+    return entry
+
+
+def save_journal(state: SessionState, path: Optional[str] = None) -> str:
+    """Save journal entries to JSON, appending to existing cross-session log.
+
+    Loads existing journal file (if any), appends current session entries,
+    deduplicates by timestamp+session_id, and writes back.
+    Returns the absolute path of the written file.
+    """
+    import json
+
+    path = path or JOURNAL_PATH
+
+    # Load existing entries from prior sessions
+    existing: List[Dict[str, Any]] = []
+    if os.path.exists(path):
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                existing = data.get("entries", [])
+        except (json.JSONDecodeError, KeyError):
+            pass
+
+    # Merge: append current session, deduplicate
+    seen = {
+        (e.get("timestamp", ""), e.get("session_id", ""), e.get("event_type", ""),
+         e.get("round_num", 0))
+        for e in existing
+    }
+    for entry in state.journal:
+        key = (entry.get("timestamp", ""), entry.get("session_id", ""),
+               entry.get("event_type", ""), entry.get("round_num", 0))
+        if key not in seen:
+            existing.append(entry)
+            seen.add(key)
+
+    data = {
+        "version": "1.0",
+        "purpose": "E₀ session journal — cross-session learning trajectory",
+        "entries": existing,
+    }
+
+    os.makedirs(os.path.dirname(os.path.abspath(path)) or ".", exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+    return os.path.abspath(path)
+
+
+def load_journal(path: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Load all journal entries from disk."""
+    import json
+
+    path = path or JOURNAL_PATH
+    if not os.path.exists(path):
+        return []
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return data.get("entries", [])
+    except (json.JSONDecodeError, KeyError):
+        return []
+
+
+def cmd_journal(state: SessionState, arg: Optional[str] = None) -> str:
+    """Display session journal or add a note.
+
+    Usage:
+      journal          — Show current session entries
+      journal all      — Show cross-session trajectory
+      journal note <text> — Add a human annotation
+    """
+    if arg and arg.startswith("note "):
+        note_text = arg[5:].strip()
+        if not note_text:
+            return "Usage: journal note <your annotation>"
+        record_journal_event(state, "note", {"text": note_text})
+        return f"  ✓ Journal note recorded: \"{note_text}\""
+
+    if arg == "all":
+        # Cross-session view: load from disk + merge current
+        all_entries = load_journal()
+        # Add current session entries not yet saved
+        current_ids = {
+            (e.get("timestamp", ""), e.get("session_id", ""))
+            for e in all_entries
+        }
+        for entry in state.journal:
+            key = (entry.get("timestamp", ""), entry.get("session_id", ""))
+            if key not in current_ids:
+                all_entries.append(entry)
+        return _format_journal(all_entries, cross_session=True)
+
+    # Default: current session only
+    return _format_journal(state.journal, cross_session=False)
+
+
+def _format_journal(
+    entries: List[Dict[str, Any]], cross_session: bool = False,
+) -> str:
+    """Format journal entries for display."""
+    if not entries:
+        if cross_session:
+            return "No journal entries found across sessions."
+        return "No journal entries yet. Run some rounds first."
+
+    lines = []
+    if cross_session:
+        lines.append("Session Journal — Cross-Session Trajectory")
+        lines.append("═" * 55)
+    else:
+        lines.append("Session Journal")
+        lines.append("═" * 55)
+
+    current_session = ""
+    for entry in entries:
+        sid = entry.get("session_id", "?")
+        if cross_session and sid != current_session:
+            current_session = sid
+            lines.append(f"\n  Session {sid}")
+            lines.append("  " + "─" * 40)
+
+        ts = entry.get("timestamp", "?")
+        etype = entry.get("event_type", "?")
+        rnum = entry.get("round_num", 0)
+        metrics = entry.get("metrics", {})
+        detail = entry.get("detail", {})
+
+        cov = metrics.get("coverage", 0)
+        ts_val = metrics.get("T_s", 0)
+
+        # Event icon
+        icons = {
+            "session_start": "▶",
+            "session_end": "■",
+            "round": "●",
+            "teach": "📖",
+            "escalate": "⚡",
+            "note": "✎",
+        }
+        icon = icons.get(etype, "·")
+
+        # Compact line
+        time_short = ts[11:19] if len(ts) >= 19 else ts
+        line = f"  {icon} {time_short} R{rnum:>3d}  cov={cov:.1%}  T_s={ts_val:.2f}"
+
+        if etype == "note":
+            line += f"  \"{detail.get('text', '')}\""
+        elif etype == "teach":
+            concept = detail.get("concept", "")
+            nodes = detail.get("nodes_added", 0)
+            line += f"  teach: {concept[:30]} (+{nodes} nodes)"
+        elif etype == "escalate":
+            level = detail.get("level", "?")
+            resolved = detail.get("resolved", False)
+            line += f"  escalate: L{level} {'✓' if resolved else '✗'}"
+        elif etype == "round":
+            mode = detail.get("mode", "?")
+            delta = detail.get("coverage_delta", 0)
+            line += f"  {mode} Δ={delta:+.1%}"
+        elif etype == "session_start":
+            line += "  session started"
+        elif etype == "session_end":
+            line += "  session ended"
+
+        lines.append(line)
+
+    # Summary line
+    if entries:
+        first_m = entries[0].get("metrics", {})
+        last_m = entries[-1].get("metrics", {})
+        cov_start = first_m.get("coverage", 0)
+        cov_end = last_m.get("coverage", 0)
+        total = len(entries)
+        lines.append("")
+        lines.append(
+            f"  {total} entries  "
+            f"coverage: {cov_start:.1%} → {cov_end:.1%}  "
+            f"Δ={cov_end - cov_start:+.1%}"
         )
 
     return "\n".join(lines)
@@ -2220,6 +2480,7 @@ E₀ Interactive Session — Commands
   trajectory       Coverage/T_s/mode progression over rounds
   diagnose         Per-domain stagnation analysis + bottleneck
   escalate         Manually trigger stagnation escalation (levels 1—5)
+  journal [note]   Session journal: view events or annotate
   why              Explain the last decision
   detail [N]       Last round's path edge by edge (or round N)
   inspect <s> <t>  Deep view of edge s→t
@@ -2411,6 +2672,9 @@ def save_session(state: SessionState, path: Optional[str] = None,
     # C226: Write-back perception learning
     if write_back_perception and state.perception:
         state.perception.save_state(_PERCEPTION_SEED)
+
+    # C231: Persist session journal
+    save_journal(state)
 
     return os.path.abspath(path)
 
@@ -2687,14 +2951,21 @@ def build_session(
     else:
         perception = build_perception_domain()
 
-    return SessionState(
+    session_id = time.strftime("%Y%m%d_%H%M%S")
+    state = SessionState(
         landscape=landscape,
         unified_nodes=unified_nodes,
         stats=stats,
         perception=perception,
         steps_per_round=steps_per_round,
         output_format=output_format,
+        session_id=session_id,
     )
+
+    # Journal: record session start (C231)
+    record_journal_event(state, "session_start")
+
+    return state
 
 
 def dispatch(state: SessionState, user_input: str) -> Optional[str]:
@@ -2758,6 +3029,9 @@ def dispatch(state: SessionState, user_input: str) -> Optional[str]:
 
     if cmd == "escalate":
         return cmd_escalate(state)
+
+    if cmd == "journal":
+        return cmd_journal(state, arg if arg else None)
 
     if cmd == "detail":
         round_n = None
