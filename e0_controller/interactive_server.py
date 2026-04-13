@@ -398,15 +398,26 @@ def run_server(
     port: int = 8484,
     steps_per_round: int = 40,
     open_browser: bool = True,
+    seed_path: Optional[str] = None,
 ) -> None:
-    """Start the interactive browser session."""
+    """Start the interactive browser session.
+
+    C225: Uses build_session auto-detect fallback chain by default.
+    Pass seed_path to override with a specific seed/session file.
+    """
     print(f"\n{'═' * 60}")
     print(f"  E₀ Interactive Browser Session")
     print(f"{'═' * 60}")
     print(f"  Building landscape...")
 
-    state = build_session(steps_per_round=steps_per_round)
+    state = build_session(
+        steps_per_round=steps_per_round,
+        self_knowledge_path=seed_path,
+        auto_detect=True,
+    )
 
+    source = state.stats.get("seed", "cold start")
+    print(f"  Source:    {source}")
     print(f"  Landscape: {state.stats['total_nodes']} nodes, "
           f"{state.stats['total_edges']} edges")
     print(f"  Domains:   Canon ({state.stats['canon_nodes']}), "
@@ -444,11 +455,13 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="E₀ Interactive Browser Session (C215)")
+        description="E₀ Interactive Browser Session (C215/C225)")
     parser.add_argument("--port", type=int, default=8484,
                         help="HTTP port (default: 8484)")
     parser.add_argument("--steps", type=int, default=40,
                         help="Steps per round (default: 40)")
+    parser.add_argument("--seed", type=str, default=None,
+                        help="Path to seed/session JSON (auto-detects if omitted)")
     parser.add_argument("--no-browser", action="store_true",
                         help="Don't open browser automatically")
     args = parser.parse_args()
@@ -457,6 +470,7 @@ def main():
         port=args.port,
         steps_per_round=args.steps,
         open_browser=not args.no_browser,
+        seed_path=args.seed,
     )
 
 

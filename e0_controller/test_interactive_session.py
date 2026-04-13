@@ -1,4 +1,4 @@
-"""Tests for E₀ Interactive Text Session (C213–C219).
+"""Tests for E₀ Interactive Text Session (C213–C225).
 
 Validates the REPL dispatch, session state management,
 each command's output through the communication pipeline,
@@ -6,14 +6,18 @@ the C214 feedback loop (rate command + session-scoped perception),
 C216 transition detail (detail + inspect commands),
 C217 Human Peer Input (task command + node matching),
 C218 LLM Peer Structuring (propose_domain_graph → inject → navigate),
-and C219 Semantic Surface + 3-Tier Task Processing.
+C219 Semantic Surface + 3-Tier Task Processing,
+and C225 Session Persistence (save/load/auto-detect).
 """
 
 from __future__ import annotations
 
+import os
+
 import pytest
 
 from e0_controller.interactive_session import (
+    SESSION_STATE_PATH,
     SessionState,
     _RATING_ACTION,
     _match_nodes,
@@ -28,11 +32,14 @@ from e0_controller.interactive_session import (
     cmd_inspect,
     cmd_rate,
     cmd_run,
+    cmd_save,
     cmd_status,
     cmd_summary,
     cmd_task,
     cmd_why,
     dispatch,
+    load_session,
+    save_session,
 )
 from e0_controller.feedback import HumanAction
 from e0_controller.perception import PerceptionDomain
@@ -1356,3 +1363,165 @@ class TestTaskNavigate:
         before = len(s.history)
         _task_navigate(s, "test", "C:difference")
         assert len(s.history) == before + 1
+
+
+# ── Session Persistence (C225) ─────────────────────────────────────────
+
+
+class TestSaveSession:
+    """save_session writes a valid JSON file."""
+
+    def test_save_creates_file(self, session, tmp_path):
+        path = str(tmp_path / "test_session.json")
+        result = save_session(session, path)
+        assert os.path.exists(result)
+
+    def test_save_contains_landscape(self, session, tmp_path):
+        path = str(tmp_path / "test_session.json")
+        save_session(session, path)
+        import json
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        assert "landscape" in data
+        assert "states" in data["landscape"]
+        assert "edges" in data["landscape"]
+
+    def test_save_contains_meta(self, session, tmp_path):
+        path = str(tmp_path / "test_session.json")
+        save_session(session, path)
+        import json
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        meta = data["meta"]
+        assert meta["version"] == "1.0"
+        assert "round_num" in meta
+        assert "saved_at" in meta
+
+    def test_save_contains_unified_nodes(self, session, tmp_path):
+        path = str(tmp_path / "test_session.json")
+        save_session(session, path)
+        import json
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        assert len(data["unified_nodes"]) > 100
+
+    def test_save_contains_perception(self, session, tmp_path):
+        path = str(tmp_path / "test_session.json")
+        save_session(session, path)
+        import json
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        assert data["perception"] is not None
+        assert "spec" in data["perception"]
+        assert "nodes" in data["perception"]["spec"]
+
+
+class TestLoadSession:
+    """load_session restores a SessionState from saved JSON."""
+
+    def test_round_trip_landscape(self, session, tmp_path):
+        path = str(tmp_path / "rt_session.json")
+        save_session(session, path)
+        restored = load_session(path)
+        assert isinstance(restored, SessionState)
+        assert restored.landscape is not None
+        assert len(restored.landscape.states) == len(session.landscape.states)
+
+    def test_round_trip_edges(self, session, tmp_path):
+        path = str(tmp_path / "rt_session.json")
+        save_session(session, path)
+        restored = load_session(path)
+        assert restored.landscape.edge_count() == session.landscape.edge_count()
+
+    def test_round_trip_unified_nodes(self, session, tmp_path):
+        path = str(tmp_path / "rt_session.json")
+        save_session(session, path)
+        restored = load_session(path)
+        assert set(restored.unified_nodes.keys()) == set(session.unified_nodes.keys())
+
+    def test_round_trip_perception(self, session, tmp_path):
+        path = str(tmp_path / "rt_session.json")
+        save_session(session, path)
+        restored = load_session(path)
+        assert restored.perception is not None
+        assert isinstance(restored.perception, PerceptionDomain)
+        assert len(restored.perception.primitives) == len(session.perception.primitives)
+
+    def test_round_trip_metadata(self, session, tmp_path):
+        path = str(tmp_path / "rt_session.json")
+        save_session(session, path)
+        restored = load_session(path)
+        assert restored.round_num == session.round_num
+        assert restored.stagnation_streak == session.stagnation_streak
+        assert restored.steps_per_round == session.steps_per_round
+
+    def test_round_trip_stats(self, session, tmp_path):
+        path = str(tmp_path / "rt_session.json")
+        save_session(session, path)
+        restored = load_session(path)
+        assert restored.stats["total_nodes"] == session.stats["total_nodes"]
+
+    def test_restored_session_can_run(self, session, tmp_path):
+        """Restored session should be fully functional."""
+        path = str(tmp_path / "rt_session.json")
+        save_session(session, path)
+        restored = load_session(path)
+        output = cmd_status(restored)
+        assert "Coverage" in output or "coverage" in output.lower()
+
+
+class TestCmdSave:
+    """cmd_save dispatches correctly."""
+
+    def test_cmd_save_returns_confirmation(self, session, tmp_path):
+        path = str(tmp_path / "save_cmd.json")
+        result = cmd_save(session, path)
+        assert "Session saved" in result
+        assert "Rounds" in result
+
+    def test_dispatch_save(self, session, tmp_path):
+        path = str(tmp_path / "dispatch_save.json")
+        result = dispatch(session, f"save {path}")
+        assert "Session saved" in result
+
+
+class TestSaveInHelp:
+    """Help text includes save command."""
+
+    def test_save_in_help(self):
+        text = cmd_help()
+        assert "save" in text.lower()
+
+
+class TestAutoDetect:
+    """build_session auto-detects session_state.json when enabled."""
+
+    def test_auto_detect_session_state(self, session, tmp_path, monkeypatch):
+        path = str(tmp_path / "session_state.json")
+        save_session(session, path)
+        import e0_controller.interactive_session as mod
+        monkeypatch.setattr(mod, "SESSION_STATE_PATH", path)
+        restored = build_session(steps_per_round=15, auto_detect=True)
+        assert restored.landscape is not None
+        assert len(restored.landscape.states) == len(session.landscape.states)
+        assert restored.steps_per_round == 15  # overridden
+
+    def test_auto_detect_off_by_default(self):
+        """Without auto_detect=True, build_session does cold start."""
+        state = build_session(steps_per_round=10)
+        assert isinstance(state, SessionState)
+        # Cold start always has EN nodes
+        assert state.stats["en_nodes"] > 0
+
+
+class TestConsolidateNotDry:
+    """cmd_run now uses consolidate with dry_run=False."""
+
+    def test_consolidate_persists(self, tmp_path, monkeypatch):
+        """After cmd_run, learning_state.json should be written."""
+        import e0_controller.explore_bootstrap_landscape as ebl
+        ls_path = str(tmp_path / "learning_state.json")
+        monkeypatch.setattr(ebl, "LEARNING_STATE_PATH", ls_path)
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        assert os.path.exists(ls_path)

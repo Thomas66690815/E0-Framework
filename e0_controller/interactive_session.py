@@ -40,6 +40,7 @@ Usage:
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -150,8 +151,8 @@ def cmd_run(state: SessionState, n: int = 1) -> str:
         )
         state.history.append(result)
 
-        # Consolidate (dry run — no disk writes in interactive mode)
-        consolidate(result, nav["new_edges"], dry_run=True)
+        # Consolidate (persist round results to learning_state.json)
+        consolidate(result, nav["new_edges"], dry_run=False)
 
         # Stagnation tracking
         if coverage_delta <= 0.001:
@@ -1237,13 +1238,157 @@ E₀ Interactive Session — Commands
   detail [N]       Last round's path edge by edge (or round N)
   inspect <s> <t>  Deep view of edge s→t
   rate <i> <rating> Rate panel i (helpful / not / confused)
+  save [path]      Save session state to disk
   summary          Full cycle summary so far
   help             Show this help
-  quit / exit      End session
+  quit / exit      End session (auto-saves)
 
   Or just type any text — E₀ will try to match it structurally,
   and call the LLM peer if needed.
 """
+
+
+# ── Session Persistence (C225) ─────────────────────────────────────────
+
+SESSION_STATE_PATH = os.path.join("memos", "session_state.json")
+
+
+def _perception_to_dict(perception: "PerceptionDomain") -> dict:
+    """Serialize perception domain to an inline dict."""
+    hist = perception.landscape.historization
+    edges = []
+    for edge in perception.landscape.edges:
+        U, F = hist._effective_traces(edge)
+        edges.append({
+            "from": edge.source,
+            "to": edge.target,
+            "delta": perception.landscape.difference(edge.source, edge.target),
+            "resistance": perception.landscape.base_resistance(
+                edge.source, edge.target,
+            ),
+            "initial_U": round(U, 6),
+            "initial_F": round(F, 6),
+            "confidence": 1.0,
+        })
+    return {
+        "tau": hist._tau,
+        "spec": {
+            "nodes": list(perception.primitives),
+            "edges": edges,
+        },
+    }
+
+
+def save_session(state: SessionState, path: Optional[str] = None) -> str:
+    """Save session state to JSON for later resume.
+
+    Persists the full landscape (all traces), unified node metadata,
+    edge metadata, perception domain, and session bookkeeping.
+
+    Returns the absolute path of the written file.
+    """
+    import json
+    import os
+    import time
+    from e0_controller.snapshot_codec import encode_landscape
+
+    path = path or SESSION_STATE_PATH
+
+    # Landscape + edge metadata
+    landscape_data = encode_landscape(state.landscape)
+    edge_meta = {}
+    for e in state.landscape.edges:
+        meta = state.landscape.edge_meta(e.source, e.target)
+        if meta:
+            edge_meta[f"{e.source}→{e.target}"] = meta
+
+    # Perception (inline using same format as PerceptionDomain.save_state)
+    perception_data = None
+    if state.perception:
+        perception_data = _perception_to_dict(state.perception)
+
+    data = {
+        "meta": {
+            "version": "1.0",
+            "purpose": "E₀ session state — resume learning across restarts",
+            "saved_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            "round_num": state.round_num,
+            "stagnation_streak": state.stagnation_streak,
+            "steps_per_round": state.steps_per_round,
+            "output_format": state.output_format,
+            "history_rounds": len(state.history),
+        },
+        "stats": state.stats,
+        "landscape": landscape_data,
+        "unified_nodes": state.unified_nodes,
+        "edge_meta": edge_meta,
+        "perception": perception_data,
+    }
+
+    os.makedirs(os.path.dirname(os.path.abspath(path)) or ".", exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+    return os.path.abspath(path)
+
+
+def load_session(path: str) -> SessionState:
+    """Load session state from a saved JSON file.
+
+    Restores landscape, unified_nodes, perception, and session metadata.
+    History is NOT restored (it depends on assessment dataclasses).
+
+    Returns a ready-to-use SessionState.
+    """
+    import json
+    from e0_controller.snapshot_codec import decode_landscape
+    from e0_controller.bootstrapper import bootstrap_landscape
+
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    meta = data["meta"]
+    landscape = decode_landscape(data["landscape"])
+
+    # Restore edge metadata
+    for key, emeta in data.get("edge_meta", {}).items():
+        parts = key.split("→")
+        if len(parts) == 2:
+            source, target = parts
+            if landscape.has_edge(source, target):
+                landscape.set_edge_meta(source, target, **emeta)
+
+    unified_nodes = data["unified_nodes"]
+    stats = data["stats"]
+
+    # Restore perception
+    perception = None
+    if data.get("perception"):
+        pdata = data["perception"]
+        p_landscape = bootstrap_landscape(pdata["spec"])
+        perception = PerceptionDomain(p_landscape, pdata["spec"]["nodes"])
+
+    return SessionState(
+        landscape=landscape,
+        unified_nodes=unified_nodes,
+        stats=stats,
+        perception=perception,
+        round_num=meta.get("round_num", 0),
+        stagnation_streak=meta.get("stagnation_streak", 0),
+        steps_per_round=meta.get("steps_per_round", 40),
+        output_format=meta.get("output_format", "text"),
+    )
+
+
+def cmd_save(state: SessionState, path: Optional[str] = None) -> str:
+    """Save session state and return confirmation."""
+    saved_path = save_session(state, path)
+    return (
+        f"Session saved: {saved_path}\n"
+        f"  Rounds: {state.round_num}, "
+        f"Nodes: {state.stats.get('total_nodes', '?')}, "
+        f"Edges: {state.stats.get('total_edges', '?')}"
+    )
 
 
 def cmd_help() -> str:
@@ -1259,21 +1404,47 @@ def build_session(
     output_format: str = "text",
     perception_path: Optional[str] = None,
     self_knowledge_path: Optional[str] = None,
+    auto_detect: bool = False,
 ) -> SessionState:
     """Build an interactive session with the multi-domain landscape.
 
-    If a self-knowledge seed exists (C220), loads it as warm start
-    instead of building from scratch.  Perception is loaded separately.
+    C225: Fallback chain for warm start:
+      1. Explicit ``self_knowledge_path`` (if provided and exists)
+      2. ``memos/session_state.json`` (if auto_detect=True and exists)
+      3. ``memos/self_knowledge_seed.json`` (if auto_detect=True and exists)
+      4. Cold start via ``build_multidomain_landscape()``
+
+    A session_state.json restored via ``load_session`` returns a full
+    SessionState directly (landscape + perception + round_num, etc.).
 
     Args:
         self_knowledge_path: Explicit path to seed JSON.
-            If None, builds fresh (no auto-detection).
+        auto_detect: If True, try session_state then seed.
+            Default is False (backward-compatible). Entry points
+            (run_interactive, run_server) set True explicitly.
     """
-    import os
+    from e0_controller.explore_self_knowledge import SEED_PATH
 
+    # ── Fallback chain: session_state → seed → cold start ──
+
+    # 1. Try explicit path
     if self_knowledge_path and os.path.exists(self_knowledge_path):
+        resolved = self_knowledge_path
+    # 2. Auto-detect session state
+    elif auto_detect and os.path.exists(SESSION_STATE_PATH):
+        state = load_session(SESSION_STATE_PATH)
+        state.steps_per_round = steps_per_round
+        state.output_format = output_format
+        return state
+    # 3. Auto-detect seed
+    elif auto_detect and os.path.exists(SEED_PATH):
+        resolved = SEED_PATH
+    else:
+        resolved = None
+
+    if resolved:
         from e0_controller.explore_self_knowledge import load_seed
-        landscape, unified_nodes, meta = load_seed(self_knowledge_path)
+        landscape, unified_nodes, meta = load_seed(resolved)
         stats = {
             "total_nodes": meta["node_count"],
             "total_edges": meta["edge_count"],
@@ -1284,7 +1455,7 @@ def build_session(
                             if n.startswith("EN:")),
             "canon_bootstrap_bridges": 0,   # not tracked in seed
             "en_bridges": 0,                # not tracked in seed
-            "seed": self_knowledge_path,
+            "seed": resolved,
         }
     else:
         landscape, unified_nodes, stats = build_multidomain_landscape()
@@ -1385,6 +1556,9 @@ def dispatch(state: SessionState, user_input: str) -> Optional[str]:
             return f"Invalid panel index: '{rate_parts[0]}'. Must be a number."
         return cmd_rate(state, idx, rate_parts[1])
 
+    if cmd == "save":
+        return cmd_save(state, arg if arg else None)
+
     # Unrecognized command → treat entire input as free-text task
     return cmd_task(state, raw)
 
@@ -1392,16 +1566,21 @@ def dispatch(state: SessionState, user_input: str) -> Optional[str]:
 def run_interactive(
     steps_per_round: int = 40,
     output_format: str = "text",
+    seed_path: Optional[str] = None,
 ) -> None:
-    """Main REPL entry point."""
+    """Main REPL entry point.  C225: auto-detect seed, auto-save on quit."""
     state = build_session(
         steps_per_round=steps_per_round,
         output_format=output_format,
+        self_knowledge_path=seed_path,
+        auto_detect=True,
     )
 
+    source = state.stats.get("seed", "cold start")
     print(f"\n{'═' * 60}")
     print(f"  E₀ Interactive Session")
     print(f"{'═' * 60}")
+    print(f"  Source:    {source}")
     print(f"  Landscape: {state.stats['total_nodes']} nodes, "
           f"{state.stats['total_edges']} edges")
     print(f"  Domains:   Canon ({state.stats['canon_nodes']}), "
@@ -1419,7 +1598,9 @@ def run_interactive(
         try:
             user_input = input("E₀> ")
         except (EOFError, KeyboardInterrupt):
-            print("\nSession ended.")
+            print("\n  Auto-saving session...")
+            save_session(state)
+            print("Session ended.")
             break
 
         result = dispatch(state, user_input)
@@ -1428,6 +1609,8 @@ def run_interactive(
                 print(f"\n  {len(state.history)} rounds completed. "
                       f"Final coverage: "
                       f"{state.history[-1].assessment_after.coverage:.1%}")
+            print("  Auto-saving session...")
+            save_session(state)
             print("Session ended.")
             break
 
@@ -1443,12 +1626,14 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="E₀ Interactive Text Session (C213)")
+        description="E₀ Interactive Text Session (C213/C225)")
     parser.add_argument("--steps", type=int, default=40,
                         help="Steps per round (default: 40)")
     parser.add_argument("--format", dest="fmt", default="text",
                         choices=["text", "markdown", "md"],
                         help="Output format (default: text)")
+    parser.add_argument("--seed", type=str, default=None,
+                        help="Path to seed/session JSON (auto-detects if omitted)")
     args = parser.parse_args()
 
     fmt = "markdown" if args.fmt == "md" else args.fmt
@@ -1456,6 +1641,7 @@ def main():
     run_interactive(
         steps_per_round=args.steps,
         output_format=fmt,
+        seed_path=args.seed,
     )
 
 
