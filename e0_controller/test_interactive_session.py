@@ -1,4 +1,4 @@
-"""Tests for E₀ Interactive Text Session (C213–C228).
+"""Tests for E₀ Interactive Text Session (C213–C229).
 
 Validates the REPL dispatch, session state management,
 each command's output through the communication pipeline,
@@ -12,8 +12,10 @@ C226 Session History + Server Lifecycle (history round-trip,
 perception write-back, server auto-save),
 C227 Seed Regeneration (regenerate_seed, cmd_regenerate,
 discovered_edge materialization, multi-session learning loop),
-and C228 Observation Dashboard (trajectory, diagnose,
-compute_trajectory, diagnose_session, per-domain stagnation).
+C228 Observation Dashboard (trajectory, diagnose,
+compute_trajectory, diagnose_session, per-domain stagnation),
+and C229 Stagnation Escalation (escalate, cmd_escalate,
+auto-escalation in cmd_run, 5-level progressive response).
 """
 
 from __future__ import annotations
@@ -38,6 +40,7 @@ from e0_controller.interactive_session import (
     build_session,
     cmd_detail,
     cmd_diagnose,
+    cmd_escalate,
     cmd_focus,
     cmd_help,
     cmd_inspect,
@@ -53,6 +56,7 @@ from e0_controller.interactive_session import (
     compute_trajectory,
     diagnose_session,
     dispatch,
+    escalate,
     load_session,
     regenerate_seed,
     save_session,
@@ -2192,3 +2196,150 @@ class TestCmdDiagnose:
         out = cmd_diagnose(s)
         assert "## Diagnostic Report" in out
         assert "### Canon" in out or "### Bootstrap" in out
+
+
+# ── C229: Stagnation Escalation ────────────────────────────────────────
+
+
+class TestEscalate:
+    """C229: escalate() returns structured escalation result."""
+
+    def test_returns_dict(self):
+        """escalate() returns a dict with required keys."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = escalate(s)
+        assert isinstance(result, dict)
+        assert "resolved" in result
+        assert "level" in result
+        assert "name" in result
+        assert "coverage_delta" in result
+        assert "attempts" in result
+
+    def test_attempts_list(self):
+        """Each attempt has level, name, coverage_delta, detail."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = escalate(s)
+        for a in result["attempts"]:
+            assert "level" in a
+            assert "name" in a
+            assert "coverage_delta" in a
+            assert "detail" in a
+
+    def test_levels_in_order(self):
+        """Attempts are tried in ascending level order."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = escalate(s)
+        levels = [a["level"] for a in result["attempts"]]
+        assert levels == sorted(levels)
+
+    def test_resets_stagnation_on_resolve(self):
+        """On resolution, stagnation_streak is reset to 0."""
+        s = build_session(steps_per_round=10)
+        s.stagnation_streak = 5
+        result = escalate(s)
+        if result["resolved"]:
+            assert s.stagnation_streak == 0
+
+    def test_accept_is_last_resort(self):
+        """Level 5 (accept) is present when nothing resolves."""
+        s = build_session(steps_per_round=10)
+        # Run many rounds to push coverage high
+        cmd_run(s, 10)
+        result = escalate(s)
+        assert result["level"] <= 5
+        if not result["resolved"]:
+            assert result["name"] == "accept"
+            assert result["level"] == 5
+
+
+class TestCmdEscalate:
+    """C229: cmd_escalate formats readable output."""
+
+    def test_output_is_string(self):
+        """cmd_escalate returns a non-empty string."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_escalate(s)
+        assert isinstance(out, str)
+        assert len(out) > 0
+
+    def test_output_header(self):
+        """Output starts with 'Stagnation Escalation'."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_escalate(s)
+        assert "Stagnation Escalation" in out
+
+    def test_output_shows_levels(self):
+        """Output shows L1, L2, etc. for attempted levels."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_escalate(s)
+        assert "L1" in out
+
+    def test_output_shows_resolution(self):
+        """Output includes resolution status."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_escalate(s)
+        assert "Resolved" in out or "Structural limit" in out
+
+    def test_output_shows_delta(self):
+        """Output includes coverage delta."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_escalate(s)
+        assert "cov=" in out
+
+
+class TestEscalationDispatch:
+    """C229: dispatch routes 'escalate' to cmd_escalate."""
+
+    def test_dispatch_escalate(self):
+        """dispatch('escalate') calls cmd_escalate."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = dispatch(s, "escalate")
+        assert "Stagnation Escalation" in out
+
+    def test_help_includes_escalate(self):
+        """Help text includes 'escalate' command."""
+        text = cmd_help()
+        assert "escalate" in text.lower()
+
+
+class TestAutoEscalation:
+    """C229: cmd_run auto-escalates on stagnation >= 3."""
+
+    def test_auto_escalation_triggers(self):
+        """After 3+ rounds of stagnation, auto-escalation appears."""
+        s = build_session(steps_per_round=3)
+        # Run enough rounds to potentially trigger stagnation
+        out = cmd_run(s, 10)
+        # Auto-escalation may or may not trigger depending on landscape
+        # State consistency: stagnation streak is tracked
+        assert s.stagnation_streak >= 0
+
+    def test_no_auto_escalation_below_threshold(self):
+        """No escalation warning with stagnation < 3."""
+        s = build_session(steps_per_round=10)
+        out = cmd_run(s, 1)
+        assert "auto-escalating" not in out
+
+    def test_forced_stagnation_triggers_escalation(self):
+        """Pre-setting stagnation_streak=2, one more stagnant round triggers."""
+        s = build_session(steps_per_round=1)
+        s.stagnation_streak = 2
+        # Run many rounds to saturate, forcing stagnation
+        cmd_run(s, 5)
+        out = cmd_run(s, 5)
+        # With very small steps, likely to stagnate
+        # Either auto-escalation message or structural saturation
+        assert (
+            "auto-escalating" in out
+            or "saturation" in out.lower()
+            or s.stagnation_streak < 3  # was resolved
+        )

@@ -1,4 +1,4 @@
-"""E₀ Interactive Text Session (C213, extended C214/C216/C217/C228).
+"""E₀ Interactive Text Session (C213, extended C214/C216/C217/C228/C229).
 
 REPL loop on the real multi-domain landscape. The user types commands,
 E₀ responds with structured communication through the full pipeline.
@@ -24,6 +24,11 @@ C228 adds Observation Dashboard: `trajectory` shows coverage/T_s/mode
 progression over rounds as a table. `diagnose` performs per-domain
 stagnation analysis with bottleneck identification and escalation hints.
 
+C229 adds Stagnation Escalation: when stagnation persists, E₀ escalates
+through 6 levels instead of stopping: focus shift → exploration boost →
+bridge creation → edge proposal → accept limit. Each level is measured.
+`escalate` command triggers manual escalation.
+
 Commands:
   run [N]       — Execute the next N rounds (default: 1)
   task <text>   — Introduce a difference in natural language
@@ -31,6 +36,7 @@ Commands:
   focus <domain> — Zoom into canon, bootstrap, or en
   trajectory    — Coverage/T_s/mode over time
   diagnose      — Per-domain stagnation analysis
+  escalate      — Manually trigger stagnation escalation
   why           — Explain the last round's decision
   detail [N]    — Show last round edge by edge (or round N)
   inspect <src> <tgt> — Deep view of a single edge
@@ -165,6 +171,21 @@ def cmd_run(state: SessionState, n: int = 1) -> str:
             state.stagnation_streak += 1
         else:
             state.stagnation_streak = 0
+
+        # Auto-escalation on persistent stagnation
+        if state.stagnation_streak >= 3:
+            esc = escalate(state)
+            esc_lines = [f"  ⚠ Stagnation ({state.stagnation_streak} rounds) — auto-escalating..."]
+            if esc["resolved"]:
+                esc_lines.append(
+                    f"  ✓ Resolved at L{esc['level']} ({esc['name']}): "
+                    f"Δcov={esc['coverage_delta']:+.3%}"
+                )
+            else:
+                esc_lines.append(
+                    "  ✗ All escalation levels exhausted — structural limit."
+                )
+            parts.append("\n".join(esc_lines))
 
         # Communication output
         text = communicate_round(
@@ -846,6 +867,344 @@ def cmd_diagnose(state: SessionState) -> str:
         lines.append(
             f"{indent}\u2192 These need new structure "
             f"(teach / dream / manual edges)"
+        )
+
+    return "\n".join(lines)
+
+
+# ── C229: Stagnation Escalation ────────────────────────────────────────
+
+# Escalation levels: each attempts to break stagnation via a different
+# strategy. Levels are tried in order; if a level produces coverage_delta
+# > 0.001, escalation succeeds and the level is reported.
+
+_ESCALATION_LEVELS = [
+    # (level, name, description)
+    (1, "focus_shift", "Navigate from bottleneck domain"),
+    (2, "exploration_boost", "Double steps + frontier-adjacent start"),
+    (3, "bridge_creation", "Create edges between isolated and visited nodes"),
+    (4, "edge_proposal", "Propose shortcut edges for thin-frontier domains"),
+    (5, "accept", "Accept structural limit"),
+]
+
+
+def _escalate_focus_shift(
+    state: SessionState, diag: Dict[str, Any],
+) -> Tuple[float, str]:
+    """Level 1: Run a round focused on the bottleneck domain."""
+    bottleneck = diag["overall"].get("bottleneck")
+    if not bottleneck:
+        return 0.0, "no bottleneck identified"
+
+    # Map name → prefix
+    prefix_map = {d["name"]: d["prefix"] for d in diag["domains"]}
+    prefix = prefix_map.get(bottleneck, "")
+    if not prefix:
+        return 0.0, f"unknown domain: {bottleneck}"
+
+    # Find a frontier-adjacent node in this domain
+    hist = state.landscape.historization
+    visited = set()
+    for e in state.landscape.edges:
+        if hist.trace_load(e) > 0:
+            visited.add(e.source)
+            visited.add(e.target)
+
+    # Prefer starting from a visited node adjacent to unvisited domain nodes
+    candidates = []
+    for e in state.landscape.edges:
+        if (e.source in visited
+                and e.target not in visited
+                and e.target.startswith(prefix)):
+            candidates.append(e.source)
+
+    if not candidates:
+        # Fall back to any visited node in this domain
+        candidates = [n for n in visited if n.startswith(prefix)]
+
+    if not candidates:
+        return 0.0, f"no accessible nodes in {bottleneck}"
+
+    start = candidates[0]
+    a_before = assess(state.landscape, state.unified_nodes)
+
+    nav = navigate(
+        state.landscape, state.unified_nodes,
+        "explore", state.steps_per_round, start=start,
+    )
+    validate_confidence(nav["path"])
+
+    a_after = assess(state.landscape, state.unified_nodes)
+    delta = a_after.coverage - a_before.coverage
+
+    return delta, f"focused on {bottleneck} from {start}, {nav['steps']} steps"
+
+
+def _escalate_exploration_boost(
+    state: SessionState, diag: Dict[str, Any],
+) -> Tuple[float, str]:
+    """Level 2: Double the step budget, start from frontier."""
+    a_before = assess(state.landscape, state.unified_nodes)
+
+    # Start from a frontier-adjacent node
+    start = _pick_start_node(
+        state.landscape, state.unified_nodes, "explore",
+    )
+    boosted_steps = state.steps_per_round * 2
+
+    nav = navigate(
+        state.landscape, state.unified_nodes,
+        "explore", boosted_steps, start=start,
+    )
+    validate_confidence(nav["path"])
+
+    a_after = assess(state.landscape, state.unified_nodes)
+    delta = a_after.coverage - a_before.coverage
+
+    return delta, f"boosted exploration: {boosted_steps} steps from {start}"
+
+
+def _escalate_bridge_creation(
+    state: SessionState, diag: Dict[str, Any],
+) -> Tuple[float, str]:
+    """Level 3: Create edges from visited nodes to isolated nodes.
+
+    Targets domains with status BLOCKED or with isolated nodes.
+    Creates bidirectional edges from the nearest visited node
+    to up to 3 isolated nodes per domain.
+    """
+    hist = state.landscape.historization
+    visited = set()
+    for e in state.landscape.edges:
+        if hist.trace_load(e) > 0:
+            visited.add(e.source)
+            visited.add(e.target)
+
+    bridges_created = 0
+    details = []
+
+    for d in diag["domains"]:
+        if d["isolated"] == 0:
+            continue
+
+        prefix = d["prefix"]
+        all_states = {n for n in state.landscape.states
+                      if n.startswith(prefix)}
+        domain_visited = visited & all_states
+
+        # Find isolated nodes (not in frontier, not visited)
+        frontier = set()
+        for e in state.landscape.edges:
+            if (e.source in visited
+                    and e.target not in visited
+                    and e.target in all_states):
+                frontier.add(e.target)
+        isolated = all_states - visited - frontier
+
+        if not isolated or not domain_visited:
+            continue
+
+        # Pick up to 3 isolated nodes, connect to nearest visited
+        for iso_node in sorted(isolated)[:3]:
+            # Pick first visited domain node as anchor
+            anchor = sorted(domain_visited)[0]
+            if not state.landscape.has_edge(anchor, iso_node):
+                state.landscape.add_edge(
+                    anchor, iso_node, 0.4, 1.2,
+                    relation_type="escalation_bridge",
+                )
+                state.landscape.add_edge(
+                    iso_node, anchor, 0.4, 1.2,
+                    relation_type="escalation_bridge",
+                )
+                bridges_created += 1
+                details.append(f"{anchor}↔{iso_node}")
+
+    if bridges_created == 0:
+        return 0.0, "no isolated nodes to bridge"
+
+    # Re-navigate to use new bridges
+    a_before = assess(state.landscape, state.unified_nodes)
+    start = _pick_start_node(
+        state.landscape, state.unified_nodes, "explore",
+    )
+    nav = navigate(
+        state.landscape, state.unified_nodes,
+        "explore", state.steps_per_round, start=start,
+    )
+    validate_confidence(nav["path"])
+    a_after = assess(state.landscape, state.unified_nodes)
+    delta = a_after.coverage - a_before.coverage
+
+    return delta, (
+        f"created {bridges_created} bridges "
+        f"({', '.join(details[:3])})"
+        + (f" +{bridges_created - 3} more" if bridges_created > 3 else "")
+    )
+
+
+def _escalate_edge_proposal(
+    state: SessionState, diag: Dict[str, Any],
+) -> Tuple[float, str]:
+    """Level 4: Propose shortcut edges for domains with thin frontiers.
+
+    Creates shortcut edges between visited nodes in different domains
+    to open new cross-domain paths. Targets the bottleneck domain.
+    """
+    bottleneck = diag["overall"].get("bottleneck")
+    hist = state.landscape.historization
+
+    visited = set()
+    for e in state.landscape.edges:
+        if hist.trace_load(e) > 0:
+            visited.add(e.source)
+            visited.add(e.target)
+
+    # Find visited nodes in bottleneck domain and other domains
+    if bottleneck:
+        prefix_map = {d["name"]: d["prefix"] for d in diag["domains"]}
+        bn_prefix = prefix_map.get(bottleneck, "")
+        bn_visited = sorted(n for n in visited if n.startswith(bn_prefix))
+        other_visited = sorted(
+            (n for n in visited if not n.startswith(bn_prefix)),
+        )
+    else:
+        bn_visited = sorted(visited)[:5]
+        other_visited = sorted(visited)[5:]
+
+    shortcuts = 0
+    for bn_node in bn_visited[:3]:
+        for other in other_visited[:3]:
+            if not state.landscape.has_edge(bn_node, other):
+                state.landscape.add_edge(
+                    bn_node, other, 0.35, 1.0,
+                    relation_type="escalation_shortcut",
+                )
+                state.landscape.add_edge(
+                    other, bn_node, 0.35, 1.0,
+                    relation_type="escalation_shortcut",
+                )
+                shortcuts += 1
+
+    if shortcuts == 0:
+        return 0.0, "no new shortcuts possible"
+
+    a_before = assess(state.landscape, state.unified_nodes)
+    start = _pick_start_node(
+        state.landscape, state.unified_nodes, "explore",
+    )
+    nav = navigate(
+        state.landscape, state.unified_nodes,
+        "explore", state.steps_per_round, start=start,
+    )
+    validate_confidence(nav["path"])
+    a_after = assess(state.landscape, state.unified_nodes)
+    delta = a_after.coverage - a_before.coverage
+
+    target = bottleneck or "landscape"
+    return delta, f"proposed {shortcuts} cross-domain shortcuts for {target}"
+
+
+def escalate(state: SessionState) -> Dict[str, Any]:
+    """Run stagnation escalation through levels 1→5.
+
+    Tries each level in order. If a level produces coverage_delta > 0.001,
+    escalation succeeds and stops. Level 5 (accept) always terminates.
+
+    Returns structured result:
+      level: int — which level resolved (or 5 for accept)
+      name: str — level name
+      coverage_delta: float — improvement from escalation
+      detail: str — human-readable explanation
+      attempts: list — each attempted level with its result
+    """
+    diag = diagnose_session(state)
+    a_start = assess(state.landscape, state.unified_nodes)
+    attempts = []
+
+    level_fns = [
+        (1, "focus_shift", _escalate_focus_shift),
+        (2, "exploration_boost", _escalate_exploration_boost),
+        (3, "bridge_creation", _escalate_bridge_creation),
+        (4, "edge_proposal", _escalate_edge_proposal),
+    ]
+
+    for level, name, fn in level_fns:
+        delta, detail = fn(state, diag)
+        attempts.append({
+            "level": level,
+            "name": name,
+            "coverage_delta": round(delta, 6),
+            "detail": detail,
+        })
+
+        if delta > 0.001:
+            # Success — this level broke the stagnation
+            state.stagnation_streak = 0
+            a_end = assess(state.landscape, state.unified_nodes)
+            return {
+                "resolved": True,
+                "level": level,
+                "name": name,
+                "coverage_delta": round(
+                    a_end.coverage - a_start.coverage, 6,
+                ),
+                "detail": detail,
+                "attempts": attempts,
+            }
+
+    # Level 5: accept structural limit
+    a_end = assess(state.landscape, state.unified_nodes)
+    total_delta = a_end.coverage - a_start.coverage
+    attempts.append({
+        "level": 5,
+        "name": "accept",
+        "coverage_delta": round(total_delta, 6),
+        "detail": "structural limit reached — no escalation level broke stagnation",
+    })
+
+    return {
+        "resolved": False,
+        "level": 5,
+        "name": "accept",
+        "coverage_delta": round(total_delta, 6),
+        "detail": "structural limit reached",
+        "attempts": attempts,
+    }
+
+
+def cmd_escalate(state: SessionState) -> str:
+    """Manually trigger stagnation escalation."""
+    result = escalate(state)
+
+    lines = [
+        "Stagnation Escalation",
+        "\u2550" * 50,
+    ]
+
+    for a in result["attempts"]:
+        marker = "\u2713" if a["coverage_delta"] > 0.001 else "\u2717"
+        lines.append(
+            f"  L{a['level']} {a['name']:<20s} "
+            f"{marker} \u0394cov={a['coverage_delta']:+.3%}  "
+            f"{a['detail']}"
+        )
+
+    lines.append("")
+    if result["resolved"]:
+        lines.append(
+            f"  \u2192 Resolved at Level {result['level']} "
+            f"({result['name']}): "
+            f"\u0394cov={result['coverage_delta']:+.3%}"
+        )
+        lines.append("  Stagnation streak reset.")
+    else:
+        lines.append(
+            "  \u2192 Structural limit reached. All levels attempted."
+        )
+        lines.append(
+            "  Consider: teach new material, introduce new domain, "
+            "or accept current coverage."
         )
 
     return "\n".join(lines)
@@ -1647,6 +2006,7 @@ E₀ Interactive Session — Commands
   focus <domain>   Zoom into canon, bootstrap, or en
   trajectory       Coverage/T_s/mode progression over rounds
   diagnose         Per-domain stagnation analysis + bottleneck
+  escalate         Manually trigger stagnation escalation (levels 1—5)
   why              Explain the last decision
   detail [N]       Last round's path edge by edge (or round N)
   inspect <s> <t>  Deep view of edge s→t
@@ -2177,6 +2537,9 @@ def dispatch(state: SessionState, user_input: str) -> Optional[str]:
 
     if cmd == "diagnose":
         return cmd_diagnose(state)
+
+    if cmd == "escalate":
+        return cmd_escalate(state)
 
     if cmd == "detail":
         round_n = None

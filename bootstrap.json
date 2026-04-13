@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C228",
-    "latest_commit_hash": "15383ff",
-    "latest_commit_msg": "C228: Observation Dashboard \u2014 trajectory + diagnose commands. compute_trajectory (structured learning metrics), diagnose_session (per-domain stagnation: SATURATED/BLOCKED/STAGNANT/GROWING/IDLE, bottleneck ID, velocity, escalation hints). 20 tests, 5073 total.",
-    "test_count": 5073,
+    "latest_commit": "C229",
+    "latest_commit_hash": "37cadc6",
+    "latest_commit_msg": "C229: Stagnation Escalation \u2014 5-level progressive response to learning blocks. escalate() tries focus_shift, exploration_boost, bridge_creation, edge_proposal, accept. Auto-triggers in cmd_run at stagnation >= 3. cmd_escalate for manual use. 15 tests, 5088 total.",
+    "test_count": 5088,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
     "module_count": "77 production + 10 benchmarks + 17 demos + 69 explorations + 127 test files",
@@ -222,7 +222,7 @@
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
     "current_arc": "E\u2080 Learning Observatory (C228\u2013C232)",
-    "arc_status": "C228: Observation Dashboard (trajectory + diagnose). C229\u2013C232 planned.",
+    "arc_status": "C228\u2013C229 done. C230\u2013C232 planned.",
     "arc_plan": {
       "C228_observation_dashboard": {
         "title": "Observation Dashboard",
@@ -232,7 +232,7 @@
       "C229_stagnation_escalation": {
         "title": "Stagnation Escalation",
         "what": "On stagnation, don\u2019t just stop \u2014 escalate through levels: focus shift \u2192 dream \u2192 curriculum \u2192 LLM consult \u2192 human hint \u2192 accept. Each level measured.",
-        "status": "PLANNED"
+        "status": "DONE (C229)"
       },
       "C230_teaching_pipeline": {
         "title": "Teaching Pipeline",
@@ -250,14 +250,14 @@
         "status": "PLANNED"
       }
     },
-    "key_result": "C228: Observation Dashboard. trajectory shows round-by-round learning metrics (coverage, T_s, mode, crossings, frontier). diagnose performs per-domain analysis with status classification and bottleneck identification. Both return structured data (compute_trajectory + diagnose_session) for programmatic use in C229+ escalation.",
+    "key_result": "C229: Stagnation Escalation. 5-level engine (focus_shift \u2192 exploration_boost \u2192 bridge_creation \u2192 edge_proposal \u2192 accept). escalate() uses diagnose_session to identify bottleneck, tries each level until coverage improves. Auto-triggers in cmd_run at stagnation >= 3. Resets streak on resolution. cmd_escalate for manual use.",
     "open_threads": [
       "Stagnation escalation: diagnose identifies problems, C229 will make reactions automatic",
       "Teaching pipeline: how to inject new material into live landscape",
       "Session journal: structured cross-session trajectory",
       "Adversarial stability still partially open (C172-C174)"
     ],
-    "next_commit_id": "C229",
+    "next_commit_id": "C230",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
