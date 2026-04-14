@@ -73,6 +73,14 @@ status, stagnation, confused edges) and picks the best action (run/escalate/
 dream/sleep/curriculum/tune/stop). Orchestrates all C233\u2013C236 capabilities
 without human input. Stops on saturation, coverage \u226595%, or max steps.
 
+C238 adds Self-Learn: `selflearn` orchestrates E\u2080 learning its own structure
+before external domains. Three phases: (1) curriculum ontodynamics \u2014 learn the
+theoretical foundation (WHAT), (2) curriculum mechanism_e0 \u2014 learn functional
+mechanisms (HOW), (3) dream consolidation \u2014 cross-domain equivalences between
+canon and mechanism. Concludes with a self-mastery assessment: per-domain
+coverage, canon\u2194process alignment, overall readiness score. Implements the
+"Self-Graph First" principle: E\u2080 must know itself before external domains.
+
 Commands:
   run [N]       — Execute the next N rounds (default: 1)
   task <text>   — Introduce a difference in natural language
@@ -89,6 +97,7 @@ Commands:
   sleep [N]     — Run N wake-sleep episodes (auto curriculum + dream)
   tune [N]      — Self-tune parameters per domain (Self-Graph diagnosis)
   auto [N]      — Autonomous learning loop (max N steps, default 10)
+  selflearn     — Self-learn: E₀ learns itself first (canon → mechanism → dream)
   why           — Explain the last round's decision
   detail [N]    — Show last round edge by edge (or round N)
   inspect <src> <tgt> — Deep view of a single edge
@@ -3582,6 +3591,178 @@ def cmd_auto(state: SessionState, arg: Optional[str] = None) -> str:
     return "\n".join(lines)
 
 
+# ── Self-Learn Command (C238) ──────────────────────────────────────────
+
+
+def _assess_self_mastery(state: SessionState) -> Dict[str, Any]:
+    """Assess E₀'s self-knowledge completeness after self-learning.
+
+    Checks:
+      1. Canon coverage (C: prefix — ontodynamics domain)
+      2. Mechanism coverage (M: prefix — mechanism domain)
+      3. Canon ↔ Process alignment (static, from canon_self_bridge)
+    Returns mastery dict with per-domain coverage, alignment, overall score.
+    """
+    from e0_controller.canon_self_bridge import canon_coverage as _canon_cov
+    from e0_controller.canon_loader import load_canon
+
+    landscape = state.landscape
+    hist = landscape.historization
+
+    # Coverage per self-knowledge domain
+    self_domains = {"canon": "C:", "mechanism": "M:"}
+    domain_coverage: Dict[str, Dict[str, Any]] = {}
+    for name, prefix in self_domains.items():
+        total_nodes = [n for n in landscape.states if n.startswith(prefix)]
+        visited = []
+        for node in total_nodes:
+            for edge in landscape.edges:
+                if edge.source == node and hist.trace_load(edge) > 0:
+                    visited.append(node)
+                    break
+        ratio = len(visited) / len(total_nodes) if total_nodes else 0.0
+        domain_coverage[name] = {
+            "total": len(total_nodes),
+            "visited": len(visited),
+            "ratio": ratio,
+        }
+
+    # Canon ↔ Process alignment (static analysis)
+    try:
+        cl = load_canon("ontodynamics")
+        cov = _canon_cov(cl)
+        alignment_ratio = cov["coverage_ratio"]
+    except Exception:
+        alignment_ratio = 0.0
+
+    # Overall mastery: average of domain coverages + alignment
+    onto_cov = domain_coverage.get("canon", {}).get("ratio", 0.0)
+    mech_cov = domain_coverage.get("mechanism", {}).get("ratio", 0.0)
+    overall = (onto_cov + mech_cov + alignment_ratio) / 3.0
+
+    return {
+        "domain_coverage": domain_coverage,
+        "canon_alignment_ratio": alignment_ratio,
+        "overall_mastery": overall,
+        "ready": overall >= 0.5,
+    }
+
+
+def selflearn_run(state: SessionState) -> Dict[str, Any]:
+    """E₀ learns itself: ontodynamics → mechanism → dream → self-assessment.
+
+    Phase 1: Curriculum ontodynamics (WHAT E₀ believes — canon concepts)
+    Phase 2: Curriculum mechanism_e0 (HOW E₀ works — functional mechanisms)
+    Phase 3: Dream consolidation (cross-domain pattern recognition)
+    Phase 4: Self-mastery assessment (coverage + alignment check)
+
+    Returns a result dict with per-phase data and mastery report.
+    """
+    phases: List[Tuple[str, Dict[str, Any]]] = []
+
+    # Phase 1: Ontodynamics — learn the theoretical foundation
+    onto_result = curriculum_run(state, "ontodynamics")
+    phases.append(("ontodynamics", onto_result))
+
+    # Phase 2: Mechanism — learn how you work
+    mech_result = curriculum_run(state, "mechanism_e0")
+    phases.append(("mechanism_e0", mech_result))
+
+    # Phase 3: Dream consolidation — find cross-domain equivalences
+    dream_result = dream_run(state, cycles=3)
+
+    # Phase 4: Self-mastery assessment
+    mastery = _assess_self_mastery(state)
+
+    # Journal event
+    record_journal_event(state, "selflearn", {
+        "phases": [p[0] for p in phases],
+        "onto_turns": len(onto_result["turn_results"]),
+        "onto_steps": sum(r.total_steps for r in onto_result["turn_results"]),
+        "onto_transferred": onto_result["transferred_edges"],
+        "mech_turns": len(mech_result["turn_results"]),
+        "mech_steps": sum(r.total_steps for r in mech_result["turn_results"]),
+        "mech_transferred": mech_result["transferred_edges"],
+        "dream_equivalences": dream_result["total_equivalences"],
+        "mastery_overall": mastery["overall_mastery"],
+        "mastery_ready": mastery["ready"],
+    })
+
+    return {
+        "phases": phases,
+        "dream": dream_result,
+        "mastery": mastery,
+    }
+
+
+def cmd_selflearn(state: SessionState) -> str:
+    """Run self-learning sequence and display results."""
+    result = selflearn_run(state)
+    md = state.output_format == "markdown"
+
+    if md:
+        lines = ["## Self-Learn: E₀ Learns Itself", ""]
+    else:
+        lines = ["Self-Learn: E₀ Learns Itself", "\u2550" * 60]
+
+    # Phase results
+    for canon_name, phase in result["phases"]:
+        turns = phase["turn_results"]
+        total_steps = sum(r.total_steps for r in turns)
+        transferred = phase["transferred_edges"]
+        lines.append(f"  Phase: {canon_name}")
+        lines.append(
+            f"    {len(turns)} turns, {total_steps} steps, "
+            f"{transferred} edges transferred"
+        )
+        for i, tr in enumerate(turns, 1):
+            eq = "\u2713" if tr.equilibrium_reached else "\u2717"
+            lines.append(
+                f"      Turn {i}: {tr.episodes} ep, "
+                f"{tr.total_steps} steps, T_s={tr.final_T_s:.2f} {eq}"
+            )
+        lines.append("")
+
+    # Dream
+    dream = result["dream"]
+    lines.append("  Dream Consolidation")
+    lines.append(
+        f"    {dream['cycles']} cycles, "
+        f"{dream['total_equivalences']} equivalences "
+        f"({dream['total_new_equivalences']} new), "
+        f"{dream['total_node_equivalences']} node-EQ"
+    )
+    lines.append("")
+
+    # Mastery assessment
+    mastery = result["mastery"]
+    if md:
+        lines.append("### Self-Mastery Assessment")
+    else:
+        lines.append("  Self-Mastery Assessment")
+        lines.append("  " + "\u2500" * 40)
+
+    for name, cov in mastery["domain_coverage"].items():
+        bar = "\u2588" * int(cov["ratio"] * 20) + "\u2591" * (20 - int(cov["ratio"] * 20))
+        lines.append(
+            f"    {name:12s} {bar} {cov['ratio']:.0%} "
+            f"({cov['visited']}/{cov['total']})"
+        )
+
+    lines.append(
+        f"    {'alignment':12s} "
+        f"{mastery['canon_alignment_ratio']:.0%} (canon \u2194 process)"
+    )
+    lines.append("")
+
+    overall = mastery["overall_mastery"]
+    ready = mastery["ready"]
+    status = "\u2713 ready for external domains" if ready else "\u2717 continue self-learning"
+    lines.append(f"  Overall mastery: {overall:.0%} — {status}")
+
+    return "\n".join(lines)
+
+
 def cmd_task(state: SessionState, text: str) -> str:
     """Process a user-provided difference as natural text.
 
@@ -3891,6 +4072,7 @@ E₀ Interactive Session — Commands
   sleep [N]        Wake-sleep cycle: navigate + auto-dream
   tune [N]         Self-tune parameters via Self-Graph (max N rounds)
   auto [N]         Autonomous learning loop (max N steps)
+  selflearn        Self-learn: E₀ learns itself first (canon → mechanism → dream)
   why              Explain the last decision
   detail [N]       Last round's path edge by edge (or round N)
   inspect <s> <t>  Deep view of edge s→t
@@ -4460,6 +4642,9 @@ def dispatch(state: SessionState, user_input: str) -> Optional[str]:
 
     if cmd == "auto":
         return cmd_auto(state, arg if arg else None)
+
+    if cmd == "selflearn":
+        return cmd_selflearn(state)
 
     if cmd == "detail":
         round_n = None

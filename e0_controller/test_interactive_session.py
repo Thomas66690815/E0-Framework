@@ -1,4 +1,4 @@
-"""Tests for E₀ Interactive Text Session (C213–C237).
+"""Tests for E₀ Interactive Text Session (C213–C238).
 
 Validates the REPL dispatch, session state management,
 each command's output through the communication pipeline,
@@ -30,7 +30,9 @@ per-domain E0Controller, SleepWakeCycle, historization transfer),
 and C236 Tune Command (tune_run, cmd_tune,
 per-domain auto-tuning via Self-Graph diagnosis, parameter perturbation),
 and C237 Auto-Mode (auto_run, cmd_auto, _choose_action,
-autonomous decision loop orchestrating run/escalate/dream/sleep/curriculum/tune).
+autonomous decision loop orchestrating run/escalate/dream/sleep/curriculum/tune),
+and C238 Self-Learn (selflearn_run, cmd_selflearn, _assess_self_mastery,
+self-learning orchestration: canon → mechanism → dream → mastery assessment).
 """
 
 from __future__ import annotations
@@ -100,6 +102,9 @@ from e0_controller.interactive_session import (
     tune_run,
     _choose_action,
     auto_run,
+    selflearn_run,
+    cmd_selflearn,
+    _assess_self_mastery,
 )
 from e0_controller.feedback import HumanAction
 from e0_controller.perception import PerceptionDomain
@@ -3763,3 +3768,204 @@ class TestAutoDispatch:
         """Help text includes 'auto' command."""
         text = cmd_help()
         assert "auto" in text.lower()
+
+
+# ── Self-Learn (C238) ──────────────────────────────────────────────────
+
+
+class TestAssessSelfMastery:
+    """C238: _assess_self_mastery measures self-knowledge completeness."""
+
+    def test_cold_start_low_mastery(self):
+        """Fresh session has low mastery (no curriculum run yet)."""
+        s = build_session(steps_per_round=10)
+        m = _assess_self_mastery(s)
+        assert "domain_coverage" in m
+        assert "canon" in m["domain_coverage"]
+        assert "mechanism" in m["domain_coverage"]
+        assert "canon_alignment_ratio" in m
+        assert "overall_mastery" in m
+        assert "ready" in m
+        # Cold start: no curriculum traces → coverage is low
+        assert m["domain_coverage"]["canon"]["ratio"] < 1.0
+
+    def test_mastery_has_alignment(self):
+        """Mastery includes canon alignment ratio."""
+        s = build_session(steps_per_round=10)
+        m = _assess_self_mastery(s)
+        # Alignment ratio is from static canon_self_bridge analysis — always > 0
+        assert m["canon_alignment_ratio"] > 0
+
+    def test_mastery_after_navigation(self):
+        """Running rounds increases canon coverage (edges get inscribed)."""
+        s = build_session(steps_per_round=10)
+        m_before = _assess_self_mastery(s)
+        cmd_run(s, 3)
+        m_after = _assess_self_mastery(s)
+        # After navigation, some C: nodes should have trace data
+        total_visited_before = sum(
+            d["visited"] for d in m_before["domain_coverage"].values()
+        )
+        total_visited_after = sum(
+            d["visited"] for d in m_after["domain_coverage"].values()
+        )
+        assert total_visited_after >= total_visited_before
+
+    def test_mastery_overall_is_average(self):
+        """Overall mastery is mean of canon_cov + mech_cov + alignment."""
+        s = build_session(steps_per_round=10)
+        m = _assess_self_mastery(s)
+        onto = m["domain_coverage"]["canon"]["ratio"]
+        mech = m["domain_coverage"]["mechanism"]["ratio"]
+        align = m["canon_alignment_ratio"]
+        expected = (onto + mech + align) / 3.0
+        assert abs(m["overall_mastery"] - expected) < 1e-9
+
+
+class TestSelflearnRun:
+    """C238: selflearn_run orchestrates self-learning pipeline."""
+
+    def test_returns_all_phases(self):
+        """Result contains both curriculum phases + dream + mastery."""
+        s = build_session(steps_per_round=10)
+        result = selflearn_run(s)
+        assert "phases" in result
+        assert len(result["phases"]) == 2
+        assert result["phases"][0][0] == "ontodynamics"
+        assert result["phases"][1][0] == "mechanism_e0"
+        assert "dream" in result
+        assert "mastery" in result
+
+    def test_curriculum_produces_turns(self):
+        """Each phase should produce curriculum turns."""
+        s = build_session(steps_per_round=10)
+        result = selflearn_run(s)
+        for name, phase in result["phases"]:
+            assert len(phase["turn_results"]) > 0
+            assert phase["transferred_edges"] >= 0
+
+    def test_dream_runs_after_curriculum(self):
+        """Dream phase runs 3 cycles after curriculum."""
+        s = build_session(steps_per_round=10)
+        result = selflearn_run(s)
+        assert result["dream"]["cycles"] == 3
+        assert "total_equivalences" in result["dream"]
+
+    def test_mastery_assessed(self):
+        """Mastery assessment is computed after all phases."""
+        s = build_session(steps_per_round=10)
+        result = selflearn_run(s)
+        m = result["mastery"]
+        assert "domain_coverage" in m
+        assert "overall_mastery" in m
+        assert isinstance(m["ready"], bool)
+
+    def test_journal_event_recorded(self):
+        """selflearn records a journal event."""
+        s = build_session(steps_per_round=10)
+        journal_before = len(s.journal)
+        selflearn_run(s)
+        selflearn_events = [
+            e for e in s.journal[journal_before:]
+            if e["event_type"] == "selflearn"
+        ]
+        assert len(selflearn_events) == 1
+        detail = selflearn_events[0]["detail"]
+        assert "onto_steps" in detail
+        assert "mech_steps" in detail
+        assert "mastery_overall" in detail
+
+    def test_selflearn_transfers_historization(self):
+        """After selflearn, C: and M: edges should have trace data."""
+        s = build_session(steps_per_round=10)
+        selflearn_run(s)
+        hist = s.landscape.historization
+        c_with_data = sum(
+            1 for e in s.landscape.edges
+            if e.source.startswith("C:") and hist.trace_load(e) > 0
+        )
+        m_with_data = sum(
+            1 for e in s.landscape.edges
+            if e.source.startswith("M:") and hist.trace_load(e) > 0
+        )
+        assert c_with_data > 0, "Ontodynamics curriculum should transfer traces"
+        assert m_with_data > 0, "Mechanism curriculum should transfer traces"
+
+    def test_mastery_improves_after_selflearn(self):
+        """Overall mastery should improve after selflearn vs cold start."""
+        s = build_session(steps_per_round=10)
+        m_before = _assess_self_mastery(s)
+        selflearn_run(s)
+        m_after = _assess_self_mastery(s)
+        assert m_after["overall_mastery"] >= m_before["overall_mastery"]
+
+
+class TestCmdSelflearn:
+    """C238: cmd_selflearn produces formatted output."""
+
+    def test_output_contains_phases(self):
+        """Output shows both curriculum phases."""
+        s = build_session(steps_per_round=10)
+        out = cmd_selflearn(s)
+        assert "ontodynamics" in out
+        assert "mechanism_e0" in out
+
+    def test_output_contains_dream(self):
+        """Output shows dream consolidation section."""
+        s = build_session(steps_per_round=10)
+        out = cmd_selflearn(s)
+        assert "Dream" in out
+
+    def test_output_contains_mastery(self):
+        """Output shows mastery assessment."""
+        s = build_session(steps_per_round=10)
+        out = cmd_selflearn(s)
+        assert "Mastery" in out
+
+    def test_output_contains_readiness(self):
+        """Output shows ready/not-ready status."""
+        s = build_session(steps_per_round=10)
+        out = cmd_selflearn(s)
+        assert "ready" in out.lower() or "continue" in out.lower()
+
+    def test_output_contains_coverage_bars(self):
+        """Output shows per-domain coverage with visual bars."""
+        s = build_session(steps_per_round=10)
+        out = cmd_selflearn(s)
+        assert "canon" in out
+        assert "mechanism" in out
+        assert "%" in out
+
+    def test_output_contains_turn_details(self):
+        """Output shows per-turn results for each phase."""
+        s = build_session(steps_per_round=10)
+        out = cmd_selflearn(s)
+        assert "Turn" in out
+        assert "T_s=" in out
+
+    def test_markdown_format(self):
+        """Markdown format uses ## headers."""
+        s = build_session(steps_per_round=10, output_format="markdown")
+        out = cmd_selflearn(s)
+        assert "## Self-Learn" in out
+
+    def test_title(self):
+        """Text format shows correct title."""
+        s = build_session(steps_per_round=10)
+        out = cmd_selflearn(s)
+        assert "Self-Learn" in out
+
+
+class TestSelflearnDispatch:
+    """C238: dispatch routes 'selflearn' command."""
+
+    def test_dispatch_selflearn(self):
+        """dispatch('selflearn') calls cmd_selflearn."""
+        s = build_session(steps_per_round=10)
+        out = dispatch(s, "selflearn")
+        assert "Self-Learn" in out
+
+    def test_help_includes_selflearn(self):
+        """Help text includes 'selflearn' command."""
+        text = cmd_help()
+        assert "selflearn" in text.lower()
