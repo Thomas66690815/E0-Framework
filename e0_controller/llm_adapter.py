@@ -332,7 +332,14 @@ def _parse_json_response(
     text: str,
     required_keys: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
-    """Extract JSON from LLM response, tolerant of markdown fences.
+    """Extract JSON from LLM response with robust fallback parsing.
+
+    Handles common LLM failure modes:
+      1. Clean JSON — parse directly
+      2. Markdown code fences — strip ```json ... ```
+      3. Preamble/postamble text — extract first { ... last }
+      4. Trailing commas — remove before parsing
+      5. Single-line // comments — strip before parsing
 
     Args:
         text: Raw LLM response string.
@@ -344,17 +351,40 @@ def _parse_json_response(
     """
     raw = text
     text = text.strip()
-    # Strip markdown code fences
-    m = re.search(r"```(?:json)?\s*\n?(.*?)\n?\s*```", text, re.DOTALL)
-    if m:
-        text = m.group(1).strip()
-    try:
-        data = json.loads(text)
-    except (json.JSONDecodeError, ValueError) as exc:
+
+    # Strategy 1: direct parse (fast path)
+    data = _try_json_loads(text)
+
+    # Strategy 2: strip markdown code fences
+    if data is None:
+        m = re.search(r"```(?:json)?\s*\n?(.*?)\n?\s*```", text, re.DOTALL)
+        if m:
+            data = _try_json_loads(m.group(1).strip())
+
+    # Strategy 3: extract first { ... last } (handles preamble/postamble)
+    if data is None:
+        first_brace = text.find("{")
+        last_brace = text.rfind("}")
+        if first_brace != -1 and last_brace > first_brace:
+            candidate = text[first_brace:last_brace + 1]
+            data = _try_json_loads(candidate)
+
+    # Strategy 4: fix trailing commas and re-try strategies 1-3
+    if data is None:
+        cleaned = _fix_json_quirks(text)
+        data = _try_json_loads(cleaned)
+        if data is None:
+            first_brace = cleaned.find("{")
+            last_brace = cleaned.rfind("}")
+            if first_brace != -1 and last_brace > first_brace:
+                candidate = cleaned[first_brace:last_brace + 1]
+                data = _try_json_loads(candidate)
+
+    if data is None:
         raise LLMResponseError(
-            f"LLM returned invalid JSON: {exc}",
+            f"LLM returned invalid JSON (all parsing strategies failed)",
             raw_response=raw,
-        ) from exc
+        )
 
     if not isinstance(data, dict):
         raise LLMResponseError(
@@ -371,6 +401,25 @@ def _parse_json_response(
             )
 
     return data
+
+
+def _try_json_loads(text: str) -> Optional[Dict[str, Any]]:
+    """Try json.loads, return None on failure instead of raising."""
+    try:
+        result = json.loads(text)
+        return result if isinstance(result, dict) else None
+    except (json.JSONDecodeError, ValueError):
+        return None
+
+
+def _fix_json_quirks(text: str) -> str:
+    """Fix common LLM JSON quirks: trailing commas, // comments."""
+    # Remove single-line // comments (but not inside strings)
+    text = re.sub(r'(?m)^\s*//.*$', '', text)
+    text = re.sub(r'(?<=\S)\s*//[^"]*$', '', text, flags=re.MULTILINE)
+    # Remove trailing commas before } or ]
+    text = re.sub(r',\s*([}\]])', r'\1', text)
+    return text
 
 
 _STATE_NAME_RE = re.compile(r"^[A-Z][A-Z0-9_]{0,49}$")

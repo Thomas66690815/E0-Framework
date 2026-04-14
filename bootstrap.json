@@ -28,7 +28,7 @@
   },
   "state": {
     "latest_commit": "C239",
-    "latest_commit_hash": "pending",
+    "latest_commit_hash": "e86a0cf",
     "latest_commit_msg": "C239: Ask Command — on-demand Q&A with gap detection and selective learning. ask_run orchestrates: _extract_question_terms (stopword filtered), _assess_knowledge (per-term structural match against landscape), gap detection, teach_concept for up to 3 gap terms, re-assessment, navigation from best match, confidence = coverage ratio. cmd_ask formatted output: knowledge assessment, gaps, learning results, navigation, confidence verdict. Unlike task (match or LLM fallback), ask detects PARTIAL knowledge and fills gaps selectively before answering. 32 tests, 5309 total.",
     "test_count": 5309,
     "test_failures": 0,

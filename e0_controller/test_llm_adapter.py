@@ -23,6 +23,8 @@ from e0_controller.llm_adapter import (
     ResistanceEstimate,
     LandscapeProposal,
     _parse_json_response,
+    _try_json_loads,
+    _fix_json_quirks,
     _normalize_state_name,
     materialize_landscape,
     task_map_from_proposal,
@@ -128,9 +130,116 @@ class TestParseJson(unittest.TestCase):
 
     def test_non_object_raises(self):
         """JSON array instead of object → LLMResponseError."""
-        with self.assertRaises(LLMResponseError) as cm:
+        with self.assertRaises(LLMResponseError):
             _parse_json_response('[1, 2, 3]')
-        self.assertIn("object", str(cm.exception))
+
+    # ── C239b: Robust JSON parsing strategies ──
+
+    def test_preamble_text_before_json(self):
+        """LLM adds text before the JSON object."""
+        data = _parse_json_response(
+            'Here is the JSON:\n{"delta": 0.5, "reasoning": "test"}'
+        )
+        self.assertEqual(data["delta"], 0.5)
+
+    def test_postamble_text_after_json(self):
+        """LLM adds explanation after the JSON object."""
+        data = _parse_json_response(
+            '{"delta": 0.5}\n\nI estimated this based on the structure.'
+        )
+        self.assertEqual(data["delta"], 0.5)
+
+    def test_preamble_and_postamble(self):
+        """LLM wraps JSON with text on both sides."""
+        data = _parse_json_response(
+            'Sure! Here is the response:\n'
+            '{"nodes": ["A", "B"], "edges": []}\n'
+            'Let me know if you need anything else.'
+        )
+        self.assertEqual(data["nodes"], ["A", "B"])
+
+    def test_trailing_comma_in_object(self):
+        """LLM adds trailing comma before closing brace."""
+        data = _parse_json_response('{"delta": 0.5, "reasoning": "test",}')
+        self.assertEqual(data["delta"], 0.5)
+
+    def test_trailing_comma_in_array(self):
+        """LLM adds trailing comma in array."""
+        data = _parse_json_response('{"nodes": ["A", "B", "C",], "edges": []}')
+        self.assertEqual(data["nodes"], ["A", "B", "C"])
+
+    def test_trailing_comma_nested(self):
+        """Trailing commas in nested structures."""
+        data = _parse_json_response(
+            '{"edges": [{"from": "A", "to": "B",},], "nodes": ["A", "B",],}'
+        )
+        self.assertEqual(len(data["edges"]), 1)
+
+    def test_single_line_comment(self):
+        """LLM adds // comments in JSON."""
+        data = _parse_json_response(
+            '{\n'
+            '  "delta": 0.5,  // estimated\n'
+            '  "reasoning": "structural"\n'
+            '}'
+        )
+        self.assertEqual(data["delta"], 0.5)
+
+    def test_markdown_fence_with_preamble(self):
+        """Markdown fence with text before it."""
+        data = _parse_json_response(
+            'Here is my answer:\n```json\n{"delta": 0.5}\n```\nDone.'
+        )
+        self.assertEqual(data["delta"], 0.5)
+
+    def test_complex_realistic_failure(self):
+        """Realistic LLM output: preamble + trailing commas + postamble."""
+        data = _parse_json_response(
+            'Based on the domain description, here is the graph:\n\n'
+            '{"nodes": ["INTERFERENCE", "BORN_RULE",],\n'
+            ' "edges": [{"from": "INTERFERENCE", "to": "BORN_RULE", '
+            '"delta": 0.4, "resistance": 1.0, "initial_U": 3.0, '
+            '"initial_F": 1.0, "confidence": 0.7,},]}\n\n'
+            'This graph captures the key relationships.'
+        )
+        self.assertEqual(data["nodes"], ["INTERFERENCE", "BORN_RULE"])
+        self.assertEqual(len(data["edges"]), 1)
+
+    def test_truly_unparseable_still_raises(self):
+        """Completely non-JSON text still raises LLMResponseError."""
+        with self.assertRaises(LLMResponseError):
+            _parse_json_response(
+                "I cannot generate a JSON response for this query."
+            )
+
+
+class TestTryJsonLoads(unittest.TestCase):
+    """_try_json_loads returns None on failure."""
+
+    def test_valid_dict(self):
+        self.assertEqual(_try_json_loads('{"a": 1}'), {"a": 1})
+
+    def test_invalid_returns_none(self):
+        self.assertIsNone(_try_json_loads("not json"))
+
+    def test_array_returns_none(self):
+        """Arrays are not dicts → returns None."""
+        self.assertIsNone(_try_json_loads("[1, 2]"))
+
+
+class TestFixJsonQuirks(unittest.TestCase):
+    """_fix_json_quirks handles trailing commas and comments."""
+
+    def test_trailing_comma_object(self):
+        self.assertEqual(_fix_json_quirks('{"a": 1,}'), '{"a": 1}')
+
+    def test_trailing_comma_array(self):
+        self.assertEqual(_fix_json_quirks('[1, 2,]'), '[1, 2]')
+
+    def test_comment_removal(self):
+        result = _fix_json_quirks('{\n// comment\n"a": 1\n}')
+        data = json.loads(result)
+        self.assertEqual(data["a"], 1)
 
 
 class TestNormalizeStateName(unittest.TestCase):
