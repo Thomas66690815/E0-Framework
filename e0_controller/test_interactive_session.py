@@ -22,7 +22,9 @@ load_journal, cmd_journal, _metrics_snapshot, cross-session merge),
 and C232 Meta-Reflection (meta_reflect, cmd_reflect,
 stagnation patterns, mode effectiveness, recommendations),
 and C233 Curriculum Command (curriculum_run, cmd_curriculum,
-prefix-aware historization transfer, session coupling).
+prefix-aware historization transfer, session coupling),
+and C234 Dream Command (dream_run, cmd_dream,
+domain sub-landscape extraction, DreamObserver session integration).
 """
 
 from __future__ import annotations
@@ -49,10 +51,12 @@ from e0_controller.interactive_session import (
     _task_connection,
     _task_known_path,
     _task_navigate,
+    _extract_domain_landscapes,
     build_session,
     cmd_curriculum,
     cmd_detail,
     cmd_diagnose,
+    cmd_dream,
     cmd_escalate,
     cmd_focus,
     cmd_help,
@@ -72,6 +76,7 @@ from e0_controller.interactive_session import (
     compute_trajectory,
     curriculum_run,
     diagnose_session,
+    dream_run,
     dispatch,
     escalate,
     load_journal,
@@ -3036,3 +3041,173 @@ class TestAvailableCanons:
 
     def test_contains_english(self):
         assert "english_basic_enriched" in AVAILABLE_CANONS
+
+
+# ── C234: Dream Command ───────────────────────────────────────────────
+
+
+class TestExtractDomainLandscapes:
+    """C234: _extract_domain_landscapes extracts per-domain sub-landscapes."""
+
+    def test_returns_dict(self, session):
+        """Returns a dict of domain name → Landscape."""
+        result = _extract_domain_landscapes(session.landscape)
+        assert isinstance(result, dict)
+        assert len(result) >= 2  # at least canon + bootstrap
+
+    def test_contains_expected_domains(self, session):
+        """Extracted domains include canon and bootstrap."""
+        result = _extract_domain_landscapes(session.landscape)
+        assert "canon" in result
+        assert "bootstrap" in result
+
+    def test_sub_landscapes_have_edges(self, session):
+        """Each sub-landscape has at least one edge."""
+        result = _extract_domain_landscapes(session.landscape)
+        for name, ls in result.items():
+            assert len(ls.edges) > 0, f"{name} has no edges"
+
+    def test_nodes_have_correct_prefix(self, session):
+        """Canon sub-landscape nodes start with C:."""
+        result = _extract_domain_landscapes(session.landscape)
+        canon_ls = result["canon"]
+        for state in canon_ls.states:
+            assert state.startswith("C:"), f"Unexpected node: {state}"
+
+
+class TestDreamRun:
+    """C234: dream_run executes dream cycles on session landscape."""
+
+    def test_returns_dict(self):
+        """dream_run returns a result dict."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)  # generate some historization
+        result = dream_run(s, cycles=1)
+        assert isinstance(result, dict)
+
+    def test_result_has_expected_keys(self):
+        """Result contains cycles, domains, readiness, totals."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = dream_run(s, cycles=1)
+        assert "cycles" in result
+        assert "domains" in result
+        assert "readiness" in result
+        assert "total_equivalences" in result
+        assert "cycle_results" in result
+
+    def test_cycles_respected(self):
+        """Number of DreamCycleResults matches requested cycles."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = dream_run(s, cycles=2)
+        assert len(result["cycle_results"]) == 2
+
+    def test_observer_persists_on_state(self):
+        """DreamObserver is stored on session state for reuse."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        assert s.dream_observer is None
+        dream_run(s, cycles=1)
+        assert s.dream_observer is not None
+
+    def test_journal_event_recorded(self):
+        """dream_run records a 'dream' journal event."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        dream_run(s, cycles=1)
+        dream_events = [e for e in s.journal if e["event_type"] == "dream"]
+        assert len(dream_events) >= 1
+        detail = dream_events[-1]["detail"]
+        assert "cycles" in detail
+        assert "domains_registered" in detail
+
+    def test_readiness_has_domains(self):
+        """Readiness report contains registered domain names."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = dream_run(s, cycles=1)
+        assert len(result["readiness"]) > 0
+
+
+class TestCmdDream:
+    """C234: cmd_dream provides formatted output."""
+
+    def test_output_is_string(self):
+        """cmd_dream returns a non-empty string."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_dream(s)
+        assert isinstance(out, str)
+        assert len(out) > 0
+
+    def test_output_has_header(self):
+        """Output contains 'Dream Consolidation'."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_dream(s)
+        assert "Dream Consolidation" in out
+
+    def test_output_has_readiness(self):
+        """Output contains 'Readiness' section."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_dream(s)
+        assert "Readiness" in out
+
+    def test_output_has_cycle_results(self):
+        """Output contains 'Cycle' in cycle result lines."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_dream(s)
+        assert "Cycle" in out
+
+    def test_output_has_dream_landscape(self):
+        """Output contains 'Dream Landscape' stats."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_dream(s)
+        assert "Dream Landscape" in out
+
+    def test_custom_cycles(self):
+        """cmd_dream('5') runs 5 cycles."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_dream(s, "5")
+        assert "5 cycles" in out
+
+    def test_invalid_arg(self):
+        """Invalid arg returns usage hint."""
+        s = build_session(steps_per_round=10)
+        out = cmd_dream(s, "abc")
+        assert "Usage" in out or "Invalid" in out
+
+    def test_markdown_format(self):
+        """Markdown mode uses ## headers."""
+        s = build_session(steps_per_round=10, output_format="markdown")
+        cmd_run(s, 1)
+        out = cmd_dream(s, "1")
+        assert "## Dream" in out
+
+
+class TestDreamDispatch:
+    """C234: dispatch routes 'dream' command."""
+
+    def test_dispatch_dream(self):
+        """dispatch('dream') calls cmd_dream."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = dispatch(s, "dream")
+        assert "Dream Consolidation" in out
+
+    def test_dispatch_dream_with_arg(self):
+        """dispatch('dream 2') passes cycle count."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = dispatch(s, "dream 2")
+        assert "2 cycles" in out
+
+    def test_help_includes_dream(self):
+        """Help text includes 'dream' command."""
+        text = cmd_help()
+        assert "dream" in text.lower()

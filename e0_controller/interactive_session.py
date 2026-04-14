@@ -50,6 +50,11 @@ hierarchical learning sequence using CurriculumRunner. Teaches the session
 progressively (derivation-level turns), transfers learned historization back
 into the session landscape (prefix-aware coupling), and records journal events.
 
+C234 adds Dream Command: `dream [N]` runs N dream consolidation cycles on
+the session landscape. Extracts domain sub-landscapes (C:/B:/EN:/M:),
+creates DreamObserver, detects cross-domain equivalences, reports readiness
+and compatibility. Observer persists on session state for reuse.
+
 Commands:
   run [N]       — Execute the next N rounds (default: 1)
   task <text>   — Introduce a difference in natural language
@@ -62,6 +67,7 @@ Commands:
   journal [note <text>] — Session journal: view or annotate
   reflect       — Meta-reflection: analyze learning patterns
   curriculum [c] — Run structured curriculum (ontodynamics, mechanism_e0, …)
+  dream [N]     — Run N dream consolidation cycles (default: 3)
   why           — Explain the last round's decision
   detail [N]    — Show last round edge by edge (or round N)
   inspect <src> <tgt> — Deep view of a single edge
@@ -89,6 +95,7 @@ from e0_controller.communication import (
     detect_round_intents,
 )
 from e0_controller.curriculum import CurriculumRunner, transfer_historization
+from e0_controller.dream_mode import DreamCycleResult, DreamObserver
 from e0_controller.explore_learning_cycle_multidomain import (
     MultiDomainAssessment,
     MultiDomainRoundResult,
@@ -133,6 +140,7 @@ class SessionState:
     llm_adapter: Optional[Any] = None  # E0LLMAdapter, lazy-init
     session_id: str = ""  # C231: unique session identifier
     journal: List[Dict[str, Any]] = field(default_factory=list)  # C231
+    dream_observer: Optional[DreamObserver] = None  # C234: persistent observer
 
 
 # ── Commands ───────────────────────────────────────────────────────────
@@ -2729,6 +2737,212 @@ def cmd_curriculum(state: SessionState, arg: Optional[str] = None) -> str:
     return "\n".join(lines)
 
 
+# ── Dream Command (C234) ──────────────────────────────────────────────
+
+# Domain prefix → observer registration name
+_DOMAIN_PREFIXES = {"C:": "canon", "B:": "bootstrap", "EN:": "en", "M:": "mechanism"}
+
+
+def _extract_domain_landscapes(
+    landscape: Any,
+) -> Dict[str, Any]:
+    """Extract per-domain sub-landscapes from the unified session landscape.
+
+    Each domain gets its own Landscape with intra-domain edges and
+    historization copied from the session landscape.
+    """
+    from e0_controller.landscape import Landscape
+
+    # Group edges by domain (intra-domain only)
+    domain_edges: Dict[str, list] = {}
+    domain_nodes: Dict[str, set] = {}
+    for edge in landscape.edges:
+        src_prefix = next(
+            (p for p in _DOMAIN_PREFIXES if edge.source.startswith(p)), None
+        )
+        tgt_prefix = next(
+            (p for p in _DOMAIN_PREFIXES if edge.target.startswith(p)), None
+        )
+        if src_prefix and src_prefix == tgt_prefix:
+            name = _DOMAIN_PREFIXES[src_prefix]
+            domain_edges.setdefault(name, []).append(edge)
+            domain_nodes.setdefault(name, set()).update(
+                [edge.source, edge.target]
+            )
+
+    # Build sub-landscapes with matching historization
+    result = {}
+    hist = landscape.historization
+    for name, edges in domain_edges.items():
+        ls = Landscape()
+        ls.inertia_modulation = True
+        for node in domain_nodes[name]:
+            ls.add_state(node)
+        for edge in edges:
+            ls.add_edge(edge.source, edge.target, delta=0.3, resistance=0.2)
+            # Copy historization
+            sub_edge = Edge(edge.source, edge.target)
+            U = hist._U.get(edge, 0.0)
+            F = hist._F.get(edge, 0.0)
+            if U > 0 or F > 0:
+                ls.historization._U[sub_edge] = U
+                ls.historization._F[sub_edge] = F
+                ls.historization._tau_last[sub_edge] = ls.historization._tau
+        result[name] = ls
+
+    return result
+
+
+def _get_or_create_observer(state: SessionState) -> DreamObserver:
+    """Get the session's DreamObserver, creating one if needed."""
+    if state.dream_observer is None:
+        state.dream_observer = DreamObserver(
+            node_equivalence_method="hungarian",
+            compatibility_threshold=0.6,
+        )
+    return state.dream_observer
+
+
+def dream_run(
+    state: SessionState,
+    cycles: int = 3,
+) -> Dict[str, Any]:
+    """Run dream consolidation cycles on the session landscape.
+
+    1. Extract domain sub-landscapes from united session landscape
+    2. Register domains with DreamObserver (refreshed each run)
+    3. Run N dream cycles
+    4. Record journal event
+
+    Returns dict with cycle_results, total stats, readiness report.
+    """
+    observer = _get_or_create_observer(state)
+
+    # Extract and register domain sub-landscapes
+    domain_landscapes = _extract_domain_landscapes(state.landscape)
+    for name, ls in domain_landscapes.items():
+        observer.register(name, ls)
+
+    # Run dream cycles
+    cycle_results: List[DreamCycleResult] = []
+    for _ in range(cycles):
+        result = observer.dream_cycle()
+        cycle_results.append(result)
+
+    # Readiness report
+    readiness = observer.readiness_report()
+
+    # Totals
+    total_eq = sum(r.equivalences_found for r in cycle_results)
+    total_new = sum(r.equivalences_new for r in cycle_results)
+    total_node_eq = sum(r.node_equivalences_found for r in cycle_results)
+    total_node_new = sum(r.node_equivalences_new for r in cycle_results)
+
+    # Record journal event
+    record_journal_event(state, "dream", {
+        "cycles": cycles,
+        "domains_registered": list(domain_landscapes.keys()),
+        "total_equivalences": total_eq,
+        "new_equivalences": total_new,
+        "node_equivalences": total_node_eq,
+        "dream_landscape_edges": (
+            cycle_results[-1].dream_landscape_edges if cycle_results else 0
+        ),
+    })
+
+    return {
+        "cycle_results": cycle_results,
+        "cycles": cycles,
+        "domains": list(domain_landscapes.keys()),
+        "readiness": readiness,
+        "total_equivalences": total_eq,
+        "total_new_equivalences": total_new,
+        "total_node_equivalences": total_node_eq,
+        "total_node_new": total_node_new,
+        "dream_landscape_edges": (
+            cycle_results[-1].dream_landscape_edges if cycle_results else 0
+        ),
+        "dream_landscape_states": (
+            cycle_results[-1].dream_landscape_states if cycle_results else 0
+        ),
+    }
+
+
+def cmd_dream(state: SessionState, arg: Optional[str] = None) -> str:
+    """Run dream consolidation and display results."""
+    cycles = 3
+    if arg:
+        try:
+            cycles = int(arg)
+            cycles = max(1, min(cycles, 20))
+        except ValueError:
+            return f"Invalid cycle count: '{arg}'. Usage: dream [N]"
+
+    result = dream_run(state, cycles)
+    md = state.output_format == "markdown"
+
+    if md:
+        lines = ["## Dream Consolidation", ""]
+    else:
+        lines = ["Dream Consolidation", "\u2550" * 60]
+
+    lines.append(f"  {result['cycles']} cycles across {len(result['domains'])} domains")
+    lines.append(f"  Domains: {', '.join(result['domains'])}")
+    lines.append("")
+
+    # Readiness
+    if md:
+        lines.append("### Domain Readiness")
+    else:
+        lines.append("  Domain Readiness")
+        lines.append("  " + "\u2500" * 40)
+    for domain, score in result["readiness"].items():
+        ready = "\u2713" if score >= 0.7 else "\u2717"
+        lines.append(f"    {ready} {domain:12s}  inertia={score:.2f}")
+    lines.append("")
+
+    # Per-cycle summary
+    if md:
+        lines.append("### Cycle Results")
+    else:
+        lines.append("  Cycle Results")
+        lines.append("  " + "\u2500" * 40)
+    for i, cr in enumerate(result["cycle_results"], 1):
+        lines.append(
+            f"    Cycle {i}: "
+            f"{cr.equivalences_found} eq ({cr.equivalences_new} new), "
+            f"{cr.node_equivalences_found} node-eq ({cr.node_equivalences_new} new)"
+        )
+        if cr.compatibility_skipped:
+            pairs = ", ".join(
+                f"{a}\u2194{b}" for a, b in cr.compatibility_skipped
+            )
+            lines.append(f"           skipped (incompatible): {pairs}")
+    lines.append("")
+
+    # Dream Landscape stats
+    if md:
+        lines.append("### Dream Landscape")
+    else:
+        lines.append("  Dream Landscape")
+        lines.append("  " + "\u2500" * 40)
+    lines.append(
+        f"    {result['dream_landscape_states']} states, "
+        f"{result['dream_landscape_edges']} edges"
+    )
+    lines.append(
+        f"    {result['total_equivalences']} equivalences total "
+        f"({result['total_new_equivalences']} new this run)"
+    )
+    if result["total_node_equivalences"] > 0:
+        lines.append(
+            f"    {result['total_node_equivalences']} node equivalences "
+            f"({result['total_node_new']} new)"
+        )
+
+    return "\n".join(lines)
+
+
 def cmd_task(state: SessionState, text: str) -> str:
     """Process a user-provided difference as natural text.
 
@@ -3034,6 +3248,7 @@ E₀ Interactive Session — Commands
   journal [note]   Session journal: view events or annotate
   reflect          Meta-reflection: analyze learning patterns
   curriculum [c]   Run structured curriculum (ontodynamics, …)
+  dream [N]        Dream consolidation: cross-domain equivalences
   why              Explain the last decision
   detail [N]       Last round's path edge by edge (or round N)
   inspect <s> <t>  Deep view of edge s→t
@@ -3591,6 +3806,9 @@ def dispatch(state: SessionState, user_input: str) -> Optional[str]:
 
     if cmd == "curriculum":
         return cmd_curriculum(state, arg if arg else None)
+
+    if cmd == "dream":
+        return cmd_dream(state, arg if arg else None)
 
     if cmd == "detail":
         round_n = None
