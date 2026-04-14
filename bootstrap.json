@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C243b",
-    "latest_commit_hash": "fbbf920",
-    "latest_commit_msg": "C243b: LLM Diagnostics + Token Limit Fix — openai_call checks finish_reason, logs diagnostics to stderr on non-stop. LLMTruncatedError (subclass LLMResponseError) raised on finish_reason='length'. LLMResponseError extended with finish_reason/usage fields. _parse_json_response logs raw preview on failure. teach_concept/ask_run/peer_structuring surface error details via DIAG tags. Root cause: max_tokens=1024 truncated complex responses. Fix: max_tokens→4096. GT-2 Blind Trust recurred. 5 new tests, 5387 total.",
-    "test_count": 5387,
+    "latest_commit": "C244",
+    "latest_commit_hash": "PENDING",
+    "latest_commit_msg": "C244: Domain Isolation + Stemming + Feedback — 4 fixes for teach/ask noise: (1) _diagnose_learning_gaps gains concept_nodes scoping (prevents cross-contamination from prior teach sessions), (2) PROPOSE_DOMAIN_GRAPH_PROMPT requires root concept node as first entry, (3) _stem() lightweight English suffix stripper + stemmed matching in _match_nodes and _assess_knowledge (logistics↔logistic, processing↔process), (4) ask_run records knowledge_gap_unresolved journal event + increments stagnation_streak on <20% confidence. 17 new tests, 5404 total.",
+    "test_count": 5404,
     "test_failures": 0,
     "ci_status": "pending",
     "module_count": "77 production + 10 benchmarks + 17 demos + 69 explorations + 127 test files",
@@ -222,7 +222,7 @@
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
     "current_arc": "On-Demand Integration (C239+)",
-    "arc_status": "C243b DONE. LLM Diagnostics — finish_reason checking, LLMTruncatedError, max_tokens 1024→4096. GT-2 Blind Trust recurred. C243 Iterative Teaching also DONE.",
+    "arc_status": "C244 DONE. Domain Isolation + Stemming + Feedback — 4 fixes for teach/ask cross-contamination and matching noise. Concept-scoped gap diagnosis, root concept node, _stem() suffix matching, knowledge_gap_unresolved feedback loop.",
     "arc_plan": {
       "C233_curriculum_command": {
         "title": "Curriculum Command",
@@ -263,19 +263,24 @@
         "title": "Iterative Teaching",
         "what": "teach_concept(rounds=N) self-directs follow-up learning. Round 1 = propose_domain_graph. Rounds 2+ = _diagnose_learning_gaps (frontier/weak/thin/leaf analysis) → _formulate_followup (gaps→NL question) → deepen_domain_graph (10th LLM prompt, extends graph targeting identified gaps) → inject → explore. cmd_teach parses 'teach water 3'. Capped at 5, early stop on no_gaps. Atomic save_learning_state (tmp→fsync→rename) prevents JSON truncation. load_learning_state graceful fallback on corrupt JSON.",
         "status": "DONE (C243)"
+      },
+      "C244_domain_isolation_stemming_feedback": {
+        "title": "Domain Isolation + Stemming + Feedback",
+        "what": "_diagnose_learning_gaps gains concept_nodes parameter (prevents cross-contamination from prior teach sessions). PROPOSE_DOMAIN_GRAPH_PROMPT requires root concept node as first entry. _stem() lightweight suffix stripper for _match_nodes and _assess_knowledge (logistics↔logistic, processing↔process). ask_run records knowledge_gap_unresolved journal event + stagnation_streak on <20% confidence.",
+        "status": "DONE (C244)"
       }
     },
-    "key_result": "C243b: LLM Diagnostics + Token Limit Fix. Root cause of persistent 'LLM returned invalid JSON': max_tokens=1024 truncated complex responses (finish_reason='length' silently ignored). Fix: max_tokens→4096, LLMTruncatedError exception, diagnostics logging at all LLM call sites. GT-2 recurrence: trusted API response without checking finish_reason — same blind trust pattern from C172. 5 new tests.",
+    "key_result": "C244: Domain Isolation + Stemming + Feedback. Root cause of teach cross-contamination: _diagnose_learning_gaps scanned ALL L: nodes, not just this concept's nodes — old weather/credit nodes polluted logistics gap diagnosis. Root cause of ask 0% confidence: no stemming (logistics≠logistic), no root concept node (no L:LOGISTIC_PROCESSES), no feedback on failure. 4 fixes: concept_nodes scoping, root node prompt, _stem() fuzzy matching, knowledge_gap_unresolved journal event. 17 new tests.",
     "open_threads": [
+      "Domain Isolation + Stemming + Feedback (C244) DONE — concept-scoped gaps, _stem(), root node, gap feedback",
       "LLM Diagnostics (C243b) DONE — finish_reason check, LLMTruncatedError, max_tokens 4096, DIAG logging",
       "Iterative Teaching (C243) DONE — teach water 3 self-directs follow-up learning",
-      "Atomic save_learning_state (C243) — prevents JSON truncation on interrupted writes",
-      "Ask pipeline complete (C239–C242) — gap detection → selective learning → navigation → synthesis",
+      "Ask pipeline complete (C239–C244) — gap detection → selective learning → navigation → synthesis → feedback",
       "Deferred: Coupling Router + Multiverse — integrate when we hit scaling/isolation limits",
       "LLM symmetry: needed at BOTH ends — input structuring (Bootstrapper) AND output formatting (User-Lesbarkeit)",
       "Adversarial stability partially mitigated (C172-C174, C243b finish_reason check)"
     ],
-    "next_commit_id": "C244",
+    "next_commit_id": "C245",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
@@ -486,6 +491,11 @@
     }
   },
   "commit_history_recent": [
+    {
+      "hash": "PENDING",
+      "id": "C244",
+      "title": "Domain Isolation + Stemming + Feedback — concept_nodes scoping in _diagnose_learning_gaps, root concept node in PROPOSE prompt, _stem() suffix matching, knowledge_gap_unresolved feedback (17 tests, 5404 total)"
+    },
     {
       "hash": "fbbf920",
       "id": "C243b",

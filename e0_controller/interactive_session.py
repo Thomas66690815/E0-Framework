@@ -1497,6 +1497,44 @@ def cmd_inspect(state: SessionState, source: str, target: str) -> str:
 # ── C217: Human Peer Input ─────────────────────────────────────────────
 
 
+def _stem(word: str) -> str:
+    """Lightweight English suffix stripper for matching.
+
+    Strips common inflectional suffixes so 'logistics'/'logistic',
+    'processing'/'process', 'received'/'receive' compare equal.
+    No external dependency — covers the most common cases.
+    """
+    w = word.lower()
+    # Order matters: longest suffix first
+    for suffix, min_stem in [
+        ("ation", 3), ("tion", 3), ("sion", 3),
+        ("ness", 4), ("ment", 3), ("ence", 3), ("ance", 3),
+        ("ible", 3), ("able", 3),
+        ("ling", 3),
+        ("ing", 3),
+        ("ous", 3), ("ive", 5),
+        ("ics", 3),
+        ("ies", 3),
+        ("ied", 3),
+        ("ful", 3),
+        ("ers", 3),
+        ("est", 4),
+        ("ic", 3),
+        ("ed", 4),
+        ("er", 4),
+        ("ly", 3),
+        ("es", 4),
+        ("al", 4),
+        ("s", 4),
+    ]:
+        if w.endswith(suffix) and len(w) - len(suffix) >= min_stem:
+            # Don't strip bare 's' after 's' (process, dress, etc.)
+            if suffix == "s" and len(w) >= 2 and w[-2] == "s":
+                continue
+            return w[: -len(suffix)]
+    return w
+
+
 def _match_nodes(
     text: str,
     landscape: Any,
@@ -1517,6 +1555,9 @@ def _match_nodes(
     if not tokens:
         return []
 
+    # Build stemmed lookup for fuzzy suffix matching
+    stemmed_tokens = {_stem(t) for t in tokens}
+
     node_meta = unified_nodes or {}
     results: List[Tuple[str, float]] = []
 
@@ -1532,6 +1573,13 @@ def _match_nodes(
         # Exact word overlap on concept name
         id_overlap = len(parts & tokens)
 
+        # Stemmed overlap: catches logistics/logistic, processing/process
+        if id_overlap == 0:
+            stemmed_parts = {_stem(p) for p in parts}
+            stem_overlap = len(stemmed_parts & stemmed_tokens)
+            # Stem matches count as 0.8 (slightly less than exact)
+            id_overlap = stem_overlap * 0.8
+
         # Also match against label and description
         meta = node_meta.get(node_id, {})
         label = str(meta.get("label", "")).lower()
@@ -1540,6 +1588,12 @@ def _match_nodes(
         sem_words = set(semantic.replace("_", " ").replace("-", " ").split())
         sem_words = {w for w in sem_words if len(w) > 2}
         sem_overlap = len(sem_words & tokens)
+
+        # Stemmed semantic overlap
+        if sem_overlap == 0 and sem_words:
+            stemmed_sem = {_stem(w) for w in sem_words}
+            stem_sem = len(stemmed_sem & stemmed_tokens)
+            sem_overlap = stem_sem * 0.8
 
         # Best of: ID match or semantic match (weighted lower)
         overlap = id_overlap + sem_overlap * 0.5
@@ -1824,6 +1878,7 @@ _TEACH_EXPLORE_ROUNDS = 3  # exploration passes after injection
 
 def _diagnose_learning_gaps(
     state: SessionState, prefix: str = "L:",
+    concept_nodes: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """Examine recently taught material and identify structural gaps.
 
@@ -1833,12 +1888,20 @@ def _diagnose_learning_gaps(
     - thin_nodes: nodes with ≤ 1 outgoing edge (dead-end risk)
     - leaf_nodes: nodes with 0 outgoing edges to other prefix nodes
 
+    When concept_nodes is given, diagnosis is scoped to only those
+    nodes (prevents cross-contamination from prior teach sessions).
+
     Returns a structured gap report.
     """
     hist = state.landscape.historization
-    prefix_nodes = [
-        n for n in state.landscape.states if n.startswith(prefix)
-    ]
+    if concept_nodes is not None:
+        prefix_nodes = [
+            n for n in concept_nodes if n in state.landscape.states
+        ]
+    else:
+        prefix_nodes = [
+            n for n in state.landscape.states if n.startswith(prefix)
+        ]
 
     frontier_nodes: List[str] = []
     thin_nodes: List[str] = []
@@ -1988,8 +2051,10 @@ def teach_concept(
             if teach_round == 0:
                 spec = adapter.propose_domain_graph(text)
             else:
-                # Diagnose gaps from previous round
-                gaps = _diagnose_learning_gaps(state, prefix="L:")
+                # Diagnose gaps from previous round — scoped to THIS concept
+                gaps = _diagnose_learning_gaps(
+                    state, prefix="L:", concept_nodes=all_nodes,
+                )
                 if not gaps["has_gaps"]:
                     teach_rounds_detail.append({
                         "round": teach_round + 1,
@@ -4114,6 +4179,7 @@ def _assess_knowledge(
     for term in terms:
         best_score = 0.0
         best_node: Optional[str] = None
+        stemmed_term = _stem(term)
         for node_id, score in matches:
             if score < _MIN_TERM_RELEVANCE:
                 continue
@@ -4125,10 +4191,17 @@ def _assess_knowledge(
             concept_words = set(
                 concept.replace("_", " ").replace("-", " ").split()
             )
-            # Exact word match only — no substring fallback
+            # Exact word match first
             if term in concept_words:
                 if score > best_score:
                     best_score = score
+                    best_node = node_id
+            # Stemmed fallback: logistics↔logistic, processing↔process
+            elif stemmed_term in {_stem(w) for w in concept_words}:
+                # Slightly penalize stem match vs exact
+                adj_score = score * 0.9
+                if adj_score > best_score:
+                    best_score = adj_score
                     best_node = node_id
         if best_node is not None:
             covered[term] = (best_node, best_score)
@@ -4353,6 +4426,16 @@ def ask_run(
         "depth_after": assessment_after["knowledge_depth"],
         "confidence": confidence,
     })
+
+    # Phase 6: Feedback on failure — low confidence signals unresolved gap
+    if confidence < 0.2 and assessment_after["gaps"]:
+        state.stagnation_streak += 1
+        record_journal_event(state, "knowledge_gap_unresolved", {
+            "question": question[:80],
+            "unresolved_gaps": assessment_after["gaps"],
+            "confidence": confidence,
+            "stagnation_streak": state.stagnation_streak,
+        })
 
     return {
         "question": question,

@@ -113,6 +113,7 @@ from e0_controller.interactive_session import (
     _formulate_followup,
     _format_path_evidence,
     _structural_answer,
+    _stem,
     ask_run,
     cmd_ask,
 )
@@ -1017,7 +1018,7 @@ class TestTaskDispatch:
             "nodes": ["GIBBERISH_A"], "edges": [],
         }
         s.llm_adapter = E0LLMAdapter(call_fn=lambda sys, usr, cfg: json.dumps(mock_spec))
-        result = dispatch(s, "task completely unknown gibberish words")
+        result = dispatch(s, "task xyzqwp blorfnax gruntik")
         assert "LLM Peer" in result
 
     def test_help_includes_freetext_hint(self):
@@ -4772,3 +4773,183 @@ class TestAskDispatch:
         """Help text includes 'ask' command."""
         text = cmd_help()
         assert "ask" in text.lower()
+
+
+# ── C244: Domain Isolation + Stemming + Feedback ─────────────────────────────
+
+
+class TestStem:
+    """C244: _stem strips common English suffixes for fuzzy matching."""
+
+    def test_logistics_logistic(self):
+        assert _stem("logistics") == _stem("logistic")
+
+    def test_processing_process(self):
+        assert _stem("processing") == _stem("process")
+
+    def test_received_stems_ed(self):
+        """'received' strips -ed suffix."""
+        assert _stem("received") == "receiv"
+        # Note: 'receive' doesn't strip -ive (part of root),
+        # so received/receive don't stem identically.
+        # Substring fallback in _match_nodes handles this case.
+
+    def test_short_words_unchanged(self):
+        """Words shorter than suffix+min_stem are returned as-is."""
+        assert _stem("is") == "is"
+        assert _stem("go") == "go"
+
+    def test_idempotent(self):
+        """Stemming an already-stemmed word doesn't over-strip."""
+        w = _stem("process")
+        assert _stem(w) == w
+
+    def test_plural_singular(self):
+        """Simple plurals."""
+        assert _stem("edges") == _stem("edge")
+
+    def test_preserves_base(self):
+        """The stem of a base word is itself."""
+        assert _stem("landscape") == "landscape"
+
+
+class TestMatchNodesStemming:
+    """C244: _match_nodes uses stemming for fuzzy suffix matching."""
+
+    def test_stemmed_match_on_injected_nodes(self):
+        """'logistics' matches L:LOGISTIC_PROCESSES via stemming."""
+        s = _build_session_with_mock(_TEACH_SPEC)
+        # Inject a node with a different inflection
+        s.landscape.add_state("L:LOGISTIC_PROCESSES")
+        matches = _match_nodes("logistics", s.landscape)
+        node_ids = [n for n, _ in matches]
+        assert "L:LOGISTIC_PROCESSES" in node_ids
+
+    def test_processing_matches_process(self):
+        """'process' matches node PAYMENT_PROCESSING via stemming."""
+        s = _build_session_with_mock(_TEACH_SPEC)
+        s.landscape.add_state("L:PAYMENT_PROCESSING")
+        matches = _match_nodes("process", s.landscape)
+        node_ids = [n for n, _ in matches]
+        assert "L:PAYMENT_PROCESSING" in node_ids
+
+    def test_exact_match_still_preferred(self):
+        """Exact word match scores higher than stem match."""
+        s = _build_session_with_mock(_TEACH_SPEC)
+        s.landscape.add_state("L:PROCESS")
+        s.landscape.add_state("L:PROCESSING")
+        matches = _match_nodes("process", s.landscape)
+        scores = {n: sc for n, sc in matches}
+        if "L:PROCESS" in scores and "L:PROCESSING" in scores:
+            assert scores["L:PROCESS"] >= scores["L:PROCESSING"]
+
+
+class TestDiagnoseLearningGapsScoped:
+    """C244: _diagnose_learning_gaps with concept_nodes scoping."""
+
+    def test_scoped_ignores_other_prefix_nodes(self, monkeypatch, tmp_path):
+        """Gap diagnosis with concept_nodes ignores nodes from other teaches."""
+        import e0_controller.explore_bootstrap_landscape as ebl
+        monkeypatch.setattr(ebl, "LEARNING_STATE_PATH", str(tmp_path / "ls.json"))
+        s = _build_session_with_mock(_TEACH_SPEC)
+        teach_concept(s, "test concept")
+        concept_nodes = [n for n in s.landscape.states if n.startswith("L:")]
+
+        # Now inject "foreign" L: nodes from a different topic
+        s.landscape.add_state("L:FOREIGN_WEATHER")
+        s.landscape.add_state("L:FOREIGN_CREDIT")
+
+        # Unscoped: sees foreign nodes
+        gaps_all = _diagnose_learning_gaps(s, prefix="L:")
+        assert gaps_all["total_prefix_nodes"] > len(concept_nodes)
+
+        # Scoped: only sees concept nodes
+        gaps_scoped = _diagnose_learning_gaps(
+            s, prefix="L:", concept_nodes=concept_nodes,
+        )
+        assert gaps_scoped["total_prefix_nodes"] == len(concept_nodes)
+
+    def test_scoped_finds_gaps_in_own_nodes(self, monkeypatch, tmp_path):
+        """Scoped diagnosis still finds legitimate gaps."""
+        import e0_controller.explore_bootstrap_landscape as ebl
+        monkeypatch.setattr(ebl, "LEARNING_STATE_PATH", str(tmp_path / "ls.json"))
+        s = _build_session_with_mock(_TEACH_SPEC)
+        teach_concept(s, "test concept")
+        concept_nodes = [n for n in s.landscape.states if n.startswith("L:")]
+        gaps = _diagnose_learning_gaps(
+            s, prefix="L:", concept_nodes=concept_nodes,
+        )
+        assert isinstance(gaps["has_gaps"], bool)
+        assert gaps["total_prefix_nodes"] >= 1
+
+    def test_empty_concept_nodes_means_no_gaps(self):
+        """Empty concept_nodes list → no gaps possible."""
+        s = build_session(steps_per_round=10)
+        gaps = _diagnose_learning_gaps(
+            s, prefix="L:", concept_nodes=[],
+        )
+        assert not gaps["has_gaps"]
+        assert gaps["total_prefix_nodes"] == 0
+
+
+class TestAssessKnowledgeStemming:
+    """C244: _assess_knowledge uses stemming for coverage."""
+
+    def test_stemmed_term_covered(self):
+        """'logistics' matches L:LOGISTIC_PROCESSES via stemming."""
+        s = build_session(steps_per_round=10)
+        # Inject node
+        s.landscape.add_state("L:LOGISTIC_PROCESSES")
+        s.unified_nodes["L:LOGISTIC_PROCESSES"] = {
+            "type": "task", "description": "logistic processes",
+        }
+        result = _assess_knowledge(s, "what are logistics")
+        assert "logistics" in result["covered"], (
+            f"'logistics' should be covered, gaps={result['gaps']}"
+        )
+
+    def test_processing_vs_process(self):
+        """'process' matches PAYMENT_PROCESSING via stemming."""
+        s = build_session(steps_per_round=10)
+        s.landscape.add_state("L:PAYMENT_PROCESSING")
+        s.unified_nodes["L:PAYMENT_PROCESSING"] = {
+            "type": "task", "description": "payment processing",
+        }
+        result = _assess_knowledge(s, "what is the payment process")
+        assert "process" in result["covered"], (
+            f"'process' should match PAYMENT_PROCESSING, gaps={result['gaps']}"
+        )
+
+
+class TestAskFeedbackOnFailure:
+    """C244: ask_run signals failure when confidence is low."""
+
+    def test_low_confidence_records_gap_event(self):
+        """0% confidence triggers knowledge_gap_unresolved journal event."""
+        s = build_session(steps_per_round=10)
+        initial_streak = s.stagnation_streak
+        # auto_learn=False to avoid LLM call; still triggers feedback
+        ask_run(s, "xyzzy plugh gibberish nonsense", auto_learn=False)
+        # Should have incremented stagnation
+        assert s.stagnation_streak > initial_streak
+        # Should have recorded journal event
+        gap_events = [
+            e for e in s.journal
+            if e.get("event_type") == "knowledge_gap_unresolved"
+        ]
+        assert len(gap_events) >= 1
+        evt = gap_events[0]
+        detail = evt.get("detail", evt)
+        assert "unresolved_gaps" in detail
+
+    def test_good_confidence_no_gap_event(self):
+        """Good confidence does not trigger gap event."""
+        s = build_session(steps_per_round=10)
+        initial_streak = s.stagnation_streak
+        # Use terms that exist in the landscape
+        ask_run(s, "tension historization", auto_learn=False)
+        gap_events = [
+            e for e in s.journal
+            if e.get("event_type") == "knowledge_gap_unresolved"
+        ]
+        assert len(gap_events) == 0

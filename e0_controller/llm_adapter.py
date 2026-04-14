@@ -350,6 +350,9 @@ Edge parameters:
 
 Guidelines:
 - Use UPPER_CASE identifiers with underscores for node names
+- The FIRST node in the list MUST be a root concept node named after the
+  domain itself (e.g. for "logistic processes" → LOGISTIC_PROCESSES).
+  This serves as the entry point and anchor for the entire graph.
 - Keep the graph bounded: 4–12 nodes, 6–20 edges
 - Include both forward paths and recovery/fallback edges
 - For well-understood transitions: high initial_U, low initial_F, high confidence
