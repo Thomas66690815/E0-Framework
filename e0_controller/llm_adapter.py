@@ -354,6 +354,35 @@ Respond with exactly this JSON (no other text):
   "evidence_sufficient": true
 }}"""
 
+DEEPEN_DOMAIN_GRAPH_PROMPT = """\
+You previously designed a domain graph about: {original_concept}
+
+The E₀ controller has navigated this graph and identified structural gaps
+that need elaboration. Your task: extend the graph with NEW nodes and edges
+that address the identified gaps. Do NOT repeat existing nodes.
+
+Existing nodes already in the landscape:
+{existing_nodes}
+
+Gaps identified by E₀:
+{gap_description}
+
+Guidelines:
+- Use UPPER_CASE identifiers with underscores for node names
+- Create 3–8 NEW nodes that address the gaps (do NOT reuse existing names)
+- Create edges that connect new nodes to each other AND to existing nodes
+- Include both forward paths and recovery/fallback edges
+- No self-loops
+
+Respond with exactly this JSON (no other text):
+{{
+  "nodes": ["NEW_STATE_A", "NEW_STATE_B", ...],
+  "edges": [
+    {{"from": "EXISTING_OR_NEW", "to": "EXISTING_OR_NEW", "delta": 0.4, "resistance": 0.8, "initial_U": 5.0, "initial_F": 1.0, "confidence": 0.7}},
+    ...
+  ]
+}}"""
+
 # ──────────────────────────────────────────────
 # Response Parsing
 # ──────────────────────────────────────────────
@@ -1070,6 +1099,83 @@ class E0LLMAdapter:
             "key_concepts": list(data.get("key_concepts", [])),
             "evidence_sufficient": bool(data.get("evidence_sufficient", True)),
         }
+
+    # ── 9. Deepen Domain Graph (C243) ──
+
+    def deepen_domain_graph(
+        self,
+        original_concept: str,
+        existing_nodes: List[str],
+        gap_description: str,
+        memos_summary: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Ask LLM to extend a domain graph based on structural gaps.
+
+        E₀ navigated the initial graph and identified weak spots.
+        The LLM elaborates those specific areas with new structure.
+
+        Args:
+            original_concept: The original teach topic.
+            existing_nodes: Node IDs already in the landscape (raw, no prefix).
+            gap_description: Natural-language description of identified gaps.
+            memos_summary: Optional runtime context.
+
+        Returns:
+            Dict with 'nodes' and 'edges' (same format as propose_domain_graph).
+        """
+        ctx = self._format_context(memos_summary) if memos_summary else "{}"
+        nodes_str = ", ".join(existing_nodes[:30])
+        prompt = DEEPEN_DOMAIN_GRAPH_PROMPT.format(
+            original_concept=original_concept,
+            existing_nodes=nodes_str,
+            gap_description=gap_description,
+        )
+
+        raw = self._call(SYSTEM_PROMPT, prompt, self.config)
+        data = _parse_json_response(raw, required_keys=["nodes", "edges"])
+
+        # Normalize — same logic as propose_domain_graph
+        nodes = []
+        seen: set = set()
+        for n in data.get("nodes", []):
+            name = _normalize_state_name(str(n))
+            if name and _STATE_NAME_RE.match(name) and name not in seen:
+                seen.add(name)
+                nodes.append(name)
+
+        edges = []
+        # Build valid name set: new nodes + existing (stripped of prefix)
+        valid_names = set(nodes) | set(existing_nodes)
+        for e in data.get("edges", []):
+            src = _normalize_state_name(str(e.get("from", "")))
+            tgt = _normalize_state_name(str(e.get("to", "")))
+            if not src or not tgt or src not in valid_names or tgt not in valid_names:
+                continue
+            if src == tgt:
+                continue
+
+            delta = float(e.get("delta", 0.5))
+            delta = max(0.0, min(1.0, delta))
+            resistance = float(e.get("resistance", 1.0))
+            resistance = max(0.01, resistance)
+            initial_U = float(e.get("initial_U", 0.0))
+            initial_U = max(0.0, initial_U)
+            initial_F = float(e.get("initial_F", 0.0))
+            initial_F = max(0.0, initial_F)
+            confidence = float(e.get("confidence", 1.0))
+            confidence = max(0.0, min(1.0, confidence))
+
+            edges.append({
+                "from": src,
+                "to": tgt,
+                "delta": delta,
+                "resistance": resistance,
+                "initial_U": initial_U,
+                "initial_F": initial_F,
+                "confidence": confidence,
+            })
+
+        return {"nodes": nodes, "edges": edges}
 
     def propose_and_bootstrap(
         self,

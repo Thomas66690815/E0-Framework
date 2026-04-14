@@ -3,7 +3,7 @@
     "purpose": "Session bootstrap for the E₀ team — human and AI working together on E₀-Framework",
     "framing": "We. The AI is an integral part of 'we'. This file is the AI's persistent identity — its Historization across context windows. Every confirmed/contradicted count is a U/F trace.",
     "usage": "Paste this file (or reference it) at the start of a new thread to restore full project context",
-    "last_updated": "2026-04-13",
+    "last_updated": "2026-04-14",
     "update_instruction": "After each commit: update state + active_context. After each lesson: update reflexion traces (confirmed++, contradicted++, recurred++). trace_quality = (confirmed - contradicted) / (confirmed + contradicted + 1)."
   },
   "project": {
@@ -27,14 +27,14 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C242",
-    "latest_commit_hash": "0331692",
-    "latest_commit_msg": "C242: Answer Synthesis — Phase 5 completes the ask pipeline. SYNTHESIZE_ANSWER_PROMPT (9th prompt type) in llm_adapter: question + path_evidence + navigation metrics → JSON {answer, confidence, key_concepts, evidence_sufficient}. synthesize_answer() method. _format_path_evidence: deduplicates nodes, shows [domain] label: description + edge transitions with quality. _structural_answer: no-LLM fallback listing up to 8 concepts. ask_run Phase 5: tries LLM synthesis, falls back to structural. cmd_ask Answer section with key_concepts + evidence_sufficient warning. 24 new tests, 5355 total.",
-    "test_count": 5355,
+    "latest_commit": "C243",
+    "latest_commit_hash": "PENDING",
+    "latest_commit_msg": "C243: Iterative Teaching + Atomic Save — teach_concept(rounds=N) self-directs follow-up learning. _diagnose_learning_gaps (frontier/weak/thin/leaf analysis), _formulate_followup (gaps→NL question), deepen_domain_graph (10th LLM prompt type, extends graph targeting identified gaps). cmd_teach parses 'teach water 3'. Rounds capped at 5, early stop on no_gaps. Atomic save_learning_state (write tmp→fsync→rename) prevents JSON truncation. load_learning_state graceful fallback on corrupt JSON. 27 new tests, 5382 total.",
+    "test_count": 5382,
     "test_failures": 0,
-    "ci_status": "green (all 3 Python versions)",
+    "ci_status": "pending",
     "module_count": "77 production + 10 benchmarks + 17 demos + 69 explorations + 127 test files",
-    "line_count": "~32500 production, ~127800 total"
+    "line_count": "~33000 production, ~128300 total"
   },
   "conventions": {
     "user_language": "German (user speaks German, code/docs in English)",
@@ -222,7 +222,7 @@
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
     "current_arc": "On-Demand Integration (C239+)",
-    "arc_status": "C242 DONE. Answer Synthesis completes ask pipeline — questions now produce actual answers, not just structural reports.",
+    "arc_status": "C243 DONE. Iterative Teaching — E₀ self-directs follow-up learning rounds based on structural gap diagnosis. Atomic file writes prevent JSON corruption.",
     "arc_plan": {
       "C233_curriculum_command": {
         "title": "Curriculum Command",
@@ -258,22 +258,23 @@
         "title": "Ask Command: On-Demand Q&A",
         "what": "ask_run orchestrates on-demand question answering: (1) _extract_question_terms tokenizes with stopword filter, (2) _assess_knowledge checks per-term structural match against landscape, (3) gap detection for unmatched terms, (4) teach_concept for up to 3 gap terms (auto_learn), (5) re-assessment after learning, (6) navigate from best match, (7) confidence = coverage ratio. cmd_ask formatted output with assessment/gaps/learning/navigation/confidence. Unlike task (match or LLM fallback), ask detects PARTIAL knowledge and fills gaps selectively.",
         "status": "DONE (C239)"
+      },
+      "C243_iterative_teaching": {
+        "title": "Iterative Teaching",
+        "what": "teach_concept(rounds=N) self-directs follow-up learning. Round 1 = propose_domain_graph. Rounds 2+ = _diagnose_learning_gaps (frontier/weak/thin/leaf analysis) → _formulate_followup (gaps→NL question) → deepen_domain_graph (10th LLM prompt, extends graph targeting identified gaps) → inject → explore. cmd_teach parses 'teach water 3'. Capped at 5, early stop on no_gaps. Atomic save_learning_state (tmp→fsync→rename) prevents JSON truncation. load_learning_state graceful fallback on corrupt JSON.",
+        "status": "DONE (C243)"
       }
     },
-    "key_result": "C242: Answer Synthesis. ask pipeline Phase 5 — LLM synthesizes prose answer from navigation evidence (path concepts, edge relations, quality metrics). Structural fallback without LLM lists connected concepts. Evidence-sufficient warning when navigation trail is too thin. 24 new tests.",
+    "key_result": "C243: Iterative Teaching. teach water 3 → E₀ learns concept, diagnoses structural gaps (frontier/weak/thin/leaf nodes), formulates own follow-up question, asks LLM to deepen graph targeting those gaps, injects new nodes, re-explores. Self-directed learning loop, isomorphic to selflearn but for arbitrary domains. Atomic save_learning_state prevents truncated JSON. 27 new tests.",
     "open_threads": [
-      "Autonomes Lernen arc COMPLETE (C233–C237)",
-      "Self-Learn (C238) DONE — E₀ can now learn itself first",
-      "Ask Command (C239) DONE — on-demand Q&A with gap detection and selective learning",
-      "Ask Robustness (C240) DONE — acronym preservation + contextual gap learning validated",
-      "Ask Semantic Precision (C241) DONE — homonym rejection + knowledge depth, all 4 ask problems resolved",
-      "Answer Synthesis (C242) DONE — ask now produces actual answers from navigation evidence",
-      "C239b: Robust JSON parsing with 4 fallback strategies (included in C240 commit)",
+      "Iterative Teaching (C243) DONE — teach water 3 self-directs follow-up learning",
+      "Atomic save_learning_state (C243) — prevents JSON truncation on interrupted writes",
+      "Ask pipeline complete (C239–C242) — gap detection → selective learning → navigation → synthesis",
       "Deferred: Coupling Router + Multiverse — integrate when we hit scaling/isolation limits",
       "LLM symmetry: needed at BOTH ends — input structuring (Bootstrapper) AND output formatting (User-Lesbarkeit)",
       "Adversarial stability still partially open (C172-C174)"
     ],
-    "next_commit_id": "C243",
+    "next_commit_id": "C244",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
@@ -485,19 +486,14 @@
   },
   "commit_history_recent": [
     {
-      "hash": "4258f5f",
-      "id": "C218",
-      "title": "LLM Peer Structuring — propose_domain_graph → inject into live landscape (T: prefix) → bridge → navigate (19 tests, 4936 total)"
+      "hash": "PENDING",
+      "id": "C243",
+      "title": "Iterative Teaching + Atomic Save — teach_concept(rounds=N) self-directed learning, _diagnose_learning_gaps, _formulate_followup, deepen_domain_graph (10th prompt), atomic save_learning_state (27 tests, 5382 total)"
     },
     {
-      "hash": "18053e5",
-      "id": "C217",
-      "title": "Human Peer Input — cmd_task (free-text → structural matching → navigate), _match_nodes, structural gap signal (25 tests, 4917 total)"
-    },
-    {
-      "hash": "6bc02ab",
-      "id": "C216",
-      "title": "Transition Detail — cmd_detail (edge-by-edge path view), cmd_inspect (deep edge narrative), _quality_bar helper (27 tests, 4892 total)"
+      "hash": "0331692",
+      "id": "C242",
+      "title": "Answer Synthesis — Phase 5 completes ask pipeline, SYNTHESIZE_ANSWER_PROMPT, synthesize_answer(), _format_path_evidence, _structural_answer (24 tests, 5355 total)"
     },
     {
       "hash": "dc14660",

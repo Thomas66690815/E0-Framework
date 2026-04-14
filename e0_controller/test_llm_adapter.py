@@ -965,5 +965,115 @@ class TestSynthesizeAnswer(unittest.TestCase):
         self.assertEqual(result["answer"], "Fenced answer.")
 
 
+class TestDeepenDomainGraph(unittest.TestCase):
+    """C243: deepen_domain_graph extends a graph based on structural gaps."""
+
+    _DEEPEN_RESPONSE = {
+        "nodes": ["DETAIL_X", "DETAIL_Y"],
+        "edges": [
+            {"from": "DETAIL_X", "to": "DETAIL_Y", "delta": 0.4,
+             "resistance": 1.0, "initial_U": 1.0, "initial_F": 0.5,
+             "confidence": 0.7},
+            {"from": "DETAIL_X", "to": "CONCEPT_A", "delta": 0.6,
+             "resistance": 1.5, "initial_U": 2.0, "initial_F": 1.0,
+             "confidence": 0.9},
+        ],
+    }
+
+    def _make_adapter(self, response_dict):
+        return E0LLMAdapter(
+            call_fn=lambda s, u, c: json.dumps(response_dict),
+        )
+
+    def test_returns_nodes_and_edges(self):
+        adapter = self._make_adapter(self._DEEPEN_RESPONSE)
+        spec = adapter.deepen_domain_graph(
+            original_concept="water",
+            existing_nodes=["CONCEPT_A", "CONCEPT_B"],
+            gap_description="CONCEPT_A is a leaf node with no outgoing edges.",
+        )
+        self.assertIn("nodes", spec)
+        self.assertIn("edges", spec)
+        self.assertEqual(len(spec["nodes"]), 2)
+        self.assertEqual(len(spec["edges"]), 2)
+
+    def test_normalizes_names(self):
+        adapter = self._make_adapter({
+            "nodes": ["detail x", " Detail_Y "],
+            "edges": [{"from": "detail x", "to": "Detail_Y", "delta": 0.5}],
+        })
+        spec = adapter.deepen_domain_graph(
+            original_concept="water",
+            existing_nodes=[],
+            gap_description="expand",
+        )
+        for name in spec["nodes"]:
+            self.assertEqual(name, name.upper().replace(" ", "_").strip())
+
+    def test_edges_validated_against_existing_and_new(self):
+        """Edges may refer to existing_nodes (not just new ones)."""
+        adapter = self._make_adapter(self._DEEPEN_RESPONSE)
+        spec = adapter.deepen_domain_graph(
+            original_concept="water",
+            existing_nodes=["CONCEPT_A"],
+            gap_description="expand CONCEPT_A",
+        )
+        targets = {e["to"] for e in spec["edges"]}
+        self.assertIn("CONCEPT_A", targets)
+        self.assertIn("DETAIL_Y", targets)
+
+    def test_unknown_targets_skipped(self):
+        adapter = self._make_adapter({
+            "nodes": ["NEW_A"],
+            "edges": [
+                {"from": "NEW_A", "to": "GHOST", "delta": 0.5},
+                {"from": "NEW_A", "to": "EXISTING_B", "delta": 0.5},
+            ],
+        })
+        spec = adapter.deepen_domain_graph(
+            original_concept="water",
+            existing_nodes=["EXISTING_B"],
+            gap_description="gaps",
+        )
+        self.assertEqual(len(spec["edges"]), 1)
+        self.assertEqual(spec["edges"][0]["to"], "EXISTING_B")
+
+    def test_self_loops_skipped(self):
+        adapter = self._make_adapter({
+            "nodes": ["A", "B"],
+            "edges": [
+                {"from": "A", "to": "A", "delta": 0.5},
+                {"from": "A", "to": "B", "delta": 0.5},
+            ],
+        })
+        spec = adapter.deepen_domain_graph(
+            original_concept="test",
+            existing_nodes=[],
+            gap_description="gaps",
+        )
+        self.assertEqual(len(spec["edges"]), 1)
+
+    def test_invalid_json_raises(self):
+        adapter = E0LLMAdapter(call_fn=lambda s, u, c: "not json")
+        with self.assertRaises(LLMResponseError):
+            adapter.deepen_domain_graph("x", [], "gaps")
+
+    def test_missing_required_keys_raises(self):
+        adapter = self._make_adapter({"nodes": ["A"]})
+        with self.assertRaises(LLMResponseError):
+            adapter.deepen_domain_graph("x", [], "gaps")
+
+    def test_edge_defaults(self):
+        adapter = self._make_adapter({
+            "nodes": ["A", "B"],
+            "edges": [{"from": "A", "to": "B"}],
+        })
+        spec = adapter.deepen_domain_graph("x", [], "gaps")
+        edge = spec["edges"][0]
+        self.assertAlmostEqual(edge["delta"], 0.5)
+        self.assertAlmostEqual(edge["resistance"], 1.0)
+        self.assertAlmostEqual(edge["confidence"], 1.0)
+
+
 if __name__ == "__main__":
     unittest.main()

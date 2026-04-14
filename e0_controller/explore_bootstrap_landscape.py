@@ -31,8 +31,8 @@ from e0_controller.primitives import Outcome
 # Phase 1: Parse bootstrap.json into nodes, edges, traces
 # ---------------------------------------------------------------------------
 
-BOOTSTRAP_PATH = os.path.join(os.path.dirname(__file__), "..", "bootstrap.json")
-LEARNING_STATE_PATH = os.path.join(os.path.dirname(__file__), "..", "learning_state.json")
+BOOTSTRAP_PATH = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "bootstrap.json"))
+LEARNING_STATE_PATH = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "learning_state.json"))
 
 
 def load_bootstrap():
@@ -41,19 +41,29 @@ def load_bootstrap():
         return json.load(f)
 
 
+_EMPTY_LEARNING_STATE = {"discovered_edges": {"edges": []}, "cross_domain_bridges": {"bridges": []}}
+
+
 def load_learning_state():
     """Load and return learning_state.json (discovered edges, bridges, history)."""
     if not os.path.exists(LEARNING_STATE_PATH):
-        return {"discovered_edges": {"edges": []}, "cross_domain_bridges": {"bridges": []}}
-    with open(LEARNING_STATE_PATH, encoding="utf-8") as f:
-        return json.load(f)
+        return dict(_EMPTY_LEARNING_STATE)
+    try:
+        with open(LEARNING_STATE_PATH, encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return dict(_EMPTY_LEARNING_STATE)
 
 
 def save_learning_state(ls):
-    """Write learning_state.json."""
-    with open(LEARNING_STATE_PATH, "w", encoding="utf-8") as f:
+    """Write learning_state.json atomically (write tmp, then rename)."""
+    tmp_path = LEARNING_STATE_PATH + ".tmp"
+    with open(tmp_path, "w", encoding="utf-8") as f:
         json.dump(ls, f, indent=2, ensure_ascii=False)
         f.write("\n")
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp_path, LEARNING_STATE_PATH)
 
 
 def extract_nodes(bs):

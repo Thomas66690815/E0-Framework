@@ -109,6 +109,8 @@ from e0_controller.interactive_session import (
     _assess_self_mastery,
     _extract_question_terms,
     _assess_knowledge,
+    _diagnose_learning_gaps,
+    _formulate_followup,
     _format_path_evidence,
     _structural_answer,
     ask_run,
@@ -1617,6 +1619,11 @@ class TestConsolidateNotDry:
 class TestHistoryRoundTrip:
     """C226: History survives save→load cycle."""
 
+    @pytest.fixture(autouse=True)
+    def _patch_learning_state(self, monkeypatch, tmp_path):
+        import e0_controller.explore_bootstrap_landscape as ebl
+        monkeypatch.setattr(ebl, "LEARNING_STATE_PATH", str(tmp_path / "ls.json"))
+
     def test_save_contains_history(self, session, tmp_path):
         """Saved JSON includes history array."""
         s = build_session(steps_per_round=10)
@@ -2541,6 +2548,219 @@ class TestTeachDispatch:
         """Help text includes 'teach' command."""
         text = cmd_help()
         assert "teach" in text.lower()
+
+
+# ── C243: Iterative Teaching ─────────────────────────────────────────────────
+
+# Spec for deepening round: new nodes that don't overlap with _TEACH_SPEC
+_DEEPEN_SPEC = {
+    "nodes": ["DETAIL_X", "DETAIL_Y"],
+    "edges": [
+        {"from": "DETAIL_X", "to": "DETAIL_Y", "delta": 0.5,
+         "resistance": 0.9, "initial_U": 2.0, "initial_F": 0.5,
+         "confidence": 0.7},
+        {"from": "CONCEPT_A", "to": "DETAIL_X", "delta": 0.4,
+         "resistance": 1.0, "initial_U": 1.0, "initial_F": 0.0,
+         "confidence": 0.8},
+    ],
+}
+
+
+class TestDiagnoseLearningGaps:
+    """C243: _diagnose_learning_gaps identifies structural weaknesses."""
+
+    def test_returns_dict(self, monkeypatch, tmp_path):
+        """Gap diagnosis returns a structured dict."""
+        import e0_controller.explore_bootstrap_landscape as ebl
+        monkeypatch.setattr(ebl, "LEARNING_STATE_PATH", str(tmp_path / "ls.json"))
+        s = _build_session_with_mock(_TEACH_SPEC)
+        teach_concept(s, "test concept")
+        gaps = _diagnose_learning_gaps(s, prefix="L:")
+        assert isinstance(gaps, dict)
+        for key in ("frontier_nodes", "weak_edges", "thin_nodes",
+                     "leaf_nodes", "total_prefix_nodes", "has_gaps"):
+            assert key in gaps, f"missing key: {key}"
+
+    def test_finds_prefix_nodes(self, monkeypatch, tmp_path):
+        """Diagnosis counts L: nodes correctly."""
+        import e0_controller.explore_bootstrap_landscape as ebl
+        monkeypatch.setattr(ebl, "LEARNING_STATE_PATH", str(tmp_path / "ls.json"))
+        s = _build_session_with_mock(_TEACH_SPEC)
+        teach_concept(s, "test concept")
+        gaps = _diagnose_learning_gaps(s, prefix="L:")
+        assert gaps["total_prefix_nodes"] >= 4  # CONCEPT_A/B/C/D
+
+    def test_no_gaps_on_empty(self):
+        """No gaps when no L: nodes exist."""
+        s = build_session(steps_per_round=10)
+        gaps = _diagnose_learning_gaps(s, prefix="L:")
+        assert not gaps["has_gaps"]
+        assert gaps["total_prefix_nodes"] == 0
+
+
+class TestFormulateFollowup:
+    """C243: _formulate_followup translates gaps to natural language."""
+
+    def test_returns_string(self):
+        """Follow-up is a non-empty string."""
+        gaps = {
+            "frontier_nodes": ["L:FRONTIER_A"],
+            "weak_edges": [],
+            "thin_nodes": [],
+            "leaf_nodes": ["L:DEAD_END"],
+            "total_prefix_nodes": 5,
+            "has_gaps": True,
+        }
+        result = _formulate_followup("water", gaps)
+        assert isinstance(result, str)
+        assert len(result) > 20
+
+    def test_mentions_leaf_nodes(self):
+        """Follow-up describes leaf/dead-end nodes."""
+        gaps = {
+            "frontier_nodes": [],
+            "weak_edges": [],
+            "thin_nodes": [],
+            "leaf_nodes": ["L:ICE", "L:STEAM"],
+            "total_prefix_nodes": 5,
+            "has_gaps": True,
+        }
+        result = _formulate_followup("water phases", gaps)
+        assert "ICE" in result
+        assert "STEAM" in result
+
+    def test_mentions_weak_edges(self):
+        """Follow-up describes uncertain transitions."""
+        gaps = {
+            "frontier_nodes": [],
+            "weak_edges": [("L:A", "L:B", 0.1)],
+            "thin_nodes": [],
+            "leaf_nodes": [],
+            "total_prefix_nodes": 5,
+            "has_gaps": True,
+        }
+        result = _formulate_followup("physics", gaps)
+        assert "uncertain" in result.lower() or "quality" in result.lower()
+
+    def test_fallback_when_no_specific_gaps(self):
+        """Generic deepening prompt when no specific gaps identified."""
+        gaps = {
+            "frontier_nodes": [],
+            "weak_edges": [],
+            "thin_nodes": [],
+            "leaf_nodes": [],
+            "total_prefix_nodes": 5,
+            "has_gaps": False,
+        }
+        result = _formulate_followup("quantum mechanics", gaps)
+        assert "quantum mechanics" in result.lower()
+
+
+class TestIterativeTeach:
+    """C243: teach_concept with rounds > 1 self-directs learning."""
+
+    def test_single_round_backward_compat(self, monkeypatch, tmp_path):
+        """rounds=1 produces same result structure as before."""
+        import e0_controller.explore_bootstrap_landscape as ebl
+        monkeypatch.setattr(ebl, "LEARNING_STATE_PATH", str(tmp_path / "ls.json"))
+        s = _build_session_with_mock(_TEACH_SPEC)
+        result = teach_concept(s, "test concept", rounds=1)
+        assert "teach_rounds" in result
+        assert len(result["teach_rounds"]) == 1
+        assert result["teach_rounds"][0]["action"] == "initial"
+
+    def test_multi_round_produces_detail(self, monkeypatch, tmp_path):
+        """rounds=2 produces teach_rounds with ≥ 1 entry."""
+        import e0_controller.explore_bootstrap_landscape as ebl
+        monkeypatch.setattr(ebl, "LEARNING_STATE_PATH", str(tmp_path / "ls.json"))
+        s = _build_session_with_mock(_TEACH_SPEC)
+        result = teach_concept(s, "test concept", rounds=2)
+        assert "teach_rounds" in result
+        assert len(result["teach_rounds"]) >= 1
+        # First round is always initial
+        assert result["teach_rounds"][0]["action"] == "initial"
+
+    def test_multi_round_adds_more_nodes(self, monkeypatch, tmp_path):
+        """Multiple rounds can add more nodes than a single round."""
+        import e0_controller.explore_bootstrap_landscape as ebl
+        monkeypatch.setattr(ebl, "LEARNING_STATE_PATH", str(tmp_path / "ls.json"))
+        s1 = _build_session_with_mock(_TEACH_SPEC)
+        r1 = teach_concept(s1, "test concept", rounds=1)
+
+        s2 = _build_session_with_mock(_TEACH_SPEC)
+        r2 = teach_concept(s2, "test concept", rounds=2)
+        # With the same mock, round 2 sees the same spec again
+        # but duplicate nodes are skipped. Still, teach_rounds grows.
+        assert len(r2["teach_rounds"]) >= len(r1["teach_rounds"])
+
+    def test_rounds_capped_at_five(self, monkeypatch, tmp_path):
+        """teach_concept caps rounds at 5."""
+        import e0_controller.explore_bootstrap_landscape as ebl
+        monkeypatch.setattr(ebl, "LEARNING_STATE_PATH", str(tmp_path / "ls.json"))
+        s = _build_session_with_mock(_TEACH_SPEC)
+        result = teach_concept(s, "test concept", rounds=10)
+        assert len(result["teach_rounds"]) <= 5
+
+    def test_stops_when_no_gaps(self, monkeypatch, tmp_path):
+        """Iterative teaching stops early when no gaps are found."""
+        import e0_controller.explore_bootstrap_landscape as ebl
+        monkeypatch.setattr(ebl, "LEARNING_STATE_PATH", str(tmp_path / "ls.json"))
+        s = _build_session_with_mock(_TEACH_SPEC)
+        result = teach_concept(s, "test concept", rounds=3)
+        # After initial round, if LLM returns same nodes (mocked),
+        # they get skipped → likely stops with no_gaps or no_structure
+        last = result["teach_rounds"][-1]
+        if len(result["teach_rounds"]) > 1:
+            assert last["action"] in (
+                "deepen", "no_gaps", "no_structure", "llm_error"
+            )
+
+    def test_total_nodes_across_rounds(self, monkeypatch, tmp_path):
+        """Total nodes_added spans all rounds."""
+        import e0_controller.explore_bootstrap_landscape as ebl
+        monkeypatch.setattr(ebl, "LEARNING_STATE_PATH", str(tmp_path / "ls.json"))
+        s = _build_session_with_mock(_TEACH_SPEC)
+        result = teach_concept(s, "test concept", rounds=2)
+        total_from_rounds = sum(
+            r.get("nodes_added", 0) for r in result["teach_rounds"]
+        )
+        assert len(result["nodes_added"]) == total_from_rounds
+
+
+class TestCmdTeachRounds:
+    """C243: cmd_teach parses round count from argument."""
+
+    def test_parses_round_count(self, monkeypatch, tmp_path):
+        """'teach water 3' parses concept='water' rounds=3."""
+        import e0_controller.explore_bootstrap_landscape as ebl
+        monkeypatch.setattr(ebl, "LEARNING_STATE_PATH", str(tmp_path / "ls.json"))
+        s = _build_session_with_mock(_TEACH_SPEC)
+        out = cmd_teach(s, "water 3")
+        assert "Rounds: 3" in out
+
+    def test_default_round_is_one(self, monkeypatch, tmp_path):
+        """'teach water' defaults to 1 round."""
+        import e0_controller.explore_bootstrap_landscape as ebl
+        monkeypatch.setattr(ebl, "LEARNING_STATE_PATH", str(tmp_path / "ls.json"))
+        s = _build_session_with_mock(_TEACH_SPEC)
+        out = cmd_teach(s, "water")
+        assert "Rounds: 1" in out
+
+    def test_multi_word_concept_without_number(self, monkeypatch, tmp_path):
+        """'teach quantum mechanics' treats full text as concept."""
+        import e0_controller.explore_bootstrap_landscape as ebl
+        monkeypatch.setattr(ebl, "LEARNING_STATE_PATH", str(tmp_path / "ls.json"))
+        s = _build_session_with_mock(_TEACH_SPEC)
+        out = cmd_teach(s, "quantum mechanics")
+        assert "quantum mechanics" in out
+
+    def test_output_shows_per_round_detail(self, monkeypatch, tmp_path):
+        """Multi-round output shows per-round info."""
+        import e0_controller.explore_bootstrap_landscape as ebl
+        monkeypatch.setattr(ebl, "LEARNING_STATE_PATH", str(tmp_path / "ls.json"))
+        s = _build_session_with_mock(_TEACH_SPEC)
+        out = cmd_teach(s, "water 2")
+        assert "Round 1:" in out
 
 
 # ── C231: Session Journal ────────────────────────────────────────────────────

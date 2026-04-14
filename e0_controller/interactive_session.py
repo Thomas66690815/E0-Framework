@@ -1809,14 +1809,147 @@ def _llm_peer_structure(state: SessionState, text: str) -> str:
 _TEACH_EXPLORE_ROUNDS = 3  # exploration passes after injection
 
 
+# ── C243: Iterative Teaching (self-directed follow-up) ─────────────────
+
+def _diagnose_learning_gaps(
+    state: SessionState, prefix: str = "L:",
+) -> Dict[str, Any]:
+    """Examine recently taught material and identify structural gaps.
+
+    Looks at nodes with the given prefix and analyzes:
+    - frontier_nodes: reachable but unvisited (trace_load == 0 on all edges)
+    - weak_edges: navigated but low trace_quality (|q| < 0.3)
+    - thin_nodes: nodes with ≤ 1 outgoing edge (dead-end risk)
+    - leaf_nodes: nodes with 0 outgoing edges to other prefix nodes
+
+    Returns a structured gap report.
+    """
+    hist = state.landscape.historization
+    prefix_nodes = [
+        n for n in state.landscape.states if n.startswith(prefix)
+    ]
+
+    frontier_nodes: List[str] = []
+    thin_nodes: List[str] = []
+    leaf_nodes: List[str] = []
+    weak_edges: List[Tuple[str, str, float]] = []
+
+    for node in prefix_nodes:
+        outgoing = [
+            e for e in state.landscape.edges
+            if e.source == node and e.target.startswith(prefix)
+        ]
+        all_outgoing = [
+            e for e in state.landscape.edges if e.source == node
+        ]
+
+        # Leaf: no outgoing to same-prefix nodes
+        if len(outgoing) == 0:
+            leaf_nodes.append(node)
+        # Thin: only 1 outgoing within prefix
+        elif len(outgoing) <= 1:
+            thin_nodes.append(node)
+
+        # Frontier: no traces on any edge touching this node
+        node_edges = [
+            e for e in state.landscape.edges
+            if e.source == node or e.target == node
+        ]
+        has_any_trace = any(hist.trace_load(e) > 0 for e in node_edges)
+        if not has_any_trace and len(node_edges) > 0:
+            frontier_nodes.append(node)
+
+        # Weak edges from this node
+        for e in all_outgoing:
+            if hist.trace_load(e) > 0:
+                q = hist.trace_quality(e)
+                if abs(q) < 0.3:
+                    weak_edges.append((e.source, e.target, q))
+
+    return {
+        "frontier_nodes": frontier_nodes,
+        "weak_edges": weak_edges,
+        "thin_nodes": thin_nodes,
+        "leaf_nodes": leaf_nodes,
+        "total_prefix_nodes": len(prefix_nodes),
+        "has_gaps": bool(frontier_nodes or weak_edges or thin_nodes or leaf_nodes),
+    }
+
+
+def _formulate_followup(
+    concept: str,
+    gaps: Dict[str, Any],
+    prefix: str = "L:",
+) -> str:
+    """Translate structural gaps into a natural-language follow-up prompt.
+
+    E₀ decides what to ask the LLM based on what it found weak
+    or missing in its own landscape.
+    """
+    parts: List[str] = []
+
+    def _strip(node_id: str) -> str:
+        return node_id.split(":", 1)[1] if ":" in node_id else node_id
+
+    if gaps["leaf_nodes"]:
+        names = [_strip(n) for n in gaps["leaf_nodes"][:4]]
+        parts.append(
+            f"These concepts are dead ends with no further connections: "
+            f"{', '.join(names)}. Elaborate what leads FROM them."
+        )
+
+    if gaps["thin_nodes"]:
+        names = [_strip(n) for n in gaps["thin_nodes"][:4]]
+        parts.append(
+            f"These concepts have very few connections: "
+            f"{', '.join(names)}. Add more transitions between them "
+            f"and to other concepts."
+        )
+
+    if gaps["frontier_nodes"]:
+        names = [_strip(n) for n in gaps["frontier_nodes"][:4]]
+        parts.append(
+            f"These concepts were never reached during navigation: "
+            f"{', '.join(names)}. Create better pathways to reach them."
+        )
+
+    if gaps["weak_edges"]:
+        pairs = [
+            f"{_strip(s)} → {_strip(t)}"
+            for s, t, _q in gaps["weak_edges"][:4]
+        ]
+        parts.append(
+            f"These transitions are uncertain (low quality): "
+            f"{', '.join(pairs)}. Add intermediate steps or "
+            f"alternative routes."
+        )
+
+    if not parts:
+        parts.append(
+            f"Provide deeper detail on the internal mechanisms "
+            f"and sub-processes within {concept}."
+        )
+
+    return (
+        f"Original topic: {concept}. "
+        + " ".join(parts)
+    )
+
+
 def teach_concept(
-    state: SessionState, text: str,
+    state: SessionState, text: str, rounds: int = 1,
 ) -> Dict[str, Any]:
     """Teach E₀ a new concept via LLM structuring + persistent exploration.
 
     Unlike task (which matches existing structure first), teach always
     invokes LLM structuring to create new landscape material and then
     runs multiple exploration passes with persistent consolidation.
+
+    C243: When rounds > 1, E₀ self-directs the learning process:
+    after each teach round, it diagnoses structural gaps in the
+    learned material, formulates a follow-up question, and asks the
+    LLM to elaborate on the weak spots. This deepens understanding
+    iteratively — E₀ decides what it doesn't understand.
 
     Returns structured result:
       nodes_added: list[str] — new node IDs injected (L: prefix)
@@ -1828,103 +1961,172 @@ def teach_concept(
       domain_crossings: int — total crossings across passes
       absorbed: int — edges visited (trace_load > 0) from new material
       total_new_edges: int — total new edges in injected subgraph
+      teach_rounds: list[dict] — per-round detail (C243)
     """
+    rounds = max(1, min(rounds, 5))  # cap at 5
     a_start = assess(state.landscape, state.unified_nodes)
 
-    # LLM structuring
-    try:
-        adapter = _get_llm_adapter(state)
-        spec = adapter.propose_domain_graph(text)
-    except Exception as exc:
-        return {
-            "error": str(exc),
-            "nodes_added": [],
-            "edges_added": [],
-            "coverage_before": a_start.coverage,
-            "coverage_after": a_start.coverage,
-            "coverage_delta": 0.0,
-            "rounds_run": 0,
-            "domain_crossings": 0,
-            "absorbed": 0,
-            "total_new_edges": 0,
-        }
+    all_nodes: List[str] = []
+    all_edges: List[Tuple[str, str]] = []
+    teach_rounds_detail: List[Dict[str, Any]] = []
 
-    if not spec.get("nodes"):
-        return {
-            "error": "LLM returned no structure",
-            "nodes_added": [],
-            "edges_added": [],
-            "coverage_before": a_start.coverage,
-            "coverage_after": a_start.coverage,
-            "coverage_delta": 0.0,
-            "rounds_run": 0,
-            "domain_crossings": 0,
-            "absorbed": 0,
-            "total_new_edges": 0,
-        }
+    for teach_round in range(rounds):
+        # ── Phase 1: LLM structuring ──
+        try:
+            adapter = _get_llm_adapter(state)
+            if teach_round == 0:
+                spec = adapter.propose_domain_graph(text)
+            else:
+                # Diagnose gaps from previous round
+                gaps = _diagnose_learning_gaps(state, prefix="L:")
+                if not gaps["has_gaps"]:
+                    teach_rounds_detail.append({
+                        "round": teach_round + 1,
+                        "action": "no_gaps",
+                        "nodes_added": 0,
+                        "edges_added": 0,
+                    })
+                    break
 
-    # Inject with L: prefix (Learned)
-    new_nodes, new_edges = _inject_spec_into_landscape(
-        state, spec, prefix="L:",
-    )
-
-    # Multi-round exploration to absorb the material
-    total_crossings = 0
-    rounds_run = 0
-
-    for i in range(_TEACH_EXPLORE_ROUNDS):
-        anchor = new_nodes[i % len(new_nodes)] if new_nodes else None
-        if not anchor:
+                followup = _formulate_followup(text, gaps)
+                existing_raw = [
+                    n.split(":", 1)[1] if ":" in n else n
+                    for n in all_nodes
+                ]
+                spec = adapter.deepen_domain_graph(
+                    original_concept=text,
+                    existing_nodes=existing_raw,
+                    gap_description=followup,
+                )
+        except Exception as exc:
+            if teach_round == 0:
+                return {
+                    "error": str(exc),
+                    "nodes_added": [],
+                    "edges_added": [],
+                    "coverage_before": a_start.coverage,
+                    "coverage_after": a_start.coverage,
+                    "coverage_delta": 0.0,
+                    "rounds_run": 0,
+                    "domain_crossings": 0,
+                    "absorbed": 0,
+                    "total_new_edges": 0,
+                    "teach_rounds": [],
+                }
+            # Later rounds: LLM failure is non-fatal, stop iterating
+            teach_rounds_detail.append({
+                "round": teach_round + 1,
+                "action": "llm_error",
+                "error": str(exc),
+                "nodes_added": 0,
+                "edges_added": 0,
+            })
             break
 
-        state.round_num += 1
-        a_before = assess(state.landscape, state.unified_nodes)
+        if not spec.get("nodes"):
+            if teach_round == 0:
+                return {
+                    "error": "LLM returned no structure",
+                    "nodes_added": [],
+                    "edges_added": [],
+                    "coverage_before": a_start.coverage,
+                    "coverage_after": a_start.coverage,
+                    "coverage_delta": 0.0,
+                    "rounds_run": 0,
+                    "domain_crossings": 0,
+                    "absorbed": 0,
+                    "total_new_edges": 0,
+                    "teach_rounds": [],
+                }
+            teach_rounds_detail.append({
+                "round": teach_round + 1,
+                "action": "no_structure",
+                "nodes_added": 0,
+                "edges_added": 0,
+            })
+            break
 
-        nav = navigate(
-            state.landscape, state.unified_nodes,
-            "explore", state.steps_per_round, start=anchor,
+        # ── Phase 2: Inject ──
+        # For deepen rounds, the spec may reference existing L: nodes
+        # in edges but only NEW nodes in the nodes list. _inject handles
+        # this because it skips nodes that already exist.
+        new_nodes, new_edges = _inject_spec_into_landscape(
+            state, spec, prefix="L:",
         )
-        validate_confidence(nav["path"])
+        all_nodes.extend(new_nodes)
+        all_edges.extend(new_edges)
 
-        a_after = assess(state.landscape, state.unified_nodes)
-        coverage_delta = a_after.coverage - a_before.coverage
+        # ── Phase 3: Explore ──
+        total_crossings = 0
+        explore_rounds = 0
 
-        reason_short = text[:60] + ("…" if len(text) > 60 else "")
-        result = MultiDomainRoundResult(
-            round_num=state.round_num,
-            mode="teach",
-            reason=f"teach: \"{reason_short}\" (pass {i + 1})",
-            steps=nav["steps"],
-            assessment_before=a_before,
-            assessment_after=a_after,
-            path=nav["path"],
-            new_edges=len(nav["new_edges"]),
-            domain_crossings=nav["domain_crossings"],
-            crossing_rate=nav["crossing_rate"],
-            coverage_delta=coverage_delta,
-            T_s_delta=a_after.T_s - a_before.T_s,
-            en_canon_crossings=nav["en_canon_crossings"],
-            en_bootstrap_crossings=nav["en_bootstrap_crossings"],
-            canon_bootstrap_crossings=nav["canon_bootstrap_crossings"],
-            type_usage=nav.get("type_usage", {}),
-        )
-        state.history.append(result)
+        for i in range(_TEACH_EXPLORE_ROUNDS):
+            anchor = new_nodes[i % len(new_nodes)] if new_nodes else None
+            if not anchor:
+                break
 
-        # Persistent consolidation — taught material sticks
-        consolidate(result, nav["new_edges"], dry_run=False)
+            state.round_num += 1
+            a_before = assess(state.landscape, state.unified_nodes)
 
-        total_crossings += nav["domain_crossings"]
-        rounds_run += 1
+            nav = navigate(
+                state.landscape, state.unified_nodes,
+                "explore", state.steps_per_round, start=anchor,
+            )
+            validate_confidence(nav["path"])
 
-        if coverage_delta <= 0.001:
-            state.stagnation_streak += 1
-        else:
-            state.stagnation_streak = 0
+            a_after = assess(state.landscape, state.unified_nodes)
+            coverage_delta = a_after.coverage - a_before.coverage
+
+            reason_short = text[:60] + ("…" if len(text) > 60 else "")
+            round_label = (
+                f"teach: \"{reason_short}\" (R{teach_round + 1} pass {i + 1})"
+            )
+            result = MultiDomainRoundResult(
+                round_num=state.round_num,
+                mode="teach",
+                reason=round_label,
+                steps=nav["steps"],
+                assessment_before=a_before,
+                assessment_after=a_after,
+                path=nav["path"],
+                new_edges=len(nav["new_edges"]),
+                domain_crossings=nav["domain_crossings"],
+                crossing_rate=nav["crossing_rate"],
+                coverage_delta=coverage_delta,
+                T_s_delta=a_after.T_s - a_before.T_s,
+                en_canon_crossings=nav["en_canon_crossings"],
+                en_bootstrap_crossings=nav["en_bootstrap_crossings"],
+                canon_bootstrap_crossings=nav["canon_bootstrap_crossings"],
+                type_usage=nav.get("type_usage", {}),
+            )
+            state.history.append(result)
+            consolidate(result, nav["new_edges"], dry_run=False)
+            total_crossings += nav["domain_crossings"]
+            explore_rounds += 1
+
+            if coverage_delta <= 0.001:
+                state.stagnation_streak += 1
+            else:
+                state.stagnation_streak = 0
+
+        followup_used = None
+        if teach_round > 0:
+            followup_used = followup  # noqa: F821 — set in else branch above
+
+        teach_rounds_detail.append({
+            "round": teach_round + 1,
+            "action": "initial" if teach_round == 0 else "deepen",
+            "nodes_added": len(new_nodes),
+            "edges_added": len(new_edges),
+            "explore_rounds": explore_rounds,
+            "domain_crossings": total_crossings,
+            "followup": followup_used,
+        })
 
     # Measure absorption: how many new edges got visited?
     hist = state.landscape.historization
     absorbed = 0
-    for src, tgt in new_edges:
+    for src, tgt in all_edges:
         e = Edge(src, tgt)
         if e in state.landscape.edges and hist.trace_load(e) > 0:
             absorbed += 1
@@ -1932,15 +2134,20 @@ def teach_concept(
     a_end = assess(state.landscape, state.unified_nodes)
 
     return {
-        "nodes_added": new_nodes,
-        "edges_added": new_edges,
+        "nodes_added": all_nodes,
+        "edges_added": all_edges,
         "coverage_before": round(a_start.coverage, 6),
         "coverage_after": round(a_end.coverage, 6),
         "coverage_delta": round(a_end.coverage - a_start.coverage, 6),
-        "rounds_run": rounds_run,
-        "domain_crossings": total_crossings,
+        "rounds_run": sum(
+            r.get("explore_rounds", 0) for r in teach_rounds_detail
+        ),
+        "domain_crossings": sum(
+            r.get("domain_crossings", 0) for r in teach_rounds_detail
+        ),
         "absorbed": absorbed,
-        "total_new_edges": len(new_edges),
+        "total_new_edges": len(all_edges),
+        "teach_rounds": teach_rounds_detail,
     }
 
 
@@ -1949,16 +2156,31 @@ def cmd_teach(state: SessionState, text: str) -> str:
 
     Always invokes LLM structuring, injects with persistent traces,
     and runs multiple exploration passes to absorb the material.
+
+    C243: 'teach water 3' runs 3 iterative rounds. After round 1,
+    E₀ diagnoses its own gaps and formulates follow-up questions.
     """
+    # Parse optional round count from end of text
+    parts = text.rsplit(None, 1)
+    teach_rounds = 1
+    concept = text
+    if len(parts) == 2:
+        try:
+            teach_rounds = int(parts[1])
+            concept = parts[0]
+        except ValueError:
+            pass  # last word isn't a number — use full text
+
     lines = [
         "Teaching Pipeline",
         "═" * 50,
-        f"  Concept: \"{text}\"",
+        f"  Concept: \"{concept}\"",
+        f"  Rounds: {teach_rounds}",
         "  Invoking LLM peer for structuring...",
         "",
     ]
 
-    result = teach_concept(state, text)
+    result = teach_concept(state, concept, rounds=teach_rounds)
 
     if result.get("error"):
         lines.append(f"  Error: {result['error']}")
@@ -1966,13 +2188,41 @@ def cmd_teach(state: SessionState, text: str) -> str:
 
     # Journal: record teach event (C231)
     record_journal_event(state, "teach", {
-        "concept": text[:80],
+        "concept": concept[:80],
         "nodes_added": len(result["nodes_added"]),
         "coverage_delta": result["coverage_delta"],
+        "teach_rounds": len(result.get("teach_rounds", [])),
     })
 
+    # Per-round detail (C243)
+    for rd in result.get("teach_rounds", []):
+        action = rd.get("action", "?")
+        rn = rd.get("round", "?")
+        if action == "initial":
+            lines.append(f"  Round {rn}: Initial structuring")
+        elif action == "deepen":
+            lines.append(f"  Round {rn}: Self-directed deepening")
+            if rd.get("followup"):
+                # Show truncated follow-up
+                fu = rd["followup"]
+                if len(fu) > 120:
+                    fu = fu[:117] + "..."
+                lines.append(f"    E₀ asked: {fu}")
+        elif action == "no_gaps":
+            lines.append(f"  Round {rn}: No structural gaps found — stopping")
+        elif action == "llm_error":
+            lines.append(f"  Round {rn}: LLM error — {rd.get('error', '?')}")
+        elif action == "no_structure":
+            lines.append(f"  Round {rn}: LLM returned no new structure")
+
+        nodes_n = rd.get("nodes_added", 0)
+        edges_n = rd.get("edges_added", 0)
+        if nodes_n > 0 or edges_n > 0:
+            lines.append(f"    +{nodes_n} nodes, +{edges_n} edges")
+        lines.append("")
+
     lines.append(
-        f"  Injected: {len(result['nodes_added'])} nodes, "
+        f"  Injected total: {len(result['nodes_added'])} nodes, "
         f"{result['total_new_edges']} edges (L: prefix)"
     )
     if result["nodes_added"]:
@@ -5038,7 +5288,7 @@ def dispatch(state: SessionState, user_input: str) -> Optional[str]:
 
     if cmd == "teach":
         if not arg:
-            return "Usage: teach <concept or domain to learn>"
+            return "Usage: teach <concept> [rounds]  (e.g. teach water 3)"
         return cmd_teach(state, arg)
 
     if cmd == "status":
