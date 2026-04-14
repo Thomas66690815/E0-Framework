@@ -67,6 +67,12 @@ runs auto_tune (Self-Graph diagnosis \u2192 perturbation \u2192 evaluation) for 
 N rounds. Reports per-domain quality changes, adopted parameter modifications,
 and contextual patterns from meta-reflection.
 
+C237 adds Auto-Mode: `auto [N]` runs an autonomous learning loop for up to N
+steps. Each step: _choose_action analyzes session state (coverage, domain
+status, stagnation, confused edges) and picks the best action (run/escalate/
+dream/sleep/curriculum/tune/stop). Orchestrates all C233\u2013C236 capabilities
+without human input. Stops on saturation, coverage \u226595%, or max steps.
+
 Commands:
   run [N]       — Execute the next N rounds (default: 1)
   task <text>   — Introduce a difference in natural language
@@ -82,6 +88,7 @@ Commands:
   dream [N]     — Run N dream consolidation cycles (default: 3)
   sleep [N]     — Run N wake-sleep episodes (auto curriculum + dream)
   tune [N]      — Self-tune parameters per domain (Self-Graph diagnosis)
+  auto [N]      — Autonomous learning loop (max N steps, default 10)
   why           — Explain the last round's decision
   detail [N]    — Show last round edge by edge (or round N)
   inspect <src> <tgt> — Deep view of a single edge
@@ -3347,6 +3354,234 @@ def cmd_tune(state: SessionState, arg: Optional[str] = None) -> str:
     return "\n".join(lines)
 
 
+# ── Auto-Mode (C237) ────────────────────────────────────────────────
+
+
+def _choose_action(state: SessionState) -> Tuple[str, str]:
+    """Decide the next autonomous action based on session state.
+
+    Returns (action, reason) where action is one of:
+      run, escalate, dream, sleep, curriculum, tune, stop
+    """
+    a = assess(state.landscape, state.unified_nodes)
+
+    # Stop: high coverage or structural saturation
+    if a.coverage >= 0.95 and a.frontier_size == 0:
+        return "stop", f"coverage {a.coverage:.1%}, no frontier"
+
+    diag = diagnose_session(state)
+    domains = diag.get("domains", [])
+
+    # Count domain statuses
+    blocked = [d for d in domains if d["status"] == "BLOCKED"]
+    stagnant = [d for d in domains if d["status"] == "STAGNANT"]
+    growing = [d for d in domains if d["status"] == "GROWING"]
+    saturated = [d for d in domains if d["status"] == "SATURATED"]
+
+    # All explored domains saturated → stop
+    active = [d for d in domains if d["status"] != "IDLE"]
+    if active and all(d["status"] == "SATURATED" for d in active):
+        return "stop", "all domains SATURATED"
+
+    # High stagnation → escalate
+    if state.stagnation_streak >= 3:
+        return "escalate", f"stagnation streak = {state.stagnation_streak}"
+
+    # Count confused edges across domains
+    total_confused = sum(d.get("confused_edges", 0) for d in domains)
+    if total_confused > 5:
+        return "dream", f"{total_confused} confused edges need consolidation"
+
+    # Blocked domains → try curriculum to add structure
+    if blocked:
+        names = [d["name"] for d in blocked]
+        return "curriculum", f"blocked domains: {', '.join(names)}"
+
+    # Many stagnant, few growing → sleep-wake for combined approach
+    if len(stagnant) >= 2 and not growing:
+        return "sleep", f"{len(stagnant)} stagnant domains, none growing"
+
+    # Low coverage → keep running
+    if a.coverage < 0.8:
+        return "run", f"coverage {a.coverage:.1%} — keep exploring"
+
+    # High coverage but still frontier → run a few more
+    if a.frontier_size > 0 and growing:
+        return "run", f"frontier={a.frontier_size}, {len(growing)} growing"
+
+    # Plateau with some stagnant → tune parameters
+    if stagnant and state.round_num >= 5:
+        return "tune", f"{len(stagnant)} stagnant domains, trying parameter tuning"
+
+    # Default: keep running
+    return "run", "default action"
+
+
+def auto_run(
+    state: SessionState,
+    max_steps: int = 10,
+    rounds_per_step: int = 3,
+) -> Dict[str, Any]:
+    """Autonomous learning loop: E₀ decides what to do next.
+
+    Each step:
+      1. _choose_action() analyzes session state
+      2. Execute the chosen action (run/escalate/dream/sleep/curriculum/tune)
+      3. Log the action and result
+      4. Check stopping conditions
+
+    Returns structured log of all actions, final coverage, and summary.
+    """
+    actions_log: List[Dict[str, Any]] = []
+    a_start = assess(state.landscape, state.unified_nodes)
+    start_coverage = a_start.coverage
+    start_round = state.round_num
+
+    for step in range(1, max_steps + 1):
+        action, reason = _choose_action(state)
+
+        if action == "stop":
+            actions_log.append({
+                "step": step, "action": "stop", "reason": reason,
+            })
+            break
+
+        # Execute action
+        if action == "run":
+            cmd_run(state, rounds_per_step)
+            detail = f"{rounds_per_step} rounds"
+
+        elif action == "escalate":
+            result = escalate(state)
+            record_journal_event(state, "escalate", {
+                "level": result["level"],
+                "resolved": result["resolved"],
+                "coverage_delta": result["coverage_delta"],
+            })
+            detail = (
+                f"L{result['level']} {result['name']}, "
+                f"resolved={result['resolved']}"
+            )
+
+        elif action == "dream":
+            dream_run(state, cycles=3)
+            detail = "3 dream cycles"
+
+        elif action == "sleep":
+            sleep_wake_run(state, episodes=3, max_cycles=20)
+            detail = "3 sleep-wake episodes"
+
+        elif action == "curriculum":
+            # Pick the first available canon
+            canon = AVAILABLE_CANONS[0] if AVAILABLE_CANONS else "ontodynamics"
+            curriculum_run(state, canon)
+            detail = f"curriculum '{canon}'"
+
+        elif action == "tune":
+            tune_run(state, max_rounds=2)
+            detail = "2 tune rounds"
+
+        else:
+            detail = "unknown"
+
+        a_now = assess(state.landscape, state.unified_nodes)
+        actions_log.append({
+            "step": step,
+            "action": action,
+            "reason": reason,
+            "detail": detail,
+            "coverage_after": round(a_now.coverage, 4),
+            "T_s": round(a_now.T_s, 3),
+            "round_num": state.round_num,
+        })
+
+    # Final assessment
+    a_end = assess(state.landscape, state.unified_nodes)
+
+    # Record journal event
+    record_journal_event(state, "auto_mode", {
+        "steps": len(actions_log),
+        "actions": [a["action"] for a in actions_log],
+        "coverage_start": round(start_coverage, 4),
+        "coverage_end": round(a_end.coverage, 4),
+        "rounds_executed": state.round_num - start_round,
+    })
+
+    return {
+        "actions": actions_log,
+        "total_steps": len(actions_log),
+        "coverage_start": start_coverage,
+        "coverage_end": a_end.coverage,
+        "coverage_delta": a_end.coverage - start_coverage,
+        "rounds_executed": state.round_num - start_round,
+        "T_s_end": a_end.T_s,
+        "stopped_reason": (
+            actions_log[-1]["reason"]
+            if actions_log and actions_log[-1]["action"] == "stop"
+            else "max_steps reached"
+        ),
+    }
+
+
+def cmd_auto(state: SessionState, arg: Optional[str] = None) -> str:
+    """Run autonomous learning loop."""
+    max_steps = 10
+    if arg:
+        try:
+            max_steps = int(arg)
+            max_steps = max(1, min(max_steps, 50))
+        except ValueError:
+            return f"Invalid step count: '{arg}'. Usage: auto [N]"
+
+    result = auto_run(state, max_steps)
+    md = state.output_format == "markdown"
+
+    if md:
+        lines = ["## Auto-Mode", ""]
+    else:
+        lines = ["Auto-Mode", "\u2550" * 60]
+
+    lines.append(
+        f"  {result['total_steps']} steps, "
+        f"{result['rounds_executed']} rounds executed"
+    )
+    lines.append(
+        f"  Coverage: {result['coverage_start']:.1%} "
+        f"\u2192 {result['coverage_end']:.1%}  "
+        f"\u0394={result['coverage_delta']:+.3%}"
+    )
+    lines.append(f"  T_s: {result['T_s_end']:.3f}")
+    lines.append(f"  Stopped: {result['stopped_reason']}")
+    lines.append("")
+
+    # Action log
+    if md:
+        lines.append("### Actions")
+    else:
+        lines.append("  Actions")
+        lines.append("  " + "\u2500" * 40)
+
+    _ACTION_ICONS = {
+        "run": "\u25b6", "escalate": "\u26a1", "dream": "\u2601",
+        "sleep": "\u263e", "curriculum": "\u2709", "tune": "\u2699",
+        "stop": "\u25a0",
+    }
+
+    for a in result["actions"]:
+        icon = _ACTION_ICONS.get(a["action"], "\u00b7")
+        detail = a.get("detail", "")
+        cov = a.get("coverage_after", "")
+        cov_str = f"  cov={cov:.1%}" if isinstance(cov, float) else ""
+        lines.append(
+            f"    {icon} Step {a['step']}: {a['action']:<12s} "
+            f"{detail}{cov_str}"
+        )
+        if a.get("reason"):
+            lines.append(f"      reason: {a['reason']}")
+
+    return "\n".join(lines)
+
+
 def cmd_task(state: SessionState, text: str) -> str:
     """Process a user-provided difference as natural text.
 
@@ -3655,6 +3890,7 @@ E₀ Interactive Session — Commands
   dream [N]        Dream consolidation: cross-domain equivalences
   sleep [N]        Wake-sleep cycle: navigate + auto-dream
   tune [N]         Self-tune parameters via Self-Graph (max N rounds)
+  auto [N]         Autonomous learning loop (max N steps)
   why              Explain the last decision
   detail [N]       Last round's path edge by edge (or round N)
   inspect <s> <t>  Deep view of edge s→t
@@ -4221,6 +4457,9 @@ def dispatch(state: SessionState, user_input: str) -> Optional[str]:
 
     if cmd == "tune":
         return cmd_tune(state, arg if arg else None)
+
+    if cmd == "auto":
+        return cmd_auto(state, arg if arg else None)
 
     if cmd == "detail":
         round_n = None

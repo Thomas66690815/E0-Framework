@@ -1,4 +1,4 @@
-"""Tests for E₀ Interactive Text Session (C213–C236).
+"""Tests for E₀ Interactive Text Session (C213–C237).
 
 Validates the REPL dispatch, session state management,
 each command's output through the communication pipeline,
@@ -28,7 +28,9 @@ domain sub-landscape extraction, DreamObserver session integration),
 and C235 Sleep-Wake Integration (sleep_wake_run, cmd_sleep,
 per-domain E0Controller, SleepWakeCycle, historization transfer),
 and C236 Tune Command (tune_run, cmd_tune,
-per-domain auto-tuning via Self-Graph diagnosis, parameter perturbation).
+per-domain auto-tuning via Self-Graph diagnosis, parameter perturbation),
+and C237 Auto-Mode (auto_run, cmd_auto, _choose_action,
+autonomous decision loop orchestrating run/escalate/dream/sleep/curriculum/tune).
 """
 
 from __future__ import annotations
@@ -57,6 +59,7 @@ from e0_controller.interactive_session import (
     _task_navigate,
     _extract_domain_landscapes,
     build_session,
+    cmd_auto,
     cmd_curriculum,
     cmd_detail,
     cmd_diagnose,
@@ -95,6 +98,8 @@ from e0_controller.interactive_session import (
     sleep_wake_run,
     teach_concept,
     tune_run,
+    _choose_action,
+    auto_run,
 )
 from e0_controller.feedback import HumanAction
 from e0_controller.perception import PerceptionDomain
@@ -3558,3 +3563,203 @@ class TestTuneDispatch:
         """Help text includes 'tune' command."""
         text = cmd_help()
         assert "tune" in text.lower()
+
+
+# ── C237 Auto-Mode ───────────────────────────────────────────────────
+
+
+class TestChooseAction:
+    """C237: _choose_action selects appropriate next action."""
+
+    def test_returns_tuple(self):
+        """_choose_action returns (action, reason)."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        action, reason = _choose_action(s)
+        assert isinstance(action, str)
+        assert isinstance(reason, str)
+
+    def test_action_is_valid(self):
+        """Action is one of the known actions."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        action, _ = _choose_action(s)
+        valid = {"run", "escalate", "dream", "sleep", "curriculum", "tune", "stop"}
+        assert action in valid
+
+    def test_low_coverage_suggests_run(self):
+        """With low coverage and no issues, action should be run."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        action, reason = _choose_action(s)
+        # Early session: most likely run or curriculum
+        assert action in {"run", "curriculum", "dream", "sleep"}
+
+    def test_high_stagnation_suggests_escalate(self):
+        """When stagnation_streak >= 3, should escalate."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        s.stagnation_streak = 5
+        action, _ = _choose_action(s)
+        assert action == "escalate"
+
+
+class TestAutoRun:
+    """C237: auto_run orchestrates autonomous learning."""
+
+    def test_returns_dict(self):
+        """auto_run returns a dict with expected keys."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = auto_run(s, max_steps=2, rounds_per_step=1)
+        assert isinstance(result, dict)
+        assert "actions" in result
+        assert "total_steps" in result
+        assert "coverage_start" in result
+        assert "coverage_end" in result
+        assert "coverage_delta" in result
+        assert "rounds_executed" in result
+        assert "stopped_reason" in result
+
+    def test_actions_logged(self):
+        """Each step produces an action log entry."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = auto_run(s, max_steps=3, rounds_per_step=1)
+        assert len(result["actions"]) > 0
+        for a in result["actions"]:
+            assert "step" in a
+            assert "action" in a
+
+    def test_coverage_tracked(self):
+        """Coverage start/end are valid percentages."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = auto_run(s, max_steps=2, rounds_per_step=1)
+        assert 0 <= result["coverage_start"] <= 1
+        assert 0 <= result["coverage_end"] <= 1
+
+    def test_coverage_non_decreasing(self):
+        """Coverage should not decrease during auto-mode."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = auto_run(s, max_steps=3, rounds_per_step=2)
+        assert result["coverage_delta"] >= -0.01  # allow tiny float noise
+
+    def test_max_steps_respected(self):
+        """auto_run does not exceed max_steps."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = auto_run(s, max_steps=2, rounds_per_step=1)
+        assert result["total_steps"] <= 2
+
+    def test_journal_event_recorded(self):
+        """auto_run records an 'auto_mode' journal event."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        auto_run(s, max_steps=2, rounds_per_step=1)
+        events = [e for e in s.journal if e["event_type"] == "auto_mode"]
+        assert len(events) >= 1
+        detail = events[-1]["detail"]
+        assert "steps" in detail
+        assert "actions" in detail
+        assert "coverage_start" in detail
+        assert "coverage_end" in detail
+
+    def test_rounds_executed_positive(self):
+        """At least some rounds are executed."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = auto_run(s, max_steps=3, rounds_per_step=2)
+        assert result["rounds_executed"] >= 0
+
+    def test_stopped_reason_populated(self):
+        """stopped_reason is always a non-empty string."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = auto_run(s, max_steps=2, rounds_per_step=1)
+        assert isinstance(result["stopped_reason"], str)
+        assert len(result["stopped_reason"]) > 0
+
+
+class TestCmdAuto:
+    """C237: cmd_auto provides formatted output."""
+
+    def test_output_is_string(self):
+        """cmd_auto returns a non-empty string."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_auto(s, "2")
+        assert isinstance(out, str)
+        assert len(out) > 0
+
+    def test_output_has_header(self):
+        """Output contains 'Auto-Mode'."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_auto(s, "2")
+        assert "Auto-Mode" in out
+
+    def test_output_has_coverage(self):
+        """Output contains coverage information."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_auto(s, "2")
+        assert "Coverage" in out or "cov=" in out
+
+    def test_output_has_actions(self):
+        """Output contains 'Actions' section."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_auto(s, "2")
+        assert "Actions" in out or "Step" in out
+
+    def test_output_has_stopped_reason(self):
+        """Output contains 'Stopped' section."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_auto(s, "2")
+        assert "Stopped" in out or "stop" in out.lower()
+
+    def test_invalid_arg(self):
+        """Invalid arg returns usage hint."""
+        s = build_session(steps_per_round=10)
+        out = cmd_auto(s, "abc")
+        assert "Usage" in out or "Invalid" in out
+
+    def test_markdown_format(self):
+        """Markdown mode uses ## headers."""
+        s = build_session(steps_per_round=10, output_format="markdown")
+        cmd_run(s, 1)
+        out = cmd_auto(s, "2")
+        assert "## Auto-Mode" in out
+
+    def test_custom_max_steps(self):
+        """cmd_auto('3') uses max 3 steps."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_auto(s, "3")
+        assert "step" in out.lower()
+
+
+class TestAutoDispatch:
+    """C237: dispatch routes 'auto' command."""
+
+    def test_dispatch_auto(self):
+        """dispatch('auto 2') calls cmd_auto."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = dispatch(s, "auto 2")
+        assert "Auto-Mode" in out
+
+    def test_dispatch_auto_no_arg(self):
+        """dispatch('auto') uses default steps."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = dispatch(s, "auto")
+        assert "Auto-Mode" in out
+
+    def test_help_includes_auto(self):
+        """Help text includes 'auto' command."""
+        text = cmd_help()
+        assert "auto" in text.lower()

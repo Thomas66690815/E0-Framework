@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C236",
+    "latest_commit": "C237",
     "latest_commit_hash": "pending",
-    "latest_commit_msg": "C236: Tune Command \u2014 per-domain auto-tuning via Self-Graph diagnosis wired into interactive session. tune_run extracts domain sub-landscapes, runs auto_tune per domain (diagnose \u2192 perturb \u2192 evaluate), reports quality changes + adopted parameters. cmd_tune formatted output with domain results + meta-reflection context. 19 tests, 5231 total.",
-    "test_count": 5231,
+    "latest_commit_msg": "C237: Auto-Mode \u2014 autonomous learning loop orchestrating all C233\u2013C236 capabilities. _choose_action analyzes session state (coverage, domain status, stagnation, confused edges) and selects run/escalate/dream/sleep/curriculum/tune/stop. auto_run executes N steps with action logging, coverage tracking, stopping on saturation/coverage\u226595%/max_steps. cmd_auto formatted output with action icons and coverage delta. 23 tests, 5254 total.",
+    "test_count": 5254,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
     "module_count": "77 production + 10 benchmarks + 17 demos + 69 explorations + 127 test files",
@@ -222,7 +222,7 @@
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
     "current_arc": "Autonomes Lernen (C233\u2013C237)",
-    "arc_status": "C233\u2013C236 DONE. C237 planned.",
+    "arc_status": "C233\u2013C237 DONE. Autonomes Lernen arc COMPLETE.",
     "arc_plan": {
       "C233_curriculum_command": {
         "title": "Curriculum Command",
@@ -246,16 +246,17 @@
       },
       "C237_auto_mode": {
         "title": "Auto-Mode",
-        "what": "Autonomous learning loop: E\u2080 decides when to run, teach, curriculum, dream, tune without human input. Goal-directed self-improvement.",
-        "status": "PLANNED"
+        "what": "Autonomous learning loop: _choose_action analyzes session state (assess coverage/frontier, diagnose_session domain status GROWING/STAGNANT/BLOCKED/SATURATED, stagnation_streak, confused edges) and picks best action. auto_run orchestrates: run (3 rounds/step) for low coverage, escalate for stagnation\u22653, dream for confused edges>5, curriculum for blocked domains, sleep for multiple stagnant, tune for quality degradation. Stops on all-SATURATED, coverage\u226595%, or max_steps. cmd_auto formatted output with action icons (\u25b6/\u26a1/\u2601/\u263e/\u2709/\u2699/\u25a0) and per-step coverage. Journal event auto_mode with full action list.",
+        "status": "DONE (C237)"
       }
     },
-    "key_result": "C236: Tune Command. Fourth commit of Autonomes Lernen arc. tune_run extracts domain sub-landscapes via _extract_domain_landscapes, builds E0Controller per domain, runs auto_tune (C155) with Self-Graph diagnosis (harmful/confused components \u2192 COMPONENT_PARAMS \u2192 \u00b1perturbation variants \u2192 sensitivity_analysis \u2192 adopt best). Reports per-domain quality (initial/final/\u0394), adopted parameter changes vs DEFAULTS, rounds/trials count. cmd_tune formatted output: domain results with \u2714/\u2500 indicators, changed config params, summary, meta-reflection context (top 3 patterns from C232). Journal event: domains_tuned, domains_improved, improved_names, total_trials.",
+    "key_result": "C237: Auto-Mode. Fifth and final commit of Autonomes Lernen arc (C233\u2013C237). auto_run orchestrates all learning capabilities without human input: _choose_action maps session state to best intervention (7 possible actions). Decision tree: all-SATURATED/coverage\u226595%\u2192stop, stagnation\u22653\u2192escalate, confused>5\u2192dream, blocked\u2192curriculum, multiple-stagnant\u2192sleep, low-coverage\u2192run, plateau+stagnant\u2192tune. Each step logged with coverage, T_s, action type. cmd_auto: formatted output with per-step icons (\u25b6\u26a1\u2601\u263e\u2709\u2699\u25a0), coverage \u0394, stopped reason. Journal event with full action sequence. Arc delivers: Curriculum(C233) + Dream(C234) + Sleep-Wake(C235) + Tune(C236) + Auto-Mode(C237) = autonomous self-improving E\u2080.",
     "open_threads": [
-      "Autonomes Lernen arc: C237 Auto-Mode next (final)",
+      "Autonomes Lernen arc COMPLETE (C233\u2013C237)",
+      "Next arc TBD",
       "Adversarial stability still partially open (C172-C174)"
     ],
-    "next_commit_id": "C237",
+    "next_commit_id": "C238",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
