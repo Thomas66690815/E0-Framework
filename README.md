@@ -48,6 +48,8 @@ The full canon: [canon/e0-canon-plain.txt](canon/e0-canon-plain.txt) — 155 lin
 - Chess position evaluation
 - Cross-domain pattern discovery (dreaming)
 - Curriculum-based knowledge acquisition
+- Interactive Q&A with answer synthesis
+- Autonomous self-learning (E₀ learns E₀)
 
 ---
 
@@ -103,6 +105,31 @@ trace = ctrl.run("A", goal="GOAL")
 # Overrides greedy on the first step. No FAILURE needed.
 ```
 
+### Interactive browser session
+
+E₀ includes a full interactive environment for exploring, learning, and querying its knowledge landscape:
+
+```bash
+py -3 -m e0_controller.interactive_server
+```
+
+This starts a local HTTP server (default: `http://127.0.0.1:8484`) with:
+
+- **25+ commands**: `run`, `status`, `focus`, `teach`, `ask`, `dream`, `sleep`, `auto`, `selflearn`, `curriculum`, `tune`, `reflect`, `trajectory`, `diagnose`, `escalate`, and more
+- **Ask pipeline** (C239–C242): natural-language Q&A — tokenization → knowledge assessment → gap learning → navigation → LLM answer synthesis
+- **Self-learning** (C238): E₀ learns its own canon and mechanisms first, then answers questions about itself
+- **Session persistence**: save/load session state across restarts
+- **Warm start** from self-knowledge seed (124 nodes, 100% coverage pre-loaded)
+
+Example commands in the session:
+```
+ask what is the difference between tension and resistance?
+selflearn
+auto 10
+teach quantum interference
+dream 3
+```
+
 ### Run the demos
 
 ```bash
@@ -115,7 +142,7 @@ py -3 -m e0_controller.demo_multiverse --entropy  # Coupled domains + dream disc
 ### Run the tests
 
 ```bash
-py -3 -m pytest e0_controller/ server/ --tb=short -q   # 4369 tests, 0 failures
+py -3 -m pytest e0_controller/ server/ --tb=short -q   # 5355 tests, 0 failures
 ```
 
 ---
@@ -150,14 +177,14 @@ Paths that reach the goal *interfere constructively*. Dead ends and loops *inter
 | 4 | Controller (selection, escalation) | `controller.py` |
 | 5 | Reflexion (self-graph, edge proposals) | `self_graph.py`, `dual_reflection.py` |
 | 6 | Multi-system (multiverse, coupling) | `multiverse.py`, `coupling_router.py` |
-| 7 | Infrastructure (sessions, persistence) | `session.py`, `memory_os.py` |
+| 7 | Infrastructure (sessions, persistence) | `interactive_session.py`, `session.py` |
 | 8 | Observation (UI projection) | `observation_controller.py` |
 | 9 | Dream mode (cross-domain patterns) | `dream_mode.py` |
 | 10 | Structural entropy (forgetting) | `structural_entropy.py` |
 | 11 | Sleep–wake cycle | `sleep_wake.py` |
 | 12 | Human communication | `perception.py`, `communication.py` |
 | 13 | UI rendering | `ui_renderer.py` |
-| 14 | Session runner (full pipeline) | `e0_session.py` |
+| 14 | Session runner (full pipeline) | `e0_session.py`, `interactive_server.py` |
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full layer diagram and core formulas.
 
@@ -182,10 +209,10 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full layer diagram and 
 
 | | |
 |---|---|
-| **Tests** | 4369 passed, 0 failures |
-| **Production modules** | 76 |
+| **Tests** | 5355 passed, 0 failures |
+| **Production modules** | 77 |
 | **Demos** | 17 |
-| **Python** | 3.11+ |
+| **Python** | 3.12+ |
 | **CI** | GitHub Actions, 3 Python versions |
 | **Canon** | Stable (155 lines, never changes) |
 

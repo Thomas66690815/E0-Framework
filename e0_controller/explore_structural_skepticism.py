@@ -357,7 +357,7 @@ def scenario_a():
         print(f"    cycle {evt.cycle} [L{evt.level}]: progress={evt.progress_rate:.2f} "
               f"revisit={evt.revisit_rate:.2f} fail_new={evt.new_failure_rate:.2f} "
               f"\u2192 {evt.action}")
-    print(f"  Path: {' \u2192 '.join(result.path)}")
+    print(f"  Path: {' → '.join(result.path)}")
     print()
     print_traces(L, [("A", "TRAP"), ("TRAP", "A"), ("A", "B"),
                      ("B", "GOAL")], "Final traces")

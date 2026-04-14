@@ -660,8 +660,8 @@ def cmd_trajectory(state: SessionState) -> str:
         lines = [
             "Learning Trajectory",
             "\u2550" * 70,
-            f"{'Rnd':>4} {'Coverage':>8} {'\u0394Cov':>7} {'T_s':>6} "
-            f"{'\u0394T_s':>7} {'Mode':<10} {'Cross':>5} {'Front':>5}",
+            f"{'Rnd':>4} {'Coverage':>8} {'ΔCov':>7} {'T_s':>6} "
+            f"{'ΔT_s':>7} {'Mode':<10} {'Cross':>5} {'Front':>5}",
             "\u2500" * 70,
         ]
 
@@ -710,7 +710,7 @@ def cmd_trajectory(state: SessionState) -> str:
 
     # Mode progression
     lines.append("")
-    lines.append(f"  Mode progression: {' \u2192 '.join(s['mode_progression'])}")
+    lines.append(f"  Mode progression: {' → '.join(s['mode_progression'])}")
 
     if s["stagnation_streak"] > 0:
         lines.append(
@@ -892,7 +892,7 @@ def cmd_diagnose(state: SessionState) -> str:
             lines.append(f"### {d['name']} ({d['prefix']})")
         else:
             lines.append(f"\n  {d['name']} ({d['prefix']})")
-            lines.append(f"  {'\u2500' * 40}")
+            lines.append(f"  {'─' * 40}")
 
         indent = "  " if md else "    "
         lines.append(
@@ -929,7 +929,7 @@ def cmd_diagnose(state: SessionState) -> str:
         lines.append("")
         lines.append("### Overall")
     else:
-        lines.append(f"\n{'\u2500' * 60}")
+        lines.append(f"\n{'─' * 60}")
         lines.append("  Overall Diagnosis:")
 
     indent = "  " if md else "    "
