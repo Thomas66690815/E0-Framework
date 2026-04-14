@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C235",
+    "latest_commit": "C236",
     "latest_commit_hash": "pending",
-    "latest_commit_msg": "C235: Sleep-Wake Integration \u2014 coupled curriculum + dream as autonomous sleep-wake cycle in interactive session. sleep_wake_run creates per-domain E0Controllers from extracted sub-landscapes, wires SleepWakeCycle with DreamObserver, runs N episodes with automatic dream pressure triggering, transfers historization back. cmd_sleep: formatted output with episodes, domain pressure, summary. 19 tests, 5212 total.",
-    "test_count": 5212,
+    "latest_commit_msg": "C236: Tune Command \u2014 per-domain auto-tuning via Self-Graph diagnosis wired into interactive session. tune_run extracts domain sub-landscapes, runs auto_tune per domain (diagnose \u2192 perturb \u2192 evaluate), reports quality changes + adopted parameters. cmd_tune formatted output with domain results + meta-reflection context. 19 tests, 5231 total.",
+    "test_count": 5231,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
     "module_count": "77 production + 10 benchmarks + 17 demos + 69 explorations + 127 test files",
@@ -222,7 +222,7 @@
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
     "current_arc": "Autonomes Lernen (C233\u2013C237)",
-    "arc_status": "C233\u2013C235 DONE. C236\u2013C237 planned.",
+    "arc_status": "C233\u2013C236 DONE. C237 planned.",
     "arc_plan": {
       "C233_curriculum_command": {
         "title": "Curriculum Command",
@@ -241,8 +241,8 @@
       },
       "C236_tune_command": {
         "title": "Tune Command",
-        "what": "Self-tuning: E\u2080 adjusts its own parameters (inscription threshold, steps_per_round, exploration rate) based on meta-reflection patterns.",
-        "status": "PLANNED"
+        "what": "Self-tuning wired into interactive session. tune_run extracts domain sub-landscapes, builds E0Controller per domain, runs auto_tune (Self-Graph diagnosis \u2192 perturbation \u2192 evaluation), reports per-domain quality changes with adopted parameter modifications. cmd_tune formatted output: domain results (initial/final quality, \u0394, rounds/trials), changed parameters, summary, meta-reflection context patterns. Journal event with domains_tuned/improved/total_trials.",
+        "status": "DONE (C236)"
       },
       "C237_auto_mode": {
         "title": "Auto-Mode",
@@ -250,12 +250,12 @@
         "status": "PLANNED"
       }
     },
-    "key_result": "C235: Sleep-Wake Integration. Third commit of Autonomes Lernen arc. sleep_wake_run builds per-domain E0Controllers from _extract_domain_landscapes, registers with SleepWakeCycle (dream pressure T_s/(T_s+\u03bc)>0.5), runs N episodes with automatic wake (navigate) / sleep (dream consolidation) phases, transfers historization back to session. _pick_domain_start selects intelligent start nodes (fewest inscriptions). cmd_sleep formatted output: episode results (wake outcome + sleep status), domain pressure report, summary. Journal event with episode count, domains, slept count. BT-2 coupling: wake + dream share historization through SleepWakeCycle orchestration.",
+    "key_result": "C236: Tune Command. Fourth commit of Autonomes Lernen arc. tune_run extracts domain sub-landscapes via _extract_domain_landscapes, builds E0Controller per domain, runs auto_tune (C155) with Self-Graph diagnosis (harmful/confused components \u2192 COMPONENT_PARAMS \u2192 \u00b1perturbation variants \u2192 sensitivity_analysis \u2192 adopt best). Reports per-domain quality (initial/final/\u0394), adopted parameter changes vs DEFAULTS, rounds/trials count. cmd_tune formatted output: domain results with \u2714/\u2500 indicators, changed config params, summary, meta-reflection context (top 3 patterns from C232). Journal event: domains_tuned, domains_improved, improved_names, total_trials.",
     "open_threads": [
-      "Autonomes Lernen arc: C236 Tune Command next",
+      "Autonomes Lernen arc: C237 Auto-Mode next (final)",
       "Adversarial stability still partially open (C172-C174)"
     ],
-    "next_commit_id": "C236",
+    "next_commit_id": "C237",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",

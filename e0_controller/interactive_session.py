@@ -61,6 +61,12 @@ per domain, orchestrates via SleepWakeCycle (wake=navigate, sleep=dream when
 T_s > \u03bc). Transfers historization back to session (C233 coupling). Couples
 curriculum (C233) + dream (C234) into an automatic rhythm.
 
+C236 adds Tune Command: `tune [N]` runs auto-tuning on each domain
+sub-landscape. For each domain: extracts sub-landscape, builds E0Controller,
+runs auto_tune (Self-Graph diagnosis \u2192 perturbation \u2192 evaluation) for up to
+N rounds. Reports per-domain quality changes, adopted parameter modifications,
+and contextual patterns from meta-reflection.
+
 Commands:
   run [N]       — Execute the next N rounds (default: 1)
   task <text>   — Introduce a difference in natural language
@@ -75,6 +81,7 @@ Commands:
   curriculum [c] — Run structured curriculum (ontodynamics, mechanism_e0, …)
   dream [N]     — Run N dream consolidation cycles (default: 3)
   sleep [N]     — Run N wake-sleep episodes (auto curriculum + dream)
+  tune [N]      — Self-tune parameters per domain (Self-Graph diagnosis)
   why           — Explain the last round's decision
   detail [N]    — Show last round edge by edge (or round N)
   inspect <src> <tgt> — Deep view of a single edge
@@ -104,6 +111,10 @@ from e0_controller.communication import (
 from e0_controller.curriculum import CurriculumRunner, transfer_historization
 from e0_controller.dream_mode import DreamCycleResult, DreamObserver
 from e0_controller.sleep_wake import EpisodeResult, SleepWakeCycle
+from e0_controller.parameter_sensitivity import (
+    AutoTuneResult, apply_config, auto_tune,
+)
+from e0_controller.config import E0Config, DEFAULTS
 from e0_controller.explore_learning_cycle_multidomain import (
     MultiDomainAssessment,
     MultiDomainRoundResult,
@@ -3156,6 +3167,186 @@ def cmd_sleep(state: SessionState, arg: Optional[str] = None) -> str:
     return "\n".join(lines)
 
 
+# ── Tune Command (C236) ─────────────────────────────────────────────
+
+
+def tune_run(
+    state: SessionState,
+    max_rounds: int = 3,
+) -> Dict[str, Any]:
+    """Run auto-tuning on each domain sub-landscape.
+
+    For each domain: extract sub-landscape, build E0Controller,
+    run auto_tune() (Self-Graph diagnosis → perturbation → evaluation),
+    collect results. If any domain improves, reports the best config
+    changes found.
+
+    Uses meta_reflect patterns to add context about what's problematic.
+
+    Returns dict with per-domain tuning results, patterns from
+    meta_reflect, and overall improvement summary.
+    """
+    from e0_controller.controller import E0Controller
+
+    domain_landscapes = _extract_domain_landscapes(state.landscape)
+    prefix_map = {v: k for k, v in _DOMAIN_PREFIXES.items()}
+
+    domain_results: List[Dict[str, Any]] = []
+    any_improved = False
+
+    for name, ls in domain_landscapes.items():
+        prefix = prefix_map.get(name, "")
+        start = _pick_domain_start(state.landscape, prefix)
+        if start is None and ls.states:
+            start = next(iter(ls.states))
+        if start is None:
+            continue
+
+        # Pick a goal: the node with highest trace_load (most visited)
+        goal = None
+        best_load = -1.0
+        for s in ls.states:
+            tl = sum(
+                ls.historization.trace_load(e)
+                for e in ls.edges if e.source == s
+            )
+            if tl > best_load:
+                best_load = tl
+                goal = s
+
+        result = auto_tune(
+            ls,
+            lambda s, t: Outcome.SUCCESS,
+            start,
+            goal=goal,
+            max_rounds=max_rounds,
+        )
+
+        domain_results.append({
+            "domain": name,
+            "initial_quality": result.initial_quality,
+            "final_quality": result.final_quality,
+            "improved": result.improved,
+            "improvement": result.improvement,
+            "rounds": len(result.rounds),
+            "trials": result.total_trials,
+            "best_config": result.best_config,
+            "summary": result.summary(),
+        })
+
+        if result.improved:
+            any_improved = True
+
+    # Gather meta-reflect patterns for context
+    patterns: List[str] = []
+    if state.history:
+        ref = meta_reflect(state)
+        patterns = ref.get("patterns", [])
+
+    # Record journal event
+    improved_domains = [d["domain"] for d in domain_results if d["improved"]]
+    record_journal_event(state, "tune", {
+        "domains_tuned": len(domain_results),
+        "domains_improved": len(improved_domains),
+        "improved_names": improved_domains,
+        "max_rounds": max_rounds,
+        "total_trials": sum(d["trials"] for d in domain_results),
+    })
+
+    return {
+        "domain_results": domain_results,
+        "any_improved": any_improved,
+        "improved_count": len(improved_domains),
+        "patterns": patterns,
+    }
+
+
+def cmd_tune(state: SessionState, arg: Optional[str] = None) -> str:
+    """Self-tune E₀ parameters via Self-Graph diagnosis."""
+    max_rounds = 3
+    if arg:
+        try:
+            max_rounds = int(arg)
+            max_rounds = max(1, min(max_rounds, 10))
+        except ValueError:
+            return f"Invalid round count: '{arg}'. Usage: tune [N]"
+
+    result = tune_run(state, max_rounds)
+    md = state.output_format == "markdown"
+
+    if md:
+        lines = ["## Auto-Tune", ""]
+    else:
+        lines = ["Auto-Tune", "\u2550" * 60]
+
+    if not result["domain_results"]:
+        lines.append("  No domains with reachable nodes to tune.")
+        return "\n".join(lines)
+
+    lines.append(
+        f"  {len(result['domain_results'])} domains, "
+        f"max {max_rounds} rounds per domain"
+    )
+    lines.append("")
+
+    # Per-domain results
+    if md:
+        lines.append("### Domain Results")
+    else:
+        lines.append("  Domain Results")
+        lines.append("  " + "\u2500" * 40)
+
+    for dr in result["domain_results"]:
+        indicator = "\u2714" if dr["improved"] else "\u2500"
+        lines.append(
+            f"    {indicator} {dr['domain']:12s}  "
+            f"quality {dr['initial_quality']:+.3f} \u2192 {dr['final_quality']:+.3f}  "
+            f"\u0394={dr['improvement']:+.3f}  "
+            f"({dr['rounds']}r/{dr['trials']}t)"
+        )
+
+        # Show changed parameters if improved
+        if dr["improved"]:
+            cfg = dr["best_config"]
+            changes = []
+            for f_name in E0Config.__dataclass_fields__:
+                new_val = getattr(cfg, f_name)
+                default_val = getattr(DEFAULTS, f_name)
+                if new_val != default_val and isinstance(new_val, (int, float)):
+                    changes.append(f"{f_name}={new_val}")
+            if changes:
+                lines.append(f"      Config: {', '.join(changes)}")
+
+    lines.append("")
+
+    # Summary
+    if md:
+        lines.append("### Summary")
+    else:
+        lines.append("  Summary")
+        lines.append("  " + "\u2500" * 40)
+
+    if result["any_improved"]:
+        lines.append(
+            f"    {result['improved_count']} domain(s) found better parameters"
+        )
+    else:
+        lines.append("    All domains already at optimal parameters")
+
+    # Context from meta-reflect
+    if result["patterns"]:
+        lines.append("")
+        if md:
+            lines.append("### Context (from meta-reflection)")
+        else:
+            lines.append("  Context (from meta-reflection)")
+            lines.append("  " + "\u2500" * 40)
+        for p in result["patterns"][:3]:
+            lines.append(f"    \u25b8 {p}")
+
+    return "\n".join(lines)
+
+
 def cmd_task(state: SessionState, text: str) -> str:
     """Process a user-provided difference as natural text.
 
@@ -3463,6 +3654,7 @@ E₀ Interactive Session — Commands
   curriculum [c]   Run structured curriculum (ontodynamics, …)
   dream [N]        Dream consolidation: cross-domain equivalences
   sleep [N]        Wake-sleep cycle: navigate + auto-dream
+  tune [N]         Self-tune parameters via Self-Graph (max N rounds)
   why              Explain the last decision
   detail [N]       Last round's path edge by edge (or round N)
   inspect <s> <t>  Deep view of edge s→t
@@ -4026,6 +4218,9 @@ def dispatch(state: SessionState, user_input: str) -> Optional[str]:
 
     if cmd == "sleep":
         return cmd_sleep(state, arg if arg else None)
+
+    if cmd == "tune":
+        return cmd_tune(state, arg if arg else None)
 
     if cmd == "detail":
         round_n = None

@@ -1,4 +1,4 @@
-"""Tests for E₀ Interactive Text Session (C213–C233).
+"""Tests for E₀ Interactive Text Session (C213–C236).
 
 Validates the REPL dispatch, session state management,
 each command's output through the communication pipeline,
@@ -26,7 +26,9 @@ prefix-aware historization transfer, session coupling),
 and C234 Dream Command (dream_run, cmd_dream,
 domain sub-landscape extraction, DreamObserver session integration),
 and C235 Sleep-Wake Integration (sleep_wake_run, cmd_sleep,
-per-domain E0Controller, SleepWakeCycle, historization transfer).
+per-domain E0Controller, SleepWakeCycle, historization transfer),
+and C236 Tune Command (tune_run, cmd_tune,
+per-domain auto-tuning via Self-Graph diagnosis, parameter perturbation).
 """
 
 from __future__ import annotations
@@ -75,6 +77,7 @@ from e0_controller.interactive_session import (
     cmd_task,
     cmd_teach,
     cmd_trajectory,
+    cmd_tune,
     cmd_why,
     compute_trajectory,
     curriculum_run,
@@ -91,6 +94,7 @@ from e0_controller.interactive_session import (
     save_session,
     sleep_wake_run,
     teach_concept,
+    tune_run,
 )
 from e0_controller.feedback import HumanAction
 from e0_controller.perception import PerceptionDomain
@@ -3382,3 +3386,175 @@ class TestSleepDispatch:
         """Help text includes 'sleep' command."""
         text = cmd_help()
         assert "sleep" in text.lower()
+
+
+# ── C236 Tune Command ────────────────────────────────────────────────
+
+
+class TestTuneRun:
+    """C236: tune_run runs auto-tuning on domain sub-landscapes."""
+
+    def test_returns_dict(self):
+        """tune_run returns a dict with expected keys."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = tune_run(s, max_rounds=1)
+        assert isinstance(result, dict)
+        assert "domain_results" in result
+        assert "any_improved" in result
+        assert "improved_count" in result
+        assert "patterns" in result
+
+    def test_domain_results_per_domain(self):
+        """Each domain gets a separate tuning result."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = tune_run(s, max_rounds=1)
+        assert len(result["domain_results"]) > 0
+        for dr in result["domain_results"]:
+            assert "domain" in dr
+            assert "initial_quality" in dr
+            assert "final_quality" in dr
+            assert "improved" in dr
+            assert "rounds" in dr
+            assert "trials" in dr
+
+    def test_domain_has_quality_scores(self):
+        """Each domain result includes numeric quality scores."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = tune_run(s, max_rounds=1)
+        for dr in result["domain_results"]:
+            assert isinstance(dr["initial_quality"], float)
+            assert isinstance(dr["final_quality"], float)
+            assert isinstance(dr["improvement"], float)
+
+    def test_improved_count_matches(self):
+        """improved_count matches the number of improved domains."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = tune_run(s, max_rounds=1)
+        actual = sum(1 for dr in result["domain_results"] if dr["improved"])
+        assert result["improved_count"] == actual
+
+    def test_any_improved_flag(self):
+        """any_improved is True iff at least one domain improved."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = tune_run(s, max_rounds=1)
+        if result["improved_count"] > 0:
+            assert result["any_improved"] is True
+        else:
+            assert result["any_improved"] is False
+
+    def test_journal_event_recorded(self):
+        """tune_run records a 'tune' journal event."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        tune_run(s, max_rounds=1)
+        events = [e for e in s.journal if e["event_type"] == "tune"]
+        assert len(events) >= 1
+        detail = events[-1]["detail"]
+        assert "domains_tuned" in detail
+        assert "domains_improved" in detail
+        assert "total_trials" in detail
+
+    def test_patterns_from_meta_reflect(self):
+        """When history exists, patterns list is populated from meta_reflect."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 3)
+        result = tune_run(s, max_rounds=1)
+        assert isinstance(result["patterns"], list)
+
+    def test_best_config_is_e0config(self):
+        """Each domain result has an E0Config as best_config."""
+        from e0_controller.config import E0Config
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = tune_run(s, max_rounds=1)
+        for dr in result["domain_results"]:
+            assert isinstance(dr["best_config"], E0Config)
+
+
+class TestCmdTune:
+    """C236: cmd_tune provides formatted output."""
+
+    def test_output_is_string(self):
+        """cmd_tune returns a non-empty string."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_tune(s)
+        assert isinstance(out, str)
+        assert len(out) > 0
+
+    def test_output_has_header(self):
+        """Output contains 'Auto-Tune'."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_tune(s)
+        assert "Auto-Tune" in out
+
+    def test_output_has_domain_results(self):
+        """Output contains 'Domain Results' section."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_tune(s)
+        assert "Domain Results" in out or "domain" in out.lower()
+
+    def test_output_has_summary(self):
+        """Output contains 'Summary' section."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_tune(s)
+        assert "Summary" in out
+
+    def test_custom_rounds(self):
+        """cmd_tune('2') uses max 2 rounds."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_tune(s, "2")
+        assert "2 rounds" in out
+
+    def test_invalid_arg(self):
+        """Invalid arg returns usage hint."""
+        s = build_session(steps_per_round=10)
+        out = cmd_tune(s, "abc")
+        assert "Usage" in out or "Invalid" in out
+
+    def test_markdown_format(self):
+        """Markdown mode uses ## headers."""
+        s = build_session(steps_per_round=10, output_format="markdown")
+        cmd_run(s, 1)
+        out = cmd_tune(s, "1")
+        assert "## Auto-Tune" in out
+
+    def test_quality_values_in_output(self):
+        """Output contains quality score values."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_tune(s, "1")
+        # Should contain quality arrow (→) or quality numbers
+        assert "quality" in out.lower() or "\u2192" in out
+
+
+class TestTuneDispatch:
+    """C236: dispatch routes 'tune' command."""
+
+    def test_dispatch_tune(self):
+        """dispatch('tune 1') calls cmd_tune."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = dispatch(s, "tune 1")
+        assert "Auto-Tune" in out
+
+    def test_dispatch_tune_no_arg(self):
+        """dispatch('tune') uses default rounds."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = dispatch(s, "tune")
+        assert "Auto-Tune" in out
+
+    def test_help_includes_tune(self):
+        """Help text includes 'tune' command."""
+        text = cmd_help()
+        assert "tune" in text.lower()
