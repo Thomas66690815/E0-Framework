@@ -186,6 +186,17 @@ class TestDispatch:
         # Either matches structurally or calls LLM peer
         assert "Structural Matching" in result or "LLM Peer" in result
 
+    def test_command_with_trailing_colon(self, session):
+        """Commands with trailing colon (ask:, run:, help:) are normalized."""
+        result = dispatch(session, "help:")
+        assert "run" in result
+
+    def test_ask_with_colon_routes_correctly(self):
+        """'ask: question' must route to cmd_ask, not to cmd_task."""
+        s = build_session(steps_per_round=10)
+        result = dispatch(s, "ask: what is tension?")
+        assert "Ask: On-Demand Q&A" in result or "On-Demand" in result
+
     def test_run_invalid_count(self, session):
         s = build_session(steps_per_round=10)
         result = dispatch(s, "run abc")

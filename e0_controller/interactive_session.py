@@ -5012,7 +5012,7 @@ def dispatch(state: SessionState, user_input: str) -> Optional[str]:
         return ""
 
     parts = raw.split(None, 1)
-    cmd = parts[0].lower()
+    cmd = parts[0].lower().rstrip(":")
     arg = parts[1].strip() if len(parts) > 1 else ""
 
     if cmd in ("quit", "exit", "q"):
