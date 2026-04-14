@@ -1,4 +1,4 @@
-"""Tests for E₀ Interactive Text Session (C213–C232).
+"""Tests for E₀ Interactive Text Session (C213–C233).
 
 Validates the REPL dispatch, session state management,
 each command's output through the communication pipeline,
@@ -20,7 +20,9 @@ C230 Teaching Pipeline (teach_concept, cmd_teach),
 C231 Session Journal (record_journal_event, save_journal,
 load_journal, cmd_journal, _metrics_snapshot, cross-session merge),
 and C232 Meta-Reflection (meta_reflect, cmd_reflect,
-stagnation patterns, mode effectiveness, recommendations).
+stagnation patterns, mode effectiveness, recommendations),
+and C233 Curriculum Command (curriculum_run, cmd_curriculum,
+prefix-aware historization transfer, session coupling).
 """
 
 from __future__ import annotations
@@ -32,6 +34,7 @@ import tempfile
 import pytest
 
 from e0_controller.interactive_session import (
+    AVAILABLE_CANONS,
     JOURNAL_PATH,
     SESSION_STATE_PATH,
     SessionState,
@@ -47,6 +50,7 @@ from e0_controller.interactive_session import (
     _task_known_path,
     _task_navigate,
     build_session,
+    cmd_curriculum,
     cmd_detail,
     cmd_diagnose,
     cmd_escalate,
@@ -66,6 +70,7 @@ from e0_controller.interactive_session import (
     cmd_trajectory,
     cmd_why,
     compute_trajectory,
+    curriculum_run,
     diagnose_session,
     dispatch,
     escalate,
@@ -2875,3 +2880,159 @@ class TestReflectDispatch:
         """Help text includes 'reflect' command."""
         text = cmd_help()
         assert "reflect" in text.lower()
+
+
+# ── C233: Curriculum Command ───────────────────────────────────────────
+
+
+class TestCurriculumRun:
+    """C233: curriculum_run executes CurriculumRunner and couples back."""
+
+    def test_returns_result_dict(self):
+        """curriculum_run returns dict with expected keys."""
+        s = build_session(steps_per_round=10)
+        result = curriculum_run(s, "ontodynamics")
+        assert "canon_name" in result
+        assert "turn_results" in result
+        assert "transferred_edges" in result
+        assert "summary" in result
+        assert result["canon_name"] == "ontodynamics"
+
+    def test_has_turn_results(self):
+        """Result contains non-empty turn_results list."""
+        s = build_session(steps_per_round=10)
+        result = curriculum_run(s, "ontodynamics")
+        assert len(result["turn_results"]) > 0
+
+    def test_turn_results_have_fields(self):
+        """Each turn result has expected fields."""
+        s = build_session(steps_per_round=10)
+        result = curriculum_run(s, "ontodynamics")
+        for tr in result["turn_results"]:
+            assert hasattr(tr, "turn")
+            assert hasattr(tr, "traces")
+            assert hasattr(tr, "equilibrium_reached")
+            assert hasattr(tr, "final_T_s")
+            assert hasattr(tr, "total_steps")
+            assert hasattr(tr, "episodes")
+
+    def test_summary_is_string(self):
+        """Result summary is a non-empty string."""
+        s = build_session(steps_per_round=10)
+        result = curriculum_run(s, "ontodynamics")
+        assert isinstance(result["summary"], str)
+        assert len(result["summary"]) > 0
+
+    def test_transferred_edges_non_negative(self):
+        """Transferred edges count is >= 0."""
+        s = build_session(steps_per_round=10)
+        result = curriculum_run(s, "ontodynamics")
+        assert result["transferred_edges"] >= 0
+
+    def test_journal_event_recorded(self):
+        """curriculum_run records a journal event."""
+        s = build_session(steps_per_round=10)
+        initial_count = len(s.journal)
+        curriculum_run(s, "ontodynamics")
+        assert len(s.journal) > initial_count
+        # Find the curriculum event
+        events = [e for e in s.journal if e["event_type"] == "curriculum"]
+        assert len(events) >= 1
+        ev = events[-1]
+        assert ev["detail"]["canon"] == "ontodynamics"
+        assert ev["detail"]["turns"] > 0
+
+    def test_mechanism_canon(self):
+        """curriculum_run works with mechanism_e0 canon."""
+        s = build_session(steps_per_round=10)
+        result = curriculum_run(s, "mechanism_e0")
+        assert result["canon_name"] == "mechanism_e0"
+        assert len(result["turn_results"]) > 0
+
+
+class TestCmdCurriculum:
+    """C233: cmd_curriculum produces formatted output."""
+
+    def test_output_is_string(self):
+        """cmd_curriculum returns a non-empty string."""
+        s = build_session(steps_per_round=10)
+        out = cmd_curriculum(s)
+        assert isinstance(out, str)
+        assert len(out) > 0
+
+    def test_output_contains_header(self):
+        """Output contains 'Curriculum:' header."""
+        s = build_session(steps_per_round=10)
+        out = cmd_curriculum(s)
+        assert "Curriculum:" in out
+
+    def test_output_contains_turn_results(self):
+        """Output contains 'Turn Results' section."""
+        s = build_session(steps_per_round=10)
+        out = cmd_curriculum(s)
+        assert "Turn Results" in out
+
+    def test_output_contains_coupling(self):
+        """Output contains 'Session Coupling' section."""
+        s = build_session(steps_per_round=10)
+        out = cmd_curriculum(s)
+        assert "Session Coupling" in out
+
+    def test_explicit_canon_name(self):
+        """Passing canon name selects that canon."""
+        s = build_session(steps_per_round=10)
+        out = cmd_curriculum(s, "mechanism_e0")
+        assert "mechanism_e0" in out
+
+    def test_partial_canon_match(self):
+        """Partial name matches the full canon."""
+        s = build_session(steps_per_round=10)
+        out = cmd_curriculum(s, "onto")
+        assert "ontodynamics" in out
+
+    def test_unknown_canon_error(self):
+        """Unknown canon returns error message."""
+        s = build_session(steps_per_round=10)
+        out = cmd_curriculum(s, "nonexistent_canon")
+        assert "Unknown canon" in out
+
+    def test_markdown_format(self):
+        """Markdown format uses ## headers."""
+        s = build_session(steps_per_round=10)
+        s.output_format = "markdown"
+        out = cmd_curriculum(s)
+        assert "## Curriculum:" in out
+
+
+class TestCurriculumDispatch:
+    """C233: dispatch routes 'curriculum' command."""
+
+    def test_dispatch_curriculum(self):
+        """dispatch('curriculum') runs the curriculum."""
+        s = build_session(steps_per_round=10)
+        out = dispatch(s, "curriculum")
+        assert "Curriculum:" in out
+
+    def test_dispatch_curriculum_with_arg(self):
+        """dispatch('curriculum ontodynamics') passes the argument."""
+        s = build_session(steps_per_round=10)
+        out = dispatch(s, "curriculum ontodynamics")
+        assert "ontodynamics" in out
+
+    def test_help_includes_curriculum(self):
+        """Help text includes 'curriculum' command."""
+        text = cmd_help()
+        assert "curriculum" in text.lower()
+
+
+class TestAvailableCanons:
+    """C233: AVAILABLE_CANONS list is correct."""
+
+    def test_contains_ontodynamics(self):
+        assert "ontodynamics" in AVAILABLE_CANONS
+
+    def test_contains_mechanism(self):
+        assert "mechanism_e0" in AVAILABLE_CANONS
+
+    def test_contains_english(self):
+        assert "english_basic_enriched" in AVAILABLE_CANONS

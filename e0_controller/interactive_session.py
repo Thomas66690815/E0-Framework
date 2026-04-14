@@ -1,4 +1,4 @@
-"""E₀ Interactive Text Session (C213, extended C214/C216/C217/C228–C232).
+"""E₀ Interactive Text Session (C213, extended C214/C216/C217/C228–C233).
 
 REPL loop on the real multi-domain landscape. The user types commands,
 E₀ responds with structured communication through the full pipeline.
@@ -45,6 +45,11 @@ escalation history, and journal events to identify systematic stagnation
 patterns. Reports mode effectiveness, domain trajectories, stagnation
 episodes, and generates actionable recommendations.
 
+C233 adds Curriculum Command: `curriculum [canon]` runs a structured
+hierarchical learning sequence using CurriculumRunner. Teaches the session
+progressively (derivation-level turns), transfers learned historization back
+into the session landscape (prefix-aware coupling), and records journal events.
+
 Commands:
   run [N]       — Execute the next N rounds (default: 1)
   task <text>   — Introduce a difference in natural language
@@ -56,6 +61,7 @@ Commands:
   escalate      — Manually trigger stagnation escalation
   journal [note <text>] — Session journal: view or annotate
   reflect       — Meta-reflection: analyze learning patterns
+  curriculum [c] — Run structured curriculum (ontodynamics, mechanism_e0, …)
   why           — Explain the last round's decision
   detail [N]    — Show last round edge by edge (or round N)
   inspect <src> <tgt> — Deep view of a single edge
@@ -82,6 +88,7 @@ from e0_controller.communication import (
     IntentType,
     detect_round_intents,
 )
+from e0_controller.curriculum import CurriculumRunner, transfer_historization
 from e0_controller.explore_learning_cycle_multidomain import (
     MultiDomainAssessment,
     MultiDomainRoundResult,
@@ -2563,6 +2570,165 @@ def cmd_reflect(state: SessionState) -> str:
     return "\n".join(lines)
 
 
+# ── Curriculum Command (C233) ──────────────────────────────────────────
+
+# Map canon names to the prefix used in the multi-domain session landscape
+_CANON_PREFIX = {
+    "ontodynamics": "C:",
+    "mechanism_e0": "M:",
+    "english_basic_enriched": "EN:",
+}
+
+AVAILABLE_CANONS = list(_CANON_PREFIX.keys())
+
+
+def _transfer_to_session(
+    curriculum_landscape: Any,
+    session_landscape: Any,
+    prefix: str,
+) -> int:
+    """Transfer historization from curriculum landscape to session landscape.
+
+    Curriculum landscapes use raw node IDs (e.g. "E0", "Difference"),
+    while the session uses prefixed IDs (e.g. "C:E0", "C:Difference").
+    This adapter maps edges correspondingly.
+
+    Returns the number of edges transferred.
+    """
+    src_hist = curriculum_landscape.historization
+    tgt_hist = session_landscape.historization
+    transferred = 0
+
+    for edge in curriculum_landscape.edges:
+        prefixed_src = f"{prefix}{edge.source}"
+        prefixed_tgt = f"{prefix}{edge.target}"
+        if session_landscape.has_edge(prefixed_src, prefixed_tgt):
+            U = src_hist._U.get(edge, 0.0)
+            F = src_hist._F.get(edge, 0.0)
+            if U > 0 or F > 0:
+                # Find the corresponding session edge
+                for se in session_landscape.edges:
+                    if se.source == prefixed_src and se.target == prefixed_tgt:
+                        tgt_hist._U[se] = tgt_hist._U.get(se, 0.0) + U
+                        tgt_hist._F[se] = tgt_hist._F.get(se, 0.0) + F
+                        tgt_hist._tau_last[se] = tgt_hist._tau
+                        transferred += 1
+                        break
+
+    return transferred
+
+
+def curriculum_run(
+    state: SessionState,
+    canon_name: str = "ontodynamics",
+) -> Dict[str, Any]:
+    """Run a structured curriculum on a canon and couple back to session.
+
+    1. Create CurriculumRunner for the canon
+    2. Execute all turns (derivation-level hierarchy)
+    3. Transfer learned historization back into session landscape
+    4. Record journal event
+
+    Returns a result dict with turn_results, transferred_edges, summary.
+    """
+    # execute_fn: curriculum runs structurally, no external execution needed
+    runner = CurriculumRunner(
+        canon_name,
+        lambda s, t: Outcome.SUCCESS,
+        max_episodes_per_turn=10,
+        max_cycles_per_episode=30,
+    )
+
+    turn_results = runner.run()
+
+    # Transfer historization from curriculum's final landscape to session
+    prefix = _CANON_PREFIX.get(canon_name, "")
+    transferred = 0
+    if prefix and runner.final_landscape is not None:
+        transferred = _transfer_to_session(
+            runner.final_landscape, state.landscape, prefix,
+        )
+
+    # Record journal event
+    record_journal_event(state, "curriculum", {
+        "canon": canon_name,
+        "turns": len(turn_results),
+        "total_steps": sum(r.total_steps for r in turn_results),
+        "equilibrium_reached": [r.equilibrium_reached for r in turn_results],
+        "transferred_edges": transferred,
+    })
+
+    return {
+        "canon_name": canon_name,
+        "turn_results": turn_results,
+        "transferred_edges": transferred,
+        "summary": runner.summary(),
+        "info": runner.info,
+    }
+
+
+def cmd_curriculum(state: SessionState, arg: Optional[str] = None) -> str:
+    """Run a structured curriculum and display results."""
+    canon_name = "ontodynamics"
+    if arg:
+        arg_clean = arg.strip().lower()
+        # Allow partial matches
+        for name in AVAILABLE_CANONS:
+            if arg_clean in name or name.startswith(arg_clean):
+                canon_name = name
+                break
+        else:
+            return (
+                f"Unknown canon: '{arg}'. "
+                f"Available: {', '.join(AVAILABLE_CANONS)}"
+            )
+
+    result = curriculum_run(state, canon_name)
+    md = state.output_format == "markdown"
+
+    if md:
+        lines = [f"## Curriculum: {canon_name}", ""]
+    else:
+        lines = [f"Curriculum: {canon_name}", "\u2550" * 60]
+
+    info = result["info"]
+    lines.append(f"  Canon: {info.name} v{info.version}")
+    lines.append(f"  Turns: {len(result['turn_results'])}")
+    lines.append("")
+
+    # Per-turn details
+    if md:
+        lines.append("### Turn Results")
+    else:
+        lines.append("  Turn Results")
+        lines.append("  " + "\u2500" * 40)
+
+    for i, tr in enumerate(result["turn_results"], 1):
+        eq = "\u2713 equilibrium" if tr.equilibrium_reached else "\u2717 max episodes"
+        lines.append(
+            f"    Turn {i} ({tr.turn.scope}):  "
+            f"{tr.episodes} ep, {tr.total_steps} steps, "
+            f"T_s={tr.final_T_s:.2f}, {eq}"
+        )
+    lines.append("")
+
+    # Coupling back to session
+    if md:
+        lines.append("### Session Coupling")
+    else:
+        lines.append("  Session Coupling")
+        lines.append("  " + "\u2500" * 40)
+
+    prefix = _CANON_PREFIX.get(canon_name, "?")
+    transferred = result["transferred_edges"]
+    lines.append(
+        f"    {transferred} edges transferred "
+        f"({prefix}* \u2192 session landscape)"
+    )
+
+    return "\n".join(lines)
+
+
 def cmd_task(state: SessionState, text: str) -> str:
     """Process a user-provided difference as natural text.
 
@@ -2867,6 +3033,7 @@ E₀ Interactive Session — Commands
   escalate         Manually trigger stagnation escalation (levels 1—5)
   journal [note]   Session journal: view events or annotate
   reflect          Meta-reflection: analyze learning patterns
+  curriculum [c]   Run structured curriculum (ontodynamics, …)
   why              Explain the last decision
   detail [N]       Last round's path edge by edge (or round N)
   inspect <s> <t>  Deep view of edge s→t
@@ -3421,6 +3588,9 @@ def dispatch(state: SessionState, user_input: str) -> Optional[str]:
 
     if cmd == "reflect":
         return cmd_reflect(state)
+
+    if cmd == "curriculum":
+        return cmd_curriculum(state, arg if arg else None)
 
     if cmd == "detail":
         round_n = None
