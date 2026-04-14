@@ -88,6 +88,7 @@ def openai_call(system: str, user: str, config: LLMConfig) -> str:
         model=config.model,
         temperature=config.temperature,
         max_completion_tokens=config.max_tokens,
+        response_format={"type": "json_object"},
         messages=[
             {"role": "system", "content": system},
             {"role": "user", "content": user},
