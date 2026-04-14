@@ -3820,7 +3820,9 @@ def _assess_knowledge(
     """Assess what E₀ structurally knows about a question.
 
     For each extracted term, checks if any landscape node covers it
-    (term appears in node concept name or description words).
+    (term appears as exact word in node concept name, not substring).
+    Requires minimum relevance from _match_nodes to filter homonyms.
+    Enriches confidence with trace_load depth signal.
 
     Returns:
       matches: full _match_nodes result
@@ -3828,7 +3830,10 @@ def _assess_knowledge(
       covered: {term: (node_id, score)} for matched terms
       gaps: list of unmatched terms
       coverage_ratio: fraction of terms with at least one match
+      knowledge_depth: weighted confidence (navigated=1.0, structural=0.3)
     """
+    _MIN_TERM_RELEVANCE = 0.4  # minimum _match_nodes score to accept
+
     matches = _match_nodes(question, state.landscape, state.unified_nodes)
     terms = _extract_question_terms(question)
 
@@ -3837,6 +3842,8 @@ def _assess_knowledge(
         best_score = 0.0
         best_node: Optional[str] = None
         for node_id, score in matches:
+            if score < _MIN_TERM_RELEVANCE:
+                continue
             concept = (
                 node_id.split(":", 1)[1].lower()
                 if ":" in node_id
@@ -3845,8 +3852,8 @@ def _assess_knowledge(
             concept_words = set(
                 concept.replace("_", " ").replace("-", " ").split()
             )
-            # Direct word match or substring match
-            if term in concept_words or (len(term) >= 4 and term in concept):
+            # Exact word match only — no substring fallback
+            if term in concept_words:
                 if score > best_score:
                     best_score = score
                     best_node = node_id
@@ -3858,12 +3865,36 @@ def _assess_knowledge(
         len(covered) / len(terms) if terms else 1.0
     )
 
+    # Knowledge depth: check trace_load on matched nodes' edges
+    hist = state.landscape.historization
+    deep_count = 0
+    for term, (node_id, _score) in covered.items():
+        has_trace = False
+        for edge in state.landscape.edges:
+            if edge.source == node_id or edge.target == node_id:
+                if hist.trace_load(edge) > 0:
+                    has_trace = True
+                    break
+        if has_trace:
+            deep_count += 1
+
+    structural_count = len(covered) - deep_count
+    if terms:
+        knowledge_depth = (
+            (deep_count * 1.0 + structural_count * 0.3) / len(terms)
+        )
+    else:
+        knowledge_depth = 1.0
+
     return {
         "matches": matches,
         "terms": terms,
         "covered": covered,
         "gaps": gaps,
         "coverage_ratio": coverage_ratio,
+        "knowledge_depth": knowledge_depth,
+        "deep_count": deep_count,
+        "structural_count": structural_count,
     }
 
 
@@ -3915,8 +3946,8 @@ def ask_run(
         if state.history:
             nav_path = state.history[-1].path
 
-    # Confidence = term coverage ratio
-    confidence = assessment_after["coverage_ratio"]
+    # Confidence = knowledge depth (coverage weighted by trace_load)
+    confidence = assessment_after["knowledge_depth"]
 
     # Journal event
     record_journal_event(state, "ask", {
@@ -3927,6 +3958,8 @@ def ask_run(
         "learned_count": len(learned),
         "coverage_before": assessment["coverage_ratio"],
         "coverage_after": assessment_after["coverage_ratio"],
+        "depth_before": assessment["knowledge_depth"],
+        "depth_after": assessment_after["knowledge_depth"],
         "confidence": confidence,
     })
 
@@ -3973,6 +4006,11 @@ def cmd_ask(state: SessionState, question: str) -> str:
         for term, (node, score) in ab["covered"].items():
             lines.append(
                 f"      \u2713 {term} \u2192 {node} (relevance={score:.2f})"
+            )
+        if ab["deep_count"] > 0 or ab["structural_count"] > 0:
+            lines.append(
+                f"    Depth: {ab['deep_count']} navigated, "
+                f"{ab['structural_count']} structural only"
             )
 
     if ab["gaps"]:

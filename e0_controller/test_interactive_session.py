@@ -4100,12 +4100,48 @@ class TestAssessKnowledge:
         assert "covered" in result
         assert "gaps" in result
         assert "coverage_ratio" in result
+        assert "knowledge_depth" in result
+        assert "deep_count" in result
+        assert "structural_count" in result
 
     def test_coverage_ratio_in_range(self):
         """Coverage ratio is between 0 and 1."""
         s = build_session(steps_per_round=10)
         result = _assess_knowledge(s, "tension unknown_word historization")
         assert 0.0 <= result["coverage_ratio"] <= 1.0
+
+    def test_no_substring_false_match(self):
+        """Substring matching should not cause false positives.
+
+        C240: 'real' must NOT match 'local_realization' via substring.
+        Only exact word matches count.
+        """
+        s = build_session(steps_per_round=10)
+        result = _assess_knowledge(s, "real question about data")
+        # 'real' should be a gap unless there's a node with 'real' as a word
+        if "real" in result["covered"]:
+            node_id = result["covered"]["real"][0]
+            concept = (
+                node_id.split(":", 1)[1].lower()
+                if ":" in node_id else node_id.lower()
+            )
+            words = set(concept.replace("_", " ").replace("-", " ").split())
+            assert "real" in words, (
+                f"'real' matched {node_id} via substring, not word match"
+            )
+
+    def test_knowledge_depth_zero_for_unvisited(self):
+        """Knowledge depth is 0 for terms matching unvisited nodes."""
+        s = build_session(steps_per_round=10)
+        result = _assess_knowledge(s, "xyzzy plugh gibberish")
+        assert result["knowledge_depth"] == 0.0
+        assert result["deep_count"] == 0
+
+    def test_knowledge_depth_in_range(self):
+        """Knowledge depth is between 0 and 1."""
+        s = build_session(steps_per_round=10)
+        result = _assess_knowledge(s, "tension historization landscape")
+        assert 0.0 <= result["knowledge_depth"] <= 1.0
 
 
 class TestAskRun:
@@ -4142,11 +4178,11 @@ class TestAskRun:
         assert result["anchor"] is not None
         assert len(result["nav_path"]) > 0
 
-    def test_confidence_reflects_coverage(self):
-        """Confidence equals term coverage ratio."""
+    def test_confidence_reflects_depth(self):
+        """Confidence equals knowledge_depth (trace_load weighted)."""
         s = build_session(steps_per_round=10)
         result = ask_run(s, "tension and historization", auto_learn=False)
-        assert result["confidence"] == result["assessment_after"]["coverage_ratio"]
+        assert result["confidence"] == result["assessment_after"]["knowledge_depth"]
 
     def test_journal_event_recorded(self):
         """ask_run records a journal event."""
