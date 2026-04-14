@@ -4008,13 +4008,28 @@ class TestExtractQuestionTerms:
         assert "the" not in terms
 
     def test_short_tokens_removed(self):
-        """Tokens of length <= 2 are removed."""
+        """Non-acronym tokens of length <= 2 are removed."""
         terms = _extract_question_terms("Is it an ok fit?")
         assert "ok" not in terms
         assert "is" not in terms
         assert "it" not in terms
         assert "an" not in terms
         assert "fit" in terms
+
+    def test_acronyms_preserved(self):
+        """ALL-CAPS tokens >= 2 chars are kept even if short."""
+        terms = _extract_question_terms(
+            "Does E0's interference match real QM interference?"
+        )
+        assert "e0" in terms
+        assert "qm" in terms
+        assert "interference" in terms
+
+    def test_acronyms_mixed_case_not_preserved(self):
+        """Mixed-case short tokens are still filtered."""
+        terms = _extract_question_terms("Is Ok to go?")
+        assert "ok" not in terms  # not ALL-CAPS
+        assert "is" not in terms
 
     def test_empty_input(self):
         """Empty input returns empty list."""
@@ -4174,6 +4189,20 @@ class TestAskRun:
         after_gaps = len(result["assessment_after"]["gaps"])
         # After learning, gaps should decrease or stay same
         assert after_gaps <= before_gaps
+
+    def test_contextual_learning_passes_question(self):
+        """Gap learning passes question context to teach_concept."""
+        import unittest.mock as _mock
+        s = _build_session_with_mock(_ASK_SPEC)
+        with _mock.patch(
+            "e0_controller.interactive_session.teach_concept",
+            return_value={"status": "ok"},
+        ) as mock_teach:
+            ask_run(s, "xyzzy plugh gibberish")
+            # teach_concept should be called with contextual string
+            for call in mock_teach.call_args_list:
+                concept_arg = call[0][1]  # 2nd positional arg
+                assert "(in context:" in concept_arg
 
 
 class TestCmdAsk:

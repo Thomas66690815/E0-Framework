@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C239",
-    "latest_commit_hash": "e86a0cf",
-    "latest_commit_msg": "C239: Ask Command — on-demand Q&A with gap detection and selective learning. ask_run orchestrates: _extract_question_terms (stopword filtered), _assess_knowledge (per-term structural match against landscape), gap detection, teach_concept for up to 3 gap terms, re-assessment, navigation from best match, confidence = coverage ratio. cmd_ask formatted output: knowledge assessment, gaps, learning results, navigation, confidence verdict. Unlike task (match or LLM fallback), ask detects PARTIAL knowledge and fills gaps selectively before answering. 32 tests, 5309 total.",
-    "test_count": 5309,
+    "latest_commit": "C240",
+    "latest_commit_hash": "a04573f",
+    "latest_commit_msg": "C240: Ask Robustness — acronym preservation + contextual gap learning. Real-world test exposed 4 problems: (1) _extract_question_terms dropped short ALL-CAPS tokens (E0, QM filtered by len<=2), (2) teach_concept received bare term without question context (interference → signal, not QM). Fixes: ALL-CAPS tokens >= 2 chars preserved as acronyms, gap learning passes question context to teach_concept. Before: 3 terms, 100% false coverage. After: 5 terms, 20% honest coverage. Also includes C239b (robust JSON parsing with 4 fallback strategies in _parse_json_response). 19 new tests (16 C239b + 3 C240), 5328 total.",
+    "test_count": 5328,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
     "module_count": "77 production + 10 benchmarks + 17 demos + 69 explorations + 127 test files",
@@ -222,7 +222,7 @@
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
     "current_arc": "On-Demand Integration (C239+)",
-    "arc_status": "C239 DONE. Ask command: on-demand question-answering with gap detection and selective learning. Next: test with real question to validate end-to-end.",
+    "arc_status": "C240 DONE. Ask robustness: acronym preservation + contextual gap learning. Real-world test validated. Next: remaining ask quality issues (homonym matching, confidence enrichment).",
     "arc_plan": {
       "C233_curriculum_command": {
         "title": "Curriculum Command",
@@ -260,17 +260,19 @@
         "status": "DONE (C239)"
       }
     },
-    "key_result": "C239: Ask Command. On-demand question-answering pipeline: _extract_question_terms + _assess_knowledge for per-term structural coverage, gap detection for unmatched terms, teach_concept for gap terms via LLM (max 3), re-assessment, navigate from best match, confidence = coverage ratio. cmd_ask with assessment/gaps/learning/navigation/confidence. Unlike task (which matches or falls back to LLM), ask detects PARTIAL knowledge and fills gaps selectively. 32 tests.",
+    "key_result": "C240: Ask Robustness. Real-world test exposed: (1) short ALL-CAPS tokens E0/QM dropped by len<=2 filter, (2) teach_concept got bare term without question context. Fixes: acronym preservation (isupper() exception), contextual gap learning (question passed to teach_concept). Before: 3 terms, 100% false coverage. After: 5 terms, 20% honest coverage. Also includes C239b robust JSON parsing (4 fallback strategies). 19 new tests.",
     "open_threads": [
       "Autonomes Lernen arc COMPLETE (C233–C237)",
       "Self-Learn (C238) DONE — E₀ can now learn itself first",
       "Ask Command (C239) DONE — on-demand Q&A with gap detection and selective learning",
-      "Next: test ask with real question (e.g. interference comparison) to validate end-to-end flow",
+      "Ask Robustness (C240) DONE — acronym preservation + contextual gap learning validated",
+      "C239b: Robust JSON parsing with 4 fallback strategies (included in C240 commit)",
+      "Open: homonym matching (match→MATCH_CONFIRMED) and confidence enrichment (trace_load check)",
       "Deferred: Coupling Router + Multiverse — integrate when we hit scaling/isolation limits",
       "LLM symmetry: needed at BOTH ends — input structuring (Bootstrapper) AND output formatting (User-Lesbarkeit)",
       "Adversarial stability still partially open (C172-C174)"
     ],
-    "next_commit_id": "C240",
+    "next_commit_id": "C241",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",

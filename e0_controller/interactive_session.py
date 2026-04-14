@@ -3798,14 +3798,19 @@ def _extract_question_terms(question: str) -> List[str]:
     Returns deduplicated terms in order of first appearance.
     """
     import re as _re
-    raw_tokens = _re.findall(r"\b\w+\b", question.lower())
+    raw_tokens = _re.findall(r"\b\w+\b", question)
     seen: set = set()
     result: List[str] = []
     for t in raw_tokens:
-        if len(t) <= 2 or t in _ASK_STOPWORDS or t in seen:
+        low = t.lower()
+        # Keep ALL-CAPS tokens even if short (E0, QM, AI, ...)
+        is_acronym = t.isupper() and len(t) >= 2
+        if not is_acronym and (len(low) <= 2 or low in _ASK_STOPWORDS):
             continue
-        seen.add(t)
-        result.append(t)
+        if low in seen:
+            continue
+        seen.add(low)
+        result.append(low)
     return result
 
 
@@ -3889,7 +3894,9 @@ def ask_run(
     learned: List[Dict[str, Any]] = []
     if assessment["gaps"] and auto_learn:
         for term in assessment["gaps"][:_ASK_MAX_GAP_LEARN]:
-            result = teach_concept(state, term)
+            # Pass question context so LLM builds the right domain
+            contextual = f"{term} (in context: {question})"
+            result = teach_concept(state, contextual)
             learned.append({"term": term, "result": result})
 
     # Phase 3: Re-assess after learning
