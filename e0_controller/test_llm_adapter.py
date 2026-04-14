@@ -17,6 +17,7 @@ from e0_controller.llm_adapter import (
     E0LLMAdapter,
     LLMConfig,
     LLMResponseError,
+    LLMTruncatedError,
     DeltaEstimate,
     ProposedState,
     TransitionResult,
@@ -1073,6 +1074,47 @@ class TestDeepenDomainGraph(unittest.TestCase):
         self.assertAlmostEqual(edge["delta"], 0.5)
         self.assertAlmostEqual(edge["resistance"], 1.0)
         self.assertAlmostEqual(edge["confidence"], 1.0)
+
+
+class TestLLMDiagnostics(unittest.TestCase):
+    """C243b: LLM error diagnostics — finish_reason, raw response capture."""
+
+    def test_truncated_error_is_llm_response_error(self):
+        """LLMTruncatedError is a subclass of LLMResponseError."""
+        err = LLMTruncatedError("truncated", raw_response='{"nodes": [')
+        self.assertIsInstance(err, LLMResponseError)
+        self.assertEqual(err.raw_response, '{"nodes": [')
+
+    def test_truncated_error_preserves_usage(self):
+        """Usage dict is captured on truncated error."""
+        usage = {"prompt_tokens": 500, "completion_tokens": 1024, "total_tokens": 1524}
+        err = LLMTruncatedError("truncated", usage=usage, finish_reason="length")
+        self.assertEqual(err.usage, usage)
+        self.assertEqual(err.finish_reason, "length")
+
+    def test_parse_failure_captures_raw(self):
+        """_parse_json_response includes raw response in error."""
+        with self.assertRaises(LLMResponseError) as ctx:
+            _parse_json_response("this is not json at all")
+        self.assertIn("this is not json at all", ctx.exception.raw_response)
+
+    def test_response_error_has_finish_reason_field(self):
+        """LLMResponseError has finish_reason and usage fields."""
+        err = LLMResponseError("test", finish_reason="stop", usage={"total_tokens": 42})
+        self.assertEqual(err.finish_reason, "stop")
+        self.assertEqual(err.usage["total_tokens"], 42)
+
+    def test_adapter_surfaces_truncated_on_length(self):
+        """Adapter method raises LLMTruncatedError when call_fn raises it."""
+        def truncated_fn(s, u, c):
+            raise LLMTruncatedError(
+                "truncated", raw_response='{"nodes": ["A"',
+                finish_reason="length",
+                usage={"completion_tokens": 1024},
+            )
+        adapter = E0LLMAdapter(call_fn=truncated_fn)
+        with self.assertRaises(LLMTruncatedError):
+            adapter.propose_domain_graph("Test")
 
 
 if __name__ == "__main__":

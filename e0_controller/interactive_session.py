@@ -1712,6 +1712,17 @@ def _llm_peer_structure(state: SessionState, text: str) -> str:
         adapter = _get_llm_adapter(state)
         spec = adapter.propose_domain_graph(text)
     except Exception as exc:
+        import sys
+        diag = f"[LLM PEER DIAG] {type(exc).__name__}: {exc}"
+        if hasattr(exc, "raw_response") and exc.raw_response:
+            preview = exc.raw_response[:500]
+            diag += f"\n[LLM PEER DIAG] raw_response ({len(exc.raw_response)} chars): {preview}"
+        if hasattr(exc, "finish_reason") and exc.finish_reason:
+            diag += f"\n[LLM PEER DIAG] finish_reason={exc.finish_reason}"
+        if hasattr(exc, "usage") and exc.usage:
+            diag += f"\n[LLM PEER DIAG] usage={exc.usage}"
+        print(diag, file=sys.stderr, flush=True)
+
         lines.append(f"  LLM peer error: {exc}")
         lines.append("")
         lines.append("  Falling back to structural gap report.")
@@ -1999,6 +2010,18 @@ def teach_concept(
                     gap_description=followup,
                 )
         except Exception as exc:
+            # ── Diagnostic: surface LLM error details ──
+            import sys
+            diag = f"[TEACH DIAG] Round {teach_round+1} error: {type(exc).__name__}: {exc}"
+            if hasattr(exc, "raw_response") and exc.raw_response:
+                preview = exc.raw_response[:500]
+                diag += f"\n[TEACH DIAG] raw_response ({len(exc.raw_response)} chars): {preview}"
+            if hasattr(exc, "finish_reason") and exc.finish_reason:
+                diag += f"\n[TEACH DIAG] finish_reason={exc.finish_reason}"
+            if hasattr(exc, "usage") and exc.usage:
+                diag += f"\n[TEACH DIAG] usage={exc.usage}"
+            print(diag, file=sys.stderr, flush=True)
+
             if teach_round == 0:
                 return {
                     "error": str(exc),
@@ -4300,8 +4323,16 @@ def ask_run(
                 coverage_delta=nav_coverage_delta,
             )
             answer = synthesis.get("answer")
-        except Exception:
+        except Exception as exc:
             # LLM unavailable — structural fallback
+            import sys
+            diag = f"[ASK SYNTH DIAG] {type(exc).__name__}: {exc}"
+            if hasattr(exc, "raw_response") and exc.raw_response:
+                preview = exc.raw_response[:500]
+                diag += f"\n[ASK SYNTH DIAG] raw ({len(exc.raw_response)} chars): {preview}"
+            if hasattr(exc, "finish_reason"):
+                diag += f"  finish_reason={exc.finish_reason}"
+            print(diag, file=sys.stderr, flush=True)
             answer = _structural_answer(question, nav_path, state)
     elif nav_path == [] and anchor is None:
         answer = _structural_answer(question, [], state)

@@ -108,7 +108,7 @@ __all__ = [
     # Provenance
     "ProvenanceLog",
     # LLM Adapter
-    "E0LLMAdapter", "LLMConfig", "LLMResponseError",
+    "E0LLMAdapter", "LLMConfig", "LLMResponseError", "LLMTruncatedError",
     "DeltaEstimate", "ProposedState", "TransitionResult",
     "ResistanceEstimate", "LandscapeProposal",
     "materialize_landscape", "task_map_from_proposal",
@@ -175,7 +175,7 @@ from .connection import omega, theta, holonomy, omega_map
 from .wavepath import psi, path_intensity, sum_paths, intensity, interference_analysis
 from .memory_os import E0MemoryOS, CanonRef, MemOSContext
 from .llm_adapter import (
-    E0LLMAdapter, LLMConfig, LLMResponseError,
+    E0LLMAdapter, LLMConfig, LLMResponseError, LLMTruncatedError,
     DeltaEstimate, ProposedState, TransitionResult,
     ResistanceEstimate, LandscapeProposal,
     materialize_landscape, task_map_from_proposal,

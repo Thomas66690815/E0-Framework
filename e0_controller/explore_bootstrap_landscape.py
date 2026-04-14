@@ -56,14 +56,28 @@ def load_learning_state():
 
 
 def save_learning_state(ls):
-    """Write learning_state.json atomically (write tmp, then rename)."""
+    """Write learning_state.json atomically (write tmp, then rename).
+
+    Falls back to direct write if atomic rename fails (Windows file locks).
+    """
     tmp_path = LEARNING_STATE_PATH + ".tmp"
-    with open(tmp_path, "w", encoding="utf-8") as f:
-        json.dump(ls, f, indent=2, ensure_ascii=False)
-        f.write("\n")
-        f.flush()
-        os.fsync(f.fileno())
-    os.replace(tmp_path, LEARNING_STATE_PATH)
+    try:
+        with open(tmp_path, "w", encoding="utf-8") as f:
+            json.dump(ls, f, indent=2, ensure_ascii=False)
+            f.write("\n")
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp_path, LEARNING_STATE_PATH)
+    except OSError:
+        # Atomic rename failed (Windows lock) — fall back to direct write
+        with open(LEARNING_STATE_PATH, "w", encoding="utf-8") as f:
+            json.dump(ls, f, indent=2, ensure_ascii=False)
+            f.write("\n")
+        # Clean up temp file if it exists
+        try:
+            os.remove(tmp_path)
+        except OSError:
+            pass
 
 
 def extract_nodes(bs):

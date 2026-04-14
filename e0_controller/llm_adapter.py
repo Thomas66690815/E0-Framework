@@ -31,9 +31,17 @@ from .primitives import Outcome
 
 class LLMResponseError(Exception):
     """Raised when the LLM returns unparseable or invalid output."""
-    def __init__(self, message: str, raw_response: str = ""):
+    def __init__(self, message: str, raw_response: str = "",
+                 finish_reason: str = "", usage: Optional[dict] = None):
         super().__init__(message)
         self.raw_response = raw_response
+        self.finish_reason = finish_reason
+        self.usage = usage or {}
+
+
+class LLMTruncatedError(LLMResponseError):
+    """Raised when the LLM response was cut off by token limit."""
+    pass
 
 
 # ──────────────────────────────────────────────
@@ -45,7 +53,7 @@ class LLMConfig:
     """Configuration for the LLM connection."""
     model: str = "gpt-5.4-mini"
     temperature: float = 0.2
-    max_tokens: int = 1024
+    max_tokens: int = 4096
     api_key: Optional[str] = None
 
     def resolve_api_key(self) -> str:
@@ -81,7 +89,11 @@ LLMCallFn = Callable[[str, str, LLMConfig], str]
 
 
 def openai_call(system: str, user: str, config: LLMConfig) -> str:
-    """Call OpenAI API. Requires `openai` package."""
+    """Call OpenAI API. Requires `openai` package.
+
+    Raises LLMTruncatedError when finish_reason == 'length' (token limit hit).
+    Logs diagnostic info to stderr on any non-standard finish.
+    """
     import openai
     client = openai.OpenAI(api_key=config.resolve_api_key())
     response = client.chat.completions.create(
@@ -94,7 +106,41 @@ def openai_call(system: str, user: str, config: LLMConfig) -> str:
             {"role": "user", "content": user},
         ],
     )
-    return response.choices[0].message.content or ""
+    choice = response.choices[0]
+    content = choice.message.content or ""
+    finish = choice.finish_reason or "unknown"
+    usage = {}
+    if response.usage:
+        usage = {
+            "prompt_tokens": response.usage.prompt_tokens,
+            "completion_tokens": response.usage.completion_tokens,
+            "total_tokens": response.usage.total_tokens,
+        }
+
+    # ── Diagnostic logging ──
+    if finish != "stop":
+        import sys
+        preview = content[:500] + ("..." if len(content) > 500 else "")
+        print(
+            f"\n[LLM DIAG] finish_reason={finish}  "
+            f"completion_tokens={usage.get('completion_tokens', '?')}  "
+            f"max_tokens={config.max_tokens}\n"
+            f"[LLM DIAG] response preview ({len(content)} chars): {preview}\n",
+            file=sys.stderr, flush=True,
+        )
+
+    if finish == "length":
+        raise LLMTruncatedError(
+            f"LLM response truncated (finish_reason='length', "
+            f"completion_tokens={usage.get('completion_tokens', '?')}, "
+            f"max_tokens={config.max_tokens}). "
+            f"Response is incomplete — increase max_tokens.",
+            raw_response=content,
+            finish_reason=finish,
+            usage=usage,
+        )
+
+    return content
 
 
 # ──────────────────────────────────────────────
@@ -440,6 +486,13 @@ def _parse_json_response(
                 data = _try_json_loads(candidate)
 
     if data is None:
+        import sys
+        preview = raw[:800] + ("..." if len(raw) > 800 else "")
+        print(
+            f"\n[LLM PARSE FAIL] All 4 strategies failed on {len(raw)} chars.\n"
+            f"[LLM PARSE FAIL] Raw response:\n{preview}\n",
+            file=sys.stderr, flush=True,
+        )
         raise LLMResponseError(
             f"LLM returned invalid JSON (all parsing strategies failed)",
             raw_response=raw,
