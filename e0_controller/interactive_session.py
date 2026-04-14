@@ -3898,6 +3898,88 @@ def _assess_knowledge(
     }
 
 
+def _format_path_evidence(
+    state: SessionState, path: List[str],
+) -> str:
+    """Format navigation path as readable evidence for answer synthesis.
+
+    For each node in the path, includes: concept name, domain, description.
+    For each edge transition, includes: relation type, quality.
+    Deduplicates consecutive visits to the same node.
+    """
+    if not path:
+        return "(no navigation path)"
+
+    hist = state.landscape.historization
+    node_meta = state.unified_nodes or {}
+    lines: List[str] = []
+    seen_nodes: set = set()
+
+    for i, node_id in enumerate(path):
+        if node_id in seen_nodes:
+            continue
+        seen_nodes.add(node_id)
+
+        # Node info
+        meta = node_meta.get(node_id, {})
+        label = meta.get("label", node_id)
+        desc = meta.get("description", "")
+        domain = meta.get("domain", "unknown")
+
+        node_line = f"  [{domain}] {label}"
+        if desc:
+            # Truncate long descriptions
+            short = desc[:120] + "..." if len(desc) > 120 else desc
+            node_line += f": {short}"
+        lines.append(node_line)
+
+        # Edge info (to next node)
+        if i + 1 < len(path):
+            next_node = path[i + 1]
+            from e0_controller.landscape import Edge
+            edge = Edge(node_id, next_node)
+            edge_meta = state.landscape.edge_meta(node_id, next_node)
+            rel_type = edge_meta.get("relation_type", "")
+            q = hist.trace_quality(edge) if edge in state.landscape.edges else 0.0
+            arrow = f"  → ({rel_type})" if rel_type else "  →"
+            if q != 0.0:
+                arrow += f" [quality={q:.2f}]"
+            lines.append(arrow)
+
+    return "\n".join(lines)
+
+
+def _structural_answer(
+    question: str, path: List[str], state: SessionState,
+) -> str:
+    """Generate a structural answer without LLM, from path + descriptions."""
+    if not path:
+        return "No structural evidence found for this question."
+
+    node_meta = state.unified_nodes or {}
+    seen: set = set()
+    concepts: List[str] = []
+
+    for node_id in path:
+        if node_id in seen:
+            continue
+        seen.add(node_id)
+        meta = node_meta.get(node_id, {})
+        desc = meta.get("description", "")
+        label = meta.get("label", node_id)
+        if desc:
+            concepts.append(f"{label}: {desc}")
+        else:
+            concepts.append(label)
+
+    if not concepts:
+        return "Navigation completed but no concept descriptions available."
+
+    header = f"Based on {len(concepts)} connected concepts:"
+    body = "\n".join(f"  • {c}" for c in concepts[:8])
+    return f"{header}\n{body}"
+
+
 def ask_run(
     state: SessionState, question: str, auto_learn: bool = True,
 ) -> Dict[str, Any]:
@@ -3939,12 +4021,40 @@ def ask_run(
     # Phase 4: Navigate from best match
     anchor: Optional[str] = None
     nav_path: List[str] = []
+    nav_steps = 0
+    nav_crossings = 0
+    nav_coverage_delta = 0.0
     all_matches = assessment_after["matches"]
     if all_matches:
         anchor = all_matches[0][0]
         _task_navigate(state, question, anchor, mode="ask")
         if state.history:
-            nav_path = state.history[-1].path
+            last_round = state.history[-1]
+            nav_path = last_round.path
+            nav_steps = last_round.steps
+            nav_crossings = last_round.domain_crossings
+            nav_coverage_delta = last_round.coverage_delta
+
+    # Phase 5: Answer synthesis
+    answer: Optional[str] = None
+    synthesis: Optional[Dict[str, Any]] = None
+    if nav_path:
+        try:
+            adapter = _get_llm_adapter(state)
+            evidence = _format_path_evidence(state, nav_path)
+            synthesis = adapter.synthesize_answer(
+                question=question,
+                path_evidence=evidence,
+                steps=nav_steps,
+                domain_crossings=nav_crossings,
+                coverage_delta=nav_coverage_delta,
+            )
+            answer = synthesis.get("answer")
+        except Exception:
+            # LLM unavailable — structural fallback
+            answer = _structural_answer(question, nav_path, state)
+    elif nav_path == [] and anchor is None:
+        answer = _structural_answer(question, [], state)
 
     # Confidence = knowledge depth (coverage weighted by trace_load)
     confidence = assessment_after["knowledge_depth"]
@@ -3972,6 +4082,8 @@ def ask_run(
         "anchor": anchor,
         "nav_path": nav_path,
         "confidence": confidence,
+        "answer": answer,
+        "synthesis": synthesis,
     }
 
 
@@ -4058,15 +4170,35 @@ def cmd_ask(state: SessionState, question: str) -> str:
                 f"(\u0394={last.coverage_delta:+.1%})"
             )
 
+    # ── Answer ──
+    if result.get("answer"):
+        lines.append("")
+        if md:
+            lines.append("### Answer")
+        else:
+            lines.append("  Answer")
+            lines.append("  " + "\u2500" * 56)
+        for ans_line in result["answer"].split("\n"):
+            lines.append(f"    {ans_line}")
+        if result.get("synthesis") and result["synthesis"].get("key_concepts"):
+            concepts = result["synthesis"]["key_concepts"]
+            lines.append(f"    Key concepts: {', '.join(concepts)}")
+        if result.get("synthesis") and not result["synthesis"].get(
+            "evidence_sufficient", True
+        ):
+            lines.append(
+                "    \u26a0 Evidence may be insufficient for a complete answer"
+            )
+
     # ── Confidence ──
     lines.append("")
     conf = result["confidence"]
     if conf >= 0.8:
-        verdict = "high — most terms structurally covered"
+        verdict = "high \u2014 most terms structurally covered"
     elif conf >= 0.5:
-        verdict = "moderate — partial structural coverage"
+        verdict = "moderate \u2014 partial structural coverage"
     else:
-        verdict = "low — significant knowledge gaps remain"
+        verdict = "low \u2014 significant knowledge gaps remain"
     lines.append(f"  Confidence: {conf:.0%} \u2014 {verdict}")
 
     return "\n".join(lines)

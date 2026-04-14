@@ -27,14 +27,14 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C241",
-    "latest_commit_hash": "9966273",
-    "latest_commit_msg": "C241: Ask Semantic Precision — homonym rejection + knowledge depth. _assess_knowledge: (1) removed substring matching (real→realization false positive), exact word match only. (2) minimum relevance threshold 0.4 from _match_nodes filters low-quality matches. (3) knowledge_depth metric: covered terms weighted by trace_load on adjacent edges (navigated=1.0, structural=0.3). Confidence now reflects actual navigation depth, not just term count. Validation: C239 100% false → C240 20% honest → C241 0% (correct: interference/match/real/e0/qm are genuine gaps in fresh landscape). 3 new tests, 5331 total.",
-    "test_count": 5331,
+    "latest_commit": "C242",
+    "latest_commit_hash": "0331692",
+    "latest_commit_msg": "C242: Answer Synthesis — Phase 5 completes the ask pipeline. SYNTHESIZE_ANSWER_PROMPT (9th prompt type) in llm_adapter: question + path_evidence + navigation metrics → JSON {answer, confidence, key_concepts, evidence_sufficient}. synthesize_answer() method. _format_path_evidence: deduplicates nodes, shows [domain] label: description + edge transitions with quality. _structural_answer: no-LLM fallback listing up to 8 concepts. ask_run Phase 5: tries LLM synthesis, falls back to structural. cmd_ask Answer section with key_concepts + evidence_sufficient warning. 24 new tests, 5355 total.",
+    "test_count": 5355,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
     "module_count": "77 production + 10 benchmarks + 17 demos + 69 explorations + 127 test files",
-    "line_count": "~32300 production, ~127400 total"
+    "line_count": "~32500 production, ~127800 total"
   },
   "conventions": {
     "user_language": "German (user speaks German, code/docs in English)",
@@ -222,7 +222,7 @@
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
     "current_arc": "On-Demand Integration (C239+)",
-    "arc_status": "C241 DONE. All 4 ask problems from real-world test resolved. Semantic precision (homonym, depth) closed.",
+    "arc_status": "C242 DONE. Answer Synthesis completes ask pipeline — questions now produce actual answers, not just structural reports.",
     "arc_plan": {
       "C233_curriculum_command": {
         "title": "Curriculum Command",
@@ -260,19 +260,20 @@
         "status": "DONE (C239)"
       }
     },
-    "key_result": "C240: Ask Robustness. Real-world test exposed: (1) short ALL-CAPS tokens E0/QM dropped by len<=2 filter, (2) teach_concept got bare term without question context. Fixes: acronym preservation (isupper() exception), contextual gap learning (question passed to teach_concept). Before: 3 terms, 100% false coverage. After: 5 terms, 20% honest coverage. Also includes C239b robust JSON parsing (4 fallback strategies). 19 new tests.",
+    "key_result": "C242: Answer Synthesis. ask pipeline Phase 5 — LLM synthesizes prose answer from navigation evidence (path concepts, edge relations, quality metrics). Structural fallback without LLM lists connected concepts. Evidence-sufficient warning when navigation trail is too thin. 24 new tests.",
     "open_threads": [
       "Autonomes Lernen arc COMPLETE (C233–C237)",
       "Self-Learn (C238) DONE — E₀ can now learn itself first",
       "Ask Command (C239) DONE — on-demand Q&A with gap detection and selective learning",
       "Ask Robustness (C240) DONE — acronym preservation + contextual gap learning validated",
       "Ask Semantic Precision (C241) DONE — homonym rejection + knowledge depth, all 4 ask problems resolved",
+      "Answer Synthesis (C242) DONE — ask now produces actual answers from navigation evidence",
       "C239b: Robust JSON parsing with 4 fallback strategies (included in C240 commit)",
       "Deferred: Coupling Router + Multiverse — integrate when we hit scaling/isolation limits",
       "LLM symmetry: needed at BOTH ends — input structuring (Bootstrapper) AND output formatting (User-Lesbarkeit)",
       "Adversarial stability still partially open (C172-C174)"
     ],
-    "next_commit_id": "C242",
+    "next_commit_id": "C243",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",

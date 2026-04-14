@@ -324,6 +324,35 @@ Respond with exactly this JSON (no other text):
   ]
 }}"""
 
+SYNTHESIZE_ANSWER_PROMPT = """\
+You are synthesizing an answer based on structural evidence from E₀ navigation.
+
+E₀ navigated its knowledge landscape to answer a question. Below is the
+evidence trail: the sequence of concepts visited, their descriptions,
+the types of connections between them, and navigation quality metrics.
+
+Your job: synthesize a coherent, informative answer to the question using
+ONLY the evidence provided. Do not invent facts. If the evidence is
+insufficient, say so honestly.
+
+Question: {question}
+
+Navigation path (concepts visited in order):
+{path_evidence}
+
+Navigation metrics:
+  Steps: {steps}
+  Domain crossings: {domain_crossings}
+  Coverage change: {coverage_delta}
+
+Respond with exactly this JSON (no other text):
+{{
+  "answer": "Your synthesized answer as a clear paragraph (2-5 sentences).",
+  "confidence": 0.7,
+  "key_concepts": ["concept1", "concept2", "concept3"],
+  "evidence_sufficient": true
+}}"""
+
 # ──────────────────────────────────────────────
 # Response Parsing
 # ──────────────────────────────────────────────
@@ -1003,6 +1032,43 @@ class E0LLMAdapter:
             })
 
         return {"nodes": nodes, "edges": edges}
+
+    # ── 8. Synthesize Answer ──
+
+    def synthesize_answer(
+        self,
+        question: str,
+        path_evidence: str,
+        steps: int = 0,
+        domain_crossings: int = 0,
+        coverage_delta: float = 0.0,
+    ) -> Dict[str, Any]:
+        """Synthesize a prose answer from E₀ navigation evidence.
+
+        Args:
+            question: the original question
+            path_evidence: formatted string of visited concepts + descriptions
+            steps: navigation step count
+            domain_crossings: how many domain boundaries were crossed
+            coverage_delta: coverage change during navigation
+
+        Returns dict with: answer, confidence, key_concepts, evidence_sufficient.
+        """
+        prompt = SYNTHESIZE_ANSWER_PROMPT.format(
+            question=question,
+            path_evidence=path_evidence,
+            steps=steps,
+            domain_crossings=domain_crossings,
+            coverage_delta=f"{coverage_delta:+.1%}",
+        )
+        raw = self._call(SYSTEM_PROMPT, prompt, self.config)
+        data = _parse_json_response(raw, required_keys=["answer"])
+        return {
+            "answer": str(data.get("answer", "")),
+            "confidence": float(data.get("confidence", 0.5)),
+            "key_concepts": list(data.get("key_concepts", [])),
+            "evidence_sufficient": bool(data.get("evidence_sufficient", True)),
+        }
 
     def propose_and_bootstrap(
         self,

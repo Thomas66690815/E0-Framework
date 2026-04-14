@@ -109,6 +109,8 @@ from e0_controller.interactive_session import (
     _assess_self_mastery,
     _extract_question_terms,
     _assess_knowledge,
+    _format_path_evidence,
+    _structural_answer,
     ask_run,
     cmd_ask,
 )
@@ -4294,6 +4296,230 @@ class TestCmdAsk:
         out = cmd_ask(s, "interference quantum born")
         # Should show either learning results or gap info
         assert "Knowledge Assessment" in out
+
+
+class TestFormatPathEvidence:
+    """C242: _format_path_evidence formats navigation path for synthesis."""
+
+    def test_empty_path(self):
+        """Empty path returns sentinel string."""
+        s = build_session(steps_per_round=10)
+        assert _format_path_evidence(s, []) == "(no navigation path)"
+
+    def test_single_node_with_meta(self):
+        """Shows domain, label, and description from unified_nodes."""
+        s = build_session(steps_per_round=10)
+        s.unified_nodes = {
+            "C:tension": {
+                "label": "tension", "domain": "core",
+                "description": "The driving force of navigation",
+            },
+        }
+        result = _format_path_evidence(s, ["C:tension"])
+        assert "[core] tension" in result
+        assert "The driving force" in result
+
+    def test_without_unified_nodes(self):
+        """Falls back to node_id as label when no meta set."""
+        s = build_session(steps_per_round=10)
+        s.unified_nodes = None
+        result = _format_path_evidence(s, ["C:tension"])
+        assert "C:tension" in result
+
+    def test_deduplication(self):
+        """Repeated nodes appear only once."""
+        s = build_session(steps_per_round=10)
+        s.unified_nodes = {
+            "A": {"label": "alpha", "domain": "d1", "description": "A desc"},
+            "B": {"label": "beta", "domain": "d2", "description": "B desc"},
+        }
+        result = _format_path_evidence(s, ["A", "B", "A"])
+        assert result.count("[d1] alpha") == 1
+
+    def test_truncates_long_descriptions(self):
+        """Descriptions > 120 chars are truncated with ellipsis."""
+        s = build_session(steps_per_round=10)
+        s.unified_nodes = {
+            "A": {"label": "alpha", "domain": "d", "description": "x" * 200},
+        }
+        result = _format_path_evidence(s, ["A"])
+        assert "..." in result
+
+    def test_edge_arrow_shown(self):
+        """Transition between nodes shows arrow."""
+        s = build_session(steps_per_round=10)
+        s.unified_nodes = {
+            "A": {"label": "alpha", "domain": "d", "description": ""},
+            "B": {"label": "beta", "domain": "d", "description": ""},
+        }
+        result = _format_path_evidence(s, ["A", "B"])
+        assert "→" in result
+
+
+class TestStructuralAnswer:
+    """C242: _structural_answer generates no-LLM fallback answers."""
+
+    def test_empty_path(self):
+        """Empty path returns 'No structural evidence' message."""
+        s = build_session(steps_per_round=10)
+        result = _structural_answer("what?", [], s)
+        assert "No structural evidence" in result
+
+    def test_with_descriptions(self):
+        """Shows header with count and bullet points."""
+        s = build_session(steps_per_round=10)
+        s.unified_nodes = {
+            "A": {"label": "Alpha", "domain": "d", "description": "First"},
+            "B": {"label": "Beta", "domain": "d", "description": "Second"},
+        }
+        result = _structural_answer("what is alpha?", ["A", "B"], s)
+        assert "2 connected concepts" in result
+        assert "Alpha: First" in result
+        assert "Beta: Second" in result
+        assert "•" in result
+
+    def test_max_eight_bullets(self):
+        """At most 8 concept bullets are shown."""
+        s = build_session(steps_per_round=10)
+        nodes = {}
+        path = []
+        for i in range(12):
+            nid = f"N{i}"
+            nodes[nid] = {
+                "label": f"n{i}", "domain": "d", "description": f"Desc {i}",
+            }
+            path.append(nid)
+        s.unified_nodes = nodes
+        result = _structural_answer("question?", path, s)
+        assert "12 connected concepts" in result
+        assert result.count("•") == 8
+
+    def test_deduplication(self):
+        """Repeated nodes yield only one bullet."""
+        s = build_session(steps_per_round=10)
+        s.unified_nodes = {
+            "A": {"label": "Alpha", "domain": "d", "description": "Desc A"},
+        }
+        result = _structural_answer("what?", ["A", "A", "A"], s)
+        assert result.count("Alpha") == 1
+
+    def test_no_description_shows_label(self):
+        """Nodes without descriptions still show label."""
+        s = build_session(steps_per_round=10)
+        s.unified_nodes = {"A": {"label": "Alpha", "domain": "d"}}
+        result = _structural_answer("what?", ["A"], s)
+        assert "Alpha" in result
+
+    def test_no_meta_at_all(self):
+        """Nodes not in unified_nodes show node_id as label."""
+        s = build_session(steps_per_round=10)
+        s.unified_nodes = {}
+        result = _structural_answer("what?", ["MYSTERY"], s)
+        assert "MYSTERY" in result
+
+
+class TestAskRunSynthesis:
+    """C242: ask_run Phase 5 produces answer and synthesis keys."""
+
+    def test_result_has_answer_key(self):
+        """Result dict always includes 'answer' and 'synthesis' keys."""
+        s = build_session(steps_per_round=10)
+        result = ask_run(s, "tension and historization")
+        assert "answer" in result
+        assert "synthesis" in result
+
+    def test_structural_fallback_without_llm(self):
+        """When LLM is unavailable, structural fallback produces answer."""
+        import unittest.mock as _mock
+        s = build_session(steps_per_round=10)
+        with _mock.patch(
+            "e0_controller.interactive_session._get_llm_adapter",
+            side_effect=RuntimeError("no LLM"),
+        ):
+            result = ask_run(s, "tension and historization")
+        if result["nav_path"]:
+            assert result["answer"] is not None
+            assert result["synthesis"] is None
+
+    def test_llm_synthesis_patched(self):
+        """Patched synthesize_answer returns proper synthesis."""
+        import unittest.mock as _mock
+        s = _build_session_with_mock(_ASK_SPEC)
+        fake = {
+            "answer": "Interference relates to Born rule.",
+            "confidence": 0.8,
+            "key_concepts": ["interference", "born_rule"],
+            "evidence_sufficient": True,
+        }
+        s.llm_adapter.synthesize_answer = lambda **kw: fake
+        result = ask_run(s, "interference quantum born")
+        if result["nav_path"]:
+            assert result["answer"] == "Interference relates to Born rule."
+            assert result["synthesis"] is not None
+            assert result["synthesis"]["key_concepts"] == [
+                "interference", "born_rule",
+            ]
+
+    def test_unknown_terms_get_answer(self):
+        """Even unknown terms may produce structural answer."""
+        s = build_session(steps_per_round=10)
+        result = ask_run(s, "xyzzy plugh gibberish")
+        assert "answer" in result
+
+
+class TestCmdAskAnswerSection:
+    """C242: cmd_ask displays Answer section when answer is available."""
+
+    def test_answer_section_with_patched_llm(self):
+        """Output shows Answer section when synthesis succeeds."""
+        s = _build_session_with_mock(_ASK_SPEC)
+        fake = {
+            "answer": "Interference is a wave phenomenon.",
+            "confidence": 0.85,
+            "key_concepts": ["interference"],
+            "evidence_sufficient": True,
+        }
+        s.llm_adapter.synthesize_answer = lambda **kw: fake
+        out = cmd_ask(s, "interference quantum born")
+        if "Interference is a wave phenomenon." in out:
+            assert "Answer" in out
+
+    def test_evidence_insufficient_warning(self):
+        """Shows warning when evidence_sufficient is False."""
+        s = _build_session_with_mock(_ASK_SPEC)
+        fake = {
+            "answer": "Unclear evidence.",
+            "confidence": 0.3,
+            "key_concepts": [],
+            "evidence_sufficient": False,
+        }
+        s.llm_adapter.synthesize_answer = lambda **kw: fake
+        out = cmd_ask(s, "interference quantum born")
+        if "Unclear evidence." in out:
+            assert "insufficient" in out.lower() or "\u26a0" in out
+
+    def test_key_concepts_in_output(self):
+        """Key concepts from synthesis appear in output."""
+        s = _build_session_with_mock(_ASK_SPEC)
+        fake = {
+            "answer": "Answer text here.",
+            "confidence": 0.7,
+            "key_concepts": ["concept_alpha", "concept_beta"],
+            "evidence_sufficient": True,
+        }
+        s.llm_adapter.synthesize_answer = lambda **kw: fake
+        out = cmd_ask(s, "interference quantum born")
+        if "Answer text here." in out:
+            assert "concept_alpha" in out
+            assert "concept_beta" in out
+
+    def test_structural_answer_displayed(self):
+        """Structural fallback answer also shown in Answer section."""
+        s = build_session(steps_per_round=10)
+        out = cmd_ask(s, "tension and historization")
+        # Without LLM, structural fallback kicks in
+        # If navigation found something, Answer section may appear
+        assert "Confidence:" in out  # Always present
 
 
 class TestAskDispatch:

@@ -903,5 +903,67 @@ class TestProposeAndBootstrap(unittest.TestCase):
         self.assertIn("DONE", trace.path)
 
 
+class TestSynthesizeAnswer(unittest.TestCase):
+    """C242: synthesize_answer turns navigation evidence into prose."""
+
+    def _make_adapter(self, response_dict):
+        """Create adapter with call_fn returning given dict as JSON."""
+        return E0LLMAdapter(
+            call_fn=lambda s, u, c: json.dumps(response_dict),
+        )
+
+    def test_returns_answer(self):
+        """Returns dict with answer string."""
+        adapter = self._make_adapter({
+            "answer": "Tension drives state transitions.",
+            "confidence": 0.8,
+            "key_concepts": ["tension", "landscape"],
+            "evidence_sufficient": True,
+        })
+        result = adapter.synthesize_answer(
+            question="What is tension?",
+            path_evidence="[core] tension: driving force",
+            steps=3, domain_crossings=0, coverage_delta=0.1,
+        )
+        self.assertEqual(result["answer"], "Tension drives state transitions.")
+        self.assertEqual(result["confidence"], 0.8)
+        self.assertEqual(result["key_concepts"], ["tension", "landscape"])
+        self.assertTrue(result["evidence_sufficient"])
+
+    def test_missing_answer_raises(self):
+        """Missing 'answer' key raises LLMResponseError."""
+        adapter = self._make_adapter({
+            "confidence": 0.5, "key_concepts": [],
+        })
+        with self.assertRaises(LLMResponseError):
+            adapter.synthesize_answer(
+                question="What?", path_evidence="(none)",
+            )
+
+    def test_defaults_for_optional_fields(self):
+        """Missing optional fields get sensible defaults."""
+        adapter = self._make_adapter({"answer": "Some answer."})
+        result = adapter.synthesize_answer(
+            question="What?", path_evidence="evidence",
+        )
+        self.assertEqual(result["answer"], "Some answer.")
+        self.assertEqual(result["confidence"], 0.5)
+        self.assertEqual(result["key_concepts"], [])
+        self.assertTrue(result["evidence_sufficient"])
+
+    def test_markdown_wrapped_json(self):
+        """Markdown-fenced JSON is still parsed correctly."""
+        def md_fn(s, u, c):
+            return '```json\n' + json.dumps({
+                "answer": "Fenced answer.", "confidence": 0.9,
+                "key_concepts": ["x"], "evidence_sufficient": True,
+            }) + '\n```'
+        adapter = E0LLMAdapter(call_fn=md_fn)
+        result = adapter.synthesize_answer(
+            question="Test?", path_evidence="evidence",
+        )
+        self.assertEqual(result["answer"], "Fenced answer.")
+
+
 if __name__ == "__main__":
     unittest.main()
