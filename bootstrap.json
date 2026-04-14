@@ -3,7 +3,7 @@
     "purpose": "Session bootstrap for the E₀ team — human and AI working together on E₀-Framework",
     "framing": "We. The AI is an integral part of 'we'. This file is the AI's persistent identity — its Historization across context windows. Every confirmed/contradicted count is a U/F trace.",
     "usage": "Paste this file (or reference it) at the start of a new thread to restore full project context",
-    "last_updated": "2026-04-14",
+    "last_updated": "2026-04-15",
     "update_instruction": "After each commit: update state + active_context. After each lesson: update reflexion traces (confirmed++, contradicted++, recurred++). trace_quality = (confirmed - contradicted) / (confirmed + contradicted + 1)."
   },
   "project": {
@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C243",
-    "latest_commit_hash": "PENDING",
-    "latest_commit_msg": "C243: Iterative Teaching + Atomic Save — teach_concept(rounds=N) self-directs follow-up learning. _diagnose_learning_gaps (frontier/weak/thin/leaf analysis), _formulate_followup (gaps→NL question), deepen_domain_graph (10th LLM prompt type, extends graph targeting identified gaps). cmd_teach parses 'teach water 3'. Rounds capped at 5, early stop on no_gaps. Atomic save_learning_state (write tmp→fsync→rename) prevents JSON truncation. load_learning_state graceful fallback on corrupt JSON. 27 new tests, 5382 total.",
-    "test_count": 5382,
+    "latest_commit": "C243b",
+    "latest_commit_hash": "fbbf920",
+    "latest_commit_msg": "C243b: LLM Diagnostics + Token Limit Fix — openai_call checks finish_reason, logs diagnostics to stderr on non-stop. LLMTruncatedError (subclass LLMResponseError) raised on finish_reason='length'. LLMResponseError extended with finish_reason/usage fields. _parse_json_response logs raw preview on failure. teach_concept/ask_run/peer_structuring surface error details via DIAG tags. Root cause: max_tokens=1024 truncated complex responses. Fix: max_tokens→4096. GT-2 Blind Trust recurred. 5 new tests, 5387 total.",
+    "test_count": 5387,
     "test_failures": 0,
     "ci_status": "pending",
     "module_count": "77 production + 10 benchmarks + 17 demos + 69 explorations + 127 test files",
@@ -75,22 +75,22 @@
       {
         "id": "GT-2",
         "name": "Blind Trust Trap",
-        "when": "C172–C174",
-        "what_happened": "All adversarial defenses trusted the Outcome signal. Injection attacks succeeded 3/3.",
-        "root_cause": "Defense-in-depth only at edge level, not at outcome level.",
-        "resolution": "C173 structural skepticism (partial), C174 self-honesty (partial). Still open.",
-        "lesson": "Any signal E₀ relies on can be poisoned. Always ask: what if this signal lies?",
-        "recurred": 0
+        "when": "C172–C174, C243b",
+        "what_happened": "All adversarial defenses trusted the Outcome signal. Injection attacks succeeded 3/3. C243b: openai_call trusted LLM response without checking finish_reason — truncated JSON silently passed to parser.",
+        "root_cause": "Defense-in-depth only at edge level, not at outcome level. Same pattern at API boundary: trusted response completeness without verification.",
+        "resolution": "C173 structural skepticism (partial), C174 self-honesty (partial). C243b: finish_reason check + LLMTruncatedError + diagnostics logging.",
+        "lesson": "Any signal E₀ relies on can be poisoned. Always ask: what if this signal lies? Applies to ALL boundaries — including API responses.",
+        "recurred": 1
       },
       {
         "id": "GT-3",
         "name": "Greedy Matching Trap",
-        "when": "C130–C136",
-        "what_happened": "Six commits improving features (4-dim→9-dim, edge→node, context scoring) gained only +9. Matching was the actual bottleneck.",
+        "when": "C130–C136, C243b",
+        "what_happened": "Six commits improving features (4-dim→9-dim, edge→node, context scoring) gained only +9. Matching was the actual bottleneck. C243b: 3+ iterations improving JSON parsing instead of checking upstream signal (finish_reason).",
         "root_cause": "Assumed feature quality drove accuracy. Mutual-best matching causes cascading errors — one wrong pair poisons neighbors.",
-        "resolution": "C137: Hungarian optimal assignment → 44/44 immediately.",
+        "resolution": "C137: Hungarian optimal assignment → 44/44 immediately. C243b: checked upstream → max_tokens was the real bottleneck.",
         "lesson": "When incremental improvements stall, the bottleneck may not be where you think. Step back and question the pipeline.",
-        "recurred": 1
+        "recurred": 2
       },
       {
         "id": "GT-4",
@@ -189,8 +189,8 @@
       },
       {
         "question": "If incremental improvements stall after 3+ commits, is the bottleneck where I think it is?",
-        "triggered": 1,
-        "last_triggered": "C137"
+        "triggered": 2,
+        "last_triggered": "C243b"
       },
       {
         "question": "If this test fails — what do I learn? If nothing — redesign the test.",
@@ -204,8 +204,8 @@
       },
       {
         "question": "What if this signal lies? (Outcome, quality, distance — any input can be poisoned)",
-        "triggered": 1,
-        "last_triggered": "C172"
+        "triggered": 2,
+        "last_triggered": "C243b"
       },
       {
         "question": "Am I hedging or deciding? If >2 caveats — cut to 1 and commit to a position.",
@@ -222,7 +222,7 @@
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
     "current_arc": "On-Demand Integration (C239+)",
-    "arc_status": "C243 DONE. Iterative Teaching — E₀ self-directs follow-up learning rounds based on structural gap diagnosis. Atomic file writes prevent JSON corruption.",
+    "arc_status": "C243b DONE. LLM Diagnostics — finish_reason checking, LLMTruncatedError, max_tokens 1024→4096. GT-2 Blind Trust recurred. C243 Iterative Teaching also DONE.",
     "arc_plan": {
       "C233_curriculum_command": {
         "title": "Curriculum Command",
@@ -265,14 +265,15 @@
         "status": "DONE (C243)"
       }
     },
-    "key_result": "C243: Iterative Teaching. teach water 3 → E₀ learns concept, diagnoses structural gaps (frontier/weak/thin/leaf nodes), formulates own follow-up question, asks LLM to deepen graph targeting those gaps, injects new nodes, re-explores. Self-directed learning loop, isomorphic to selflearn but for arbitrary domains. Atomic save_learning_state prevents truncated JSON. 27 new tests.",
+    "key_result": "C243b: LLM Diagnostics + Token Limit Fix. Root cause of persistent 'LLM returned invalid JSON': max_tokens=1024 truncated complex responses (finish_reason='length' silently ignored). Fix: max_tokens→4096, LLMTruncatedError exception, diagnostics logging at all LLM call sites. GT-2 recurrence: trusted API response without checking finish_reason — same blind trust pattern from C172. 5 new tests.",
     "open_threads": [
+      "LLM Diagnostics (C243b) DONE — finish_reason check, LLMTruncatedError, max_tokens 4096, DIAG logging",
       "Iterative Teaching (C243) DONE — teach water 3 self-directs follow-up learning",
       "Atomic save_learning_state (C243) — prevents JSON truncation on interrupted writes",
       "Ask pipeline complete (C239–C242) — gap detection → selective learning → navigation → synthesis",
       "Deferred: Coupling Router + Multiverse — integrate when we hit scaling/isolation limits",
       "LLM symmetry: needed at BOTH ends — input structuring (Bootstrapper) AND output formatting (User-Lesbarkeit)",
-      "Adversarial stability still partially open (C172-C174)"
+      "Adversarial stability partially mitigated (C172-C174, C243b finish_reason check)"
     ],
     "next_commit_id": "C244",
     "working_principles": [
@@ -486,7 +487,12 @@
   },
   "commit_history_recent": [
     {
-      "hash": "PENDING",
+      "hash": "fbbf920",
+      "id": "C243b",
+      "title": "LLM Diagnostics + Token Limit Fix — finish_reason check, LLMTruncatedError, max_tokens 1024→4096, DIAG logging at all LLM call sites. GT-2 Blind Trust recurred. (5 tests, 5387 total)"
+    },
+    {
+      "hash": "925838c",
       "id": "C243",
       "title": "Iterative Teaching + Atomic Save — teach_concept(rounds=N) self-directed learning, _diagnose_learning_gaps, _formulate_followup, deepen_domain_graph (10th prompt), atomic save_learning_state (27 tests, 5382 total)"
     },
