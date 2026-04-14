@@ -81,10 +81,21 @@ canon and mechanism. Concludes with a self-mastery assessment: per-domain
 coverage, canon\u2194process alignment, overall readiness score. Implements the
 "Self-Graph First" principle: E\u2080 must know itself before external domains.
 
+C239 adds Ask Command: `ask <question>` is the on-demand question-answering
+pipeline. Orchestrates: (1) knowledge assessment — extract question terms and
+match against landscape structure, (2) gap detection — identify terms with no
+structural match, (3) on-demand learning — teach_concept for each gap term
+(max 3) via LLM, (4) re-assessment — measure coverage improvement after
+learning, (5) navigation — navigate from best match through combined knowledge,
+(6) confidence — term coverage ratio as honest signal. Unlike `task` (which
+matches or delegates to LLM), `ask` detects PARTIAL knowledge and fills gaps
+selectively before answering.
+
 Commands:
   run [N]       — Execute the next N rounds (default: 1)
   task <text>   — Introduce a difference in natural language
   teach <text>  — Explicitly teach E₀ a new concept
+  ask <question> — On-demand Q&A: assess → gap-detect → learn → answer
   status        — Show current landscape overview
   focus <domain> — Zoom into canon, bootstrap, or en
   trajectory    — Coverage/T_s/mode over time
@@ -3763,6 +3774,259 @@ def cmd_selflearn(state: SessionState) -> str:
     return "\n".join(lines)
 
 
+# ── C239: Ask Command — On-Demand Question Answering ──────────────────
+
+_ASK_STOPWORDS = frozenset({
+    "a", "an", "the", "is", "are", "was", "were", "be", "been", "being",
+    "do", "does", "did", "have", "has", "had", "will", "would", "shall",
+    "should", "can", "could", "may", "might", "must",
+    "and", "or", "but", "not", "no", "nor",
+    "in", "on", "at", "to", "for", "of", "with", "by", "from", "as",
+    "into", "about", "between", "through", "after", "before",
+    "this", "that", "these", "those", "it", "its",
+    "what", "which", "who", "whom", "how", "when", "where", "why",
+    "if", "then", "than", "so", "too", "also", "very",
+})
+
+_ASK_MAX_GAP_LEARN = 3  # max gap terms to auto-learn per question
+
+
+def _extract_question_terms(question: str) -> List[str]:
+    """Extract meaningful terms from a question for gap analysis.
+
+    Tokenizes on word boundaries, filters stopwords and short tokens.
+    Returns deduplicated terms in order of first appearance.
+    """
+    import re as _re
+    raw_tokens = _re.findall(r"\b\w+\b", question.lower())
+    seen: set = set()
+    result: List[str] = []
+    for t in raw_tokens:
+        if len(t) <= 2 or t in _ASK_STOPWORDS or t in seen:
+            continue
+        seen.add(t)
+        result.append(t)
+    return result
+
+
+def _assess_knowledge(
+    state: SessionState, question: str,
+) -> Dict[str, Any]:
+    """Assess what E₀ structurally knows about a question.
+
+    For each extracted term, checks if any landscape node covers it
+    (term appears in node concept name or description words).
+
+    Returns:
+      matches: full _match_nodes result
+      terms: extracted question terms
+      covered: {term: (node_id, score)} for matched terms
+      gaps: list of unmatched terms
+      coverage_ratio: fraction of terms with at least one match
+    """
+    matches = _match_nodes(question, state.landscape, state.unified_nodes)
+    terms = _extract_question_terms(question)
+
+    covered: Dict[str, Tuple[str, float]] = {}
+    for term in terms:
+        best_score = 0.0
+        best_node: Optional[str] = None
+        for node_id, score in matches:
+            concept = (
+                node_id.split(":", 1)[1].lower()
+                if ":" in node_id
+                else node_id.lower()
+            )
+            concept_words = set(
+                concept.replace("_", " ").replace("-", " ").split()
+            )
+            # Direct word match or substring match
+            if term in concept_words or (len(term) >= 4 and term in concept):
+                if score > best_score:
+                    best_score = score
+                    best_node = node_id
+        if best_node is not None:
+            covered[term] = (best_node, best_score)
+
+    gaps = [t for t in terms if t not in covered]
+    coverage_ratio = (
+        len(covered) / len(terms) if terms else 1.0
+    )
+
+    return {
+        "matches": matches,
+        "terms": terms,
+        "covered": covered,
+        "gaps": gaps,
+        "coverage_ratio": coverage_ratio,
+    }
+
+
+def ask_run(
+    state: SessionState, question: str, auto_learn: bool = True,
+) -> Dict[str, Any]:
+    """On-demand question answering: assess → gap-detect → learn → navigate.
+
+    Pipeline:
+      1. Knowledge assessment: match question terms against landscape
+      2. Gap detection: identify terms with no structural match
+      3. On-demand learning: teach_concept for each gap term (max 3)
+      4. Re-assessment: measure coverage improvement
+      5. Navigation: navigate from best match through combined knowledge
+      6. Confidence: term coverage ratio as honest confidence signal
+
+    Args:
+        state: current session
+        question: free-text question in natural language
+        auto_learn: if True, automatically learn gap terms via LLM
+
+    Returns structured result with assessment, gaps, learning, navigation.
+    """
+    # Phase 1: Knowledge assessment
+    assessment = _assess_knowledge(state, question)
+
+    # Phase 2: Learn gaps (if any and auto_learn)
+    learned: List[Dict[str, Any]] = []
+    if assessment["gaps"] and auto_learn:
+        for term in assessment["gaps"][:_ASK_MAX_GAP_LEARN]:
+            result = teach_concept(state, term)
+            learned.append({"term": term, "result": result})
+
+    # Phase 3: Re-assess after learning
+    if learned:
+        assessment_after = _assess_knowledge(state, question)
+    else:
+        assessment_after = assessment
+
+    # Phase 4: Navigate from best match
+    anchor: Optional[str] = None
+    nav_path: List[str] = []
+    all_matches = assessment_after["matches"]
+    if all_matches:
+        anchor = all_matches[0][0]
+        _task_navigate(state, question, anchor, mode="ask")
+        if state.history:
+            nav_path = state.history[-1].path
+
+    # Confidence = term coverage ratio
+    confidence = assessment_after["coverage_ratio"]
+
+    # Journal event
+    record_journal_event(state, "ask", {
+        "question": question[:80],
+        "terms": len(assessment["terms"]),
+        "gaps_before": len(assessment["gaps"]),
+        "gaps_after": len(assessment_after["gaps"]),
+        "learned_count": len(learned),
+        "coverage_before": assessment["coverage_ratio"],
+        "coverage_after": assessment_after["coverage_ratio"],
+        "confidence": confidence,
+    })
+
+    return {
+        "question": question,
+        "terms": assessment["terms"],
+        "assessment_before": assessment,
+        "learned": learned,
+        "assessment_after": assessment_after,
+        "anchor": anchor,
+        "nav_path": nav_path,
+        "confidence": confidence,
+    }
+
+
+def cmd_ask(state: SessionState, question: str) -> str:
+    """Answer a question using on-demand gap detection and learning."""
+    if not question.strip():
+        return "Usage: ask <your question in natural language>"
+
+    result = ask_run(state, question)
+    md = state.output_format == "markdown"
+
+    if md:
+        lines = ["## Ask: On-Demand Q&A", ""]
+    else:
+        lines = ["Ask: On-Demand Q&A", "\u2550" * 60]
+
+    lines.append(f"  Question: \"{question}\"")
+    lines.append("")
+
+    # ── Knowledge Assessment ──
+    ab = result["assessment_before"]
+    n_covered = len(ab["terms"]) - len(ab["gaps"])
+    lines.append("  Knowledge Assessment")
+    lines.append(f"    Terms: {', '.join(ab['terms'])}")
+    lines.append(
+        f"    Coverage: {ab['coverage_ratio']:.0%} "
+        f"({n_covered}/{len(ab['terms'])} terms matched)"
+    )
+
+    if ab["covered"]:
+        lines.append("    Known:")
+        for term, (node, score) in ab["covered"].items():
+            lines.append(
+                f"      \u2713 {term} \u2192 {node} (relevance={score:.2f})"
+            )
+
+    if ab["gaps"]:
+        lines.append("    Gaps:")
+        for gap in ab["gaps"]:
+            lines.append(f"      \u2717 {gap}")
+
+    # ── On-Demand Learning ──
+    if result["learned"]:
+        lines.append("")
+        lines.append("  On-Demand Learning")
+        for item in result["learned"]:
+            r = item["result"]
+            if r.get("error"):
+                lines.append(f"    \u2717 {item['term']}: {r['error']}")
+            else:
+                lines.append(
+                    f"    \u2713 {item['term']}: "
+                    f"{len(r['nodes_added'])} nodes, "
+                    f"{r['total_new_edges']} edges "
+                    f"(coverage \u0394={r['coverage_delta']:+.1%})"
+                )
+
+        aa = result["assessment_after"]
+        lines.append(
+            f"    Coverage: {ab['coverage_ratio']:.0%} "
+            f"\u2192 {aa['coverage_ratio']:.0%}"
+        )
+
+    # ── Navigation ──
+    if result["anchor"]:
+        lines.append("")
+        lines.append("  Navigation")
+        lines.append(f"    Anchor: {result['anchor']}")
+        if state.history:
+            last = state.history[-1]
+            lines.append(
+                f"    Steps: {last.steps}  "
+                f"Crossings: {last.domain_crossings}"
+            )
+            lines.append(
+                f"    Coverage: "
+                f"{last.assessment_before.coverage:.1%} \u2192 "
+                f"{last.assessment_after.coverage:.1%} "
+                f"(\u0394={last.coverage_delta:+.1%})"
+            )
+
+    # ── Confidence ──
+    lines.append("")
+    conf = result["confidence"]
+    if conf >= 0.8:
+        verdict = "high — most terms structurally covered"
+    elif conf >= 0.5:
+        verdict = "moderate — partial structural coverage"
+    else:
+        verdict = "low — significant knowledge gaps remain"
+    lines.append(f"  Confidence: {conf:.0%} \u2014 {verdict}")
+
+    return "\n".join(lines)
+
+
 def cmd_task(state: SessionState, text: str) -> str:
     """Process a user-provided difference as natural text.
 
@@ -4073,6 +4337,7 @@ E₀ Interactive Session — Commands
   tune [N]         Self-tune parameters via Self-Graph (max N rounds)
   auto [N]         Autonomous learning loop (max N steps)
   selflearn        Self-learn: E₀ learns itself first (canon → mechanism → dream)
+  ask <question>   On-demand Q&A: assess → gap-detect → learn → answer
   why              Explain the last decision
   detail [N]       Last round's path edge by edge (or round N)
   inspect <s> <t>  Deep view of edge s→t
@@ -4645,6 +4910,11 @@ def dispatch(state: SessionState, user_input: str) -> Optional[str]:
 
     if cmd == "selflearn":
         return cmd_selflearn(state)
+
+    if cmd == "ask":
+        if not arg:
+            return "Usage: ask <your question in natural language>"
+        return cmd_ask(state, arg)
 
     if cmd == "detail":
         round_n = None

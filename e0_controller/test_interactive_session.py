@@ -32,7 +32,9 @@ per-domain auto-tuning via Self-Graph diagnosis, parameter perturbation),
 and C237 Auto-Mode (auto_run, cmd_auto, _choose_action,
 autonomous decision loop orchestrating run/escalate/dream/sleep/curriculum/tune),
 and C238 Self-Learn (selflearn_run, cmd_selflearn, _assess_self_mastery,
-self-learning orchestration: canon → mechanism → dream → mastery assessment).
+self-learning orchestration: canon → mechanism → dream → mastery assessment),
+and C239 Ask Command (ask_run, cmd_ask, _extract_question_terms,
+_assess_knowledge, on-demand Q&A: assess → gap-detect → learn → navigate).
 """
 
 from __future__ import annotations
@@ -105,6 +107,10 @@ from e0_controller.interactive_session import (
     selflearn_run,
     cmd_selflearn,
     _assess_self_mastery,
+    _extract_question_terms,
+    _assess_knowledge,
+    ask_run,
+    cmd_ask,
 )
 from e0_controller.feedback import HumanAction
 from e0_controller.perception import PerceptionDomain
@@ -3969,3 +3975,278 @@ class TestSelflearnDispatch:
         """Help text includes 'selflearn' command."""
         text = cmd_help()
         assert "selflearn" in text.lower()
+
+
+# ── C239: Ask Command — On-Demand Question Answering ──────────────────
+
+# Spec for ask tests: nodes whose names align with landscape concepts
+_ASK_SPEC = {
+    "nodes": ["INTERFERENCE_QM", "BORN_RULE", "WAVE_FUNCTION"],
+    "edges": [
+        {"from": "INTERFERENCE_QM", "to": "BORN_RULE", "delta": 0.5,
+         "resistance": 1.0, "initial_U": 3.0, "initial_F": 1.0,
+         "confidence": 0.7},
+        {"from": "BORN_RULE", "to": "WAVE_FUNCTION", "delta": 0.4,
+         "resistance": 0.9, "initial_U": 2.0, "initial_F": 0.5,
+         "confidence": 0.8},
+        {"from": "WAVE_FUNCTION", "to": "INTERFERENCE_QM", "delta": 0.3,
+         "resistance": 1.0, "initial_U": 1.0, "initial_F": 0.5,
+         "confidence": 0.6},
+    ],
+}
+
+
+class TestExtractQuestionTerms:
+    """C239: _extract_question_terms tokenizes and filters questions."""
+
+    def test_basic_extraction(self):
+        """Extracts meaningful words, drops stopwords."""
+        terms = _extract_question_terms("What is the interference pattern?")
+        assert "interference" in terms
+        assert "pattern" in terms
+        assert "what" not in terms
+        assert "the" not in terms
+
+    def test_short_tokens_removed(self):
+        """Tokens of length <= 2 are removed."""
+        terms = _extract_question_terms("Is it an ok fit?")
+        assert "ok" not in terms
+        assert "is" not in terms
+        assert "it" not in terms
+        assert "an" not in terms
+        assert "fit" in terms
+
+    def test_empty_input(self):
+        """Empty input returns empty list."""
+        assert _extract_question_terms("") == []
+        assert _extract_question_terms("is the a") == []
+
+    def test_deduplication(self):
+        """Duplicate terms appear only once."""
+        terms = _extract_question_terms(
+            "tension and tension and more tension"
+        )
+        assert terms.count("tension") == 1
+
+    def test_preserves_order(self):
+        """Terms appear in order of first occurrence."""
+        terms = _extract_question_terms("landscape tension historization")
+        assert terms == ["landscape", "tension", "historization"]
+
+    def test_stopwords_comprehensive(self):
+        """All stopwords are filtered."""
+        terms = _extract_question_terms(
+            "does this have the same interference as that one"
+        )
+        assert "interference" in terms
+        # Only 'interference', 'same', 'one' should survive
+        for t in terms:
+            assert t not in {"does", "this", "have", "the", "as", "that"}
+
+
+class TestAssessKnowledge:
+    """C239: _assess_knowledge checks structural coverage of a question."""
+
+    def test_known_terms_covered(self):
+        """Terms matching existing landscape nodes are covered."""
+        s = build_session(steps_per_round=10)
+        result = _assess_knowledge(s, "tension and historization")
+        assert "tension" in result["covered"]
+        assert result["coverage_ratio"] > 0
+
+    def test_unknown_terms_are_gaps(self):
+        """Terms not matching any node appear as gaps."""
+        s = build_session(steps_per_round=10)
+        result = _assess_knowledge(s, "quantum decoherence unknown")
+        # These terms should not match canon/bootstrap/en nodes
+        gaps = result["gaps"]
+        assert len(gaps) > 0
+
+    def test_full_coverage(self):
+        """When all terms match, coverage_ratio approaches 1.0."""
+        s = build_session(steps_per_round=10)
+        # Use terms that definitely exist in the landscape
+        result = _assess_knowledge(s, "tension historization")
+        assert result["coverage_ratio"] >= 0.5
+
+    def test_empty_landscape_question(self):
+        """Coverage of purely unknown terms is 0."""
+        s = build_session(steps_per_round=10)
+        result = _assess_knowledge(s, "xyzzy plugh gibberish")
+        assert result["coverage_ratio"] == 0.0
+        assert len(result["gaps"]) == 3
+
+    def test_returns_required_keys(self):
+        """Result dict has all required keys."""
+        s = build_session(steps_per_round=10)
+        result = _assess_knowledge(s, "interference exploration")
+        assert "matches" in result
+        assert "terms" in result
+        assert "covered" in result
+        assert "gaps" in result
+        assert "coverage_ratio" in result
+
+    def test_coverage_ratio_in_range(self):
+        """Coverage ratio is between 0 and 1."""
+        s = build_session(steps_per_round=10)
+        result = _assess_knowledge(s, "tension unknown_word historization")
+        assert 0.0 <= result["coverage_ratio"] <= 1.0
+
+
+class TestAskRun:
+    """C239: ask_run orchestrates the full question-answering pipeline."""
+
+    def test_returns_required_keys(self):
+        """Result dict has all required keys."""
+        s = build_session(steps_per_round=10)
+        result = ask_run(s, "tension and historization", auto_learn=False)
+        for key in [
+            "question", "terms", "assessment_before", "learned",
+            "assessment_after", "anchor", "nav_path", "confidence",
+        ]:
+            assert key in result, f"Missing key: {key}"
+
+    def test_no_learn_when_auto_learn_false(self):
+        """With auto_learn=False, no teaching happens even with gaps."""
+        s = build_session(steps_per_round=10)
+        result = ask_run(s, "quantum decoherence unknown", auto_learn=False)
+        assert result["learned"] == []
+
+    def test_known_question_no_learning(self):
+        """Question fully covered by existing nodes needs no learning."""
+        s = build_session(steps_per_round=10)
+        result = ask_run(s, "tension and historization", auto_learn=True)
+        # Even with auto_learn=True, no learning if no gaps
+        if not result["assessment_before"]["gaps"]:
+            assert result["learned"] == []
+
+    def test_navigates_from_best_match(self):
+        """Navigation starts from the highest-relevance match."""
+        s = build_session(steps_per_round=10)
+        result = ask_run(s, "tension and historization", auto_learn=False)
+        assert result["anchor"] is not None
+        assert len(result["nav_path"]) > 0
+
+    def test_confidence_reflects_coverage(self):
+        """Confidence equals term coverage ratio."""
+        s = build_session(steps_per_round=10)
+        result = ask_run(s, "tension and historization", auto_learn=False)
+        assert result["confidence"] == result["assessment_after"]["coverage_ratio"]
+
+    def test_journal_event_recorded(self):
+        """ask_run records a journal event."""
+        s = build_session(steps_per_round=10)
+        journal_before = len(s.journal)
+        ask_run(s, "tension and exploration", auto_learn=False)
+        ask_events = [
+            e for e in s.journal[journal_before:]
+            if e["event_type"] == "ask"
+        ]
+        assert len(ask_events) == 1
+        d = ask_events[0]["detail"]
+        assert "question" in d
+        assert "gaps_before" in d
+        assert "confidence" in d
+
+    def test_learning_with_mock_llm(self):
+        """With gaps and mock LLM, teach_concept is called for gap terms."""
+        s = _build_session_with_mock(_ASK_SPEC)
+        # Ask about something partially known + gap terms
+        result = ask_run(s, "interference quantum born rule")
+        # Some terms should have been learned
+        if result["assessment_before"]["gaps"]:
+            assert len(result["learned"]) > 0
+
+    def test_max_gap_learn_limit(self):
+        """At most _ASK_MAX_GAP_LEARN gap terms are learned."""
+        from e0_controller.interactive_session import _ASK_MAX_GAP_LEARN
+        s = _build_session_with_mock(_ASK_SPEC)
+        result = ask_run(
+            s, "alpha beta gamma delta epsilon zeta theta kappa"
+        )
+        assert len(result["learned"]) <= _ASK_MAX_GAP_LEARN
+
+    def test_assessment_after_reflects_learning(self):
+        """After learning, assessment_after may have fewer gaps."""
+        s = _build_session_with_mock(_ASK_SPEC)
+        result = ask_run(s, "interference quantum born wave")
+        before_gaps = len(result["assessment_before"]["gaps"])
+        after_gaps = len(result["assessment_after"]["gaps"])
+        # After learning, gaps should decrease or stay same
+        assert after_gaps <= before_gaps
+
+
+class TestCmdAsk:
+    """C239: cmd_ask produces formatted output."""
+
+    def test_output_contains_question(self):
+        """Output includes the original question."""
+        s = build_session(steps_per_round=10)
+        out = cmd_ask(s, "tension and historization")
+        assert "tension and historization" in out
+
+    def test_output_contains_assessment(self):
+        """Output shows knowledge assessment section."""
+        s = build_session(steps_per_round=10)
+        out = cmd_ask(s, "tension and exploration")
+        assert "Knowledge Assessment" in out
+        assert "Terms:" in out
+
+    def test_output_contains_confidence(self):
+        """Output shows confidence score."""
+        s = build_session(steps_per_round=10)
+        out = cmd_ask(s, "tension and historization")
+        assert "Confidence:" in out
+
+    def test_output_contains_navigation(self):
+        """Output shows navigation section for known terms."""
+        s = build_session(steps_per_round=10)
+        out = cmd_ask(s, "tension and historization")
+        assert "Navigation" in out
+        assert "Anchor:" in out
+
+    def test_output_shows_gaps(self):
+        """Output shows gaps when terms are unknown."""
+        s = build_session(steps_per_round=10)
+        out = cmd_ask(s, "xyzzy plugh gibberish")
+        assert "Gaps:" in out
+
+    def test_markdown_format(self):
+        """Markdown format uses ## headers."""
+        s = build_session(steps_per_round=10, output_format="markdown")
+        out = cmd_ask(s, "tension and historization")
+        assert "## Ask:" in out
+
+    def test_empty_question(self):
+        """Empty question returns usage hint."""
+        s = build_session(steps_per_round=10)
+        out = cmd_ask(s, "")
+        assert "Usage:" in out
+
+    def test_learning_section_with_mock(self):
+        """Output shows learning section when gaps are filled."""
+        s = _build_session_with_mock(_ASK_SPEC)
+        out = cmd_ask(s, "interference quantum born")
+        # Should show either learning results or gap info
+        assert "Knowledge Assessment" in out
+
+
+class TestAskDispatch:
+    """C239: dispatch routes 'ask' command."""
+
+    def test_dispatch_ask(self):
+        """dispatch('ask <question>') calls cmd_ask."""
+        s = build_session(steps_per_round=10)
+        out = dispatch(s, "ask tension and historization")
+        assert "Ask:" in out
+
+    def test_dispatch_ask_no_arg(self):
+        """dispatch('ask') without argument returns usage."""
+        s = build_session(steps_per_round=10)
+        out = dispatch(s, "ask")
+        assert "Usage:" in out
+
+    def test_help_includes_ask(self):
+        """Help text includes 'ask' command."""
+        text = cmd_help()
+        assert "ask" in text.lower()

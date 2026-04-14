@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C238",
-    "latest_commit_hash": "PENDING",
-    "latest_commit_msg": "C238: Self-Learn \u2014 E\u2080 learns itself first. selflearn_run orchestrates: (1) curriculum ontodynamics (WHAT E\u2080 believes), (2) curriculum mechanism_e0 (HOW E\u2080 works), (3) dream consolidation (cross-domain equivalences), (4) self-mastery assessment (per-domain coverage + canon\u2194process alignment + readiness gate). _assess_self_mastery checks C: and M: node coverage via trace_load, canon_self_bridge alignment ratio, overall mastery score. cmd_selflearn formatted output with per-phase turns, dream stats, coverage bars, mastery verdict. Implements Self-Graph First principle: E\u2080 must know itself before external domains. 21 tests, 5275 total.",
-    "test_count": 5275,
+    "latest_commit": "C239",
+    "latest_commit_hash": "pending",
+    "latest_commit_msg": "C239: Ask Command — on-demand Q&A with gap detection and selective learning. ask_run orchestrates: _extract_question_terms (stopword filtered), _assess_knowledge (per-term structural match against landscape), gap detection, teach_concept for up to 3 gap terms, re-assessment, navigation from best match, confidence = coverage ratio. cmd_ask formatted output: knowledge assessment, gaps, learning results, navigation, confidence verdict. Unlike task (match or LLM fallback), ask detects PARTIAL knowledge and fills gaps selectively before answering. 32 tests, 5309 total.",
+    "test_count": 5309,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
     "module_count": "77 production + 10 benchmarks + 17 demos + 69 explorations + 127 test files",
@@ -221,8 +221,8 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "Self-Graph First (C238+)",
-    "arc_status": "C238 DONE. Self-Learn command implemented. Next: concrete question to drive on-demand domain acquisition.",
+    "current_arc": "On-Demand Integration (C239+)",
+    "arc_status": "C239 DONE. Ask command: on-demand question-answering with gap detection and selective learning. Next: test with real question to validate end-to-end.",
     "arc_plan": {
       "C233_curriculum_command": {
         "title": "Curriculum Command",
@@ -236,35 +236,41 @@
       },
       "C235_sleep_wake_integration": {
         "title": "Sleep-Wake Integration",
-        "what": "Couple curriculum + dream into a sleep-wake cycle. sleep_wake_run creates per-domain E0Controllers from extracted sub-landscapes, wires SleepWakeCycle (dream pressure trigger T_s/(T_s+\u03bc)>0.5), runs N episodes with automatic wake/sleep phases, transfers historization back. cmd_sleep formatted output with episodes, domain pressure, summary. Uses _pick_domain_start for intelligent start selection, _get_or_create_observer for persistent DreamObserver, _extract_domain_landscapes for domain isolation.",
+        "what": "Couple curriculum + dream into a sleep-wake cycle. sleep_wake_run creates per-domain E0Controllers from extracted sub-landscapes, wires SleepWakeCycle (dream pressure trigger T_s/(T_s+μ)>0.5), runs N episodes with automatic wake/sleep phases, transfers historization back. cmd_sleep formatted output with episodes, domain pressure, summary. Uses _pick_domain_start for intelligent start selection, _get_or_create_observer for persistent DreamObserver, _extract_domain_landscapes for domain isolation.",
         "status": "DONE (C235)"
       },
       "C236_tune_command": {
         "title": "Tune Command",
-        "what": "Self-tuning wired into interactive session. tune_run extracts domain sub-landscapes, builds E0Controller per domain, runs auto_tune (Self-Graph diagnosis \u2192 perturbation \u2192 evaluation), reports per-domain quality changes with adopted parameter modifications. cmd_tune formatted output: domain results (initial/final quality, \u0394, rounds/trials), changed parameters, summary, meta-reflection context patterns. Journal event with domains_tuned/improved/total_trials.",
+        "what": "Self-tuning wired into interactive session. tune_run extracts domain sub-landscapes, builds E0Controller per domain, runs auto_tune (Self-Graph diagnosis → perturbation → evaluation), reports per-domain quality changes with adopted parameter modifications. cmd_tune formatted output: domain results (initial/final quality, Δ, rounds/trials), changed parameters, summary, meta-reflection context patterns. Journal event with domains_tuned/improved/total_trials.",
         "status": "DONE (C236)"
       },
       "C237_auto_mode": {
         "title": "Auto-Mode",
-        "what": "Autonomous learning loop: _choose_action analyzes session state (assess coverage/frontier, diagnose_session domain status GROWING/STAGNANT/BLOCKED/SATURATED, stagnation_streak, confused edges) and picks best action. auto_run orchestrates: run (3 rounds/step) for low coverage, escalate for stagnation\u22653, dream for confused edges>5, curriculum for blocked domains, sleep for multiple stagnant, tune for quality degradation. Stops on all-SATURATED, coverage\u226595%, or max_steps. cmd_auto formatted output with action icons (\u25b6/\u26a1/\u2601/\u263e/\u2709/\u2699/\u25a0) and per-step coverage. Journal event auto_mode with full action list.",
+        "what": "Autonomous learning loop: _choose_action analyzes session state (assess coverage/frontier, diagnose_session domain status GROWING/STAGNANT/BLOCKED/SATURATED, stagnation_streak, confused edges) and picks best action. auto_run orchestrates: run (3 rounds/step) for low coverage, escalate for stagnation≥3, dream for confused edges>5, curriculum for blocked domains, sleep for multiple stagnant, tune for quality degradation. Stops on all-SATURATED, coverage≥95%, or max_steps. cmd_auto formatted output with action icons (▶/⚡/☁/☾/✉/⚙/■) and per-step coverage. Journal event auto_mode with full action list.",
         "status": "DONE (C237)"
       },
       "C238_selflearn": {
-        "title": "Self-Learn: E\u2080 Learns Itself",
-        "what": "selflearn_run orchestrates self-learning: (1) curriculum ontodynamics (WHAT), (2) curriculum mechanism_e0 (HOW), (3) dream consolidation (cross-domain equivalences between canon and mechanism), (4) _assess_self_mastery (C: and M: node coverage via trace_load, canon_self_bridge alignment, overall mastery score, readiness gate \u22650.5). cmd_selflearn formatted output with per-phase turns, dream stats, coverage bars, mastery verdict. Implements Self-Graph First principle.",
+        "title": "Self-Learn: E₀ Learns Itself",
+        "what": "selflearn_run orchestrates self-learning: (1) curriculum ontodynamics (WHAT), (2) curriculum mechanism_e0 (HOW), (3) dream consolidation (cross-domain equivalences between canon and mechanism), (4) _assess_self_mastery (C: and M: node coverage via trace_load, canon_self_bridge alignment, overall mastery score, readiness gate ≥0.5). cmd_selflearn formatted output with per-phase turns, dream stats, coverage bars, mastery verdict. Implements Self-Graph First principle.",
         "status": "DONE (C238)"
+      },
+      "C239_ask_command": {
+        "title": "Ask Command: On-Demand Q&A",
+        "what": "ask_run orchestrates on-demand question answering: (1) _extract_question_terms tokenizes with stopword filter, (2) _assess_knowledge checks per-term structural match against landscape, (3) gap detection for unmatched terms, (4) teach_concept for up to 3 gap terms (auto_learn), (5) re-assessment after learning, (6) navigate from best match, (7) confidence = coverage ratio. cmd_ask formatted output with assessment/gaps/learning/navigation/confidence. Unlike task (match or LLM fallback), ask detects PARTIAL knowledge and fills gaps selectively.",
+        "status": "DONE (C239)"
       }
     },
-    "key_result": "C238: Self-Learn. E\u2080 learns itself before external domains. selflearn_run: curriculum ontodynamics (WHAT) \u2192 curriculum mechanism_e0 (HOW) \u2192 dream consolidation (cross-domain EQ) \u2192 self-mastery assessment. _assess_self_mastery checks C: and M: node coverage + canon\u2194process alignment + overall score + readiness gate. cmd_selflearn with per-phase details, coverage bars, mastery verdict. 21 tests.",
+    "key_result": "C239: Ask Command. On-demand question-answering pipeline: _extract_question_terms + _assess_knowledge for per-term structural coverage, gap detection for unmatched terms, teach_concept for gap terms via LLM (max 3), re-assessment, navigate from best match, confidence = coverage ratio. cmd_ask with assessment/gaps/learning/navigation/confidence. Unlike task (which matches or falls back to LLM), ask detects PARTIAL knowledge and fills gaps selectively. 32 tests.",
     "open_threads": [
       "Autonomes Lernen arc COMPLETE (C233–C237)",
-      "Self-Learn (C238) DONE \u2014 E\u2080 can now learn itself first",
-      "Next: pose a concrete question to drive on-demand domain acquisition via LLM",
-      "Deferred: Coupling Router + Multiverse \u2014 integrate when we hit scaling/isolation limits",
-      "LLM symmetry: needed at BOTH ends \u2014 input structuring (Bootstrapper) AND output formatting (User-Lesbarkeit)",
+      "Self-Learn (C238) DONE — E₀ can now learn itself first",
+      "Ask Command (C239) DONE — on-demand Q&A with gap detection and selective learning",
+      "Next: test ask with real question (e.g. interference comparison) to validate end-to-end flow",
+      "Deferred: Coupling Router + Multiverse — integrate when we hit scaling/isolation limits",
+      "LLM symmetry: needed at BOTH ends — input structuring (Bootstrapper) AND output formatting (User-Lesbarkeit)",
       "Adversarial stability still partially open (C172-C174)"
     ],
-    "next_commit_id": "C239",
+    "next_commit_id": "C240",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
@@ -314,8 +320,7 @@
         "contradicted": 0,
         "last_tested": "C224"
       }
-    ],
-    "next_commit_id": "C233"
+    ]
   },
   "structural_entropy": {
     "_comment": "Our forgetting protocol. Isomorphic to E₀'s structural entropy (C114-C121). Prevents bootstrap.json from growing without bound. Prune trigger is parameter-free: pressure = entries_since_last_prune / (entries_since_last_prune + μ). When pressure > 0.5 → prune. Check after each arc completion.",
