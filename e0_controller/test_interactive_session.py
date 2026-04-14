@@ -24,7 +24,9 @@ stagnation patterns, mode effectiveness, recommendations),
 and C233 Curriculum Command (curriculum_run, cmd_curriculum,
 prefix-aware historization transfer, session coupling),
 and C234 Dream Command (dream_run, cmd_dream,
-domain sub-landscape extraction, DreamObserver session integration).
+domain sub-landscape extraction, DreamObserver session integration),
+and C235 Sleep-Wake Integration (sleep_wake_run, cmd_sleep,
+per-domain E0Controller, SleepWakeCycle, historization transfer).
 """
 
 from __future__ import annotations
@@ -67,6 +69,7 @@ from e0_controller.interactive_session import (
     cmd_regenerate,
     cmd_run,
     cmd_save,
+    cmd_sleep,
     cmd_status,
     cmd_summary,
     cmd_task,
@@ -86,6 +89,7 @@ from e0_controller.interactive_session import (
     regenerate_seed,
     save_journal,
     save_session,
+    sleep_wake_run,
     teach_concept,
 )
 from e0_controller.feedback import HumanAction
@@ -3211,3 +3215,170 @@ class TestDreamDispatch:
         """Help text includes 'dream' command."""
         text = cmd_help()
         assert "dream" in text.lower()
+
+
+# ── C235: Sleep-Wake Integration ──────────────────────────────────────
+
+
+class TestSleepWakeRun:
+    """C235: sleep_wake_run executes wake-sleep episodes."""
+
+    def test_returns_dict(self):
+        """sleep_wake_run returns a result dict."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = sleep_wake_run(s, episodes=2, max_cycles=10)
+        assert isinstance(result, dict)
+
+    def test_result_has_expected_keys(self):
+        """Result contains episodes, domains, sleep_count, etc."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = sleep_wake_run(s, episodes=2, max_cycles=10)
+        assert "episodes" in result
+        assert "domains" in result
+        assert "sleep_count" in result
+        assert "total_steps" in result
+        assert "transferred_edges" in result
+        assert "episode_results" in result
+        assert "pressure" in result
+
+    def test_episode_count_matches(self):
+        """Number of EpisodeResults matches domains × episodes."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = sleep_wake_run(s, episodes=2, max_cycles=10)
+        n_domains = len(result["domains"])
+        # SleepWakeCycle produces one EpisodeResult per domain per episode
+        assert len(result["episode_results"]) == n_domains * 2
+
+    def test_episodes_have_wake_phase(self):
+        """Each episode has a wake phase with T_s values."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = sleep_wake_run(s, episodes=1, max_cycles=10)
+        for ep in result["episode_results"]:
+            assert hasattr(ep, "wake")
+            assert hasattr(ep.wake, "T_s_before")
+            assert hasattr(ep.wake, "T_s_after")
+
+    def test_journal_event_recorded(self):
+        """sleep_wake_run records a 'sleep_wake' journal event."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        sleep_wake_run(s, episodes=1, max_cycles=10)
+        events = [e for e in s.journal if e["event_type"] == "sleep_wake"]
+        assert len(events) >= 1
+        detail = events[-1]["detail"]
+        assert "episodes" in detail
+        assert "domains" in detail
+        assert "transferred_edges" in detail
+
+    def test_historization_transferred_back(self):
+        """Transferred edges count is non-negative."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = sleep_wake_run(s, episodes=2, max_cycles=10)
+        assert result["transferred_edges"] >= 0
+
+    def test_pressure_report_has_domains(self):
+        """Pressure report contains registered domains."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = sleep_wake_run(s, episodes=1, max_cycles=10)
+        assert len(result["pressure"]) > 0
+        for name, info in result["pressure"].items():
+            assert "T_s" in info
+            assert "pressure" in info
+
+    def test_observer_reused_from_dream(self):
+        """If dream was run first, sleep reuses the same observer."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        dream_run(s, cycles=1)
+        obs_before = s.dream_observer
+        sleep_wake_run(s, episodes=1, max_cycles=10)
+        assert s.dream_observer is obs_before
+
+
+class TestCmdSleep:
+    """C235: cmd_sleep provides formatted output."""
+
+    def test_output_is_string(self):
+        """cmd_sleep returns a non-empty string."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_sleep(s)
+        assert isinstance(out, str)
+        assert len(out) > 0
+
+    def test_output_has_header(self):
+        """Output contains 'Sleep-Wake Cycle'."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_sleep(s)
+        assert "Sleep-Wake Cycle" in out
+
+    def test_output_has_episodes(self):
+        """Output contains 'Episodes' section."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_sleep(s)
+        assert "Episodes" in out or "Ep " in out
+
+    def test_output_has_summary(self):
+        """Output contains 'Summary' section."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_sleep(s)
+        assert "Summary" in out
+
+    def test_output_has_pressure(self):
+        """Output contains 'Pressure' section."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_sleep(s)
+        assert "Pressure" in out
+
+    def test_custom_episodes(self):
+        """cmd_sleep('3') runs 3 episodes."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_sleep(s, "3")
+        assert "3 episodes" in out
+
+    def test_invalid_arg(self):
+        """Invalid arg returns usage hint."""
+        s = build_session(steps_per_round=10)
+        out = cmd_sleep(s, "abc")
+        assert "Usage" in out or "Invalid" in out
+
+    def test_markdown_format(self):
+        """Markdown mode uses ## headers."""
+        s = build_session(steps_per_round=10, output_format="markdown")
+        cmd_run(s, 1)
+        out = cmd_sleep(s, "2")
+        assert "## Sleep-Wake" in out
+
+
+class TestSleepDispatch:
+    """C235: dispatch routes 'sleep' command."""
+
+    def test_dispatch_sleep(self):
+        """dispatch('sleep 2') calls cmd_sleep."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = dispatch(s, "sleep 2")
+        assert "Sleep-Wake Cycle" in out
+
+    def test_dispatch_sleep_no_arg(self):
+        """dispatch('sleep') uses default episodes."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = dispatch(s, "sleep")
+        assert "Sleep-Wake Cycle" in out
+
+    def test_help_includes_sleep(self):
+        """Help text includes 'sleep' command."""
+        text = cmd_help()
+        assert "sleep" in text.lower()

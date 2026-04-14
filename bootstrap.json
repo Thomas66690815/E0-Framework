@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C234",
+    "latest_commit": "C235",
     "latest_commit_hash": "pending",
-    "latest_commit_msg": "C234: Dream Command \u2014 cross-domain consolidation wired into interactive session. dream_run + cmd_dream: domain sub-landscape extraction, DreamObserver with Hungarian node equivalences, readiness report, per-cycle stats, Dream Landscape summary, journal events. Observer persists on session state. 21 tests, 5193 total.",
-    "test_count": 5193,
+    "latest_commit_msg": "C235: Sleep-Wake Integration \u2014 coupled curriculum + dream as autonomous sleep-wake cycle in interactive session. sleep_wake_run creates per-domain E0Controllers from extracted sub-landscapes, wires SleepWakeCycle with DreamObserver, runs N episodes with automatic dream pressure triggering, transfers historization back. cmd_sleep: formatted output with episodes, domain pressure, summary. 19 tests, 5212 total.",
+    "test_count": 5212,
     "test_failures": 0,
     "ci_status": "green (all 3 Python versions)",
     "module_count": "77 production + 10 benchmarks + 17 demos + 69 explorations + 127 test files",
@@ -222,7 +222,7 @@
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
     "current_arc": "Autonomes Lernen (C233\u2013C237)",
-    "arc_status": "C233\u2013C234 DONE. C235\u2013C237 planned.",
+    "arc_status": "C233\u2013C235 DONE. C236\u2013C237 planned.",
     "arc_plan": {
       "C233_curriculum_command": {
         "title": "Curriculum Command",
@@ -236,8 +236,8 @@
       },
       "C235_sleep_wake_integration": {
         "title": "Sleep-Wake Integration",
-        "what": "Couple curriculum + dream into a sleep-wake cycle. After curriculum turns, auto-dream to consolidate. BT-2 shared historization coupling.",
-        "status": "PLANNED"
+        "what": "Couple curriculum + dream into a sleep-wake cycle. sleep_wake_run creates per-domain E0Controllers from extracted sub-landscapes, wires SleepWakeCycle (dream pressure trigger T_s/(T_s+\u03bc)>0.5), runs N episodes with automatic wake/sleep phases, transfers historization back. cmd_sleep formatted output with episodes, domain pressure, summary. Uses _pick_domain_start for intelligent start selection, _get_or_create_observer for persistent DreamObserver, _extract_domain_landscapes for domain isolation.",
+        "status": "DONE (C235)"
       },
       "C236_tune_command": {
         "title": "Tune Command",
@@ -250,12 +250,12 @@
         "status": "PLANNED"
       }
     },
-    "key_result": "C234: Dream Command. Second commit of Autonomes Lernen arc. dream_run extracts domain sub-landscapes from unified session landscape (_extract_domain_landscapes groups edges by C:/B:/EN:/M: prefix, builds per-domain Landscape with copied historization), creates DreamObserver (Hungarian node equivalences, compatibility_threshold=0.6), runs N dream cycles. cmd_dream formatted output: domain readiness (inertia score), per-cycle equivalences (edge + node), Dream Landscape stats. Observer stored on SessionState.dream_observer for reuse. Journal event with cycle count, domains, equivalences.",
+    "key_result": "C235: Sleep-Wake Integration. Third commit of Autonomes Lernen arc. sleep_wake_run builds per-domain E0Controllers from _extract_domain_landscapes, registers with SleepWakeCycle (dream pressure T_s/(T_s+\u03bc)>0.5), runs N episodes with automatic wake (navigate) / sleep (dream consolidation) phases, transfers historization back to session. _pick_domain_start selects intelligent start nodes (fewest inscriptions). cmd_sleep formatted output: episode results (wake outcome + sleep status), domain pressure report, summary. Journal event with episode count, domains, slept count. BT-2 coupling: wake + dream share historization through SleepWakeCycle orchestration.",
     "open_threads": [
-      "Autonomes Lernen arc: C235 Sleep-Wake Integration next",
+      "Autonomes Lernen arc: C236 Tune Command next",
       "Adversarial stability still partially open (C172-C174)"
     ],
-    "next_commit_id": "C235",
+    "next_commit_id": "C236",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",

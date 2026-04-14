@@ -55,6 +55,12 @@ the session landscape. Extracts domain sub-landscapes (C:/B:/EN:/M:),
 creates DreamObserver, detects cross-domain equivalences, reports readiness
 and compatibility. Observer persists on session state for reuse.
 
+C235 adds Sleep-Wake Integration: `sleep [N]` runs N wake-sleep episodes on
+the session landscape. Extracts domain sub-landscapes, creates E0Controllers
+per domain, orchestrates via SleepWakeCycle (wake=navigate, sleep=dream when
+T_s > \u03bc). Transfers historization back to session (C233 coupling). Couples
+curriculum (C233) + dream (C234) into an automatic rhythm.
+
 Commands:
   run [N]       — Execute the next N rounds (default: 1)
   task <text>   — Introduce a difference in natural language
@@ -68,6 +74,7 @@ Commands:
   reflect       — Meta-reflection: analyze learning patterns
   curriculum [c] — Run structured curriculum (ontodynamics, mechanism_e0, …)
   dream [N]     — Run N dream consolidation cycles (default: 3)
+  sleep [N]     — Run N wake-sleep episodes (auto curriculum + dream)
   why           — Explain the last round's decision
   detail [N]    — Show last round edge by edge (or round N)
   inspect <src> <tgt> — Deep view of a single edge
@@ -96,6 +103,7 @@ from e0_controller.communication import (
 )
 from e0_controller.curriculum import CurriculumRunner, transfer_historization
 from e0_controller.dream_mode import DreamCycleResult, DreamObserver
+from e0_controller.sleep_wake import EpisodeResult, SleepWakeCycle
 from e0_controller.explore_learning_cycle_multidomain import (
     MultiDomainAssessment,
     MultiDomainRoundResult,
@@ -2943,6 +2951,211 @@ def cmd_dream(state: SessionState, arg: Optional[str] = None) -> str:
     return "\n".join(lines)
 
 
+# ── Sleep-Wake Command (C235) ─────────────────────────────────────────
+
+
+def _pick_domain_start(landscape: Any, domain_prefix: str) -> Optional[str]:
+    """Pick a start node for a domain sub-landscape.
+
+    Prefers the node with lowest trace_load (least explored).
+    Falls back to first state if all have zero load.
+    """
+    best_node = None
+    best_load = float("inf")
+    hist = landscape.historization
+    for state_name in landscape.states:
+        if not state_name.startswith(domain_prefix):
+            continue
+        # Sum trace_load for all edges from this node
+        load = 0.0
+        for edge in landscape.edges:
+            if edge.source == state_name:
+                load += hist.trace_load(edge)
+        if load < best_load:
+            best_load = load
+            best_node = state_name
+    return best_node
+
+
+def sleep_wake_run(
+    state: SessionState,
+    episodes: int = 5,
+    max_cycles: int = 30,
+) -> Dict[str, Any]:
+    """Run a sleep-wake cycle on the session landscape.
+
+    Combines wake (per-domain E0Controller navigation) with sleep
+    (DreamObserver consolidation when T_s > μ).
+
+    1. Extract domain sub-landscapes
+    2. Create E0Controller per domain
+    3. Create/reuse DreamObserver, register domains
+    4. Set up SleepWakeCycle, register controllers
+    5. Run N episodes
+    6. Transfer learned historization back to session landscape
+    7. Record journal event
+
+    Returns result dict with episode_results, pressure_report, summary.
+    """
+    from e0_controller.controller import E0Controller
+    from e0_controller.structural_entropy import structural_temperature
+
+    # Extract domain sub-landscapes
+    domain_landscapes = _extract_domain_landscapes(state.landscape)
+
+    # Create/reuse DreamObserver
+    observer = _get_or_create_observer(state)
+
+    # Register domains with observer
+    for name, ls in domain_landscapes.items():
+        observer.register(name, ls)
+
+    # Create E0Controller per domain + register with SleepWakeCycle
+    swc = SleepWakeCycle(observer, mu=5.0, max_dream_cycles=5)
+
+    prefix_map = {v: k for k, v in _DOMAIN_PREFIXES.items()}  # name→prefix
+    for name, ls in domain_landscapes.items():
+        ctrl = E0Controller(ls, lambda s, t: Outcome.SUCCESS,
+                            inscription_threshold=True)
+        prefix = prefix_map.get(name, "")
+        start = _pick_domain_start(state.landscape, prefix)
+        if start is None and ls.states:
+            start = next(iter(ls.states))
+        if start is not None:
+            swc.register(name, ctrl, start=start)
+
+    # Wire dream peer_fns for cross-domain bridge hypotheses
+    if len(swc.domain_names) >= 2:
+        swc.wire_peer_fns()
+
+    # Run episodes
+    episode_results = swc.run(n_episodes=episodes, max_cycles_per_run=max_cycles)
+
+    # Transfer historization back to session landscape
+    total_transferred = 0
+    for name, ls in domain_landscapes.items():
+        prefix = prefix_map.get(name, "")
+        if prefix:
+            transferred = _transfer_to_session(ls, state.landscape, prefix)
+            total_transferred += transferred
+
+    # Pressure report
+    pressure = swc.pressure_report()
+
+    # Count sleep phases
+    sleep_count = sum(1 for ep in episode_results if ep.slept)
+    total_steps = sum(
+        len(ep.wake.trace.steps) for ep in episode_results
+    )
+    total_dream_cycles = sum(
+        len(ep.sleep.dream_results)
+        for ep in episode_results
+        if ep.slept and ep.sleep is not None
+    )
+
+    # Record journal event
+    record_journal_event(state, "sleep_wake", {
+        "episodes": episodes,
+        "domains": list(domain_landscapes.keys()),
+        "sleep_phases": sleep_count,
+        "total_steps": total_steps,
+        "dream_cycles": total_dream_cycles,
+        "transferred_edges": total_transferred,
+    })
+
+    return {
+        "episode_results": episode_results,
+        "episodes": episodes,
+        "domains": list(domain_landscapes.keys()),
+        "sleep_count": sleep_count,
+        "total_steps": total_steps,
+        "total_dream_cycles": total_dream_cycles,
+        "transferred_edges": total_transferred,
+        "pressure": pressure,
+        "summary": swc.summary(),
+    }
+
+
+def cmd_sleep(state: SessionState, arg: Optional[str] = None) -> str:
+    """Run sleep-wake episodes and display results."""
+    episodes = 5
+    if arg:
+        try:
+            episodes = int(arg)
+            episodes = max(1, min(episodes, 50))
+        except ValueError:
+            return f"Invalid episode count: '{arg}'. Usage: sleep [N]"
+
+    result = sleep_wake_run(state, episodes)
+    md = state.output_format == "markdown"
+
+    if md:
+        lines = ["## Sleep-Wake Cycle", ""]
+    else:
+        lines = ["Sleep-Wake Cycle", "\u2550" * 60]
+
+    lines.append(
+        f"  {result['episodes']} episodes across "
+        f"{len(result['domains'])} domains"
+    )
+    lines.append(f"  Domains: {', '.join(result['domains'])}")
+    lines.append("")
+
+    # Episode summary
+    if md:
+        lines.append("### Episodes")
+    else:
+        lines.append("  Episodes")
+        lines.append("  " + "\u2500" * 40)
+
+    for ep in result["episode_results"]:
+        wake = ep.wake
+        sleep_tag = ""
+        if ep.slept and ep.sleep is not None:
+            n_dreams = len(ep.sleep.dream_results)
+            sleep_tag = f" \u2192 sleep ({n_dreams} dream cycles)"
+        lines.append(
+            f"    Ep {ep.episode}: {wake.domain}  "
+            f"T_s={wake.T_s_before:.2f}\u2192{wake.T_s_after:.2f}  "
+            f"p={wake.pressure_after:.2f}{sleep_tag}"
+        )
+    lines.append("")
+
+    # Aggregate stats
+    if md:
+        lines.append("### Summary")
+    else:
+        lines.append("  Summary")
+        lines.append("  " + "\u2500" * 40)
+
+    lines.append(f"    {result['total_steps']} navigation steps")
+    lines.append(
+        f"    {result['sleep_count']} sleep phases "
+        f"({result['total_dream_cycles']} dream cycles)"
+    )
+    lines.append(
+        f"    {result['transferred_edges']} edges transferred "
+        f"back to session"
+    )
+    lines.append("")
+
+    # Pressure
+    if md:
+        lines.append("### Domain Pressure")
+    else:
+        lines.append("  Domain Pressure")
+        lines.append("  " + "\u2500" * 40)
+    for name, info in result["pressure"].items():
+        indicator = "\u25cf" if info["pressure"] > 0.5 else "\u25cb"
+        lines.append(
+            f"    {indicator} {name:12s}  "
+            f"T_s={info['T_s']:.2f}  "
+            f"pressure={info['pressure']:.2f}"
+        )
+
+    return "\n".join(lines)
+
+
 def cmd_task(state: SessionState, text: str) -> str:
     """Process a user-provided difference as natural text.
 
@@ -3249,6 +3462,7 @@ E₀ Interactive Session — Commands
   reflect          Meta-reflection: analyze learning patterns
   curriculum [c]   Run structured curriculum (ontodynamics, …)
   dream [N]        Dream consolidation: cross-domain equivalences
+  sleep [N]        Wake-sleep cycle: navigate + auto-dream
   why              Explain the last decision
   detail [N]       Last round's path edge by edge (or round N)
   inspect <s> <t>  Deep view of edge s→t
@@ -3809,6 +4023,9 @@ def dispatch(state: SessionState, user_input: str) -> Optional[str]:
 
     if cmd == "dream":
         return cmd_dream(state, arg if arg else None)
+
+    if cmd == "sleep":
+        return cmd_sleep(state, arg if arg else None)
 
     if cmd == "detail":
         round_n = None
