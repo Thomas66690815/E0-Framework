@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C249",
-    "latest_commit_hash": "edf48e2",
-    "latest_commit_msg": "C249: Dream multiverse-aware — cross-universe L: domain injection. _DOMAIN_PREFIXES gains L:→learned. dream_run injects L: sub-landscapes from other universes as learned_<name> domains. 8 new tests, 5444 total.",
-    "test_count": 5444,
+    "latest_commit": "C250",
+    "latest_commit_hash": "99b2d63",
+    "latest_commit_msg": "C250: Dynamic domain detection — _detect_domains replaces hardcoded lists. diagnose/trajectory/meta_reflect/focus/why now detect L: and custom prefixes from landscape. Fix _domain_of fallback. 17 new tests, 5461 total.",
+    "test_count": 5461,
     "test_failures": 0,
     "ci_status": "pending",
     "module_count": "77 production + 10 benchmarks + 17 demos + 69 explorations + 127 test files",
@@ -221,43 +221,23 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "Multiverse Integration (C245–C249)",
-    "arc_status": "COMPLETE. All 5 commits landed. Universe registry, per-universe isolation, CouplingRouter wiring, divergence-pressure auto-coupling, cross-universe dream. 74 arc tests, 5444 total.",
+    "current_arc": "Standalone fix (C250)",
+    "arc_status": "COMPLETE. C250 dynamic domain detection — _detect_domains replaces hardcoded domain lists in diagnose/trajectory/meta_reflect/focus/why. L: and custom prefixes now visible. 17 new tests.",
     "arc_plan": {
-      "C245_universe_registry": {
-        "title": "Universe Registry",
-        "what": "SessionState gains universes dict (name→UniverseState with own Landscape+Historization+L:nodes). active_universe pointer, default='main'. Commands: universe create <name>, universe list, universe switch <name>, universe delete <name>. All existing commands operate on active universe. Dispatch refactored: dispatch→_dispatch_inner with pre/post sync. _ensure_main_universe lazy-creates 'main' from existing session landscape. 27 tests.",
-        "status": "DONE (C245)"
-      },
-      "C246_teach_ask_per_universe": {
-        "title": "Teach/Ask Per Universe",
-        "what": "consolidate() gains universe kwarg — tags edges+history in learning_state.json. All call sites pass state.active_universe. regenerate_seed filters by universe. In-memory isolation was already correct (C245 sync). This closes the persistence gap. 7 tests (3 landscape isolation + 2 consolidate tag + 2 regenerate filter).",
-        "status": "DONE (C246)"
-      },
-      "C247_coupling_router_wiring": {
-        "title": "CouplingRouter Wiring",
-        "what": "Wire CouplingRouter (C66-C68) into interactive session. _universe_to_coupling adapter bridges UniverseState→Universe. _ensure_coupling_router lazy-creates/updates router at ≥2 universes. couple_run transfers L: nodes+edges from partner, historizes outcome. Commands: couple/explore/recover/<name>/status. 25 tests.",
-        "status": "DONE (C247)"
-      },
-      "C248_divergence_pressure_auto": {
-        "title": "Divergence Pressure Auto-Coupling",
-        "what": "_choose_action gains 'couple' action: stagnation_streak≥3 + ≥2 universes → RECOVERY coupling before escalate. auto_run executes couple_run, resets stagnation on success, records auto_couple journal event. Single-universe unchanged. 6 tests.",
-        "status": "DONE (C248)"
-      },
-      "C249_dream_multiverse_aware": {
-        "title": "Dream Multiverse-Aware",
-        "what": "_DOMAIN_PREFIXES extended with L:→learned. dream_run iterates non-active universes, extracts L: sub-landscapes, registers as learned_<name> with DreamObserver. Journal+return gain cross_universe_domains field. 8 tests.",
-        "status": "DONE (C249)"
+      "C250_dynamic_domain_detection": {
+        "title": "Dynamic Domain Detection",
+        "what": "_detect_domains(landscape) scans for ^[A-Z]+: prefixes. _compute_domain_stats computes coverage directly. diagnose_session/compute_trajectory/meta_reflect/cmd_focus/cmd_why/_metrics_snapshot all use detected domains instead of hardcoded _DOMAINS. _domain_of in explore_learning_cycle_multidomain fixed: L:→learned, unknown prefix→lowered, bare→unknown. 17 tests.",
+        "status": "DONE (C250)"
       }
     },
-    "previous_arc_summary": "On-Demand Integration (C233–C244): Wired all core capabilities into interactive session — curriculum, dream, sleep-wake, tune, auto-mode, selflearn, ask, teach with iterative learning, domain isolation + stemming. Complete pipeline from cold-start to autonomous learning.",
-    "key_result": "Multiverse Integration arc COMPLETE (C245–C249). Interactive session now supports multiple isolated E₀ universes with CouplingRouter, auto-divergence coupling, per-universe teach/ask, and cross-universe dream. 74 arc tests.",
+    "previous_arc_summary": "Multiverse Integration (C245–C249): Universe registry, per-universe teach/ask isolation, CouplingRouter wiring, divergence-pressure auto-coupling, cross-universe dream. 74 arc tests. On-Demand Integration (C233–C244): Wired all core capabilities into interactive session.",
+    "key_result": "C250 standalone fix COMPLETE. Hardcoded domain lists (Canon/Bootstrap/EN/Mechanism) replaced by _detect_domains() scanning landscape for ^[A-Z]+: prefixes. L: and custom domains now visible in reflect/diagnose/trajectory/focus/why. 17 new tests, 5461 total.",
     "open_threads": [
       "LLM symmetry: needed at BOTH ends — input structuring (Bootstrapper) AND output formatting (User-Lesbarkeit)",
       "Adversarial stability partially mitigated (C172-C174, C243b finish_reason check)",
       "Next arc TBD — C43 Self-Graph (LLM Bootstrap Architecture) or new direction"
     ],
-    "next_commit_id": "C250",
+    "next_commit_id": "C251",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
@@ -468,6 +448,11 @@
     }
   },
   "commit_history_recent": [
+    {
+      "hash": "99b2d63",
+      "id": "C250",
+      "title": "Dynamic domain detection — _detect_domains replaces hardcoded lists, diagnose/trajectory/meta_reflect/focus/why now detect L: and custom prefixes. Fix _domain_of fallback. (17 tests, 5461 total)"
+    },
     {
       "hash": "PENDING",
       "id": "C244",
