@@ -166,6 +166,27 @@ from e0_controller.primitives import Edge, Outcome
 from e0_controller.ui_emitter import UISpec
 
 
+# ── Universe State (C245) ─────────────────────────────────────────────
+
+
+@dataclass
+class UniverseState:
+    """One E₀ universe — isolated landscape with own learned nodes.
+
+    C245: Each universe has its own landscape, unified_nodes, and stats.
+    The 'main' universe is the default (= the session's original landscape).
+    Additional universes can be created for domain isolation.
+    """
+
+    name: str
+    landscape: Any
+    unified_nodes: Dict[str, Any]
+    stats: Dict[str, int]
+    history: List[MultiDomainRoundResult] = field(default_factory=list)
+    round_num: int = 0
+    stagnation_streak: int = 0
+
+
 # ── Session State ──────────────────────────────────────────────────────
 
 
@@ -187,6 +208,9 @@ class SessionState:
     session_id: str = ""  # C231: unique session identifier
     journal: List[Dict[str, Any]] = field(default_factory=list)  # C231
     dream_observer: Optional[DreamObserver] = None  # C234: persistent observer
+    # C245: Multiverse support — multiple isolated E₀ universes
+    universes: Dict[str, UniverseState] = field(default_factory=dict)
+    active_universe: str = "main"
 
 
 # ── Commands ───────────────────────────────────────────────────────────
@@ -4860,6 +4884,194 @@ def cmd_rate(state: SessionState, panel_idx: int, rating: str) -> str:
     )
 
 
+# ── Universe Management (C245) ────────────────────────────────────────
+
+
+def _ensure_main_universe(state: SessionState) -> None:
+    """Ensure the 'main' universe exists in the registry.
+
+    Lazily creates it from the session's top-level landscape on first access.
+    This maintains backward compatibility — existing sessions that lack
+    universes get a 'main' universe wrapping their current landscape.
+    """
+    if "main" not in state.universes:
+        state.universes["main"] = UniverseState(
+            name="main",
+            landscape=state.landscape,
+            unified_nodes=state.unified_nodes,
+            stats=state.stats,
+            history=state.history,
+            round_num=state.round_num,
+            stagnation_streak=state.stagnation_streak,
+        )
+
+
+def _sync_active_to_session(state: SessionState) -> None:
+    """Sync the active universe's data back to session top-level fields.
+
+    The session's top-level landscape/unified_nodes/stats always mirror
+    the active universe. This ensures all existing commands work unchanged.
+    """
+    u = state.universes.get(state.active_universe)
+    if u is None:
+        return
+    state.landscape = u.landscape
+    state.unified_nodes = u.unified_nodes
+    state.stats = u.stats
+    state.history = u.history
+    state.round_num = u.round_num
+    state.stagnation_streak = u.stagnation_streak
+
+
+def _sync_session_to_active(state: SessionState) -> None:
+    """Sync session top-level fields back to the active universe.
+
+    Called after commands that modify session state (run, teach, etc.)
+    to keep the universe registry in sync.
+    """
+    u = state.universes.get(state.active_universe)
+    if u is None:
+        return
+    u.landscape = state.landscape
+    u.unified_nodes = state.unified_nodes
+    u.stats = state.stats
+    u.history = state.history
+    u.round_num = state.round_num
+    u.stagnation_streak = state.stagnation_streak
+
+
+def universe_create(state: SessionState, name: str) -> str:
+    """Create a new empty universe with a fresh landscape."""
+    _ensure_main_universe(state)
+
+    if name in state.universes:
+        return f"Universe '{name}' already exists."
+
+    if not name.isidentifier():
+        return (
+            f"Invalid universe name '{name}'. "
+            f"Use letters, digits, underscores (no spaces)."
+        )
+
+    landscape, unified_nodes, stats = build_multidomain_landscape()
+    u = UniverseState(
+        name=name,
+        landscape=landscape,
+        unified_nodes=unified_nodes,
+        stats=stats,
+    )
+    state.universes[name] = u
+
+    record_journal_event(state, "universe_created", {"name": name})
+    return (
+        f"Universe '{name}' created "
+        f"({stats['total_nodes']} nodes, {stats['total_edges']} edges).\n"
+        f"  Switch with: universe switch {name}"
+    )
+
+
+def universe_list(state: SessionState) -> str:
+    """List all universes with basic stats."""
+    _ensure_main_universe(state)
+
+    lines = ["Universes:"]
+    for name, u in state.universes.items():
+        marker = " ◀ active" if name == state.active_universe else ""
+        n_states = len(list(u.landscape.states))
+        n_edges = len(list(u.landscape.edges))
+        l_nodes = sum(
+            1 for s in u.landscape.states if s.startswith("L:")
+        )
+        lines.append(
+            f"  {name}: {n_states} states, {n_edges} edges, "
+            f"{l_nodes} learned (L:), round {u.round_num}{marker}"
+        )
+    return "\n".join(lines)
+
+
+def universe_switch(state: SessionState, name: str) -> str:
+    """Switch to a different universe."""
+    _ensure_main_universe(state)
+
+    if name not in state.universes:
+        available = ", ".join(state.universes.keys())
+        return f"Universe '{name}' not found. Available: {available}"
+
+    if name == state.active_universe:
+        return f"Already in universe '{name}'."
+
+    # Save current universe state
+    _sync_session_to_active(state)
+
+    # Switch
+    state.active_universe = name
+    _sync_active_to_session(state)
+
+    record_journal_event(state, "universe_switched", {"to": name})
+
+    u = state.universes[name]
+    n_states = len(list(u.landscape.states))
+    n_edges = len(list(u.landscape.edges))
+    return (
+        f"Switched to universe '{name}' "
+        f"({n_states} states, {n_edges} edges, round {u.round_num})."
+    )
+
+
+def universe_delete(state: SessionState, name: str) -> str:
+    """Delete a universe (cannot delete the active one)."""
+    _ensure_main_universe(state)
+
+    if name not in state.universes:
+        return f"Universe '{name}' not found."
+
+    if name == "main":
+        return "Cannot delete the 'main' universe."
+
+    if name == state.active_universe:
+        return (
+            f"Cannot delete active universe '{name}'. "
+            f"Switch to another universe first."
+        )
+
+    del state.universes[name]
+    record_journal_event(state, "universe_deleted", {"name": name})
+    return f"Universe '{name}' deleted."
+
+
+def cmd_universe(state: SessionState, arg: str) -> str:
+    """Handle universe subcommands: create, list, switch, delete."""
+    if not arg:
+        return universe_list(state)
+
+    parts = arg.split(None, 1)
+    subcmd = parts[0].lower()
+    subarg = parts[1].strip() if len(parts) > 1 else ""
+
+    if subcmd == "list":
+        return universe_list(state)
+
+    if subcmd == "create":
+        if not subarg:
+            return "Usage: universe create <name>"
+        return universe_create(state, subarg)
+
+    if subcmd == "switch":
+        if not subarg:
+            return "Usage: universe switch <name>"
+        return universe_switch(state, subarg)
+
+    if subcmd == "delete":
+        if not subarg:
+            return "Usage: universe delete <name>"
+        return universe_delete(state, subarg)
+
+    return (
+        f"Unknown subcommand '{subcmd}'. "
+        f"Usage: universe [create|list|switch|delete] [name]"
+    )
+
+
 HELP_TEXT = """
 E₀ Interactive Session — Commands
 ──────────────────────────────────
@@ -4879,6 +5091,7 @@ E₀ Interactive Session — Commands
   auto [N]         Autonomous learning loop (max N steps)
   selflearn        Self-learn: E₀ learns itself first (canon → mechanism → dream)
   ask <question>   On-demand Q&A: assess → gap-detect → learn → answer
+  universe [sub]   Manage E₀ universes (create|list|switch|delete)
   why              Explain the last decision
   detail [N]       Last round's path edge by edge (or round N)
   inspect <s> <t>  Deep view of edge s→t
@@ -5370,7 +5583,24 @@ def dispatch(state: SessionState, user_input: str) -> Optional[str]:
     """Parse and dispatch a single user command.
 
     Returns the output string, or None for quit.
+
+    C245: Syncs active universe before/after command execution.
     """
+    # C245: Ensure universe registry exists and is synced
+    if state.universes:
+        _sync_active_to_session(state)
+
+    result = _dispatch_inner(state, user_input)
+
+    # C245: After any mutating command, sync back to active universe
+    if state.universes and result is not None:
+        _sync_session_to_active(state)
+
+    return result
+
+
+def _dispatch_inner(state: SessionState, user_input: str) -> Optional[str]:
+    """Inner dispatch without universe sync (called by dispatch)."""
     raw = user_input.strip()
     if not raw:
         return ""
@@ -5488,6 +5718,9 @@ def dispatch(state: SessionState, user_input: str) -> Optional[str]:
 
     if cmd == "save":
         return cmd_save(state, arg if arg else None)
+
+    if cmd == "universe":
+        return cmd_universe(state, arg)
 
     if cmd == "regenerate":
         return cmd_regenerate(state, arg if arg else None)

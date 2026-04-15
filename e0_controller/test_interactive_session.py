@@ -50,6 +50,7 @@ from e0_controller.interactive_session import (
     JOURNAL_PATH,
     SESSION_STATE_PATH,
     SessionState,
+    UniverseState,
     _RATING_ACTION,
     _assessment_to_dict,
     _dict_to_assessment,
@@ -85,6 +86,7 @@ from e0_controller.interactive_session import (
     cmd_teach,
     cmd_trajectory,
     cmd_tune,
+    cmd_universe,
     cmd_why,
     compute_trajectory,
     curriculum_run,
@@ -116,6 +118,13 @@ from e0_controller.interactive_session import (
     _stem,
     ask_run,
     cmd_ask,
+    universe_create,
+    universe_list,
+    universe_switch,
+    universe_delete,
+    _ensure_main_universe,
+    _sync_active_to_session,
+    _sync_session_to_active,
 )
 from e0_controller.feedback import HumanAction
 from e0_controller.perception import PerceptionDomain
@@ -4953,3 +4962,261 @@ class TestAskFeedbackOnFailure:
             if e.get("event_type") == "knowledge_gap_unresolved"
         ]
         assert len(gap_events) == 0
+
+
+# ── Universe Registry (C245) ──────────────────────────────────────────
+
+
+class TestEnsureMainUniverse:
+    """C245: _ensure_main_universe lazily wraps session landscape."""
+
+    def test_creates_main_from_session(self):
+        """First call creates 'main' from session's current landscape."""
+        s = build_session(steps_per_round=10)
+        assert len(s.universes) == 0
+        _ensure_main_universe(s)
+        assert "main" in s.universes
+        assert s.universes["main"].landscape is s.landscape
+
+    def test_idempotent(self):
+        """Calling twice does not overwrite."""
+        s = build_session(steps_per_round=10)
+        _ensure_main_universe(s)
+        u1 = s.universes["main"]
+        _ensure_main_universe(s)
+        assert s.universes["main"] is u1
+
+
+class TestUniverseCreate:
+    """C245: universe_create builds isolated landscape."""
+
+    def test_create_new_universe(self):
+        """New universe gets its own fresh landscape."""
+        s = build_session(steps_per_round=10)
+        result = universe_create(s, "logistics")
+        assert "created" in result.lower()
+        assert "logistics" in s.universes
+        # Different landscape object
+        u = s.universes["logistics"]
+        assert u.landscape is not s.landscape
+        assert u.round_num == 0
+
+    def test_create_duplicate_rejected(self):
+        """Cannot create a universe with an existing name."""
+        s = build_session(steps_per_round=10)
+        universe_create(s, "alpha")
+        result = universe_create(s, "alpha")
+        assert "already exists" in result.lower()
+
+    def test_create_invalid_name_rejected(self):
+        """Names must be valid identifiers."""
+        s = build_session(steps_per_round=10)
+        result = universe_create(s, "my universe")
+        assert "invalid" in result.lower()
+
+    def test_create_records_journal(self):
+        """Creation records a journal event."""
+        s = build_session(steps_per_round=10)
+        universe_create(s, "physics")
+        events = [
+            e for e in s.journal
+            if e.get("event_type") == "universe_created"
+        ]
+        assert len(events) == 1
+        assert events[0]["detail"]["name"] == "physics"
+
+
+class TestUniverseList:
+    """C245: universe_list shows all universes with stats."""
+
+    def test_list_default(self):
+        """Default session has main universe after list."""
+        s = build_session(steps_per_round=10)
+        result = universe_list(s)
+        assert "main" in result
+        assert "active" in result.lower()
+
+    def test_list_multiple(self):
+        """Lists all created universes."""
+        s = build_session(steps_per_round=10)
+        universe_create(s, "alpha")
+        universe_create(s, "beta")
+        result = universe_list(s)
+        assert "main" in result
+        assert "alpha" in result
+        assert "beta" in result
+
+
+class TestUniverseSwitch:
+    """C245: universe_switch changes active universe."""
+
+    def test_switch_changes_landscape(self):
+        """After switch, session landscape reflects new universe."""
+        s = build_session(steps_per_round=10)
+        original_landscape = s.landscape
+        universe_create(s, "alt")
+        alt_landscape = s.universes["alt"].landscape
+        result = universe_switch(s, "alt")
+        assert "switched" in result.lower()
+        assert s.active_universe == "alt"
+        assert s.landscape is alt_landscape
+        assert s.landscape is not original_landscape
+
+    def test_switch_preserves_state(self):
+        """Switching away saves current state, switching back restores it."""
+        s = build_session(steps_per_round=10)
+        # Modify main
+        s.round_num = 42
+        s.stagnation_streak = 5
+        _ensure_main_universe(s)
+        _sync_session_to_active(s)
+        # Create alt and switch
+        universe_create(s, "alt")
+        universe_switch(s, "alt")
+        assert s.round_num == 0  # alt is fresh
+        # Switch back
+        universe_switch(s, "main")
+        assert s.round_num == 42
+        assert s.stagnation_streak == 5
+
+    def test_switch_nonexistent_rejected(self):
+        """Cannot switch to a universe that doesn't exist."""
+        s = build_session(steps_per_round=10)
+        result = universe_switch(s, "nope")
+        assert "not found" in result.lower()
+
+    def test_switch_same_noop(self):
+        """Switching to the current universe is a no-op."""
+        s = build_session(steps_per_round=10)
+        _ensure_main_universe(s)
+        result = universe_switch(s, "main")
+        assert "already" in result.lower()
+
+    def test_switch_records_journal(self):
+        """Switching records a journal event."""
+        s = build_session(steps_per_round=10)
+        universe_create(s, "target")
+        universe_switch(s, "target")
+        events = [
+            e for e in s.journal
+            if e.get("event_type") == "universe_switched"
+        ]
+        assert len(events) == 1
+        assert events[0]["detail"]["to"] == "target"
+
+
+class TestUniverseDelete:
+    """C245: universe_delete removes a universe."""
+
+    def test_delete_non_active(self):
+        """Can delete a non-active universe."""
+        s = build_session(steps_per_round=10)
+        universe_create(s, "temp")
+        result = universe_delete(s, "temp")
+        assert "deleted" in result.lower()
+        assert "temp" not in s.universes
+
+    def test_delete_active_rejected(self):
+        """Cannot delete the active universe."""
+        s = build_session(steps_per_round=10)
+        universe_create(s, "active_one")
+        universe_switch(s, "active_one")
+        result = universe_delete(s, "active_one")
+        assert "cannot delete active" in result.lower()
+
+    def test_delete_main_rejected(self):
+        """Cannot delete the main universe."""
+        s = build_session(steps_per_round=10)
+        _ensure_main_universe(s)
+        result = universe_delete(s, "main")
+        assert "cannot delete" in result.lower()
+
+    def test_delete_records_journal(self):
+        """Deletion records a journal event."""
+        s = build_session(steps_per_round=10)
+        universe_create(s, "doomed")
+        universe_delete(s, "doomed")
+        events = [
+            e for e in s.journal
+            if e.get("event_type") == "universe_deleted"
+        ]
+        assert len(events) == 1
+
+
+class TestCmdUniverse:
+    """C245: cmd_universe dispatches subcommands."""
+
+    def test_no_arg_lists(self):
+        """No argument shows list."""
+        s = build_session(steps_per_round=10)
+        result = cmd_universe(s, "")
+        assert "main" in result
+
+    def test_list_subcommand(self):
+        """Explicit 'list' subcommand."""
+        s = build_session(steps_per_round=10)
+        result = cmd_universe(s, "list")
+        assert "main" in result
+
+    def test_create_via_cmd(self):
+        """Create via cmd_universe."""
+        s = build_session(steps_per_round=10)
+        result = cmd_universe(s, "create myworld")
+        assert "created" in result.lower()
+
+    def test_switch_via_cmd(self):
+        """Switch via cmd_universe."""
+        s = build_session(steps_per_round=10)
+        cmd_universe(s, "create target")
+        result = cmd_universe(s, "switch target")
+        assert "switched" in result.lower()
+
+    def test_delete_via_cmd(self):
+        """Delete via cmd_universe."""
+        s = build_session(steps_per_round=10)
+        cmd_universe(s, "create temp")
+        result = cmd_universe(s, "delete temp")
+        assert "deleted" in result.lower()
+
+    def test_unknown_subcommand(self):
+        """Unknown subcommand returns error."""
+        s = build_session(steps_per_round=10)
+        result = cmd_universe(s, "frobnicate")
+        assert "unknown" in result.lower()
+
+
+class TestUniverseDispatch:
+    """C245: 'universe' command works through dispatch."""
+
+    def test_dispatch_universe_list(self):
+        """dispatch routes 'universe' to cmd_universe."""
+        s = build_session(steps_per_round=10)
+        result = dispatch(s, "universe")
+        assert "main" in result
+
+    def test_dispatch_universe_create(self):
+        """dispatch handles 'universe create X'."""
+        s = build_session(steps_per_round=10)
+        result = dispatch(s, "universe create test_u")
+        assert "created" in result.lower()
+        assert "test_u" in s.universes
+
+    def test_dispatch_syncs_after_run(self):
+        """After 'run' via dispatch, active universe state is synced."""
+        s = build_session(steps_per_round=10)
+        _ensure_main_universe(s)
+        initial_round = s.round_num
+        dispatch(s, "run 1")
+        # Session state updated
+        assert s.round_num > initial_round
+        # Universe state also updated
+        assert s.universes["main"].round_num == s.round_num
+
+
+class TestUniverseInHelp:
+    """C245: universe command appears in help text."""
+
+    def test_help_mentions_universe(self):
+        """Help text includes universe command."""
+        text = cmd_help()
+        assert "universe" in text.lower()

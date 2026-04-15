@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C244",
+    "latest_commit": "C245",
     "latest_commit_hash": "PENDING",
-    "latest_commit_msg": "C244: Domain Isolation + Stemming + Feedback — 4 fixes for teach/ask noise: (1) _diagnose_learning_gaps gains concept_nodes scoping (prevents cross-contamination from prior teach sessions), (2) PROPOSE_DOMAIN_GRAPH_PROMPT requires root concept node as first entry, (3) _stem() lightweight English suffix stripper + stemmed matching in _match_nodes and _assess_knowledge (logistics↔logistic, processing↔process), (4) ask_run records knowledge_gap_unresolved journal event + increments stagnation_streak on <20% confidence. 17 new tests, 5404 total.",
-    "test_count": 5404,
+    "latest_commit_msg": "C245: Universe Registry — SessionState gains UniverseState dict (name→isolated Landscape), active_universe pointer, universe create/list/switch/delete commands. Dispatch refactored to sync active universe before/after commands. _ensure_main_universe lazy wraps existing landscape. 27 new tests, 5398 total.",
+    "test_count": 5398,
     "test_failures": 0,
     "ci_status": "pending",
     "module_count": "77 production + 10 benchmarks + 17 demos + 69 explorations + 127 test files",
@@ -221,66 +221,43 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "On-Demand Integration (C239+)",
-    "arc_status": "C244 DONE. Domain Isolation + Stemming + Feedback — 4 fixes for teach/ask cross-contamination and matching noise. Concept-scoped gap diagnosis, root concept node, _stem() suffix matching, knowledge_gap_unresolved feedback loop.",
+    "current_arc": "Multiverse Integration (C245–C249)",
+    "arc_status": "STARTING. Previous arc (On-Demand Integration C233–C244) complete. Now wiring MultiverseController + CouplingRouter into interactive session — multiple E₀ universes with automatic divergence-pressure coupling.",
     "arc_plan": {
-      "C233_curriculum_command": {
-        "title": "Curriculum Command",
-        "what": "Wire CurriculumRunner into interactive session. curriculum [canon] runs structured hierarchical learning (derivation-level turns), transfers historization back into session landscape (prefix-aware coupling), records journal events.",
-        "status": "DONE (C233)"
+      "C245_universe_registry": {
+        "title": "Universe Registry",
+        "what": "SessionState gains universes dict (name→UniverseState with own Landscape+Historization+L:nodes). active_universe pointer, default='main'. Commands: universe create <name>, universe list, universe switch <name>, universe delete <name>. All existing commands operate on active universe. Dispatch refactored: dispatch→_dispatch_inner with pre/post sync. _ensure_main_universe lazy-creates 'main' from existing session landscape. 27 tests.",
+        "status": "DONE (C245)"
       },
-      "C234_dream_command": {
-        "title": "Dream Command",
-        "what": "Wire DreamObserver into session. dream [N] runs consolidation on session landscape. Extracts per-domain sub-landscapes (C:/B:/EN:/M:), registers with DreamObserver (Hungarian node equivalences, compatibility gating), runs N dream cycles. Reports readiness, equivalences, Dream Landscape stats. Observer persists on session state for reuse across commands.",
-        "status": "DONE (C234)"
+      "C246_teach_ask_per_universe": {
+        "title": "Teach/Ask Per Universe",
+        "what": "teach_concept and ask_run operate on active_universe's landscape. L: nodes scoped to universe (L:<universe>:<NODE> or separate node set). No cross-contamination by design — each universe is isolated until explicitly coupled.",
+        "status": "PLANNED"
       },
-      "C235_sleep_wake_integration": {
-        "title": "Sleep-Wake Integration",
-        "what": "Couple curriculum + dream into a sleep-wake cycle. sleep_wake_run creates per-domain E0Controllers from extracted sub-landscapes, wires SleepWakeCycle (dream pressure trigger T_s/(T_s+μ)>0.5), runs N episodes with automatic wake/sleep phases, transfers historization back. cmd_sleep formatted output with episodes, domain pressure, summary. Uses _pick_domain_start for intelligent start selection, _get_or_create_observer for persistent DreamObserver, _extract_domain_landscapes for domain isolation.",
-        "status": "DONE (C235)"
+      "C247_coupling_router_wiring": {
+        "title": "CouplingRouter Wiring",
+        "what": "At ≥2 universes: CouplingRouter auto-instanziiert. couple <name> manual partner selection. couple explore/recover uses dual-selection. Coupling outcomes historized. Knowledge transfer: high-confidence edges from partner injected as hypothesis edges.",
+        "status": "PLANNED"
       },
-      "C236_tune_command": {
-        "title": "Tune Command",
-        "what": "Self-tuning wired into interactive session. tune_run extracts domain sub-landscapes, builds E0Controller per domain, runs auto_tune (Self-Graph diagnosis → perturbation → evaluation), reports per-domain quality changes with adopted parameter modifications. cmd_tune formatted output: domain results (initial/final quality, Δ, rounds/trials), changed parameters, summary, meta-reflection context patterns. Journal event with domains_tuned/improved/total_trials.",
-        "status": "DONE (C236)"
+      "C248_divergence_pressure_auto": {
+        "title": "Divergence Pressure Auto-Coupling",
+        "what": "auto-mode integrates divergence_pressure. Stagnating universe → CouplingRouter selects partner → knowledge transfer (edges with confidence > threshold). No new command — auto recognizes this automatically.",
+        "status": "PLANNED"
       },
-      "C237_auto_mode": {
-        "title": "Auto-Mode",
-        "what": "Autonomous learning loop: _choose_action analyzes session state (assess coverage/frontier, diagnose_session domain status GROWING/STAGNANT/BLOCKED/SATURATED, stagnation_streak, confused edges) and picks best action. auto_run orchestrates: run (3 rounds/step) for low coverage, escalate for stagnation≥3, dream for confused edges>5, curriculum for blocked domains, sleep for multiple stagnant, tune for quality degradation. Stops on all-SATURATED, coverage≥95%, or max_steps. cmd_auto formatted output with action icons (▶/⚡/☁/☾/✉/⚙/■) and per-step coverage. Journal event auto_mode with full action list.",
-        "status": "DONE (C237)"
-      },
-      "C238_selflearn": {
-        "title": "Self-Learn: E₀ Learns Itself",
-        "what": "selflearn_run orchestrates self-learning: (1) curriculum ontodynamics (WHAT), (2) curriculum mechanism_e0 (HOW), (3) dream consolidation (cross-domain equivalences between canon and mechanism), (4) _assess_self_mastery (C: and M: node coverage via trace_load, canon_self_bridge alignment, overall mastery score, readiness gate ≥0.5). cmd_selflearn formatted output with per-phase turns, dream stats, coverage bars, mastery verdict. Implements Self-Graph First principle.",
-        "status": "DONE (C238)"
-      },
-      "C239_ask_command": {
-        "title": "Ask Command: On-Demand Q&A",
-        "what": "ask_run orchestrates on-demand question answering: (1) _extract_question_terms tokenizes with stopword filter, (2) _assess_knowledge checks per-term structural match against landscape, (3) gap detection for unmatched terms, (4) teach_concept for up to 3 gap terms (auto_learn), (5) re-assessment after learning, (6) navigate from best match, (7) confidence = coverage ratio. cmd_ask formatted output with assessment/gaps/learning/navigation/confidence. Unlike task (match or LLM fallback), ask detects PARTIAL knowledge and fills gaps selectively.",
-        "status": "DONE (C239)"
-      },
-      "C243_iterative_teaching": {
-        "title": "Iterative Teaching",
-        "what": "teach_concept(rounds=N) self-directs follow-up learning. Round 1 = propose_domain_graph. Rounds 2+ = _diagnose_learning_gaps (frontier/weak/thin/leaf analysis) → _formulate_followup (gaps→NL question) → deepen_domain_graph (10th LLM prompt, extends graph targeting identified gaps) → inject → explore. cmd_teach parses 'teach water 3'. Capped at 5, early stop on no_gaps. Atomic save_learning_state (tmp→fsync→rename) prevents JSON truncation. load_learning_state graceful fallback on corrupt JSON.",
-        "status": "DONE (C243)"
-      },
-      "C244_domain_isolation_stemming_feedback": {
-        "title": "Domain Isolation + Stemming + Feedback",
-        "what": "_diagnose_learning_gaps gains concept_nodes parameter (prevents cross-contamination from prior teach sessions). PROPOSE_DOMAIN_GRAPH_PROMPT requires root concept node as first entry. _stem() lightweight suffix stripper for _match_nodes and _assess_knowledge (logistics↔logistic, processing↔process). ask_run records knowledge_gap_unresolved journal event + stagnation_streak on <20% confidence.",
-        "status": "DONE (C244)"
+      "C249_dream_multiverse_aware": {
+        "title": "Dream Multiverse-Aware",
+        "what": "dream becomes universe-aware: searches equivalences between active universe and all others (not just C:/B:/EN:/M: prefixes). _DOMAIN_PREFIXES extended with L: + dynamic universe domains. dream across universes = cross-universe consolidation.",
+        "status": "PLANNED"
       }
     },
-    "key_result": "C244: Domain Isolation + Stemming + Feedback. Root cause of teach cross-contamination: _diagnose_learning_gaps scanned ALL L: nodes, not just this concept's nodes — old weather/credit nodes polluted logistics gap diagnosis. Root cause of ask 0% confidence: no stemming (logistics≠logistic), no root concept node (no L:LOGISTIC_PROCESSES), no feedback on failure. 4 fixes: concept_nodes scoping, root node prompt, _stem() fuzzy matching, knowledge_gap_unresolved journal event. 17 new tests.",
+    "previous_arc_summary": "On-Demand Integration (C233–C244): Wired all core capabilities into interactive session — curriculum, dream, sleep-wake, tune, auto-mode, selflearn, ask, teach with iterative learning, domain isolation + stemming. Complete pipeline from cold-start to autonomous learning.",
+    "key_result": "Arc transition: On-Demand Integration complete (C233–C244). Clean reset of learning_state.json + session_state.json after contamination analysis. Starting Multiverse Integration — multiple E₀ universes with CouplingRouter and divergence_pressure.",
     "open_threads": [
-      "Domain Isolation + Stemming + Feedback (C244) DONE — concept-scoped gaps, _stem(), root node, gap feedback",
-      "LLM Diagnostics (C243b) DONE — finish_reason check, LLMTruncatedError, max_tokens 4096, DIAG logging",
-      "Iterative Teaching (C243) DONE — teach water 3 self-directs follow-up learning",
-      "Ask pipeline complete (C239–C244) — gap detection → selective learning → navigation → synthesis → feedback",
-      "Deferred: Coupling Router + Multiverse — integrate when we hit scaling/isolation limits",
+      "Multiverse Integration arc C245–C249 — universe registry → per-universe teach/ask → coupling → auto-divergence → dream cross-universe",
       "LLM symmetry: needed at BOTH ends — input structuring (Bootstrapper) AND output formatting (User-Lesbarkeit)",
       "Adversarial stability partially mitigated (C172-C174, C243b finish_reason check)"
     ],
-    "next_commit_id": "C245",
+    "next_commit_id": "C246",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
