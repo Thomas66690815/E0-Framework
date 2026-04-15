@@ -4948,6 +4948,97 @@ class TestAssessKnowledgeStemming:
         )
 
 
+# ── C253: Teach-Aware Ask — scoring + anchor preference ──────────────
+
+
+class TestMatchNodesBalancedScoring:
+    """C253: _match_nodes uses balanced scoring (node_ratio + query_ratio)/2."""
+
+    def test_single_word_exact_match_unchanged(self):
+        """Exact single-word match still scores 1.0."""
+        s = build_session(steps_per_round=5)
+        s.landscape.add_state("EN:water")
+        matches = _match_nodes("water", s.landscape)
+        assert matches[0] == ("EN:water", 1.0)
+
+    def test_compound_concept_not_penalized(self):
+        """L:WHAT_IS_WATER scores ≥0.5 for query 'water' (was 0.33)."""
+        s = build_session(steps_per_round=5)
+        s.landscape.add_state("L:WHAT_IS_WATER")
+        matches = _match_nodes("water", s.landscape)
+        scores = {m[0]: m[1] for m in matches}
+        assert "L:WHAT_IS_WATER" in scores
+        assert scores["L:WHAT_IS_WATER"] >= 0.5  # was 0.33 before fix
+
+    def test_two_word_concept_scores_higher(self):
+        """L:WATER_CYCLE scores higher than L:WHAT_IS_WATER for 'water'."""
+        s = build_session(steps_per_round=5)
+        s.landscape.add_state("L:WATER_CYCLE")
+        s.landscape.add_state("L:WHAT_IS_WATER")
+        matches = _match_nodes("water", s.landscape)
+        scores = {m[0]: m[1] for m in matches}
+        assert scores["L:WATER_CYCLE"] > scores["L:WHAT_IS_WATER"]
+
+    def test_multi_word_query_full_match_is_1(self):
+        """'molecular composition' vs L:MOLECULAR_COMPOSITION = 1.0."""
+        s = build_session(steps_per_round=5)
+        s.landscape.add_state("L:MOLECULAR_COMPOSITION")
+        matches = _match_nodes("molecular composition", s.landscape)
+        assert matches[0][1] == 1.0
+
+    def test_all_matches_still_returned(self):
+        """Both EN: and L: nodes appear when both match."""
+        s = build_session(steps_per_round=5)
+        s.landscape.add_state("EN:water")
+        s.landscape.add_state("L:WHAT_IS_WATER")
+        s.landscape.add_state("L:WATER_CYCLE")
+        matches = _match_nodes("water", s.landscape)
+        ids = [m[0] for m in matches]
+        assert "EN:water" in ids
+        assert "L:WHAT_IS_WATER" in ids
+        assert "L:WATER_CYCLE" in ids
+
+
+class TestAskAnchorPreference:
+    """C253: ask_run prefers L: (taught) anchors over generic matches."""
+
+    def test_prefers_l_node_when_close_score(self):
+        """L: node chosen as anchor when its score ≥50% of best."""
+        s = build_session(steps_per_round=10)
+        s.landscape.add_state("EN:water")
+        s.landscape.add_state("L:WHAT_IS_WATER")
+        s.landscape.add_state("L:WATER_CYCLE")
+        # Add edges so navigation works
+        s.landscape.add_edge("EN:water", "L:WHAT_IS_WATER", delta=0.4, resistance=1.0)
+        s.landscape.add_edge("L:WHAT_IS_WATER", "L:WATER_CYCLE", delta=0.3, resistance=0.5)
+        result = ask_run(s, "what is water", auto_learn=False)
+        # Anchor should be an L: node, not EN:water
+        anchor = result.get("anchor")
+        if anchor is not None:
+            assert anchor.startswith("L:"), f"Expected L: anchor, got {anchor}"
+
+    def test_still_uses_best_when_no_l_match(self):
+        """Without L: nodes, best match is used as before."""
+        s = build_session(steps_per_round=10)
+        # Only EN nodes, no L:
+        result = ask_run(s, "what is tension", auto_learn=False)
+        anchor = result.get("anchor")
+        if anchor is not None:
+            assert anchor.startswith("C:"), f"Expected C: anchor, got {anchor}"
+
+    def test_l_node_not_preferred_when_score_too_low(self):
+        """L: node ignored when its score < 50% of best."""
+        s = build_session(steps_per_round=10)
+        s.landscape.add_state("EN:water")
+        # L: node with very low overlap (no word match, only substring)
+        s.landscape.add_state("L:HYDROGEN_OXYGEN_BONDING")
+        result = ask_run(s, "water", auto_learn=False)
+        anchor = result.get("anchor")
+        # Should NOT prefer L: here — no word overlap
+        if anchor is not None:
+            assert anchor == "EN:water"
+
+
 class TestAskFeedbackOnFailure:
     """C244: ask_run signals failure when confidence is low."""
 

@@ -1743,8 +1743,14 @@ def _match_nodes(
                         break
 
         if overlap > 0:
+            # Normalize by the LARGER of (node parts, query tokens) so
+            # neither short queries nor long concept names dominate.
+            # "water" vs "what_is_water": max(3,1)=3 → 1/3=0.33 OLD
+            # Now: overlap/max(3,1)=0.33 BUT query_ratio=1/1=1.0 → avg=0.67
             total_parts = max(1, len(parts))
-            relevance = overlap / total_parts
+            node_ratio = overlap / total_parts
+            query_ratio = min(1.0, overlap / max(1, len(tokens)))
+            relevance = (node_ratio + query_ratio) / 2
             results.append((node_id, relevance))
 
     results.sort(key=lambda x: (-x[1], x[0]))
@@ -4586,7 +4592,7 @@ def ask_run(
     else:
         assessment_after = assessment
 
-    # Phase 4: Navigate from best match
+    # Phase 4: Navigate from best match — prefer L: (taught) anchors
     anchor: Optional[str] = None
     nav_path: List[str] = []
     nav_steps = 0
@@ -4594,7 +4600,16 @@ def ask_run(
     nav_coverage_delta = 0.0
     all_matches = assessment_after["matches"]
     if all_matches:
+        # Prefer recently-taught L: nodes over generic vocabulary matches
+        # (taught material is more specific than seed dictionaries)
         anchor = all_matches[0][0]
+        best_score = all_matches[0][1]
+        for node_id, score in all_matches:
+            if score < best_score * 0.5:
+                break  # stop if score drops below 50% of best
+            if node_id.startswith("L:"):
+                anchor = node_id
+                break
         _task_navigate(state, question, anchor, mode="ask")
         if state.history:
             last_round = state.history[-1]
