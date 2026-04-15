@@ -164,6 +164,13 @@ from e0_controller.feedback import (
 from e0_controller.perception import PerceptionDomain, build_perception_domain
 from e0_controller.primitives import Edge, Outcome
 from e0_controller.ui_emitter import UISpec
+from e0_controller.coupling_router import (
+    CouplingRouter,
+    CouplingReason,
+    CouplingSelection,
+    structural_distance,
+)
+from e0_controller.multiverse import Universe
 
 
 # ── Universe State (C245) ─────────────────────────────────────────────
@@ -208,6 +215,7 @@ class SessionState:
     session_id: str = ""  # C231: unique session identifier
     journal: List[Dict[str, Any]] = field(default_factory=list)  # C231
     dream_observer: Optional[DreamObserver] = None  # C234: persistent observer
+    coupling_router: Optional[CouplingRouter] = None  # C247: inter-universe coupling
     # C245: Multiverse support — multiple isolated E₀ universes
     universes: Dict[str, UniverseState] = field(default_factory=dict)
     active_universe: str = "main"
@@ -5076,6 +5084,207 @@ def cmd_universe(state: SessionState, arg: str) -> str:
     )
 
 
+# ── CouplingRouter Integration (C247) ─────────────────────────────────
+
+
+def _universe_to_coupling(us: UniverseState) -> Universe:
+    """Convert a session UniverseState to a CouplingRouter Universe.
+
+    CouplingRouter needs execute_fn/start/goal which don't apply in
+    interactive-session context.  We provide inert stubs.
+    """
+    return Universe(
+        name=us.name,
+        landscape=us.landscape,
+        execute_fn=lambda s, t: Outcome.SUCCESS,
+        start="",
+        goal="",
+    )
+
+
+def _ensure_coupling_router(state: SessionState) -> Optional[CouplingRouter]:
+    """Lazily create or update the CouplingRouter when ≥2 universes exist.
+
+    Returns the router if ≥2 universes, None otherwise.
+    """
+    _ensure_main_universe(state)
+    if len(state.universes) < 2:
+        state.coupling_router = None
+        return None
+
+    universes = [_universe_to_coupling(u) for u in state.universes.values()]
+
+    if state.coupling_router is None:
+        state.coupling_router = CouplingRouter(universes)
+    else:
+        # Sync membership: add new, remove departed
+        existing = set(state.coupling_router.universes.keys())
+        current = {u.name for u in universes}
+        for u in universes:
+            if u.name not in existing:
+                state.coupling_router.add_universe(u)
+        for name in existing - current:
+            state.coupling_router.remove_universe(name)
+        # Update structural distances (landscapes may have changed)
+        # Refresh Universe objects (landscape references may have changed)
+        for u in universes:
+            if u.name in state.coupling_router.universes:
+                state.coupling_router.universes[u.name] = u
+        state.coupling_router.update_distances()
+
+    return state.coupling_router
+
+
+def couple_run(
+    state: SessionState,
+    partner_name: Optional[str] = None,
+    reason: CouplingReason = CouplingReason.RECOVERY,
+    confidence_threshold: float = 0.3,
+) -> Dict[str, Any]:
+    """Transfer high-confidence L: edges from a partner universe.
+
+    If *partner_name* is given, couples with that specific universe.
+    Otherwise uses CouplingRouter.select_partner() to pick the best
+    partner based on *reason* (RECOVERY or EXPLORATION).
+
+    Transfers L: nodes and their edges from the partner's landscape
+    into the active universe's landscape.  Only edges with both endpoints
+    present after node transfer are copied.  The coupling outcome
+    (how many new nodes/edges were gained) is historized on the router.
+
+    Returns a result dict with transfer statistics.
+    """
+    _ensure_main_universe(state)
+    router = _ensure_coupling_router(state)
+
+    if router is None:
+        return {"error": "Need ≥2 universes for coupling. Use 'universe create <name>'."}
+
+    active_name = state.active_universe
+    active_us = state.universes[active_name]
+    active_cu = _universe_to_coupling(active_us)
+
+    # Select partner
+    if partner_name:
+        if partner_name not in state.universes:
+            return {"error": f"Universe '{partner_name}' not found."}
+        if partner_name == active_name:
+            return {"error": "Cannot couple a universe with itself."}
+        partner_us = state.universes[partner_name]
+        selection = CouplingSelection(
+            partner=_universe_to_coupling(partner_us),
+            reason=reason,
+            score=0.0,
+            edge_delta=structural_distance(active_cu, _universe_to_coupling(partner_us)),
+            coupling_quality=0.0,
+        )
+    else:
+        selections = router.select_partner(active_cu, reason)
+        if not selections:
+            return {"error": "No coupling partner available."}
+        selection = selections[0]
+        partner_us = state.universes[selection.partner.name]
+
+    # Transfer: L: nodes + edges from partner → active
+    partner_landscape = partner_us.landscape
+    active_landscape = state.landscape  # = active_us.landscape via sync
+
+    partner_l_nodes = {n for n in partner_landscape.states if n.startswith("L:")}
+    existing_nodes = active_landscape.states
+
+    nodes_added = 0
+    for node in partner_l_nodes:
+        if node not in existing_nodes:
+            active_landscape.add_state(node)
+            nodes_added += 1
+
+    edges_added = 0
+    for edge in partner_landscape.edges:
+        src, tgt = edge.source, edge.target
+        if not (src.startswith("L:") or tgt.startswith("L:")):
+            continue  # only transfer L:-related edges
+        if src in active_landscape.states and tgt in active_landscape.states:
+            if not active_landscape.has_edge(src, tgt):
+                delta = partner_landscape.difference(src, tgt)
+                resistance = partner_landscape.effective_resistance(src, tgt)
+                active_landscape.add_edge(
+                    src, tgt,
+                    delta=delta if delta is not None else 0.5,
+                    resistance=max(resistance, 0.1) if resistance is not None else 1.0,
+                    relation_type="coupled",
+                )
+                edges_added += 1
+
+    # Historize on router
+    gained = nodes_added + edges_added
+    outcome = Outcome.SUCCESS if gained > 0 else Outcome.FAILURE
+    router.historize(active_name, selection.partner.name, outcome)
+
+    return {
+        "partner": selection.partner.name,
+        "reason": selection.reason.value,
+        "score": round(selection.score, 4),
+        "edge_delta": round(selection.edge_delta, 4),
+        "nodes_transferred": nodes_added,
+        "edges_transferred": edges_added,
+        "outcome": outcome.name,
+    }
+
+
+def couple_status(state: SessionState) -> str:
+    """Show coupling router status: universes, weights, distances."""
+    router = _ensure_coupling_router(state)
+    if router is None:
+        return "Coupling inactive (need ≥2 universes)."
+    return router.summary()
+
+
+def cmd_couple(state: SessionState, arg: str) -> str:
+    """Handle couple subcommands: <name>, explore, recover, status."""
+    if not arg:
+        # Default: auto-select via RECOVERY
+        result = couple_run(state)
+        if "error" in result:
+            return result["error"]
+        return _format_couple_result(result)
+
+    parts = arg.split(None, 1)
+    subcmd = parts[0].lower()
+
+    if subcmd == "status":
+        return couple_status(state)
+
+    if subcmd == "explore":
+        result = couple_run(state, reason=CouplingReason.EXPLORATION)
+        if "error" in result:
+            return result["error"]
+        return _format_couple_result(result)
+
+    if subcmd == "recover":
+        result = couple_run(state, reason=CouplingReason.RECOVERY)
+        if "error" in result:
+            return result["error"]
+        return _format_couple_result(result)
+
+    # Treat as partner name
+    result = couple_run(state, partner_name=subcmd)
+    if "error" in result:
+        return result["error"]
+    return _format_couple_result(result)
+
+
+def _format_couple_result(result: Dict[str, Any]) -> str:
+    """Format couple_run result for display."""
+    lines = [
+        f"Coupled with '{result['partner']}' ({result['reason']})",
+        f"  Structural distance: {result['edge_delta']:.4f}",
+        f"  Nodes transferred: {result['nodes_transferred']}",
+        f"  Edges transferred: {result['edges_transferred']}",
+        f"  Outcome: {result['outcome']}",
+    ]
+    return "\n".join(lines)
+
+
 HELP_TEXT = """
 E₀ Interactive Session — Commands
 ──────────────────────────────────
@@ -5096,6 +5305,7 @@ E₀ Interactive Session — Commands
   selflearn        Self-learn: E₀ learns itself first (canon → mechanism → dream)
   ask <question>   On-demand Q&A: assess → gap-detect → learn → answer
   universe [sub]   Manage E₀ universes (create|list|switch|delete)
+  couple [sub]     Couple with another universe (explore|recover|status|<name>)
   why              Explain the last decision
   detail [N]       Last round's path edge by edge (or round N)
   inspect <s> <t>  Deep view of edge s→t
@@ -5729,6 +5939,9 @@ def _dispatch_inner(state: SessionState, user_input: str) -> Optional[str]:
 
     if cmd == "universe":
         return cmd_universe(state, arg)
+
+    if cmd == "couple":
+        return cmd_couple(state, arg)
 
     if cmd == "regenerate":
         return cmd_regenerate(state, arg if arg else None)

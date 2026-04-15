@@ -125,10 +125,17 @@ from e0_controller.interactive_session import (
     _ensure_main_universe,
     _sync_active_to_session,
     _sync_session_to_active,
+    _universe_to_coupling,
+    _ensure_coupling_router,
+    couple_run,
+    couple_status,
+    cmd_couple,
+    _format_couple_result,
 )
 from e0_controller.feedback import HumanAction
 from e0_controller.perception import PerceptionDomain
-from e0_controller.primitives import Edge
+from e0_controller.coupling_router import CouplingReason, CouplingRouter
+from e0_controller.primitives import Edge, Outcome
 
 
 # ── Fixtures ───────────────────────────────────────────────────────────
@@ -5451,3 +5458,282 @@ class TestRegenerateSeedUniverseFilter:
             assert result["materialized_edges"] == 1
         finally:
             mod.LEARNING_STATE_PATH = orig
+
+
+# ---------------------------------------------------------------------------
+# C247 — CouplingRouter Wiring
+# ---------------------------------------------------------------------------
+
+
+class TestUniverseToCoupling:
+    """C247: Converting UniverseState to CouplingRouter Universe."""
+
+    def test_converts_basic_fields(self):
+        """Name and landscape carried through."""
+        from e0_controller.multiverse import Universe
+
+        s = build_session(steps_per_round=5)
+        _ensure_main_universe(s)
+        cu = _universe_to_coupling(s.universes["main"])
+        assert isinstance(cu, Universe)
+        assert cu.name == "main"
+        assert cu.landscape is s.universes["main"].landscape
+
+    def test_execute_fn_is_stub(self):
+        """Execute function returns SUCCESS (inert stub)."""
+        s = build_session(steps_per_round=5)
+        _ensure_main_universe(s)
+        cu = _universe_to_coupling(s.universes["main"])
+        assert cu.execute_fn("a", "b") == Outcome.SUCCESS
+
+
+class TestEnsureCouplingRouter:
+    """C247: Lazy CouplingRouter creation."""
+
+    def test_none_with_single_universe(self):
+        """No router when only one universe exists."""
+        s = build_session(steps_per_round=5)
+        _ensure_main_universe(s)
+        router = _ensure_coupling_router(s)
+        assert router is None
+        assert s.coupling_router is None
+
+    def test_creates_with_two_universes(self):
+        """Router created when ≥2 universes exist."""
+        s = build_session(steps_per_round=5)
+        _ensure_main_universe(s)
+        universe_create(s, "alt")
+        router = _ensure_coupling_router(s)
+        assert router is not None
+        assert isinstance(router, CouplingRouter)
+        assert router.universe_count == 2
+
+    def test_reuses_existing_router(self):
+        """Same router object reused on subsequent calls."""
+        s = build_session(steps_per_round=5)
+        _ensure_main_universe(s)
+        universe_create(s, "alt")
+        r1 = _ensure_coupling_router(s)
+        r2 = _ensure_coupling_router(s)
+        assert r1 is r2
+
+    def test_adds_new_universe_to_existing_router(self):
+        """Adding a third universe updates the existing router."""
+        s = build_session(steps_per_round=5)
+        _ensure_main_universe(s)
+        universe_create(s, "alt")
+        _ensure_coupling_router(s)
+        universe_create(s, "third")
+        router = _ensure_coupling_router(s)
+        assert router.universe_count == 3
+
+    def test_removes_deleted_universe_from_router(self):
+        """Deleting a universe removes it from the router."""
+        s = build_session(steps_per_round=5)
+        _ensure_main_universe(s)
+        universe_create(s, "alt")
+        universe_create(s, "third")
+        _ensure_coupling_router(s)
+        universe_delete(s, "third")
+        router = _ensure_coupling_router(s)
+        assert router.universe_count == 2
+
+
+class TestCoupleRun:
+    """C247: couple_run knowledge transfer."""
+
+    def test_error_with_single_universe(self):
+        """Returns error dict when only one universe."""
+        s = build_session(steps_per_round=5)
+        result = couple_run(s)
+        assert "error" in result
+
+    def test_error_self_couple(self):
+        """Cannot couple a universe with itself."""
+        s = build_session(steps_per_round=5)
+        _ensure_main_universe(s)
+        universe_create(s, "alt")
+        result = couple_run(s, partner_name="main")
+        assert "error" in result
+
+    def test_error_nonexistent_partner(self):
+        """Error for nonexistent partner name."""
+        s = build_session(steps_per_round=5)
+        _ensure_main_universe(s)
+        universe_create(s, "alt")
+        result = couple_run(s, partner_name="ghost")
+        assert "error" in result
+
+    def test_transfers_l_nodes(self):
+        """L: nodes from partner appear in active universe."""
+        s = build_session(steps_per_round=5)
+        _ensure_main_universe(s)
+        universe_create(s, "donor")
+        # Inject L: nodes into donor
+        universe_switch(s, "donor")
+        s.landscape.add_state("L:WATER")
+        s.landscape.add_state("L:EVAPORATION")
+        s.landscape.add_edge("L:WATER", "L:EVAPORATION", delta=0.5, resistance=1.0)
+        _sync_session_to_active(s)
+        # Switch to main and couple
+        universe_switch(s, "main")
+        result = couple_run(s, partner_name="donor")
+        assert result["nodes_transferred"] == 2
+        assert result["edges_transferred"] == 1
+        assert "L:WATER" in s.landscape.states
+        assert "L:EVAPORATION" in s.landscape.states
+        assert result["outcome"] == "SUCCESS"
+
+    def test_no_duplicate_transfer(self):
+        """Second couple transfers nothing (already present)."""
+        s = build_session(steps_per_round=5)
+        _ensure_main_universe(s)
+        universe_create(s, "donor")
+        universe_switch(s, "donor")
+        s.landscape.add_state("L:TOPIC")
+        _sync_session_to_active(s)
+        universe_switch(s, "main")
+        couple_run(s, partner_name="donor")
+        result = couple_run(s, partner_name="donor")
+        assert result["nodes_transferred"] == 0
+        assert result["outcome"] == "FAILURE"
+
+    def test_auto_select_recovery(self):
+        """Auto-select partner via RECOVERY reason."""
+        s = build_session(steps_per_round=5)
+        _ensure_main_universe(s)
+        universe_create(s, "expert")
+        universe_switch(s, "expert")
+        s.landscape.add_state("L:INSIGHT")
+        _sync_session_to_active(s)
+        universe_switch(s, "main")
+        result = couple_run(s, reason=CouplingReason.RECOVERY)
+        assert result["partner"] == "expert"
+        assert result["reason"] == "recovery"
+
+    def test_auto_select_exploration(self):
+        """Auto-select partner via EXPLORATION reason."""
+        s = build_session(steps_per_round=5)
+        _ensure_main_universe(s)
+        universe_create(s, "novel")
+        universe_switch(s, "novel")
+        s.landscape.add_state("L:ALIEN")
+        _sync_session_to_active(s)
+        universe_switch(s, "main")
+        result = couple_run(s, reason=CouplingReason.EXPLORATION)
+        assert result["partner"] == "novel"
+        assert result["reason"] == "exploration"
+
+    def test_only_l_edges_transferred(self):
+        """Non-L: edges are not transferred."""
+        s = build_session(steps_per_round=5)
+        _ensure_main_universe(s)
+        universe_create(s, "donor")
+        universe_switch(s, "donor")
+        # Add L: edge and a non-L: edge
+        s.landscape.add_state("L:A")
+        s.landscape.add_state("L:B")
+        s.landscape.add_edge("L:A", "L:B", delta=0.5, resistance=1.0)
+        s.landscape.add_state("X:FOO")
+        s.landscape.add_state("X:BAR")
+        s.landscape.add_edge("X:FOO", "X:BAR", delta=0.5, resistance=1.0)
+        _sync_session_to_active(s)
+        universe_switch(s, "main")
+        result = couple_run(s, partner_name="donor")
+        # L: nodes transferred, but X: edge NOT transferred
+        assert result["nodes_transferred"] == 2  # only L:A, L:B
+        assert result["edges_transferred"] == 1  # only L:A→L:B
+        assert "X:FOO" not in s.landscape.states
+
+
+class TestCoupleStatus:
+    """C247: couple status output."""
+
+    def test_inactive_with_one_universe(self):
+        """Reports inactive with single universe."""
+        s = build_session(steps_per_round=5)
+        assert "inactive" in couple_status(s).lower()
+
+    def test_summary_with_two_universes(self):
+        """Returns router summary with ≥2 universes."""
+        s = build_session(steps_per_round=5)
+        _ensure_main_universe(s)
+        universe_create(s, "alt")
+        text = couple_status(s)
+        assert "main" in text
+        assert "alt" in text
+
+
+class TestCmdCouple:
+    """C247: cmd_couple command parsing."""
+
+    def test_default_recovery(self):
+        """No args = auto-select RECOVERY."""
+        s = build_session(steps_per_round=5)
+        _ensure_main_universe(s)
+        universe_create(s, "donor")
+        universe_switch(s, "donor")
+        s.landscape.add_state("L:NODE")
+        _sync_session_to_active(s)
+        universe_switch(s, "main")
+        text = cmd_couple(s, "")
+        assert "donor" in text.lower()
+
+    def test_explore_subcommand(self):
+        """'couple explore' uses EXPLORATION."""
+        s = build_session(steps_per_round=5)
+        _ensure_main_universe(s)
+        universe_create(s, "other")
+        text = cmd_couple(s, "explore")
+        assert "other" in text.lower() or "FAILURE" in text
+
+    def test_recover_subcommand(self):
+        """'couple recover' uses RECOVERY."""
+        s = build_session(steps_per_round=5)
+        _ensure_main_universe(s)
+        universe_create(s, "other")
+        text = cmd_couple(s, "recover")
+        assert "other" in text.lower() or "FAILURE" in text
+
+    def test_status_subcommand(self):
+        """'couple status' shows router info."""
+        s = build_session(steps_per_round=5)
+        _ensure_main_universe(s)
+        universe_create(s, "alt")
+        text = cmd_couple(s, "status")
+        assert "main" in text and "alt" in text
+
+    def test_named_partner(self):
+        """'couple donor' couples with named universe."""
+        s = build_session(steps_per_round=5)
+        _ensure_main_universe(s)
+        universe_create(s, "donor")
+        text = cmd_couple(s, "donor")
+        assert "donor" in text.lower()
+
+    def test_error_single_universe(self):
+        """Error message when only one universe."""
+        s = build_session(steps_per_round=5)
+        text = cmd_couple(s, "")
+        assert "2" in text or "universe" in text.lower()
+
+
+class TestCoupleInHelp:
+    """C247: couple command appears in help text."""
+
+    def test_help_mentions_couple(self):
+        """Help text includes couple command."""
+        text = cmd_help()
+        assert "couple" in text.lower()
+
+
+class TestCoupleInDispatch:
+    """C247: couple command dispatches correctly."""
+
+    def test_dispatch_couple(self):
+        """dispatch('couple status') routes correctly."""
+        s = build_session(steps_per_round=5)
+        _ensure_main_universe(s)
+        universe_create(s, "alt")
+        text = dispatch(s, "couple status")
+        assert "main" in text and "alt" in text
