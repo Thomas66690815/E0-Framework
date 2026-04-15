@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C251",
-    "latest_commit_hash": "62e929a",
-    "latest_commit_msg": "C251: Adaptive dream compatibility + diagnostic scores. dream_cycle threshold param, dream_run adaptive 1.5x relaxation, cmd_dream shows scores. 10 new tests, 5471 total.",
-    "test_count": 5471,
+    "latest_commit": "C252",
+    "latest_commit_hash": "739b0a0",
+    "latest_commit_msg": "C252: Bidirectional coupling — _transfer_l_nodes helper, couple_run transfers both directions, inbound/outbound output, 8 new tests (5510 total)",
+    "test_count": 5510,
     "test_failures": 0,
     "ci_status": "pending",
     "module_count": "77 production + 10 benchmarks + 17 demos + 69 explorations + 127 test files",
@@ -221,8 +221,8 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "Standalone fixes (C250–C251)",
-    "arc_status": "COMPLETE. C250 dynamic domain detection. C251 adaptive dream compatibility + diagnostic scores.",
+    "current_arc": "Standalone fixes (C250–C252)",
+    "arc_status": "COMPLETE. C250 dynamic domain detection. C251 adaptive dream compatibility. C252 bidirectional coupling.",
     "arc_plan": {
       "C250_dynamic_domain_detection": {
         "title": "Dynamic Domain Detection",
@@ -233,16 +233,21 @@
         "title": "Adaptive Dream Compatibility",
         "what": "dream_cycle() gains compatibility_threshold param. dream_run() adaptive relaxation: if cycle 1 finds 0 pairs, relaxes 1.5x for remaining cycles. cmd_dream shows compatibility scores and relaxation warning. Bootstrap always incompatible (0.71-0.90) due to different degree distribution — correct behavior. 10 tests.",
         "status": "DONE (C251)"
+      },
+      "C252_bidirectional_coupling": {
+        "title": "Bidirectional Coupling",
+        "what": "_transfer_l_nodes() extracted helper. couple_run() transfers L: nodes in BOTH directions (partner→active AND active→partner). cmd_couple shows inbound/outbound stats. Root cause: old unidirectional transfer meant unique L: nodes in active never flowed back to partner. 8 tests.",
+        "status": "DONE (C252)"
       }
     },
     "previous_arc_summary": "Multiverse Integration (C245–C249): Universe registry, per-universe teach/ask isolation, CouplingRouter wiring, divergence-pressure auto-coupling, cross-universe dream. 74 arc tests. On-Demand Integration (C233–C244): Wired all core capabilities into interactive session.",
-    "key_result": "C250-C251 COMPLETE. Dynamic domain detection + adaptive dream compatibility. Dream now shows compatibility scores and auto-relaxes threshold when all pairs fail. Bootstrap confirmed structurally incompatible (correct). 27 new tests, 5471 total.",
+    "key_result": "C250-C252 COMPLETE. Dynamic domain detection + adaptive dream compatibility + bidirectional coupling. Dream shows scores/auto-relaxes. Coupling now transfers L: nodes both ways (fixes 0-transfer when active has unique nodes). 35 new tests, 5510 total.",
     "open_threads": [
       "LLM symmetry: needed at BOTH ends — input structuring (Bootstrapper) AND output formatting (User-Lesbarkeit)",
       "Adversarial stability partially mitigated (C172-C174, C243b finish_reason check)",
       "Next arc TBD — C43 Self-Graph (LLM Bootstrap Architecture) or new direction"
     ],
-    "next_commit_id": "C252",
+    "next_commit_id": "C253",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
@@ -453,6 +458,11 @@
     }
   },
   "commit_history_recent": [
+    {
+      "hash": "739b0a0",
+      "id": "C252",
+      "title": "Bidirectional coupling — _transfer_l_nodes helper, couple_run transfers both directions, inbound/outbound output. (8 tests, 5510 total)"
+    },
     {
       "hash": "62e929a",
       "id": "C251",
