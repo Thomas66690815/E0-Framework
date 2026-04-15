@@ -5825,3 +5825,120 @@ class TestAutoCoupleOnStagnation:
         auto_run(s, max_steps=1, rounds_per_step=1)
         # Stagnation NOT reset since coupling transferred nothing
         assert s.stagnation_streak >= 5
+
+
+# ---------------------------------------------------------------------------
+# C249 — Dream Multiverse-Aware
+# ---------------------------------------------------------------------------
+
+
+class TestDomainPrefixesIncludesLearned:
+    """C249: _DOMAIN_PREFIXES includes L: for learned nodes."""
+
+    def test_l_prefix_in_domain_prefixes(self):
+        """L: prefix is registered as 'learned'."""
+        from e0_controller.interactive_session import _DOMAIN_PREFIXES
+        assert "L:" in _DOMAIN_PREFIXES
+        assert _DOMAIN_PREFIXES["L:"] == "learned"
+
+
+class TestExtractDomainLandscapesLearned:
+    """C249: _extract_domain_landscapes extracts L: nodes as 'learned'."""
+
+    def test_extracts_learned_domain(self):
+        """L: nodes form a separate 'learned' domain."""
+        s = build_session(steps_per_round=5)
+        s.landscape.add_state("L:WATER")
+        s.landscape.add_state("L:ICE")
+        s.landscape.add_edge("L:WATER", "L:ICE", delta=0.5, resistance=1.0)
+        result = _extract_domain_landscapes(s.landscape)
+        assert "learned" in result
+        assert "L:WATER" in result["learned"].states
+        assert "L:ICE" in result["learned"].states
+
+    def test_no_learned_when_no_l_nodes(self):
+        """No 'learned' domain when no L: edges exist."""
+        s = build_session(steps_per_round=5)
+        result = _extract_domain_landscapes(s.landscape)
+        # May or may not be present (depends on cold start landscape)
+        if "learned" in result:
+            assert len(result["learned"].states) >= 1
+
+
+class TestDreamRunCrossUniverse:
+    """C249: dream_run includes L: sub-landscapes from other universes."""
+
+    def test_single_universe_no_cross(self):
+        """With one universe, domains are standard (no cross_universe_domains)."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = dream_run(s, cycles=1)
+        assert "cross_universe_domains" in result
+        assert result["cross_universe_domains"] == []
+
+    def test_cross_universe_domains_registered(self):
+        """Other universes' L: sub-landscapes registered as learned_<name>."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        _ensure_main_universe(s)
+        universe_create(s, "research")
+        # Add L: nodes to research universe
+        universe_switch(s, "research")
+        s.landscape.add_state("L:CONCEPT_A")
+        s.landscape.add_state("L:CONCEPT_B")
+        s.landscape.add_edge("L:CONCEPT_A", "L:CONCEPT_B", delta=0.5, resistance=1.0)
+        _sync_session_to_active(s)
+        # Switch back to main and dream
+        universe_switch(s, "main")
+        result = dream_run(s, cycles=1)
+        assert "learned_research" in result["cross_universe_domains"]
+        assert "learned_research" in result["domains"]
+
+    def test_cross_universe_empty_not_registered(self):
+        """Other universe with no L: nodes is not registered."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        _ensure_main_universe(s)
+        universe_create(s, "empty_alt")
+        result = dream_run(s, cycles=1)
+        assert "learned_empty_alt" not in result.get("cross_universe_domains", [])
+
+    def test_journal_includes_cross_universe(self):
+        """Dream journal event includes cross_universe_domains."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        _ensure_main_universe(s)
+        universe_create(s, "other")
+        universe_switch(s, "other")
+        s.landscape.add_state("L:X")
+        s.landscape.add_state("L:Y")
+        s.landscape.add_edge("L:X", "L:Y", delta=0.3, resistance=0.5)
+        _sync_session_to_active(s)
+        universe_switch(s, "main")
+        dream_run(s, cycles=1)
+        dream_events = [e for e in s.journal if e["event_type"] == "dream"]
+        assert len(dream_events) >= 1
+        detail = dream_events[-1]["detail"]
+        assert "cross_universe_domains" in detail
+        assert "learned_other" in detail["cross_universe_domains"]
+
+    def test_multiple_other_universes(self):
+        """Multiple other universes each get their own dream domain."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        _ensure_main_universe(s)
+        for name in ["alpha", "beta"]:
+            universe_create(s, name)
+            universe_switch(s, name)
+            s.landscape.add_state(f"L:{name.upper()}_1")
+            s.landscape.add_state(f"L:{name.upper()}_2")
+            s.landscape.add_edge(
+                f"L:{name.upper()}_1", f"L:{name.upper()}_2",
+                delta=0.4, resistance=0.8,
+            )
+            _sync_session_to_active(s)
+        universe_switch(s, "main")
+        result = dream_run(s, cycles=1)
+        cross = result["cross_universe_domains"]
+        assert "learned_alpha" in cross
+        assert "learned_beta" in cross

@@ -3159,7 +3159,10 @@ def cmd_curriculum(state: SessionState, arg: Optional[str] = None) -> str:
 # ── Dream Command (C234) ──────────────────────────────────────────────
 
 # Domain prefix → observer registration name
-_DOMAIN_PREFIXES = {"C:": "canon", "B:": "bootstrap", "EN:": "en", "M:": "mechanism"}
+_DOMAIN_PREFIXES = {
+    "C:": "canon", "B:": "bootstrap", "EN:": "en", "M:": "mechanism",
+    "L:": "learned",  # C249: include learned nodes in dream consolidation
+}
 
 
 def _extract_domain_landscapes(
@@ -3237,10 +3240,24 @@ def dream_run(
     """
     observer = _get_or_create_observer(state)
 
-    # Extract and register domain sub-landscapes
+    # Extract and register domain sub-landscapes from active universe
     domain_landscapes = _extract_domain_landscapes(state.landscape)
     for name, ls in domain_landscapes.items():
         observer.register(name, ls)
+
+    # C249: Cross-universe dream — register L: sub-landscapes from other universes
+    _ensure_main_universe(state)
+    cross_universe_domains: List[str] = []
+    for uname, ustate in state.universes.items():
+        if uname == state.active_universe:
+            continue
+        other_domains = _extract_domain_landscapes(ustate.landscape)
+        learned = other_domains.get("learned")
+        if learned and learned.states:
+            reg_name = f"learned_{uname}"
+            observer.register(reg_name, learned)
+            domain_landscapes[reg_name] = learned
+            cross_universe_domains.append(reg_name)
 
     # Run dream cycles
     cycle_results: List[DreamCycleResult] = []
@@ -3261,6 +3278,7 @@ def dream_run(
     record_journal_event(state, "dream", {
         "cycles": cycles,
         "domains_registered": list(domain_landscapes.keys()),
+        "cross_universe_domains": cross_universe_domains,
         "total_equivalences": total_eq,
         "new_equivalences": total_new,
         "node_equivalences": total_node_eq,
@@ -3273,6 +3291,7 @@ def dream_run(
         "cycle_results": cycle_results,
         "cycles": cycles,
         "domains": list(domain_landscapes.keys()),
+        "cross_universe_domains": cross_universe_domains,
         "readiness": readiness,
         "total_equivalences": total_eq,
         "total_new_equivalences": total_new,
