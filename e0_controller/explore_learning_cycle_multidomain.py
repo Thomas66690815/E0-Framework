@@ -351,15 +351,28 @@ BRIDGE_TYPE_BONUS = {
 
 
 def _domain_of(node_id: str) -> str:
-    """Return domain prefix: 'canon', 'bootstrap', 'en', or 'mechanism'."""
+    """Return domain identifier from node prefix.
+
+    Known prefixes map to canonical names; unknown prefixes use
+    the prefix itself (lowercased, colon stripped).  Nodes without
+    a recognised ``^[A-Z]+:`` prefix return ``'unknown'``.
+    """
     if node_id.startswith("C:"):
         return "canon"
+    elif node_id.startswith("B:"):
+        return "bootstrap"
     elif node_id.startswith("EN:"):
         return "en"
     elif node_id.startswith("M:"):
         return "mechanism"
+    elif node_id.startswith("L:"):
+        return "learned"
     else:
-        return "bootstrap"
+        # Generic extraction for future / custom prefixes
+        idx = node_id.find(":")
+        if idx > 0 and node_id[:idx].isalpha() and node_id[:idx].isupper():
+            return node_id[:idx].lower()
+        return "unknown"
 
 
 def _edge_type_bonus(landscape, source: str, target: str) -> float:

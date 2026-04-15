@@ -382,17 +382,25 @@ def cmd_focus(state: SessionState, domain: str) -> str:
     from e0_controller.text_renderer import render_text, render_markdown
     from e0_controller.evidence_interpreter import interpret_panel, interpret_trace
 
-    # Map user input to prefix
-    prefix_map = {
-        "canon": "C:", "c": "C:",
-        "bootstrap": "B:", "boot": "B:", "b": "B:",
-        "en": "EN:", "english": "EN:", "e": "EN:",
-    }
+    # Map user input to prefix — dynamic detection (C250)
+    detected = _detect_domains(state.landscape)
+    prefix_map: Dict[str, str] = {}
+    for p, dname in detected:
+        prefix_map[dname.lower()] = p
+        prefix_map[p.rstrip(":").lower()] = p
+    # Common aliases
+    prefix_map.update({
+        "boot": "B:", "english": "EN:", "mech": "M:", "learn": "L:",
+    })
     prefix = prefix_map.get(domain.lower())
     if prefix is None:
-        return f"Unknown domain '{domain}'. Use: canon, bootstrap, or en."
+        available = ", ".join(name for _, name in detected) or "none"
+        return f"Unknown domain '{domain}'. Available: {available}."
 
-    domain_label = {"C:": "Canon", "B:": "Bootstrap", "EN:": "EN"}[prefix]
+    domain_label = next(
+        (name for p, name in detected if p == prefix),
+        _PREFIX_DISPLAY.get(prefix, prefix.rstrip(":")),
+    )
     hist = state.landscape.historization
 
     # Gather domain-specific data
@@ -541,10 +549,14 @@ def cmd_why(state: SessionState) -> str:
         f"  Coverage:   {a.coverage:.1%} ({a.visited_nodes}/{a.total_nodes})",
         f"  T_s:        {a.T_s:.3f}",
         f"  Frontier:   {a.frontier_size} nodes",
-        f"  Canon:      {a.canon_coverage:.1%}",
-        f"  Bootstrap:  {a.bootstrap_coverage:.1%}",
-        f"  EN:         {a.en_coverage:.1%}",
     ]
+    # Per-domain coverages (all known Assessment domains with nodes > 0)
+    for prefix, name in _DOMAINS:
+        attr = _DOMAIN_ATTR[prefix]
+        cov = getattr(a, f"{attr}_coverage", 0)
+        nodes = getattr(a, f"{attr}_nodes", 0)
+        if nodes > 0:
+            lines.append(f"  {name + ':':14s}{cov:.1%}")
 
     # What happened
     result_a = last.assessment_after
@@ -594,6 +606,7 @@ def cmd_summary(state: SessionState) -> str:
 # ── C228: Observation Dashboard ────────────────────────────────────────
 
 # Mapping from state prefix to assessment attribute prefix
+# (backward compat — used for reading historical Assessment attrs)
 _DOMAIN_ATTR = {
     "C:": "canon",
     "B:": "bootstrap",
@@ -601,13 +614,87 @@ _DOMAIN_ATTR = {
     "M:": "mech",
 }
 
-# Ordered domain list for consistent output
+# Ordered domain list for consistent output (backward compat)
 _DOMAINS = [
     ("C:", "Canon"),
     ("B:", "Bootstrap"),
     ("EN:", "EN"),
     ("M:", "Mechanism"),
 ]
+
+# ── C250: Dynamic Domain Detection ────────────────────────────────────
+
+import re as _re_domain
+
+# Canonical display names for known prefixes
+_PREFIX_DISPLAY: Dict[str, str] = {
+    "C:": "Canon",
+    "B:": "Bootstrap",
+    "EN:": "EN",
+    "M:": "Mechanism",
+    "L:": "Learned",
+}
+
+# Canonical ordering for known prefixes (unknown ones sort after)
+_CANONICAL_ORDER = ["C:", "B:", "EN:", "M:", "L:"]
+
+_PREFIX_RE = _re_domain.compile(r'^([A-Z]+:)')
+
+
+def _detect_domains(landscape: Any) -> List[Tuple[str, str]]:
+    """Detect all domain prefixes present in the landscape.
+
+    Scans landscape.states for ^[A-Z]+: patterns.
+    Returns list of (prefix, display_name) tuples in canonical order,
+    with unknown prefixes sorted alphabetically after known ones.
+    """
+    prefixes: set = set()
+    for state_name in landscape.states:
+        m = _PREFIX_RE.match(state_name)
+        if m:
+            prefixes.add(m.group(1))
+
+    result: List[Tuple[str, str]] = []
+    for p in _CANONICAL_ORDER:
+        if p in prefixes:
+            result.append((p, _PREFIX_DISPLAY[p]))
+            prefixes.discard(p)
+    for p in sorted(prefixes):
+        result.append((p, _PREFIX_DISPLAY.get(p, p.rstrip(":"))))
+    return result
+
+
+def _compute_domain_stats(
+    landscape: Any,
+    prefix: str,
+    visited_set: Optional[set] = None,
+) -> Dict[str, Any]:
+    """Compute coverage stats for a single domain prefix.
+
+    Works directly from landscape — independent of Assessment fields.
+    If *visited_set* is provided, reuses it (avoids recomputation
+    when called in a loop).
+    """
+    hist = landscape.historization
+    if visited_set is None:
+        visited_set = set()
+        for e in landscape.edges:
+            if hist.trace_load(e) > 0:
+                visited_set.add(e.source)
+                visited_set.add(e.target)
+
+    all_states = {n for n in landscape.states if n.startswith(prefix)}
+    domain_visited = visited_set & all_states
+    total = len(all_states)
+    vis = len(domain_visited)
+    coverage = vis / max(1, total)
+
+    return {
+        "prefix": prefix,
+        "total": total,
+        "visited": vis,
+        "coverage": coverage,
+    }
 
 
 def compute_trajectory(state: SessionState) -> Dict[str, Any]:
@@ -639,13 +726,13 @@ def compute_trajectory(state: SessionState) -> Dict[str, Any]:
     first_a = state.history[0].assessment_before
     last_a = state.history[-1].assessment_after
 
-    # Per-domain trajectory
+    # Per-domain trajectory (known domains from Assessment history)
     domain_trends = {}
     for prefix, name in _DOMAINS:
         attr = _DOMAIN_ATTR[prefix]
-        c_before = getattr(first_a, f"{attr}_coverage")
-        c_after = getattr(last_a, f"{attr}_coverage")
-        nodes = getattr(last_a, f"{attr}_nodes")
+        c_before = getattr(first_a, f"{attr}_coverage", 0)
+        c_after = getattr(last_a, f"{attr}_coverage", 0)
+        nodes = getattr(last_a, f"{attr}_nodes", 0)
         if nodes > 0:
             domain_trends[name] = {
                 "coverage_start": c_before,
@@ -653,6 +740,19 @@ def compute_trajectory(state: SessionState) -> Dict[str, Any]:
                 "delta": c_after - c_before,
                 "nodes": nodes,
             }
+
+    # Detected domains not in Assessment: current snapshot only
+    known_prefixes = {p for p, _ in _DOMAINS}
+    for prefix, name in _detect_domains(state.landscape):
+        if prefix not in known_prefixes and name not in domain_trends:
+            stats = _compute_domain_stats(state.landscape, prefix)
+            if stats["total"] > 0:
+                domain_trends[name] = {
+                    "coverage_start": stats["coverage"],
+                    "coverage_end": stats["coverage"],
+                    "delta": 0,
+                    "nodes": stats["total"],
+                }
 
     # Mode progression
     modes = [r.mode for r in state.history]
@@ -779,19 +879,17 @@ def diagnose_session(state: SessionState) -> Dict[str, Any]:
 
     domain_results = []
 
-    for prefix, name in _DOMAINS:
-        attr = _DOMAIN_ATTR[prefix]
-        coverage = getattr(a, f"{attr}_coverage")
-        total = getattr(a, f"{attr}_nodes")
-        vis = getattr(a, f"{attr}_visited")
+    for prefix, name in _detect_domains(state.landscape):
+        all_states = {n for n in state.landscape.states
+                      if n.startswith(prefix)}
+        total = len(all_states)
 
         if total == 0:
             continue
 
-        # Domain-specific edges and quality distribution
-        all_states = {n for n in state.landscape.states
-                      if n.startswith(prefix)}
         domain_visited = visited_set & all_states
+        vis = len(domain_visited)
+        coverage = vis / max(1, total)
         unvisited = all_states - visited_set
 
         qualities: List[float] = []
@@ -815,14 +913,16 @@ def diagnose_session(state: SessionState) -> Dict[str, Any]:
         isolated = unvisited - frontier
 
         # Recent velocity (last 5 rounds)
+        # For known domains, use historical Assessment attrs; otherwise 0
         recent_deltas: List[float] = []
-        if state.history:
+        attr = _DOMAIN_ATTR.get(prefix)
+        if attr and state.history:
             for r in state.history[-5:]:
                 before_cov = getattr(
-                    r.assessment_before, f"{attr}_coverage",
+                    r.assessment_before, f"{attr}_coverage", 0,
                 )
                 after_cov = getattr(
-                    r.assessment_after, f"{attr}_coverage",
+                    r.assessment_after, f"{attr}_coverage", 0,
                 )
                 recent_deltas.append(after_cov - before_cov)
         velocity = (
@@ -2398,7 +2498,7 @@ JOURNAL_PATH = os.path.join("memos", "session_journal.json")
 def _metrics_snapshot(state: SessionState) -> Dict[str, Any]:
     """Take a lightweight metrics snapshot for a journal entry."""
     a = assess(state.landscape, state.unified_nodes)
-    return {
+    snapshot: Dict[str, Any] = {
         "coverage": round(a.coverage, 4),
         "T_s": round(a.T_s, 4),
         "frontier_size": a.frontier_size,
@@ -2410,6 +2510,14 @@ def _metrics_snapshot(state: SessionState) -> Dict[str, Any]:
         "mech_coverage": round(a.mech_coverage, 4),
         "stagnation_streak": state.stagnation_streak,
     }
+    # C250: add all detected domains
+    domain_coverages: Dict[str, float] = {}
+    for prefix, name in _detect_domains(state.landscape):
+        stats = _compute_domain_stats(state.landscape, prefix)
+        if stats["total"] > 0:
+            domain_coverages[name] = round(stats["coverage"], 4)
+    snapshot["domain_coverages"] = domain_coverages
+    return snapshot
 
 
 def record_journal_event(
@@ -2685,21 +2793,20 @@ def meta_reflect(state: SessionState) -> Dict[str, Any]:
         })
 
     # ── 3. Domain trajectory: coverage over time per domain ──
-    domain_names = ["Canon", "Bootstrap", "EN", "Mechanism"]
-    domain_attrs = ["canon", "bootstrap", "en", "mech"]
+    # Dynamic: use all domains from diagnose_session instead of hardcoded list
     domain_trajectories: Dict[str, Dict[str, Any]] = {}
-    for name, attr in zip(domain_names, domain_attrs):
+    for d_diag in diag["domains"]:
+        name = d_diag["name"]
         dt = traj["summary"]["domain_trends"].get(name, {})
-        d_diag = next((d for d in diag["domains"] if d["name"] == name), None)
         domain_trajectories[name] = {
-            "coverage_start": dt.get("coverage_start", 0),
-            "coverage_end": dt.get("coverage_end", 0),
+            "coverage_start": dt.get("coverage_start", d_diag["coverage"]),
+            "coverage_end": dt.get("coverage_end", d_diag["coverage"]),
             "delta": dt.get("delta", 0),
-            "status": d_diag["status"] if d_diag else "UNKNOWN",
-            "velocity": d_diag["velocity"] if d_diag else 0,
-            "confused_edges": d_diag["confused_edges"] if d_diag else 0,
-            "frontier": d_diag["frontier"] if d_diag else 0,
-            "isolated": d_diag["isolated"] if d_diag else 0,
+            "status": d_diag["status"],
+            "velocity": d_diag["velocity"],
+            "confused_edges": d_diag["confused_edges"],
+            "frontier": d_diag["frontier"],
+            "isolated": d_diag["isolated"],
         }
 
     # ── 4. Escalation history from journal ──

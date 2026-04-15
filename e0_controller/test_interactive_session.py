@@ -5942,3 +5942,180 @@ class TestDreamRunCrossUniverse:
         cross = result["cross_universe_domains"]
         assert "learned_alpha" in cross
         assert "learned_beta" in cross
+
+
+# ---------------------------------------------------------------------------
+# C250 — Dynamic Domain Detection
+# ---------------------------------------------------------------------------
+
+
+class TestDetectDomains:
+    """C250: _detect_domains scans landscape for prefix patterns."""
+
+    def test_standard_domains(self):
+        """Standard landscape has canonical domains in order."""
+        from e0_controller.interactive_session import _detect_domains
+        s = build_session(steps_per_round=5)
+        detected = _detect_domains(s.landscape)
+        prefixes = [p for p, _ in detected]
+        # At minimum C: B: EN: M: must be present in canonical order
+        for required in ["C:", "B:", "EN:", "M:"]:
+            assert required in prefixes
+
+    def test_learned_domain_detected(self):
+        """L: nodes are detected as Learned domain."""
+        from e0_controller.interactive_session import _detect_domains
+        s = build_session(steps_per_round=5)
+        s.landscape.add_state("L:CONCEPT_X")
+        detected = _detect_domains(s.landscape)
+        prefixes = [p for p, _ in detected]
+        names = [n for _, n in detected]
+        assert "L:" in prefixes
+        assert "Learned" in names
+
+    def test_unknown_prefix_detected(self):
+        """Unknown prefixes are detected and named by their prefix."""
+        from e0_controller.interactive_session import _detect_domains
+        s = build_session(steps_per_round=5)
+        s.landscape.add_state("X:NOVEL_CONCEPT")
+        detected = _detect_domains(s.landscape)
+        prefixes = [p for p, _ in detected]
+        assert "X:" in prefixes
+        # Unknown prefixes sort after known ones
+        assert prefixes.index("X:") > prefixes.index("M:")
+
+    def test_canonical_order_preserved(self):
+        """Known prefixes appear in canonical order."""
+        from e0_controller.interactive_session import _detect_domains
+        s = build_session(steps_per_round=5)
+        s.landscape.add_state("L:A")
+        detected = _detect_domains(s.landscape)
+        prefixes = [p for p, _ in detected]
+        # C: before B: before EN: before M: before L:
+        known = [p for p in prefixes if p in ["C:", "B:", "EN:", "M:", "L:"]]
+        assert known == ["C:", "B:", "EN:", "M:", "L:"]
+
+
+class TestComputeDomainStats:
+    """C250: _compute_domain_stats computes directly from landscape."""
+
+    def test_stats_for_learned_domain(self):
+        """Coverage computed directly from landscape for L: nodes."""
+        from e0_controller.interactive_session import _compute_domain_stats
+        s = build_session(steps_per_round=5)
+        s.landscape.add_state("L:A")
+        s.landscape.add_state("L:B")
+        stats = _compute_domain_stats(s.landscape, "L:")
+        assert stats["total"] == 2
+        assert stats["visited"] == 0
+        assert stats["coverage"] == 0.0
+
+    def test_stats_with_visited(self):
+        """Visited set is honoured when passed in."""
+        from e0_controller.interactive_session import _compute_domain_stats
+        s = build_session(steps_per_round=5)
+        s.landscape.add_state("L:A")
+        s.landscape.add_state("L:B")
+        stats = _compute_domain_stats(
+            s.landscape, "L:", visited_set={"L:A"},
+        )
+        assert stats["visited"] == 1
+        assert abs(stats["coverage"] - 0.5) < 0.01
+
+
+class TestDiagnoseSessionDynamic:
+    """C250: diagnose_session includes dynamically detected domains."""
+
+    def test_learned_domain_in_diagnostics(self):
+        """L: nodes appear in diagnose_session output."""
+        s = build_session(steps_per_round=10)
+        s.landscape.add_state("L:ITEM_1")
+        s.landscape.add_state("L:ITEM_2")
+        s.landscape.add_edge("L:ITEM_1", "L:ITEM_2", delta=0.5, resistance=1.0)
+        diag = diagnose_session(s)
+        names = [d["name"] for d in diag["domains"]]
+        assert "Learned" in names
+
+    def test_unknown_prefix_in_diagnostics(self):
+        """Nodes with novel prefix appear in diagnostics."""
+        s = build_session(steps_per_round=10)
+        s.landscape.add_state("Z:ALPHA")
+        s.landscape.add_state("Z:BETA")
+        diag = diagnose_session(s)
+        names = [d["name"] for d in diag["domains"]]
+        assert "Z" in names  # display name = prefix minus colon
+
+
+class TestComputeTrajectoryDynamic:
+    """C250: compute_trajectory includes detected domains."""
+
+    def test_learned_domain_in_trajectory(self):
+        """L: nodes appear in trajectory domain_trends after run."""
+        s = build_session(steps_per_round=10)
+        s.landscape.add_state("L:ITEM_1")
+        s.landscape.add_state("L:ITEM_2")
+        s.landscape.add_edge("L:ITEM_1", "L:ITEM_2", delta=0.5, resistance=1.0)
+        cmd_run(s, 1)
+        traj = compute_trajectory(s)
+        assert "Learned" in traj["summary"]["domain_trends"]
+
+
+class TestMetaReflectDynamic:
+    """C250: meta_reflect includes all detected domains."""
+
+    def test_learned_domain_in_reflection(self):
+        """L: domain appears in meta-reflection domain trajectories."""
+        s = build_session(steps_per_round=10)
+        s.landscape.add_state("L:ITEM_1")
+        s.landscape.add_state("L:ITEM_2")
+        s.landscape.add_edge("L:ITEM_1", "L:ITEM_2", delta=0.5, resistance=1.0)
+        cmd_run(s, 3)
+        result = meta_reflect(s)
+        assert "Learned" in result["domain_trajectories"]
+
+
+class TestCmdFocusDynamic:
+    """C250: cmd_focus accepts any detected domain."""
+
+    def test_focus_learned_domain(self):
+        """cmd_focus('learned') works when L: nodes exist."""
+        s = build_session(steps_per_round=10)
+        s.landscape.add_state("L:ITEM_1")
+        s.landscape.add_state("L:ITEM_2")
+        s.landscape.add_edge("L:ITEM_1", "L:ITEM_2", delta=0.5, resistance=1.0)
+        cmd_run(s, 1)
+        result = cmd_focus(s, "learned")
+        assert "Learned" in result
+
+    def test_focus_available_lists_all(self):
+        """Unknown domain error lists all available domains."""
+        s = build_session(steps_per_round=5)
+        s.landscape.add_state("L:A")
+        result = cmd_focus(s, "nonexistent")
+        assert "Available:" in result
+        assert "Canon" in result
+        assert "Learned" in result
+
+
+class TestDomainOfDynamic:
+    """C250: _domain_of handles all prefixes correctly."""
+
+    def test_learned_prefix(self):
+        """L: nodes return 'learned'."""
+        from e0_controller.explore_learning_cycle_multidomain import _domain_of
+        assert _domain_of("L:CONCEPT") == "learned"
+
+    def test_bootstrap_explicit(self):
+        """B: nodes return 'bootstrap' (not fallback)."""
+        from e0_controller.explore_learning_cycle_multidomain import _domain_of
+        assert _domain_of("B:SOME_NODE") == "bootstrap"
+
+    def test_unknown_prefix(self):
+        """Unknown uppercase prefix returns its lowered name."""
+        from e0_controller.explore_learning_cycle_multidomain import _domain_of
+        assert _domain_of("Z:SOMETHING") == "z"
+
+    def test_no_prefix(self):
+        """Node without prefix returns 'unknown'."""
+        from e0_controller.explore_learning_cycle_multidomain import _domain_of
+        assert _domain_of("no_prefix_node") == "unknown"

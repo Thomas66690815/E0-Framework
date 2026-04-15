@@ -171,8 +171,12 @@ class TestDomainOf:
         assert _domain_of("EN:thing") == "en"
 
     def test_unprefixed_is_bootstrap(self):
-        """Nodes without recognized prefix default to bootstrap."""
-        assert _domain_of("UNKNOWN:x") == "bootstrap"
+        """Nodes with unknown uppercase prefix return lowered prefix (C250)."""
+        assert _domain_of("UNKNOWN:x") == "unknown"
+
+    def test_no_prefix_is_unknown(self):
+        """Nodes without any prefix return 'unknown'."""
+        assert _domain_of("bare_node") == "unknown"
 
     def test_mechanism(self):
         assert _domain_of("M:dream_mode") == "mechanism"
