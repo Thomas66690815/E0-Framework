@@ -3366,11 +3366,30 @@ def dream_run(
             domain_landscapes[reg_name] = learned
             cross_universe_domains.append(reg_name)
 
-    # Run dream cycles
+    # Run dream cycles — C251: adaptive threshold relaxation
     cycle_results: List[DreamCycleResult] = []
-    for _ in range(cycles):
+    relaxed = False
+    for i in range(cycles):
         result = observer.dream_cycle()
         cycle_results.append(result)
+        # After first cycle: if ALL pairs skipped and none compatible,
+        # relax threshold by 1.5× for remaining cycles (E₀ escalation pattern).
+        if (
+            i == 0
+            and not relaxed
+            and result.compatibility_skipped
+            and result.equivalences_found == 0
+            and result.node_equivalences_found == 0
+        ):
+            relaxed_threshold = observer._compatibility_threshold * 1.5
+            relaxed = True
+            # Re-run remaining cycles with relaxed threshold
+            for _ in range(cycles - 1):
+                result2 = observer.dream_cycle(
+                    compatibility_threshold=relaxed_threshold,
+                )
+                cycle_results.append(result2)
+            break
 
     # Readiness report
     readiness = observer.readiness_report()
@@ -3383,12 +3402,13 @@ def dream_run(
 
     # Record journal event
     record_journal_event(state, "dream", {
-        "cycles": cycles,
+        "cycles": len(cycle_results),
         "domains_registered": list(domain_landscapes.keys()),
         "cross_universe_domains": cross_universe_domains,
         "total_equivalences": total_eq,
         "new_equivalences": total_new,
         "node_equivalences": total_node_eq,
+        "threshold_relaxed": relaxed,
         "dream_landscape_edges": (
             cycle_results[-1].dream_landscape_edges if cycle_results else 0
         ),
@@ -3396,7 +3416,7 @@ def dream_run(
 
     return {
         "cycle_results": cycle_results,
-        "cycles": cycles,
+        "cycles": len(cycle_results),
         "domains": list(domain_landscapes.keys()),
         "cross_universe_domains": cross_universe_domains,
         "readiness": readiness,
@@ -3404,6 +3424,7 @@ def dream_run(
         "total_new_equivalences": total_new,
         "total_node_equivalences": total_node_eq,
         "total_node_new": total_node_new,
+        "threshold_relaxed": relaxed,
         "dream_landscape_edges": (
             cycle_results[-1].dream_landscape_edges if cycle_results else 0
         ),
@@ -3452,6 +3473,13 @@ def cmd_dream(state: SessionState, arg: Optional[str] = None) -> str:
     else:
         lines.append("  Cycle Results")
         lines.append("  " + "\u2500" * 40)
+
+    # C251: Show threshold relaxation notice
+    if result.get("threshold_relaxed"):
+        lines.append("    \u26a0 Threshold relaxed (1.5\u00d7) — "
+                      "all pairs were incompatible at default threshold")
+        lines.append("")
+
     for i, cr in enumerate(result["cycle_results"], 1):
         lines.append(
             f"    Cycle {i}: "
@@ -3463,6 +3491,12 @@ def cmd_dream(state: SessionState, arg: Optional[str] = None) -> str:
                 f"{a}\u2194{b}" for a, b in cr.compatibility_skipped
             )
             lines.append(f"           skipped (incompatible): {pairs}")
+        # C251: Show compatibility scores for first cycle
+        if i == 1 and cr.compatibility_scores:
+            lines.append("           scores: " + ", ".join(
+                f"{a}\u2194{b}={s:.2f}"
+                for (a, b), s in sorted(cr.compatibility_scores.items())
+            ))
     lines.append("")
 
     # Dream Landscape stats

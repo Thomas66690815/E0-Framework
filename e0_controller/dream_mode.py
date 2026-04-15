@@ -804,7 +804,10 @@ class DreamObserver:
 
     # -- Dream cycle --------------------------------------------------------
 
-    def dream_cycle(self) -> DreamCycleResult:
+    def dream_cycle(
+        self,
+        compatibility_threshold: Optional[float] = None,
+    ) -> DreamCycleResult:
         """Run one dream observation pass across all domain pairs.
 
         Steps:
@@ -820,8 +823,17 @@ class DreamObserver:
         Domains that are not dream-ready are skipped.
         Domain pairs that are not structurally compatible are skipped (C168).
 
+        *compatibility_threshold* overrides the instance default for this cycle.
+        Pass ``None`` (default) to use the observer's configured threshold.
+
         Returns a DreamCycleResult summarizing the cycle.
         """
+        threshold = (
+            compatibility_threshold
+            if compatibility_threshold is not None
+            else self._compatibility_threshold
+        )
+
         # Partition domains by readiness
         ready: List[str] = []
         skipped: List[str] = []
@@ -838,14 +850,14 @@ class DreamObserver:
         compatibility_scores: Dict[Tuple[str, str], float] = {}
         for i, name_a in enumerate(ready):
             for name_b in ready[i + 1:]:
-                if self._compatibility_threshold is not None:
+                if threshold is not None:
                     score = dream_compatibility(
                         self._domains[name_a],
                         self._domains[name_b],
                         depth=self._wl_depth,
                     )
                     compatibility_scores[(name_a, name_b)] = score
-                    if score > self._compatibility_threshold:
+                    if score > threshold:
                         compatibility_skipped.append((name_a, name_b))
                         continue
                 compatible_pairs.append((name_a, name_b))

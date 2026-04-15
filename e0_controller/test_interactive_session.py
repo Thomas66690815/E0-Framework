@@ -6119,3 +6119,141 @@ class TestDomainOfDynamic:
         """Node without prefix returns 'unknown'."""
         from e0_controller.explore_learning_cycle_multidomain import _domain_of
         assert _domain_of("no_prefix_node") == "unknown"
+
+
+# ── C251: Adaptive Dream Compatibility ────────────────────────────────
+
+
+class TestDreamCycleThresholdParam:
+    """C251: dream_cycle accepts compatibility_threshold override."""
+
+    def test_default_uses_instance_threshold(self):
+        """Without override, dream_cycle uses the observer's threshold."""
+        from e0_controller.dream_mode import DreamObserver
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        obs = DreamObserver(
+            compatibility_threshold=0.01,  # very strict
+            readiness_threshold=0.0,
+        )
+        ls = _extract_domain_landscapes(s.landscape)
+        for name, l in ls.items():
+            obs.register(name, l)
+        result = obs.dream_cycle()
+        # All pairs should be skipped at 0.01
+        assert len(result.compatibility_skipped) > 0
+        assert result.equivalences_found == 0
+
+    def test_override_relaxes_threshold(self):
+        """Passing explicit threshold overrides the instance default."""
+        from e0_controller.dream_mode import DreamObserver
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        obs = DreamObserver(
+            compatibility_threshold=0.01,  # very strict default
+            readiness_threshold=0.0,
+        )
+        ls = _extract_domain_landscapes(s.landscape)
+        for name, l in ls.items():
+            obs.register(name, l)
+        # Override with lenient threshold
+        result = obs.dream_cycle(compatibility_threshold=1.0)
+        assert len(result.compatibility_skipped) == 0
+        assert result.equivalences_found > 0
+
+    def test_none_preserves_instance_threshold(self):
+        """Passing None explicitly still uses the observer's threshold."""
+        from e0_controller.dream_mode import DreamObserver
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        obs = DreamObserver(
+            compatibility_threshold=0.01,
+            readiness_threshold=0.0,
+        )
+        ls = _extract_domain_landscapes(s.landscape)
+        for name, l in ls.items():
+            obs.register(name, l)
+        result = obs.dream_cycle(compatibility_threshold=None)
+        assert result.equivalences_found == 0
+
+
+class TestDreamRunAdaptiveRelaxation:
+    """C251: dream_run relaxes threshold when all pairs are incompatible."""
+
+    def test_relaxation_triggers_on_all_incompatible(self):
+        """When cycle 1 finds 0 eq, threshold relaxes for remaining cycles."""
+        from e0_controller.dream_mode import DreamObserver
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        # Threshold 0.30 → all pairs fail (min score ~0.34)
+        # Relaxed to 0.45 → canon↔en(0.40), canon↔mech(0.40) pass
+        s.dream_observer = DreamObserver(
+            compatibility_threshold=0.30,
+            readiness_threshold=0.0,
+        )
+        result = dream_run(s, cycles=3)
+        assert result["threshold_relaxed"] is True
+        # Cycle 1: 0 eq (all fail)
+        assert result["cycle_results"][0].equivalences_found == 0
+        # Cycle 2+: should find equivalences after relaxation
+        assert result["cycle_results"][1].equivalences_found > 0
+
+    def test_no_relaxation_when_pairs_pass(self):
+        """When cycle 1 finds equivalences, no relaxation happens."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = dream_run(s, cycles=3)
+        # Default threshold (0.6) → canon↔en, canon↔mech, en↔mech pass
+        assert result["threshold_relaxed"] is False
+        assert result["cycle_results"][0].equivalences_found > 0
+
+    def test_relaxation_in_journal(self):
+        """Journal event records whether threshold was relaxed."""
+        from e0_controller.dream_mode import DreamObserver
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        s.dream_observer = DreamObserver(
+            compatibility_threshold=0.30,
+            readiness_threshold=0.0,
+        )
+        dream_run(s, cycles=3)
+        dream_events = [e for e in s.journal if e["event_type"] == "dream"]
+        assert dream_events[-1]["detail"]["threshold_relaxed"] is True
+
+
+class TestCmdDreamScores:
+    """C251: cmd_dream output includes compatibility scores."""
+
+    def test_scores_in_output(self):
+        """Dream output shows compatibility scores."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_dream(s)
+        assert "scores:" in out
+
+    def test_scores_show_numeric_values(self):
+        """Score lines contain numeric values like '=0.40'."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_dream(s)
+        import re
+        assert re.search(r"=\d\.\d\d", out)
+
+    def test_relaxation_notice_shown(self):
+        """Relaxation warning appears when threshold is relaxed."""
+        from e0_controller.dream_mode import DreamObserver
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        s.dream_observer = DreamObserver(
+            compatibility_threshold=0.30,
+            readiness_threshold=0.0,
+        )
+        out = cmd_dream(s)
+        assert "Threshold relaxed" in out
+
+    def test_no_relaxation_notice_when_not_needed(self):
+        """No relaxation warning when pairs pass at default threshold."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_dream(s)
+        assert "Threshold relaxed" not in out
