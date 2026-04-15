@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C246",
-    "latest_commit_hash": "384fcef",
-    "latest_commit_msg": "C246: Per-Universe Teach/Ask Isolation — consolidate() universe tag. Every persisted edge and history entry carries universe field. regenerate_seed filters by active_universe. Closes persistence gap: learning_state.json no longer cross-contaminates. 7 new tests, 5405 total.",
-    "test_count": 5405,
+    "latest_commit": "C247",
+    "latest_commit_hash": "9ebc68c",
+    "latest_commit_msg": "C247: CouplingRouter Wiring — couple command for inter-universe knowledge transfer. _universe_to_coupling adapter, _ensure_coupling_router lazy init, couple_run L:-edge transfer with historization. Commands: couple/couple explore/couple recover/couple <name>/couple status. 25 new tests, 5430 total.",
+    "test_count": 5430,
     "test_failures": 0,
     "ci_status": "pending",
     "module_count": "77 production + 10 benchmarks + 17 demos + 69 explorations + 127 test files",
@@ -236,8 +236,8 @@
       },
       "C247_coupling_router_wiring": {
         "title": "CouplingRouter Wiring",
-        "what": "At ≥2 universes: CouplingRouter auto-instanziiert. couple <name> manual partner selection. couple explore/recover uses dual-selection. Coupling outcomes historized. Knowledge transfer: high-confidence edges from partner injected as hypothesis edges.",
-        "status": "PLANNED"
+        "what": "Wire CouplingRouter (C66-C68) into interactive session. _universe_to_coupling adapter bridges UniverseState→Universe. _ensure_coupling_router lazy-creates/updates router at ≥2 universes. couple_run transfers L: nodes+edges from partner, historizes outcome. Commands: couple/explore/recover/<name>/status. 25 tests.",
+        "status": "DONE (C247)"
       },
       "C248_divergence_pressure_auto": {
         "title": "Divergence Pressure Auto-Coupling",
@@ -257,7 +257,7 @@
       "LLM symmetry: needed at BOTH ends — input structuring (Bootstrapper) AND output formatting (User-Lesbarkeit)",
       "Adversarial stability partially mitigated (C172-C174, C243b finish_reason check)"
     ],
-    "next_commit_id": "C247",
+    "next_commit_id": "C248",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
