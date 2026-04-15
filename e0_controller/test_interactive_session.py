@@ -131,6 +131,8 @@ from e0_controller.interactive_session import (
     couple_status,
     cmd_couple,
     _format_couple_result,
+    _inject_dream_bridges,
+    _create_bridges,
 )
 from e0_controller.feedback import HumanAction
 from e0_controller.perception import PerceptionDomain
@@ -6501,3 +6503,208 @@ class TestCmdCoupleBidirectionalOutput:
         assert "Inbound" in text
         assert "Outbound" in text
         assert "Total:" in text
+
+
+# ---------------------------------------------------------------------------
+# C254 — Dream Backflow + Bridge Resistance
+# ---------------------------------------------------------------------------
+
+
+class TestInjectDreamBridges:
+    """C254: _inject_dream_bridges creates cross-domain edges from node equivalences."""
+
+    def test_injects_bidirectional_edges(self):
+        """Node equivalences produce bidirectional dream_bridge edges."""
+        from e0_controller.dream_mode import DreamObserver
+        from e0_controller.interactive_session import _inject_dream_bridges
+
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+
+        # Set up observer with two domains that have matching structure
+        obs = DreamObserver(compatibility_threshold=1.0, readiness_threshold=0.0)
+        ls_canon = _extract_domain_landscapes(s.landscape).get("canon")
+        ls_en = _extract_domain_landscapes(s.landscape).get("en")
+        if ls_canon and ls_en:
+            obs.register("canon", ls_canon)
+            obs.register("en", ls_en)
+            obs.dream_cycle(compatibility_threshold=1.0)
+
+            count = _inject_dream_bridges(s, obs)
+            # Should produce edges if node equivalences found
+            node_eqs = obs.node_equivalences_for("canon")
+            if len(node_eqs) > 0:
+                assert count > 0
+                # Check that dream_bridge edges exist
+                from e0_controller.primitives import Edge
+                eq = node_eqs[0]
+                own_full = "C:" + eq["own_node"]
+                partner_full = "EN:" + eq["partner_node"]
+                if own_full in s.landscape.states and partner_full in s.landscape.states:
+                    fwd = Edge(own_full, partner_full)
+                    assert fwd in s.landscape._R0
+
+    def test_no_injection_without_equivalences(self):
+        """Zero bridges injected when observer has no equivalences."""
+        from e0_controller.dream_mode import DreamObserver
+        from e0_controller.interactive_session import _inject_dream_bridges
+
+        s = build_session(steps_per_round=10)
+        obs = DreamObserver(compatibility_threshold=0.01, readiness_threshold=0.0)
+        # no domains registered → no equivalences
+        count = _inject_dream_bridges(s, obs)
+        assert count == 0
+
+    def test_skips_missing_nodes(self):
+        """Equivalence with nodes not in session landscape is skipped."""
+        from e0_controller.dream_mode import DreamObserver
+        from e0_controller.interactive_session import _inject_dream_bridges
+
+        s = build_session(steps_per_round=10)
+        # Manually set up observer with a landscape that has an extra node
+        obs = DreamObserver(compatibility_threshold=1.0, readiness_threshold=0.0)
+        from e0_controller.landscape import Landscape
+
+        ls_a = Landscape()
+        ls_a.add_state("C:FAKE_NODE_A")
+        ls_a.add_state("C:FAKE_NODE_B")
+        ls_a.add_edge("C:FAKE_NODE_A", "C:FAKE_NODE_B", 0.5, 1.0)
+
+        ls_b = Landscape()
+        ls_b.add_state("EN:fake_a")
+        ls_b.add_state("EN:fake_b")
+        ls_b.add_edge("EN:fake_a", "EN:fake_b", 0.5, 1.0)
+
+        obs.register("canon", ls_a)
+        obs.register("en", ls_b)
+        obs.dream_cycle(compatibility_threshold=1.0)
+
+        # These fake nodes don't exist in session landscape
+        count = _inject_dream_bridges(s, obs)
+        assert count == 0  # all skipped — nodes not in session landscape
+
+    def test_dream_bridge_resistance_is_low(self):
+        """Dream bridge edges have R=0.35 (traversable)."""
+        from e0_controller.dream_mode import DreamObserver
+        from e0_controller.interactive_session import _inject_dream_bridges
+        from e0_controller.primitives import Edge
+
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+
+        obs = DreamObserver(compatibility_threshold=1.0, readiness_threshold=0.0)
+        domains = _extract_domain_landscapes(s.landscape)
+        for name, ls in domains.items():
+            obs.register(name, ls)
+        obs.dream_cycle(compatibility_threshold=1.0)
+        _inject_dream_bridges(s, obs)
+
+        # Find a dream_bridge edge and check its R
+        for edge, meta in s.landscape._metadata.items():
+            if meta.get("relation_type") == "dream_bridge":
+                assert s.landscape._R0[edge] == pytest.approx(0.35)
+                assert s.landscape._delta[edge] == pytest.approx(0.3)
+                break
+
+    def test_no_duplicate_on_second_run(self):
+        """Running injection twice does not create duplicate edges."""
+        from e0_controller.dream_mode import DreamObserver
+        from e0_controller.interactive_session import _inject_dream_bridges
+
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+
+        obs = DreamObserver(compatibility_threshold=1.0, readiness_threshold=0.0)
+        domains = _extract_domain_landscapes(s.landscape)
+        for name, ls in domains.items():
+            obs.register(name, ls)
+        obs.dream_cycle(compatibility_threshold=1.0)
+
+        count1 = _inject_dream_bridges(s, obs)
+        count2 = _inject_dream_bridges(s, obs)
+        # Second run should add 0 (all already present)
+        assert count2 == 0
+
+    def test_skips_cross_universe_domains(self):
+        """Domains not in _DOMAIN_PREFIXES (like 'learned_test3') are skipped."""
+        from e0_controller.dream_mode import DreamObserver
+        from e0_controller.interactive_session import _inject_dream_bridges
+        from e0_controller.landscape import Landscape
+
+        s = build_session(steps_per_round=10)
+        obs = DreamObserver(compatibility_threshold=1.0, readiness_threshold=0.0)
+
+        # Register a cross-universe domain name
+        ls = Landscape()
+        ls.add_state("L:A")
+        ls.add_state("L:B")
+        ls.add_edge("L:A", "L:B", 0.5, 1.0)
+        obs.register("learned_test3", ls)
+
+        count = _inject_dream_bridges(s, obs)
+        assert count == 0
+
+
+class TestDreamRunBackflow:
+    """C254: dream_run returns dream_bridges_added count."""
+
+    def test_dream_bridges_in_result(self):
+        """dream_run result dict contains dream_bridges_added key."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = dream_run(s, cycles=1)
+        assert "dream_bridges_added" in result
+        assert isinstance(result["dream_bridges_added"], int)
+
+    def test_dream_bridges_in_journal(self):
+        """Journal event records dream_bridges_added."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        dream_run(s, cycles=1)
+        dream_events = [e for e in s.journal if e["event_type"] == "dream"]
+        assert len(dream_events) >= 1
+        assert "dream_bridges_added" in dream_events[-1]["detail"]
+
+    def test_cmd_dream_shows_bridges(self):
+        """cmd_dream output shows bridge count when >0."""
+        from e0_controller.dream_mode import DreamObserver
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        # Use lenient threshold to get node equivalences
+        s.dream_observer = DreamObserver(
+            compatibility_threshold=1.0,
+            readiness_threshold=0.0,
+        )
+        out = cmd_dream(s)
+        # If bridges were injected, output should mention them
+        if "dream bridges" in out:
+            assert "injected" in out
+
+
+class TestBridgeResistanceReduced:
+    """C254: _create_bridges uses lower resistance for traversability."""
+
+    def test_bridge_resistance_is_0_4(self):
+        """Task bridges use R=0.4 (was 1.2)."""
+        from e0_controller.interactive_session import _create_bridges
+
+        s = build_session(steps_per_round=10)
+        # Add L: nodes that overlap with existing concepts
+        s.landscape.add_state("L:TENSION_EXPLAINED")
+        bridges = _create_bridges(s, ["L:TENSION_EXPLAINED"])
+        if bridges:
+            from e0_controller.primitives import Edge
+            fwd = Edge(bridges[0][0], bridges[0][1])
+            assert s.landscape._R0[fwd] == pytest.approx(0.4)
+
+    def test_bridge_delta_is_0_3(self):
+        """Task bridges use delta=0.3 (was 0.4)."""
+        from e0_controller.interactive_session import _create_bridges
+
+        s = build_session(steps_per_round=10)
+        s.landscape.add_state("L:TENSION_EXPLAINED")
+        bridges = _create_bridges(s, ["L:TENSION_EXPLAINED"])
+        if bridges:
+            from e0_controller.primitives import Edge
+            fwd = Edge(bridges[0][0], bridges[0][1])
+            assert s.landscape._delta[fwd] == pytest.approx(0.3)

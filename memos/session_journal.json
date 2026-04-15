@@ -15163,6 +15163,6739 @@
         "steps": 12,
         "domain_crossings": 6
       }
+    },
+    {
+      "timestamp": "2026-04-15T10:18:36",
+      "session_id": "20260415_101836",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:19:20",
+      "session_id": "20260415_101920",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:19:20",
+      "session_id": "20260415_101920",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:19:20",
+      "session_id": "20260415_101920",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:19:21",
+      "session_id": "20260415_101921",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:19:21",
+      "session_id": "20260415_101921",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:19:21",
+      "session_id": "20260415_101921",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:19:21",
+      "session_id": "20260415_101921",
+      "event_type": "round",
+      "round_num": 3,
+      "metrics": {
+        "coverage": 0.6744,
+        "T_s": 0.0628,
+        "frontier_size": 40,
+        "visited_nodes": 116,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.4773,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.034884,
+        "steps": 12,
+        "domain_crossings": 7
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:19:22",
+      "session_id": "20260415_101922",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:19:22",
+      "session_id": "20260415_101922",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:19:22",
+      "session_id": "20260415_101922",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:19:23",
+      "session_id": "20260415_101923",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:19:23",
+      "session_id": "20260415_101923",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:19:25",
+      "session_id": "20260415_101925",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:19:25",
+      "session_id": "20260415_101925",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:19:25",
+      "session_id": "20260415_101925",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:24:40",
+      "session_id": "20260415_102440",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:25:24",
+      "session_id": "20260415_102524",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:25:24",
+      "session_id": "20260415_102524",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:25:24",
+      "session_id": "20260415_102524",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:25:25",
+      "session_id": "20260415_102525",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:25:25",
+      "session_id": "20260415_102525",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:25:25",
+      "session_id": "20260415_102525",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:25:26",
+      "session_id": "20260415_102525",
+      "event_type": "round",
+      "round_num": 3,
+      "metrics": {
+        "coverage": 0.6744,
+        "T_s": 0.0628,
+        "frontier_size": 40,
+        "visited_nodes": 116,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.4773,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.034884,
+        "steps": 12,
+        "domain_crossings": 7
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:25:26",
+      "session_id": "20260415_102526",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:25:26",
+      "session_id": "20260415_102526",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:25:27",
+      "session_id": "20260415_102527",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:25:27",
+      "session_id": "20260415_102527",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:25:27",
+      "session_id": "20260415_102527",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:25:28",
+      "session_id": "20260415_102528",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:25:30",
+      "session_id": "20260415_102530",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:25:30",
+      "session_id": "20260415_102530",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:25:30",
+      "session_id": "20260415_102530",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:48:14",
+      "session_id": "20260415_104814",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:49:03",
+      "session_id": "20260415_104903",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:49:03",
+      "session_id": "20260415_104903",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:49:03",
+      "session_id": "20260415_104903",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:49:04",
+      "session_id": "20260415_104903",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:49:04",
+      "session_id": "20260415_104904",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:49:04",
+      "session_id": "20260415_104904",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:49:04",
+      "session_id": "20260415_104904",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:49:04",
+      "session_id": "20260415_104904",
+      "event_type": "round",
+      "round_num": 3,
+      "metrics": {
+        "coverage": 0.6744,
+        "T_s": 0.0628,
+        "frontier_size": 40,
+        "visited_nodes": 116,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.4773,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.034884,
+        "steps": 12,
+        "domain_crossings": 7
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:49:05",
+      "session_id": "20260415_104904",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:49:05",
+      "session_id": "20260415_104904",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:49:05",
+      "session_id": "20260415_104905",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:49:05",
+      "session_id": "20260415_104905",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:49:06",
+      "session_id": "20260415_104906",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:49:08",
+      "session_id": "20260415_104908",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:49:08",
+      "session_id": "20260415_104908",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T10:49:08",
+      "session_id": "20260415_104908",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T11:10:33",
+      "session_id": "20260415_111033",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T11:11:21",
+      "session_id": "20260415_111121",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T11:11:21",
+      "session_id": "20260415_111121",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T11:11:21",
+      "session_id": "20260415_111121",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T11:11:22",
+      "session_id": "20260415_111122",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T11:11:22",
+      "session_id": "20260415_111122",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T11:11:22",
+      "session_id": "20260415_111122",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T11:11:22",
+      "session_id": "20260415_111122",
+      "event_type": "round",
+      "round_num": 3,
+      "metrics": {
+        "coverage": 0.6744,
+        "T_s": 0.0628,
+        "frontier_size": 40,
+        "visited_nodes": 116,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.4773,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.034884,
+        "steps": 12,
+        "domain_crossings": 7
+      }
+    },
+    {
+      "timestamp": "2026-04-15T11:11:23",
+      "session_id": "20260415_111123",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T11:11:23",
+      "session_id": "20260415_111123",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T11:11:23",
+      "session_id": "20260415_111123",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T11:11:24",
+      "session_id": "20260415_111124",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T11:11:26",
+      "session_id": "20260415_111126",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T11:11:26",
+      "session_id": "20260415_111126",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T11:11:27",
+      "session_id": "20260415_111126",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-14T20:18:06",
+      "session_id": "20260414_201806",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.9007,
+        "T_s": 0.8036,
+        "frontier_size": 36,
+        "visited_nodes": 408,
+        "total_nodes": 453,
+        "canon_coverage": 0.746,
+        "bootstrap_coverage": 0.6585,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0
+      }
+    },
+    {
+      "timestamp": "2026-04-14T20:18:20",
+      "session_id": "20260414_201806",
+      "event_type": "curriculum",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.936,
+        "T_s": 6.8689,
+        "frontier_size": 24,
+        "visited_nodes": 424,
+        "total_nodes": 453,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.6585,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "canon": "ontodynamics",
+        "turns": 3,
+        "total_steps": 690,
+        "equilibrium_reached": [
+          false,
+          true,
+          false
+        ],
+        "transferred_edges": 131
+      }
+    },
+    {
+      "timestamp": "2026-04-14T20:18:21",
+      "session_id": "20260414_201806",
+      "event_type": "curriculum",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.9382,
+        "T_s": 5.3844,
+        "frontier_size": 23,
+        "visited_nodes": 425,
+        "total_nodes": 453,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.6585,
+        "en_coverage": 0.0,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "canon": "mechanism_e0",
+        "turns": 3,
+        "total_steps": 900,
+        "equilibrium_reached": [
+          false,
+          false,
+          false
+        ],
+        "transferred_edges": 43
+      }
+    },
+    {
+      "timestamp": "2026-04-14T20:18:25",
+      "session_id": "20260414_201806",
+      "event_type": "dream",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.9382,
+        "T_s": 5.3844,
+        "frontier_size": 23,
+        "visited_nodes": 425,
+        "total_nodes": 453,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.6585,
+        "en_coverage": 0.0,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "cycles": 3,
+        "domains_registered": [
+          "canon",
+          "bootstrap",
+          "mechanism"
+        ],
+        "total_equivalences": 0,
+        "new_equivalences": 0,
+        "node_equivalences": 0,
+        "dream_landscape_edges": 0
+      }
+    },
+    {
+      "timestamp": "2026-04-14T20:18:25",
+      "session_id": "20260414_201806",
+      "event_type": "selflearn",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.9382,
+        "T_s": 5.3844,
+        "frontier_size": 23,
+        "visited_nodes": 425,
+        "total_nodes": 453,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.6585,
+        "en_coverage": 0.0,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "phases": [
+          "ontodynamics",
+          "mechanism_e0"
+        ],
+        "onto_turns": 3,
+        "onto_steps": 690,
+        "onto_transferred": 131,
+        "mech_turns": 3,
+        "mech_steps": 900,
+        "mech_transferred": 43,
+        "dream_equivalences": 0,
+        "mastery_overall": 0.9047619047619048,
+        "mastery_ready": true
+      }
+    },
+    {
+      "timestamp": "2026-04-14T20:18:53",
+      "session_id": "20260414_201806",
+      "event_type": "ask",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.9448,
+        "T_s": 0.1328,
+        "frontier_size": 20,
+        "visited_nodes": 428,
+        "total_nodes": 453,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.7561,
+        "en_coverage": 0.0,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "question": "what is time",
+        "terms": 1,
+        "gaps_before": 0,
+        "gaps_after": 0,
+        "learned_count": 0,
+        "coverage_before": 1.0,
+        "coverage_after": 1.0,
+        "depth_before": 1.0,
+        "depth_after": 1.0,
+        "confidence": 1.0
+      }
+    },
+    {
+      "timestamp": "2026-04-14T20:19:51",
+      "session_id": "20260414_201806",
+      "event_type": "ask",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.9536,
+        "T_s": 0.062,
+        "frontier_size": 16,
+        "visited_nodes": 432,
+        "total_nodes": 453,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.8537,
+        "en_coverage": 0.0,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "question": "what is mass",
+        "terms": 1,
+        "gaps_before": 0,
+        "gaps_after": 0,
+        "learned_count": 0,
+        "coverage_before": 1.0,
+        "coverage_after": 1.0,
+        "depth_before": 1.0,
+        "depth_after": 1.0,
+        "confidence": 1.0
+      }
+    },
+    {
+      "timestamp": "2026-04-14T20:21:25",
+      "session_id": "20260414_201806",
+      "event_type": "ask",
+      "round_num": 6,
+      "metrics": {
+        "coverage": 0.9372,
+        "T_s": 0.0486,
+        "frontier_size": 21,
+        "visited_nodes": 433,
+        "total_nodes": 462,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.8537,
+        "en_coverage": 0.0,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 4
+      },
+      "detail": {
+        "question": "what is SU2 Spinor",
+        "terms": 2,
+        "gaps_before": 1,
+        "gaps_after": 0,
+        "learned_count": 1,
+        "coverage_before": 0.5,
+        "coverage_after": 1.0,
+        "depth_before": 0.5,
+        "depth_after": 1.0,
+        "confidence": 1.0
+      }
+    },
+    {
+      "timestamp": "2026-04-14T20:22:31",
+      "session_id": "20260414_201806",
+      "event_type": "ask",
+      "round_num": 8,
+      "metrics": {
+        "coverage": 0.9199,
+        "T_s": 0.0796,
+        "frontier_size": 26,
+        "visited_nodes": 425,
+        "total_nodes": 462,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.8537,
+        "en_coverage": 0.0,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 6
+      },
+      "detail": {
+        "question": "what is dreaming",
+        "terms": 1,
+        "gaps_before": 0,
+        "gaps_after": 0,
+        "learned_count": 0,
+        "coverage_before": 1.0,
+        "coverage_after": 1.0,
+        "depth_before": 1.0,
+        "depth_after": 1.0,
+        "confidence": 1.0
+      }
+    },
+    {
+      "timestamp": "2026-04-14T20:23:46",
+      "session_id": "20260414_201806",
+      "event_type": "ask",
+      "round_num": 12,
+      "metrics": {
+        "coverage": 0.9195,
+        "T_s": 0.1062,
+        "frontier_size": 14,
+        "visited_nodes": 434,
+        "total_nodes": 472,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.8537,
+        "en_coverage": 0.0,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 10
+      },
+      "detail": {
+        "question": "what is speed",
+        "terms": 1,
+        "gaps_before": 1,
+        "gaps_after": 0,
+        "learned_count": 1,
+        "coverage_before": 0.0,
+        "coverage_after": 1.0,
+        "depth_before": 0.0,
+        "depth_after": 1.0,
+        "confidence": 1.0
+      }
+    },
+    {
+      "timestamp": "2026-04-14T20:24:48",
+      "session_id": "20260414_201806",
+      "event_type": "dream",
+      "round_num": 12,
+      "metrics": {
+        "coverage": 0.9195,
+        "T_s": 0.1062,
+        "frontier_size": 14,
+        "visited_nodes": 434,
+        "total_nodes": 472,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.8537,
+        "en_coverage": 0.0,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 10
+      },
+      "detail": {
+        "cycles": 3,
+        "domains_registered": [
+          "canon",
+          "bootstrap",
+          "mechanism"
+        ],
+        "total_equivalences": 0,
+        "new_equivalences": 0,
+        "node_equivalences": 0,
+        "dream_landscape_edges": 0
+      }
+    },
+    {
+      "timestamp": "2026-04-14T20:30:41",
+      "session_id": "20260414_201806",
+      "event_type": "teach",
+      "round_num": 15,
+      "metrics": {
+        "coverage": 0.8983,
+        "T_s": 0.2583,
+        "frontier_size": 14,
+        "visited_nodes": 433,
+        "total_nodes": 482,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.8537,
+        "en_coverage": 0.0,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 13
+      },
+      "detail": {
+        "concept": "everything about the water molecule",
+        "nodes_added": 10,
+        "coverage_delta": -0.021151,
+        "teach_rounds": 2
+      }
+    },
+    {
+      "timestamp": "2026-04-14T20:31:04",
+      "session_id": "20260414_201806",
+      "event_type": "ask",
+      "round_num": 16,
+      "metrics": {
+        "coverage": 0.8983,
+        "T_s": 0.1656,
+        "frontier_size": 14,
+        "visited_nodes": 433,
+        "total_nodes": 482,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.8537,
+        "en_coverage": 0.0,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 14
+      },
+      "detail": {
+        "question": "what is water",
+        "terms": 1,
+        "gaps_before": 0,
+        "gaps_after": 0,
+        "learned_count": 0,
+        "coverage_before": 1.0,
+        "coverage_after": 1.0,
+        "depth_before": 1.0,
+        "depth_after": 1.0,
+        "confidence": 1.0
+      }
+    },
+    {
+      "timestamp": "2026-04-14T20:32:27",
+      "session_id": "20260414_201806",
+      "event_type": "ask",
+      "round_num": 17,
+      "metrics": {
+        "coverage": 0.9004,
+        "T_s": 0.1016,
+        "frontier_size": 13,
+        "visited_nodes": 434,
+        "total_nodes": 482,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.878,
+        "en_coverage": 0.0,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "question": "how do the concepts of water and mass connect",
+        "terms": 4,
+        "gaps_before": 0,
+        "gaps_after": 0,
+        "learned_count": 0,
+        "coverage_before": 1.0,
+        "coverage_after": 1.0,
+        "depth_before": 0.825,
+        "depth_after": 0.825,
+        "confidence": 0.825
+      }
+    },
+    {
+      "timestamp": "2026-04-14T20:33:22",
+      "session_id": "20260414_201806",
+      "event_type": "dream",
+      "round_num": 17,
+      "metrics": {
+        "coverage": 0.9004,
+        "T_s": 0.1016,
+        "frontier_size": 13,
+        "visited_nodes": 434,
+        "total_nodes": 482,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.878,
+        "en_coverage": 0.0,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "cycles": 3,
+        "domains_registered": [
+          "canon",
+          "bootstrap",
+          "mechanism"
+        ],
+        "total_equivalences": 0,
+        "new_equivalences": 0,
+        "node_equivalences": 0,
+        "dream_landscape_edges": 0
+      }
+    },
+    {
+      "timestamp": "2026-04-14T20:35:06",
+      "session_id": "20260414_201806",
+      "event_type": "ask",
+      "round_num": 18,
+      "metrics": {
+        "coverage": 0.9004,
+        "T_s": 0.0907,
+        "frontier_size": 13,
+        "visited_nodes": 434,
+        "total_nodes": 482,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.878,
+        "en_coverage": 0.0,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 1
+      },
+      "detail": {
+        "question": "what is difference between ice and water",
+        "terms": 3,
+        "gaps_before": 0,
+        "gaps_after": 0,
+        "learned_count": 0,
+        "coverage_before": 1.0,
+        "coverage_after": 1.0,
+        "depth_before": 1.0,
+        "depth_after": 1.0,
+        "confidence": 1.0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T08:58:08",
+      "session_id": "20260414_201806",
+      "event_type": "teach",
+      "round_num": 21,
+      "metrics": {
+        "coverage": 0.9018,
+        "T_s": 0.0946,
+        "frontier_size": 13,
+        "visited_nodes": 441,
+        "total_nodes": 489,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.878,
+        "en_coverage": 0.0,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 4
+      },
+      "detail": {
+        "concept": "derive the water molecule from e0",
+        "nodes_added": 7,
+        "coverage_delta": 0.001426,
+        "teach_rounds": 1
+      }
+    },
+    {
+      "timestamp": "2026-04-15T08:59:26",
+      "session_id": "20260414_201806",
+      "event_type": "teach",
+      "round_num": 36,
+      "metrics": {
+        "coverage": 0.8774,
+        "T_s": 0.2891,
+        "frontier_size": 20,
+        "visited_nodes": 451,
+        "total_nodes": 514,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.878,
+        "en_coverage": 0.0,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 19
+      },
+      "detail": {
+        "concept": "derive the water molecule from e0",
+        "nodes_added": 25,
+        "coverage_delta": -0.024409,
+        "teach_rounds": 5
+      }
+    },
+    {
+      "timestamp": "2026-04-15T09:00:00",
+      "session_id": "20260414_201806",
+      "event_type": "ask",
+      "round_num": 37,
+      "metrics": {
+        "coverage": 0.8774,
+        "T_s": 0.1683,
+        "frontier_size": 20,
+        "visited_nodes": 451,
+        "total_nodes": 514,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.878,
+        "en_coverage": 0.0,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 20
+      },
+      "detail": {
+        "question": "what is water",
+        "terms": 1,
+        "gaps_before": 0,
+        "gaps_after": 0,
+        "learned_count": 0,
+        "coverage_before": 1.0,
+        "coverage_after": 1.0,
+        "depth_before": 1.0,
+        "depth_after": 1.0,
+        "confidence": 1.0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T09:00:47",
+      "session_id": "20260414_201806",
+      "event_type": "ask",
+      "round_num": 38,
+      "metrics": {
+        "coverage": 0.8774,
+        "T_s": 0.1758,
+        "frontier_size": 20,
+        "visited_nodes": 451,
+        "total_nodes": 514,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.878,
+        "en_coverage": 0.0,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 21
+      },
+      "detail": {
+        "question": "what is a molecule",
+        "terms": 1,
+        "gaps_before": 0,
+        "gaps_after": 0,
+        "learned_count": 0,
+        "coverage_before": 1.0,
+        "coverage_after": 1.0,
+        "depth_before": 1.0,
+        "depth_after": 1.0,
+        "confidence": 1.0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T09:02:23",
+      "session_id": "20260414_201806",
+      "event_type": "teach",
+      "round_num": 53,
+      "metrics": {
+        "coverage": 0.8736,
+        "T_s": 0.2451,
+        "frontier_size": 18,
+        "visited_nodes": 477,
+        "total_nodes": 546,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.878,
+        "en_coverage": 0.0,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 36
+      },
+      "detail": {
+        "concept": "what is a molecule",
+        "nodes_added": 32,
+        "coverage_delta": -0.003806,
+        "teach_rounds": 5
+      }
+    },
+    {
+      "timestamp": "2026-04-15T09:05:16",
+      "session_id": "20260414_201806",
+      "event_type": "ask",
+      "round_num": 58,
+      "metrics": {
+        "coverage": 0.8757,
+        "T_s": 0.1403,
+        "frontier_size": 19,
+        "visited_nodes": 493,
+        "total_nodes": 563,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.878,
+        "en_coverage": 0.0,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 41
+      },
+      "detail": {
+        "question": "what is a molcule",
+        "terms": 1,
+        "gaps_before": 1,
+        "gaps_after": 0,
+        "learned_count": 1,
+        "coverage_before": 0.0,
+        "coverage_after": 1.0,
+        "depth_before": 0.0,
+        "depth_after": 1.0,
+        "confidence": 1.0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T09:06:10",
+      "session_id": "20260414_201806",
+      "event_type": "teach",
+      "round_num": 61,
+      "metrics": {
+        "coverage": 0.8772,
+        "T_s": 0.1265,
+        "frontier_size": 19,
+        "visited_nodes": 500,
+        "total_nodes": 570,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.878,
+        "en_coverage": 0.0,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 44
+      },
+      "detail": {
+        "concept": "relationship of atoms and molecules",
+        "nodes_added": 7,
+        "coverage_delta": 0.001527,
+        "teach_rounds": 2
+      }
+    },
+    {
+      "timestamp": "2026-04-15T09:06:50",
+      "session_id": "20260414_201806",
+      "event_type": "ask",
+      "round_num": 63,
+      "metrics": {
+        "coverage": 0.8754,
+        "T_s": 0.1373,
+        "frontier_size": 20,
+        "visited_nodes": 499,
+        "total_nodes": 570,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.878,
+        "en_coverage": 0.0,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 46
+      },
+      "detail": {
+        "question": "what is an atom",
+        "terms": 1,
+        "gaps_before": 0,
+        "gaps_after": 0,
+        "learned_count": 0,
+        "coverage_before": 1.0,
+        "coverage_after": 1.0,
+        "depth_before": 1.0,
+        "depth_after": 1.0,
+        "confidence": 1.0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T09:08:37",
+      "session_id": "20260414_201806",
+      "event_type": "reflect",
+      "round_num": 63,
+      "metrics": {
+        "coverage": 0.8754,
+        "T_s": 0.1373,
+        "frontier_size": 20,
+        "visited_nodes": 499,
+        "total_nodes": 570,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.878,
+        "en_coverage": 0.0,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 46
+      },
+      "detail": {
+        "patterns_found": 5,
+        "recommendations": 2,
+        "stagnation_episodes": 2
+      }
+    },
+    {
+      "timestamp": "2026-04-15T09:08:37",
+      "session_id": "20260414_201806",
+      "event_type": "tune",
+      "round_num": 63,
+      "metrics": {
+        "coverage": 0.8754,
+        "T_s": 0.1373,
+        "frontier_size": 20,
+        "visited_nodes": 499,
+        "total_nodes": 570,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.878,
+        "en_coverage": 0.0,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 46
+      },
+      "detail": {
+        "domains_tuned": 3,
+        "domains_improved": 0,
+        "improved_names": [],
+        "max_rounds": 5,
+        "total_trials": 3
+      }
+    },
+    {
+      "timestamp": "2026-04-15T09:09:28",
+      "session_id": "20260414_201806",
+      "event_type": "round",
+      "round_num": 64,
+      "metrics": {
+        "coverage": 0.8772,
+        "T_s": 0.1341,
+        "frontier_size": 20,
+        "visited_nodes": 500,
+        "total_nodes": 570,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.878,
+        "en_coverage": 0.0,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "mode": "llm",
+        "coverage_delta": 0.001754,
+        "steps": 40,
+        "domain_crossings": 0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T11:33:05",
+      "session_id": "",
+      "event_type": "universe_created",
+      "round_num": 64,
+      "metrics": {
+        "coverage": 0.8772,
+        "T_s": 0.1341,
+        "frontier_size": 20,
+        "visited_nodes": 500,
+        "total_nodes": 570,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.878,
+        "en_coverage": 0.0,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "name": "new1"
+      }
+    },
+    {
+      "timestamp": "2026-04-15T11:33:22",
+      "session_id": "",
+      "event_type": "universe_switched",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "to": "new1"
+      }
+    },
+    {
+      "timestamp": "2026-04-15T11:33:29",
+      "session_id": "",
+      "event_type": "curriculum",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.7442,
+        "T_s": 2.2668,
+        "frontier_size": 23,
+        "visited_nodes": 128,
+        "total_nodes": 172,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "canon": "ontodynamics",
+        "turns": 3,
+        "total_steps": 690,
+        "equilibrium_reached": [
+          false,
+          true,
+          false
+        ],
+        "transferred_edges": 131
+      }
+    },
+    {
+      "timestamp": "2026-04-15T11:33:40",
+      "session_id": "",
+      "event_type": "dream",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.7558,
+        "T_s": 2.3708,
+        "frontier_size": 21,
+        "visited_nodes": 130,
+        "total_nodes": 172,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "cycles": 3,
+        "domains_registered": [
+          "canon",
+          "bootstrap",
+          "en",
+          "mechanism",
+          "learned_main"
+        ],
+        "cross_universe_domains": [
+          "learned_main"
+        ],
+        "total_equivalences": 1689,
+        "new_equivalences": 563,
+        "node_equivalences": 60,
+        "dream_landscape_edges": 1166
+      }
+    },
+    {
+      "timestamp": "2026-04-15T11:33:40",
+      "session_id": "",
+      "event_type": "selflearn",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.7558,
+        "T_s": 2.3708,
+        "frontier_size": 21,
+        "visited_nodes": 130,
+        "total_nodes": 172,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "phases": [
+          "ontodynamics",
+          "mechanism_e0"
+        ],
+        "onto_turns": 3,
+        "onto_steps": 690,
+        "onto_transferred": 131,
+        "mech_turns": 3,
+        "mech_steps": 900,
+        "mech_transferred": 43,
+        "dream_equivalences": 1689,
+        "mastery_overall": 0.8994708994708995,
+        "mastery_ready": true
+      }
+    },
+    {
+      "timestamp": "2026-04-15T11:34:15",
+      "session_id": "",
+      "event_type": "ask",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.8256,
+        "T_s": 0.071,
+        "frontier_size": 14,
+        "visited_nodes": 142,
+        "total_nodes": 172,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.4091,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "question": "what is tension",
+        "terms": 1,
+        "gaps_before": 0,
+        "gaps_after": 0,
+        "learned_count": 0,
+        "coverage_before": 1.0,
+        "coverage_after": 1.0,
+        "depth_before": 1.0,
+        "depth_after": 1.0,
+        "confidence": 1.0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T11:35:18",
+      "session_id": "",
+      "event_type": "ask",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.8372,
+        "T_s": 0.0375,
+        "frontier_size": 13,
+        "visited_nodes": 144,
+        "total_nodes": 172,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.4545,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "question": "what is difference",
+        "terms": 1,
+        "gaps_before": 0,
+        "gaps_after": 0,
+        "learned_count": 0,
+        "coverage_before": 1.0,
+        "coverage_after": 1.0,
+        "depth_before": 1.0,
+        "depth_after": 1.0,
+        "confidence": 1.0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T11:36:44",
+      "session_id": "",
+      "event_type": "ask",
+      "round_num": 6,
+      "metrics": {
+        "coverage": 0.8444,
+        "T_s": 0.0433,
+        "frontier_size": 13,
+        "visited_nodes": 152,
+        "total_nodes": 180,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.4545,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 4
+      },
+      "detail": {
+        "question": "what is interference",
+        "terms": 1,
+        "gaps_before": 1,
+        "gaps_after": 0,
+        "learned_count": 1,
+        "coverage_before": 0.0,
+        "coverage_after": 1.0,
+        "depth_before": 0.0,
+        "depth_after": 1.0,
+        "confidence": 1.0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T11:37:20",
+      "session_id": "",
+      "event_type": "ask",
+      "round_num": 10,
+      "metrics": {
+        "coverage": 0.8632,
+        "T_s": 0.1041,
+        "frontier_size": 12,
+        "visited_nodes": 164,
+        "total_nodes": 190,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.5,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "question": "when is amplitude used in e0",
+        "terms": 2,
+        "gaps_before": 1,
+        "gaps_after": 0,
+        "learned_count": 1,
+        "coverage_before": 0.5,
+        "coverage_after": 1.0,
+        "depth_before": 0.5,
+        "depth_after": 1.0,
+        "confidence": 1.0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T11:43:12",
+      "session_id": "",
+      "event_type": "ask",
+      "round_num": 17,
+      "metrics": {
+        "coverage": 0.8738,
+        "T_s": 0.3611,
+        "frontier_size": 12,
+        "visited_nodes": 180,
+        "total_nodes": 206,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.5,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 7
+      },
+      "detail": {
+        "question": "what is your goal",
+        "terms": 2,
+        "gaps_before": 2,
+        "gaps_after": 0,
+        "learned_count": 2,
+        "coverage_before": 0.0,
+        "coverage_after": 1.0,
+        "depth_before": 0.0,
+        "depth_after": 1.0,
+        "confidence": 1.0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T11:46:52",
+      "session_id": "",
+      "event_type": "reflect",
+      "round_num": 17,
+      "metrics": {
+        "coverage": 0.8738,
+        "T_s": 0.3611,
+        "frontier_size": 12,
+        "visited_nodes": 180,
+        "total_nodes": 206,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.5,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 7
+      },
+      "detail": {
+        "patterns_found": 3,
+        "recommendations": 3,
+        "stagnation_episodes": 2
+      }
+    },
+    {
+      "timestamp": "2026-04-15T11:48:45",
+      "session_id": "",
+      "event_type": "ask",
+      "round_num": 18,
+      "metrics": {
+        "coverage": 0.283,
+        "T_s": 0.1589,
+        "frontier_size": 11,
+        "visited_nodes": 182,
+        "total_nodes": 643,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.5455,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 0
+      },
+      "detail": {
+        "question": "what is water",
+        "terms": 1,
+        "gaps_before": 0,
+        "gaps_after": 0,
+        "learned_count": 0,
+        "coverage_before": 1.0,
+        "coverage_after": 1.0,
+        "depth_before": 1.0,
+        "depth_after": 1.0,
+        "confidence": 1.0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:33:25",
+      "session_id": "20260415_123325",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:34:12",
+      "session_id": "20260415_123412",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:34:12",
+      "session_id": "20260415_123412",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:34:12",
+      "session_id": "20260415_123412",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:34:13",
+      "session_id": "20260415_123413",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:34:13",
+      "session_id": "20260415_123413",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:34:13",
+      "session_id": "20260415_123413",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:34:13",
+      "session_id": "20260415_123413",
+      "event_type": "round",
+      "round_num": 3,
+      "metrics": {
+        "coverage": 0.6744,
+        "T_s": 0.0628,
+        "frontier_size": 40,
+        "visited_nodes": 116,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.4773,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.4773,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.034884,
+        "steps": 12,
+        "domain_crossings": 7
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:34:14",
+      "session_id": "20260415_123413",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:34:14",
+      "session_id": "20260415_123414",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:34:14",
+      "session_id": "20260415_123414",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:34:15",
+      "session_id": "20260415_123415",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:34:17",
+      "session_id": "20260415_123417",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:34:17",
+      "session_id": "20260415_123417",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:34:18",
+      "session_id": "20260415_123417",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:42:19",
+      "session_id": "20260415_124219",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:43:17",
+      "session_id": "20260415_124317",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:43:17",
+      "session_id": "20260415_124317",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:43:17",
+      "session_id": "20260415_124317",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:43:18",
+      "session_id": "20260415_124318",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:43:18",
+      "session_id": "20260415_124318",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:43:18",
+      "session_id": "20260415_124318",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:43:18",
+      "session_id": "20260415_124318",
+      "event_type": "round",
+      "round_num": 3,
+      "metrics": {
+        "coverage": 0.6744,
+        "T_s": 0.0628,
+        "frontier_size": 40,
+        "visited_nodes": 116,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.4773,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.4773,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.034884,
+        "steps": 12,
+        "domain_crossings": 7
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:43:19",
+      "session_id": "20260415_124319",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:43:19",
+      "session_id": "20260415_124319",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:43:19",
+      "session_id": "20260415_124319",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:43:20",
+      "session_id": "20260415_124320",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:43:20",
+      "session_id": "20260415_124320",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:43:21",
+      "session_id": "20260415_124321",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:43:23",
+      "session_id": "20260415_124323",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:43:23",
+      "session_id": "20260415_124323",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T12:43:23",
+      "session_id": "20260415_124323",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T13:51:30",
+      "session_id": "",
+      "event_type": "dream",
+      "round_num": 19,
+      "metrics": {
+        "coverage": 0.2985,
+        "T_s": 0.1426,
+        "frontier_size": 17,
+        "visited_nodes": 194,
+        "total_nodes": 650,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.5455,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.5455,
+          "Mechanism": 1.0,
+          "Learned": 0.0828,
+          "T": 1.0
+        }
+      },
+      "detail": {
+        "cycles": 5,
+        "domains_registered": [
+          "canon",
+          "bootstrap",
+          "en",
+          "mechanism",
+          "learned"
+        ],
+        "cross_universe_domains": [],
+        "total_equivalences": 4485,
+        "new_equivalences": 897,
+        "node_equivalences": 100,
+        "dream_landscape_edges": 1834
+      }
+    },
+    {
+      "timestamp": "2026-04-15T13:52:29",
+      "session_id": "",
+      "event_type": "universe_created",
+      "round_num": 19,
+      "metrics": {
+        "coverage": 0.2985,
+        "T_s": 0.1426,
+        "frontier_size": 17,
+        "visited_nodes": 194,
+        "total_nodes": 650,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.5455,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.5455,
+          "Mechanism": 1.0,
+          "Learned": 0.0828,
+          "T": 1.0
+        }
+      },
+      "detail": {
+        "name": "new1"
+      }
+    },
+    {
+      "timestamp": "2026-04-15T13:52:41",
+      "session_id": "",
+      "event_type": "universe_switched",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "to": "new1"
+      }
+    },
+    {
+      "timestamp": "2026-04-15T13:52:50",
+      "session_id": "",
+      "event_type": "curriculum",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.7442,
+        "T_s": 2.2668,
+        "frontier_size": 23,
+        "visited_nodes": 128,
+        "total_nodes": 172,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "canon": "ontodynamics",
+        "turns": 3,
+        "total_steps": 690,
+        "equilibrium_reached": [
+          false,
+          true,
+          false
+        ],
+        "transferred_edges": 131
+      }
+    },
+    {
+      "timestamp": "2026-04-15T14:09:21",
+      "session_id": "",
+      "event_type": "ask",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.843,
+        "T_s": 0.0705,
+        "frontier_size": 13,
+        "visited_nodes": 145,
+        "total_nodes": 172,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.4773,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.4773,
+          "Mechanism": 1.0
+        }
+      },
+      "detail": {
+        "question": "what is water",
+        "terms": 1,
+        "gaps_before": 0,
+        "gaps_after": 0,
+        "learned_count": 0,
+        "coverage_before": 1.0,
+        "coverage_after": 1.0,
+        "depth_before": 0.3,
+        "depth_after": 0.3,
+        "confidence": 0.3
+      }
+    },
+    {
+      "timestamp": "2026-04-15T14:11:31",
+      "session_id": "",
+      "event_type": "universe_created",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.843,
+        "T_s": 0.0705,
+        "frontier_size": 16,
+        "visited_nodes": 145,
+        "total_nodes": 172,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.4773,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.4773,
+          "Mechanism": 1.0
+        }
+      },
+      "detail": {
+        "name": "test1"
+      }
+    },
+    {
+      "timestamp": "2026-04-15T14:11:45",
+      "session_id": "",
+      "event_type": "universe_switched",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "to": "test1"
+      }
+    },
+    {
+      "timestamp": "2026-04-15T14:12:08",
+      "session_id": "",
+      "event_type": "curriculum",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.7442,
+        "T_s": 2.2668,
+        "frontier_size": 23,
+        "visited_nodes": 128,
+        "total_nodes": 172,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "canon": "ontodynamics",
+        "turns": 3,
+        "total_steps": 690,
+        "equilibrium_reached": [
+          false,
+          true,
+          false
+        ],
+        "transferred_edges": 131
+      }
+    },
+    {
+      "timestamp": "2026-04-15T14:12:20",
+      "session_id": "",
+      "event_type": "dream",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.7558,
+        "T_s": 2.3708,
+        "frontier_size": 21,
+        "visited_nodes": 130,
+        "total_nodes": 172,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 1.0
+        }
+      },
+      "detail": {
+        "cycles": 3,
+        "domains_registered": [
+          "canon",
+          "bootstrap",
+          "en",
+          "mechanism"
+        ],
+        "cross_universe_domains": [],
+        "total_equivalences": 1689,
+        "new_equivalences": 563,
+        "node_equivalences": 60,
+        "dream_landscape_edges": 1166
+      }
+    },
+    {
+      "timestamp": "2026-04-15T14:12:20",
+      "session_id": "",
+      "event_type": "selflearn",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.7558,
+        "T_s": 2.3708,
+        "frontier_size": 21,
+        "visited_nodes": 130,
+        "total_nodes": 172,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 1.0
+        }
+      },
+      "detail": {
+        "phases": [
+          "ontodynamics",
+          "mechanism_e0"
+        ],
+        "onto_turns": 3,
+        "onto_steps": 690,
+        "onto_transferred": 131,
+        "mech_turns": 3,
+        "mech_steps": 900,
+        "mech_transferred": 43,
+        "dream_equivalences": 1689,
+        "mastery_overall": 0.8994708994708995,
+        "mastery_ready": true
+      }
+    },
+    {
+      "timestamp": "2026-04-15T14:13:32",
+      "session_id": "",
+      "event_type": "ask",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.8256,
+        "T_s": 0.071,
+        "frontier_size": 14,
+        "visited_nodes": 142,
+        "total_nodes": 172,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.4091,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.4091,
+          "Mechanism": 1.0
+        }
+      },
+      "detail": {
+        "question": "what is tension",
+        "terms": 1,
+        "gaps_before": 0,
+        "gaps_after": 0,
+        "learned_count": 0,
+        "coverage_before": 1.0,
+        "coverage_after": 1.0,
+        "depth_before": 1.0,
+        "depth_after": 1.0,
+        "confidence": 1.0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T14:15:59",
+      "session_id": "",
+      "event_type": "teach",
+      "round_num": 16,
+      "metrics": {
+        "coverage": 0.8889,
+        "T_s": 0.054,
+        "frontier_size": 8,
+        "visited_nodes": 184,
+        "total_nodes": 207,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.5682,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 12,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.5682,
+          "Mechanism": 1.0,
+          "Learned": 1.0
+        }
+      },
+      "detail": {
+        "concept": "what atoms are derived from e0",
+        "nodes_added": 35,
+        "coverage_delta": 0.063307,
+        "teach_rounds": 5
+      }
+    },
+    {
+      "timestamp": "2026-04-15T14:16:52",
+      "session_id": "",
+      "event_type": "ask",
+      "round_num": 17,
+      "metrics": {
+        "coverage": 0.8889,
+        "T_s": 0.0553,
+        "frontier_size": 8,
+        "visited_nodes": 184,
+        "total_nodes": 207,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.5682,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 13,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.5682,
+          "Mechanism": 1.0,
+          "Learned": 1.0
+        }
+      },
+      "detail": {
+        "question": "what is an atom",
+        "terms": 1,
+        "gaps_before": 0,
+        "gaps_after": 0,
+        "learned_count": 0,
+        "coverage_before": 1.0,
+        "coverage_after": 1.0,
+        "depth_before": 1.0,
+        "depth_after": 1.0,
+        "confidence": 1.0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T14:18:17",
+      "session_id": "",
+      "event_type": "dream",
+      "round_num": 17,
+      "metrics": {
+        "coverage": 0.8889,
+        "T_s": 0.0553,
+        "frontier_size": 8,
+        "visited_nodes": 184,
+        "total_nodes": 207,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.5682,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 13,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.5682,
+          "Mechanism": 1.0,
+          "Learned": 1.0
+        }
+      },
+      "detail": {
+        "cycles": 5,
+        "domains_registered": [
+          "canon",
+          "bootstrap",
+          "en",
+          "mechanism",
+          "learned"
+        ],
+        "cross_universe_domains": [],
+        "total_equivalences": 0,
+        "new_equivalences": 0,
+        "node_equivalences": 0,
+        "dream_landscape_edges": 1166
+      }
+    },
+    {
+      "timestamp": "2026-04-15T14:20:40",
+      "session_id": "",
+      "event_type": "teach",
+      "round_num": 32,
+      "metrics": {
+        "coverage": 0.9046,
+        "T_s": 0.0658,
+        "frontier_size": 8,
+        "visited_nodes": 218,
+        "total_nodes": 241,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.5682,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 28,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.5682,
+          "Mechanism": 1.0,
+          "Learned": 1.0
+        }
+      },
+      "detail": {
+        "concept": "what is an atom derived from e0",
+        "nodes_added": 34,
+        "coverage_delta": 0.015675,
+        "teach_rounds": 5
+      }
+    },
+    {
+      "timestamp": "2026-04-15T14:21:06",
+      "session_id": "",
+      "event_type": "dream",
+      "round_num": 32,
+      "metrics": {
+        "coverage": 0.9046,
+        "T_s": 0.0658,
+        "frontier_size": 8,
+        "visited_nodes": 218,
+        "total_nodes": 241,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.5682,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 28,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.5682,
+          "Mechanism": 1.0,
+          "Learned": 1.0
+        }
+      },
+      "detail": {
+        "cycles": 3,
+        "domains_registered": [
+          "canon",
+          "bootstrap",
+          "en",
+          "mechanism",
+          "learned"
+        ],
+        "cross_universe_domains": [],
+        "total_equivalences": 0,
+        "new_equivalences": 0,
+        "node_equivalences": 0,
+        "dream_landscape_edges": 1166
+      }
+    },
+    {
+      "timestamp": "2026-04-15T14:21:27",
+      "session_id": "",
+      "event_type": "ask",
+      "round_num": 33,
+      "metrics": {
+        "coverage": 0.9046,
+        "T_s": 0.0591,
+        "frontier_size": 8,
+        "visited_nodes": 218,
+        "total_nodes": 241,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.5682,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 29,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.5682,
+          "Mechanism": 1.0,
+          "Learned": 1.0
+        }
+      },
+      "detail": {
+        "question": "what is an atom",
+        "terms": 1,
+        "gaps_before": 0,
+        "gaps_after": 0,
+        "learned_count": 0,
+        "coverage_before": 1.0,
+        "coverage_after": 1.0,
+        "depth_before": 1.0,
+        "depth_after": 1.0,
+        "confidence": 1.0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T14:37:13",
+      "session_id": "",
+      "event_type": "teach",
+      "round_num": 48,
+      "metrics": {
+        "coverage": 0.9164,
+        "T_s": 0.1885,
+        "frontier_size": 8,
+        "visited_nodes": 252,
+        "total_nodes": 275,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.5682,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 44,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.5682,
+          "Mechanism": 1.0,
+          "Learned": 1.0
+        }
+      },
+      "detail": {
+        "concept": "function of central banks",
+        "nodes_added": 34,
+        "coverage_delta": 0.011799,
+        "teach_rounds": 5
+      }
+    },
+    {
+      "timestamp": "2026-04-15T14:49:16",
+      "session_id": "",
+      "event_type": "ask",
+      "round_num": 49,
+      "metrics": {
+        "coverage": 0.9164,
+        "T_s": 0.1336,
+        "frontier_size": 8,
+        "visited_nodes": 252,
+        "total_nodes": 275,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.5682,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 45,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.5682,
+          "Mechanism": 1.0,
+          "Learned": 1.0
+        }
+      },
+      "detail": {
+        "question": "what is water",
+        "terms": 1,
+        "gaps_before": 0,
+        "gaps_after": 0,
+        "learned_count": 0,
+        "coverage_before": 1.0,
+        "coverage_after": 1.0,
+        "depth_before": 1.0,
+        "depth_after": 1.0,
+        "confidence": 1.0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T14:49:38",
+      "session_id": "",
+      "event_type": "ask",
+      "round_num": 50,
+      "metrics": {
+        "coverage": 0.9164,
+        "T_s": 0.1495,
+        "frontier_size": 8,
+        "visited_nodes": 252,
+        "total_nodes": 275,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.5682,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 46,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.5682,
+          "Mechanism": 1.0,
+          "Learned": 1.0
+        }
+      },
+      "detail": {
+        "question": "what does a central bank",
+        "terms": 2,
+        "gaps_before": 0,
+        "gaps_after": 0,
+        "learned_count": 0,
+        "coverage_before": 1.0,
+        "coverage_after": 1.0,
+        "depth_before": 1.0,
+        "depth_after": 1.0,
+        "confidence": 1.0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:01:24",
+      "session_id": "20260415_150124",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:02:21",
+      "session_id": "20260415_150221",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:02:21",
+      "session_id": "20260415_150221",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:02:21",
+      "session_id": "20260415_150221",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:02:22",
+      "session_id": "20260415_150222",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:02:22",
+      "session_id": "20260415_150222",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:02:23",
+      "session_id": "20260415_150222",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:02:23",
+      "session_id": "20260415_150222",
+      "event_type": "round",
+      "round_num": 3,
+      "metrics": {
+        "coverage": 0.6744,
+        "T_s": 0.0628,
+        "frontier_size": 40,
+        "visited_nodes": 116,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.4773,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.4773,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.034884,
+        "steps": 12,
+        "domain_crossings": 7
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:02:23",
+      "session_id": "20260415_150223",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:02:23",
+      "session_id": "20260415_150223",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:02:23",
+      "session_id": "20260415_150223",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:02:24",
+      "session_id": "20260415_150224",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:02:24",
+      "session_id": "20260415_150224",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:02:26",
+      "session_id": "20260415_150226",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:02:26",
+      "session_id": "20260415_150226",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:02:27",
+      "session_id": "20260415_150226",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:42:49",
+      "session_id": "20260415_154249",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:43:51",
+      "session_id": "20260415_154351",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:43:51",
+      "session_id": "20260415_154351",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:43:51",
+      "session_id": "20260415_154351",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:43:52",
+      "session_id": "20260415_154352",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:43:52",
+      "session_id": "20260415_154352",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:43:52",
+      "session_id": "20260415_154352",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:43:52",
+      "session_id": "20260415_154352",
+      "event_type": "round",
+      "round_num": 3,
+      "metrics": {
+        "coverage": 0.6744,
+        "T_s": 0.0628,
+        "frontier_size": 40,
+        "visited_nodes": 116,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.4773,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.4773,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.034884,
+        "steps": 12,
+        "domain_crossings": 7
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:43:53",
+      "session_id": "20260415_154353",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:43:53",
+      "session_id": "20260415_154353",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:43:53",
+      "session_id": "20260415_154353",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:43:54",
+      "session_id": "20260415_154354",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:43:57",
+      "session_id": "20260415_154357",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:43:57",
+      "session_id": "20260415_154357",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:43:58",
+      "session_id": "20260415_154357",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:14:18",
+      "session_id": "",
+      "event_type": "dream",
+      "round_num": 50,
+      "metrics": {
+        "coverage": 0.9164,
+        "T_s": 0.1495,
+        "frontier_size": 8,
+        "visited_nodes": 252,
+        "total_nodes": 275,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.5682,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 46,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.5682,
+          "Mechanism": 1.0,
+          "Learned": 1.0
+        }
+      },
+      "detail": {
+        "cycles": 3,
+        "domains_registered": [
+          "canon",
+          "bootstrap",
+          "en",
+          "mechanism",
+          "learned"
+        ],
+        "cross_universe_domains": [],
+        "total_equivalences": 7534,
+        "new_equivalences": 3767,
+        "node_equivalences": 40,
+        "threshold_relaxed": true,
+        "dream_landscape_edges": 7574
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:15:12",
+      "session_id": "",
+      "event_type": "universe_created",
+      "round_num": 50,
+      "metrics": {
+        "coverage": 0.9164,
+        "T_s": 0.1495,
+        "frontier_size": 8,
+        "visited_nodes": 252,
+        "total_nodes": 275,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.5682,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 46,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.5682,
+          "Mechanism": 1.0,
+          "Learned": 1.0
+        }
+      },
+      "detail": {
+        "name": "test1"
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:15:20",
+      "session_id": "",
+      "event_type": "universe_switched",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "to": "test1"
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:15:27",
+      "session_id": "",
+      "event_type": "curriculum",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.7442,
+        "T_s": 2.2668,
+        "frontier_size": 23,
+        "visited_nodes": 128,
+        "total_nodes": 172,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "canon": "ontodynamics",
+        "turns": 3,
+        "total_steps": 690,
+        "equilibrium_reached": [
+          false,
+          true,
+          false
+        ],
+        "transferred_edges": 131
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:15:36",
+      "session_id": "",
+      "event_type": "dream",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.7558,
+        "T_s": 2.3708,
+        "frontier_size": 21,
+        "visited_nodes": 130,
+        "total_nodes": 172,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 1.0
+        }
+      },
+      "detail": {
+        "cycles": 3,
+        "domains_registered": [
+          "canon",
+          "bootstrap",
+          "en",
+          "mechanism",
+          "learned_main"
+        ],
+        "cross_universe_domains": [
+          "learned_main"
+        ],
+        "total_equivalences": 132765,
+        "new_equivalences": 44255,
+        "node_equivalences": 369,
+        "threshold_relaxed": false,
+        "dream_landscape_edges": 96330
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:15:36",
+      "session_id": "",
+      "event_type": "selflearn",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.7558,
+        "T_s": 2.3708,
+        "frontier_size": 21,
+        "visited_nodes": 130,
+        "total_nodes": 172,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 1.0
+        }
+      },
+      "detail": {
+        "phases": [
+          "ontodynamics",
+          "mechanism_e0"
+        ],
+        "onto_turns": 3,
+        "onto_steps": 690,
+        "onto_transferred": 131,
+        "mech_turns": 3,
+        "mech_steps": 900,
+        "mech_transferred": 43,
+        "dream_equivalences": 132765,
+        "mastery_overall": 0.8994708994708995,
+        "mastery_ready": true
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:17:16",
+      "session_id": "",
+      "event_type": "teach",
+      "round_num": 15,
+      "metrics": {
+        "coverage": 0.7931,
+        "T_s": 0.0644,
+        "frontier_size": 21,
+        "visited_nodes": 161,
+        "total_nodes": 203,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 15,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 1.0,
+          "Learned": 1.0
+        }
+      },
+      "detail": {
+        "concept": "function of central banks",
+        "nodes_added": 31,
+        "coverage_delta": 0.037289,
+        "teach_rounds": 5
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:30:10",
+      "session_id": "",
+      "event_type": "ask",
+      "round_num": 16,
+      "metrics": {
+        "coverage": 0.5748,
+        "T_s": 0.0561,
+        "frontier_size": 40,
+        "visited_nodes": 169,
+        "total_nodes": 294,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.2727,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.2727,
+          "Mechanism": 1.0,
+          "Learned": 0.2705
+        }
+      },
+      "detail": {
+        "question": "what is water",
+        "terms": 1,
+        "gaps_before": 0,
+        "gaps_after": 0,
+        "learned_count": 0,
+        "coverage_before": 1.0,
+        "coverage_after": 1.0,
+        "depth_before": 0.3,
+        "depth_after": 0.3,
+        "confidence": 0.3
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:30:51",
+      "session_id": "",
+      "event_type": "ask",
+      "round_num": 17,
+      "metrics": {
+        "coverage": 0.619,
+        "T_s": 0.0518,
+        "frontier_size": 31,
+        "visited_nodes": 182,
+        "total_nodes": 294,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.2727,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.2727,
+          "Mechanism": 1.0,
+          "Learned": 0.377
+        }
+      },
+      "detail": {
+        "question": "what do central banks",
+        "terms": 2,
+        "gaps_before": 0,
+        "gaps_after": 0,
+        "learned_count": 0,
+        "coverage_before": 1.0,
+        "coverage_after": 1.0,
+        "depth_before": 1.0,
+        "depth_after": 1.0,
+        "confidence": 1.0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:33:22",
+      "session_id": "",
+      "event_type": "ask",
+      "round_num": 21,
+      "metrics": {
+        "coverage": 0.6612,
+        "T_s": 0.0464,
+        "frontier_size": 23,
+        "visited_nodes": 201,
+        "total_nodes": 304,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.2727,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 2,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.2727,
+          "Mechanism": 1.0,
+          "Learned": 0.4924
+        }
+      },
+      "detail": {
+        "question": "what is the function of interest",
+        "terms": 2,
+        "gaps_before": 1,
+        "gaps_after": 0,
+        "learned_count": 1,
+        "coverage_before": 0.5,
+        "coverage_after": 1.0,
+        "depth_before": 0.5,
+        "depth_after": 1.0,
+        "confidence": 1.0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:35:15",
+      "session_id": "",
+      "event_type": "dream",
+      "round_num": 21,
+      "metrics": {
+        "coverage": 0.6612,
+        "T_s": 0.0464,
+        "frontier_size": 23,
+        "visited_nodes": 201,
+        "total_nodes": 304,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.2727,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 2,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.2727,
+          "Mechanism": 1.0,
+          "Learned": 0.4924
+        }
+      },
+      "detail": {
+        "cycles": 5,
+        "domains_registered": [
+          "canon",
+          "bootstrap",
+          "en",
+          "mechanism",
+          "learned",
+          "learned_main"
+        ],
+        "cross_universe_domains": [
+          "learned_main"
+        ],
+        "total_equivalences": 3285,
+        "new_equivalences": 98,
+        "node_equivalences": 100,
+        "threshold_relaxed": false,
+        "dream_landscape_edges": 96558
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:36:39",
+      "session_id": "",
+      "event_type": "universe_created",
+      "round_num": 21,
+      "metrics": {
+        "coverage": 0.6612,
+        "T_s": 0.0464,
+        "frontier_size": 23,
+        "visited_nodes": 201,
+        "total_nodes": 304,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.2727,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 2,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.2727,
+          "Mechanism": 1.0,
+          "Learned": 0.4924
+        }
+      },
+      "detail": {
+        "name": "test2"
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:36:45",
+      "session_id": "",
+      "event_type": "universe_switched",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "to": "test2"
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:37:46",
+      "session_id": "",
+      "event_type": "ask",
+      "round_num": 7,
+      "metrics": {
+        "coverage": 0.7989,
+        "T_s": 0.0608,
+        "frontier_size": 25,
+        "visited_nodes": 151,
+        "total_nodes": 189,
+        "canon_coverage": 0.6825,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.7273,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.6825,
+          "Bootstrap": 0.9111,
+          "EN": 0.7273,
+          "Mechanism": 0.9,
+          "Learned": 1.0
+        }
+      },
+      "detail": {
+        "question": "was ist Spannung",
+        "terms": 2,
+        "gaps_before": 2,
+        "gaps_after": 0,
+        "learned_count": 2,
+        "coverage_before": 0.0,
+        "coverage_after": 1.0,
+        "depth_before": 0.0,
+        "depth_after": 1.0,
+        "confidence": 1.0
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:39:04",
+      "session_id": "",
+      "event_type": "ask",
+      "round_num": 14,
+      "metrics": {
+        "coverage": 0.8325,
+        "T_s": 0.0551,
+        "frontier_size": 21,
+        "visited_nodes": 169,
+        "total_nodes": 203,
+        "canon_coverage": 0.7302,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.75,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 1,
+        "domain_coverages": {
+          "Canon": 0.7302,
+          "Bootstrap": 0.9111,
+          "EN": 0.75,
+          "Mechanism": 0.9,
+          "Learned": 1.0
+        }
+      },
+      "detail": {
+        "question": "was sind Integrationskosten",
+        "terms": 2,
+        "gaps_before": 2,
+        "gaps_after": 1,
+        "learned_count": 2,
+        "coverage_before": 0.0,
+        "coverage_after": 0.5,
+        "depth_before": 0.0,
+        "depth_after": 0.5,
+        "confidence": 0.5
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:48:21",
+      "session_id": "20260415_154821",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:49:11",
+      "session_id": "20260415_154911",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:49:11",
+      "session_id": "20260415_154911",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:49:11",
+      "session_id": "20260415_154911",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:49:12",
+      "session_id": "20260415_154912",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:49:12",
+      "session_id": "20260415_154912",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:49:12",
+      "session_id": "20260415_154912",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:49:12",
+      "session_id": "20260415_154912",
+      "event_type": "round",
+      "round_num": 3,
+      "metrics": {
+        "coverage": 0.6744,
+        "T_s": 0.0628,
+        "frontier_size": 40,
+        "visited_nodes": 116,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.4773,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.4773,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.034884,
+        "steps": 12,
+        "domain_crossings": 7
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:49:13",
+      "session_id": "20260415_154913",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:49:13",
+      "session_id": "20260415_154913",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:49:13",
+      "session_id": "20260415_154913",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:49:14",
+      "session_id": "20260415_154914",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:49:17",
+      "session_id": "20260415_154917",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:49:18",
+      "session_id": "20260415_154917",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T15:49:18",
+      "session_id": "20260415_154917",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T16:48:31",
+      "session_id": "20260415_164831",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T16:49:37",
+      "session_id": "20260415_164937",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T16:49:37",
+      "session_id": "20260415_164937",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T16:49:37",
+      "session_id": "20260415_164937",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T16:49:38",
+      "session_id": "20260415_164938",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T16:49:38",
+      "session_id": "20260415_164938",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T16:49:38",
+      "session_id": "20260415_164938",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T16:49:38",
+      "session_id": "20260415_164938",
+      "event_type": "round",
+      "round_num": 3,
+      "metrics": {
+        "coverage": 0.6744,
+        "T_s": 0.0628,
+        "frontier_size": 40,
+        "visited_nodes": 116,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.4773,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.4773,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.034884,
+        "steps": 12,
+        "domain_crossings": 7
+      }
+    },
+    {
+      "timestamp": "2026-04-15T16:49:39",
+      "session_id": "20260415_164939",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T16:49:39",
+      "session_id": "20260415_164939",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T16:49:39",
+      "session_id": "20260415_164939",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T16:49:40",
+      "session_id": "20260415_164940",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T16:49:42",
+      "session_id": "20260415_164942",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5872,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T16:49:42",
+      "session_id": "20260415_164942",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.5988,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011628,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T16:49:42",
+      "session_id": "20260415_164942",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6395,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 172,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.9111,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040698,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T17:12:09",
+      "session_id": "20260415_171209",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5896,
+        "T_s": 0.0774,
+        "frontier_size": 48,
+        "visited_nodes": 102,
+        "total_nodes": 173,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.913,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.913,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T17:13:26",
+      "session_id": "20260415_171326",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5896,
+        "T_s": 0.0774,
+        "frontier_size": 48,
+        "visited_nodes": 102,
+        "total_nodes": 173,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.913,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.913,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T17:13:26",
+      "session_id": "20260415_171326",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.6012,
+        "T_s": 0.0718,
+        "frontier_size": 47,
+        "visited_nodes": 104,
+        "total_nodes": 173,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.913,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.913,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011561,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T17:13:26",
+      "session_id": "20260415_171326",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6416,
+        "T_s": 0.0666,
+        "frontier_size": 44,
+        "visited_nodes": 111,
+        "total_nodes": 173,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.913,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.913,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040462,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T17:13:27",
+      "session_id": "20260415_171327",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5896,
+        "T_s": 0.0774,
+        "frontier_size": 48,
+        "visited_nodes": 102,
+        "total_nodes": 173,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.913,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.913,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T17:13:27",
+      "session_id": "20260415_171327",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.6012,
+        "T_s": 0.0718,
+        "frontier_size": 47,
+        "visited_nodes": 104,
+        "total_nodes": 173,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.913,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.913,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011561,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T17:13:27",
+      "session_id": "20260415_171327",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6416,
+        "T_s": 0.0666,
+        "frontier_size": 44,
+        "visited_nodes": 111,
+        "total_nodes": 173,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.913,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.913,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040462,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T17:13:27",
+      "session_id": "20260415_171327",
+      "event_type": "round",
+      "round_num": 3,
+      "metrics": {
+        "coverage": 0.6763,
+        "T_s": 0.0624,
+        "frontier_size": 40,
+        "visited_nodes": 117,
+        "total_nodes": 173,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.913,
+        "en_coverage": 0.4773,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.913,
+          "EN": 0.4773,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.034682,
+        "steps": 12,
+        "domain_crossings": 7
+      }
+    },
+    {
+      "timestamp": "2026-04-15T17:13:28",
+      "session_id": "20260415_171327",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.6012,
+        "T_s": 0.0718,
+        "frontier_size": 47,
+        "visited_nodes": 104,
+        "total_nodes": 173,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.913,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.913,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011561,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T17:13:28",
+      "session_id": "20260415_171328",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5896,
+        "T_s": 0.0774,
+        "frontier_size": 48,
+        "visited_nodes": 102,
+        "total_nodes": 173,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.913,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.913,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T17:13:28",
+      "session_id": "20260415_171328",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.6012,
+        "T_s": 0.0718,
+        "frontier_size": 47,
+        "visited_nodes": 104,
+        "total_nodes": 173,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.913,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.913,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011561,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T17:13:28",
+      "session_id": "20260415_171328",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6416,
+        "T_s": 0.0666,
+        "frontier_size": 44,
+        "visited_nodes": 111,
+        "total_nodes": 173,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.913,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.913,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040462,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-15T17:13:29",
+      "session_id": "20260415_171329",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5896,
+        "T_s": 0.0774,
+        "frontier_size": 48,
+        "visited_nodes": 102,
+        "total_nodes": 173,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.913,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.913,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T17:13:33",
+      "session_id": "20260415_171333",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5896,
+        "T_s": 0.0774,
+        "frontier_size": 48,
+        "visited_nodes": 102,
+        "total_nodes": 173,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.913,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.913,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-15T17:13:33",
+      "session_id": "20260415_171333",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.6012,
+        "T_s": 0.0718,
+        "frontier_size": 47,
+        "visited_nodes": 104,
+        "total_nodes": 173,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.913,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.913,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011561,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-15T17:13:34",
+      "session_id": "20260415_171333",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6416,
+        "T_s": 0.0666,
+        "frontier_size": 44,
+        "visited_nodes": 111,
+        "total_nodes": 173,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.913,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.913,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.040462,
+        "steps": 12,
+        "domain_crossings": 6
+      }
     }
   ]
 }

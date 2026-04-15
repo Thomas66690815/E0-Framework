@@ -1872,13 +1872,13 @@ def _create_bridges(
                 best_match = existing_id
 
         if best_match and best_score > 0:
-            # Bidirectional bridge
+            # Bidirectional bridge — C254: reduced resistance for traversability
             state.landscape.add_edge(
-                new_id, best_match, 0.4, 1.2,
+                new_id, best_match, 0.3, 0.4,
                 relation_type="task_bridge", bridge_type="llm_structural",
             )
             state.landscape.add_edge(
-                best_match, new_id, 0.4, 1.2,
+                best_match, new_id, 0.3, 0.4,
                 relation_type="task_bridge", bridge_type="llm_structural",
             )
             bridges.append((new_id, best_match))
@@ -3328,6 +3328,71 @@ def _extract_domain_landscapes(
     return result
 
 
+def _inject_dream_bridges(
+    state: SessionState,
+    observer: DreamObserver,
+) -> int:
+    """Inject dream node-equivalences as cross-domain edges into the session landscape.
+
+    C254: After dream consolidation, structural equivalences discovered by the
+    DreamObserver are injected back as navigable cross-domain edges so that
+    ask/navigation can traverse domain boundaries.
+
+    Returns the number of edges added.
+    """
+    from e0_controller.landscape import Edge
+
+    prefix_map = {v: k for k, v in _DOMAIN_PREFIXES.items()}  # name→prefix
+    injected = 0
+    seen_pairs: set = set()
+
+    for domain in observer.domain_names:
+        own_prefix = prefix_map.get(domain)
+        if own_prefix is None:
+            continue  # cross-universe domain like "learned_test3"
+
+        equivs = observer.node_equivalences_for(domain)
+
+        for eq in equivs:
+            partner_domain = eq["partner_domain"]
+            partner_prefix = prefix_map.get(partner_domain)
+            if partner_prefix is None:
+                continue
+
+            own_full = own_prefix + eq["own_node"]
+            partner_full = partner_prefix + eq["partner_node"]
+
+            pair = tuple(sorted([own_full, partner_full]))
+            if pair in seen_pairs:
+                continue
+            seen_pairs.add(pair)
+
+            # Both nodes must exist in the session landscape
+            if (own_full not in state.landscape.states
+                    or partner_full not in state.landscape.states):
+                continue
+
+            # Add bidirectional dream bridge (low resistance for traversability)
+            fwd = Edge(own_full, partner_full)
+            rev = Edge(partner_full, own_full)
+
+            if fwd not in state.landscape._R0:
+                state.landscape.add_edge(
+                    own_full, partner_full, 0.3, 0.35,
+                    relation_type="dream_bridge",
+                )
+                injected += 1
+
+            if rev not in state.landscape._R0:
+                state.landscape.add_edge(
+                    partner_full, own_full, 0.3, 0.35,
+                    relation_type="dream_bridge",
+                )
+                injected += 1
+
+    return injected
+
+
 def _get_or_create_observer(state: SessionState) -> DreamObserver:
     """Get the session's DreamObserver, creating one if needed."""
     if state.dream_observer is None:
@@ -3406,6 +3471,9 @@ def dream_run(
     total_node_eq = sum(r.node_equivalences_found for r in cycle_results)
     total_node_new = sum(r.node_equivalences_new for r in cycle_results)
 
+    # C254: Inject dream node-equivalences as navigable cross-domain edges
+    dream_bridges_added = _inject_dream_bridges(state, observer)
+
     # Record journal event
     record_journal_event(state, "dream", {
         "cycles": len(cycle_results),
@@ -3415,6 +3483,7 @@ def dream_run(
         "new_equivalences": total_new,
         "node_equivalences": total_node_eq,
         "threshold_relaxed": relaxed,
+        "dream_bridges_added": dream_bridges_added,
         "dream_landscape_edges": (
             cycle_results[-1].dream_landscape_edges if cycle_results else 0
         ),
@@ -3431,6 +3500,7 @@ def dream_run(
         "total_node_equivalences": total_node_eq,
         "total_node_new": total_node_new,
         "threshold_relaxed": relaxed,
+        "dream_bridges_added": dream_bridges_added,
         "dream_landscape_edges": (
             cycle_results[-1].dream_landscape_edges if cycle_results else 0
         ),
@@ -3524,6 +3594,11 @@ def cmd_dream(state: SessionState, arg: Optional[str] = None) -> str:
             f"    {result['total_node_equivalences']} node equivalences "
             f"({result['total_node_new']} new)"
         )
+
+    # C254: Dream backflow — injected cross-domain edges
+    bridges = result.get("dream_bridges_added", 0)
+    if bridges > 0:
+        lines.append(f"    {bridges} dream bridges injected into landscape")
 
     return "\n".join(lines)
 
