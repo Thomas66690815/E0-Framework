@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C250",
-    "latest_commit_hash": "99b2d63",
-    "latest_commit_msg": "C250: Dynamic domain detection — _detect_domains replaces hardcoded lists. diagnose/trajectory/meta_reflect/focus/why now detect L: and custom prefixes from landscape. Fix _domain_of fallback. 17 new tests, 5461 total.",
-    "test_count": 5461,
+    "latest_commit": "C251",
+    "latest_commit_hash": "62e929a",
+    "latest_commit_msg": "C251: Adaptive dream compatibility + diagnostic scores. dream_cycle threshold param, dream_run adaptive 1.5x relaxation, cmd_dream shows scores. 10 new tests, 5471 total.",
+    "test_count": 5471,
     "test_failures": 0,
     "ci_status": "pending",
     "module_count": "77 production + 10 benchmarks + 17 demos + 69 explorations + 127 test files",
@@ -221,23 +221,28 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "Standalone fix (C250)",
-    "arc_status": "COMPLETE. C250 dynamic domain detection — _detect_domains replaces hardcoded domain lists in diagnose/trajectory/meta_reflect/focus/why. L: and custom prefixes now visible. 17 new tests.",
+    "current_arc": "Standalone fixes (C250–C251)",
+    "arc_status": "COMPLETE. C250 dynamic domain detection. C251 adaptive dream compatibility + diagnostic scores.",
     "arc_plan": {
       "C250_dynamic_domain_detection": {
         "title": "Dynamic Domain Detection",
-        "what": "_detect_domains(landscape) scans for ^[A-Z]+: prefixes. _compute_domain_stats computes coverage directly. diagnose_session/compute_trajectory/meta_reflect/cmd_focus/cmd_why/_metrics_snapshot all use detected domains instead of hardcoded _DOMAINS. _domain_of in explore_learning_cycle_multidomain fixed: L:→learned, unknown prefix→lowered, bare→unknown. 17 tests.",
+        "what": "_detect_domains(landscape) scans for ^[A-Z]+: prefixes. diagnose/trajectory/meta_reflect/focus/why use detected domains. _domain_of fixed. 17 tests.",
         "status": "DONE (C250)"
+      },
+      "C251_adaptive_dream_compatibility": {
+        "title": "Adaptive Dream Compatibility",
+        "what": "dream_cycle() gains compatibility_threshold param. dream_run() adaptive relaxation: if cycle 1 finds 0 pairs, relaxes 1.5x for remaining cycles. cmd_dream shows compatibility scores and relaxation warning. Bootstrap always incompatible (0.71-0.90) due to different degree distribution — correct behavior. 10 tests.",
+        "status": "DONE (C251)"
       }
     },
     "previous_arc_summary": "Multiverse Integration (C245–C249): Universe registry, per-universe teach/ask isolation, CouplingRouter wiring, divergence-pressure auto-coupling, cross-universe dream. 74 arc tests. On-Demand Integration (C233–C244): Wired all core capabilities into interactive session.",
-    "key_result": "C250 standalone fix COMPLETE. Hardcoded domain lists (Canon/Bootstrap/EN/Mechanism) replaced by _detect_domains() scanning landscape for ^[A-Z]+: prefixes. L: and custom domains now visible in reflect/diagnose/trajectory/focus/why. 17 new tests, 5461 total.",
+    "key_result": "C250-C251 COMPLETE. Dynamic domain detection + adaptive dream compatibility. Dream now shows compatibility scores and auto-relaxes threshold when all pairs fail. Bootstrap confirmed structurally incompatible (correct). 27 new tests, 5471 total.",
     "open_threads": [
       "LLM symmetry: needed at BOTH ends — input structuring (Bootstrapper) AND output formatting (User-Lesbarkeit)",
       "Adversarial stability partially mitigated (C172-C174, C243b finish_reason check)",
       "Next arc TBD — C43 Self-Graph (LLM Bootstrap Architecture) or new direction"
     ],
-    "next_commit_id": "C251",
+    "next_commit_id": "C252",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
@@ -448,6 +453,11 @@
     }
   },
   "commit_history_recent": [
+    {
+      "hash": "62e929a",
+      "id": "C251",
+      "title": "Adaptive dream compatibility + diagnostic scores — dream_cycle threshold param, dream_run adaptive 1.5x relaxation, cmd_dream shows scores. (10 tests, 5471 total)"
+    },
     {
       "hash": "99b2d63",
       "id": "C250",
