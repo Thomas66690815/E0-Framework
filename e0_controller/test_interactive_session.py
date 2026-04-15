@@ -3845,7 +3845,7 @@ class TestChooseAction:
         s = build_session(steps_per_round=10)
         cmd_run(s, 1)
         action, _ = _choose_action(s)
-        valid = {"run", "escalate", "dream", "sleep", "curriculum", "tune", "stop"}
+        valid = {"run", "escalate", "couple", "dream", "sleep", "curriculum", "tune", "stop"}
         assert action in valid
 
     def test_low_coverage_suggests_run(self):
@@ -3857,12 +3857,23 @@ class TestChooseAction:
         assert action in {"run", "curriculum", "dream", "sleep"}
 
     def test_high_stagnation_suggests_escalate(self):
-        """When stagnation_streak >= 3, should escalate."""
+        """When stagnation_streak >= 3 and single universe, should escalate."""
         s = build_session(steps_per_round=10)
         cmd_run(s, 1)
         s.stagnation_streak = 5
         action, _ = _choose_action(s)
         assert action == "escalate"
+
+    def test_stagnation_with_universes_suggests_couple(self):
+        """C248: stagnation + ≥2 universes → couple instead of escalate."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        _ensure_main_universe(s)
+        universe_create(s, "donor")
+        s.stagnation_streak = 5
+        action, reason = _choose_action(s)
+        assert action == "couple"
+        assert "universe" in reason.lower()
 
 
 class TestAutoRun:
@@ -5737,3 +5748,80 @@ class TestCoupleInDispatch:
         universe_create(s, "alt")
         text = dispatch(s, "couple status")
         assert "main" in text and "alt" in text
+
+
+# ---------------------------------------------------------------------------
+# C248 — Divergence Pressure Auto-Coupling
+# ---------------------------------------------------------------------------
+
+
+class TestAutoCoupleOnStagnation:
+    """C248: auto_run triggers coupling when stagnating with ≥2 universes."""
+
+    def test_auto_run_couples_on_stagnation(self):
+        """Auto-mode uses couple action when stagnating + multi-universe."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        _ensure_main_universe(s)
+        universe_create(s, "donor")
+        # Inject L: nodes into donor so coupling transfers something
+        universe_switch(s, "donor")
+        s.landscape.add_state("L:HELP_NODE")
+        _sync_session_to_active(s)
+        universe_switch(s, "main")
+        # Force stagnation
+        s.stagnation_streak = 5
+        result = auto_run(s, max_steps=2, rounds_per_step=1)
+        actions = [a["action"] for a in result["actions"]]
+        assert "couple" in actions
+
+    def test_auto_couple_resets_stagnation(self):
+        """Successful coupling resets stagnation streak."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        _ensure_main_universe(s)
+        universe_create(s, "donor")
+        universe_switch(s, "donor")
+        s.landscape.add_state("L:FRESH_KNOWLEDGE")
+        _sync_session_to_active(s)
+        universe_switch(s, "main")
+        s.stagnation_streak = 5
+        auto_run(s, max_steps=1, rounds_per_step=1)
+        # After successful couple, stagnation should be reset
+        assert s.stagnation_streak == 0
+
+    def test_auto_couple_records_journal(self):
+        """Auto-coupling records a journal event."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        _ensure_main_universe(s)
+        universe_create(s, "donor")
+        universe_switch(s, "donor")
+        s.landscape.add_state("L:JOURNAL_TEST")
+        _sync_session_to_active(s)
+        universe_switch(s, "main")
+        s.stagnation_streak = 5
+        auto_run(s, max_steps=1, rounds_per_step=1)
+        couple_events = [e for e in s.journal if e.get("event_type") == "auto_couple"]
+        assert len(couple_events) >= 1
+        assert couple_events[0]["detail"]["partner"] == "donor"
+
+    def test_single_universe_still_escalates(self):
+        """Without multi-universe, stagnation still triggers escalate."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        s.stagnation_streak = 5
+        action, _ = _choose_action(s)
+        assert action == "escalate"
+
+    def test_auto_couple_failure_preserves_stagnation(self):
+        """Coupling that transfers nothing does not reset stagnation."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        _ensure_main_universe(s)
+        universe_create(s, "empty_donor")
+        # donor is empty — nothing to transfer
+        s.stagnation_streak = 5
+        auto_run(s, max_steps=1, rounds_per_step=1)
+        # Stagnation NOT reset since coupling transferred nothing
+        assert s.stagnation_streak >= 5

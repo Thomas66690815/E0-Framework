@@ -3754,7 +3754,7 @@ def _choose_action(state: SessionState) -> Tuple[str, str]:
     """Decide the next autonomous action based on session state.
 
     Returns (action, reason) where action is one of:
-      run, escalate, dream, sleep, curriculum, tune, stop
+      run, escalate, couple, dream, sleep, curriculum, tune, stop
     """
     a = assess(state.landscape, state.unified_nodes)
 
@@ -3775,6 +3775,10 @@ def _choose_action(state: SessionState) -> Tuple[str, str]:
     active = [d for d in domains if d["status"] != "IDLE"]
     if active and all(d["status"] == "SATURATED" for d in active):
         return "stop", "all domains SATURATED"
+
+    # C248: Stagnation + ≥2 universes → try coupling before escalate
+    if state.stagnation_streak >= 3 and len(state.universes) >= 2:
+        return "couple", f"stagnation streak = {state.stagnation_streak}, {len(state.universes)} universes available"
 
     # High stagnation → escalate
     if state.stagnation_streak >= 3:
@@ -3873,6 +3877,29 @@ def auto_run(
         elif action == "tune":
             tune_run(state, max_rounds=2)
             detail = "2 tune rounds"
+
+        elif action == "couple":
+            result = couple_run(state, reason=CouplingReason.RECOVERY)
+            if "error" not in result:
+                transferred = result["nodes_transferred"] + result["edges_transferred"]
+                detail = (
+                    f"coupled with '{result['partner']}' "
+                    f"({result['reason']}), "
+                    f"+{result['nodes_transferred']} nodes, "
+                    f"+{result['edges_transferred']} edges"
+                )
+                record_journal_event(state, "auto_couple", {
+                    "partner": result["partner"],
+                    "reason": result["reason"],
+                    "nodes_transferred": result["nodes_transferred"],
+                    "edges_transferred": result["edges_transferred"],
+                    "outcome": result["outcome"],
+                })
+                # If coupling gained something, reset stagnation
+                if transferred > 0:
+                    state.stagnation_streak = 0
+            else:
+                detail = f"couple failed: {result['error']}"
 
         else:
             detail = "unknown"
