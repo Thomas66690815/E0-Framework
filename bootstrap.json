@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C252",
-    "latest_commit_hash": "739b0a0",
-    "latest_commit_msg": "C252: Bidirectional coupling — _transfer_l_nodes helper, couple_run transfers both directions, inbound/outbound output, 8 new tests (5510 total)",
-    "test_count": 5510,
+    "latest_commit": "C253",
+    "latest_commit_hash": "23837e3",
+    "latest_commit_msg": "C253: Teach-aware ask — balanced scoring (node_ratio+query_ratio)/2, L:-anchor preference in ask_run. Fixes teach→ask disconnect. 8 new tests (5518 total)",
+    "test_count": 5518,
     "test_failures": 0,
     "ci_status": "pending",
     "module_count": "77 production + 10 benchmarks + 17 demos + 69 explorations + 127 test files",
@@ -221,8 +221,8 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "Standalone fixes (C250–C252)",
-    "arc_status": "COMPLETE. C250 dynamic domain detection. C251 adaptive dream compatibility. C252 bidirectional coupling.",
+    "current_arc": "Domain Architecture Analysis (C250–C253+)",
+    "arc_status": "IN PROGRESS. C250 domain detection. C251 dream compatibility. C252 bidirectional coupling. C253 teach-aware ask. Next: dream output backflow + domain concept clarification.",
     "arc_plan": {
       "C250_dynamic_domain_detection": {
         "title": "Dynamic Domain Detection",
@@ -238,16 +238,22 @@
         "title": "Bidirectional Coupling",
         "what": "_transfer_l_nodes() extracted helper. couple_run() transfers L: nodes in BOTH directions (partner→active AND active→partner). cmd_couple shows inbound/outbound stats. Root cause: old unidirectional transfer meant unique L: nodes in active never flowed back to partner. 8 tests.",
         "status": "DONE (C252)"
+      },
+      "C253_teach_aware_ask": {
+        "title": "Teach-Aware Ask",
+        "what": "_match_nodes balanced scoring: (node_ratio + query_ratio)/2 prevents compound concepts from being penalized. ask_run prefers L: anchor when score ≥50% of best. Fixes teach→ask disconnect: after teach what is water, ask now anchors to L:WATER_CYCLE instead of EN:water. 8 tests.",
+        "status": "DONE (C253)"
       }
     },
     "previous_arc_summary": "Multiverse Integration (C245–C249): Universe registry, per-universe teach/ask isolation, CouplingRouter wiring, divergence-pressure auto-coupling, cross-universe dream. 74 arc tests. On-Demand Integration (C233–C244): Wired all core capabilities into interactive session.",
-    "key_result": "C250-C252 COMPLETE. Dynamic domain detection + adaptive dream compatibility + bidirectional coupling. Dream shows scores/auto-relaxes. Coupling now transfers L: nodes both ways (fixes 0-transfer when active has unique nodes). 35 new tests, 5510 total.",
+    "key_result": "C250-C253. Domain detection + dream compatibility + bidirectional coupling + teach-aware ask. Ask now finds taught L: material. Remaining: dream output is a dead-end (equivalences never feed back into navigation), domain concept is overloaded (prefix-scope vs dream-unit vs universe-slice).",
     "open_threads": [
-      "LLM symmetry: needed at BOTH ends — input structuring (Bootstrapper) AND output formatting (User-Lesbarkeit)",
-      "Adversarial stability partially mitigated (C172-C174, C243b finish_reason check)",
-      "Next arc TBD — C43 Self-Graph (LLM Bootstrap Architecture) or new direction"
+      "Dream backflow: 18k equivalences computed but never injected as navigable cross-domain edges",
+      "Domain concept overloaded: prefix scope, dream compatibility unit, universe slice — needs clarification",
+      "Teach bridges too weak: delta=0.4, R=1.2 vs intra-domain delta=0.3, R=0.2 (6x resistance)",
+      "LLM symmetry: needed at BOTH ends — input structuring (Bootstrapper) AND output formatting"
     ],
-    "next_commit_id": "C253",
+    "next_commit_id": "C254",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
@@ -458,6 +464,11 @@
     }
   },
   "commit_history_recent": [
+    {
+      "hash": "23837e3",
+      "id": "C253",
+      "title": "Teach-aware ask — balanced scoring (node_ratio+query_ratio)/2, L:-anchor preference. Fixes teach→ask disconnect. (8 tests, 5518 total)"
+    },
     {
       "hash": "739b0a0",
       "id": "C252",
