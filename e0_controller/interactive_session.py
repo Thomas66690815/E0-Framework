@@ -271,7 +271,8 @@ def cmd_run(state: SessionState, n: int = 1) -> str:
         state.history.append(result)
 
         # Consolidate (persist round results to learning_state.json)
-        consolidate(result, nav["new_edges"], dry_run=False)
+        consolidate(result, nav["new_edges"], dry_run=False,
+                    universe=state.active_universe)
 
         # Stagnation tracking
         if coverage_delta <= 0.001:
@@ -1865,7 +1866,8 @@ def _llm_peer_structure(state: SessionState, text: str) -> str:
             type_usage=nav.get("type_usage", {}),
         )
         state.history.append(result)
-        consolidate(result, nav["new_edges"], dry_run=True)
+        consolidate(result, nav["new_edges"], dry_run=True,
+                    universe=state.active_universe)
 
         if coverage_delta <= 0.001:
             state.stagnation_streak += 1
@@ -2212,7 +2214,8 @@ def teach_concept(
                 type_usage=nav.get("type_usage", {}),
             )
             state.history.append(result)
-            consolidate(result, nav["new_edges"], dry_run=False)
+            consolidate(result, nav["new_edges"], dry_run=False,
+                        universe=state.active_universe)
             total_crossings += nav["domain_crossings"]
             explore_rounds += 1
 
@@ -4661,7 +4664,8 @@ def _task_navigate(
         type_usage=nav.get("type_usage", {}),
     )
     state.history.append(result)
-    consolidate(result, nav["new_edges"], dry_run=True)
+    consolidate(result, nav["new_edges"], dry_run=True,
+                universe=state.active_universe)
 
     if coverage_delta <= 0.001:
         state.stagnation_streak += 1
@@ -5389,6 +5393,10 @@ def regenerate_seed(
     # ── Step 1: Materialize discovered edges ──
     ls = load_learning_state()
     discovered = ls.get("discovered_edges", {}).get("edges", [])
+    # C246: only materialize edges belonging to the active universe
+    universe = getattr(state, "active_universe", "main")
+    discovered = [e for e in discovered
+                  if e.get("universe", "main") == universe]
     materialized = 0
     skipped_existing = 0
     skipped_low_conf = 0

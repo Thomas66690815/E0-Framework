@@ -627,8 +627,13 @@ def validate_confidence(path) -> Dict[Tuple[str, str], float]:
 
 
 def consolidate(round_result: MultiDomainRoundResult, new_edges: List[Dict],
-                dry_run: bool = False) -> Dict[str, Any]:
-    """Write round results to learning_state.json."""
+                dry_run: bool = False,
+                universe: str = "main") -> Dict[str, Any]:
+    """Write round results to learning_state.json.
+
+    *universe* tags each persisted edge and history entry so that
+    multi-universe sessions (C246) can reload without cross-contamination.
+    """
     if dry_run:
         return {
             "new_edges_would_persist": len(new_edges),
@@ -650,7 +655,8 @@ def consolidate(round_result: MultiDomainRoundResult, new_edges: List[Dict],
     for edge in new_edges:
         key = (edge["from"], edge["to"])
         if key not in existing:
-            ls["discovered_edges"]["edges"].append(edge)
+            tagged = dict(edge, universe=universe)
+            ls["discovered_edges"]["edges"].append(tagged)
             existing.add(key)
             added += 1
 
@@ -684,6 +690,7 @@ def consolidate(round_result: MultiDomainRoundResult, new_edges: List[Dict],
         "en_coverage": round(a.en_coverage, 4),
         "mech_coverage": round(a.mech_coverage, 4),
         "timestamp": datetime.now(timezone.utc).isoformat(),
+        "universe": universe,
     }
     ls["multidomain_history"]["rounds"].append(history_entry)
 

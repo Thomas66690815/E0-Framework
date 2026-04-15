@@ -5220,3 +5220,234 @@ class TestUniverseInHelp:
         """Help text includes universe command."""
         text = cmd_help()
         assert "universe" in text.lower()
+
+
+# ---------------------------------------------------------------------------
+# C246: Per-Universe Teach/Ask Isolation
+# ---------------------------------------------------------------------------
+
+
+class TestUniverseLandscapeIsolation:
+    """C246: L: nodes added in one universe must not appear in another."""
+
+    def test_l_nodes_isolated_between_universes(self):
+        """Teach-injected L: nodes in universe A are absent from universe B."""
+        s = build_session(steps_per_round=10)
+        _ensure_main_universe(s)
+
+        universe_create(s, "alpha")
+        universe_switch(s, "alpha")
+
+        # Inject L: nodes into alpha's landscape
+        s.landscape.add_state("L:WATER_CYCLE")
+        s.landscape.add_state("L:EVAPORATION")
+        _sync_session_to_active(s)
+
+        # Switch to main — L: nodes must be absent
+        universe_switch(s, "main")
+        main_l = [n for n in s.landscape.states if n.startswith("L:")]
+        assert len(main_l) == 0, f"Main sees alpha L: nodes: {main_l}"
+
+    def test_l_nodes_persist_on_switch_back(self):
+        """L: nodes survive universe round-trip (A→B→A)."""
+        s = build_session(steps_per_round=10)
+        _ensure_main_universe(s)
+
+        universe_create(s, "beta")
+        universe_switch(s, "beta")
+
+        s.landscape.add_state("L:PHOTOSYNTHESIS")
+        _sync_session_to_active(s)
+
+        universe_switch(s, "main")
+        universe_switch(s, "beta")
+
+        beta_l = [n for n in s.landscape.states if n.startswith("L:")]
+        assert "L:PHOTOSYNTHESIS" in beta_l
+
+    def test_two_universes_independent_l_nodes(self):
+        """Two universes can have different L: nodes simultaneously."""
+        s = build_session(steps_per_round=10)
+        _ensure_main_universe(s)
+
+        # Teach in main
+        s.landscape.add_state("L:GRAVITY")
+        _sync_session_to_active(s)
+
+        # Teach in alpha
+        universe_create(s, "alpha")
+        universe_switch(s, "alpha")
+        s.landscape.add_state("L:LOGISTICS")
+        _sync_session_to_active(s)
+
+        # Check alpha
+        alpha_l = {n for n in s.landscape.states if n.startswith("L:")}
+        assert "L:LOGISTICS" in alpha_l
+        assert "L:GRAVITY" not in alpha_l
+
+        # Check main
+        universe_switch(s, "main")
+        main_l = {n for n in s.landscape.states if n.startswith("L:")}
+        assert "L:GRAVITY" in main_l
+        assert "L:LOGISTICS" not in main_l
+
+
+class TestConsolidateUniverseTag:
+    """C246: consolidate() tags edges and history with universe name."""
+
+    def test_edges_tagged_with_universe(self, tmp_path):
+        """Persisted edges carry the universe field."""
+        import e0_controller.explore_bootstrap_landscape as mod
+        from e0_controller.explore_learning_cycle_multidomain import (
+            consolidate, MultiDomainAssessment, MultiDomainRoundResult,
+        )
+
+        tmp_ls = tmp_path / "learning_state.json"
+        with open(tmp_ls, "w", encoding="utf-8") as f:
+            json.dump({"_meta": {"source": "test"}}, f)
+
+        orig = mod.LEARNING_STATE_PATH
+        mod.LEARNING_STATE_PATH = str(tmp_ls)
+        try:
+            a = MultiDomainAssessment(
+                total_nodes=100, total_edges=200, visited_nodes=50,
+                coverage=0.5, frontier_size=10, T_s=0.1,
+                mean_quality=0.5, stale_edges=0,
+                canon_coverage=0.5, bootstrap_coverage=0.5, en_coverage=0.5,
+                canon_nodes=30, bootstrap_nodes=30, en_nodes=30,
+                canon_visited=15, bootstrap_visited=15, en_visited=15,
+            )
+            rr = MultiDomainRoundResult(
+                round_num=1, mode="teach", reason="test", steps=10,
+                assessment_before=a, assessment_after=a,
+                path=["A", "B"], new_edges=1,
+                domain_crossings=0, crossing_rate=0.0,
+                coverage_delta=0.01, T_s_delta=0.0,
+                en_canon_crossings=0, en_bootstrap_crossings=0,
+                canon_bootstrap_crossings=0,
+            )
+            consolidate(rr, [{"from": "X", "to": "Y"}], universe="sandbox")
+
+            with open(tmp_ls, encoding="utf-8") as f:
+                ls = json.load(f)
+
+            edge = ls["discovered_edges"]["edges"][0]
+            assert edge["universe"] == "sandbox"
+
+            entry = ls["multidomain_history"]["rounds"][0]
+            assert entry["universe"] == "sandbox"
+        finally:
+            mod.LEARNING_STATE_PATH = orig
+
+    def test_default_universe_is_main(self, tmp_path):
+        """Without explicit universe kwarg, edges are tagged 'main'."""
+        import e0_controller.explore_bootstrap_landscape as mod
+        from e0_controller.explore_learning_cycle_multidomain import (
+            consolidate, MultiDomainAssessment, MultiDomainRoundResult,
+        )
+
+        tmp_ls = tmp_path / "learning_state.json"
+        with open(tmp_ls, "w", encoding="utf-8") as f:
+            json.dump({"_meta": {"source": "test"}}, f)
+
+        orig = mod.LEARNING_STATE_PATH
+        mod.LEARNING_STATE_PATH = str(tmp_ls)
+        try:
+            a = MultiDomainAssessment(
+                total_nodes=100, total_edges=200, visited_nodes=50,
+                coverage=0.5, frontier_size=10, T_s=0.1,
+                mean_quality=0.5, stale_edges=0,
+                canon_coverage=0.5, bootstrap_coverage=0.5, en_coverage=0.5,
+                canon_nodes=30, bootstrap_nodes=30, en_nodes=30,
+                canon_visited=15, bootstrap_visited=15, en_visited=15,
+            )
+            rr = MultiDomainRoundResult(
+                round_num=1, mode="teach", reason="test", steps=10,
+                assessment_before=a, assessment_after=a,
+                path=["A", "B"], new_edges=0,
+                domain_crossings=0, crossing_rate=0.0,
+                coverage_delta=0.01, T_s_delta=0.0,
+                en_canon_crossings=0, en_bootstrap_crossings=0,
+                canon_bootstrap_crossings=0,
+            )
+            consolidate(rr, [{"from": "A", "to": "B"}])
+
+            with open(tmp_ls, encoding="utf-8") as f:
+                ls = json.load(f)
+
+            edge = ls["discovered_edges"]["edges"][0]
+            assert edge["universe"] == "main"
+        finally:
+            mod.LEARNING_STATE_PATH = orig
+
+
+class TestRegenerateSeedUniverseFilter:
+    """C246: regenerate_seed only materializes edges from active universe."""
+
+    def test_filters_by_active_universe(self, tmp_path):
+        """Edges tagged with a different universe are skipped."""
+        import e0_controller.explore_bootstrap_landscape as mod
+
+        s = build_session(steps_per_round=10)
+        _ensure_main_universe(s)
+
+        # Add nodes so edges can be materialized
+        s.landscape.add_state("L:A")
+        s.landscape.add_state("L:B")
+        s.landscape.add_state("L:C")
+
+        # Write learning_state with edges from two universes
+        tmp_ls = tmp_path / "learning_state.json"
+        ls_data = {
+            "discovered_edges": {
+                "edges": [
+                    {"from": "L:A", "to": "L:B", "confidence": 0.9,
+                     "delta": 0.5, "resistance": 1.0, "universe": "main"},
+                    {"from": "L:B", "to": "L:C", "confidence": 0.9,
+                     "delta": 0.5, "resistance": 1.0, "universe": "sandbox"},
+                ]
+            }
+        }
+        with open(tmp_ls, "w", encoding="utf-8") as f:
+            json.dump(ls_data, f)
+
+        orig = mod.LEARNING_STATE_PATH
+        mod.LEARNING_STATE_PATH = str(tmp_ls)
+        try:
+            result = regenerate_seed(s, path=str(tmp_path / "seed.json"))
+            # Only the "main" edge should be materialized
+            assert result["materialized_edges"] == 1
+            assert s.landscape.has_edge("L:A", "L:B")
+            assert not s.landscape.has_edge("L:B", "L:C")
+        finally:
+            mod.LEARNING_STATE_PATH = orig
+
+    def test_legacy_edges_without_universe_count_as_main(self, tmp_path):
+        """Pre-C246 edges (no universe field) are treated as 'main'."""
+        import e0_controller.explore_bootstrap_landscape as mod
+
+        s = build_session(steps_per_round=10)
+        _ensure_main_universe(s)
+
+        s.landscape.add_state("L:X")
+        s.landscape.add_state("L:Y")
+
+        tmp_ls = tmp_path / "learning_state.json"
+        ls_data = {
+            "discovered_edges": {
+                "edges": [
+                    {"from": "L:X", "to": "L:Y", "confidence": 0.9,
+                     "delta": 0.5, "resistance": 1.0},
+                ]
+            }
+        }
+        with open(tmp_ls, "w", encoding="utf-8") as f:
+            json.dump(ls_data, f)
+
+        orig = mod.LEARNING_STATE_PATH
+        mod.LEARNING_STATE_PATH = str(tmp_ls)
+        try:
+            result = regenerate_seed(s, path=str(tmp_path / "seed.json"))
+            assert result["materialized_edges"] == 1
+        finally:
+            mod.LEARNING_STATE_PATH = orig
