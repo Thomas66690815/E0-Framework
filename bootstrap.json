@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C247",
-    "latest_commit_hash": "9ebc68c",
-    "latest_commit_msg": "C247: CouplingRouter Wiring — couple command for inter-universe knowledge transfer. _universe_to_coupling adapter, _ensure_coupling_router lazy init, couple_run L:-edge transfer with historization. Commands: couple/couple explore/couple recover/couple <name>/couple status. 25 new tests, 5430 total.",
-    "test_count": 5430,
+    "latest_commit": "C248",
+    "latest_commit_hash": "9548dd8",
+    "latest_commit_msg": "C248: Divergence Pressure Auto-Coupling — _choose_action triggers couple on stagnation. Multi-universe stagnation → RECOVERY coupling before escalate. auto_run executes couple, resets stagnation on success, records journal. Single-universe unchanged. 6 new tests, 5436 total.",
+    "test_count": 5436,
     "test_failures": 0,
     "ci_status": "pending",
     "module_count": "77 production + 10 benchmarks + 17 demos + 69 explorations + 127 test files",
@@ -241,8 +241,8 @@
       },
       "C248_divergence_pressure_auto": {
         "title": "Divergence Pressure Auto-Coupling",
-        "what": "auto-mode integrates divergence_pressure. Stagnating universe → CouplingRouter selects partner → knowledge transfer (edges with confidence > threshold). No new command — auto recognizes this automatically.",
-        "status": "PLANNED"
+        "what": "_choose_action gains 'couple' action: stagnation_streak≥3 + ≥2 universes → RECOVERY coupling before escalate. auto_run executes couple_run, resets stagnation on success, records auto_couple journal event. Single-universe unchanged. 6 tests.",
+        "status": "DONE (C248)"
       },
       "C249_dream_multiverse_aware": {
         "title": "Dream Multiverse-Aware",
@@ -257,7 +257,7 @@
       "LLM symmetry: needed at BOTH ends — input structuring (Bootstrapper) AND output formatting (User-Lesbarkeit)",
       "Adversarial stability partially mitigated (C172-C174, C243b finish_reason check)"
     ],
-    "next_commit_id": "C248",
+    "next_commit_id": "C249",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
