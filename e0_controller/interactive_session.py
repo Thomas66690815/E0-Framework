@@ -5322,22 +5322,59 @@ def _ensure_coupling_router(state: SessionState) -> Optional[CouplingRouter]:
     return state.coupling_router
 
 
+def _transfer_l_nodes(
+    source_landscape: Any,
+    target_landscape: Any,
+) -> Tuple[int, int]:
+    """Transfer L: nodes and L:-related edges from source to target.
+
+    Returns (nodes_added, edges_added).
+    """
+    source_l_nodes = {n for n in source_landscape.states if n.startswith("L:")}
+    existing_nodes = target_landscape.states
+
+    nodes_added = 0
+    for node in source_l_nodes:
+        if node not in existing_nodes:
+            target_landscape.add_state(node)
+            nodes_added += 1
+
+    edges_added = 0
+    for edge in source_landscape.edges:
+        src, tgt = edge.source, edge.target
+        if not (src.startswith("L:") or tgt.startswith("L:")):
+            continue
+        if src in target_landscape.states and tgt in target_landscape.states:
+            if not target_landscape.has_edge(src, tgt):
+                delta = source_landscape.difference(src, tgt)
+                resistance = source_landscape.effective_resistance(src, tgt)
+                target_landscape.add_edge(
+                    src, tgt,
+                    delta=delta if delta is not None else 0.5,
+                    resistance=max(resistance, 0.1) if resistance is not None else 1.0,
+                    relation_type="coupled",
+                )
+                edges_added += 1
+
+    return nodes_added, edges_added
+
+
 def couple_run(
     state: SessionState,
     partner_name: Optional[str] = None,
     reason: CouplingReason = CouplingReason.RECOVERY,
     confidence_threshold: float = 0.3,
 ) -> Dict[str, Any]:
-    """Transfer high-confidence L: edges from a partner universe.
+    """Bidirectional L: transfer between active universe and partner.
 
     If *partner_name* is given, couples with that specific universe.
     Otherwise uses CouplingRouter.select_partner() to pick the best
     partner based on *reason* (RECOVERY or EXPLORATION).
 
-    Transfers L: nodes and their edges from the partner's landscape
-    into the active universe's landscape.  Only edges with both endpoints
-    present after node transfer are copied.  The coupling outcome
-    (how many new nodes/edges were gained) is historized on the router.
+    Transfers L: nodes and their edges in **both directions**:
+    partner → active AND active → partner.  Only edges with both
+    endpoints present after node transfer are copied.  The coupling
+    outcome is historized on the router.
 
     Returns a result dict with transfer statistics.
     """
@@ -5372,38 +5409,15 @@ def couple_run(
         selection = selections[0]
         partner_us = state.universes[selection.partner.name]
 
-    # Transfer: L: nodes + edges from partner → active
+    # Bidirectional transfer: partner → active AND active → partner
     partner_landscape = partner_us.landscape
     active_landscape = state.landscape  # = active_us.landscape via sync
 
-    partner_l_nodes = {n for n in partner_landscape.states if n.startswith("L:")}
-    existing_nodes = active_landscape.states
+    nodes_in, edges_in = _transfer_l_nodes(partner_landscape, active_landscape)
+    nodes_out, edges_out = _transfer_l_nodes(active_landscape, partner_landscape)
 
-    nodes_added = 0
-    for node in partner_l_nodes:
-        if node not in existing_nodes:
-            active_landscape.add_state(node)
-            nodes_added += 1
-
-    edges_added = 0
-    for edge in partner_landscape.edges:
-        src, tgt = edge.source, edge.target
-        if not (src.startswith("L:") or tgt.startswith("L:")):
-            continue  # only transfer L:-related edges
-        if src in active_landscape.states and tgt in active_landscape.states:
-            if not active_landscape.has_edge(src, tgt):
-                delta = partner_landscape.difference(src, tgt)
-                resistance = partner_landscape.effective_resistance(src, tgt)
-                active_landscape.add_edge(
-                    src, tgt,
-                    delta=delta if delta is not None else 0.5,
-                    resistance=max(resistance, 0.1) if resistance is not None else 1.0,
-                    relation_type="coupled",
-                )
-                edges_added += 1
-
-    # Historize on router
-    gained = nodes_added + edges_added
+    # Historize on router — based on total gained
+    gained = nodes_in + edges_in + nodes_out + edges_out
     outcome = Outcome.SUCCESS if gained > 0 else Outcome.FAILURE
     router.historize(active_name, selection.partner.name, outcome)
 
@@ -5412,8 +5426,10 @@ def couple_run(
         "reason": selection.reason.value,
         "score": round(selection.score, 4),
         "edge_delta": round(selection.edge_delta, 4),
-        "nodes_transferred": nodes_added,
-        "edges_transferred": edges_added,
+        "nodes_transferred": nodes_in + nodes_out,
+        "edges_transferred": edges_in + edges_out,
+        "inbound": {"nodes": nodes_in, "edges": edges_in},
+        "outbound": {"nodes": nodes_out, "edges": edges_out},
         "outcome": outcome.name,
     }
 
@@ -5462,11 +5478,14 @@ def cmd_couple(state: SessionState, arg: str) -> str:
 
 def _format_couple_result(result: Dict[str, Any]) -> str:
     """Format couple_run result for display."""
+    inb = result.get("inbound", {})
+    outb = result.get("outbound", {})
     lines = [
         f"Coupled with '{result['partner']}' ({result['reason']})",
         f"  Structural distance: {result['edge_delta']:.4f}",
-        f"  Nodes transferred: {result['nodes_transferred']}",
-        f"  Edges transferred: {result['edges_transferred']}",
+        f"  Inbound  (partner → active): {inb.get('nodes', 0)} nodes, {inb.get('edges', 0)} edges",
+        f"  Outbound (active → partner): {outb.get('nodes', 0)} nodes, {outb.get('edges', 0)} edges",
+        f"  Total: {result['nodes_transferred']} nodes, {result['edges_transferred']} edges",
         f"  Outcome: {result['outcome']}",
     ]
     return "\n".join(lines)

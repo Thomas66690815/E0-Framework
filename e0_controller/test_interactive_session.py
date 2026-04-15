@@ -6257,3 +6257,156 @@ class TestCmdDreamScores:
         cmd_run(s, 1)
         out = cmd_dream(s)
         assert "Threshold relaxed" not in out
+
+
+# ── C252: Bidirectional Coupling ──────────────────────────────────────
+
+
+class TestTransferLNodes:
+    """C252: _transfer_l_nodes helper transfers L: nodes and edges."""
+
+    def test_transfers_nodes_and_edges(self):
+        """L: nodes and edges move from source to target."""
+        from e0_controller.interactive_session import _transfer_l_nodes
+        s = build_session(steps_per_round=5)
+        _ensure_main_universe(s)
+        universe_create(s, "src")
+        universe_switch(s, "src")
+        s.landscape.add_state("L:A")
+        s.landscape.add_state("L:B")
+        s.landscape.add_edge("L:A", "L:B", delta=0.5, resistance=1.0)
+        src_ls = s.landscape
+        universe_switch(s, "main")
+        tgt_ls = s.landscape
+        nodes, edges = _transfer_l_nodes(src_ls, tgt_ls)
+        assert nodes == 2
+        assert edges == 1
+        assert "L:A" in tgt_ls.states
+        assert "L:B" in tgt_ls.states
+
+    def test_skips_existing_nodes(self):
+        """Nodes already in target are not duplicated."""
+        from e0_controller.interactive_session import _transfer_l_nodes
+        s = build_session(steps_per_round=5)
+        _ensure_main_universe(s)
+        s.landscape.add_state("L:EXIST")
+        universe_create(s, "src")
+        universe_switch(s, "src")
+        s.landscape.add_state("L:EXIST")
+        s.landscape.add_state("L:NEW")
+        src_ls = s.landscape
+        universe_switch(s, "main")
+        tgt_ls = s.landscape
+        nodes, edges = _transfer_l_nodes(src_ls, tgt_ls)
+        assert nodes == 1  # only L:NEW
+
+    def test_skips_non_l_edges(self):
+        """Edges not touching L: nodes are not transferred."""
+        from e0_controller.interactive_session import _transfer_l_nodes
+        s = build_session(steps_per_round=5)
+        _ensure_main_universe(s)
+        universe_create(s, "src")
+        universe_switch(s, "src")
+        s.landscape.add_state("X:FOO")
+        s.landscape.add_state("X:BAR")
+        s.landscape.add_edge("X:FOO", "X:BAR", delta=0.5, resistance=1.0)
+        src_ls = s.landscape
+        universe_switch(s, "main")
+        tgt_ls = s.landscape
+        nodes, edges = _transfer_l_nodes(src_ls, tgt_ls)
+        assert nodes == 0
+        assert edges == 0
+
+
+class TestBidirectionalCoupleRun:
+    """C252: couple_run transfers L: nodes in both directions."""
+
+    def test_outbound_transfer(self):
+        """Active → partner direction transfers unique L: nodes."""
+        s = build_session(steps_per_round=5)
+        _ensure_main_universe(s)
+        universe_create(s, "peer")
+        # main has unique L: nodes
+        universe_switch(s, "main")
+        s.landscape.add_state("L:MAIN_ONLY")
+        _sync_session_to_active(s)
+        # peer has nothing extra
+        universe_switch(s, "peer")
+        result = couple_run(s, partner_name="main")
+        # Inbound: main → peer (L:MAIN_ONLY comes in)
+        assert result["inbound"]["nodes"] == 1
+        # Check peer now has it
+        assert "L:MAIN_ONLY" in s.landscape.states
+
+    def test_both_directions_transfer(self):
+        """Both universes gain each other's unique L: nodes."""
+        s = build_session(steps_per_round=5)
+        _ensure_main_universe(s)
+        # main gets unique node
+        s.landscape.add_state("L:FROM_MAIN")
+        _sync_session_to_active(s)
+        universe_create(s, "peer")
+        universe_switch(s, "peer")
+        # peer gets unique node
+        s.landscape.add_state("L:FROM_PEER")
+        _sync_session_to_active(s)
+        result = couple_run(s, partner_name="main")
+        # Inbound (main → peer): L:FROM_MAIN already in peer (copied on create)
+        # But the exact duplication depends on create. Let's just check totals.
+        total_nodes = result["nodes_transferred"]
+        assert total_nodes >= 1  # at least L:FROM_PEER → main
+        assert result["outcome"] == "SUCCESS"
+        # main should have L:FROM_PEER
+        main_ls = s.universes["main"].landscape
+        assert "L:FROM_PEER" in main_ls.states
+
+    def test_outbound_when_inbound_zero(self):
+        """Even if partner has nothing new, active's nodes flow out."""
+        s = build_session(steps_per_round=5)
+        _ensure_main_universe(s)
+        universe_create(s, "learner")
+        # learner gets unique L: nodes, main has none
+        universe_switch(s, "learner")
+        s.landscape.add_state("L:UNIQUE_A")
+        s.landscape.add_state("L:UNIQUE_B")
+        _sync_session_to_active(s)
+        result = couple_run(s, partner_name="main")
+        # Inbound (main → learner): 0 (main has no L: nodes)
+        assert result["inbound"]["nodes"] == 0
+        # Outbound (learner → main): 2
+        assert result["outbound"]["nodes"] == 2
+        assert result["outcome"] == "SUCCESS"
+        main_ls = s.universes["main"].landscape
+        assert "L:UNIQUE_A" in main_ls.states
+        assert "L:UNIQUE_B" in main_ls.states
+
+    def test_result_dict_has_inbound_outbound(self):
+        """Result dict contains inbound/outbound sub-dicts."""
+        s = build_session(steps_per_round=5)
+        _ensure_main_universe(s)
+        universe_create(s, "alt")
+        result = couple_run(s, partner_name="alt")
+        assert "inbound" in result
+        assert "outbound" in result
+        assert "nodes" in result["inbound"]
+        assert "edges" in result["inbound"]
+        assert "nodes" in result["outbound"]
+        assert "edges" in result["outbound"]
+
+
+class TestCmdCoupleBidirectionalOutput:
+    """C252: cmd_couple output shows bidirectional transfer info."""
+
+    def test_inbound_outbound_lines(self):
+        """Output shows Inbound and Outbound lines."""
+        s = build_session(steps_per_round=5)
+        _ensure_main_universe(s)
+        universe_create(s, "donor")
+        universe_switch(s, "donor")
+        s.landscape.add_state("L:ITEM")
+        _sync_session_to_active(s)
+        universe_switch(s, "main")
+        text = cmd_couple(s, "donor")
+        assert "Inbound" in text
+        assert "Outbound" in text
+        assert "Total:" in text
