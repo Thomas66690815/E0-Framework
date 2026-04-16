@@ -398,34 +398,65 @@ def cmd_status(state: SessionState) -> str:
 
 
 def cmd_focus(state: SessionState, domain: str) -> str:
-    """Zoom into a specific domain's state."""
+    """Zoom into a specific domain or community's state.
+
+    Accepts prefix names (canon, bootstrap, en, mechanism, learned),
+    community IDs (community_0, c0), or raw prefixes (C:, EN:).
+    """
     from e0_controller.ui_emitter import emit_ui_spec
     from e0_controller.text_renderer import render_text, render_markdown
     from e0_controller.evidence_interpreter import interpret_panel, interpret_trace
 
-    # Map user input to prefix — dynamic detection (C250)
-    detected = _detect_domains(state.landscape)
-    prefix_map: Dict[str, str] = {}
-    for p, dname in detected:
-        prefix_map[dname.lower()] = p
-        prefix_map[p.rstrip(":").lower()] = p
-    # Common aliases
-    prefix_map.update({
-        "boot": "B:", "english": "EN:", "mech": "M:", "learn": "L:",
-    })
-    prefix = prefix_map.get(domain.lower())
-    if prefix is None:
-        available = ", ".join(name for _, name in detected) or "none"
-        return f"Unknown domain '{domain}'. Available: {available}."
+    # C259: Try community IDs first
+    community_nodes: Optional[set] = None
+    domain_label: Optional[str] = None
+    domain_key = domain.lower().strip()
 
-    domain_label = next(
-        (name for p, name in detected if p == prefix),
-        _PREFIX_DISPLAY.get(prefix, prefix.rstrip(":")),
-    )
+    from e0_controller.community import extract_community_landscapes
+    comm_landscapes = extract_community_landscapes(state.landscape)
+
+    # Match community_N or cN
+    for cname in comm_landscapes:
+        if (domain_key == cname.lower()
+                or domain_key == cname.lower().replace("community_", "c")):
+            community_nodes = set(comm_landscapes[cname].states)
+            domain_label = cname
+            break
+
+    if community_nodes is None:
+        # Fall back to prefix-based resolution
+        detected = _detect_domains(state.landscape)
+        prefix_map: Dict[str, str] = {}
+        for p, dname in detected:
+            prefix_map[dname.lower()] = p
+            prefix_map[p.rstrip(":").lower()] = p
+        # Common aliases
+        prefix_map.update({
+            "boot": "B:", "english": "EN:", "mech": "M:", "learn": "L:",
+        })
+        prefix = prefix_map.get(domain_key)
+        if prefix is None:
+            comm_names = list(comm_landscapes.keys())
+            available_prefix = ", ".join(name for _, name in detected) or "none"
+            available_comm = ", ".join(comm_names) or "none"
+            return (
+                f"Unknown domain '{domain}'. "
+                f"Prefix domains: {available_prefix}. "
+                f"Communities: {available_comm}."
+            )
+
+        domain_label = next(
+            (name for p, name in detected if p == prefix),
+            _PREFIX_DISPLAY.get(prefix, prefix.rstrip(":")),
+        )
+        community_nodes = {
+            n for n in state.landscape.states if n.startswith(prefix)
+        }
+
     hist = state.landscape.historization
 
-    # Gather domain-specific data
-    all_nodes = [n for n in state.landscape.states if n.startswith(prefix)]
+    # Gather domain-specific data using community_nodes set
+    all_nodes = sorted(community_nodes)
     visited = set()
     edge_data = []
     for e in state.landscape.edges:
@@ -434,17 +465,18 @@ def cmd_focus(state: SessionState, domain: str) -> str:
         if load > 0:
             visited.add(e.source)
             visited.add(e.target)
-        # Edges within or touching this domain
-        if e.source.startswith(prefix) or e.target.startswith(prefix):
+        # Edges within or touching this partition
+        if e.source in community_nodes or e.target in community_nodes:
             if load > 0:
                 edge_data.append({
                     "edge": f"{e.source} → {e.target}",
                     "load": load,
                     "quality": quality,
-                    "cross": _domain_of(e.source) != _domain_of(e.target),
+                    "cross": (e.source not in community_nodes
+                              or e.target not in community_nodes),
                 })
 
-    domain_visited = [n for n in visited if n.startswith(prefix)]
+    domain_visited = [n for n in visited if n in community_nodes]
     coverage = len(domain_visited) / max(1, len(all_nodes))
 
     # Sort edges: most active first
@@ -718,12 +750,20 @@ def _compute_domain_stats(
     }
 
 
-def compute_trajectory(state: SessionState) -> Dict[str, Any]:
+def compute_trajectory(
+    state: SessionState,
+    partition: str = "community",
+) -> Dict[str, Any]:
     """Compute learning trajectory data from session history.
 
     Returns a structured dict with per-round metrics and overall trends.
     Designed for both display (cmd_trajectory) and programmatic use
     (C229+ escalation logic).
+
+    Parameters
+    ----------
+    partition : str
+        'community' (default) or 'prefix' (legacy).
     """
     if not state.history:
         return {"rounds": [], "summary": None}
@@ -747,33 +787,58 @@ def compute_trajectory(state: SessionState) -> Dict[str, Any]:
     first_a = state.history[0].assessment_before
     last_a = state.history[-1].assessment_after
 
-    # Per-domain trajectory (known domains from Assessment history)
+    # Per-domain/community trajectory
     domain_trends = {}
-    for prefix, name in _DOMAINS:
-        attr = _DOMAIN_ATTR[prefix]
-        c_before = getattr(first_a, f"{attr}_coverage", 0)
-        c_after = getattr(last_a, f"{attr}_coverage", 0)
-        nodes = getattr(last_a, f"{attr}_nodes", 0)
-        if nodes > 0:
-            domain_trends[name] = {
-                "coverage_start": c_before,
-                "coverage_end": c_after,
-                "delta": c_after - c_before,
-                "nodes": nodes,
-            }
 
-    # Detected domains not in Assessment: current snapshot only
-    known_prefixes = {p for p, _ in _DOMAINS}
-    for prefix, name in _detect_domains(state.landscape):
-        if prefix not in known_prefixes and name not in domain_trends:
-            stats = _compute_domain_stats(state.landscape, prefix)
-            if stats["total"] > 0:
+    if partition == "community":
+        # C259: Community-based domain trends
+        from e0_controller.community import extract_community_landscapes
+        comm_landscapes = extract_community_landscapes(state.landscape)
+        hist = state.landscape.historization
+        visited_set: set = set()
+        for e in state.landscape.edges:
+            if hist.trace_load(e) > 0:
+                visited_set.add(e.source)
+                visited_set.add(e.target)
+        for name, ls in comm_landscapes.items():
+            all_nodes = set(ls.states)
+            vis = len(visited_set & all_nodes)
+            total = len(all_nodes)
+            coverage = vis / max(1, total)
+            if total > 0:
                 domain_trends[name] = {
-                    "coverage_start": stats["coverage"],
-                    "coverage_end": stats["coverage"],
+                    "coverage_start": coverage,
+                    "coverage_end": coverage,
                     "delta": 0,
-                    "nodes": stats["total"],
+                    "nodes": total,
                 }
+    else:
+        # Legacy prefix-based domain trends
+        for prefix, name in _DOMAINS:
+            attr = _DOMAIN_ATTR[prefix]
+            c_before = getattr(first_a, f"{attr}_coverage", 0)
+            c_after = getattr(last_a, f"{attr}_coverage", 0)
+            nodes = getattr(last_a, f"{attr}_nodes", 0)
+            if nodes > 0:
+                domain_trends[name] = {
+                    "coverage_start": c_before,
+                    "coverage_end": c_after,
+                    "delta": c_after - c_before,
+                    "nodes": nodes,
+                }
+
+        # Detected domains not in Assessment: current snapshot only
+        known_prefixes = {p for p, _ in _DOMAINS}
+        for prefix, name in _detect_domains(state.landscape):
+            if prefix not in known_prefixes and name not in domain_trends:
+                stats = _compute_domain_stats(state.landscape, prefix)
+                if stats["total"] > 0:
+                    domain_trends[name] = {
+                        "coverage_start": stats["coverage"],
+                        "coverage_end": stats["coverage"],
+                        "delta": 0,
+                        "nodes": stats["total"],
+                    }
 
     # Mode progression
     modes = [r.mode for r in state.history]
@@ -874,12 +939,20 @@ def cmd_trajectory(state: SessionState) -> str:
     return "\n".join(lines)
 
 
-def diagnose_session(state: SessionState) -> Dict[str, Any]:
-    """Per-domain stagnation analysis with bottleneck identification.
+def diagnose_session(
+    state: SessionState,
+    partition: str = "community",
+) -> Dict[str, Any]:
+    """Per-domain/community stagnation analysis with bottleneck identification.
 
-    Returns structured diagnostic data for each domain:
+    Returns structured diagnostic data for each partition:
       - coverage, frontier, isolated nodes, velocity, status, suggestion
     Plus overall diagnosis with bottleneck identification.
+
+    Parameters
+    ----------
+    partition : str
+        'community' (default) or 'prefix' (legacy).
 
     Domain status values:
       SATURATED — coverage ≥ 95%, fully explored
@@ -900,9 +973,20 @@ def diagnose_session(state: SessionState) -> Dict[str, Any]:
 
     domain_results = []
 
-    for prefix, name in _detect_domains(state.landscape):
-        all_states = {n for n in state.landscape.states
-                      if n.startswith(prefix)}
+    # C259: Build partition list — community or prefix
+    if partition == "community":
+        from e0_controller.community import extract_community_landscapes
+        comm_landscapes = extract_community_landscapes(state.landscape)
+        partition_list = [
+            (name, set(ls.states)) for name, ls in comm_landscapes.items()
+        ]
+    else:
+        partition_list = [
+            (name, {n for n in state.landscape.states if n.startswith(prefix)})
+            for prefix, name in _detect_domains(state.landscape)
+        ]
+
+    for part_name, all_states in partition_list:
         total = len(all_states)
 
         if total == 0:
@@ -916,13 +1000,13 @@ def diagnose_session(state: SessionState) -> Dict[str, Any]:
         qualities: List[float] = []
         loads: List[float] = []
         for e in state.landscape.edges:
-            if e.source.startswith(prefix) or e.target.startswith(prefix):
+            if e.source in all_states or e.target in all_states:
                 m = hist.trace_load(e)
                 if m > 0:
                     qualities.append(hist.trace_quality(e))
                     loads.append(m)
 
-        # Frontier: reachable from visited, not yet visited, in this domain
+        # Frontier: reachable from visited, not yet visited, in this partition
         frontier: set = set()
         for e in state.landscape.edges:
             if (e.source in visited_set
@@ -934,22 +1018,30 @@ def diagnose_session(state: SessionState) -> Dict[str, Any]:
         isolated = unvisited - frontier
 
         # Recent velocity (last 5 rounds)
-        # For known domains, use historical Assessment attrs; otherwise 0
-        recent_deltas: List[float] = []
-        attr = _DOMAIN_ATTR.get(prefix)
-        if attr and state.history:
-            for r in state.history[-5:]:
-                before_cov = getattr(
-                    r.assessment_before, f"{attr}_coverage", 0,
+        # For prefix mode on known domains, use historical Assessment attrs
+        # For community mode: velocity = 0 (Assessment doesn't track communities)
+        velocity = 0.0
+        if partition != "community":
+            # Find the prefix for this domain name
+            prefix = next(
+                (p for p, n in _detect_domains(state.landscape)
+                 if n == part_name), None
+            )
+            attr = _DOMAIN_ATTR.get(prefix) if prefix else None
+            if attr and state.history:
+                recent_deltas: List[float] = []
+                for r in state.history[-5:]:
+                    before_cov = getattr(
+                        r.assessment_before, f"{attr}_coverage", 0,
+                    )
+                    after_cov = getattr(
+                        r.assessment_after, f"{attr}_coverage", 0,
+                    )
+                    recent_deltas.append(after_cov - before_cov)
+                velocity = (
+                    sum(recent_deltas) / len(recent_deltas)
+                    if recent_deltas else 0.0
                 )
-                after_cov = getattr(
-                    r.assessment_after, f"{attr}_coverage", 0,
-                )
-                recent_deltas.append(after_cov - before_cov)
-        velocity = (
-            sum(recent_deltas) / len(recent_deltas)
-            if recent_deltas else 0.0
-        )
 
         # Confused edges: high load, low quality
         mean_q = (
@@ -994,8 +1086,10 @@ def diagnose_session(state: SessionState) -> Dict[str, Any]:
             suggestion = "no history yet — run rounds"
 
         domain_results.append({
-            "name": name,
-            "prefix": prefix,
+            "name": part_name,
+            "prefix": part_name if partition == "community" else next(
+                (p for p, n in _detect_domains(state.landscape)
+                 if n == part_name), ""),
             "coverage": coverage,
             "total": total,
             "visited": vis,
@@ -1010,7 +1104,7 @@ def diagnose_session(state: SessionState) -> Dict[str, Any]:
             "suggestion": suggestion,
         })
 
-    # Overall: bottleneck is lowest-coverage domain that isn't saturated
+    # Overall: bottleneck is lowest-coverage partition that isn't saturated
     active = [d for d in domain_results if d["coverage"] < 0.95]
     bottleneck = (
         min(active, key=lambda d: d["coverage"])["name"]
@@ -1024,6 +1118,7 @@ def diagnose_session(state: SessionState) -> Dict[str, Any]:
 
     return {
         "domains": domain_results,
+        "partition": partition,
         "overall": {
             "coverage": a.coverage,
             "T_s": round(a.T_s, 4),
@@ -2785,7 +2880,10 @@ def _format_journal(
 # ── C232: Meta-Reflection ──────────────────────────────────────────────
 
 
-def meta_reflect(state: SessionState) -> Dict[str, Any]:
+def meta_reflect(
+    state: SessionState,
+    partition: str = "community",
+) -> Dict[str, Any]:
     """Analyze the learning trajectory for systematic stagnation patterns.
 
     Synthesizes three data sources:
@@ -2793,11 +2891,16 @@ def meta_reflect(state: SessionState) -> Dict[str, Any]:
       2. Diagnosis: current domain stagnation status
       3. Journal: event history for pattern extraction
 
+    Parameters
+    ----------
+    partition : str
+        'community' (default) or 'prefix' (legacy).
+
     Returns a structured reflection with identified patterns,
     correlations, and actionable recommendations.
     """
-    traj = compute_trajectory(state)
-    diag = diagnose_session(state)
+    traj = compute_trajectory(state, partition=partition)
+    diag = diagnose_session(state, partition=partition)
     rounds = traj["rounds"]
 
     # ── 1. Stagnation episodes: consecutive Δcov ≤ 0.001 ──
@@ -5791,7 +5894,7 @@ E₀ Interactive Session — Commands
   run [N]          Execute next N rounds (default: 1)
   teach <concept>  Teach E₀ new material (LLM → inject → explore)
   status           Current landscape overview
-  focus <domain>   Zoom into canon, bootstrap, or en
+  focus <name>     Zoom into domain or community (canon, community_0, c0, …)
   trajectory       Coverage/T_s/mode progression over rounds
   diagnose         Per-domain stagnation analysis + bottleneck
   escalate         Manually trigger stagnation escalation (levels 1—5)
@@ -6358,7 +6461,7 @@ def _dispatch_inner(state: SessionState, user_input: str) -> Optional[str]:
 
     if cmd == "focus":
         if not arg:
-            return "Usage: focus <domain> (canon, bootstrap, en)"
+            return "Usage: focus <name> (canon, bootstrap, community_0, c0, …)"
         return cmd_focus(state, arg)
 
     if cmd == "why":

@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C258",
-    "latest_commit_hash": "9319394",
-    "latest_commit_msg": "C258: Sleep-Wake + Tune on Communities — sleep_wake_run + tune_run gain partition='community'|'prefix', _pick_community_start, _transfer_community_to_session, cmd_sleep/cmd_tune arg parsing. 38 new tests (5640 total)",
-    "test_count": 5640,
+    "latest_commit": "C259",
+    "latest_commit_hash": "ee52645",
+    "latest_commit_msg": "C259: Diagnostics on Communities — diagnose_session, compute_trajectory, meta_reflect gain partition='community'|'prefix'. cmd_focus accepts community_0/c0 shorthand. 17 new tests (5657 total)",
+    "test_count": 5657,
     "test_failures": 0,
     "ci_status": "pending",
     "module_count": "78 production + 10 benchmarks + 17 demos + 69 explorations + 128 test files",
@@ -291,8 +291,8 @@
       },
       "C259_diagnostics_on_communities": {
         "title": "Diagnostics on Communities",
-        "what": "diagnose_session(), compute_trajectory(), meta_reflect() fully community-based. cmd_focus accepts community ID or legacy prefix name (alias). Domain trends → community trends. ~10 tests migrate.",
-        "status": "PLANNED"
+        "what": "diagnose_session(), compute_trajectory(), meta_reflect() gain partition='community'|'prefix'. cmd_focus accepts community IDs (community_0, c0). Domain trends → community trends. 17 new tests.",
+        "status": "DONE"
       },
       "_phase_3_convergence": "Dream ↔ Coupling unification. Self-similarity restored.",
       "C260_unified_equivalence": {

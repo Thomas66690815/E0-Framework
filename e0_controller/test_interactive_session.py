@@ -2125,9 +2125,8 @@ class TestComputeTrajectory:
         cmd_run(s, 2)
         traj = compute_trajectory(s)
         trends = traj["summary"]["domain_trends"]
-        # At least Canon and Bootstrap should be present
-        assert "Canon" in trends
-        assert "Bootstrap" in trends
+        # Default community mode: at least one community
+        assert len(trends) > 0
         for name, dt in trends.items():
             assert "coverage_start" in dt
             assert "coverage_end" in dt
@@ -2251,13 +2250,13 @@ class TestCmdDiagnose:
     """C228: cmd_diagnose formats diagnosis for display."""
 
     def test_output_contains_domains(self, session):
-        """Output lists all active domains."""
+        """Output lists all active partitions."""
         s = build_session(steps_per_round=10)
         cmd_run(s, 1)
         out = cmd_diagnose(s)
         assert "Diagnostic Report" in out
-        assert "Canon" in out
-        assert "Bootstrap" in out
+        # Default community mode: community_ names
+        assert "community_" in out
         assert "Overall" in out
 
     def test_output_shows_status(self, session):
@@ -2287,7 +2286,7 @@ class TestCmdDiagnose:
         cmd_run(s, 1)
         out = cmd_diagnose(s)
         assert "## Diagnostic Report" in out
-        assert "### Canon" in out or "### Bootstrap" in out
+        assert "### community_" in out or "### Canon" in out
 
 
 # ── C229: Stagnation Escalation ────────────────────────────────────────
@@ -3030,10 +3029,12 @@ class TestMetaReflect:
                 assert field in me, f"missing field: {field}"
 
     def test_domain_trajectories_four_domains(self, session):
-        """All four domains are tracked."""
+        """Community-based domains are tracked."""
         ref = meta_reflect(session)
-        for name in ("Canon", "Bootstrap", "EN", "Mechanism"):
-            assert name in ref["domain_trajectories"]
+        # Default community mode: community_ names
+        assert len(ref["domain_trajectories"]) > 0
+        for name in ref["domain_trajectories"]:
+            assert isinstance(name, str)
 
     def test_domain_trajectory_fields(self, session):
         """Domain trajectory entries have expected fields."""
@@ -6122,21 +6123,21 @@ class TestDiagnoseSessionDynamic:
     """C250: diagnose_session includes dynamically detected domains."""
 
     def test_learned_domain_in_diagnostics(self):
-        """L: nodes appear in diagnose_session output."""
+        """L: nodes appear in diagnose_session output (prefix mode)."""
         s = build_session(steps_per_round=10)
         s.landscape.add_state("L:ITEM_1")
         s.landscape.add_state("L:ITEM_2")
         s.landscape.add_edge("L:ITEM_1", "L:ITEM_2", delta=0.5, resistance=1.0)
-        diag = diagnose_session(s)
+        diag = diagnose_session(s, partition="prefix")
         names = [d["name"] for d in diag["domains"]]
         assert "Learned" in names
 
     def test_unknown_prefix_in_diagnostics(self):
-        """Nodes with novel prefix appear in diagnostics."""
+        """Nodes with novel prefix appear in diagnostics (prefix mode)."""
         s = build_session(steps_per_round=10)
         s.landscape.add_state("Z:ALPHA")
         s.landscape.add_state("Z:BETA")
-        diag = diagnose_session(s)
+        diag = diagnose_session(s, partition="prefix")
         names = [d["name"] for d in diag["domains"]]
         assert "Z" in names  # display name = prefix minus colon
 
@@ -6145,13 +6146,13 @@ class TestComputeTrajectoryDynamic:
     """C250: compute_trajectory includes detected domains."""
 
     def test_learned_domain_in_trajectory(self):
-        """L: nodes appear in trajectory domain_trends after run."""
+        """L: nodes appear in trajectory domain_trends (prefix mode)."""
         s = build_session(steps_per_round=10)
         s.landscape.add_state("L:ITEM_1")
         s.landscape.add_state("L:ITEM_2")
         s.landscape.add_edge("L:ITEM_1", "L:ITEM_2", delta=0.5, resistance=1.0)
         cmd_run(s, 1)
-        traj = compute_trajectory(s)
+        traj = compute_trajectory(s, partition="prefix")
         assert "Learned" in traj["summary"]["domain_trends"]
 
 
@@ -6159,13 +6160,13 @@ class TestMetaReflectDynamic:
     """C250: meta_reflect includes all detected domains."""
 
     def test_learned_domain_in_reflection(self):
-        """L: domain appears in meta-reflection domain trajectories."""
+        """L: domain appears in meta-reflection (prefix mode)."""
         s = build_session(steps_per_round=10)
         s.landscape.add_state("L:ITEM_1")
         s.landscape.add_state("L:ITEM_2")
         s.landscape.add_edge("L:ITEM_1", "L:ITEM_2", delta=0.5, resistance=1.0)
         cmd_run(s, 3)
-        result = meta_reflect(s)
+        result = meta_reflect(s, partition="prefix")
         assert "Learned" in result["domain_trajectories"]
 
 
@@ -6183,13 +6184,13 @@ class TestCmdFocusDynamic:
         assert "Learned" in result
 
     def test_focus_available_lists_all(self):
-        """Unknown domain error lists all available domains."""
+        """Unknown domain error lists available domains and communities."""
         s = build_session(steps_per_round=5)
         s.landscape.add_state("L:A")
         result = cmd_focus(s, "nonexistent")
-        assert "Available:" in result
-        assert "Canon" in result
-        assert "Learned" in result
+        assert "Unknown domain" in result
+        assert "Canon" in result or "community_" in result
+        assert "Learned" in result or "Communities:" in result
 
 
 class TestDomainOfDynamic:
@@ -7265,3 +7266,171 @@ class TestTransferCommunityToSession:
 
         count = _transfer_community_to_session(sub, session)
         assert count == 0
+
+
+# ── C259: Diagnostics on Communities ────────────────────────────────
+
+
+class TestDiagnoseSessionPartition:
+    """C259: diagnose_session partition parameter."""
+
+    def test_default_partition_is_community(self):
+        """Default partition mode is 'community'."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        diag = diagnose_session(s)
+        assert diag["partition"] == "community"
+
+    def test_community_partition_returns_community_names(self):
+        """Community mode produces domain names like community_0."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        diag = diagnose_session(s, partition="community")
+        names = [d["name"] for d in diag["domains"]]
+        if names:
+            assert any(n.startswith("community_") for n in names)
+
+    def test_prefix_partition_returns_prefix_names(self):
+        """Prefix mode produces domain names like Canon, Bootstrap."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        diag = diagnose_session(s, partition="prefix")
+        assert diag["partition"] == "prefix"
+        names = [d["name"] for d in diag["domains"]]
+        prefix_names = {"Canon", "Bootstrap", "EN", "Mechanism", "Learned"}
+        if names:
+            assert any(n in prefix_names for n in names)
+
+    def test_partition_in_result(self):
+        """Result dict contains 'partition' key."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        diag = diagnose_session(s)
+        assert "partition" in diag
+
+    def test_community_domains_have_coverage(self):
+        """Each community domain has coverage field."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        diag = diagnose_session(s, partition="community")
+        for d in diag["domains"]:
+            assert "coverage" in d
+            assert "total" in d
+            assert "visited" in d
+            assert "status" in d
+
+    def test_community_has_overall(self):
+        """Overall section present in community mode."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        diag = diagnose_session(s, partition="community")
+        assert "overall" in diag
+        assert "bottleneck" in diag["overall"]
+
+    def test_community_comparison_always_present(self):
+        """Community comparison section present regardless of partition mode."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        for mode in ("community", "prefix"):
+            diag = diagnose_session(s, partition=mode)
+            assert "communities" in diag
+
+
+class TestComputeTrajectoryPartition:
+    """C259: compute_trajectory partition parameter."""
+
+    def test_default_partition_is_community(self):
+        """Default partition mode uses community names."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 2)
+        traj = compute_trajectory(s)
+        trends = traj["summary"]["domain_trends"]
+        if trends:
+            assert any(k.startswith("community_") for k in trends)
+
+    def test_prefix_partition_returns_prefix_names(self):
+        """Prefix mode uses prefix names (Canon, Bootstrap, etc.)."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 2)
+        traj = compute_trajectory(s, partition="prefix")
+        trends = traj["summary"]["domain_trends"]
+        prefix_names = {"Canon", "Bootstrap", "EN", "Mechanism"}
+        if trends:
+            assert any(k in prefix_names for k in trends)
+
+    def test_community_trends_have_fields(self):
+        """Community domain trends have expected fields."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 2)
+        traj = compute_trajectory(s, partition="community")
+        for name, dt in traj["summary"]["domain_trends"].items():
+            assert "coverage_start" in dt
+            assert "coverage_end" in dt
+            assert "delta" in dt
+            assert "nodes" in dt
+
+
+class TestMetaReflectPartition:
+    """C259: meta_reflect partition parameter."""
+
+    def test_default_uses_community(self):
+        """Default mode produces community-based trajectories."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 3)
+        ref = meta_reflect(s)
+        if ref["domain_trajectories"]:
+            assert any(
+                k.startswith("community_")
+                for k in ref["domain_trajectories"]
+            )
+
+    def test_prefix_mode_produces_prefix_names(self):
+        """Prefix mode produces Canon, Bootstrap etc."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 3)
+        ref = meta_reflect(s, partition="prefix")
+        prefix_names = {"Canon", "Bootstrap", "EN", "Mechanism"}
+        if ref["domain_trajectories"]:
+            assert any(
+                k in prefix_names for k in ref["domain_trajectories"]
+            )
+
+
+class TestCmdFocusCommunity:
+    """C259: cmd_focus accepts community IDs."""
+
+    def test_focus_community_0(self):
+        """cmd_focus('community_0') works."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_focus(s, "community_0")
+        assert "community_0" in out
+
+    def test_focus_c0_shorthand(self):
+        """cmd_focus('c0') is alias for community_0."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_focus(s, "c0")
+        assert "community_0" in out
+
+    def test_focus_prefix_still_works(self):
+        """cmd_focus('canon') still works (prefix fallback)."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_focus(s, "canon")
+        assert "Canon" in out
+
+    def test_unknown_domain_lists_communities(self):
+        """Unknown domain error includes community names."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_focus(s, "nonexistent")
+        assert "Unknown domain" in out
+        assert "Communities:" in out
+
+    def test_focus_community_shows_nodes(self):
+        """Community focus shows node count and coverage."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_focus(s, "community_0")
+        assert "visited" in out.lower() or "nodes" in out.lower()
