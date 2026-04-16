@@ -87,7 +87,7 @@ from e0_controller.config import DEFAULTS
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from e0_controller.dream_mode import DreamObserver
+    from e0_controller.dream_mode import DreamObserver, StructuralResonance
 
 
 # ──────────────────────────────────────────────
@@ -333,6 +333,27 @@ class CouplingRouter:
                 for src, tgt in [(a_name, b_name), (b_name, a_name)]:
                     if self.landscape.has_edge(src, tgt):
                         self.landscape.adjust_delta(src, tgt, new_delta)
+
+    def resonance(
+        self,
+        name_a: str,
+        name_b: str,
+        *,
+        depth: int = 2,
+    ) -> "StructuralResonance":
+        """Compute unified structural resonance between two universes (C260).
+
+        Uses find_structural_resonance() — the same algorithm that Dream
+        uses for community↔community comparison — at inter-landscape scale.
+        """
+        from e0_controller.dream_mode import find_structural_resonance
+        ua = self.universes[name_a]
+        ub = self.universes[name_b]
+        return find_structural_resonance(
+            ua.landscape, ub.landscape,
+            domain_a=name_a, domain_b=name_b,
+            depth=depth,
+        )
 
     @property
     def universe_count(self) -> int:

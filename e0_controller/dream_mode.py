@@ -601,7 +601,8 @@ def dream_compatibility(
 ) -> float:
     """Structural compatibility score between two domains.
 
-    Computes the mean WL node distance under Hungarian optimal assignment.
+    Delegates to find_structural_resonance() (C260) and returns the
+    compatibility field (mean WL distance under Hungarian assignment).
     Lower values indicate higher compatibility — domains whose nodes occupy
     similar structural roles with similar quality distributions.
 
@@ -612,16 +613,9 @@ def dream_compatibility(
 
     Returns float('inf') if either landscape has no states.
     """
-    if not landscape_a.states or not landscape_b.states:
-        return float("inf")
-
-    eqs = find_wl_node_equivalences_hungarian(
+    return find_structural_resonance(
         landscape_a, landscape_b, depth=depth,
-    )
-    if not eqs:
-        return float("inf")
-
-    return sum(eq.distance for eq in eqs) / len(eqs)
+    ).compatibility
 
 
 def is_dream_compatible(
@@ -633,6 +627,135 @@ def is_dream_compatible(
 ) -> bool:
     """Whether two domains are structurally compatible for cross-domain dreaming."""
     return dream_compatibility(landscape_a, landscape_b, depth=depth) <= threshold
+
+
+# ---------------------------------------------------------------------------
+# Unified Structural Resonance (C260)
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class StructuralResonance:
+    """Result of unified structural resonance analysis between two landscapes.
+
+    Works on arbitrary landscape subsets: community sub-landscapes (intra),
+    full landscapes (inter-universe), or any Landscape pair.
+
+    Dream uses this intra-landscape (community ↔ community).
+    Coupling uses this inter-landscape (universe ↔ universe).
+    Same algorithm, different scale.
+    """
+    node_equivalences: Tuple  # Tuple[NodeEquivalence, ...]
+    compatibility: float      # mean WL distance (lower = more compatible)
+    structural_distance: float  # Jaccard state distance (0=identical, 1=disjoint)
+    resonance_score: float    # combined score (higher = more resonant)
+    nodes_a: int              # node count in landscape_a
+    nodes_b: int              # node count in landscape_b
+    matched_nodes: int        # number of matched pairs
+
+    @property
+    def is_compatible(self) -> bool:
+        """Whether the two landscapes are structurally compatible (<0.5)."""
+        return self.compatibility < 0.5
+
+    @property
+    def top_matches(self) -> Tuple:
+        """Top 5 best node matches by distance."""
+        return self.node_equivalences[:5]
+
+
+def find_structural_resonance(
+    landscape_a: Landscape,
+    landscape_b: Landscape,
+    *,
+    domain_a: str = "A",
+    domain_b: str = "B",
+    depth: int = 2,
+) -> StructuralResonance:
+    """Unified structural resonance between two arbitrary landscapes.
+
+    Combines WL-Hungarian node matching (proven C137) with Jaccard
+    structural distance into a single resonance score.
+
+    This is the canonical way to compare any two landscape subsets:
+    - Dream: community_0.landscape ↔ community_1.landscape (intra)
+    - Coupling: universe_a.landscape ↔ universe_b.landscape (inter)
+    - Validation: known-isomorphic graphs should score high
+
+    Parameters
+    ----------
+    landscape_a, landscape_b : Landscape
+        Arbitrary landscape subsets to compare.
+    domain_a, domain_b : str
+        Labels for the two landscapes (used in fingerprints).
+    depth : int
+        WL recursion depth (default 2).
+
+    Returns
+    -------
+    StructuralResonance
+        Combined analysis with node equivalences, compatibility,
+        structural distance, and resonance score.
+    """
+    states_a = landscape_a.states
+    states_b = landscape_b.states
+    n_a = len(states_a)
+    n_b = len(states_b)
+
+    # Edge case: empty landscapes
+    if n_a == 0 or n_b == 0:
+        return StructuralResonance(
+            node_equivalences=(),
+            compatibility=float("inf"),
+            structural_distance=1.0,
+            resonance_score=0.0,
+            nodes_a=n_a,
+            nodes_b=n_b,
+            matched_nodes=0,
+        )
+
+    # 1. WL-Hungarian node matching (proven C137)
+    eqs = find_wl_node_equivalences_hungarian(
+        landscape_a, landscape_b,
+        domain_a=domain_a, domain_b=domain_b,
+        depth=depth,
+    )
+
+    # 2. Compatibility = mean WL distance under optimal assignment
+    if eqs:
+        compatibility = sum(eq.distance for eq in eqs) / len(eqs)
+    else:
+        compatibility = float("inf")
+
+    # 3. Jaccard structural distance on state sets
+    union = states_a | states_b
+    if union:
+        jaccard_dist = 1.0 - len(states_a & states_b) / len(union)
+    else:
+        jaccard_dist = 1.0
+
+    # 4. Combined resonance score
+    # High resonance = low compatibility distance + structural overlap
+    # Score ∈ [0, 1]: 1 = perfect resonance, 0 = no resonance
+    if compatibility == float("inf"):
+        resonance_score = 0.0
+    else:
+        # compatibility_score: 1.0 at distance=0, 0.0 at distance≥1.0
+        compat_score = max(0.0, 1.0 - compatibility)
+        # overlap_score: 1.0 for identical states, 0.0 for disjoint
+        overlap_score = 1.0 - jaccard_dist
+        # Weighted combination: topology (WL) matters more than naming overlap
+        # 70% topology, 30% state overlap
+        resonance_score = 0.7 * compat_score + 0.3 * overlap_score
+
+    return StructuralResonance(
+        node_equivalences=tuple(eqs),
+        compatibility=compatibility,
+        structural_distance=jaccard_dist,
+        resonance_score=resonance_score,
+        nodes_a=n_a,
+        nodes_b=n_b,
+        matched_nodes=len(eqs),
+    )
 
 
 # ---------------------------------------------------------------------------

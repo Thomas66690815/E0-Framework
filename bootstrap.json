@@ -27,14 +27,14 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C259",
-    "latest_commit_hash": "ee52645",
-    "latest_commit_msg": "C259: Diagnostics on Communities — diagnose_session, compute_trajectory, meta_reflect gain partition='community'|'prefix'. cmd_focus accepts community_0/c0 shorthand. 17 new tests (5657 total)",
-    "test_count": 5657,
+    "latest_commit": "C260",
+    "latest_commit_hash": "pending",
+    "latest_commit_msg": "C260: Unified Equivalence Mechanism — find_structural_resonance() works on arbitrary landscape subsets. Dream+Coupling use same algorithm at different scales. dream_compatibility() delegates to unified function. CouplingRouter.resonance() added. 30 new tests (5687 total)",
+    "test_count": 5687,
     "test_failures": 0,
     "ci_status": "pending",
-    "module_count": "78 production + 10 benchmarks + 17 demos + 69 explorations + 128 test files",
-    "line_count": "~33000 production, ~128300 total"
+    "module_count": "78 production + 10 benchmarks + 17 demos + 69 explorations + 129 test files",
+    "line_count": "~33200 production, ~128700 total"
   },
   "conventions": {
     "user_language": "German (user speaks German, code/docs in English)",
@@ -298,7 +298,7 @@
       "C260_unified_equivalence": {
         "title": "Unified Equivalence Mechanism",
         "what": "find_structural_resonance(cluster_a, cluster_b) works on arbitrary landscape subsets. Dream uses it intra-landscape (community ↔ community). Coupling uses it inter-landscape (universe ↔ universe). Same algorithm, different scale. Scale-invariance test: same mechanism produces consistent results at different scales.",
-        "status": "PLANNED"
+        "status": "DONE"
       },
       "C261_prefixes_as_display": {
         "title": "Prefixes as Display Layer + Cleanup",

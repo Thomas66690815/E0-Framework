@@ -26503,6 +26503,834 @@
         "steps": 12,
         "domain_crossings": 6
       }
+    },
+    {
+      "timestamp": "2026-04-16T10:44:57",
+      "session_id": "20260416_104457",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5805,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-16T10:45:58",
+      "session_id": "20260416_104558",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5805,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-16T10:45:58",
+      "session_id": "20260416_104558",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.592,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011494,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-16T10:45:58",
+      "session_id": "20260416_104558",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6322,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.04023,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-16T10:45:59",
+      "session_id": "20260416_104559",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5805,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-16T10:45:59",
+      "session_id": "20260416_104559",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.592,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011494,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-16T10:45:59",
+      "session_id": "20260416_104559",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6322,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.04023,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-16T10:45:59",
+      "session_id": "20260416_104559",
+      "event_type": "round",
+      "round_num": 3,
+      "metrics": {
+        "coverage": 0.6667,
+        "T_s": 0.0628,
+        "frontier_size": 40,
+        "visited_nodes": 116,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.4773,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.4773,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.034483,
+        "steps": 12,
+        "domain_crossings": 7
+      }
+    },
+    {
+      "timestamp": "2026-04-16T10:46:00",
+      "session_id": "20260416_104559",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6322,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.04023,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-16T10:46:00",
+      "session_id": "20260416_104600",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5805,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-16T10:46:00",
+      "session_id": "20260416_104600",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.592,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011494,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-16T10:46:01",
+      "session_id": "20260416_104601",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5805,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-16T10:46:02",
+      "session_id": "20260416_104602",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5805,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-16T10:46:02",
+      "session_id": "20260416_104602",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.592,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011494,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-16T10:46:02",
+      "session_id": "20260416_104602",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6322,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.04023,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-16T10:50:15",
+      "session_id": "20260416_105015",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5805,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-16T10:51:01",
+      "session_id": "20260416_105101",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5805,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-16T10:51:01",
+      "session_id": "20260416_105101",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.592,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011494,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-16T10:51:01",
+      "session_id": "20260416_105101",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6322,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.04023,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-16T10:51:02",
+      "session_id": "20260416_105102",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5805,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-16T10:51:02",
+      "session_id": "20260416_105102",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.592,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011494,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-16T10:51:02",
+      "session_id": "20260416_105102",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6322,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.04023,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-16T10:51:02",
+      "session_id": "20260416_105102",
+      "event_type": "round",
+      "round_num": 3,
+      "metrics": {
+        "coverage": 0.6667,
+        "T_s": 0.0628,
+        "frontier_size": 40,
+        "visited_nodes": 116,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.4773,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.4773,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.034483,
+        "steps": 12,
+        "domain_crossings": 7
+      }
+    },
+    {
+      "timestamp": "2026-04-16T10:51:03",
+      "session_id": "20260416_105103",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5805,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-16T10:51:03",
+      "session_id": "20260416_105103",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.592,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011494,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-16T10:51:03",
+      "session_id": "20260416_105103",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6322,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.04023,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-16T10:51:04",
+      "session_id": "20260416_105104",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5805,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-16T10:51:05",
+      "session_id": "20260416_105105",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5805,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-16T10:51:06",
+      "session_id": "20260416_105105",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.592,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011494,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-16T10:51:06",
+      "session_id": "20260416_105105",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6322,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.04023,
+        "steps": 12,
+        "domain_crossings": 6
+      }
     }
   ]
 }

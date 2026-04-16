@@ -517,20 +517,270 @@ Updated controller judgment:
 - In hybrid / adaptive / reflective modes, the runtime becomes architecturally impure by design through optional feedback channels.
 - Therefore the strongest proven behavioral impurity is now back-coupling, not domain semantics inside the primitive equations.
 
+## Refined Pass: Dream / Coupling / Metadata Sweep
+
+### Dream Mode: explicit higher-layer handles, but matching stays structural
+
+`dream_mode.py` now looks clearer than before:
+
+1. The matching criterion itself is structural, not domain-semantic:
+   - edge fingerprints are built from `trace_quality`, `trace_load`, `inertia_factor`, and `context_sensitivity`:
+     `e0_controller/dream_mode.py:43`
+     `e0_controller/dream_mode.py:53`
+     `e0_controller/dream_mode.py:56`
+     `e0_controller/dream_mode.py:59`
+   - cross-domain equivalence is then computed by fingerprint distance, not by labels:
+     `e0_controller/dream_mode.py:81`
+     `e0_controller/dream_mode.py:140`
+     `e0_controller/dream_mode.py:168`
+     `e0_controller/dream_mode.py:178`
+   - compatibility gating is also structural:
+     `e0_controller/dream_mode.py:846`
+     `e0_controller/dream_mode.py:853`
+
+2. The word `domain` is still a real explicit modeling choice:
+   - `DreamObserver` registers named landscapes in `_domains`:
+     `e0_controller/dream_mode.py:762`
+     `e0_controller/dream_mode.py:784`
+   - dream states are encoded as `"domain:src→tgt"` and `"domain:node"`:
+     `e0_controller/dream_mode.py:642`
+     `e0_controller/dream_mode.py:650`
+     `e0_controller/dream_mode.py:1260`
+
+3. The important distinction:
+   - these names are acting as handles for already-separated higher-layer landscapes,
+   - not as hidden features in the equivalence metric itself.
+
+Updated Dream judgment:
+
+- This is not the old GT-7 error in disguised form.
+- Dream Mode does **not** appear to smuggle domain labels into primitive matching criteria.
+- But it still presupposes that the system already has named higher-layer units to compare; therefore it is a valid orchestration/meta-layer, not an example of domain emergence from pure E0 alone.
+
+### Dream-to-runtime backflow is explicit and real
+
+Dream Mode is not purely observational once its proposal functions are used:
+
+- `equivalences_for()` queries the Dream Landscape by domain-qualified state prefixes:
+  `e0_controller/dream_mode.py:1068`
+  `e0_controller/dream_mode.py:1088`
+- `propose_bridges()` selects partner domains and calls cross-reflexion against the target landscape:
+  `e0_controller/dream_mode.py:1270`
+  `e0_controller/dream_mode.py:1331`
+  `e0_controller/dream_mode.py:1358`
+- `propose_node_bridges()` can directly add proposed edges into the target landscape:
+  `e0_controller/dream_mode.py:1416`
+  `e0_controller/dream_mode.py:1560`
+  `e0_controller/dream_mode.py:1564`
+- `make_dream_peer_fn()` feeds dream output back into controller overload handling:
+  `e0_controller/dream_mode.py:1578`
+  `e0_controller/dream_mode.py:1599`
+  `e0_controller/dream_mode.py:1620`
+
+Updated implication:
+
+- Dream Mode is admissible as a higher layer.
+- It is not evidence for primitive contamination.
+- But it is another clear case of higher-layer intervention that can modify runtime behavior and even target landscapes.
+
+### Coupling Router: explicit meta-landscape, not hidden domain leakage
+
+`coupling_router.py` is even cleaner conceptually than Dream Mode:
+
+1. It openly declares a meta-landscape over universes:
+   - routing landscape over named universes:
+     `e0_controller/coupling_router.py:136`
+     `e0_controller/coupling_router.py:151`
+     `e0_controller/coupling_router.py:167`
+   - edges are built from structural distance and donor-weighted resistance:
+     `e0_controller/coupling_router.py:163`
+     `e0_controller/coupling_router.py:176`
+     `e0_controller/coupling_router.py:178`
+
+2. Partner selection is primitive-style within that explicit meta-layer:
+   - selection uses only `delta` and historized `trace_quality` on routing edges:
+     `e0_controller/coupling_router.py:187`
+     `e0_controller/coupling_router.py:208`
+     `e0_controller/coupling_router.py:212`
+     `e0_controller/coupling_router.py:228`
+
+3. Therefore:
+   - the router does not pretend universes are E0 primitives,
+   - it explicitly builds a derived landscape whose nodes are universes.
+
+Updated Coupling judgment:
+
+- This is architecturally a higher-order controller over already-formed units.
+- It is not a hidden E0/E2 conflation.
+- The abstraction is explicit, not smuggled.
+
+### Dream and Coupling do back-couple into live behavior
+
+The remaining risk is again backflow, not hidden primitive semantics:
+
+- `make_routed_peer_fn()` injects coupling-router choices into controller peer consultation:
+  `e0_controller/coupling_router.py:373`
+  `e0_controller/coupling_router.py:390`
+  `e0_controller/coupling_router.py:406`
+- `update_weights_from_dream()` uses dream equivalence quality to change router weights and therefore future routing resistances:
+  `e0_controller/coupling_router.py:717`
+  `e0_controller/coupling_router.py:755`
+  `e0_controller/coupling_router.py:775`
+  `e0_controller/coupling_router.py:779`
+
+Updated implication:
+
+- Dream and Coupling are not where primitive contamination currently hides.
+- They are where higher-layer modules begin to form a real interventional ecology on top of the primitive kernel.
+
+### Metadata sweep: no current evidence of live typed/domain navigation outside annotation
+
+The production sweep for edge metadata gave a useful negative result:
+
+1. Metadata is written and stored:
+   - canon import normalizes and stores `relation_type` metadata:
+     `e0_controller/canon_loader.py:206`
+     `e0_controller/canon_loader.py:212`
+   - controller forwards `relation_type` / `bridge_type` into inscription context:
+     `e0_controller/controller.py:723`
+     `e0_controller/controller.py:727`
+
+2. Outside the controller, current production readers look observational rather than behavioral:
+   - inscription narratives in `evidence_interpreter.py`:
+     `e0_controller/evidence_interpreter.py:125`
+   - volatility reporting in `observation_controller.py`:
+     `e0_controller/observation_controller.py:353`
+   - `Landscape` itself only stores metadata:
+     `e0_controller/landscape.py:212`
+     `e0_controller/landscape.py:216`
+
+3. I did **not** find a production navigation path outside `controller.py` that uses
+   `relation_type`, `bridge_type`, `source_domain`, or `target_domain`
+   as live decision input.
+
+Important boundary note:
+
+- there are exploratory/test-only typed-navigation paths in the repo,
+  but they are not currently part of the main production navigation path.
+
+## Synthesis Matrix
+
+### Storage contamination
+
+- `Historization`
+  - stores higher-layer semantic/context fields directly in core memory state:
+    `e0_controller/historization.py:93`
+    `e0_controller/historization.py:159`
+    `e0_controller/historization.py:453`
+  - current judgment: real layer mixing in storage form, even without proven primitive-control corruption.
+
+### Behavioral contamination
+
+- `controller.py`
+  - optional higher-layer feedback changes live behavior through inscription threshold, adaptive dampening, and self-graph override gates:
+    `e0_controller/controller.py:710`
+    `e0_controller/controller.py:768`
+    `e0_controller/controller.py:638`
+  - current judgment: strongest proven runtime impurity.
+
+- `session.py`
+  - orchestrates reflection, structural mutation, reflexive action, and auto-tuning back into the live system:
+    `e0_controller/session.py:163`
+    `e0_controller/session.py:388`
+    `e0_controller/session.py:399`
+    `e0_controller/session.py:414`
+    `e0_controller/session.py:623`
+    `e0_controller/session.py:635`
+  - current judgment: highest-level impurity accumulator; not a primitive leak, but a strong orchestration backflow layer.
+
+- `dream_mode.py` / `coupling_router.py`
+  - both can intervene in runtime behavior via peer functions, edge proposals, and weight updates:
+    `e0_controller/dream_mode.py:1560`
+    `e0_controller/dream_mode.py:1578`
+    `e0_controller/coupling_router.py:373`
+    `e0_controller/coupling_router.py:717`
+  - current judgment: valid higher-layer intervention, not hidden primitive contamination.
+
+### Observational annotation
+
+- `Historization.classify_experience()` / `adapt_from_experience()`
+  - classify volatility from revisit statistics and feed back into inscription caution:
+    `e0_controller/historization.py:375`
+    `e0_controller/historization.py:413`
+  - current judgment: real adaptive observation, but not semantic-domain reasoning despite the wording.
+
+- `evidence_interpreter.py` / `observation_controller.py`
+  - consume inscription and volatility signals narratively/observationally:
+    `e0_controller/evidence_interpreter.py:85`
+    `e0_controller/observation_controller.py:353`
+
+### Legitimate derived layers
+
+- Primitive-near kernel:
+  - `e0_controller/primitives.py:1`
+  - `e0_controller/tension.py:1`
+  - `e0_controller/wavepath.py:1`
+
+- Explicitly higher layers with currently acceptable separation:
+  - `e0_controller/community.py:4`
+  - `e0_controller/self_graph.py:6`
+  - `e0_controller/reflection.py:1`
+  - `e0_controller/dual_reflection.py:1`
+  - `e0_controller/structural_mutation.py:1`
+  - `e0_controller/dream_mode.py:720`
+  - `e0_controller/coupling_router.py:136`
+
+## Final Two-Part Verdict
+
+### 1. Is the primitive E0 kernel still clean?
+
+Current answer: mostly yes, with one important reservation.
+
+- The Delta / Resistance / Historization mechanics that actually drive primitive edge evaluation still look largely clean:
+  `e0_controller/historization.py:258`
+  `e0_controller/historization.py:313`
+  `e0_controller/historization.py:596`
+  `e0_controller/controller.py:306`
+  `e0_controller/controller.py:322`
+- I do not currently see evidence that domain labels or relation labels have become direct inputs to primitive edge scoring.
+- The reservation is `Historization` storage: higher-layer context is being stored inside the same core memory object, even if it is not yet what drives the primitive equations.
+
+Working verdict:
+
+- the primitive kernel is still substantially cleaner than feared;
+- the strongest kernel-near issue is storage-level layer mixing, not proven semantic corruption of the core equations.
+
+### 2. Is the running framework architecturally layer-disciplined?
+
+Current answer: only partially.
+
+- The running framework is not cleanly one-way layered anymore.
+- Higher layers repeatedly feed back into live control:
+  - controller back-coupling:
+    `e0_controller/controller.py:710`
+    `e0_controller/controller.py:768`
+    `e0_controller/controller.py:638`
+  - session orchestration:
+    `e0_controller/session.py:399`
+    `e0_controller/session.py:414`
+    `e0_controller/session.py:635`
+  - dream/coupling interventions:
+    `e0_controller/dream_mode.py:1578`
+    `e0_controller/coupling_router.py:373`
+
+Working verdict:
+
+- the framework is architecturally powerful, but no longer strongly layer-disciplined in the strict E0 sense;
+- the main impurity is not "hidden domains inside primitives";
+- it is the accumulated ecology of higher-layer interventions acting back on the live system.
+
 ## Next Audit Trail
 
-The next pass should focus on:
+If we continue from here, the next useful pass is narrower:
 
-1. Final verdict pass on `dream_mode.py` and `coupling_router.py`: emergent grouping vs named higher-layer units
-2. Audit whether any production navigation path outside `controller.py` uses edge metadata (`relation_type`, `bridge_type`, domain labels) as live decision input rather than as annotation
-3. Final synthesis matrix:
-   - storage contamination
-   - behavioral contamination
-   - observational annotation
-   - legitimate derived layer
-4. Separate the final verdict into two explicit questions:
-   - Is the primitive E0 kernel still clean?
-   - Is the running framework architecturally layer-disciplined?
+1. decide whether `Historization` contextual inscription should remain inside the core object or be treated as a parallel derived memory layer
+2. decide which controller/session feedback paths are philosophically accepted as "E0 runtime ecology" and which count as actual architecture debt
+3. turn the current verdict into a remediation map without changing code yet
 
 ## Working Constraint
 
