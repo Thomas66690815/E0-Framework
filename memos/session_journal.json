@@ -27853,6 +27853,616 @@
         "steps": 12,
         "domain_crossings": 6
       }
+    },
+    {
+      "timestamp": "2026-04-16T09:20:38",
+      "session_id": "",
+      "event_type": "ask",
+      "round_num": 114,
+      "metrics": {
+        "coverage": 0.9279,
+        "T_s": 0.1054,
+        "frontier_size": 18,
+        "visited_nodes": 399,
+        "total_nodes": 430,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.7273,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 2,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.7273,
+          "Mechanism": 1.0,
+          "Learned": 0.9419
+        }
+      },
+      "detail": {
+        "question": "what is water",
+        "terms": 1,
+        "gaps_before": 0,
+        "gaps_after": 0,
+        "learned_count": 0,
+        "coverage_before": 1.0,
+        "coverage_after": 1.0,
+        "depth_before": 1.0,
+        "depth_after": 1.0,
+        "confidence": 1.0
+      }
+    },
+    {
+      "timestamp": "2026-04-16T09:29:38",
+      "session_id": "",
+      "event_type": "ask",
+      "round_num": 118,
+      "metrics": {
+        "coverage": 0.9286,
+        "T_s": 0.1069,
+        "frontier_size": 18,
+        "visited_nodes": 403,
+        "total_nodes": 434,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.7273,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 6,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.7273,
+          "Mechanism": 1.0,
+          "Learned": 0.9427
+        }
+      },
+      "detail": {
+        "question": "is a tree made from wood?",
+        "terms": 3,
+        "gaps_before": 1,
+        "gaps_after": 0,
+        "learned_count": 1,
+        "coverage_before": 0.6666666666666666,
+        "coverage_after": 1.0,
+        "depth_before": 0.6666666666666666,
+        "depth_after": 1.0,
+        "confidence": 1.0
+      }
+    },
+    {
+      "timestamp": "2026-04-16T09:33:11",
+      "session_id": "",
+      "event_type": "teach",
+      "round_num": 121,
+      "metrics": {
+        "coverage": 0.9299,
+        "T_s": 0.1169,
+        "frontier_size": 18,
+        "visited_nodes": 411,
+        "total_nodes": 442,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.7273,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 9,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.7273,
+          "Mechanism": 1.0,
+          "Learned": 0.9444
+        }
+      },
+      "detail": {
+        "concept": "logistic processes",
+        "nodes_added": 8,
+        "coverage_delta": 0.001293,
+        "teach_rounds": 2
+      }
+    },
+    {
+      "timestamp": "2026-04-16T09:33:35",
+      "session_id": "",
+      "event_type": "ask",
+      "round_num": 122,
+      "metrics": {
+        "coverage": 0.9299,
+        "T_s": 0.1408,
+        "frontier_size": 18,
+        "visited_nodes": 411,
+        "total_nodes": 442,
+        "canon_coverage": 1.0,
+        "bootstrap_coverage": 0.9111,
+        "en_coverage": 0.7273,
+        "mech_coverage": 1.0,
+        "stagnation_streak": 10,
+        "domain_coverages": {
+          "Canon": 1.0,
+          "Bootstrap": 0.9111,
+          "EN": 0.7273,
+          "Mechanism": 1.0,
+          "Learned": 0.9444
+        }
+      },
+      "detail": {
+        "question": "what is a logistics process",
+        "terms": 2,
+        "gaps_before": 0,
+        "gaps_after": 0,
+        "learned_count": 0,
+        "coverage_before": 1.0,
+        "coverage_after": 1.0,
+        "depth_before": 1.0,
+        "depth_after": 1.0,
+        "confidence": 1.0
+      }
+    },
+    {
+      "timestamp": "2026-04-16T11:38:52",
+      "session_id": "20260416_113852",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5805,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-16T11:39:50",
+      "session_id": "20260416_113950",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5805,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-16T11:39:50",
+      "session_id": "20260416_113950",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.592,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011494,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-16T11:39:50",
+      "session_id": "20260416_113950",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6322,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.04023,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-16T11:39:51",
+      "session_id": "20260416_113951",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5805,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-16T11:39:51",
+      "session_id": "20260416_113951",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.592,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011494,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-16T11:39:51",
+      "session_id": "20260416_113951",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6322,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.04023,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-16T11:39:51",
+      "session_id": "20260416_113951",
+      "event_type": "round",
+      "round_num": 3,
+      "metrics": {
+        "coverage": 0.6667,
+        "T_s": 0.0628,
+        "frontier_size": 40,
+        "visited_nodes": 116,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.4773,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.4773,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.034483,
+        "steps": 12,
+        "domain_crossings": 7
+      }
+    },
+    {
+      "timestamp": "2026-04-16T11:39:52",
+      "session_id": "20260416_113952",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5805,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-16T11:39:52",
+      "session_id": "20260416_113952",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.592,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011494,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-16T11:39:53",
+      "session_id": "20260416_113952",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6322,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.04023,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-16T11:39:53",
+      "session_id": "20260416_113953",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5805,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-16T11:39:53",
+      "session_id": "20260416_113953",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.592,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011494,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-16T11:39:55",
+      "session_id": "20260416_113955",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5805,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-16T11:39:58",
+      "session_id": "20260416_113958",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.5805,
+        "T_s": 0.078,
+        "frontier_size": 48,
+        "visited_nodes": 101,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1364,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1364,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-16T11:39:58",
+      "session_id": "20260416_113958",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.592,
+        "T_s": 0.0723,
+        "frontier_size": 47,
+        "visited_nodes": 103,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.1818,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.1818,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.011494,
+        "steps": 12,
+        "domain_crossings": 9
+      }
+    },
+    {
+      "timestamp": "2026-04-16T11:39:58",
+      "session_id": "20260416_113958",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.6322,
+        "T_s": 0.067,
+        "frontier_size": 44,
+        "visited_nodes": 110,
+        "total_nodes": 174,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 0.8723,
+        "en_coverage": 0.3409,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 0.8723,
+          "EN": 0.3409,
+          "Mechanism": 0.9
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.04023,
+        "steps": 12,
+        "domain_crossings": 6
+      }
     }
   ]
 }

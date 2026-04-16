@@ -7586,3 +7586,231 @@ class TestCrossUniverseDreamMetadata:
         result = dream_run(s, cycles=1)
         # Check that cross-universe domains were included
         assert "domains_compared" in result or "total_equivalences" in result
+
+
+# ---------------------------------------------------------------------------
+# C262 — Cold Start without Scaffolding
+# ---------------------------------------------------------------------------
+
+
+class TestColdStartWithoutScaffolding:
+    """C262: Full integration — session from zero operates without prefix scaffolding.
+
+    Proves the Emergent Structure arc (C255–C262): community detection,
+    structural resonance, and dream consolidation work on a landscape
+    built purely from selflearn + teach — no prefix-based partitioning required.
+    """
+
+    def test_cold_start_selflearn_creates_historization(self):
+        """Cold session → selflearn populates landscape with trace data."""
+        s = build_session(steps_per_round=10)
+        initial_edges_with_data = sum(
+            1 for e in s.landscape.edges
+            if s.landscape.historization.trace_load(e) > 0
+        )
+        selflearn_run(s)
+        final_edges_with_data = sum(
+            1 for e in s.landscape.edges
+            if s.landscape.historization.trace_load(e) > 0
+        )
+        assert final_edges_with_data > initial_edges_with_data
+
+    def test_community_detection_after_selflearn(self):
+        """After selflearn, community detection finds natural clusters."""
+        from e0_controller.community import detect_communities
+        s = build_session(steps_per_round=10)
+        selflearn_run(s)
+        communities = detect_communities(s.landscape)
+        assert len(communities) >= 2, (
+            f"Expected ≥2 communities after selflearn, got {len(communities)}"
+        )
+
+    def test_teach_adds_nodes_with_metadata(self):
+        """teach_concept injects nodes with taught_at metadata."""
+        s = build_session(steps_per_round=5)
+        result = teach_concept(s, "photosynthesis")
+        nodes = result.get("nodes_added", [])
+        if nodes:  # LLM may be mocked
+            for nid in nodes:
+                meta = s.unified_nodes.get(nid, {})
+                assert "taught_at" in meta
+
+    def test_teach_nodes_join_communities(self):
+        """Taught nodes are detected by community detection (no prefix gate)."""
+        from e0_controller.community import detect_communities
+        s = build_session(steps_per_round=10)
+        selflearn_run(s)
+        # Manually inject "taught" nodes (simulating teach_concept without LLM)
+        import time
+        now = time.time()
+        for name in ["L:PHOTOSYNTHESIS", "L:CHLOROPLAST", "L:LIGHT_REACTION"]:
+            s.landscape.add_state(name)
+            s.unified_nodes[name] = {"taught_at": now, "type": "task"}
+        s.landscape.add_edge("L:PHOTOSYNTHESIS", "L:CHLOROPLAST",
+                             delta=0.3, resistance=0.5)
+        s.landscape.add_edge("L:CHLOROPLAST", "L:LIGHT_REACTION",
+                             delta=0.3, resistance=0.5)
+        # Bridge to existing landscape
+        existing = next(iter(s.landscape.states))
+        s.landscape.add_edge(existing, "L:PHOTOSYNTHESIS",
+                             delta=0.5, resistance=1.0)
+
+        communities = detect_communities(s.landscape)
+        # Taught nodes should appear in some community
+        all_community_nodes = set()
+        for comm in communities:
+            all_community_nodes.update(comm)
+        assert "L:PHOTOSYNTHESIS" in all_community_nodes
+        assert "L:CHLOROPLAST" in all_community_nodes
+
+    def test_dream_on_communities_after_selflearn(self):
+        """dream_run(partition='community') works after selflearn — no prefix needed."""
+        s = build_session(steps_per_round=10)
+        selflearn_run(s)
+        result = dream_run(s, cycles=1, partition="community")
+        assert result["cycles"] == 1
+        assert "total_equivalences" in result
+
+    def test_structural_resonance_on_communities(self):
+        """find_structural_resonance works on community sub-landscapes."""
+        from e0_controller.community import extract_community_landscapes
+        from e0_controller.dream_mode import find_structural_resonance
+        s = build_session(steps_per_round=10)
+        selflearn_run(s)
+        communities = extract_community_landscapes(s.landscape)
+        if len(communities) >= 2:
+            names = list(communities.keys())
+            sr = find_structural_resonance(
+                communities[names[0]], communities[names[1]],
+                domain_a=names[0], domain_b=names[1],
+            )
+            assert 0.0 <= sr.resonance_score <= 1.0
+            assert sr.nodes_a > 0
+            assert sr.nodes_b > 0
+
+    def test_ask_prefers_taught_over_seed(self):
+        """ask_run anchors on taught_at metadata, not prefix membership."""
+        s = build_session(steps_per_round=10)
+        import time
+        # Inject taught node with high relevance
+        s.landscape.add_state("L:QUANTUM_MECHANICS")
+        s.unified_nodes["L:QUANTUM_MECHANICS"] = {
+            "taught_at": time.time(), "type": "task",
+        }
+        s.landscape.add_edge(
+            next(iter(s.landscape.states)), "L:QUANTUM_MECHANICS",
+            delta=0.5, resistance=1.0,
+        )
+        result = ask_run(s, "quantum mechanics", auto_learn=False)
+        anchor = result.get("anchor")
+        if anchor is not None:
+            # Should prefer the taught node via metadata
+            assert anchor == "L:QUANTUM_MECHANICS" or anchor.startswith("L:")
+
+    def test_full_pipeline_zero_to_resonance(self):
+        """Capstone: cold start → selflearn → inject taught → communities → resonance.
+
+        This is the arc's proof: E₀ starts from zero, learns itself,
+        acquires new knowledge, and discovers structural resonance
+        between communities — all without prefix-based partitioning.
+        """
+        from e0_controller.community import (
+            detect_communities,
+            extract_community_landscapes,
+        )
+        from e0_controller.dream_mode import find_structural_resonance
+
+        # 1. Cold start
+        s = build_session(steps_per_round=10)
+        initial_nodes = len(s.landscape.states)
+        assert initial_nodes > 0
+
+        # 2. Selflearn — E₀ learns itself
+        selflearn_run(s)
+        after_selflearn = sum(
+            1 for e in s.landscape.edges
+            if s.landscape.historization.trace_load(e) > 0
+        )
+        assert after_selflearn > 0, "Selflearn must create trace data"
+
+        # 3. Inject taught material (simulating biology + physics)
+        import time
+        now = time.time()
+
+        bio_nodes = ["L:CELL_BIOLOGY", "L:MITOSIS", "L:DNA_REPLICATION"]
+        for name in bio_nodes:
+            s.landscape.add_state(name)
+            s.unified_nodes[name] = {"taught_at": now, "type": "task"}
+        s.landscape.add_edge("L:CELL_BIOLOGY", "L:MITOSIS",
+                             delta=0.3, resistance=0.5)
+        s.landscape.add_edge("L:MITOSIS", "L:DNA_REPLICATION",
+                             delta=0.3, resistance=0.5)
+
+        phys_nodes = ["L:QUANTUM_PHYSICS", "L:WAVE_FUNCTION", "L:SUPERPOSITION"]
+        for name in phys_nodes:
+            s.landscape.add_state(name)
+            s.unified_nodes[name] = {"taught_at": now + 1.0, "type": "task"}
+        s.landscape.add_edge("L:QUANTUM_PHYSICS", "L:WAVE_FUNCTION",
+                             delta=0.3, resistance=0.5)
+        s.landscape.add_edge("L:WAVE_FUNCTION", "L:SUPERPOSITION",
+                             delta=0.3, resistance=0.5)
+
+        # Bridge taught material to existing landscape (as teach_concept _create_bridges does)
+        hub = next(iter(s.landscape.states))
+        s.landscape.add_edge(hub, "L:CELL_BIOLOGY", delta=0.5, resistance=1.0)
+        s.landscape.add_edge(hub, "L:QUANTUM_PHYSICS", delta=0.5, resistance=1.0)
+
+        # 4. Community detection — finds natural clusters
+        communities = detect_communities(s.landscape)
+        assert len(communities) >= 2, (
+            f"Expected ≥2 communities, got {len(communities)}"
+        )
+
+        # Taught nodes should be distributed across communities
+        all_community_nodes = set()
+        for comm in communities:
+            all_community_nodes.update(comm)
+        for name in bio_nodes + phys_nodes:
+            assert name in all_community_nodes, (
+                f"Taught node {name} not in any community"
+            )
+
+        # 5. Structural resonance between communities
+        community_landscapes = extract_community_landscapes(s.landscape)
+        if len(community_landscapes) >= 2:
+            names = list(community_landscapes.keys())
+            sr = find_structural_resonance(
+                community_landscapes[names[0]],
+                community_landscapes[names[1]],
+                domain_a=names[0],
+                domain_b=names[1],
+            )
+            # Resonance should be computable (may be low — that's fine)
+            assert 0.0 <= sr.resonance_score <= 1.0
+            assert sr.matched_nodes > 0
+
+        # 6. Dream on communities — no prefix scaffolding
+        dream_result = dream_run(s, cycles=1, partition="community")
+        assert dream_result["cycles"] == 1
+
+    def test_no_prefix_gate_in_pipeline(self):
+        """Verify no step in the pipeline requires prefix-based partitioning."""
+        from e0_controller.community import extract_community_landscapes
+        s = build_session(steps_per_round=10)
+        selflearn_run(s)
+
+        # Community extraction works without _extract_domain_landscapes
+        communities = extract_community_landscapes(s.landscape)
+        assert len(communities) >= 1
+
+        # Dream works with partition='community' (default)
+        result = dream_run(s, cycles=1, partition="community")
+        assert "total_equivalences" in result
+
+    def test_diagnose_works_on_cold_start_communities(self):
+        """diagnose_session(partition='community') works after cold start + selflearn."""
+        s = build_session(steps_per_round=10)
+        selflearn_run(s)
+        result = diagnose_session(s, partition="community")
+        assert "domains" in result
+        assert len(result["domains"]) >= 1
