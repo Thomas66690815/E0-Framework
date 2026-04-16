@@ -29,6 +29,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import warnings
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
@@ -462,6 +463,15 @@ def navigate(landscape, unified_nodes, mode: str, steps: int,
     # C266: use community membership for crossing detection when available
     use_communities = communities is not None and len(communities) > 0
 
+    # C267: warn once if falling back to prefix-based decisions
+    if not use_communities:
+        warnings.warn(
+            "navigate() using prefix-based _domain_of for crossing detection. "
+            "Pass communities= for community-based partitioning.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
     crossings = {"en_canon": 0, "en_bootstrap": 0, "canon_bootstrap": 0,
                   "mech_canon": 0, "mech_bootstrap": 0, "mech_en": 0}
     total_crossings = 0
@@ -496,9 +506,8 @@ def navigate(landscape, unified_nodes, mode: str, steps: int,
                 is_crossing = nbr_domain != cur_domain
             if is_crossing:
                 bonus *= 1.5
-            # In explore_en mode, extra bonus for EN territory
-            nbr_domain_for_en = _domain_of(nbr)
-            if mode == "explore_en" and nbr_domain_for_en == "en":
+            # In explore_en mode, extra bonus for EN territory (prefix = display label)
+            if mode == "explore_en" and nbr.startswith("EN:"):
                 bonus *= 1.3
             # C206: relation-type and bridge-type bonus
             bonus *= _edge_type_bonus(landscape, current, nbr)

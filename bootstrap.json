@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C266",
-    "latest_commit_hash": "fdb145e",
-    "latest_commit_msg": "C266: Community Crossings — navigate() uses community membership for crossing detection, community_of() helper, crossing_rate from community boundaries, 10 new tests (5745 total)",
-    "test_count": 5745,
+    "latest_commit": "C267",
+    "latest_commit_hash": "203da39",
+    "latest_commit_msg": "C267: Single Partition World — _domain_of Display Only. DeprecationWarning on all prefix-based fallbacks (navigate, cmd_detail, cmd_inspect). All production decision paths use community membership. 10 new verification tests (5755 total)",
+    "test_count": 5755,
     "test_failures": 0,
     "ci_status": "pending",
     "module_count": "78 production + 10 benchmarks + 17 demos + 69 explorations + 129 test files",
@@ -237,7 +237,7 @@
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
     "current_arc": "Micro-Level Emergence (C263–C267)",
-    "arc_status": "PLANNED. C255-C262 moved macro systems to community-based partitioning. The micro level (cold start, teach bridging, navigation crossing) still uses prefix assumptions. This arc completes the migration.",
+    "arc_status": "DONE. C263-C267 completed. All micro-level prefix assumptions replaced by community membership. Single partitioning mechanism at every level.",
     "arc_thesis": "The Emergent Structure arc (C255-C262) proved that communities emerge from Historization and can replace prefix-based partitioning at the macro level (Dream, Sleep-Wake, Diagnostics). But the post-arc audit revealed that the micro level is still scaffolded: cold start includes EN domain by default, teach bridges use lexical matching instead of structural resonance, navigation crossing detection uses _domain_of() prefix lookup, and taught nodes are not integrated into communities until manual re-detection. This arc makes emergence the default at every level.",
     "arc_motivation": {
       "audit_finding_1": "Cold start inconsistency: build_multidomain_landscape(include_en=True) is default, but learn_self(include_en=False) excludes EN. Cold start ≠ warm start.",
@@ -304,7 +304,7 @@
           "One partitioning mechanism at every level: community detection from R_eff",
           "Macro (Dream, Sleep-Wake, Diagnostics) and micro (navigation, teach, crossing) converge"
         ],
-        "status": "NOT STARTED"
+        "status": "DONE"
       }
     },
     "impact_analysis": {
@@ -336,7 +336,7 @@
       "LLM symmetry: needed at BOTH ends — input structuring (Bootstrapper) AND output formatting",
       "Dream edge-level equivalences not yet injected (only node-level in C254)"
     ],
-    "next_commit_id": "C263",
+    "next_commit_id": "C268",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",

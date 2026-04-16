@@ -126,6 +126,7 @@ from __future__ import annotations
 
 import os
 import time
+import warnings
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -1666,9 +1667,16 @@ def cmd_detail(state: SessionState, round_num: Optional[int] = None) -> str:
         meta = state.landscape.edge_meta(src, tgt)
         rel_type = meta.get("relation_type", "")
         bridge = meta.get("bridge_type", "")
-        cross = (community_of(src, state.communities) != community_of(tgt, state.communities)
-                 if state.communities
-                 else _domain_of(src) != _domain_of(tgt))
+        if state.communities:
+            cross = community_of(src, state.communities) != community_of(tgt, state.communities)
+        else:
+            warnings.warn(
+                "cmd_detail: falling back to _domain_of() for crossing detection. "
+                "Pass communities for community-based partitioning.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            cross = _domain_of(src) != _domain_of(tgt)
 
         type_label = rel_type or bridge or "—"
         cross_label = "✗" if cross else ""
@@ -1703,6 +1711,12 @@ def cmd_detail(state: SessionState, round_num: Optional[int] = None) -> str:
             f"  {len(path) - 1} transitions, {crossings} community crossings"
         )
     else:
+        warnings.warn(
+            "cmd_detail: falling back to _domain_of() for crossing summary. "
+            "Pass communities for community-based partitioning.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         crossings = sum(
             1 for i in range(len(path) - 1)
             if _domain_of(path[i]) != _domain_of(path[i + 1])
@@ -1744,11 +1758,25 @@ def cmd_inspect(state: SessionState, source: str, target: str) -> str:
     meta = state.landscape.edge_meta(source, target)
     summary = hist.inscription_summary(edge)
 
+    # C267: domain labels for display, community for crossing decision
+    src_label = _domain_of(source)
+    tgt_label = _domain_of(target)
+    if state.communities:
+        is_cross = community_of(source, state.communities) != community_of(target, state.communities)
+    else:
+        warnings.warn(
+            "cmd_inspect: falling back to _domain_of() for crossing detection. "
+            "Pass communities for community-based partitioning.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        is_cross = src_label != tgt_label
+
     lines = [
         f"Edge: {source} → {target}",
         f"{'─' * 60}",
-        f"  Domains:     {_domain_of(source)} → {_domain_of(target)}"
-        + (" [CROSS-DOMAIN]" if _domain_of(source) != _domain_of(target) else ""),
+        f"  Domains:     {src_label} → {tgt_label}"
+        + (" [CROSS-COMMUNITY]" if is_cross else ""),
         f"  trace_load:  {m:.2f}",
         f"  quality:     {q:+.4f}  {_quality_bar(q)}",
         f"  inertia:     {inertia:.4f}",
@@ -3612,7 +3640,6 @@ def _extract_domain_landscapes(
     Each domain gets its own Landscape with intra-domain edges and
     historization copied from the session landscape.
     """
-    import warnings
     warnings.warn(
         "_extract_domain_landscapes is deprecated (C261). "
         "Use extract_community_landscapes() instead.",

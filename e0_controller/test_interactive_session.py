@@ -8233,3 +8233,146 @@ class TestCommunityCrossings:
         assert community_of("A", communities) == community_of("B", communities)
         # A and D in different communities
         assert community_of("A", communities) != community_of("D", communities)
+
+
+# ── C267: Single Partition World — _domain_of Display Only ─────────────
+
+class TestSinglePartitionWorld:
+    """C267 capstone: zero production decisions depend on prefix-based
+    _domain_of().  All behavioral crossing detection uses community
+    membership.  _domain_of remains valid for display labels only."""
+
+    # -- navigate() with communities: no DeprecationWarning --
+
+    def test_navigate_with_communities_no_deprecation(self):
+        """navigate() with communities emits no DeprecationWarning."""
+        import warnings
+        s = build_session(steps_per_round=10)
+        from e0_controller.explore_learning_cycle_multidomain import navigate
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", DeprecationWarning)
+            nav = navigate(
+                s.landscape, s.unified_nodes, "explore", 10,
+                start="B:HERE", communities=s.communities,
+            )
+        assert nav["steps"] >= 0
+
+    def test_navigate_without_communities_warns(self):
+        """navigate() without communities emits DeprecationWarning."""
+        import warnings
+        s = build_session(steps_per_round=10)
+        from e0_controller.explore_learning_cycle_multidomain import navigate
+        with pytest.warns(DeprecationWarning, match="navigate.*_domain_of"):
+            navigate(
+                s.landscape, s.unified_nodes, "explore", 10,
+                start="B:HERE",
+            )
+
+    # -- cmd_run full pipeline: no DeprecationWarning --
+
+    def test_cmd_run_no_deprecation(self):
+        """Full cmd_run pipeline with communities raises no DeprecationWarning."""
+        import warnings
+        s = build_session(steps_per_round=10)
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", DeprecationWarning)
+            cmd_run(s, 1)
+
+    # -- cmd_detail with communities: no DeprecationWarning --
+
+    def test_cmd_detail_no_deprecation(self):
+        """cmd_detail with communities raises no DeprecationWarning."""
+        import warnings
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", DeprecationWarning)
+            output = cmd_detail(s)
+        assert "community crossings" in output
+
+    def test_cmd_detail_without_communities_warns(self):
+        """cmd_detail without communities falls back with DeprecationWarning."""
+        import warnings
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        saved = s.communities
+        s.communities = []
+        try:
+            with pytest.warns(DeprecationWarning, match="cmd_detail.*_domain_of"):
+                cmd_detail(s)
+        finally:
+            s.communities = saved
+
+    # -- cmd_inspect with communities: no DeprecationWarning --
+
+    def test_cmd_inspect_no_deprecation(self):
+        """cmd_inspect with communities raises no DeprecationWarning."""
+        import warnings
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        # Pick an edge that has inscriptions
+        edges = list(s.landscape.edges)
+        source, target = edges[0].source, edges[0].target
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", DeprecationWarning)
+            output = cmd_inspect(s, source, target)
+        assert isinstance(output, str)
+
+    def test_cmd_inspect_without_communities_warns(self):
+        """cmd_inspect without communities falls back with DeprecationWarning."""
+        import warnings
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 2)
+        # Find an edge with inscriptions
+        hist = s.landscape.historization
+        edge = None
+        for e in s.landscape.edges:
+            if hist.trace_load(e) > 0:
+                edge = e
+                break
+        if edge is None:
+            pytest.skip("no inscribed edge found")
+        saved = s.communities
+        s.communities = []
+        try:
+            with pytest.warns(DeprecationWarning, match="cmd_inspect.*_domain_of"):
+                cmd_inspect(s, edge.source, edge.target)
+        finally:
+            s.communities = saved
+
+    # -- _domain_of still works for display --
+
+    def test_domain_of_still_returns_labels(self):
+        """_domain_of still returns correct display labels."""
+        from e0_controller.explore_learning_cycle_multidomain import _domain_of
+        assert _domain_of("EN:hello") == "en"
+        assert _domain_of("B:bootstrap") == "bootstrap"
+        assert _domain_of("C:canon") == "canon"
+        assert _domain_of("MECH:gear") == "mech"
+
+    # -- Display prefixes alias is available --
+
+    def test_display_prefixes_alias(self):
+        """_DISPLAY_PREFIXES alias is available (C261 rename)."""
+        assert isinstance(_DISPLAY_PREFIXES, dict)
+        assert "EN:" in _DISPLAY_PREFIXES
+
+    # -- Integration: full session exercises zero _domain_of decisions --
+
+    def test_full_session_pipeline_no_prefix_decisions(self):
+        """Build, run, detail, inspect — all without DeprecationWarning.
+        This is the capstone integration test for the single-partition model."""
+        import warnings
+        s = build_session(steps_per_round=10)
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", DeprecationWarning)
+            # 1. Run rounds
+            cmd_run(s, 2)
+            # 2. Detail the last round
+            cmd_detail(s)
+            # 3. Inspect an edge with inscriptions
+            hist = s.landscape.historization
+            for e in s.landscape.edges:
+                if hist.trace_load(e) > 0:
+                    cmd_inspect(s, e.source, e.target)
+                    break
