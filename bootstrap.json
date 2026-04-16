@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C255",
-    "latest_commit_hash": "04fc2fa",
-    "latest_commit_msg": "C255: Community Detection from R_eff — detect_communities(landscape) using weighted Label Propagation on 1/R_eff. Emergent structure replaces prefix-based domains. GT-7 Coherent Domain Error documented. 24 new tests (5553 total)",
-    "test_count": 5553,
+    "latest_commit": "C256",
+    "latest_commit_hash": "3ccb454",
+    "latest_commit_msg": "C256: Dual-Mode Validation — NMI comparison between emergent communities and prefix-based domains. extract_community_landscapes, prefix_partition, compare_partitions. Wired into diagnose_session + cmd_diagnose + cmd_status. 29 new tests (5582 total)",
+    "test_count": 5582,
     "test_failures": 0,
     "ci_status": "pending",
     "module_count": "78 production + 10 benchmarks + 17 demos + 69 explorations + 128 test files",
@@ -254,9 +254,16 @@
       },
       "C256_dual_mode_validation": {
         "title": "Dual-Mode Validation",
-        "what": "_extract_community_landscapes() parallel to legacy _extract_domain_landscapes(). diagnose_session() gains communities field. NMI (Normalized Mutual Information) comparison: emergent communities vs prefix domains after N rounds. cmd_status/cmd_diagnose show both.",
+        "what": "NMI comparison between emergent communities and prefix-based domains. normalized_mutual_information(), extract_community_landscapes(), prefix_partition(), compare_partitions() in community.py. diagnose_session() + cmd_diagnose() + cmd_status() show community comparison: community_count, prefix_count, NMI, verdict (aligned/partial/divergent).",
         "key_measurement": "NMI score: how well do emergent communities correlate with prefix groups? If NMI < 0.3 → community detection fails, abort arc. If NMI > 0.7 → communities rediscover prefixes (expected for well-structured landscapes).",
-        "status": "PLANNED"
+        "key_results": [
+          "NMI(identical) = 1.0, NMI(independent) ≈ 0 — mathematically sound",
+          "extract_community_landscapes copies actual Δ/R₀ (improvement over hardcoded 0.3/0.2 in legacy)",
+          "Prefix partition uses ^[A-Z]+: regex — same convention as legacy _DOMAIN_PREFIXES",
+          "Verdict thresholds: ≥0.7 aligned, <0.3 divergent, else partial",
+          "29 new tests: NMI (11), extract_community_landscapes (8), prefix_partition (5), compare_partitions (5)"
+        ],
+        "status": "DONE"
       },
       "_phase_2_migration": "Replace old system. Tests migrate in batches.",
       "C257_dream_on_communities": {

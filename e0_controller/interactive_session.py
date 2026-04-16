@@ -373,6 +373,27 @@ def cmd_status(state: SessionState) -> str:
             parts.append(f"### {panel.label}\n")
         parts.append(interpret_panel(panel))
 
+    # Community summary (C256)
+    from e0_controller.community import compare_partitions
+    comp = compare_partitions(state.landscape)
+    if comp["community_count"] > 0:
+        if state.output_format == "markdown":
+            parts.append("\n## Emergent Communities\n")
+            parts.append(
+                f"Communities: {comp['community_count']}  |  "
+                f"Prefix groups: {comp['prefix_count']}  |  "
+                f"NMI: {comp['nmi']:.3f}  |  "
+                f"Verdict: **{comp['verdict']}**"
+            )
+        else:
+            parts.append("\n--- Emergent Communities ---")
+            parts.append(
+                f"Communities: {comp['community_count']}  "
+                f"Prefix groups: {comp['prefix_count']}  "
+                f"NMI: {comp['nmi']:.3f}  "
+                f"Verdict: {comp['verdict']}"
+            )
+
     return "\n".join(parts)
 
 
@@ -997,6 +1018,10 @@ def diagnose_session(state: SessionState) -> Dict[str, Any]:
     )
     blocked = [d["name"] for d in domain_results if d["status"] == "BLOCKED"]
 
+    # C256: Emergent community comparison
+    from e0_controller.community import compare_partitions
+    community_comparison = compare_partitions(state.landscape)
+
     return {
         "domains": domain_results,
         "overall": {
@@ -1007,6 +1032,7 @@ def diagnose_session(state: SessionState) -> Dict[str, Any]:
             "bottleneck": bottleneck,
             "blocked_domains": blocked,
         },
+        "communities": community_comparison,
     }
 
 
@@ -1092,6 +1118,30 @@ def cmd_diagnose(state: SessionState) -> str:
             f"{indent}\u2192 These need new structure "
             f"(teach / dream / manual edges)"
         )
+
+    # C256: Community comparison section
+    cc = diag.get("communities")
+    if cc:
+        if md:
+            lines.append("")
+            lines.append("### Emergent Communities")
+        else:
+            lines.append(f"\n{'\u2500' * 60}")
+            lines.append("  Emergent Communities:")
+        lines.append(
+            f"{indent}Communities: {cc['community_count']}  "
+            f"Prefix groups: {cc['prefix_count']}  "
+            f"NMI: {cc['nmi']:.3f}  "
+            f"Verdict: {cc['verdict']}"
+        )
+        # Show community membership (compact)
+        for i, community in enumerate(cc["communities"]):
+            members = sorted(community)
+            if len(members) > 8:
+                display = ", ".join(members[:6]) + f" … (+{len(members) - 6})"
+            else:
+                display = ", ".join(members)
+            lines.append(f"{indent}  C{i}: {display}")
 
     return "\n".join(lines)
 
