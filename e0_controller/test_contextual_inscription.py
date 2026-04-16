@@ -324,7 +324,7 @@ class TestFullCycleInscription:
             max_rounds=3, steps_per_round=20, verbose=False,
         )
         # Re-build to access the landscape (run_multidomain_cycle builds internally)
-        ls, nodes, stats = build_multidomain_landscape()
+        ls, nodes, stats = build_multidomain_landscape(include_en=True)
         # Run again on this landscape to get inscriptions
         from e0_controller.explore_learning_cycle_multidomain import navigate
         nav = navigate(ls, nodes, mode="explore", steps=30)

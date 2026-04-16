@@ -171,7 +171,8 @@ class TestBuildSession:
     def test_has_three_domains(self, session):
         assert session.stats["canon_nodes"] > 0
         assert session.stats["bootstrap_nodes"] > 0
-        assert session.stats["en_nodes"] > 0
+        # C263: cold start excludes EN by default
+        assert session.stats["en_nodes"] == 0
 
     def test_default_format(self, session):
         assert session.output_format == "text"
@@ -314,23 +315,27 @@ class TestCmdFocus:
         assert "Bootstrap" in result
 
     def test_focus_en(self):
+        # C263: EN excluded by default, focus should report unknown
         s = build_session(steps_per_round=15)
         cmd_run(s, 1)
         result = cmd_focus(s, "en")
-        assert "EN" in result
+        assert "Unknown domain" in result
 
     def test_focus_aliases(self):
         s = build_session(steps_per_round=15)
         cmd_run(s, 1)
         assert "Canon" in cmd_focus(s, "c")
         assert "Bootstrap" in cmd_focus(s, "boot")
+        # C263: EN excluded by default, but alias still resolves (shows empty domain)
         assert "EN" in cmd_focus(s, "english")
+        assert "0/0" in cmd_focus(s, "english")
 
     def test_focus_case_insensitive(self):
         s = build_session(steps_per_round=15)
         cmd_run(s, 1)
         assert "Canon" in cmd_focus(s, "CANON")
-        assert "EN" in cmd_focus(s, "En")
+        # C263: EN excluded by default
+        assert "Unknown domain" in cmd_focus(s, "En")
 
     def test_focus_unknown(self):
         s = build_session(steps_per_round=10)
@@ -1272,9 +1277,19 @@ class TestSemanticSurface:
         with_desc = sum(1 for v in canon.values() if v.get("description"))
         assert with_desc == len(canon), f"Only {with_desc}/{len(canon)} canon nodes have descriptions"
 
-    def test_en_nodes_have_description(self):
+    def test_cold_start_excludes_en(self):
+        """C263: Cold start no longer includes EN domain by default."""
         s = build_session(steps_per_round=10)
-        en = {k: v for k, v in s.unified_nodes.items() if k.startswith("EN:")}
+        en = {k for k in s.unified_nodes if k.startswith("EN:")}
+        assert len(en) == 0, f"Cold start should not include EN nodes, found {len(en)}"
+
+    def test_en_nodes_have_description_when_opted_in(self):
+        """EN nodes carry descriptions when explicitly included."""
+        from e0_controller.explore_learning_cycle_multidomain import (
+            build_multidomain_landscape,
+        )
+        _, unified_nodes, _ = build_multidomain_landscape(include_en=True)
+        en = {k: v for k, v in unified_nodes.items() if k.startswith("EN:")}
         assert len(en) > 0
         with_desc = sum(1 for v in en.values() if v.get("description"))
         assert with_desc > 0, "EN nodes should have descriptions"
@@ -1618,8 +1633,8 @@ class TestAutoDetect:
         """Without auto_detect=True, build_session does cold start."""
         state = build_session(steps_per_round=10)
         assert isinstance(state, SessionState)
-        # Cold start always has EN nodes
-        assert state.stats["en_nodes"] > 0
+        # C263: cold start excludes EN by default
+        assert state.stats["en_nodes"] == 0
 
 
 class TestConsolidateNotDry:
@@ -6065,8 +6080,8 @@ class TestDetectDomains:
         s = build_session(steps_per_round=5)
         detected = _detect_domains(s.landscape)
         prefixes = [p for p, _ in detected]
-        # At minimum C: B: EN: M: must be present in canonical order
-        for required in ["C:", "B:", "EN:", "M:"]:
+        # C263: cold start excludes EN — only C: B: M: required
+        for required in ["C:", "B:", "M:"]:
             assert required in prefixes
 
     def test_learned_domain_detected(self):
@@ -6098,9 +6113,12 @@ class TestDetectDomains:
         s.landscape.add_state("L:A")
         detected = _detect_domains(s.landscape)
         prefixes = [p for p, _ in detected]
-        # C: before B: before EN: before M: before L:
+        # C263: cold start has C+B+M (no EN). With L: added manually.
+        # Canonical order: C: before B: before M: before L:
         known = [p for p in prefixes if p in ["C:", "B:", "EN:", "M:", "L:"]]
-        assert known == ["C:", "B:", "EN:", "M:", "L:"]
+        # Only present prefixes must be in order
+        expected_order = [p for p in ["C:", "B:", "EN:", "M:", "L:"] if p in known]
+        assert known == expected_order
 
 
 class TestComputeDomainStats:
@@ -7814,3 +7832,77 @@ class TestColdStartWithoutScaffolding:
         result = diagnose_session(s, partition="community")
         assert "domains" in result
         assert len(result["domains"]) >= 1
+
+
+# ── C263: Cold Start Alignment ─────────────────────────────────────────
+
+
+class TestColdStartAlignment:
+    """C263: Cold start produces C+B+M landscape (no EN), matching warm start."""
+
+    def test_cold_start_has_no_en_nodes(self):
+        """build_session cold start excludes EN domain by default."""
+        s = build_session(steps_per_round=5)
+        en_nodes = [n for n in s.unified_nodes if n.startswith("EN:")]
+        assert len(en_nodes) == 0, f"Cold start should exclude EN, found {len(en_nodes)}"
+
+    def test_cold_start_has_canon_bootstrap_mechanism(self):
+        """Cold start still includes the 3 core domains."""
+        s = build_session(steps_per_round=5)
+        c_nodes = [n for n in s.unified_nodes if n.startswith("C:")]
+        b_nodes = [n for n in s.unified_nodes if n.startswith("B:")]
+        m_nodes = [n for n in s.unified_nodes if n.startswith("M:")]
+        assert len(c_nodes) > 0, "Canon nodes missing"
+        assert len(b_nodes) > 0, "Bootstrap nodes missing"
+        assert len(m_nodes) > 0, "Mechanism nodes missing"
+
+    def test_cold_start_stats_reflect_no_en(self):
+        """Stats dict reports 0 EN nodes on cold start."""
+        s = build_session(steps_per_round=5)
+        assert s.stats.get("en_nodes", 0) == 0
+
+    def test_explicit_include_en_still_works(self):
+        """include_en=True opt-in still produces EN nodes."""
+        from e0_controller.explore_learning_cycle_multidomain import (
+            build_multidomain_landscape,
+        )
+        _, nodes, stats = build_multidomain_landscape(include_en=True)
+        en = [n for n in nodes if n.startswith("EN:")]
+        assert len(en) >= 40, f"EN opt-in should produce ≥40 nodes, got {len(en)}"
+        assert stats["en_nodes"] >= 40
+
+    def test_include_en_false_matches_default(self):
+        """Explicit include_en=False produces same result as default."""
+        from e0_controller.explore_learning_cycle_multidomain import (
+            build_multidomain_landscape,
+        )
+        _, nodes_default, stats_default = build_multidomain_landscape()
+        _, nodes_explicit, stats_explicit = build_multidomain_landscape(include_en=False)
+        assert stats_default["en_nodes"] == 0
+        assert stats_explicit["en_nodes"] == 0
+        assert set(nodes_default.keys()) == set(nodes_explicit.keys())
+
+    def test_universe_create_excludes_en(self):
+        """New universes match cold start: no EN nodes."""
+        s = build_session(steps_per_round=5)
+        from e0_controller.interactive_session import universe_create
+        result = universe_create(s, "test_u")
+        assert "test_u" in s.universes
+        u = s.universes["test_u"]
+        en = [n for n in u.unified_nodes if n.startswith("EN:")]
+        assert len(en) == 0, f"New universe should exclude EN, found {len(en)}"
+
+    def test_cold_warm_start_parity(self):
+        """Cold start and warm start (learn_self) produce same domain set."""
+        from e0_controller.explore_learning_cycle_multidomain import (
+            build_multidomain_landscape,
+        )
+        # Cold start
+        _, cold_nodes, _ = build_multidomain_landscape()
+        cold_prefixes = {n.split(":")[0] for n in cold_nodes if ":" in n}
+        # Warm start uses include_en=False (default in learn_self)
+        _, warm_nodes, _ = build_multidomain_landscape(include_en=False)
+        warm_prefixes = {n.split(":")[0] for n in warm_nodes if ":" in n}
+        assert cold_prefixes == warm_prefixes, (
+            f"Cold {cold_prefixes} ≠ Warm {warm_prefixes}"
+        )

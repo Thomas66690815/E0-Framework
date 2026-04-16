@@ -46,7 +46,7 @@ from e0_controller.explore_bootstrap_landscape import (
 @pytest.fixture(scope="module")
 def multidomain():
     """Build the 4-domain landscape once for all tests."""
-    landscape, unified_nodes, stats = build_multidomain_landscape()
+    landscape, unified_nodes, stats = build_multidomain_landscape(include_en=True)
     return landscape, unified_nodes, stats
 
 
@@ -312,12 +312,12 @@ class TestNavigation:
         """explore_en mode visits more EN nodes than regular explore."""
         landscape, nodes, _ = multidomain
         # Reset by building fresh
-        ls_fresh, nodes_fresh, _ = build_multidomain_landscape()
+        ls_fresh, nodes_fresh, _ = build_multidomain_landscape(include_en=True)
 
         r_normal = navigate(ls_fresh, nodes_fresh, "explore", 30, start="B:HERE")
         en_normal = len([n for n in r_normal["path"] if n.startswith("EN:")])
 
-        ls_fresh2, nodes_fresh2, _ = build_multidomain_landscape()
+        ls_fresh2, nodes_fresh2, _ = build_multidomain_landscape(include_en=True)
         r_en = navigate(ls_fresh2, nodes_fresh2, "explore_en", 30, start="B:HERE")
         en_biased = len([n for n in r_en["path"] if n.startswith("EN:")])
 
@@ -517,7 +517,7 @@ class TestCommunicateRound:
     """communicate_round produces text/markdown from round results."""
 
     def test_produces_text(self):
-        landscape, unified_nodes, _ = build_multidomain_landscape()
+        landscape, unified_nodes, _ = build_multidomain_landscape(include_en=True)
         results = run_multidomain_cycle(
             max_rounds=1, steps_per_round=20, verbose=False)
         text = communicate_round(results[0], landscape, output_format="text")
@@ -526,7 +526,7 @@ class TestCommunicateRound:
         assert "Interpretations" in text
 
     def test_produces_markdown(self):
-        landscape, unified_nodes, _ = build_multidomain_landscape()
+        landscape, unified_nodes, _ = build_multidomain_landscape(include_en=True)
         results = run_multidomain_cycle(
             max_rounds=1, steps_per_round=20, verbose=False)
         md = communicate_round(results[0], landscape, output_format="markdown")
@@ -534,7 +534,7 @@ class TestCommunicateRound:
         assert "## Interpretations" in md
 
     def test_has_coverage_info(self):
-        landscape, _, _ = build_multidomain_landscape()
+        landscape, _, _ = build_multidomain_landscape(include_en=True)
         results = run_multidomain_cycle(
             max_rounds=1, steps_per_round=20, verbose=False)
         text = communicate_round(results[0], landscape, output_format="text")
@@ -542,7 +542,7 @@ class TestCommunicateRound:
         assert "%" in text
 
     def test_stagnation_in_output(self):
-        landscape, _, _ = build_multidomain_landscape()
+        landscape, _, _ = build_multidomain_landscape(include_en=True)
         results = run_multidomain_cycle(
             max_rounds=1, steps_per_round=20, verbose=False)
         text = communicate_round(
@@ -554,7 +554,7 @@ class TestCommunicateSummary:
     """communicate_summary aggregates full cycle into prose."""
 
     def test_produces_text(self):
-        landscape, _, _ = build_multidomain_landscape()
+        landscape, _, _ = build_multidomain_landscape(include_en=True)
         results = run_multidomain_cycle(
             max_rounds=2, steps_per_round=20, verbose=False)
         text = communicate_summary(results, landscape, output_format="text")
@@ -562,14 +562,14 @@ class TestCommunicateSummary:
         assert "Interpretations" in text
 
     def test_produces_markdown(self):
-        landscape, _, _ = build_multidomain_landscape()
+        landscape, _, _ = build_multidomain_landscape(include_en=True)
         results = run_multidomain_cycle(
             max_rounds=2, steps_per_round=20, verbose=False)
         md = communicate_summary(results, landscape, output_format="markdown")
         assert "# E₀ Learning Cycle Summary" in md
 
     def test_has_inscription_analysis(self):
-        landscape, _, _ = build_multidomain_landscape()
+        landscape, _, _ = build_multidomain_landscape(include_en=True)
         # Navigate to create inscriptions
         results = run_multidomain_cycle(
             max_rounds=3, steps_per_round=30, verbose=False)
@@ -579,14 +579,14 @@ class TestCommunicateSummary:
         assert "Interpretations" in text
 
     def test_has_domain_crossings(self):
-        landscape, _, _ = build_multidomain_landscape()
+        landscape, _, _ = build_multidomain_landscape(include_en=True)
         results = run_multidomain_cycle(
             max_rounds=2, steps_per_round=30, verbose=False)
         text = communicate_summary(results, landscape, output_format="text")
         assert "Crossings" in text or "crossings" in text
 
     def test_empty_history_returns_empty(self):
-        landscape, _, _ = build_multidomain_landscape()
+        landscape, _, _ = build_multidomain_landscape(include_en=True)
         text = communicate_summary([], landscape, output_format="text")
         assert text == ""
 

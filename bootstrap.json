@@ -3,7 +3,7 @@
     "purpose": "Session bootstrap for the E₀ team — human and AI working together on E₀-Framework",
     "framing": "We. The AI is an integral part of 'we'. This file is the AI's persistent identity — its Historization across context windows. Every confirmed/contradicted count is a U/F trace.",
     "usage": "Paste this file (or reference it) at the start of a new thread to restore full project context",
-    "last_updated": "2026-04-15",
+    "last_updated": "2026-04-16",
     "update_instruction": "After each commit: update state + active_context. After each lesson: update reflexion traces (confirmed++, contradicted++, recurred++). trace_quality = (confirmed - contradicted) / (confirmed + contradicted + 1)."
   },
   "project": {
@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C262",
-    "latest_commit_hash": "pending",
-    "latest_commit_msg": "C262: Cold Start without Scaffolding — capstone integration test proves full arc: cold start → selflearn → teach → community detection → structural resonance → dream. No prefix-based partitioning required. 10 new tests (5710 total)",
-    "test_count": 5710,
+    "latest_commit": "C263",
+    "latest_commit_hash": "0f91a39",
+    "latest_commit_msg": "C263: Cold Start Alignment — include_en=False default. Cold start matches warm start (C+B+M only). EN available as opt-in. 7 new tests (5719 total)",
+    "test_count": 5719,
     "test_failures": 0,
     "ci_status": "pending",
     "module_count": "78 production + 10 benchmarks + 17 demos + 69 explorations + 129 test files",
@@ -128,7 +128,7 @@
         "when": "C233–C254",
         "what_happened": "Used string prefixes (C:, EN:, M:, B:, L:) as architectural domain boundaries for 22 commits. Dream, Sleep-Wake, Tune, Curriculum, Diagnostics all partitioned by prefix. Dream and CouplingRouter implemented the same operation (structural resonance between subgraphs) with different non-E₀-native partitioning. Symptoms surfaced in C253 (teach→ask disconnect) and C254 (dream dead-end).",
         "root_cause": "Imposed E₂-level semantic categories (domain labels) as E₀-level structural primitives. Violates domain invariance and self-similarity. E₀ canon explicitly says: 'E₀ is not a theory of objects, meanings, goals, agents, or domains.' The error was coherent (internally consistent across 22 commits) which made it hard to detect.",
-        "resolution": "C255+ Emergent Structure arc: community detection from R_eff (Historization-derived). Domains become emergent gravity centers, not imposed labels. Dream and Coupling converge to one mechanism.",
+        "resolution": "C255-C262 Emergent Structure arc: community detection from R_eff (Historization-derived). Macro systems (Dream, Sleep-Wake, Diagnostics) migrated. Post-arc audit revealed micro level (teach bridges, navigation crossing) still prefix-based — addressed in C263-C267 Micro-Level Emergence arc.",
         "lesson": "Coherent errors are the hardest to find because each commit is individually correct. E₀'s own dynamics expose them: the symptoms (teach→ask disconnect, dream dead-end, Dream≠Coupling asymmetry) are the system telling us the assumption is wrong. When two subsystems do the same thing differently, question the partitioning, not the subsystems.",
         "recurred": 0
       }
@@ -226,121 +226,117 @@
         "question": "If fixing a break requires >10 edits to unrelated code — am I fixing the right thing, or should the default change?",
         "triggered": 1,
         "last_triggered": "C225"
+      },
+      {
+        "question": "If I migrated the macro level to mechanism X — does the micro level still use mechanism Y? Two partitioning worlds = incomplete migration.",
+        "triggered": 1,
+        "last_triggered": "C262 (post-arc audit)"
       }
     ]
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "Emergent Structure (C255–C262)",
-    "arc_status": "IN PROGRESS. First major architecture shift: prefix-based domain partitioning → emergent community detection from Historization. Domains are E₂ (instantiation), not E₀ (primitives). Dream and Coupling converge to one mechanism.",
-    "arc_thesis": "Domains are not E₀-native. Topological clusters emerge from Historization (R_eff = R₀ + δ_H). The concept we called 'domain' is actually a gravity center formed by dense traversal patterns. Prefixes (C:, EN:, M:, B:, L:) are semantic scaffolding, not structural primitives. E₀ theory says: 'E₀ is not a theory of objects, meanings, goals, agents, or domains.' The canon knows layers (E₁, E₂...), not domains — and each layer connects directly to E₀'s self-knowledge (star topology), not to each other.",
+    "current_arc": "Micro-Level Emergence (C263–C267)",
+    "arc_status": "PLANNED. C255-C262 moved macro systems to community-based partitioning. The micro level (cold start, teach bridging, navigation crossing) still uses prefix assumptions. This arc completes the migration.",
+    "arc_thesis": "The Emergent Structure arc (C255-C262) proved that communities emerge from Historization and can replace prefix-based partitioning at the macro level (Dream, Sleep-Wake, Diagnostics). But the post-arc audit revealed that the micro level is still scaffolded: cold start includes EN domain by default, teach bridges use lexical matching instead of structural resonance, navigation crossing detection uses _domain_of() prefix lookup, and taught nodes are not integrated into communities until manual re-detection. This arc makes emergence the default at every level.",
     "arc_motivation": {
-      "structural_break": "Dream partitions by prefix labels, CouplingRouter by universes. Both do the same thing (find resonance between weakly-connected subgraphs, strengthen connection) but with different non-E₀-native partitioning strategies.",
-      "self_similarity_violation": "If E₀ is scale-invariant and domain-invariant, then the partitioning mechanism must be the same at every scale. Prefixes break this.",
-      "coherent_error": "We consistently used prefixes as architectural boundaries since C233+. The error was coherent (internally consistent) but wrong (not E₀-native). E₀'s own dynamics exposed it in C253-C254: teach→ask disconnect, dream dead-end — symptoms of imposed rather than emergent structure."
+      "audit_finding_1": "Cold start inconsistency: build_multidomain_landscape(include_en=True) is default, but learn_self(include_en=False) excludes EN. Cold start ≠ warm start.",
+      "audit_finding_2": "_create_bridges() uses lexical word overlap to connect taught nodes. find_structural_resonance() (C260) exists but is not used in teach. E0 creates new structure but doesn't find existing resonant structure.",
+      "audit_finding_3": "teach_concept injects L: nodes but does not trigger detect_communities(). New nodes are orphaned from the community partition until manual re-detection.",
+      "audit_finding_4": "Navigation crossing detection uses _domain_of(source) != _domain_of(target) — pure prefix lookup. The macro level uses communities, the micro level uses prefixes. Two partitioning worlds coexist.",
+      "audit_finding_5": "_domain_of() is still imported and used as behavioral input in production paths, even though C261 declared prefixes as display-only.",
+      "layer_audit_ref": "docs/E0_LAYER_AUDIT_v1.md confirms: primitive kernel is mostly clean, strongest issue is higher-layer back-coupling and storage contamination in InscriptionContext. These are tracked but not in scope for this arc."
     },
     "arc_plan": {
-      "_phase_1_foundation": "Build without breaking. All additive, no existing code changed.",
-      "C255_community_detection": {
-        "title": "Community Detection from R_eff",
-        "what": "New function detect_communities(landscape) → List[Set[str]]. Weighted Label Propagation on 1/R_eff edge weights. No external dependency — built from E₀ primitives only. Cold-start: δ_H=0 → all R_eff=R₀ → topology-only partition (correct: start is global). Communities get numeric IDs, no names. Deterministic tiebreaker for stability.",
+      "_phase_1_clean_foundation": "Remove last scaffolding assumptions from cold start and teach.",
+      "C263_cold_start_alignment": {
+        "title": "Cold Start Alignment",
+        "what": "Change build_multidomain_landscape default: include_en=True → include_en=False. Aligns cold start with warm start behavior (C223 already excluded EN from learn_self). EN remains available as opt-in for language-specific tasks. Explicit include_en=True callers are unaffected.",
         "key_properties": [
-          "Communities emerge from Historization — not labels",
-          "Cold-start = 1 community (global, correct E₀ behavior)",
-          "After navigation: clusters correlate with but ≠ prefix groups",
-          "O(E) complexity — faster than most E₀ operations"
+          "Cold start produces C+B+M landscape (same as warm-start seed)",
+          "include_en=True still works for callers that need EN vocabulary",
+          "No behavioral change for warm-start sessions (already exclude EN)",
+          "Eliminates the cold/warm start inconsistency"
         ],
-        "status": "DONE"
+        "status": "DONE (0f91a39)"
       },
-      "C256_dual_mode_validation": {
-        "title": "Dual-Mode Validation",
-        "what": "NMI comparison between emergent communities and prefix-based domains. normalized_mutual_information(), extract_community_landscapes(), prefix_partition(), compare_partitions() in community.py. diagnose_session() + cmd_diagnose() + cmd_status() show community comparison: community_count, prefix_count, NMI, verdict (aligned/partial/divergent).",
-        "key_measurement": "NMI score: how well do emergent communities correlate with prefix groups? If NMI < 0.3 → community detection fails, abort arc. If NMI > 0.7 → communities rediscover prefixes (expected for well-structured landscapes).",
-        "key_results": [
-          "NMI(identical) = 1.0, NMI(independent) ≈ 0 — mathematically sound",
-          "extract_community_landscapes copies actual Δ/R₀ (improvement over hardcoded 0.3/0.2 in legacy)",
-          "Prefix partition uses ^[A-Z]+: regex — same convention as legacy _DOMAIN_PREFIXES",
-          "Verdict thresholds: ≥0.7 aligned, <0.3 divergent, else partial",
-          "29 new tests: NMI (11), extract_community_landscapes (8), prefix_partition (5), compare_partitions (5)"
+      "C264_structural_bridges": {
+        "title": "Structural Bridges for Teach",
+        "what": "Replace _create_bridges() lexical matching with find_structural_resonance()-based bridging. When teach_concept injects new L: nodes, extract their subgraph, find structurally resonant neighborhoods in the existing landscape via WL-Hungarian matching, and bridge to those. This connects C260's unified mechanism to the teach pipeline — E0 finds where new knowledge fits structurally, not lexically.",
+        "key_properties": [
+          "Bridge targets selected by structural resonance, not word overlap",
+          "Same WL-Hungarian algorithm used by Dream and Coupling (self-similarity)",
+          "Lexical fallback for very small subgraphs (< 3 nodes) where structural comparison is meaningless",
+          "Teach bridges become E0-native instead of string comparison"
         ],
-        "status": "DONE"
+        "status": "NOT STARTED"
       },
-      "_phase_2_migration": "Replace old system. Tests migrate in batches.",
-      "C257_dream_on_communities": {
-        "title": "Dream on Communities",
-        "what": "dream_run() gains partition='community'|'prefix' (default: community). Community mode uses detect_communities() → extract_community_landscapes() instead of prefix-based _extract_domain_landscapes(). cmd_dream supports 'dream [community|prefix] [N]'. _inject_dream_bridges fixed: node names from DreamObserver are already fully qualified, no prefix prepending needed. Cross-universe L: extraction still prefix-based (special case).",
-        "key_results": [
-          "Community mode finds equivalences between emergent clusters",
-          "11 communities discovered vs 4 prefix groups in standard landscape",
-          "_inject_dream_bridges now handles both community_ and prefix domains",
-          "Backward compat: dream 3, dream prefix 5, dream community all work",
-          "auto_run + selflearn_run inherit community default automatically"
+      "_phase_2_community_completeness": "Taught material joins the living community structure automatically.",
+      "C265_community_refresh": {
+        "title": "Automatic Community Refresh",
+        "what": "After teach_concept and selflearn_run modify the landscape, automatically re-run detect_communities(). SessionState caches current community partition (list of sets). Community membership is always current, not stale from session start. Taught nodes join communities based on their bridge topology.",
+        "key_properties": [
+          "Community partition always reflects current landscape topology",
+          "Taught nodes get community membership immediately, not on next manual detection",
+          "Refresh is incremental-friendly: LPA converges fast on small topology changes",
+          "Session stores communities as first-class state, not computed on demand"
         ],
-        "status": "DONE"
+        "status": "NOT STARTED"
       },
-      "C258_subsystems_on_communities": {
-        "title": "Sleep-Wake + Tune on Communities",
-        "what": "sleep_wake_run() and tune_run() gain partition='community'|'prefix' (default: community). _pick_community_start picks from sub-landscape directly. _transfer_community_to_session transfers by full node name matching. curriculum_run does NOT need partition (uses CurriculumRunner on canons). 38 new tests.",
-        "key_insights": [
-          "Community sub-landscapes already use full session IDs (C:omega etc) — no prefix prepending needed for transfer",
-          "_pick_community_start iterates sub-landscape states (no prefix filtering), picks lowest trace_load",
-          "curriculum_run operates on named canon structure, not landscape partitioning — excluded from migration",
-          "cmd_sleep and cmd_tune accept [community|prefix] [N] — same pattern as cmd_dream"
+      "C266_community_crossings": {
+        "title": "Navigation Crossing from Communities",
+        "what": "Replace _domain_of(source) != _domain_of(target) in navigation crossing detection with community membership check. domain_crossings in RoundHistory → community_crossings (backward compat alias). Crossing count reflects emergent community boundaries, not imposed prefix boundaries. Requires cached community partition from C265.",
+        "key_properties": [
+          "Crossing detection uses communities, not prefixes",
+          "Community crossings ≤ prefix crossings (communities can span prefix groups)",
+          "Backward compat: domain_crossings property still accessible",
+          "Cross-domain log annotation shows community IDs instead of prefix labels"
         ],
-        "status": "DONE"
+        "status": "NOT STARTED"
       },
-      "C259_diagnostics_on_communities": {
-        "title": "Diagnostics on Communities",
-        "what": "diagnose_session(), compute_trajectory(), meta_reflect() gain partition='community'|'prefix'. cmd_focus accepts community IDs (community_0, c0). Domain trends → community trends. 17 new tests.",
-        "status": "DONE"
-      },
-      "_phase_3_convergence": "Dream ↔ Coupling unification. Self-similarity restored.",
-      "C260_unified_equivalence": {
-        "title": "Unified Equivalence Mechanism",
-        "what": "find_structural_resonance(cluster_a, cluster_b) works on arbitrary landscape subsets. Dream uses it intra-landscape (community ↔ community). Coupling uses it inter-landscape (universe ↔ universe). Same algorithm, different scale. Scale-invariance test: same mechanism produces consistent results at different scales.",
-        "status": "DONE"
-      },
-      "C261_prefixes_as_display": {
-        "title": "Prefixes as Display Layer + Cleanup",
-        "what": "_DOMAIN_PREFIXES → _DISPLAY_PREFIXES (human readability only). _extract_domain_landscapes deprecated (DeprecationWarning). L: → community metadata ({taught_at: timestamp}). ask_run: community-recency preference replaces L:-preference. teach_concept stamps taught_at on injected nodes. Cross-universe dream uses taught_at metadata instead of _extract_domain_landscapes.",
-        "status": "DONE"
-      },
-      "_phase_4_completion": "Cold-start without scaffolding.",
-      "C262_cold_start_without_scaffolding": {
-        "title": "Cold Start without Scaffolding",
-        "what": "Capstone integration test: build_session() → selflearn → teach biology+physics → community detection finds natural clusters → dream finds structural resonance between communities. No prefix-based partitioning required at any step. 10 tests prove: community detection after selflearn, taught nodes join communities, resonance on community sub-landscapes, ask_run metadata preference, full pipeline zero-to-resonance, diagnose on cold-start communities.",
-        "status": "DONE"
+      "_phase_3_cleanup": "No production code path depends on prefixes for decisions.",
+      "C267_single_partition_world": {
+        "title": "Single Partition World — _domain_of Display Only",
+        "what": "Capstone: _domain_of() gets DeprecationWarning when called from production decision paths. All behavioral uses replaced by community membership (C265-C266). Display/logging uses (human-readable labels) remain valid — prefixes are display, not structure. Comprehensive verification test: exercise all production paths and confirm zero _domain_of-dependent decisions.",
+        "key_properties": [
+          "_domain_of deprecated for behavioral use, valid for display",
+          "No production decision depends on prefix identity",
+          "One partitioning mechanism at every level: community detection from R_eff",
+          "Macro (Dream, Sleep-Wake, Diagnostics) and micro (navigation, teach, crossing) converge"
+        ],
+        "status": "NOT STARTED"
       }
     },
     "impact_analysis": {
-      "structural_uses_of_prefixes": "~50 in production code",
-      "display_uses_of_prefixes": "~95 (logging, formatting, UI labels)",
-      "test_methods_affected": "40+ across 8+ test classes",
-      "critical_function": "_extract_domain_landscapes() — used by dream_run, sleep_wake_run, tune_run, curriculum integration, auto_mode",
-      "safe_subsystems": "DreamObserver.register() already name-based; CouplingRouter already universe-based; Landscape is flat (no domain field)",
-      "risk_mitigation": "Phase 1 is purely additive (no breaks). Phase 2 uses dual-mode + compat shims. NMI gate in C256 can abort arc if community detection fails."
+      "build_multidomain_landscape_callers": "build_session (cold start fallback), explore scripts, tests. Only cold start path changes default.",
+      "_create_bridges_callers": "teach_concept only. Single call site — clean replacement.",
+      "community_caching": "SessionState needs a communities field. detect_communities already exists (C255). Refresh on landscape modification.",
+      "_domain_of_behavioral_uses": "navigation crossing (~5 call sites in interactive_session.py), domain trend computation, focus command",
+      "_domain_of_display_uses": "~20 logging/formatting sites — remain valid",
+      "backward_compat": "domain_crossings alias, _domain_of still callable (with warning), include_en still accepted"
     },
     "invariants": [
-      "No test breaks before Phase 2 — Phase 1 is purely additive",
-      "5529+ tests stay green at every commit point",
+      "5710+ tests stay green at every commit point",
       "Prefixes remain as human-readable display labels — readability never lost",
-      "Every commit is independently valuable — no 'will be useful in 3 commits'",
-      "If community detection fails — visible in C256 NMI measurement, arc is reversible"
+      "Every commit is independently valuable",
+      "include_en=True still works as explicit opt-in",
+      "Warm-start sessions unaffected (already have no EN, already use seed)"
     ],
     "what_we_prove": [
-      "Historization creates structure — not labels, not semantic categories",
-      "E₀ is self-similar across scales — Dream and Coupling are the same mechanism",
-      "Domain invariance is not just theory — the system itself does not distinguish between domains",
-      "Errors surface — E₀'s own dynamics exposed the domain error (C253-C254 symptoms)"
+      "The micro level and macro level use the same partitioning mechanism",
+      "Teach creates bridges through structural resonance, not lexical matching",
+      "Communities are always current — new knowledge is immediately integrated",
+      "No production decision depends on prefix identity"
     ],
-    "previous_arc_summary": "Domain Architecture Analysis (C250–C254): Dynamic domain detection, adaptive dream compatibility, bidirectional coupling, teach-aware ask, dream backflow + bridge resistance. 54 arc tests. Fixed teach→ask disconnect, dream dead-end, bridge resistance. Discovered that domains are E₂ scaffolding, not E₀ primitives. Multiverse Integration (C245–C249): 74 tests. On-Demand Integration (C233–C244).",
-    "key_result": "Domains are an E₂ artifact imposed on E₀ machinery. Dream and CouplingRouter do the same operation (structural resonance) with different non-E₀-native partitioning. Prefix-based partitioning (C:, EN:, M:) breaks self-similarity. Community detection from R_eff restores E₀ consistency.",
+    "previous_arc_summary": "Emergent Structure (C255–C262): Community detection from R_eff, NMI validation, Dream+Sleep-Wake+Tune+Diagnostics on communities, unified structural resonance (Dream ↔ Coupling), prefixes as display layer, cold-start capstone test. 181 arc tests. Proved: Historization creates structure, not labels. Domains are E₂ artifacts. Domain Architecture Analysis (C250–C254): 54 arc tests. Multiverse Integration (C245–C249): 74 tests.",
+    "key_result": "C255-C262 proved macro-level emergence works. Post-arc audit exposed: micro level (cold start, teach, navigation) still uses prefix assumptions. Two partitioning worlds coexist. This arc converges them.",
     "open_threads": [
+      "Layer Audit (docs/E0_LAYER_AUDIT_v1.md): InscriptionContext stores higher-layer context fields — storage contamination, not yet behavioral. Tracked, not in scope.",
+      "Layer Audit: Controller back-coupling from higher layers (inscription threshold, self-graph override). Architecturally intended but weakens strict layering claim. Tracked.",
       "LLM symmetry: needed at BOTH ends — input structuring (Bootstrapper) AND output formatting",
-      "Dream edge-level equivalences not yet injected (only node-level in C254)",
-      "teach_concept L: prefix → needs community metadata migration (C261)"
+      "Dream edge-level equivalences not yet injected (only node-level in C254)"
     ],
-    "next_commit_id": "C255",
+    "next_commit_id": "C263",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
@@ -350,9 +346,9 @@
       },
       {
         "principle": "Historization is the dominant mechanism — other features add incremental value",
-        "confirmed": 5,
+        "confirmed": 6,
         "contradicted": 0,
-        "last_tested": "C191b"
+        "last_tested": "C262"
       },
       {
         "principle": "Cooperation > Competition — always check for shared knowledge first",
@@ -392,9 +388,15 @@
       },
       {
         "principle": "Domains are E₂ (instantiation), not E₀ (primitives). Structure emerges from Historization, not labels.",
-        "confirmed": 0,
+        "confirmed": 8,
         "contradicted": 0,
-        "last_tested": "C254 (identified)"
+        "last_tested": "C262"
+      },
+      {
+        "principle": "Macro migration without micro migration creates two partitioning worlds. Complete the migration at every level.",
+        "confirmed": 1,
+        "contradicted": 0,
+        "last_tested": "C262 (post-arc audit)"
       }
     ]
   },
@@ -558,6 +560,46 @@
   },
   "commit_history_recent": [
     {
+      "hash": "db2c2ae",
+      "id": "C262",
+      "title": "Cold Start without Scaffolding — capstone integration test: cold start → selflearn → teach → community detection → structural resonance → dream. 10 new tests (5710 total)"
+    },
+    {
+      "hash": "a4e570f",
+      "id": "C261",
+      "title": "Prefixes as Display Layer — _DISPLAY_PREFIXES, taught_at metadata, community-recency preference in ask_run. 13 new tests (5700 total)"
+    },
+    {
+      "hash": "aa6474c",
+      "id": "C260",
+      "title": "Unified Equivalence Mechanism — find_structural_resonance() for arbitrary landscape subsets, Dream+Coupling converge. 30 new tests (5687 total)"
+    },
+    {
+      "hash": "c988350",
+      "id": "C259",
+      "title": "Diagnostics on Communities — diagnose/trajectory/meta_reflect on community partition. 17 new tests (5657 total)"
+    },
+    {
+      "hash": "ffc777e",
+      "id": "C258",
+      "title": "Sleep-Wake + Tune on Communities — partition='community'|'prefix' default community. 38 new tests (5640 total)"
+    },
+    {
+      "hash": "fef3f73",
+      "id": "C257",
+      "title": "Dream on Communities — dream_run partition='community' default, _inject_dream_bridges fixed. 11 new tests (5602 total)"
+    },
+    {
+      "hash": "fa457c6",
+      "id": "C256",
+      "title": "Dual-Mode Validation — NMI comparison, extract_community_landscapes, prefix_partition, compare_partitions. 29 new tests (5591 total)"
+    },
+    {
+      "hash": "467330a",
+      "id": "C255",
+      "title": "Community Detection from R_eff — detect_communities() weighted LPA, emergent structure replaces prefix partitioning. 27 new tests (5562 total)"
+    },
+    {
       "hash": "0319da7",
       "id": "C254",
       "title": "Dream backflow + bridge resistance — _inject_dream_bridges injects node equivalences as cross-domain edges (R=0.35), _create_bridges R 1.2→0.4. (11 tests, 5529 total)"
@@ -668,11 +710,6 @@
       "title": "Dream-Based Causal Transfer — 4D fingerprint (q, load, I, cs) prevents false cross-domain equivalences (17 tests, 4098 total)"
     },
     {
-      "hash": "5e5c362",
-      "id": "C175",
-      "title": "Causal Binding — implicit intervention discovery, natural path alternation detects confounds (4 PASS, 1 informative FAIL)"
-    },
-    {
       "hash": "ed3eb49",
       "id": "C174",
       "title": "Self-Honesty Level 2 — avoid known-bad solves injection attacks (C: FAIL→PARTIAL, fakes 19→4, bloat 167%→67%)"
@@ -688,69 +725,9 @@
       "title": "Adversarial Stability — 3/3 FAIL, all defenses trust Outcome signal blindly"
     },
     {
-      "hash": "55e02a8",
-      "id": "C171",
-      "title": "Asymmetric Teaching exploration (Q4) — training=0, topology dominates, scoped to LLM-bootstrapped"
-    },
-    {
-      "hash": "1423a8b",
-      "id": "C170",
-      "title": "Partial structure matching (Q3) — 0% overlap, WL fingerprints too specific for subgraph matching"
-    },
-    {
-      "hash": "f0f8733",
-      "id": "C169",
-      "title": "Compatibility threshold calibration (Q1+Q2) — 36 pairs, gap=0.410, threshold 0.6 confirmed"
-    },
-    {
-      "hash": "7c3483c",
-      "id": "docs",
-      "title": "Documentation update for C167/C168/C168b"
-    },
-    {
-      "hash": "f4d487d",
-      "id": "C168b",
-      "title": "Compatibility-gated dreaming exploration — 59% edge noise, 67% node noise filtered"
-    },
-    {
-      "hash": "8398fc2",
-      "id": "C168",
-      "title": "Compatibility-gated dreaming — dream_compatibility(), is_dream_compatible(), gated DreamObserver (15 tests)"
-    },
-    {
-      "hash": "8f11ab7",
-      "id": "C167",
-      "title": "Infrastructure hardening — bootstrap.json, conftest.py, docs alignment"
-    },
-    {
-      "hash": "502413c",
-      "id": "fix",
-      "title": "CI: add scipy to dependencies, fix pyproject.toml structure, fix .gitignore encoding"
-    },
-    {
       "hash": "50e2474",
       "id": "C166b",
       "title": "LLM-derived start/goal endpoints from task description"
-    },
-    {
-      "hash": "c01c7b8",
-      "id": "C166",
-      "title": "Task-aware intents — landscape + trace data flows into UI (12 tests, 4070 total)"
-    },
-    {
-      "hash": "e4a498c",
-      "id": "C165",
-      "title": "Unified session runner — end-to-end pipeline (15 tests, 4058 total)"
-    },
-    {
-      "hash": "5c952e8",
-      "id": "C164b",
-      "title": "Live LLM pretraining (252 evals, 75% success) + progress output"
-    },
-    {
-      "hash": "44b0191",
-      "id": "C164",
-      "title": "Learnable rendering selection + LLM pretraining + memo persistence (30 tests, 4043 total)"
     },
     {
       "hash": "ce6efcc",
@@ -761,11 +738,6 @@
       "hash": "998f1f6",
       "id": "C139",
       "title": "DreamObserver + Hungarian/WL node equivalences wired into dream_cycle runtime"
-    },
-    {
-      "hash": "8822127",
-      "id": "C138a",
-      "title": "Ablation matrix — 18 configs, Hungarian+D2 dominates all"
     },
     {
       "hash": "322207c",
@@ -781,11 +753,6 @@
       "hash": "9a3a447",
       "id": "C130",
       "title": "Confidence-Weighted Edge-Role Matching — quality/load/inertia signals"
-    },
-    {
-      "hash": "a909436",
-      "id": "C128b",
-      "title": "Documentation update — results, README, architecture, test registry"
     },
     {
       "hash": "8e21e63",

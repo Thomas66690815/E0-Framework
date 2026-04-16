@@ -815,9 +815,12 @@ def build_mech_bridges(mech_info, unified_nodes) -> List[Dict]:
 
 def build_multidomain_landscape(fresh_en: bool = True, fresh_canon: bool = True,
                                 fresh_mech: bool = True,
-                                include_en: bool = True,
+                                include_en: bool = False,
                                 ) -> Tuple[Any, Dict, Dict[str, int]]:
     """Build unified Canon + Bootstrap + (optional EN) + Mechanism landscape.
+
+    C263: Default changed from include_en=True to include_en=False.
+    Cold start now matches warm start (C+B+M only). EN available as opt-in.
 
     Domains:
     - Canon (C:): Ontodynamics theory — what E₀ IS
@@ -1162,7 +1165,7 @@ def run_multidomain_cycle(
     stagnation_streak = 0
 
     # Build landscape ONCE
-    landscape, unified_nodes, stats = build_multidomain_landscape()
+    landscape, unified_nodes, stats = build_multidomain_landscape(include_en=True)
 
     if verbose:
         print(f"\n{'=' * 65}")

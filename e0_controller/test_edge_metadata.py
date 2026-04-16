@@ -230,7 +230,7 @@ class TestMultidomainMetadata:
         from e0_controller.explore_learning_cycle_multidomain import (
             build_multidomain_landscape,
         )
-        landscape, nodes, stats = build_multidomain_landscape()
+        landscape, nodes, stats = build_multidomain_landscape(include_en=True)
         return landscape, nodes, stats
 
     def test_en_bridges_have_bridge_type(self, multidomain):
