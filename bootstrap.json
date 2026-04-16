@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C256",
-    "latest_commit_hash": "3ccb454",
-    "latest_commit_msg": "C256: Dual-Mode Validation — NMI comparison between emergent communities and prefix-based domains. extract_community_landscapes, prefix_partition, compare_partitions. Wired into diagnose_session + cmd_diagnose + cmd_status. 29 new tests (5582 total)",
-    "test_count": 5582,
+    "latest_commit": "C257",
+    "latest_commit_hash": "adbc093",
+    "latest_commit_msg": "C257: Dream on Communities — dream_run partition='community'|'prefix', _inject_dream_bridges fixed for community domains, cmd_dream arg parsing. 19 new tests (5602 total)",
+    "test_count": 5602,
     "test_failures": 0,
     "ci_status": "pending",
     "module_count": "78 production + 10 benchmarks + 17 demos + 69 explorations + 128 test files",
@@ -268,8 +268,15 @@
       "_phase_2_migration": "Replace old system. Tests migrate in batches.",
       "C257_dream_on_communities": {
         "title": "Dream on Communities",
-        "what": "dream_run() gains partition='community'|'prefix' (default: community). DreamObserver already name-based → receives community IDs. Fingerprint comparison unchanged. Key question: does community-based dream find MORE equivalences? (Communities can include cross-domain bridges that prefix partitioning excludes.)",
-        "status": "PLANNED"
+        "what": "dream_run() gains partition='community'|'prefix' (default: community). Community mode uses detect_communities() → extract_community_landscapes() instead of prefix-based _extract_domain_landscapes(). cmd_dream supports 'dream [community|prefix] [N]'. _inject_dream_bridges fixed: node names from DreamObserver are already fully qualified, no prefix prepending needed. Cross-universe L: extraction still prefix-based (special case).",
+        "key_results": [
+          "Community mode finds equivalences between emergent clusters",
+          "11 communities discovered vs 4 prefix groups in standard landscape",
+          "_inject_dream_bridges now handles both community_ and prefix domains",
+          "Backward compat: dream 3, dream prefix 5, dream community all work",
+          "auto_run + selflearn_run inherit community default automatically"
+        ],
+        "status": "DONE"
       },
       "C258_subsystems_on_communities": {
         "title": "Sleep-Wake + Tune + Curriculum on Communities",

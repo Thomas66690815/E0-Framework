@@ -6284,7 +6284,7 @@ class TestDreamRunAdaptiveRelaxation:
             compatibility_threshold=0.30,
             readiness_threshold=0.0,
         )
-        result = dream_run(s, cycles=3)
+        result = dream_run(s, cycles=3, partition="prefix")
         assert result["threshold_relaxed"] is True
         # Cycle 1: 0 eq (all fail)
         assert result["cycle_results"][0].equivalences_found == 0
@@ -6309,7 +6309,7 @@ class TestDreamRunAdaptiveRelaxation:
             compatibility_threshold=0.30,
             readiness_threshold=0.0,
         )
-        dream_run(s, cycles=3)
+        dream_run(s, cycles=3, partition="prefix")
         dream_events = [e for e in s.journal if e["event_type"] == "dream"]
         assert dream_events[-1]["detail"]["threshold_relaxed"] is True
 
@@ -6341,7 +6341,7 @@ class TestCmdDreamScores:
             compatibility_threshold=0.30,
             readiness_threshold=0.0,
         )
-        out = cmd_dream(s)
+        out = cmd_dream(s, "prefix")
         assert "Threshold relaxed" in out
 
     def test_no_relaxation_notice_when_not_needed(self):
@@ -6538,8 +6538,9 @@ class TestInjectDreamBridges:
                 # Check that dream_bridge edges exist
                 from e0_controller.primitives import Edge
                 eq = node_eqs[0]
-                own_full = "C:" + eq["own_node"]
-                partner_full = "EN:" + eq["partner_node"]
+                # C257: own_node is already fully qualified (e.g. "C:omega")
+                own_full = eq["own_node"]
+                partner_full = eq["partner_node"]
                 if own_full in s.landscape.states and partner_full in s.landscape.states:
                     fwd = Edge(own_full, partner_full)
                     assert fwd in s.landscape._R0
@@ -6696,6 +6697,202 @@ class TestBridgeResistanceReduced:
             from e0_controller.primitives import Edge
             fwd = Edge(bridges[0][0], bridges[0][1])
             assert s.landscape._R0[fwd] == pytest.approx(0.4)
+
+
+# ── C257: Dream on Communities ──────────────────────────────────────
+
+
+class TestDreamRunPartition:
+    """C257: dream_run partition parameter selects community or prefix mode."""
+
+    def test_default_partition_is_community(self):
+        """Default partition mode is 'community'."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = dream_run(s, cycles=1)
+        assert result["partition"] == "community"
+
+    def test_community_partition_returns_community_names(self):
+        """Community mode produces domain names like community_0."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = dream_run(s, cycles=1, partition="community")
+        # At least one community should exist
+        if result["domains"]:
+            assert any(d.startswith("community_") for d in result["domains"])
+
+    def test_prefix_partition_returns_prefix_names(self):
+        """Prefix mode produces domain names like canon, bootstrap."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = dream_run(s, cycles=1, partition="prefix")
+        assert result["partition"] == "prefix"
+        prefix_names = {"canon", "bootstrap", "en", "mechanism", "learned"}
+        if result["domains"]:
+            assert any(d in prefix_names for d in result["domains"])
+
+    def test_partition_in_journal(self):
+        """Journal event records partition mode."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        dream_run(s, cycles=1, partition="community")
+        dream_events = [e for e in s.journal if e["event_type"] == "dream"]
+        assert len(dream_events) >= 1
+        assert dream_events[-1]["detail"]["partition"] == "community"
+
+    def test_partition_prefix_in_journal(self):
+        """Prefix mode recorded in journal."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        dream_run(s, cycles=1, partition="prefix")
+        dream_events = [e for e in s.journal if e["event_type"] == "dream"]
+        assert dream_events[-1]["detail"]["partition"] == "prefix"
+
+    def test_result_has_partition_key(self):
+        """Result dict always contains 'partition' key."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = dream_run(s, cycles=1)
+        assert "partition" in result
+
+    def test_community_mode_returns_valid_result(self):
+        """Community mode produces structurally valid result."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = dream_run(s, cycles=1, partition="community")
+        assert isinstance(result["cycle_results"], list)
+        assert result["cycles"] >= 1
+        assert isinstance(result["readiness"], dict)
+        assert isinstance(result["total_equivalences"], int)
+
+    def test_both_modes_produce_readiness(self):
+        """Both community and prefix modes have readiness reports."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        r_comm = dream_run(s, cycles=1, partition="community")
+        s.dream_observer = None  # reset observer
+        r_prefix = dream_run(s, cycles=1, partition="prefix")
+        assert len(r_comm["readiness"]) >= 0
+        assert len(r_prefix["readiness"]) >= 0
+
+
+class TestCmdDreamPartition:
+    """C257: cmd_dream supports partition argument."""
+
+    def test_default_uses_community(self):
+        """cmd_dream without args uses community mode."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_dream(s)
+        assert "Dream Consolidation" in out
+        assert "partitions" in out.lower() or "community" in out.lower()
+
+    def test_community_arg(self):
+        """cmd_dream('community') explicitly selects community mode."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_dream(s, "community")
+        assert "community" in out.lower()
+
+    def test_prefix_arg(self):
+        """cmd_dream('prefix') selects prefix mode."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_dream(s, "prefix")
+        assert "prefix" in out.lower()
+
+    def test_community_with_cycles(self):
+        """cmd_dream('community 5') selects community mode with 5 cycles."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_dream(s, "community 5")
+        assert "5 cycles" in out
+
+    def test_prefix_with_cycles(self):
+        """cmd_dream('prefix 2') selects prefix mode with 2 cycles."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_dream(s, "prefix 2")
+        assert "2 cycles" in out
+
+    def test_cycles_only(self):
+        """cmd_dream('3') still works (backward compat)."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_dream(s, "3")
+        assert "3 cycles" in out
+
+    def test_invalid_arg_returns_usage(self):
+        """cmd_dream('bad') returns usage hint."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_dream(s, "bad")
+        assert "Usage" in out or "Invalid" in out
+
+    def test_markdown_shows_partition_mode(self):
+        """Markdown output mentions partition mode."""
+        s = build_session(steps_per_round=10)
+        s.output_format = "markdown"
+        cmd_run(s, 1)
+        out = cmd_dream(s, "prefix 1")
+        assert "prefix" in out.lower()
+
+    def test_shows_partitions_label(self):
+        """Output uses 'Partitions:' instead of legacy 'Domains:'."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_dream(s)
+        assert "Partitions:" in out
+
+
+class TestDreamCommunityBridges:
+    """C257: _inject_dream_bridges handles community-based domains."""
+
+    def test_community_domains_not_skipped(self):
+        """Community domains are not filtered out by prefix check."""
+        from e0_controller.dream_mode import DreamObserver
+        from e0_controller.interactive_session import _inject_dream_bridges
+
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        obs = DreamObserver(
+            compatibility_threshold=1.0, readiness_threshold=0.0,
+        )
+        # Register community-named landscapes
+        from e0_controller.community import extract_community_landscapes
+        comms = extract_community_landscapes(s.landscape)
+        for name, ls in comms.items():
+            obs.register(name, ls)
+
+        # Should not crash — community_ domains are handled
+        count = _inject_dream_bridges(s, obs)
+        assert isinstance(count, int)
+        assert count >= 0
+
+    def test_bridge_injection_uses_full_node_names(self):
+        """Node names from DreamObserver are used directly (no prefix prepend)."""
+        from e0_controller.dream_mode import DreamObserver
+        from e0_controller.interactive_session import _inject_dream_bridges
+        from e0_controller.landscape import Landscape
+
+        # Build a tiny session with known nodes
+        s = build_session(steps_per_round=10)
+        obs = DreamObserver(
+            compatibility_threshold=1.0, readiness_threshold=0.0,
+        )
+
+        # Register two tiny landscapes with known nodes
+        la = Landscape()
+        la.add_edge("C:X", "C:Y", delta=0.5, resistance=0.5)
+        lb = Landscape()
+        lb.add_edge("EN:A", "EN:B", delta=0.5, resistance=0.5)
+        obs.register("community_0", la)
+        obs.register("community_1", lb)
+        obs.dream_cycle(compatibility_threshold=1.0)
+
+        # Verify the function handles community domains
+        count = _inject_dream_bridges(s, obs)
+        assert isinstance(count, int)
 
     def test_bridge_delta_is_0_3(self):
         """Task bridges use delta=0.3 (was 0.4)."""

@@ -3388,6 +3388,12 @@ def _inject_dream_bridges(
     DreamObserver are injected back as navigable cross-domain edges so that
     ask/navigation can traverse domain boundaries.
 
+    C257: Handles both community-based and prefix-based domains.
+    Community domains (community_0, community_1, ...) have fully qualified
+    node names already.  Prefix domains use the name→prefix mapping.
+    Node equivalences from DreamObserver always contain the original node
+    names from the sub-landscapes — which are already full landscape names.
+
     Returns the number of edges added.
     """
     from e0_controller.landscape import Edge
@@ -3397,20 +3403,22 @@ def _inject_dream_bridges(
     seen_pairs: set = set()
 
     for domain in observer.domain_names:
-        own_prefix = prefix_map.get(domain)
-        if own_prefix is None:
+        is_community = domain.startswith("community_")
+        if not is_community and prefix_map.get(domain) is None:
             continue  # cross-universe domain like "learned_test3"
 
         equivs = observer.node_equivalences_for(domain)
 
         for eq in equivs:
             partner_domain = eq["partner_domain"]
-            partner_prefix = prefix_map.get(partner_domain)
-            if partner_prefix is None:
+            is_partner_community = partner_domain.startswith("community_")
+            if not is_partner_community and prefix_map.get(partner_domain) is None:
                 continue
 
-            own_full = own_prefix + eq["own_node"]
-            partner_full = partner_prefix + eq["partner_node"]
+            # C257: node names from DreamObserver are already the full names
+            # from the sub-landscapes (e.g. "C:omega", "EN:hello")
+            own_full = eq["own_node"]
+            partner_full = eq["partner_node"]
 
             pair = tuple(sorted([own_full, partner_full]))
             if pair in seen_pairs:
@@ -3456,20 +3464,35 @@ def _get_or_create_observer(state: SessionState) -> DreamObserver:
 def dream_run(
     state: SessionState,
     cycles: int = 3,
+    partition: str = "community",
 ) -> Dict[str, Any]:
     """Run dream consolidation cycles on the session landscape.
 
-    1. Extract domain sub-landscapes from united session landscape
+    1. Extract sub-landscapes (community or prefix partitioning)
     2. Register domains with DreamObserver (refreshed each run)
     3. Run N dream cycles
     4. Record journal event
+
+    Parameters
+    ----------
+    state : SessionState
+    cycles : int
+        Number of dream cycles (default 3).
+    partition : str
+        Partitioning mode: 'community' (emergent, default) or 'prefix' (legacy).
+        Community mode uses detect_communities() from C255; prefix mode uses
+        _DOMAIN_PREFIXES grouping.
 
     Returns dict with cycle_results, total stats, readiness report.
     """
     observer = _get_or_create_observer(state)
 
-    # Extract and register domain sub-landscapes from active universe
-    domain_landscapes = _extract_domain_landscapes(state.landscape)
+    # C257: Extract sub-landscapes based on partition mode
+    if partition == "community":
+        from e0_controller.community import extract_community_landscapes
+        domain_landscapes = extract_community_landscapes(state.landscape)
+    else:
+        domain_landscapes = _extract_domain_landscapes(state.landscape)
     for name, ls in domain_landscapes.items():
         observer.register(name, ls)
 
@@ -3527,6 +3550,7 @@ def dream_run(
     # Record journal event
     record_journal_event(state, "dream", {
         "cycles": len(cycle_results),
+        "partition": partition,
         "domains_registered": list(domain_landscapes.keys()),
         "cross_universe_domains": cross_universe_domains,
         "total_equivalences": total_eq,
@@ -3542,6 +3566,7 @@ def dream_run(
     return {
         "cycle_results": cycle_results,
         "cycles": len(cycle_results),
+        "partition": partition,
         "domains": list(domain_landscapes.keys()),
         "cross_universe_domains": cross_universe_domains,
         "readiness": readiness,
@@ -3561,16 +3586,29 @@ def dream_run(
 
 
 def cmd_dream(state: SessionState, arg: Optional[str] = None) -> str:
-    """Run dream consolidation and display results."""
-    cycles = 3
-    if arg:
-        try:
-            cycles = int(arg)
-            cycles = max(1, min(cycles, 20))
-        except ValueError:
-            return f"Invalid cycle count: '{arg}'. Usage: dream [N]"
+    """Run dream consolidation and display results.
 
-    result = dream_run(state, cycles)
+    Usage: dream [community|prefix] [N]
+    Default: community mode, 3 cycles.
+    """
+    cycles = 3
+    partition = "community"
+    if arg:
+        parts = arg.strip().split()
+        for part in parts:
+            if part in ("community", "prefix"):
+                partition = part
+            else:
+                try:
+                    cycles = int(part)
+                    cycles = max(1, min(cycles, 20))
+                except ValueError:
+                    return (
+                        f"Invalid argument: '{part}'. "
+                        "Usage: dream [community|prefix] [N]"
+                    )
+
+    result = dream_run(state, cycles, partition=partition)
     md = state.output_format == "markdown"
 
     if md:
@@ -3578,8 +3616,9 @@ def cmd_dream(state: SessionState, arg: Optional[str] = None) -> str:
     else:
         lines = ["Dream Consolidation", "\u2550" * 60]
 
-    lines.append(f"  {result['cycles']} cycles across {len(result['domains'])} domains")
-    lines.append(f"  Domains: {', '.join(result['domains'])}")
+    mode_label = "community" if result["partition"] == "community" else "prefix"
+    lines.append(f"  {result['cycles']} cycles across {len(result['domains'])} {mode_label} partitions")
+    lines.append(f"  Partitions: {', '.join(result['domains'])}")
     lines.append("")
 
     # Readiness
@@ -5644,7 +5683,7 @@ E₀ Interactive Session — Commands
   journal [note]   Session journal: view events or annotate
   reflect          Meta-reflection: analyze learning patterns
   curriculum [c]   Run structured curriculum (ontodynamics, …)
-  dream [N]        Dream consolidation: cross-domain equivalences
+  dream [community|prefix] [N]        Dream consolidation: cross-domain equivalences
   sleep [N]        Wake-sleep cycle: navigate + auto-dream
   tune [N]         Self-tune parameters via Self-Graph (max N rounds)
   auto [N]         Autonomous learning loop (max N steps)
