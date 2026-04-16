@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C257",
-    "latest_commit_hash": "adbc093",
-    "latest_commit_msg": "C257: Dream on Communities — dream_run partition='community'|'prefix', _inject_dream_bridges fixed for community domains, cmd_dream arg parsing. 19 new tests (5602 total)",
-    "test_count": 5602,
+    "latest_commit": "C258",
+    "latest_commit_hash": "9319394",
+    "latest_commit_msg": "C258: Sleep-Wake + Tune on Communities — sleep_wake_run + tune_run gain partition='community'|'prefix', _pick_community_start, _transfer_community_to_session, cmd_sleep/cmd_tune arg parsing. 38 new tests (5640 total)",
+    "test_count": 5640,
     "test_failures": 0,
     "ci_status": "pending",
     "module_count": "78 production + 10 benchmarks + 17 demos + 69 explorations + 128 test files",
@@ -279,9 +279,15 @@
         "status": "DONE"
       },
       "C258_subsystems_on_communities": {
-        "title": "Sleep-Wake + Tune + Curriculum on Communities",
-        "what": "sleep_wake_run(), tune_run(), curriculum_run() migrate from _extract_domain_landscapes to _extract_community_landscapes. _pick_domain_start → _pick_community_start. Compat shim for 1 commit. ~15-20 tests migrate.",
-        "status": "PLANNED"
+        "title": "Sleep-Wake + Tune on Communities",
+        "what": "sleep_wake_run() and tune_run() gain partition='community'|'prefix' (default: community). _pick_community_start picks from sub-landscape directly. _transfer_community_to_session transfers by full node name matching. curriculum_run does NOT need partition (uses CurriculumRunner on canons). 38 new tests.",
+        "key_insights": [
+          "Community sub-landscapes already use full session IDs (C:omega etc) — no prefix prepending needed for transfer",
+          "_pick_community_start iterates sub-landscape states (no prefix filtering), picks lowest trace_load",
+          "curriculum_run operates on named canon structure, not landscape partitioning — excluded from migration",
+          "cmd_sleep and cmd_tune accept [community|prefix] [N] — same pattern as cmd_dream"
+        ],
+        "status": "DONE"
       },
       "C259_diagnostics_on_communities": {
         "title": "Diagnostics on Communities",

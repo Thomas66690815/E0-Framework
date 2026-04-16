@@ -3208,6 +3208,38 @@ def _transfer_to_session(
     return transferred
 
 
+def _transfer_community_to_session(
+    community_landscape: Any,
+    session_landscape: Any,
+) -> int:
+    """Transfer historization from community sub-landscape to session landscape.
+
+    C258: Community sub-landscapes already use the full session node IDs
+    (e.g. "C:omega", "EN:hello"), so no prefix mapping is needed.
+    Directly copies U/F traces for matching edges.
+
+    Returns the number of edges transferred.
+    """
+    src_hist = community_landscape.historization
+    tgt_hist = session_landscape.historization
+    transferred = 0
+
+    for edge in community_landscape.edges:
+        if session_landscape.has_edge(edge.source, edge.target):
+            U = src_hist._U.get(edge, 0.0)
+            F = src_hist._F.get(edge, 0.0)
+            if U > 0 or F > 0:
+                for se in session_landscape.edges:
+                    if se.source == edge.source and se.target == edge.target:
+                        tgt_hist._U[se] = tgt_hist._U.get(se, 0.0) + U
+                        tgt_hist._F[se] = tgt_hist._F.get(se, 0.0) + F
+                        tgt_hist._tau_last[se] = tgt_hist._tau
+                        transferred += 1
+                        break
+
+    return transferred
+
+
 def curriculum_run(
     state: SessionState,
     canon_name: str = "ontodynamics",
@@ -3718,31 +3750,62 @@ def _pick_domain_start(landscape: Any, domain_prefix: str) -> Optional[str]:
     return best_node
 
 
+def _pick_community_start(sub_landscape: Any) -> Optional[str]:
+    """Pick a start node from a community sub-landscape.
+
+    C258: Community sub-landscapes already contain only their own nodes,
+    so no prefix filtering is needed.  Prefers the node with lowest
+    trace_load (least explored).
+    """
+    best_node = None
+    best_load = float("inf")
+    hist = sub_landscape.historization
+    for state_name in sub_landscape.states:
+        load = 0.0
+        for edge in sub_landscape.edges:
+            if edge.source == state_name:
+                load += hist.trace_load(edge)
+        if load < best_load:
+            best_load = load
+            best_node = state_name
+    return best_node
+
+
 def sleep_wake_run(
     state: SessionState,
     episodes: int = 5,
     max_cycles: int = 30,
+    partition: str = "community",
 ) -> Dict[str, Any]:
     """Run a sleep-wake cycle on the session landscape.
 
     Combines wake (per-domain E0Controller navigation) with sleep
     (DreamObserver consolidation when T_s > μ).
 
-    1. Extract domain sub-landscapes
-    2. Create E0Controller per domain
+    1. Extract sub-landscapes (community or prefix partitioning)
+    2. Create E0Controller per partition
     3. Create/reuse DreamObserver, register domains
     4. Set up SleepWakeCycle, register controllers
     5. Run N episodes
     6. Transfer learned historization back to session landscape
     7. Record journal event
 
+    Parameters
+    ----------
+    partition : str
+        'community' (default) or 'prefix' (legacy).
+
     Returns result dict with episode_results, pressure_report, summary.
     """
     from e0_controller.controller import E0Controller
     from e0_controller.structural_entropy import structural_temperature
 
-    # Extract domain sub-landscapes
-    domain_landscapes = _extract_domain_landscapes(state.landscape)
+    # C258: Extract sub-landscapes based on partition mode
+    if partition == "community":
+        from e0_controller.community import extract_community_landscapes
+        domain_landscapes = extract_community_landscapes(state.landscape)
+    else:
+        domain_landscapes = _extract_domain_landscapes(state.landscape)
 
     # Create/reuse DreamObserver
     observer = _get_or_create_observer(state)
@@ -3758,8 +3821,11 @@ def sleep_wake_run(
     for name, ls in domain_landscapes.items():
         ctrl = E0Controller(ls, lambda s, t: Outcome.SUCCESS,
                             inscription_threshold=True)
-        prefix = prefix_map.get(name, "")
-        start = _pick_domain_start(state.landscape, prefix)
+        if partition == "community":
+            start = _pick_community_start(ls)
+        else:
+            prefix = prefix_map.get(name, "")
+            start = _pick_domain_start(state.landscape, prefix)
         if start is None and ls.states:
             start = next(iter(ls.states))
         if start is not None:
@@ -3774,11 +3840,17 @@ def sleep_wake_run(
 
     # Transfer historization back to session landscape
     total_transferred = 0
-    for name, ls in domain_landscapes.items():
-        prefix = prefix_map.get(name, "")
-        if prefix:
-            transferred = _transfer_to_session(ls, state.landscape, prefix)
-            total_transferred += transferred
+    if partition == "community":
+        for name, ls in domain_landscapes.items():
+            total_transferred += _transfer_community_to_session(
+                ls, state.landscape,
+            )
+    else:
+        for name, ls in domain_landscapes.items():
+            prefix = prefix_map.get(name, "")
+            if prefix:
+                transferred = _transfer_to_session(ls, state.landscape, prefix)
+                total_transferred += transferred
 
     # Pressure report
     pressure = swc.pressure_report()
@@ -3797,6 +3869,7 @@ def sleep_wake_run(
     # Record journal event
     record_journal_event(state, "sleep_wake", {
         "episodes": episodes,
+        "partition": partition,
         "domains": list(domain_landscapes.keys()),
         "sleep_phases": sleep_count,
         "total_steps": total_steps,
@@ -3807,6 +3880,7 @@ def sleep_wake_run(
     return {
         "episode_results": episode_results,
         "episodes": episodes,
+        "partition": partition,
         "domains": list(domain_landscapes.keys()),
         "sleep_count": sleep_count,
         "total_steps": total_steps,
@@ -3818,18 +3892,32 @@ def sleep_wake_run(
 
 
 def cmd_sleep(state: SessionState, arg: Optional[str] = None) -> str:
-    """Run sleep-wake episodes and display results."""
-    episodes = 5
-    if arg:
-        try:
-            episodes = int(arg)
-            episodes = max(1, min(episodes, 50))
-        except ValueError:
-            return f"Invalid episode count: '{arg}'. Usage: sleep [N]"
+    """Run sleep-wake episodes and display results.
 
-    result = sleep_wake_run(state, episodes)
+    Usage: sleep [community|prefix] [N]
+    Default: community mode, 5 episodes.
+    """
+    episodes = 5
+    partition = "community"
+    if arg:
+        parts = arg.strip().split()
+        for part in parts:
+            if part in ("community", "prefix"):
+                partition = part
+            else:
+                try:
+                    episodes = int(part)
+                    episodes = max(1, min(episodes, 50))
+                except ValueError:
+                    return (
+                        f"Invalid argument: '{part}'. "
+                        "Usage: sleep [community|prefix] [N]"
+                    )
+
+    result = sleep_wake_run(state, episodes, partition=partition)
     md = state.output_format == "markdown"
 
+    mode_label = result["partition"]
     if md:
         lines = ["## Sleep-Wake Cycle", ""]
     else:
@@ -3837,9 +3925,9 @@ def cmd_sleep(state: SessionState, arg: Optional[str] = None) -> str:
 
     lines.append(
         f"  {result['episodes']} episodes across "
-        f"{len(result['domains'])} domains"
+        f"{len(result['domains'])} {mode_label} partitions"
     )
-    lines.append(f"  Domains: {', '.join(result['domains'])}")
+    lines.append(f"  Partitions: {', '.join(result['domains'])}")
     lines.append("")
 
     # Episode summary
@@ -3903,30 +3991,41 @@ def cmd_sleep(state: SessionState, arg: Optional[str] = None) -> str:
 def tune_run(
     state: SessionState,
     max_rounds: int = 3,
+    partition: str = "community",
 ) -> Dict[str, Any]:
-    """Run auto-tuning on each domain sub-landscape.
+    """Run auto-tuning on each sub-landscape.
 
-    For each domain: extract sub-landscape, build E0Controller,
+    For each partition: extract sub-landscape, build E0Controller,
     run auto_tune() (Self-Graph diagnosis → perturbation → evaluation),
-    collect results. If any domain improves, reports the best config
-    changes found.
+    collect results.
 
-    Uses meta_reflect patterns to add context about what's problematic.
+    Parameters
+    ----------
+    partition : str
+        'community' (default) or 'prefix' (legacy).
 
-    Returns dict with per-domain tuning results, patterns from
+    Returns dict with per-partition tuning results, patterns from
     meta_reflect, and overall improvement summary.
     """
     from e0_controller.controller import E0Controller
 
-    domain_landscapes = _extract_domain_landscapes(state.landscape)
+    # C258: partition mode
+    if partition == "community":
+        from e0_controller.community import extract_community_landscapes
+        domain_landscapes = extract_community_landscapes(state.landscape)
+    else:
+        domain_landscapes = _extract_domain_landscapes(state.landscape)
     prefix_map = {v: k for k, v in _DOMAIN_PREFIXES.items()}
 
     domain_results: List[Dict[str, Any]] = []
     any_improved = False
 
     for name, ls in domain_landscapes.items():
-        prefix = prefix_map.get(name, "")
-        start = _pick_domain_start(state.landscape, prefix)
+        if partition == "community":
+            start = _pick_community_start(ls)
+        else:
+            prefix = prefix_map.get(name, "")
+            start = _pick_domain_start(state.landscape, prefix)
         if start is None and ls.states:
             start = next(iter(ls.states))
         if start is None:
@@ -3980,6 +4079,7 @@ def tune_run(
         "domains_improved": len(improved_domains),
         "improved_names": improved_domains,
         "max_rounds": max_rounds,
+        "partition": partition,
         "total_trials": sum(d["trials"] for d in domain_results),
     })
 
@@ -3987,35 +4087,50 @@ def tune_run(
         "domain_results": domain_results,
         "any_improved": any_improved,
         "improved_count": len(improved_domains),
+        "partition": partition,
         "patterns": patterns,
     }
 
 
 def cmd_tune(state: SessionState, arg: Optional[str] = None) -> str:
-    """Self-tune E₀ parameters via Self-Graph diagnosis."""
-    max_rounds = 3
-    if arg:
-        try:
-            max_rounds = int(arg)
-            max_rounds = max(1, min(max_rounds, 10))
-        except ValueError:
-            return f"Invalid round count: '{arg}'. Usage: tune [N]"
+    """Self-tune E₀ parameters via Self-Graph diagnosis.
 
-    result = tune_run(state, max_rounds)
+    Usage: tune [community|prefix] [N]
+    Default: community mode, 3 rounds.
+    """
+    max_rounds = 3
+    partition = "community"
+    if arg:
+        parts = arg.strip().split()
+        for part in parts:
+            if part in ("community", "prefix"):
+                partition = part
+            else:
+                try:
+                    max_rounds = int(part)
+                    max_rounds = max(1, min(max_rounds, 10))
+                except ValueError:
+                    return (
+                        f"Invalid argument: '{part}'. "
+                        "Usage: tune [community|prefix] [N]"
+                    )
+
+    result = tune_run(state, max_rounds, partition=partition)
     md = state.output_format == "markdown"
 
+    mode_label = result["partition"]
     if md:
         lines = ["## Auto-Tune", ""]
     else:
         lines = ["Auto-Tune", "\u2550" * 60]
 
     if not result["domain_results"]:
-        lines.append("  No domains with reachable nodes to tune.")
+        lines.append(f"  No {mode_label} partitions with reachable nodes to tune.")
         return "\n".join(lines)
 
     lines.append(
-        f"  {len(result['domain_results'])} domains, "
-        f"max {max_rounds} rounds per domain"
+        f"  {len(result['domain_results'])} {mode_label} partitions, "
+        f"max {max_rounds} rounds per partition"
     )
     lines.append("")
 
@@ -5684,8 +5799,8 @@ E₀ Interactive Session — Commands
   reflect          Meta-reflection: analyze learning patterns
   curriculum [c]   Run structured curriculum (ontodynamics, …)
   dream [community|prefix] [N]        Dream consolidation: cross-domain equivalences
-  sleep [N]        Wake-sleep cycle: navigate + auto-dream
-  tune [N]         Self-tune parameters via Self-Graph (max N rounds)
+  sleep [community|prefix] [N]        Wake-sleep cycle: navigate + auto-dream
+  tune [community|prefix] [N]         Self-tune parameters via Self-Graph (max N rounds)
   auto [N]         Autonomous learning loop (max N steps)
   selflearn        Self-learn: E₀ learns itself first (canon → mechanism → dream)
   ask <question>   On-demand Q&A: assess → gap-detect → learn → answer

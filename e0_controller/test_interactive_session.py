@@ -63,6 +63,8 @@ from e0_controller.interactive_session import (
     _task_known_path,
     _task_navigate,
     _extract_domain_landscapes,
+    _pick_community_start,
+    _transfer_community_to_session,
     build_session,
     cmd_auto,
     cmd_curriculum,
@@ -6905,3 +6907,361 @@ class TestDreamCommunityBridges:
             from e0_controller.primitives import Edge
             fwd = Edge(bridges[0][0], bridges[0][1])
             assert s.landscape._delta[fwd] == pytest.approx(0.3)
+
+
+# ── C258: Sleep-Wake + Tune on Communities ──────────────────────────
+
+
+class TestSleepWakePartition:
+    """C258: sleep_wake_run partition parameter selects community or prefix mode."""
+
+    def test_default_partition_is_community(self):
+        """Default partition mode is 'community'."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = sleep_wake_run(s, episodes=1, max_cycles=10)
+        assert result["partition"] == "community"
+
+    def test_community_partition_returns_community_names(self):
+        """Community mode produces domain names like community_0."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = sleep_wake_run(s, episodes=1, max_cycles=10, partition="community")
+        if result["domains"]:
+            assert any(d.startswith("community_") for d in result["domains"])
+
+    def test_prefix_partition_returns_prefix_names(self):
+        """Prefix mode produces domain names like canon, bootstrap."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = sleep_wake_run(s, episodes=1, max_cycles=10, partition="prefix")
+        assert result["partition"] == "prefix"
+        prefix_names = {"canon", "bootstrap", "en", "mechanism", "learned"}
+        if result["domains"]:
+            assert any(d in prefix_names for d in result["domains"])
+
+    def test_partition_in_journal(self):
+        """Journal event records partition mode."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        sleep_wake_run(s, episodes=1, max_cycles=10, partition="community")
+        events = [e for e in s.journal if e["event_type"] == "sleep_wake"]
+        assert len(events) >= 1
+        assert events[-1]["detail"]["partition"] == "community"
+
+    def test_partition_prefix_in_journal(self):
+        """Prefix mode recorded in journal."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        sleep_wake_run(s, episodes=1, max_cycles=10, partition="prefix")
+        events = [e for e in s.journal if e["event_type"] == "sleep_wake"]
+        assert events[-1]["detail"]["partition"] == "prefix"
+
+    def test_result_has_partition_key(self):
+        """Result dict always contains 'partition' key."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = sleep_wake_run(s, episodes=1, max_cycles=10)
+        assert "partition" in result
+
+    def test_community_mode_valid_result(self):
+        """Community mode produces structurally valid result."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = sleep_wake_run(s, episodes=1, max_cycles=10, partition="community")
+        assert isinstance(result["episode_results"], list)
+        assert result["episodes"] == 1
+        assert isinstance(result["transferred_edges"], int)
+        assert isinstance(result["pressure"], dict)
+
+    def test_both_modes_produce_pressure(self):
+        """Both community and prefix modes have pressure reports."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        r_comm = sleep_wake_run(s, episodes=1, max_cycles=10, partition="community")
+        s.dream_observer = None
+        r_prefix = sleep_wake_run(s, episodes=1, max_cycles=10, partition="prefix")
+        assert len(r_comm["pressure"]) >= 0
+        assert len(r_prefix["pressure"]) >= 0
+
+
+class TestCmdSleepPartition:
+    """C258: cmd_sleep supports partition argument."""
+
+    def test_default_uses_community(self):
+        """cmd_sleep without args uses community mode."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_sleep(s)
+        assert "Sleep-Wake Cycle" in out
+        assert "partitions" in out.lower() or "community" in out.lower()
+
+    def test_community_arg(self):
+        """cmd_sleep('community') explicitly selects community mode."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_sleep(s, "community")
+        assert "community" in out.lower()
+
+    def test_prefix_arg(self):
+        """cmd_sleep('prefix') selects prefix mode."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_sleep(s, "prefix")
+        assert "prefix" in out.lower()
+
+    def test_community_with_episodes(self):
+        """cmd_sleep('community 3') selects community mode with 3 episodes."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_sleep(s, "community 3")
+        assert "3 episodes" in out
+
+    def test_prefix_with_episodes(self):
+        """cmd_sleep('prefix 2') selects prefix mode with 2 episodes."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_sleep(s, "prefix 2")
+        assert "2 episodes" in out
+
+    def test_episodes_only_backward_compat(self):
+        """cmd_sleep('3') still works (backward compat)."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_sleep(s, "3")
+        assert "3 episodes" in out
+
+    def test_invalid_arg_returns_usage(self):
+        """cmd_sleep('bad') returns usage hint."""
+        s = build_session(steps_per_round=10)
+        out = cmd_sleep(s, "bad")
+        assert "Usage" in out or "Invalid" in out
+
+    def test_dispatch_sleep_community(self):
+        """dispatch('sleep community 2') works."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = dispatch(s, "sleep community 2")
+        assert "Sleep-Wake Cycle" in out
+
+    def test_dispatch_sleep_prefix(self):
+        """dispatch('sleep prefix') works."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = dispatch(s, "sleep prefix")
+        assert "Sleep-Wake Cycle" in out
+
+
+class TestTunePartition:
+    """C258: tune_run partition parameter selects community or prefix mode."""
+
+    def test_default_partition_is_community(self):
+        """Default partition mode is 'community'."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = tune_run(s, max_rounds=1)
+        assert result["partition"] == "community"
+
+    def test_community_partition_returns_community_names(self):
+        """Community mode produces domain names like community_0."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = tune_run(s, max_rounds=1, partition="community")
+        if result["domain_results"]:
+            assert any(
+                dr["domain"].startswith("community_")
+                for dr in result["domain_results"]
+            )
+
+    def test_prefix_partition_returns_prefix_names(self):
+        """Prefix mode produces domain names like canon, bootstrap."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = tune_run(s, max_rounds=1, partition="prefix")
+        assert result["partition"] == "prefix"
+        prefix_names = {"canon", "bootstrap", "en", "mechanism", "learned"}
+        if result["domain_results"]:
+            assert any(
+                dr["domain"] in prefix_names
+                for dr in result["domain_results"]
+            )
+
+    def test_partition_in_journal(self):
+        """Journal event records partition mode."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        tune_run(s, max_rounds=1, partition="community")
+        events = [e for e in s.journal if e["event_type"] == "tune"]
+        assert len(events) >= 1
+        assert events[-1]["detail"]["partition"] == "community"
+
+    def test_partition_prefix_in_journal(self):
+        """Prefix mode recorded in journal."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        tune_run(s, max_rounds=1, partition="prefix")
+        events = [e for e in s.journal if e["event_type"] == "tune"]
+        assert events[-1]["detail"]["partition"] == "prefix"
+
+    def test_result_has_partition_key(self):
+        """Result dict always contains 'partition' key."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = tune_run(s, max_rounds=1)
+        assert "partition" in result
+
+    def test_community_mode_valid_result(self):
+        """Community mode produces structurally valid result."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        result = tune_run(s, max_rounds=1, partition="community")
+        assert isinstance(result["domain_results"], list)
+        assert isinstance(result["any_improved"], bool)
+        assert isinstance(result["improved_count"], int)
+
+
+class TestCmdTunePartition:
+    """C258: cmd_tune supports partition argument."""
+
+    def test_default_uses_community(self):
+        """cmd_tune without args uses community mode."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_tune(s)
+        assert "Auto-Tune" in out
+        assert "partitions" in out.lower() or "community" in out.lower()
+
+    def test_community_arg(self):
+        """cmd_tune('community') explicitly selects community mode."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_tune(s, "community")
+        assert "community" in out.lower()
+
+    def test_prefix_arg(self):
+        """cmd_tune('prefix') selects prefix mode."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_tune(s, "prefix")
+        assert "prefix" in out.lower()
+
+    def test_community_with_rounds(self):
+        """cmd_tune('community 2') selects community mode with 2 rounds."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_tune(s, "community 2")
+        assert "2 rounds" in out
+
+    def test_rounds_only_backward_compat(self):
+        """cmd_tune('2') still works (backward compat)."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = cmd_tune(s, "2")
+        assert "2 rounds" in out
+
+    def test_invalid_arg_returns_usage(self):
+        """cmd_tune('bad') returns usage hint."""
+        s = build_session(steps_per_round=10)
+        out = cmd_tune(s, "bad")
+        assert "Usage" in out or "Invalid" in out
+
+    def test_dispatch_tune_community(self):
+        """dispatch('tune community 1') works."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = dispatch(s, "tune community 1")
+        assert "Auto-Tune" in out
+
+    def test_dispatch_tune_prefix(self):
+        """dispatch('tune prefix') works."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        out = dispatch(s, "tune prefix")
+        assert "Auto-Tune" in out
+
+
+class TestPickCommunityStart:
+    """C258: _pick_community_start picks lowest trace_load node."""
+
+    def test_returns_node_from_sublangscape(self):
+        """Returns a node name that exists in the sub-landscape."""
+        from e0_controller.landscape import Landscape
+        ls = Landscape()
+        ls.add_edge("C:A", "C:B", delta=0.5, resistance=0.5)
+        ls.add_edge("C:B", "C:C", delta=0.5, resistance=0.5)
+        start = _pick_community_start(ls)
+        assert start in ls.states
+
+    def test_prefers_lowest_trace_load(self):
+        """Picks the node with lowest outgoing trace_load."""
+        from e0_controller.landscape import Landscape
+        ls = Landscape()
+        ls.add_edge("X", "Y", delta=0.5, resistance=0.5)
+        ls.add_edge("Y", "Z", delta=0.5, resistance=0.5)
+        # Add trace to X→Y so X has higher load
+        from e0_controller.primitives import Edge
+        e = Edge("X", "Y")
+        ls.historization._U[e] = 5.0
+        start = _pick_community_start(ls)
+        # Y or Z should be preferred (lower load)
+        assert start in ("Y", "Z")
+
+    def test_empty_landscape_returns_none(self):
+        """Empty landscape returns None."""
+        from e0_controller.landscape import Landscape
+        ls = Landscape()
+        assert _pick_community_start(ls) is None
+
+
+class TestTransferCommunityToSession:
+    """C258: _transfer_community_to_session transfers by full node names."""
+
+    def test_transfers_matching_edges(self):
+        """Edges with matching full names are transferred."""
+        from e0_controller.landscape import Landscape
+        from e0_controller.primitives import Edge
+
+        sub = Landscape()
+        sub.add_edge("C:A", "C:B", delta=0.5, resistance=0.5)
+        e_sub = Edge("C:A", "C:B")
+        sub.historization._U[e_sub] = 3.0
+        sub.historization._F[e_sub] = 1.0
+
+        session = Landscape()
+        session.add_edge("C:A", "C:B", delta=0.5, resistance=0.5)
+        session.add_edge("EN:X", "EN:Y", delta=0.5, resistance=0.5)
+
+        count = _transfer_community_to_session(sub, session)
+        assert count == 1
+        # Session edge should have the transferred values
+        e_sess = Edge("C:A", "C:B")
+        assert session.historization._U.get(e_sess, 0.0) >= 3.0
+
+    def test_no_transfer_for_missing_edges(self):
+        """Edges not present in session are not transferred."""
+        from e0_controller.landscape import Landscape
+        from e0_controller.primitives import Edge
+
+        sub = Landscape()
+        sub.add_edge("C:X", "C:Y", delta=0.5, resistance=0.5)
+        e_sub = Edge("C:X", "C:Y")
+        sub.historization._U[e_sub] = 2.0
+
+        session = Landscape()
+        session.add_edge("C:A", "C:B", delta=0.5, resistance=0.5)
+
+        count = _transfer_community_to_session(sub, session)
+        assert count == 0
+
+    def test_zero_traces_not_transferred(self):
+        """Edges with zero U and F are not transferred."""
+        from e0_controller.landscape import Landscape
+
+        sub = Landscape()
+        sub.add_edge("C:A", "C:B", delta=0.5, resistance=0.5)
+
+        session = Landscape()
+        session.add_edge("C:A", "C:B", delta=0.5, resistance=0.5)
+
+        count = _transfer_community_to_session(sub, session)
+        assert count == 0
