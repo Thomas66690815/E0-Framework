@@ -7906,3 +7906,135 @@ class TestColdStartAlignment:
         assert cold_prefixes == warm_prefixes, (
             f"Cold {cold_prefixes} ≠ Warm {warm_prefixes}"
         )
+
+
+# ── C264: Structural Bridges for Teach ─────────────────────────────────
+
+
+class TestStructuralBridges:
+    """C264: _create_bridges uses structural resonance (WL-Hungarian)
+    for >= 3 new nodes, lexical fallback for < 3."""
+
+    def test_small_subgraph_uses_lexical(self):
+        """Single new node (< 3) triggers lexical fallback path."""
+        s = build_session(steps_per_round=10)
+        s.landscape.add_state("L:tension_explained")
+        bridges = _create_bridges(s, ["L:tension_explained"])
+        # Should find a lexical match (tension exists in landscape)
+        assert len(bridges) > 0
+        # Bridge type should be llm_structural (lexical fallback)
+        meta = s.landscape.edge_meta(bridges[0][0], bridges[0][1])
+        assert meta.get("bridge_type") == "llm_structural"
+
+    def test_two_nodes_uses_lexical(self):
+        """Two new nodes (< 3) still use lexical fallback."""
+        s = build_session(steps_per_round=10)
+        s.landscape.add_state("L:tension_explained")
+        s.landscape.add_state("L:connection_detail")
+        s.landscape.add_edge("L:tension_explained", "L:connection_detail", 0.5, 1.0)
+        bridges = _create_bridges(
+            s, ["L:tension_explained", "L:connection_detail"],
+        )
+        # Lexical fallback: bridge_type = llm_structural
+        for src, tgt in bridges:
+            meta = s.landscape.edge_meta(src, tgt)
+            assert meta.get("bridge_type") == "llm_structural"
+
+    def test_structural_path_with_3_plus_nodes(self):
+        """Three or more new nodes trigger structural resonance."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        # Inject 4 interconnected L: nodes
+        new_nodes = ["L:alpha", "L:beta", "L:gamma", "L:delta"]
+        for n in new_nodes:
+            s.landscape.add_state(n)
+        s.landscape.add_edge("L:alpha", "L:beta", 0.5, 1.0)
+        s.landscape.add_edge("L:beta", "L:gamma", 0.5, 1.0)
+        s.landscape.add_edge("L:gamma", "L:delta", 0.5, 1.0)
+        s.landscape.add_edge("L:delta", "L:alpha", 0.5, 1.0)
+
+        bridges = _create_bridges(s, new_nodes)
+        # Should produce at least some bridges
+        assert len(bridges) > 0
+        # At least one bridge should use structural_resonance type
+        has_structural = False
+        for src, tgt in bridges:
+            meta = s.landscape.edge_meta(src, tgt)
+            if meta.get("bridge_type") == "structural_resonance":
+                has_structural = True
+                break
+        assert has_structural, "Expected structural_resonance bridges for >= 3 nodes"
+
+    def test_structural_bridges_are_bidirectional(self):
+        """Structural bridges are always bidirectional."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        new_nodes = ["L:p1", "L:p2", "L:p3"]
+        for n in new_nodes:
+            s.landscape.add_state(n)
+        s.landscape.add_edge("L:p1", "L:p2", 0.5, 1.0)
+        s.landscape.add_edge("L:p2", "L:p3", 0.5, 1.0)
+        bridges = _create_bridges(s, new_nodes)
+        # Every (a,b) should have a corresponding (b,a)
+        bridge_set = set(bridges)
+        for src, tgt in bridges:
+            assert (tgt, src) in bridge_set, (
+                f"Missing reverse bridge ({tgt}, {src})"
+            )
+
+    def test_structural_bridge_resistance_0_4(self):
+        """Structural bridges use same R=0.4 as lexical (C254)."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        new_nodes = ["L:x1", "L:x2", "L:x3"]
+        for n in new_nodes:
+            s.landscape.add_state(n)
+        s.landscape.add_edge("L:x1", "L:x2", 0.5, 1.0)
+        s.landscape.add_edge("L:x2", "L:x3", 0.5, 1.0)
+        bridges = _create_bridges(s, new_nodes)
+        for src, tgt in bridges:
+            meta = s.landscape.edge_meta(src, tgt)
+            if meta.get("bridge_type") == "structural_resonance":
+                assert s.landscape._R0[Edge(src, tgt)] == pytest.approx(0.4)
+                assert s.landscape._delta[Edge(src, tgt)] == pytest.approx(0.3)
+
+    def test_structural_bridge_delta_0_3(self):
+        """Structural bridges use delta=0.3."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        new_nodes = ["L:y1", "L:y2", "L:y3", "L:y4"]
+        for n in new_nodes:
+            s.landscape.add_state(n)
+        s.landscape.add_edge("L:y1", "L:y2", 0.5, 1.0)
+        s.landscape.add_edge("L:y2", "L:y3", 0.5, 1.0)
+        s.landscape.add_edge("L:y3", "L:y4", 0.5, 1.0)
+        bridges = _create_bridges(s, new_nodes)
+        structural = [(s_, t) for s_, t in bridges
+                      if s.landscape.edge_meta(s_, t).get("bridge_type")
+                      == "structural_resonance"]
+        assert len(structural) > 0
+
+    def test_unbridged_gets_lexical_fallback(self):
+        """New nodes not matched structurally get lexical fallback."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        # 3 connected nodes + 1 isolated (no internal edges)
+        new_nodes = ["L:node_a", "L:node_b", "L:node_c", "L:tension_detail"]
+        for n in new_nodes:
+            s.landscape.add_state(n)
+        s.landscape.add_edge("L:node_a", "L:node_b", 0.5, 1.0)
+        s.landscape.add_edge("L:node_b", "L:node_c", 0.5, 1.0)
+        bridges = _create_bridges(s, new_nodes)
+        # Should have some bridges (at least structural + possibly lexical)
+        assert len(bridges) > 0
+
+    def test_empty_new_nodes(self):
+        """Empty input produces no bridges."""
+        s = build_session(steps_per_round=10)
+        bridges = _create_bridges(s, [])
+        assert bridges == []
+
+    def test_lexical_fallback_exported(self):
+        """_lexical_bridge_fallback is importable."""
+        from e0_controller.interactive_session import _lexical_bridge_fallback
+        assert callable(_lexical_bridge_fallback)

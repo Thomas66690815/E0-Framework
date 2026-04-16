@@ -136,7 +136,9 @@ from e0_controller.communication import (
     detect_round_intents,
 )
 from e0_controller.curriculum import CurriculumRunner, transfer_historization
-from e0_controller.dream_mode import DreamCycleResult, DreamObserver
+from e0_controller.dream_mode import (
+    DreamCycleResult, DreamObserver, find_structural_resonance,
+)
 from e0_controller.sleep_wake import EpisodeResult, SleepWakeCycle
 from e0_controller.parameter_sensitivity import (
     AutoTuneResult, apply_config, auto_tune,
@@ -163,6 +165,7 @@ from e0_controller.feedback import (
 )
 from e0_controller.perception import PerceptionDomain, build_perception_domain
 from e0_controller.primitives import Edge, Outcome
+from e0_controller.landscape import Landscape
 from e0_controller.ui_emitter import UISpec
 from e0_controller.coupling_router import (
     CouplingRouter,
@@ -1983,11 +1986,93 @@ def _create_bridges(
 ) -> List[Tuple[str, str]]:
     """Connect new LLM-generated nodes to existing landscape structure.
 
-    For each new node, finds the closest existing node by concept overlap
-    and creates a bidirectional bridge edge.
+    C264: Uses structural resonance (WL-Hungarian) to find where new
+    knowledge fits topologically. Falls back to lexical matching for
+    very small subgraphs (< 3 nodes) where structural comparison is
+    meaningless.
     """
     bridges: List[Tuple[str, str]] = []
-    existing = [n for n in state.landscape.states if not n.startswith("T:")]
+    if not new_nodes:
+        return bridges
+
+    existing = [n for n in state.landscape.states if n not in set(new_nodes)]
+
+    # --- Build mini-landscape from new nodes ---
+    new_set = set(new_nodes)
+    new_landscape = Landscape()
+    for n in new_nodes:
+        new_landscape.add_state(n)
+    for edge in state.landscape.edges:
+        if edge.source in new_set and edge.target in new_set:
+            new_landscape.add_edge(
+                edge.source, edge.target,
+                state.landscape._delta[edge],
+                state.landscape._R0[edge],
+            )
+
+    # --- Structural resonance path (>= 3 new nodes) ---
+    if len(new_nodes) >= 3:
+        # Build existing-only landscape for comparison
+        existing_landscape = Landscape()
+        existing_set = set(existing)
+        for n in existing:
+            existing_landscape.add_state(n)
+        for edge in state.landscape.edges:
+            if edge.source in existing_set and edge.target in existing_set:
+                existing_landscape.add_edge(
+                    edge.source, edge.target,
+                    state.landscape._delta[edge],
+                    state.landscape._R0[edge],
+                )
+
+        resonance = find_structural_resonance(
+            new_landscape, existing_landscape,
+            domain_a="new", domain_b="existing",
+            depth=2,
+        )
+
+        bridged_new = set()
+        for eq in resonance.node_equivalences:
+            new_id = eq.node_a
+            match_id = eq.node_b
+            if new_id in bridged_new:
+                continue
+            if eq.distance < 0.8:  # reasonable match threshold
+                state.landscape.add_edge(
+                    new_id, match_id, 0.3, 0.4,
+                    relation_type="task_bridge",
+                    bridge_type="structural_resonance",
+                )
+                state.landscape.add_edge(
+                    match_id, new_id, 0.3, 0.4,
+                    relation_type="task_bridge",
+                    bridge_type="structural_resonance",
+                )
+                bridges.append((new_id, match_id))
+                bridges.append((match_id, new_id))
+                bridged_new.add(new_id)
+
+        # Any unbridged new nodes get lexical fallback
+        unbridged = [n for n in new_nodes if n not in bridged_new]
+        if unbridged:
+            bridges.extend(_lexical_bridge_fallback(state, unbridged, existing))
+        return bridges
+
+    # --- Lexical fallback for tiny subgraphs (< 3 nodes) ---
+    return _lexical_bridge_fallback(state, new_nodes, existing)
+
+
+def _lexical_bridge_fallback(
+    state: SessionState,
+    new_nodes: List[str],
+    existing: List[str],
+) -> List[Tuple[str, str]]:
+    """Lexical word-overlap bridging for small subgraphs.
+
+    Pre-C264 default behaviour, kept as fallback when structural
+    comparison is meaningless (< 3 nodes).
+    """
+    bridges: List[Tuple[str, str]] = []
 
     for new_id in new_nodes:
         concept = new_id.split(":", 1)[1].lower() if ":" in new_id else new_id.lower()
@@ -2017,7 +2102,6 @@ def _create_bridges(
                 best_match = existing_id
 
         if best_match and best_score > 0:
-            # Bidirectional bridge — C254: reduced resistance for traversability
             state.landscape.add_edge(
                 new_id, best_match, 0.3, 0.4,
                 relation_type="task_bridge", bridge_type="llm_structural",

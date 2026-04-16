@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C263",
+    "latest_commit": "C264",
     "latest_commit_hash": "0f91a39",
-    "latest_commit_msg": "C263: Cold Start Alignment — include_en=False default. Cold start matches warm start (C+B+M only). EN available as opt-in. 7 new tests (5719 total)",
-    "test_count": 5719,
+    "latest_commit_msg": "C264: Structural Bridges for Teach — _create_bridges uses find_structural_resonance (WL-Hungarian) for >=3 new nodes, lexical fallback for <3. bridge_type=structural_resonance. 9 new tests (5728 total)",
+    "test_count": 5728,
     "test_failures": 0,
     "ci_status": "pending",
     "module_count": "78 production + 10 benchmarks + 17 demos + 69 explorations + 129 test files",
@@ -269,7 +269,7 @@
           "Lexical fallback for very small subgraphs (< 3 nodes) where structural comparison is meaningless",
           "Teach bridges become E0-native instead of string comparison"
         ],
-        "status": "NOT STARTED"
+        "status": "DONE"
       },
       "_phase_2_community_completeness": "Taught material joins the living community structure automatically.",
       "C265_community_refresh": {
