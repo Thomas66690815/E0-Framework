@@ -150,6 +150,7 @@ from e0_controller.explore_learning_cycle_multidomain import (
     MultiDomainRoundResult,
     assess,
     build_multidomain_landscape,
+    community_of,
     communicate_round,
     communicate_summary,
     consolidate,
@@ -265,6 +266,7 @@ def cmd_run(state: SessionState, n: int = 1) -> str:
         start = _pick_start_node(state.landscape, state.unified_nodes, mode)
         nav = navigate(
             state.landscape, state.unified_nodes, mode, steps, start=start,
+            communities=state.communities,
         )
 
         # Validate
@@ -291,6 +293,7 @@ def cmd_run(state: SessionState, n: int = 1) -> str:
             en_bootstrap_crossings=nav["en_bootstrap_crossings"],
             canon_bootstrap_crossings=nav["canon_bootstrap_crossings"],
             type_usage=nav.get("type_usage", {}),
+            community_crossings=nav["community_crossings"],
         )
         state.history.append(result)
 
@@ -637,7 +640,7 @@ def cmd_why(state: SessionState) -> str:
         f"Outcome:",
         f"  Coverage:   {a.coverage:.1%} → {result_a.coverage:.1%} "
         f"(Δ={last.coverage_delta:+.1%})",
-        f"  Crossings:  {last.domain_crossings} "
+        f"  Crossings:  {last.community_crossings} "
         f"({last.crossing_rate:.0%} of steps)",
         f"  New edges:  {last.new_edges}",
     ])
@@ -798,6 +801,7 @@ def compute_trajectory(
             "T_s_delta": r.T_s_delta,
             "mode": r.mode,
             "domain_crossings": r.domain_crossings,
+            "community_crossings": r.community_crossings,
             "frontier_size": a.frontier_size,
             "new_edges": r.new_edges,
             "steps": r.steps,
@@ -909,7 +913,7 @@ def cmd_trajectory(state: SessionState) -> str:
         ts = f"{rd['T_s']:.3f}"
         dts = f"{rd['T_s_delta']:+.3f}"
         mode = rd["mode"][:10]
-        cross = str(rd["domain_crossings"])
+        cross = str(rd.get("community_crossings", rd["domain_crossings"]))
         front = str(rd["frontier_size"])
 
         if md:
@@ -1319,6 +1323,7 @@ def _escalate_focus_shift(
     nav = navigate(
         state.landscape, state.unified_nodes,
         "explore", state.steps_per_round, start=start,
+        communities=state.communities,
     )
     validate_confidence(nav["path"])
 
@@ -1343,6 +1348,7 @@ def _escalate_exploration_boost(
     nav = navigate(
         state.landscape, state.unified_nodes,
         "explore", boosted_steps, start=start,
+        communities=state.communities,
     )
     validate_confidence(nav["path"])
 
@@ -1419,6 +1425,7 @@ def _escalate_bridge_creation(
     nav = navigate(
         state.landscape, state.unified_nodes,
         "explore", state.steps_per_round, start=start,
+        communities=state.communities,
     )
     validate_confidence(nav["path"])
     a_after = assess(state.landscape, state.unified_nodes)
@@ -1484,6 +1491,7 @@ def _escalate_edge_proposal(
     nav = navigate(
         state.landscape, state.unified_nodes,
         "explore", state.steps_per_round, start=start,
+        communities=state.communities,
     )
     validate_confidence(nav["path"])
     a_after = assess(state.landscape, state.unified_nodes)
@@ -1634,7 +1642,7 @@ def cmd_detail(state: SessionState, round_num: Optional[int] = None) -> str:
         f"Round {result.round_num} — Transition Detail",
         f"{'─' * 60}",
         f"  Mode: {result.mode} · {result.steps} steps · "
-        f"{result.domain_crossings} crossings",
+        f"{result.community_crossings} crossings",
         "",
     ]
 
@@ -1643,7 +1651,7 @@ def cmd_detail(state: SessionState, round_num: Optional[int] = None) -> str:
         lines = [
             f"## Round {result.round_num} — Transition Detail",
             f"Mode: {result.mode} · {result.steps} steps · "
-            f"{result.domain_crossings} crossings",
+            f"{result.community_crossings} crossings",
             "",
             "| # | Transition | Cross | Quality | Load | Inertia | Type |",
             "|---|-----------|-------|---------|------|---------|------|",
@@ -1658,7 +1666,9 @@ def cmd_detail(state: SessionState, round_num: Optional[int] = None) -> str:
         meta = state.landscape.edge_meta(src, tgt)
         rel_type = meta.get("relation_type", "")
         bridge = meta.get("bridge_type", "")
-        cross = _domain_of(src) != _domain_of(tgt)
+        cross = (community_of(src, state.communities) != community_of(tgt, state.communities)
+                 if state.communities
+                 else _domain_of(src) != _domain_of(tgt))
 
         type_label = rel_type or bridge or "—"
         cross_label = "✗" if cross else ""
@@ -1682,15 +1692,24 @@ def cmd_detail(state: SessionState, round_num: Optional[int] = None) -> str:
                 f"  {type_label}"
             )
 
-    # Summary line
+    # Summary line — C266: use community membership when available
     lines.append("")
-    crossings = sum(
-        1 for i in range(len(path) - 1)
-        if _domain_of(path[i]) != _domain_of(path[i + 1])
-    )
-    lines.append(
-        f"  {len(path) - 1} transitions, {crossings} domain crossings"
-    )
+    if state.communities:
+        crossings = sum(
+            1 for i in range(len(path) - 1)
+            if community_of(path[i], state.communities) != community_of(path[i + 1], state.communities)
+        )
+        lines.append(
+            f"  {len(path) - 1} transitions, {crossings} community crossings"
+        )
+    else:
+        crossings = sum(
+            1 for i in range(len(path) - 1)
+            if _domain_of(path[i]) != _domain_of(path[i + 1])
+        )
+        lines.append(
+            f"  {len(path) - 1} transitions, {crossings} domain crossings"
+        )
 
     return "\n".join(lines)
 
@@ -2200,6 +2219,7 @@ def _llm_peer_structure(state: SessionState, text: str) -> str:
             state.landscape, state.unified_nodes,
             "explore", state.steps_per_round,
             start=anchor,
+            communities=state.communities,
         )
         validate_confidence(nav["path"])
         a_after = assess(state.landscape, state.unified_nodes)
@@ -2223,6 +2243,7 @@ def _llm_peer_structure(state: SessionState, text: str) -> str:
             en_bootstrap_crossings=nav["en_bootstrap_crossings"],
             canon_bootstrap_crossings=nav["canon_bootstrap_crossings"],
             type_usage=nav.get("type_usage", {}),
+            community_crossings=nav["community_crossings"],
         )
         state.history.append(result)
         consolidate(result, nav["new_edges"], dry_run=True,
@@ -2236,7 +2257,7 @@ def _llm_peer_structure(state: SessionState, text: str) -> str:
         lines.append(f"  Anchor: {anchor}")
         lines.append(
             f"  Steps: {nav['steps']}  "
-            f"Crossings: {nav['domain_crossings']}"
+            f"Crossings: {nav['community_crossings']}"
         )
         lines.append(
             f"  Coverage: {a_before.coverage:.1%} → {a_after.coverage:.1%} "
@@ -2551,6 +2572,7 @@ def teach_concept(
             nav = navigate(
                 state.landscape, state.unified_nodes,
                 "explore", state.steps_per_round, start=anchor,
+                communities=state.communities,
             )
             validate_confidence(nav["path"])
 
@@ -2578,11 +2600,12 @@ def teach_concept(
                 en_bootstrap_crossings=nav["en_bootstrap_crossings"],
                 canon_bootstrap_crossings=nav["canon_bootstrap_crossings"],
                 type_usage=nav.get("type_usage", {}),
+                community_crossings=nav["community_crossings"],
             )
             state.history.append(result)
             consolidate(result, nav["new_edges"], dry_run=False,
                         universe=state.active_universe)
-            total_crossings += nav["domain_crossings"]
+            total_crossings += nav["community_crossings"]
             explore_rounds += 1
 
             if coverage_delta <= 0.001:
@@ -2720,7 +2743,7 @@ def cmd_teach(state: SessionState, text: str) -> str:
     lines.append("")
     lines.append(
         f"  Exploration: {result['rounds_run']} passes, "
-        f"{result['domain_crossings']} domain crossings"
+        f"{result['domain_crossings']} community crossings"
     )
     lines.append(
         f"  Coverage: {result['coverage_before']:.1%} → "
@@ -5391,6 +5414,7 @@ def _task_navigate(
         state.landscape, state.unified_nodes,
         "explore", state.steps_per_round,
         start=anchor,
+        communities=state.communities,
     )
     validate_confidence(nav["path"])
     a_after = assess(state.landscape, state.unified_nodes)
@@ -5414,6 +5438,7 @@ def _task_navigate(
         en_bootstrap_crossings=nav["en_bootstrap_crossings"],
         canon_bootstrap_crossings=nav["canon_bootstrap_crossings"],
         type_usage=nav.get("type_usage", {}),
+        community_crossings=nav["community_crossings"],
     )
     state.history.append(result)
     consolidate(result, nav["new_edges"], dry_run=True,
@@ -5427,7 +5452,7 @@ def _task_navigate(
     lines = [
         f"  Anchor: {anchor}",
         f"  Steps: {nav['steps']}  "
-        f"Crossings: {nav['domain_crossings']}",
+        f"Crossings: {nav['community_crossings']}",
         f"  Coverage: {a_before.coverage:.1%} → {a_after.coverage:.1%} "
         f"(Δ={coverage_delta:+.1%})",
     ]

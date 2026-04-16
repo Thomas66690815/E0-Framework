@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C265",
-    "latest_commit_hash": "0f91a39",
-    "latest_commit_msg": "C265: Automatic Community Refresh — communities cached on SessionState, refreshed after build_session/cmd_run/teach/selflearn. 7 new tests (5735 total)",
-    "test_count": 5735,
+    "latest_commit": "C266",
+    "latest_commit_hash": "fdb145e",
+    "latest_commit_msg": "C266: Community Crossings — navigate() uses community membership for crossing detection, community_of() helper, crossing_rate from community boundaries, 10 new tests (5745 total)",
+    "test_count": 5745,
     "test_failures": 0,
     "ci_status": "pending",
     "module_count": "78 production + 10 benchmarks + 17 demos + 69 explorations + 129 test files",
@@ -292,7 +292,7 @@
           "Backward compat: domain_crossings property still accessible",
           "Cross-domain log annotation shows community IDs instead of prefix labels"
         ],
-        "status": "NOT STARTED"
+        "status": "DONE"
       },
       "_phase_3_cleanup": "No production code path depends on prefixes for decisions.",
       "C267_single_partition_world": {

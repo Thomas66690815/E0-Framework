@@ -8134,3 +8134,102 @@ class TestCommunityRefresh:
         assert isinstance(s.communities, list)
         for c in s.communities:
             assert isinstance(c, set)
+
+
+class TestCommunityCrossings:
+    """C266: Navigation crossing detection uses community membership
+    instead of prefix-based _domain_of(). Two nodes cross a boundary
+    when they belong to different communities."""
+
+    def test_community_of_finds_membership(self):
+        """community_of returns correct index for known nodes."""
+        from e0_controller.explore_learning_cycle_multidomain import community_of
+        communities = [{"A", "B", "C"}, {"D", "E"}, {"F"}]
+        assert community_of("A", communities) == 0
+        assert community_of("D", communities) == 1
+        assert community_of("F", communities) == 2
+
+    def test_community_of_returns_neg1_for_unknown(self):
+        """community_of returns -1 for nodes not in any community."""
+        from e0_controller.explore_learning_cycle_multidomain import community_of
+        communities = [{"A", "B"}]
+        assert community_of("Z", communities) == -1
+
+    def test_community_of_empty_communities(self):
+        """community_of handles empty community list."""
+        from e0_controller.explore_learning_cycle_multidomain import community_of
+        assert community_of("A", []) == -1
+
+    def test_navigate_returns_community_crossings(self):
+        """navigate() result includes community_crossings key."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)  # populate some history
+        from e0_controller.explore_learning_cycle_multidomain import navigate
+        nav = navigate(
+            s.landscape, s.unified_nodes, "explore", 10,
+            start="B:HERE", communities=s.communities,
+        )
+        assert "community_crossings" in nav
+        assert "domain_crossings" in nav  # backward compat
+        assert isinstance(nav["community_crossings"], int)
+        assert nav["community_crossings"] >= 0
+
+    def test_community_crossings_le_domain_crossings(self):
+        """Community crossings <= prefix crossings (communities can span prefix groups)."""
+        s = build_session(steps_per_round=20)
+        from e0_controller.explore_learning_cycle_multidomain import navigate
+        nav = navigate(
+            s.landscape, s.unified_nodes, "explore", 20,
+            start="B:HERE", communities=s.communities,
+        )
+        assert nav["community_crossings"] <= nav["domain_crossings"]
+
+    def test_no_communities_fallback(self):
+        """Without communities, community_crossings equals domain_crossings."""
+        s = build_session(steps_per_round=10)
+        from e0_controller.explore_learning_cycle_multidomain import navigate
+        nav = navigate(
+            s.landscape, s.unified_nodes, "explore", 10,
+            start="B:HERE",
+        )
+        assert nav["community_crossings"] == nav["domain_crossings"]
+
+    def test_crossing_rate_uses_community(self):
+        """crossing_rate is computed from community_crossings, not domain_crossings."""
+        s = build_session(steps_per_round=10)
+        from e0_controller.explore_learning_cycle_multidomain import navigate
+        nav = navigate(
+            s.landscape, s.unified_nodes, "explore", 10,
+            start="B:HERE", communities=s.communities,
+        )
+        steps = nav["steps"]
+        if steps > 0:
+            expected_rate = nav["community_crossings"] / steps
+            assert abs(nav["crossing_rate"] - expected_rate) < 1e-9
+
+    def test_round_result_has_community_crossings(self):
+        """MultiDomainRoundResult stores community_crossings."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        assert len(s.history) >= 1
+        r = s.history[-1]
+        assert hasattr(r, "community_crossings")
+        assert isinstance(r.community_crossings, int)
+        assert r.community_crossings >= 0
+
+    def test_cmd_detail_uses_community_label(self):
+        """cmd_detail path summary says 'community crossings' when communities exist."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        output = cmd_detail(s)
+        # With communities available, should say 'community crossings'
+        assert "community crossings" in output or "0 community" in output
+
+    def test_same_community_no_crossing(self):
+        """Two nodes in the same community do not count as a crossing."""
+        from e0_controller.explore_learning_cycle_multidomain import community_of
+        communities = [{"A", "B", "C"}, {"D", "E"}]
+        # A and B in same community
+        assert community_of("A", communities) == community_of("B", communities)
+        # A and D in different communities
+        assert community_of("A", communities) != community_of("D", communities)

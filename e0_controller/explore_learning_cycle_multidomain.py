@@ -201,6 +201,8 @@ class MultiDomainRoundResult:
     mech_canon_crossings: int = 0
     mech_bootstrap_crossings: int = 0
     mech_en_crossings: int = 0
+    # C266: Community-based crossing count (≤ domain_crossings)
+    community_crossings: int = 0
 
 
 # ── Phase 1: ASSESS ────────────────────────────────────────────────────
@@ -375,6 +377,18 @@ def _domain_of(node_id: str) -> str:
         return "unknown"
 
 
+def community_of(node: str, communities: List[Set[str]]) -> int:
+    """Return index of the community containing *node*, or -1 if not found.
+
+    C266: Community-based crossing detection.  Two nodes cross a boundary
+    when they belong to different communities (different return values).
+    """
+    for idx, comm in enumerate(communities):
+        if node in comm:
+            return idx
+    return -1
+
+
 def _edge_type_bonus(landscape, source: str, target: str) -> float:
     """Compute multiplicative bonus from edge metadata (C206).
 
@@ -424,8 +438,16 @@ def _pick_start_node(landscape, unified_nodes, mode: str) -> str:
 
 
 def navigate(landscape, unified_nodes, mode: str, steps: int,
-             start: str = "B:HERE") -> Dict[str, Any]:
-    """Navigate with 3-domain crossing tracking and exploration bonus."""
+             start: str = "B:HERE",
+             communities: Optional[List[Set[str]]] = None) -> Dict[str, Any]:
+    """Navigate with crossing tracking and exploration bonus.
+
+    C266: When *communities* is provided, crossing detection uses community
+    membership instead of prefix-based ``_domain_of()``.  Two nodes cross a
+    boundary when ``community_of(src, communities) != community_of(tgt, communities)``.
+    Prefix-based pair counts (en_canon, etc.) are only populated when using
+    prefix mode (communities is None).
+    """
     hist = landscape.historization
 
     globally_visited = set()
@@ -437,9 +459,13 @@ def navigate(landscape, unified_nodes, mode: str, steps: int,
     current = start
     path = [current]
     visited_count: Dict[str, int] = {}
+    # C266: use community membership for crossing detection when available
+    use_communities = communities is not None and len(communities) > 0
+
     crossings = {"en_canon": 0, "en_bootstrap": 0, "canon_bootstrap": 0,
                   "mech_canon": 0, "mech_bootstrap": 0, "mech_en": 0}
     total_crossings = 0
+    community_crossings = 0  # C266: community-based crossing count
     type_usage: Dict[str, int] = {}  # C206: track which edge types were chosen
 
     for step in range(steps):
@@ -453,16 +479,26 @@ def navigate(landscape, unified_nodes, mode: str, steps: int,
 
         # Apply exploration bonus + type-aware scoring (C206)
         scored = {}
-        cur_domain = _domain_of(current)
+        # C266: cross-boundary bonus uses communities when available
+        if use_communities:
+            cur_comm = community_of(current, communities)
+        else:
+            cur_domain = _domain_of(current)
         for nbr, tp in potentials.items():
             # 2× for globally unvisited
             bonus = 2.0 if nbr not in globally_visited else 1.0
-            # 1.5× for cross-domain (encourages bridge usage)
-            nbr_domain = _domain_of(nbr)
-            if nbr_domain != cur_domain:
+            # 1.5× for cross-boundary (encourages bridge usage)
+            if use_communities:
+                nbr_comm = community_of(nbr, communities)
+                is_crossing = cur_comm != nbr_comm
+            else:
+                nbr_domain = _domain_of(nbr)
+                is_crossing = nbr_domain != cur_domain
+            if is_crossing:
                 bonus *= 1.5
             # In explore_en mode, extra bonus for EN territory
-            if mode == "explore_en" and nbr_domain == "en":
+            nbr_domain_for_en = _domain_of(nbr)
+            if mode == "explore_en" and nbr_domain_for_en == "en":
                 bonus *= 1.3
             # C206: relation-type and bridge-type bonus
             bonus *= _edge_type_bonus(landscape, current, nbr)
@@ -481,24 +517,51 @@ def navigate(landscape, unified_nodes, mode: str, steps: int,
             if val:
                 type_usage[val] = type_usage.get(val, 0) + 1
 
-        # Track crossing type
-        src_domain = _domain_of(current)
-        tgt_domain = _domain_of(nbr)
-        if src_domain != tgt_domain:
-            total_crossings += 1
-            pair = tuple(sorted([src_domain, tgt_domain]))
-            if pair == ("canon", "en"):
-                crossings["en_canon"] += 1
-            elif pair == ("bootstrap", "en"):
-                crossings["en_bootstrap"] += 1
-            elif pair == ("bootstrap", "canon"):
-                crossings["canon_bootstrap"] += 1
-            elif pair == ("canon", "mechanism"):
-                crossings["mech_canon"] += 1
-            elif pair == ("bootstrap", "mechanism"):
-                crossings["mech_bootstrap"] += 1
-            elif pair == ("en", "mechanism"):
-                crossings["mech_en"] += 1
+        # Track crossing — C266: community-based when available
+        if use_communities:
+            src_comm = community_of(current, communities)
+            tgt_comm = community_of(nbr, communities)
+            is_cross = src_comm != tgt_comm
+            if is_cross:
+                community_crossings += 1
+            # Also track prefix crossings for backward compat reporting
+            src_domain = _domain_of(current)
+            tgt_domain = _domain_of(nbr)
+            if src_domain != tgt_domain:
+                total_crossings += 1
+                pair = tuple(sorted([src_domain, tgt_domain]))
+                if pair == ("canon", "en"):
+                    crossings["en_canon"] += 1
+                elif pair == ("bootstrap", "en"):
+                    crossings["en_bootstrap"] += 1
+                elif pair == ("bootstrap", "canon"):
+                    crossings["canon_bootstrap"] += 1
+                elif pair == ("canon", "mechanism"):
+                    crossings["mech_canon"] += 1
+                elif pair == ("bootstrap", "mechanism"):
+                    crossings["mech_bootstrap"] += 1
+                elif pair == ("en", "mechanism"):
+                    crossings["mech_en"] += 1
+        else:
+            src_domain = _domain_of(current)
+            tgt_domain = _domain_of(nbr)
+            is_cross = src_domain != tgt_domain
+            if is_cross:
+                total_crossings += 1
+                pair = tuple(sorted([src_domain, tgt_domain]))
+                if pair == ("canon", "en"):
+                    crossings["en_canon"] += 1
+                elif pair == ("bootstrap", "en"):
+                    crossings["en_bootstrap"] += 1
+                elif pair == ("bootstrap", "canon"):
+                    crossings["canon_bootstrap"] += 1
+                elif pair == ("canon", "mechanism"):
+                    crossings["mech_canon"] += 1
+                elif pair == ("bootstrap", "mechanism"):
+                    crossings["mech_bootstrap"] += 1
+                elif pair == ("en", "mechanism"):
+                    crossings["mech_en"] += 1
+                community_crossings = total_crossings  # no communities → same as prefix
 
         # Historize with contextual inscription (C207)
         if landscape.has_edge(current, nbr):
@@ -512,22 +575,26 @@ def navigate(landscape, unified_nodes, mode: str, steps: int,
             else:
                 outcome = Outcome.SUCCESS
 
-            # C207: classify traversal role
+            # C207/C266: classify traversal role using crossing flag
             rc = visited_count.get(nbr, 0)
-            if src_domain != tgt_domain:
+            if is_cross:
                 role = "bridge"
             elif rc > 0:
                 role = "revisit"
             else:
                 role = "exploration"
 
+            # source/target domain for inscription (display, always prefix)
+            src_domain_log = _domain_of(current)
+            tgt_domain_log = _domain_of(nbr)
+
             landscape.historization.inscribe(
                 edge, outcome,
                 mode=mode,
                 relation_type=meta.get("relation_type", ""),
                 bridge_type=meta.get("bridge_type", ""),
-                source_domain=src_domain,
-                target_domain=tgt_domain,
+                source_domain=src_domain_log,
+                target_domain=tgt_domain_log,
                 role=role,
                 revisit_count=rc,
                 step=step,
@@ -543,8 +610,9 @@ def navigate(landscape, unified_nodes, mode: str, steps: int,
     return {
         "path": path,
         "steps": len(path) - 1,
-        "domain_crossings": total_crossings,
-        "crossing_rate": total_crossings / max(1, len(path) - 1),
+        "community_crossings": community_crossings,
+        "domain_crossings": total_crossings,  # backward compat (prefix-based)
+        "crossing_rate": community_crossings / max(1, len(path) - 1),
         "en_canon_crossings": crossings["en_canon"],
         "en_bootstrap_crossings": crossings["en_bootstrap"],
         "canon_bootstrap_crossings": crossings["canon_bootstrap"],
