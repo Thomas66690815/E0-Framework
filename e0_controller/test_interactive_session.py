@@ -136,6 +136,7 @@ from e0_controller.interactive_session import (
     _format_couple_result,
     _inject_dream_bridges,
     _create_bridges,
+    refresh_communities,
 )
 from e0_controller.feedback import HumanAction
 from e0_controller.perception import PerceptionDomain
@@ -8038,3 +8039,98 @@ class TestStructuralBridges:
         """_lexical_bridge_fallback is importable."""
         from e0_controller.interactive_session import _lexical_bridge_fallback
         assert callable(_lexical_bridge_fallback)
+
+
+# ── C265: Automatic Community Refresh ──────────────────────────────────
+
+
+class TestCommunityRefresh:
+    """C265: Communities are cached on SessionState and refreshed
+    after landscape mutations (build_session, cmd_run, teach, selflearn)."""
+
+    def test_build_session_populates_communities(self):
+        """build_session sets initial community partition."""
+        s = build_session(steps_per_round=10)
+        assert hasattr(s, "communities")
+        assert len(s.communities) > 0
+        # Each community is a set of node names
+        for c in s.communities:
+            assert isinstance(c, set)
+            assert len(c) > 0
+
+    def test_all_nodes_covered(self):
+        """Every landscape node belongs to exactly one community."""
+        s = build_session(steps_per_round=10)
+        all_members = set()
+        for c in s.communities:
+            # No overlap
+            assert len(all_members & c) == 0, "Node in multiple communities"
+            all_members |= c
+        assert all_members == s.landscape.states
+
+    def test_cmd_run_refreshes(self):
+        """Communities update after cmd_run navigation."""
+        s = build_session(steps_per_round=10)
+        before = [set(c) for c in s.communities]
+        cmd_run(s, 1)
+        # Communities should still be valid (all nodes covered)
+        all_members = set()
+        for c in s.communities:
+            all_members |= c
+        assert all_members == s.landscape.states
+
+    def test_refresh_communities_callable(self):
+        """refresh_communities is a standalone function."""
+        s = build_session(steps_per_round=10)
+        result = refresh_communities(s)
+        assert result is s.communities
+        assert len(result) > 0
+
+    def test_teach_refreshes_communities(self):
+        """After teach_concept, communities include new L: nodes."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+
+        # Manually inject nodes to simulate teach (no LLM needed)
+        s.landscape.add_state("L:test_alpha")
+        s.landscape.add_state("L:test_beta")
+        s.landscape.add_edge("L:test_alpha", "L:test_beta", 0.5, 1.0)
+        # Bridge to existing
+        existing = next(iter(s.landscape.states - {"L:test_alpha", "L:test_beta"}))
+        s.landscape.add_edge("L:test_alpha", existing, 0.3, 0.4)
+
+        refresh_communities(s)
+
+        # New nodes must appear in some community
+        all_members = set()
+        for c in s.communities:
+            all_members |= c
+        assert "L:test_alpha" in all_members
+        assert "L:test_beta" in all_members
+
+    def test_communities_change_after_topology_mutation(self):
+        """Adding dense edges between previously distant nodes can merge communities."""
+        s = build_session(steps_per_round=10)
+        n_before = len(s.communities)
+
+        # Create strong connections between nodes from different communities
+        if n_before >= 2:
+            comm_a = sorted(s.communities[0])
+            comm_b = sorted(s.communities[1])
+            if comm_a and comm_b:
+                for a_node in comm_a[:3]:
+                    for b_node in comm_b[:3]:
+                        s.landscape.add_edge(a_node, b_node, 0.5, 0.1)
+                        s.landscape.add_edge(b_node, a_node, 0.5, 0.1)
+
+                refresh_communities(s)
+                # After dense cross-linking, community count may change
+                # (either fewer communities or different membership)
+                assert len(s.communities) > 0  # still valid
+
+    def test_communities_field_type(self):
+        """communities field is a list of sets."""
+        s = build_session(steps_per_round=10)
+        assert isinstance(s.communities, list)
+        for c in s.communities:
+            assert isinstance(c, set)

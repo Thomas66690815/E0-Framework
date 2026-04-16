@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C264",
+    "latest_commit": "C265",
     "latest_commit_hash": "0f91a39",
-    "latest_commit_msg": "C264: Structural Bridges for Teach — _create_bridges uses find_structural_resonance (WL-Hungarian) for >=3 new nodes, lexical fallback for <3. bridge_type=structural_resonance. 9 new tests (5728 total)",
-    "test_count": 5728,
+    "latest_commit_msg": "C265: Automatic Community Refresh — communities cached on SessionState, refreshed after build_session/cmd_run/teach/selflearn. 7 new tests (5735 total)",
+    "test_count": 5735,
     "test_failures": 0,
     "ci_status": "pending",
     "module_count": "78 production + 10 benchmarks + 17 demos + 69 explorations + 129 test files",
@@ -281,7 +281,7 @@
           "Refresh is incremental-friendly: LPA converges fast on small topology changes",
           "Session stores communities as first-class state, not computed on demand"
         ],
-        "status": "NOT STARTED"
+        "status": "DONE"
       },
       "C266_community_crossings": {
         "title": "Navigation Crossing from Communities",

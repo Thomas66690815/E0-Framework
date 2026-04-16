@@ -139,6 +139,7 @@ from e0_controller.curriculum import CurriculumRunner, transfer_historization
 from e0_controller.dream_mode import (
     DreamCycleResult, DreamObserver, find_structural_resonance,
 )
+from e0_controller.community import detect_communities
 from e0_controller.sleep_wake import EpisodeResult, SleepWakeCycle
 from e0_controller.parameter_sensitivity import (
     AutoTuneResult, apply_config, auto_tune,
@@ -222,6 +223,18 @@ class SessionState:
     # C245: Multiverse support — multiple isolated E₀ universes
     universes: Dict[str, UniverseState] = field(default_factory=dict)
     active_universe: str = "main"
+    # C265: Cached community partition — refreshed after landscape mutations
+    communities: List = field(default_factory=list)
+
+
+def refresh_communities(state: SessionState) -> List:
+    """Re-detect communities from current landscape topology.
+
+    C265: Called after any landscape mutation (cmd_run, teach_concept,
+    selflearn_run) so cached communities always reflect current state.
+    """
+    state.communities = detect_communities(state.landscape)
+    return state.communities
 
 
 # ── Commands ───────────────────────────────────────────────────────────
@@ -321,6 +334,9 @@ def cmd_run(state: SessionState, n: int = 1) -> str:
             output_format=state.output_format,
         )
         parts.append(text)
+
+    # C265: Refresh community partition after navigation
+    refresh_communities(state)
 
     return "\n".join(parts)
 
@@ -2598,6 +2614,9 @@ def teach_concept(
 
     a_end = assess(state.landscape, state.unified_nodes)
 
+    # C265: Refresh community partition after teaching
+    refresh_communities(state)
+
     return {
         "nodes_added": all_nodes,
         "edges_added": all_edges,
@@ -4775,6 +4794,9 @@ def selflearn_run(state: SessionState) -> Dict[str, Any]:
         "mastery_ready": mastery["ready"],
     })
 
+    # C265: Refresh community partition after self-learning
+    refresh_communities(state)
+
     return {
         "phases": phases,
         "dream": dream_result,
@@ -6534,6 +6556,9 @@ def build_session(
 
     # Journal: record session start (C231)
     record_journal_event(state, "session_start")
+
+    # C265: Compute initial community partition
+    refresh_communities(state)
 
     return state
 
