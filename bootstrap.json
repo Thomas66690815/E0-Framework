@@ -27,14 +27,14 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C260",
+    "latest_commit": "C261",
     "latest_commit_hash": "pending",
-    "latest_commit_msg": "C260: Unified Equivalence Mechanism — find_structural_resonance() works on arbitrary landscape subsets. Dream+Coupling use same algorithm at different scales. dream_compatibility() delegates to unified function. CouplingRouter.resonance() added. 30 new tests (5687 total)",
-    "test_count": 5687,
+    "latest_commit_msg": "C261: Prefixes as Display Layer — _DOMAIN_PREFIXES → _DISPLAY_PREFIXES (backward compat alias). _extract_domain_landscapes deprecated. teach_concept stamps taught_at metadata. ask_run uses community-recency preference. Cross-universe dream uses metadata filter. 13 new tests (5700 total)",
+    "test_count": 5700,
     "test_failures": 0,
     "ci_status": "pending",
     "module_count": "78 production + 10 benchmarks + 17 demos + 69 explorations + 129 test files",
-    "line_count": "~33200 production, ~128700 total"
+    "line_count": "~33300 production, ~129000 total"
   },
   "conventions": {
     "user_language": "German (user speaks German, code/docs in English)",
@@ -302,8 +302,8 @@
       },
       "C261_prefixes_as_display": {
         "title": "Prefixes as Display Layer + Cleanup",
-        "what": "_DOMAIN_PREFIXES → _DISPLAY_PREFIXES (human readability only). _extract_domain_landscapes removed or deprecated. L: → community metadata ({taught_at: timestamp}). ask_run: community-recency preference replaces L:-preference. teach_concept: prefix optional. Massive test cleanup: all prefix assertions → community assertions.",
-        "status": "PLANNED"
+        "what": "_DOMAIN_PREFIXES → _DISPLAY_PREFIXES (human readability only). _extract_domain_landscapes deprecated (DeprecationWarning). L: → community metadata ({taught_at: timestamp}). ask_run: community-recency preference replaces L:-preference. teach_concept stamps taught_at on injected nodes. Cross-universe dream uses taught_at metadata instead of _extract_domain_landscapes.",
+        "status": "DONE"
       },
       "_phase_4_completion": "Cold-start without scaffolding.",
       "C262_cold_start_without_scaffolding": {

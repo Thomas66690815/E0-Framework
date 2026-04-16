@@ -2426,6 +2426,13 @@ def teach_concept(
         new_nodes, new_edges = _inject_spec_into_landscape(
             state, spec, prefix="L:",
         )
+        # C261: Stamp taught_at metadata on newly injected nodes.
+        # This enables community-recency preference (replacing L: prefix check)
+        # and cross-universe discovery without prefix-based filtering.
+        _now = time.time()
+        for nid in new_nodes:
+            if nid in state.unified_nodes:
+                state.unified_nodes[nid]["taught_at"] = _now
         all_nodes.extend(new_nodes)
         all_edges.extend(new_edges)
 
@@ -3456,11 +3463,14 @@ def cmd_curriculum(state: SessionState, arg: Optional[str] = None) -> str:
 
 # ── Dream Command (C234) ──────────────────────────────────────────────
 
-# Domain prefix → observer registration name
-_DOMAIN_PREFIXES = {
+# C261: Display prefix → observer registration name (human readability only).
+# Prefixes are no longer architectural — community detection (C255) is the
+# canonical partitioning mechanism.  These remain for display + legacy compat.
+_DISPLAY_PREFIXES = {
     "C:": "canon", "B:": "bootstrap", "EN:": "en", "M:": "mechanism",
-    "L:": "learned",  # C249: include learned nodes in dream consolidation
+    "L:": "learned",
 }
+_DOMAIN_PREFIXES = _DISPLAY_PREFIXES  # backward compat alias (C261)
 
 
 def _extract_domain_landscapes(
@@ -3468,9 +3478,21 @@ def _extract_domain_landscapes(
 ) -> Dict[str, Any]:
     """Extract per-domain sub-landscapes from the unified session landscape.
 
+    .. deprecated:: C261
+        Use ``extract_community_landscapes()`` from ``community.py`` instead.
+        Prefix-based partitioning is superseded by community detection (C255).
+        This function remains for ``partition='prefix'`` backward compatibility.
+
     Each domain gets its own Landscape with intra-domain edges and
     historization copied from the session landscape.
     """
+    import warnings
+    warnings.warn(
+        "_extract_domain_landscapes is deprecated (C261). "
+        "Use extract_community_landscapes() instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     from e0_controller.landscape import Landscape
 
     # Group edges by domain (intra-domain only)
@@ -3631,19 +3653,41 @@ def dream_run(
     for name, ls in domain_landscapes.items():
         observer.register(name, ls)
 
-    # C249: Cross-universe dream — register L: sub-landscapes from other universes
+    # C261: Cross-universe dream — register taught sub-landscapes from other
+    # universes.  Uses taught_at metadata (C261) with L: prefix fallback.
     _ensure_main_universe(state)
     cross_universe_domains: List[str] = []
     for uname, ustate in state.universes.items():
         if uname == state.active_universe:
             continue
-        other_domains = _extract_domain_landscapes(ustate.landscape)
-        learned = other_domains.get("learned")
-        if learned and learned.states:
-            reg_name = f"learned_{uname}"
-            observer.register(reg_name, learned)
-            domain_landscapes[reg_name] = learned
-            cross_universe_domains.append(reg_name)
+        # C261: Prefer metadata-based taught node detection
+        taught_nodes = {
+            n for n in ustate.landscape.states
+            if ustate.unified_nodes.get(n, {}).get("taught_at")
+            or n.startswith("L:")  # legacy fallback
+        }
+        if taught_nodes:
+            from e0_controller.landscape import Landscape as _Landscape
+            learned = _Landscape()
+            for e in ustate.landscape.edges:
+                if e.source in taught_nodes and e.target in taught_nodes:
+                    learned.add_edge(e.source, e.target, delta=0.3, resistance=0.2)
+                    # Copy historization
+                    _hist = ustate.landscape.historization
+                    _U = _hist._U.get(e, 0.0)
+                    _F = _hist._F.get(e, 0.0)
+                    if _U > 0 or _F > 0:
+                        _sub_edge = Edge(e.source, e.target)
+                        learned.historization._U[_sub_edge] = _U
+                        learned.historization._F[_sub_edge] = _F
+                        learned.historization._tau_last[_sub_edge] = (
+                            learned.historization._tau
+                        )
+            if learned.states:
+                reg_name = f"learned_{uname}"
+                observer.register(reg_name, learned)
+                domain_landscapes[reg_name] = learned
+                cross_universe_domains.append(reg_name)
 
     # Run dream cycles — C251: adaptive threshold relaxation
     cycle_results: List[DreamCycleResult] = []
@@ -4974,7 +5018,7 @@ def ask_run(
     else:
         assessment_after = assessment
 
-    # Phase 4: Navigate from best match — prefer L: (taught) anchors
+    # Phase 4: Navigate from best match — prefer taught anchors (C261)
     anchor: Optional[str] = None
     nav_path: List[str] = []
     nav_steps = 0
@@ -4982,16 +5026,26 @@ def ask_run(
     nav_coverage_delta = 0.0
     all_matches = assessment_after["matches"]
     if all_matches:
-        # Prefer recently-taught L: nodes over generic vocabulary matches
-        # (taught material is more specific than seed dictionaries)
+        # C261: Community-recency preference — prefer nodes with taught_at
+        # metadata (recently taught material is more specific than seed
+        # dictionaries).  Falls back to L: prefix check for backward compat.
         anchor = all_matches[0][0]
         best_score = all_matches[0][1]
+        best_taught: Optional[str] = None
+        best_taught_at = 0.0
         for node_id, score in all_matches:
             if score < best_score * 0.5:
                 break  # stop if score drops below 50% of best
-            if node_id.startswith("L:"):
-                anchor = node_id
-                break
+            meta = state.unified_nodes.get(node_id, {})
+            taught_at = meta.get("taught_at", 0.0)
+            if taught_at > best_taught_at:
+                best_taught = node_id
+                best_taught_at = taught_at
+            elif best_taught is None and node_id.startswith("L:"):
+                # Legacy fallback: L: prefix without taught_at metadata
+                best_taught = node_id
+        if best_taught is not None:
+            anchor = best_taught
         _task_navigate(state, question, anchor, mode="ask")
         if state.history:
             last_round = state.history[-1]

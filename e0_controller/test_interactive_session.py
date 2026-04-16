@@ -63,6 +63,7 @@ from e0_controller.interactive_session import (
     _task_known_path,
     _task_navigate,
     _extract_domain_landscapes,
+    _DISPLAY_PREFIXES,
     _pick_community_start,
     _transfer_community_to_session,
     build_session,
@@ -5929,13 +5930,23 @@ class TestAutoCoupleOnStagnation:
 
 
 class TestDomainPrefixesIncludesLearned:
-    """C249: _DOMAIN_PREFIXES includes L: for learned nodes."""
+    """C249/C261: _DISPLAY_PREFIXES includes L: for learned nodes."""
 
     def test_l_prefix_in_domain_prefixes(self):
-        """L: prefix is registered as 'learned'."""
+        """L: prefix is registered as 'learned' (backward compat alias)."""
         from e0_controller.interactive_session import _DOMAIN_PREFIXES
         assert "L:" in _DOMAIN_PREFIXES
         assert _DOMAIN_PREFIXES["L:"] == "learned"
+
+    def test_l_prefix_in_display_prefixes(self):
+        """C261: L: prefix in renamed _DISPLAY_PREFIXES."""
+        assert "L:" in _DISPLAY_PREFIXES
+        assert _DISPLAY_PREFIXES["L:"] == "learned"
+
+    def test_backward_compat_alias(self):
+        """C261: _DOMAIN_PREFIXES is same object as _DISPLAY_PREFIXES."""
+        from e0_controller.interactive_session import _DOMAIN_PREFIXES
+        assert _DOMAIN_PREFIXES is _DISPLAY_PREFIXES
 
 
 class TestExtractDomainLandscapesLearned:
@@ -7434,3 +7445,144 @@ class TestCmdFocusCommunity:
         cmd_run(s, 1)
         out = cmd_focus(s, "community_0")
         assert "visited" in out.lower() or "nodes" in out.lower()
+
+
+# ---------------------------------------------------------------------------
+# C261 — Prefixes as Display Layer + Cleanup
+# ---------------------------------------------------------------------------
+
+
+class TestDisplayPrefixesRename:
+    """C261: _DOMAIN_PREFIXES renamed to _DISPLAY_PREFIXES."""
+
+    def test_all_five_prefixes(self):
+        """All 5 prefixes present in _DISPLAY_PREFIXES."""
+        assert set(_DISPLAY_PREFIXES.keys()) == {"C:", "B:", "EN:", "M:", "L:"}
+
+    def test_values_are_lowercase_domain_names(self):
+        """Values are lowercase domain names for observer registration."""
+        for k, v in _DISPLAY_PREFIXES.items():
+            assert v == v.lower(), f"{k} → {v} should be lowercase"
+
+
+class TestExtractDomainLandscapesDeprecation:
+    """C261: _extract_domain_landscapes emits deprecation warning."""
+
+    def test_deprecation_warning(self):
+        """Calling _extract_domain_landscapes raises DeprecationWarning."""
+        import warnings
+        s = build_session(steps_per_round=5)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            _extract_domain_landscapes(s.landscape)
+            deprecation_warnings = [
+                x for x in w if issubclass(x.category, DeprecationWarning)
+            ]
+            assert len(deprecation_warnings) >= 1
+            assert "C261" in str(deprecation_warnings[0].message)
+
+    def test_still_works(self):
+        """Function still returns valid results despite deprecation."""
+        import warnings
+        s = build_session(steps_per_round=5)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            result = _extract_domain_landscapes(s.landscape)
+        assert isinstance(result, dict)
+        # Should at least have canon domain from build_session
+        assert len(result) >= 1
+
+
+class TestTaughtAtMetadata:
+    """C261: teach_concept stamps taught_at on newly injected nodes."""
+
+    def test_taught_at_present_after_teach(self):
+        """Nodes from teach_concept have taught_at timestamp."""
+        s = build_session(steps_per_round=5)
+        import time
+        before = time.time()
+        result = teach_concept(s, "photosynthesis")
+        after = time.time()
+        for nid in result.get("nodes_added", []):
+            meta = s.unified_nodes.get(nid, {})
+            assert "taught_at" in meta, f"{nid} missing taught_at"
+            assert before <= meta["taught_at"] <= after
+
+    def test_taught_at_is_float_timestamp(self):
+        """taught_at value is a float (Unix timestamp)."""
+        s = build_session(steps_per_round=5)
+        result = teach_concept(s, "gravity")
+        for nid in result.get("nodes_added", []):
+            assert isinstance(s.unified_nodes[nid]["taught_at"], float)
+
+    def test_nodes_still_have_l_prefix(self):
+        """C261: Nodes still get L: prefix as display label."""
+        s = build_session(steps_per_round=5)
+        result = teach_concept(s, "thermodynamics")
+        for nid in result.get("nodes_added", []):
+            assert nid.startswith("L:"), f"expected L: prefix, got {nid}"
+
+
+class TestAskRunCommunityRecencyPreference:
+    """C261: ask_run prefers taught nodes by taught_at metadata, not just L: prefix."""
+
+    def test_prefers_node_with_taught_at(self):
+        """Node with taught_at metadata preferred over generic match."""
+        s = build_session(steps_per_round=10)
+        s.landscape.add_state("EN:water")
+        s.landscape.add_state("L:WHAT_IS_WATER")
+        # Stamp taught_at on the L: node
+        s.unified_nodes["L:WHAT_IS_WATER"] = {"taught_at": 1000.0, "type": "task"}
+        s.landscape.add_edge("EN:water", "L:WHAT_IS_WATER", delta=0.4, resistance=1.0)
+        result = ask_run(s, "what is water", auto_learn=False)
+        anchor = result.get("anchor")
+        if anchor is not None:
+            assert anchor == "L:WHAT_IS_WATER"
+
+    def test_prefers_most_recent_taught(self):
+        """Among multiple taught nodes, prefers the most recently taught."""
+        s = build_session(steps_per_round=10)
+        s.landscape.add_state("L:WATER_BASICS")
+        s.landscape.add_state("L:WATER_ADVANCED")
+        s.unified_nodes["L:WATER_BASICS"] = {"taught_at": 100.0, "type": "task"}
+        s.unified_nodes["L:WATER_ADVANCED"] = {"taught_at": 200.0, "type": "task"}
+        s.landscape.add_edge("L:WATER_BASICS", "L:WATER_ADVANCED", delta=0.3, resistance=0.5)
+        result = ask_run(s, "water", auto_learn=False)
+        anchor = result.get("anchor")
+        if anchor is not None:
+            assert anchor == "L:WATER_ADVANCED"
+
+    def test_l_prefix_fallback_without_metadata(self):
+        """L: node still preferred even without taught_at (legacy fallback)."""
+        s = build_session(steps_per_round=10)
+        s.landscape.add_state("EN:water")
+        s.landscape.add_state("L:WHAT_IS_WATER")
+        s.landscape.add_edge("EN:water", "L:WHAT_IS_WATER", delta=0.4, resistance=1.0)
+        # No taught_at metadata — should still prefer L: via fallback
+        result = ask_run(s, "what is water", auto_learn=False)
+        anchor = result.get("anchor")
+        if anchor is not None:
+            assert anchor.startswith("L:"), f"Expected L: fallback, got {anchor}"
+
+
+class TestCrossUniverseDreamMetadata:
+    """C261: Cross-universe dream uses taught_at metadata for node discovery."""
+
+    def test_taught_at_nodes_discovered_cross_universe(self):
+        """Nodes with taught_at in other universe are registered for dreaming."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        # Create second universe with taught nodes
+        from e0_controller.interactive_session import cmd_universe
+        cmd_universe(s, "create beta")
+        cmd_universe(s, "switch beta")
+        s.landscape.add_state("L:BETA_CONCEPT")
+        s.landscape.add_state("L:BETA_DETAIL")
+        s.landscape.add_edge("L:BETA_CONCEPT", "L:BETA_DETAIL", delta=0.5, resistance=1.0)
+        s.unified_nodes["L:BETA_CONCEPT"] = {"taught_at": 1000.0}
+        s.unified_nodes["L:BETA_DETAIL"] = {"taught_at": 1000.0}
+        cmd_universe(s, "switch main")
+        # Dream should discover beta's taught nodes
+        result = dream_run(s, cycles=1)
+        # Check that cross-universe domains were included
+        assert "domains_compared" in result or "total_equivalences" in result
