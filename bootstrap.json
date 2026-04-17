@@ -241,8 +241,8 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "SC-11 Scaling Benchmark (Phase B/C of Audit Remediation)",
-    "arc_status": "SC-11 CONFIRMED. E₀ outperforms greedy at N=500 across 3 topology families (WALL_GRID, DECOY_DAG, SHORTCUT). 20/20 wins L0–L4. TRAP_GRID non-differentiating (greedy avoids diagonal traps). Next: Phase B papers (P9 Emergent Structure, P7 Dream).",
+    "current_arc": "Phase B Coverage Papers (Audit Remediation)",
+    "arc_status": "Phase B COMPLETE. P9 (Emergent Structure / GT-7, 11 sections + 4 appendices) and P7 (Dream/Entropy/Sleep-Wake, 14 sections + 4 appendices) written. Next: Phase C honesty (falsification targets, scaling tests) or Phase D (SOTA comparison, P8/P10).",
     "arc_thesis": "SC-11 predicted that S_eff discrimination might collapse at scale (Holonomy Independence Theorem → path-local phases). Benchmark falsifies this: E₀'s advantage grows with scale (WALL_GRID: 16/10opt at N=21 → 84/44opt at N=463; DECOY_DAG: 5/5opt → 26/26opt while greedy fails; SHORTCUT: 78/250opt at N=520 while greedy fails at step 41).",
     "arc_motivation": {
       "audit_doc": "docs/E0_PAPER_AUDIT_v1.md — full findings, remediation plan, claim registry",
@@ -261,7 +261,7 @@
       "phase_B_coverage": {
         "title": "Close the gap",
         "items": "P9 Emergent Structure (GT-7), P7 Dream/Entropy/Sleep-Wake",
-        "status": "NOT STARTED"
+        "status": "COMPLETE (C271)"
       },
       "phase_C_honesty": {
         "title": "Test our limits",
@@ -300,7 +300,7 @@
       "Layer Audit (docs/E0_LAYER_AUDIT_v1.md): InscriptionContext storage contamination — tracked, not in scope",
       "delta_H_trusted is dead code — trust mechanism (C186) not wired into main resistance path"
     ],
-    "next_commit_id": "C271",
+    "next_commit_id": "C272",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
