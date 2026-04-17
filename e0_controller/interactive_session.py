@@ -1245,7 +1245,8 @@ def cmd_diagnose(state: SessionState) -> str:
             lines.append("")
             lines.append("### Emergent Communities")
         else:
-            lines.append(f"\n{'\u2500' * 60}")
+            sep = '\u2500' * 60
+            lines.append(f"\n{sep}")
             lines.append("  Emergent Communities:")
         lines.append(
             f"{indent}Communities: {cc['community_count']}  "
