@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C270",
-    "latest_commit_hash": "bd02525",
-    "latest_commit_msg": "C270: SC-11 Scaling Benchmark — E₀ advantage confirmed to N=500",
-    "test_count": 5741,
+    "latest_commit": "C272",
+    "latest_commit_hash": "e46a413",
+    "latest_commit_msg": "C272: Phase C Falsification — 4 targets, 2 confirmed strengths, 2 structural limits",
+    "test_count": 5782,
     "test_failures": 1,
     "ci_status": "pending",
     "module_count": "78 production + 11 benchmarks + 17 demos + 69 explorations + 129 test files",
@@ -241,9 +241,9 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "Phase B Coverage Papers (Audit Remediation)",
-    "arc_status": "Phase B COMPLETE. P9 (Emergent Structure / GT-7, 11 sections + 4 appendices) and P7 (Dream/Entropy/Sleep-Wake, 14 sections + 4 appendices) written. Next: Phase C honesty (falsification targets, scaling tests) or Phase D (SOTA comparison, P8/P10).",
-    "arc_thesis": "SC-11 predicted that S_eff discrimination might collapse at scale (Holonomy Independence Theorem → path-local phases). Benchmark falsifies this: E₀'s advantage grows with scale (WALL_GRID: 16/10opt at N=21 → 84/44opt at N=463; DECOY_DAG: 5/5opt → 26/26opt while greedy fails; SHORTCUT: 78/250opt at N=520 while greedy fails at step 41).",
+    "current_arc": "Phase C Falsification (Audit Remediation)",
+    "arc_status": "Phase C COMPLETE. 4 falsification targets (F1–F4) built and tested. F1 (exploration depth to 500) and F2 (ossification resistance) confirm E₀ strengths. F3 (branching boundary at b≥3) and F4 (non-Markov path deps: 0% success) confirm structural limits. 13 new tests. Next: Phase D (SOTA comparison, P8/P10).",
+    "arc_thesis": "Phase C constructs domains designed to BREAK E₀. Honest result: 2 strengths confirmed (revisit penalty enables depth-500 exploration, no ossification under non-stationarity), 2 structural limits documented (branching factor ≥3 overwhelms penalty mechanism, edge-local historization cannot learn path dependencies).",
     "arc_motivation": {
       "audit_doc": "docs/E0_PAPER_AUDIT_v1.md — full findings, remediation plan, claim registry",
       "F1_high": "P1 select_next: Paper says argmin S_eff, code uses S_eff/(M_H·I)·(1+α·𝟙_recent). Revisit penalty never formalized.",
@@ -265,8 +265,14 @@
       },
       "phase_C_honesty": {
         "title": "Test our limits",
-        "items": "S4 falsification targets, S1 scaling benchmarks (N>50)",
-        "status": "NOT STARTED"
+        "items": "S4 falsification targets (F1–F4), S1 scaling benchmarks (N>50)",
+        "status": "COMPLETE (C272)",
+        "results": {
+          "F1_exploration_depth": "E₀ ✓ at all depths 5–500, Greedy ✗ (revisit penalty escapes distractor loops)",
+          "F2_ossification": "E₀ ADAPTED at all warmup levels 5–200 (no ossification detected)",
+          "F3_dense_branching": "E₀ ✓ only at b=2, BOUNDARY at b≥3 (combinatorial explosion overwhelms penalty)",
+          "F4_non_markov_paths": "CONFIRMED LIMIT — Oracle 100%, E₀ 0%, Greedy 0% (edge-local historization cannot learn path dependencies)"
+        }
       },
       "phase_D_positioning": {
         "title": "External context",
@@ -280,7 +286,7 @@
       "test_infrastructure": "Parameter-default regression tests to prevent future drift"
     },
     "invariants": [
-      "5741 tests stay green — no paper fix may break existing behavior (1 pre-existing dream threshold failure)",
+      "5782 tests stay green — no paper fix may break existing behavior (1 pre-existing dream threshold failure)",
       "Papers describe what code does, not what we wish it did",
       "Each phase (A→B→C→D) completes before the next begins"
     ],
@@ -293,14 +299,15 @@
     "previous_arc_summary": "Micro-Level Emergence (C263–C267): All micro-level prefix assumptions replaced by community membership. Single partitioning mechanism at every level. Emergent Structure (C255–C262): Community detection from R_eff. C268: Bootstrap Topology Fix.",
     "key_result": "Scientific self-audit complete. Papers are not wrong but are incomplete and stale. 160 commits uncovered. 8 formula mismatches documented. Remediation plan in 4 phases (A–D).",
     "open_threads": [
-      "Phase B: P9 Emergent Structure (GT-7), P7 Dream/Entropy/Sleep-Wake — SC-11 precondition satisfied",
       "TRAP_GRID domain needs redesign — greedy avoids diagonal traps via edge-path, no differentiation",
-      "Phase C: Falsification targets from 12 structural contradictions (docs/E0_STRUCTURAL_CONTRADICTIONS_v1.md)",
       "Phase D: SOTA comparison on path-dependent/trap/no-reward domains, not standard RL benchmarks",
+      "Phase D: P8 (Self-Tuning), P10 (Perception/Communication) papers still needed",
       "Layer Audit (docs/E0_LAYER_AUDIT_v1.md): InscriptionContext storage contamination — tracked, not in scope",
-      "delta_H_trusted is dead code — trust mechanism (C186) not wired into main resistance path"
+      "delta_H_trusted is dead code — trust mechanism (C186) not wired into main resistance path",
+      "F3 branching boundary (b≥3): potential improvement via hierarchical revisit penalty or subtree-level decay",
+      "F4 non-Markov limit: would require path-aware historization (credit assignment) to overcome"
     ],
-    "next_commit_id": "C272",
+    "next_commit_id": "C273",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
