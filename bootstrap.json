@@ -27,13 +27,13 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C269",
-    "latest_commit_hash": "8c5d195",
-    "latest_commit_msg": "C269: Phase A — Paper-Code Consistency (F1–F8 + Rule 3)",
+    "latest_commit": "C270",
+    "latest_commit_hash": "bd02525",
+    "latest_commit_msg": "C270: SC-11 Scaling Benchmark — E₀ advantage confirmed to N=500",
     "test_count": 5741,
     "test_failures": 1,
     "ci_status": "pending",
-    "module_count": "78 production + 10 benchmarks + 17 demos + 69 explorations + 129 test files",
+    "module_count": "78 production + 11 benchmarks + 17 demos + 69 explorations + 129 test files",
     "line_count": "~33300 production, ~129200 total"
   },
   "conventions": {
@@ -241,9 +241,9 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "Paper Consistency (Phase A of Audit Remediation)",
-    "arc_status": "Phase A COMPLETE. F1–F8 paper/code mismatches fixed. 17 parameter-default regression tests added. Papers P1/P5/P6 updated to match code. emergent_locality.py μ defaults aligned with scoped_reflexion.py. Next: Phase B (scaling benchmark → P9 → P7).",
-    "arc_thesis": "The 6 papers cover C1–C108 of a C268 codebase. 160 commits have no paper coverage. Core structural claims hold, but select_next formula (P1), μ default (P5), θ default (P6) and coupling proof (P6) diverge from code. Papers must be updated to match reality before new papers (P7–P10) can be written on uncovered subsystems.",
+    "current_arc": "SC-11 Scaling Benchmark (Phase B/C of Audit Remediation)",
+    "arc_status": "SC-11 CONFIRMED. E₀ outperforms greedy at N=500 across 3 topology families (WALL_GRID, DECOY_DAG, SHORTCUT). 20/20 wins L0–L4. TRAP_GRID non-differentiating (greedy avoids diagonal traps). Next: Phase B papers (P9 Emergent Structure, P7 Dream).",
+    "arc_thesis": "SC-11 predicted that S_eff discrimination might collapse at scale (Holonomy Independence Theorem → path-local phases). Benchmark falsifies this: E₀'s advantage grows with scale (WALL_GRID: 16/10opt at N=21 → 84/44opt at N=463; DECOY_DAG: 5/5opt → 26/26opt while greedy fails; SHORTCUT: 78/250opt at N=520 while greedy fails at step 41).",
     "arc_motivation": {
       "audit_doc": "docs/E0_PAPER_AUDIT_v1.md — full findings, remediation plan, claim registry",
       "F1_high": "P1 select_next: Paper says argmin S_eff, code uses S_eff/(M_H·I)·(1+α·𝟙_recent). Revisit penalty never formalized.",
@@ -293,15 +293,14 @@
     "previous_arc_summary": "Micro-Level Emergence (C263–C267): All micro-level prefix assumptions replaced by community membership. Single partitioning mechanism at every level. Emergent Structure (C255–C262): Community detection from R_eff. C268: Bootstrap Topology Fix.",
     "key_result": "Scientific self-audit complete. Papers are not wrong but are incomplete and stale. 160 commits uncovered. 8 formula mismatches documented. Remediation plan in 4 phases (A–D).",
     "open_threads": [
-      "Phase A: Fix F1–F8 paper/code mismatches (see docs/E0_PAPER_AUDIT_v1.md §7.2)",
-      "SC-11 Scalability study (N>50) — precondition for Phase B, identified as make-or-break in docs/E0_STRUCTURAL_CONTRADICTIONS_v1.md §6.4",
-      "Phase B revised: (1) Scaling benchmark, (2) P9 GT-7/Emergent Structure, (3) P7 Dream/Entropy",
-      "Phase C: Falsification must target the 12 structural contradictions — not generic",
+      "Phase B: P9 Emergent Structure (GT-7), P7 Dream/Entropy/Sleep-Wake — SC-11 precondition satisfied",
+      "TRAP_GRID domain needs redesign — greedy avoids diagonal traps via edge-path, no differentiation",
+      "Phase C: Falsification targets from 12 structural contradictions (docs/E0_STRUCTURAL_CONTRADICTIONS_v1.md)",
       "Phase D: SOTA comparison on path-dependent/trap/no-reward domains, not standard RL benchmarks",
       "Layer Audit (docs/E0_LAYER_AUDIT_v1.md): InscriptionContext storage contamination — tracked, not in scope",
       "delta_H_trusted is dead code — trust mechanism (C186) not wired into main resistance path"
     ],
-    "next_commit_id": "C270",
+    "next_commit_id": "C271",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
