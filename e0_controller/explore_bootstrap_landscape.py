@@ -222,6 +222,17 @@ def extract_edges(bs, nodes):
     add("GT-5", "PC-5", 0.5, 0.3, 0.8, "override trap → 'if test fails, what do I learn?'")
     add("GT-3", "PC-6", 0.5, 0.3, 0.8, "greedy matching → 'fixing the right problem?'")
 
+    # GT-6 (Default Blast Radius) → PC-9 (>10 edits to unrelated code)
+    add("GT-6", "PC-9", 0.5, 0.3, 0.8, "default blast radius → 'fixing break with >10 edits?'")
+    # GT-6 is a recurrence of GT-3 pattern
+    add("GT-6", "GT-3", 0.4, 0.2, 0.8, "default blast radius = GT-3 recurrence")
+    # GT-7 (Coherent Domain Error) → PC-10 (macro X / micro Y)
+    add("GT-7", "PC-10", 0.5, 0.3, 0.8, "coherent domain error → 'macro X / micro still Y?'")
+    # GT-7 → WP-9 (Domains are E₂)
+    add("GT-7", "WP-9", 0.6, 0.2, 0.9, "coherent domain error → domains are E₂ not E₀")
+    # GT-7 → WP-10 (complete migration at every level)
+    add("GT-7", "WP-10", 0.6, 0.2, 0.9, "coherent domain error → complete migration at every level")
+
     # --- PC → WP: Perspective checks flow into principles ---
     add("PC-1", "WP-3", 0.4, 0.2, 0.8, "'sharing knowledge?' reinforces cooperation principle")
     add("PC-2", "WP-4", 0.4, 0.2, 0.8, "'testing what I think?' reinforces quality > quantity")
@@ -230,6 +241,13 @@ def extract_edges(bs, nodes):
     add("PC-5", "WP-7", 0.4, 0.2, 0.8, "'what do I learn from failure?' reinforces doubt")
     add("PC-6", "WP-6", 0.4, 0.2, 0.8, "'wrong assumption?' reinforces signal monitoring")
     add("PC-7", "WP-6", 0.4, 0.2, 0.8, "'signal lies?' reinforces signal monitoring")
+
+    # PC-8 → WP-8: "hedging or deciding?" → "verify before assert"
+    add("PC-8", "WP-8", 0.4, 0.2, 0.8, "'hedging or deciding?' reinforces verify-before-assert")
+    # PC-9 → WP-4: ">10 edits?" → quality > quantity
+    add("PC-9", "WP-4", 0.4, 0.2, 0.8, "'>10 edits to unrelated code?' reinforces quality > quantity")
+    # PC-10 → WP-10: "macro X / micro Y?" → complete migration
+    add("PC-10", "WP-10", 0.4, 0.2, 0.8, "'macro X / micro Y?' reinforces complete migration")
 
     # --- GT → WP: Traps that became principles ---
     add("GT-1", "WP-3", 0.6, 0.2, 0.9, "isolated agents → cooperation > competition")
@@ -265,6 +283,13 @@ def extract_edges(bs, nodes):
     add("WP-2", "WP-1", 0.3, 0.2, 0.8, "historization dominant → skeleton/muscle")
     add("WP-7", "WP-2", 0.3, 0.2, 0.8, "doubt necessary → historization dominant")
     add("WP-3", "WP-5", 0.3, 0.2, 0.8, "cooperation → pipeline bottleneck thinking")
+
+    # WP-9 → WP-2: domains are E₂ → historization dominant
+    add("WP-9", "WP-2", 0.3, 0.2, 0.8, "domains are E₂ → historization creates structure")
+    # WP-10 → WP-9: complete migration → domains are E₂
+    add("WP-10", "WP-9", 0.3, 0.2, 0.8, "complete migration → domains are E₂")
+    # WP-8 → WP-4: verify before assert → quality > quantity
+    add("WP-8", "WP-4", 0.3, 0.2, 0.8, "verify before assert → quality > quantity")
 
     # --- HERE → Open Threads: Current state to frontier ---
     for nid in nodes:
@@ -318,6 +343,13 @@ def extract_edges(bs, nodes):
                 add(src, tgt, effective_delta, de.get("resistance", 1.0),
                     de.get("confidence", 0.5),
                     de.get("derivation", "discovered by exploration"))
+
+    # --- Orphan fallback: auto-connect nodes with zero edges to HERE ---
+    # Prevents bootstrap.json growth from silently breaking coverage.
+    connected = {e["from"] for e in edges} | {e["to"] for e in edges}
+    for nid in nodes:
+        if nid not in connected and nid != "HERE":
+            add("HERE", nid, 0.3, 0.5, 0.6, f"auto-link: {nid} has no curated edges")
 
     return edges
 

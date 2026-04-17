@@ -27,9 +27,9 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C267",
-    "latest_commit_hash": "203da39",
-    "latest_commit_msg": "C267: Single Partition World — _domain_of Display Only. DeprecationWarning on all prefix-based fallbacks (navigate, cmd_detail, cmd_inspect). All production decision paths use community membership. 10 new verification tests (5755 total)",
+    "latest_commit": "C268",
+    "latest_commit_hash": "2b895e6",
+    "latest_commit_msg": "C268: Bootstrap Topology Fix — wire orphan nodes, fix _choose_action priority ordering",
     "test_count": 5755,
     "test_failures": 0,
     "ci_status": "pending",

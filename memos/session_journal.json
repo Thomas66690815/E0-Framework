@@ -33511,6 +33511,1619 @@
         "steps": 12,
         "domain_crossings": 7
       }
+    },
+    {
+      "timestamp": "2026-04-17T06:50:52",
+      "session_id": "20260417_065052",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.782,
+        "T_s": 0.0745,
+        "frontier_size": 27,
+        "visited_nodes": 104,
+        "total_nodes": 133,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-17T06:51:52",
+      "session_id": "20260417_065152",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.782,
+        "T_s": 0.0745,
+        "frontier_size": 27,
+        "visited_nodes": 104,
+        "total_nodes": 133,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-17T06:51:52",
+      "session_id": "20260417_065152",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.8195,
+        "T_s": 0.0693,
+        "frontier_size": 23,
+        "visited_nodes": 109,
+        "total_nodes": 133,
+        "canon_coverage": 0.6349,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.6349,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.037594,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-17T06:51:52",
+      "session_id": "20260417_065152",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.8571,
+        "T_s": 0.0644,
+        "frontier_size": 18,
+        "visited_nodes": 114,
+        "total_nodes": 133,
+        "canon_coverage": 0.7143,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.7143,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.037594,
+        "steps": 12,
+        "domain_crossings": 7
+      }
+    },
+    {
+      "timestamp": "2026-04-17T06:51:53",
+      "session_id": "20260417_065153",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.782,
+        "T_s": 0.0745,
+        "frontier_size": 27,
+        "visited_nodes": 104,
+        "total_nodes": 133,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-17T06:51:53",
+      "session_id": "20260417_065153",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.8195,
+        "T_s": 0.0693,
+        "frontier_size": 23,
+        "visited_nodes": 109,
+        "total_nodes": 133,
+        "canon_coverage": 0.6349,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.6349,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.037594,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-17T06:51:53",
+      "session_id": "20260417_065153",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.8571,
+        "T_s": 0.0644,
+        "frontier_size": 18,
+        "visited_nodes": 114,
+        "total_nodes": 133,
+        "canon_coverage": 0.7143,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.7143,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.037594,
+        "steps": 12,
+        "domain_crossings": 7
+      }
+    },
+    {
+      "timestamp": "2026-04-17T06:51:53",
+      "session_id": "20260417_065153",
+      "event_type": "round",
+      "round_num": 3,
+      "metrics": {
+        "coverage": 0.9023,
+        "T_s": 0.0602,
+        "frontier_size": 12,
+        "visited_nodes": 120,
+        "total_nodes": 133,
+        "canon_coverage": 0.8095,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.8095,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.045113,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-17T06:51:54",
+      "session_id": "20260417_065154",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.782,
+        "T_s": 0.0745,
+        "frontier_size": 27,
+        "visited_nodes": 104,
+        "total_nodes": 133,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-17T06:51:54",
+      "session_id": "20260417_065154",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.8195,
+        "T_s": 0.0693,
+        "frontier_size": 23,
+        "visited_nodes": 109,
+        "total_nodes": 133,
+        "canon_coverage": 0.6349,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.6349,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.037594,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-17T06:51:54",
+      "session_id": "20260417_065154",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.8571,
+        "T_s": 0.0644,
+        "frontier_size": 18,
+        "visited_nodes": 114,
+        "total_nodes": 133,
+        "canon_coverage": 0.7143,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.7143,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.037594,
+        "steps": 12,
+        "domain_crossings": 7
+      }
+    },
+    {
+      "timestamp": "2026-04-17T06:51:55",
+      "session_id": "20260417_065155",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.782,
+        "T_s": 0.0745,
+        "frontier_size": 27,
+        "visited_nodes": 104,
+        "total_nodes": 133,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-17T06:51:55",
+      "session_id": "20260417_065155",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.8195,
+        "T_s": 0.0693,
+        "frontier_size": 23,
+        "visited_nodes": 109,
+        "total_nodes": 133,
+        "canon_coverage": 0.6349,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.6349,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.037594,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-17T06:51:56",
+      "session_id": "20260417_065156",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.782,
+        "T_s": 0.0745,
+        "frontier_size": 27,
+        "visited_nodes": 104,
+        "total_nodes": 133,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-17T06:51:58",
+      "session_id": "20260417_065158",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.782,
+        "T_s": 0.0745,
+        "frontier_size": 27,
+        "visited_nodes": 104,
+        "total_nodes": 133,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-17T06:51:58",
+      "session_id": "20260417_065158",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.8195,
+        "T_s": 0.0693,
+        "frontier_size": 23,
+        "visited_nodes": 109,
+        "total_nodes": 133,
+        "canon_coverage": 0.6349,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.6349,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.037594,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-17T06:51:58",
+      "session_id": "20260417_065158",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.8571,
+        "T_s": 0.0644,
+        "frontier_size": 18,
+        "visited_nodes": 114,
+        "total_nodes": 133,
+        "canon_coverage": 0.7143,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.7143,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.037594,
+        "steps": 12,
+        "domain_crossings": 7
+      }
+    },
+    {
+      "timestamp": "2026-04-17T07:48:55",
+      "session_id": "20260417_074855",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.782,
+        "T_s": 0.0745,
+        "frontier_size": 27,
+        "visited_nodes": 104,
+        "total_nodes": 133,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-17T07:50:01",
+      "session_id": "20260417_075001",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.782,
+        "T_s": 0.0745,
+        "frontier_size": 27,
+        "visited_nodes": 104,
+        "total_nodes": 133,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-17T07:50:01",
+      "session_id": "20260417_075001",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.8195,
+        "T_s": 0.0693,
+        "frontier_size": 23,
+        "visited_nodes": 109,
+        "total_nodes": 133,
+        "canon_coverage": 0.6349,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.6349,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.037594,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-17T07:50:01",
+      "session_id": "20260417_075001",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.8571,
+        "T_s": 0.0644,
+        "frontier_size": 18,
+        "visited_nodes": 114,
+        "total_nodes": 133,
+        "canon_coverage": 0.7143,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.7143,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.037594,
+        "steps": 12,
+        "domain_crossings": 7
+      }
+    },
+    {
+      "timestamp": "2026-04-17T07:50:02",
+      "session_id": "20260417_075002",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.782,
+        "T_s": 0.0745,
+        "frontier_size": 27,
+        "visited_nodes": 104,
+        "total_nodes": 133,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-17T07:50:02",
+      "session_id": "20260417_075002",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.8195,
+        "T_s": 0.0693,
+        "frontier_size": 23,
+        "visited_nodes": 109,
+        "total_nodes": 133,
+        "canon_coverage": 0.6349,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.6349,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.037594,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-17T07:50:03",
+      "session_id": "20260417_075002",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.8571,
+        "T_s": 0.0644,
+        "frontier_size": 18,
+        "visited_nodes": 114,
+        "total_nodes": 133,
+        "canon_coverage": 0.7143,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.7143,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.037594,
+        "steps": 12,
+        "domain_crossings": 7
+      }
+    },
+    {
+      "timestamp": "2026-04-17T07:50:03",
+      "session_id": "20260417_075002",
+      "event_type": "round",
+      "round_num": 3,
+      "metrics": {
+        "coverage": 0.9023,
+        "T_s": 0.0602,
+        "frontier_size": 12,
+        "visited_nodes": 120,
+        "total_nodes": 133,
+        "canon_coverage": 0.8095,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.8095,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.045113,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-17T07:50:03",
+      "session_id": "20260417_075003",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.782,
+        "T_s": 0.0745,
+        "frontier_size": 27,
+        "visited_nodes": 104,
+        "total_nodes": 133,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-17T07:50:03",
+      "session_id": "20260417_075003",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.8195,
+        "T_s": 0.0693,
+        "frontier_size": 23,
+        "visited_nodes": 109,
+        "total_nodes": 133,
+        "canon_coverage": 0.6349,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.6349,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.037594,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-17T07:50:04",
+      "session_id": "20260417_075004",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.782,
+        "T_s": 0.0745,
+        "frontier_size": 27,
+        "visited_nodes": 104,
+        "total_nodes": 133,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-17T07:50:04",
+      "session_id": "20260417_075004",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.8195,
+        "T_s": 0.0693,
+        "frontier_size": 23,
+        "visited_nodes": 109,
+        "total_nodes": 133,
+        "canon_coverage": 0.6349,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.6349,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.037594,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-17T07:50:04",
+      "session_id": "20260417_075004",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.8571,
+        "T_s": 0.0644,
+        "frontier_size": 18,
+        "visited_nodes": 114,
+        "total_nodes": 133,
+        "canon_coverage": 0.7143,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.7143,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.037594,
+        "steps": 12,
+        "domain_crossings": 7
+      }
+    },
+    {
+      "timestamp": "2026-04-17T07:50:05",
+      "session_id": "20260417_075005",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.782,
+        "T_s": 0.0745,
+        "frontier_size": 27,
+        "visited_nodes": 104,
+        "total_nodes": 133,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-17T07:50:06",
+      "session_id": "20260417_075006",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.782,
+        "T_s": 0.0745,
+        "frontier_size": 27,
+        "visited_nodes": 104,
+        "total_nodes": 133,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-17T07:50:09",
+      "session_id": "20260417_075009",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.782,
+        "T_s": 0.0745,
+        "frontier_size": 27,
+        "visited_nodes": 104,
+        "total_nodes": 133,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-17T07:50:10",
+      "session_id": "20260417_075009",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.8195,
+        "T_s": 0.0693,
+        "frontier_size": 23,
+        "visited_nodes": 109,
+        "total_nodes": 133,
+        "canon_coverage": 0.6349,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.6349,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.037594,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-17T07:50:10",
+      "session_id": "20260417_075009",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.8571,
+        "T_s": 0.0644,
+        "frontier_size": 18,
+        "visited_nodes": 114,
+        "total_nodes": 133,
+        "canon_coverage": 0.7143,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.7143,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.037594,
+        "steps": 12,
+        "domain_crossings": 7
+      }
+    },
+    {
+      "timestamp": "2026-04-17T07:59:36",
+      "session_id": "20260417_075936",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.782,
+        "T_s": 0.0745,
+        "frontier_size": 27,
+        "visited_nodes": 104,
+        "total_nodes": 133,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-17T08:00:22",
+      "session_id": "20260417_080022",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.782,
+        "T_s": 0.0745,
+        "frontier_size": 27,
+        "visited_nodes": 104,
+        "total_nodes": 133,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-17T08:00:22",
+      "session_id": "20260417_080022",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.8195,
+        "T_s": 0.0693,
+        "frontier_size": 23,
+        "visited_nodes": 109,
+        "total_nodes": 133,
+        "canon_coverage": 0.6349,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.6349,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.037594,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-17T08:00:22",
+      "session_id": "20260417_080022",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.8571,
+        "T_s": 0.0644,
+        "frontier_size": 18,
+        "visited_nodes": 114,
+        "total_nodes": 133,
+        "canon_coverage": 0.7143,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.7143,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.037594,
+        "steps": 12,
+        "domain_crossings": 7
+      }
+    },
+    {
+      "timestamp": "2026-04-17T08:00:22",
+      "session_id": "20260417_080022",
+      "event_type": "round",
+      "round_num": 3,
+      "metrics": {
+        "coverage": 0.9023,
+        "T_s": 0.0602,
+        "frontier_size": 12,
+        "visited_nodes": 120,
+        "total_nodes": 133,
+        "canon_coverage": 0.8095,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.8095,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.045113,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-17T08:00:23",
+      "session_id": "20260417_080023",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.782,
+        "T_s": 0.0745,
+        "frontier_size": 27,
+        "visited_nodes": 104,
+        "total_nodes": 133,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-17T08:00:23",
+      "session_id": "20260417_080023",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.8195,
+        "T_s": 0.0693,
+        "frontier_size": 23,
+        "visited_nodes": 109,
+        "total_nodes": 133,
+        "canon_coverage": 0.6349,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.6349,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.037594,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-17T08:00:23",
+      "session_id": "20260417_080023",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.8571,
+        "T_s": 0.0644,
+        "frontier_size": 18,
+        "visited_nodes": 114,
+        "total_nodes": 133,
+        "canon_coverage": 0.7143,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.7143,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.037594,
+        "steps": 12,
+        "domain_crossings": 7
+      }
+    },
+    {
+      "timestamp": "2026-04-17T08:00:24",
+      "session_id": "20260417_080024",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.782,
+        "T_s": 0.0745,
+        "frontier_size": 27,
+        "visited_nodes": 104,
+        "total_nodes": 133,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-17T08:00:26",
+      "session_id": "20260417_080026",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.782,
+        "T_s": 0.0745,
+        "frontier_size": 27,
+        "visited_nodes": 104,
+        "total_nodes": 133,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-17T08:00:27",
+      "session_id": "20260417_080026",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.8195,
+        "T_s": 0.0693,
+        "frontier_size": 23,
+        "visited_nodes": 109,
+        "total_nodes": 133,
+        "canon_coverage": 0.6349,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.6349,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.037594,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-17T08:00:27",
+      "session_id": "20260417_080026",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.8571,
+        "T_s": 0.0644,
+        "frontier_size": 18,
+        "visited_nodes": 114,
+        "total_nodes": 133,
+        "canon_coverage": 0.7143,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.7143,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.037594,
+        "steps": 12,
+        "domain_crossings": 7
+      }
+    },
+    {
+      "timestamp": "2026-04-17T08:08:15",
+      "session_id": "20260417_080815",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.782,
+        "T_s": 0.0745,
+        "frontier_size": 27,
+        "visited_nodes": 104,
+        "total_nodes": 133,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-17T08:09:10",
+      "session_id": "20260417_080910",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.782,
+        "T_s": 0.0745,
+        "frontier_size": 27,
+        "visited_nodes": 104,
+        "total_nodes": 133,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-17T08:09:10",
+      "session_id": "20260417_080910",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.8195,
+        "T_s": 0.0693,
+        "frontier_size": 23,
+        "visited_nodes": 109,
+        "total_nodes": 133,
+        "canon_coverage": 0.6349,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.6349,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.037594,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-17T08:09:10",
+      "session_id": "20260417_080910",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.8571,
+        "T_s": 0.0644,
+        "frontier_size": 18,
+        "visited_nodes": 114,
+        "total_nodes": 133,
+        "canon_coverage": 0.7143,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.7143,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.037594,
+        "steps": 12,
+        "domain_crossings": 7
+      }
+    },
+    {
+      "timestamp": "2026-04-17T08:09:11",
+      "session_id": "20260417_080910",
+      "event_type": "round",
+      "round_num": 3,
+      "metrics": {
+        "coverage": 0.9023,
+        "T_s": 0.0602,
+        "frontier_size": 12,
+        "visited_nodes": 120,
+        "total_nodes": 133,
+        "canon_coverage": 0.8095,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.8095,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.045113,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-17T08:09:11",
+      "session_id": "20260417_080911",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.782,
+        "T_s": 0.0745,
+        "frontier_size": 27,
+        "visited_nodes": 104,
+        "total_nodes": 133,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-17T08:09:11",
+      "session_id": "20260417_080911",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.8195,
+        "T_s": 0.0693,
+        "frontier_size": 23,
+        "visited_nodes": 109,
+        "total_nodes": 133,
+        "canon_coverage": 0.6349,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.6349,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.037594,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-17T08:09:11",
+      "session_id": "20260417_080911",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.8571,
+        "T_s": 0.0644,
+        "frontier_size": 18,
+        "visited_nodes": 114,
+        "total_nodes": 133,
+        "canon_coverage": 0.7143,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.7143,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.037594,
+        "steps": 12,
+        "domain_crossings": 7
+      }
+    },
+    {
+      "timestamp": "2026-04-17T08:09:12",
+      "session_id": "20260417_080912",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.782,
+        "T_s": 0.0745,
+        "frontier_size": 27,
+        "visited_nodes": 104,
+        "total_nodes": 133,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-17T08:09:12",
+      "session_id": "20260417_080912",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.8195,
+        "T_s": 0.0693,
+        "frontier_size": 23,
+        "visited_nodes": 109,
+        "total_nodes": 133,
+        "canon_coverage": 0.6349,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.6349,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.037594,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-17T08:09:13",
+      "session_id": "20260417_080913",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.782,
+        "T_s": 0.0745,
+        "frontier_size": 27,
+        "visited_nodes": 104,
+        "total_nodes": 133,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-17T08:09:17",
+      "session_id": "20260417_080917",
+      "event_type": "session_start",
+      "round_num": 0,
+      "metrics": {
+        "coverage": 0.782,
+        "T_s": 0.0745,
+        "frontier_size": 27,
+        "visited_nodes": 104,
+        "total_nodes": 133,
+        "canon_coverage": 0.5714,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.9,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.5714,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-04-17T08:09:17",
+      "session_id": "20260417_080917",
+      "event_type": "round",
+      "round_num": 1,
+      "metrics": {
+        "coverage": 0.8195,
+        "T_s": 0.0693,
+        "frontier_size": 23,
+        "visited_nodes": 109,
+        "total_nodes": 133,
+        "canon_coverage": 0.6349,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.6349,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.037594,
+        "steps": 12,
+        "domain_crossings": 6
+      }
+    },
+    {
+      "timestamp": "2026-04-17T08:09:17",
+      "session_id": "20260417_080917",
+      "event_type": "round",
+      "round_num": 2,
+      "metrics": {
+        "coverage": 0.8571,
+        "T_s": 0.0644,
+        "frontier_size": 18,
+        "visited_nodes": 114,
+        "total_nodes": 133,
+        "canon_coverage": 0.7143,
+        "bootstrap_coverage": 1.0,
+        "en_coverage": 0.0,
+        "mech_coverage": 0.95,
+        "stagnation_streak": 0,
+        "domain_coverages": {
+          "Canon": 0.7143,
+          "Bootstrap": 1.0,
+          "Mechanism": 0.95
+        }
+      },
+      "detail": {
+        "mode": "explore_en",
+        "coverage_delta": 0.037594,
+        "steps": 12,
+        "domain_crossings": 7
+      }
     }
   ]
 }

@@ -4516,18 +4516,18 @@ def _choose_action(state: SessionState) -> Tuple[str, str]:
     growing = [d for d in domains if d["status"] == "GROWING"]
     saturated = [d for d in domains if d["status"] == "SATURATED"]
 
-    # All explored domains saturated → stop
-    active = [d for d in domains if d["status"] != "IDLE"]
-    if active and all(d["status"] == "SATURATED" for d in active):
-        return "stop", "all domains SATURATED"
-
-    # C248: Stagnation + ≥2 universes → try coupling before escalate
+    # C248: Stagnation + ≥2 universes → try coupling before escalate/stop
     if state.stagnation_streak >= 3 and len(state.universes) >= 2:
         return "couple", f"stagnation streak = {state.stagnation_streak}, {len(state.universes)} universes available"
 
-    # High stagnation → escalate
+    # High stagnation → escalate (even if saturated — stagnation overrides)
     if state.stagnation_streak >= 3:
         return "escalate", f"stagnation streak = {state.stagnation_streak}"
+
+    # All explored domains saturated with good coverage and no frontier → stop
+    active = [d for d in domains if d["status"] != "IDLE"]
+    if active and all(d["status"] == "SATURATED" for d in active) and a.coverage >= 0.9:
+        return "stop", "all domains SATURATED"
 
     # Count confused edges across domains
     total_confused = sum(d.get("confused_edges", 0) for d in domains)
