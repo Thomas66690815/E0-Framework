@@ -27,14 +27,14 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C272",
-    "latest_commit_hash": "e46a413",
-    "latest_commit_msg": "C272: Phase C Falsification — 4 targets, 2 confirmed strengths, 2 structural limits",
-    "test_count": 5782,
+    "latest_commit": "C273",
+    "latest_commit_hash": "7af7d78",
+    "latest_commit_msg": "C273: Phase D Positioning — SOTA benchmark, reproduction protocol, P8+P10 papers",
+    "test_count": 5793,
     "test_failures": 1,
     "ci_status": "pending",
-    "module_count": "78 production + 11 benchmarks + 17 demos + 69 explorations + 129 test files",
-    "line_count": "~33300 production, ~129200 total"
+    "module_count": "78 production + 12 benchmarks + 17 demos + 69 explorations + 130 test files",
+    "line_count": "~33800 production, ~130600 total"
   },
   "conventions": {
     "user_language": "German (user speaks German, code/docs in English)",
@@ -241,9 +241,9 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "Phase C Falsification (Audit Remediation)",
-    "arc_status": "Phase C COMPLETE. 4 falsification targets (F1–F4) built and tested. F1 (exploration depth to 500) and F2 (ossification resistance) confirm E₀ strengths. F3 (branching boundary at b≥3) and F4 (non-Markov path deps: 0% success) confirm structural limits. 13 new tests. Next: Phase D (SOTA comparison, P8/P10).",
-    "arc_thesis": "Phase C constructs domains designed to BREAK E₀. Honest result: 2 strengths confirmed (revisit penalty enables depth-500 exploration, no ossification under non-stationarity), 2 structural limits documented (branching factor ≥3 overwhelms penalty mechanism, edge-local historization cannot learn path dependencies).",
+    "current_arc": "Audit Remediation COMPLETE (Phases A–D)",
+    "arc_status": "ALL 4 PHASES COMPLETE. A (C269: paper-code consistency, 8 mismatches fixed). B (C271: P7+P9 papers covering 27 uncovered modules). C (C272: falsification benchmark, F1-F4). D (C273: SOTA comparison, reproduction protocol, P8+P10 papers). Full audit remediation arc finished.",
+    "arc_thesis": "Scientific self-audit of E₀ papers vs code. Result: papers now match code, all major modules have paper coverage (P1-P10), falsification targets document 2 strengths + 2 structural limits, SOTA benchmark positions E₀ vs 4 baselines (10/10 domains), reproduction protocol enables independent verification.",
     "arc_motivation": {
       "audit_doc": "docs/E0_PAPER_AUDIT_v1.md — full findings, remediation plan, claim registry",
       "F1_high": "P1 select_next: Paper says argmin S_eff, code uses S_eff/(M_H·I)·(1+α·𝟙_recent). Revisit penalty never formalized.",
@@ -277,7 +277,13 @@
       "phase_D_positioning": {
         "title": "External context",
         "items": "S2 SOTA comparison, S3 reproduction protocol, P8/P10 remaining papers",
-        "status": "NOT STARTED"
+        "status": "COMPLETE (C273)",
+        "results": {
+          "S2_sota": "benchmark_sota.py: E₀ 10/10, Q-Learn 9/10, ε-Greedy 8/10, Random 7/10, Greedy 5/10. E₀ only method reaching all goals.",
+          "S3_reproduction": "reproduce.py: 8 claims verified in 0.6s. REPRODUCTION.md: full reproduction guide.",
+          "P8_self_tuning": "PAPER8_MANUSCRIPT_v1.md: E₀ dynamics on parameter space (self_tuning.py + parameter_sensitivity.py, 58 tests)",
+          "P10_perception": "PAPER10_MANUSCRIPT_v1.md: 4-layer communication architecture (perception/communication/ui_emitter/feedback, 180 tests)"
+        }
       }
     },
     "impact_analysis": {
@@ -297,17 +303,17 @@
       "27 substantial modules lack paper coverage"
     ],
     "previous_arc_summary": "Micro-Level Emergence (C263–C267): All micro-level prefix assumptions replaced by community membership. Single partitioning mechanism at every level. Emergent Structure (C255–C262): Community detection from R_eff. C268: Bootstrap Topology Fix.",
-    "key_result": "Scientific self-audit complete. Papers are not wrong but are incomplete and stale. 160 commits uncovered. 8 formula mismatches documented. Remediation plan in 4 phases (A–D).",
+    "key_result": "Full audit remediation complete (A–D). 10 papers (P1–P10) now cover all major modules. 8 formula mismatches fixed. SOTA benchmark + falsification targets + reproduction protocol provide external positioning. Papers describe what code does.",
     "open_threads": [
       "TRAP_GRID domain needs redesign — greedy avoids diagonal traps via edge-path, no differentiation",
-      "Phase D: SOTA comparison on path-dependent/trap/no-reward domains, not standard RL benchmarks",
-      "Phase D: P8 (Self-Tuning), P10 (Perception/Communication) papers still needed",
       "Layer Audit (docs/E0_LAYER_AUDIT_v1.md): InscriptionContext storage contamination — tracked, not in scope",
       "delta_H_trusted is dead code — trust mechanism (C186) not wired into main resistance path",
       "F3 branching boundary (b≥3): potential improvement via hierarchical revisit penalty or subtree-level decay",
-      "F4 non-Markov limit: would require path-aware historization (credit assignment) to overcome"
+      "F4 non-Markov limit: would require path-aware historization (credit assignment) to overcome",
+      "Quality score weights (P8 §12.1) are heuristic — could be meta-tunable but risks infinite regress",
+      "Per-user perception landscapes (P10 §9.1) not yet implemented — all users share same perception"
     ],
-    "next_commit_id": "C273",
+    "next_commit_id": "C274",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
