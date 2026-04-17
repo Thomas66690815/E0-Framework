@@ -3,7 +3,7 @@
     "purpose": "Session bootstrap for the E₀ team — human and AI working together on E₀-Framework",
     "framing": "We. The AI is an integral part of 'we'. This file is the AI's persistent identity — its Historization across context windows. Every confirmed/contradicted count is a U/F trace.",
     "usage": "Paste this file (or reference it) at the start of a new thread to restore full project context",
-    "last_updated": "2026-04-16",
+    "last_updated": "2026-04-18",
     "update_instruction": "After each commit: update state + active_context. After each lesson: update reflexion traces (confirmed++, contradicted++, recurred++). trace_quality = (confirmed - contradicted) / (confirmed + contradicted + 1)."
   },
   "project": {
@@ -27,11 +27,11 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C268",
-    "latest_commit_hash": "2b895e6",
-    "latest_commit_msg": "C268: Bootstrap Topology Fix — wire orphan nodes, fix _choose_action priority ordering",
-    "test_count": 5755,
-    "test_failures": 0,
+    "latest_commit": "C269",
+    "latest_commit_hash": "8c5d195",
+    "latest_commit_msg": "C269: Phase A — Paper-Code Consistency (F1–F8 + Rule 3)",
+    "test_count": 5741,
+    "test_failures": 1,
     "ci_status": "pending",
     "module_count": "78 production + 10 benchmarks + 17 demos + 69 explorations + 129 test files",
     "line_count": "~33300 production, ~129200 total"
@@ -231,112 +231,77 @@
         "question": "If I migrated the macro level to mechanism X — does the micro level still use mechanism Y? Two partitioning worlds = incomplete migration.",
         "triggered": 1,
         "last_triggered": "C262 (post-arc audit)"
+      },
+      {
+        "question": "Does the paper still match the code? If a formula or default changed since the paper was written, the paper is stale — not the code.",
+        "triggered": 2,
+        "last_triggered": "C269 Phase A — 8 mismatches fixed"
       }
     ]
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "Micro-Level Emergence (C263–C267)",
-    "arc_status": "DONE. C263-C267 completed. All micro-level prefix assumptions replaced by community membership. Single partitioning mechanism at every level.",
-    "arc_thesis": "The Emergent Structure arc (C255-C262) proved that communities emerge from Historization and can replace prefix-based partitioning at the macro level (Dream, Sleep-Wake, Diagnostics). But the post-arc audit revealed that the micro level is still scaffolded: cold start includes EN domain by default, teach bridges use lexical matching instead of structural resonance, navigation crossing detection uses _domain_of() prefix lookup, and taught nodes are not integrated into communities until manual re-detection. This arc makes emergence the default at every level.",
+    "current_arc": "Paper Consistency (Phase A of Audit Remediation)",
+    "arc_status": "Phase A COMPLETE. F1–F8 paper/code mismatches fixed. 17 parameter-default regression tests added. Papers P1/P5/P6 updated to match code. emergent_locality.py μ defaults aligned with scoped_reflexion.py. Next: Phase B (scaling benchmark → P9 → P7).",
+    "arc_thesis": "The 6 papers cover C1–C108 of a C268 codebase. 160 commits have no paper coverage. Core structural claims hold, but select_next formula (P1), μ default (P5), θ default (P6) and coupling proof (P6) diverge from code. Papers must be updated to match reality before new papers (P7–P10) can be written on uncovered subsystems.",
     "arc_motivation": {
-      "audit_finding_1": "Cold start inconsistency: build_multidomain_landscape(include_en=True) is default, but learn_self(include_en=False) excludes EN. Cold start ≠ warm start.",
-      "audit_finding_2": "_create_bridges() uses lexical word overlap to connect taught nodes. find_structural_resonance() (C260) exists but is not used in teach. E0 creates new structure but doesn't find existing resonant structure.",
-      "audit_finding_3": "teach_concept injects L: nodes but does not trigger detect_communities(). New nodes are orphaned from the community partition until manual re-detection.",
-      "audit_finding_4": "Navigation crossing detection uses _domain_of(source) != _domain_of(target) — pure prefix lookup. The macro level uses communities, the micro level uses prefixes. Two partitioning worlds coexist.",
-      "audit_finding_5": "_domain_of() is still imported and used as behavioral input in production paths, even though C261 declared prefixes as display-only.",
-      "layer_audit_ref": "docs/E0_LAYER_AUDIT_v1.md confirms: primitive kernel is mostly clean, strongest issue is higher-layer back-coupling and storage contamination in InscriptionContext. These are tracked but not in scope for this arc."
+      "audit_doc": "docs/E0_PAPER_AUDIT_v1.md — full findings, remediation plan, claim registry",
+      "F1_high": "P1 select_next: Paper says argmin S_eff, code uses S_eff/(M_H·I)·(1+α·𝟙_recent). Revisit penalty never formalized.",
+      "F3_high": "P5 §4.1: μ=5.0 vs code μ=|E|/|V| (C105). Internal inconsistency between §4.1 and §10.4. Two code paths differ.",
+      "F6_medium": "P6 §4.3: NoveltyGate θ=0.5 vs code θ=0.0. Functionally different.",
+      "F7_medium": "P6 §3.2: Coupling proof claims monotonic gap widening, code clips at δ_max.",
+      "coverage_gap": "27 substantial modules (~9345 lines) without paper coverage. Largest: dream_mode (1442), self_tuning (1164), structural_mutation (693)."
     },
     "arc_plan": {
-      "_phase_1_clean_foundation": "Remove last scaffolding assumptions from cold start and teach.",
-      "C263_cold_start_alignment": {
-        "title": "Cold Start Alignment",
-        "what": "Change build_multidomain_landscape default: include_en=True → include_en=False. Aligns cold start with warm start behavior (C223 already excluded EN from learn_self). EN remains available as opt-in for language-specific tasks. Explicit include_en=True callers are unaffected.",
-        "key_properties": [
-          "Cold start produces C+B+M landscape (same as warm-start seed)",
-          "include_en=True still works for callers that need EN vocabulary",
-          "No behavioral change for warm-start sessions (already exclude EN)",
-          "Eliminates the cold/warm start inconsistency"
-        ],
-        "status": "DONE (0f91a39)"
+      "phase_A_consistency": {
+        "title": "Paper matches code",
+        "items": "F1–F8 paper corrections + parameter-default regression tests (Rule 3)",
+        "status": "COMPLETE (C269)"
       },
-      "C264_structural_bridges": {
-        "title": "Structural Bridges for Teach",
-        "what": "Replace _create_bridges() lexical matching with find_structural_resonance()-based bridging. When teach_concept injects new L: nodes, extract their subgraph, find structurally resonant neighborhoods in the existing landscape via WL-Hungarian matching, and bridge to those. This connects C260's unified mechanism to the teach pipeline — E0 finds where new knowledge fits structurally, not lexically.",
-        "key_properties": [
-          "Bridge targets selected by structural resonance, not word overlap",
-          "Same WL-Hungarian algorithm used by Dream and Coupling (self-similarity)",
-          "Lexical fallback for very small subgraphs (< 3 nodes) where structural comparison is meaningless",
-          "Teach bridges become E0-native instead of string comparison"
-        ],
-        "status": "DONE"
+      "phase_B_coverage": {
+        "title": "Close the gap",
+        "items": "P9 Emergent Structure (GT-7), P7 Dream/Entropy/Sleep-Wake",
+        "status": "NOT STARTED"
       },
-      "_phase_2_community_completeness": "Taught material joins the living community structure automatically.",
-      "C265_community_refresh": {
-        "title": "Automatic Community Refresh",
-        "what": "After teach_concept and selflearn_run modify the landscape, automatically re-run detect_communities(). SessionState caches current community partition (list of sets). Community membership is always current, not stale from session start. Taught nodes join communities based on their bridge topology.",
-        "key_properties": [
-          "Community partition always reflects current landscape topology",
-          "Taught nodes get community membership immediately, not on next manual detection",
-          "Refresh is incremental-friendly: LPA converges fast on small topology changes",
-          "Session stores communities as first-class state, not computed on demand"
-        ],
-        "status": "DONE"
+      "phase_C_honesty": {
+        "title": "Test our limits",
+        "items": "S4 falsification targets, S1 scaling benchmarks (N>50)",
+        "status": "NOT STARTED"
       },
-      "C266_community_crossings": {
-        "title": "Navigation Crossing from Communities",
-        "what": "Replace _domain_of(source) != _domain_of(target) in navigation crossing detection with community membership check. domain_crossings in RoundHistory → community_crossings (backward compat alias). Crossing count reflects emergent community boundaries, not imposed prefix boundaries. Requires cached community partition from C265.",
-        "key_properties": [
-          "Crossing detection uses communities, not prefixes",
-          "Community crossings ≤ prefix crossings (communities can span prefix groups)",
-          "Backward compat: domain_crossings property still accessible",
-          "Cross-domain log annotation shows community IDs instead of prefix labels"
-        ],
-        "status": "DONE"
-      },
-      "_phase_3_cleanup": "No production code path depends on prefixes for decisions.",
-      "C267_single_partition_world": {
-        "title": "Single Partition World — _domain_of Display Only",
-        "what": "Capstone: _domain_of() gets DeprecationWarning when called from production decision paths. All behavioral uses replaced by community membership (C265-C266). Display/logging uses (human-readable labels) remain valid — prefixes are display, not structure. Comprehensive verification test: exercise all production paths and confirm zero _domain_of-dependent decisions.",
-        "key_properties": [
-          "_domain_of deprecated for behavioral use, valid for display",
-          "No production decision depends on prefix identity",
-          "One partitioning mechanism at every level: community detection from R_eff",
-          "Macro (Dream, Sleep-Wake, Diagnostics) and micro (navigation, teach, crossing) converge"
-        ],
-        "status": "DONE"
+      "phase_D_positioning": {
+        "title": "External context",
+        "items": "S2 SOTA comparison, S3 reproduction protocol, P8/P10 remaining papers",
+        "status": "NOT STARTED"
       }
     },
     "impact_analysis": {
-      "build_multidomain_landscape_callers": "build_session (cold start fallback), explore scripts, tests. Only cold start path changes default.",
-      "_create_bridges_callers": "teach_concept only. Single call site — clean replacement.",
-      "community_caching": "SessionState needs a communities field. detect_communities already exists (C255). Refresh on landscape modification.",
-      "_domain_of_behavioral_uses": "navigation crossing (~5 call sites in interactive_session.py), domain trend computation, focus command",
-      "_domain_of_display_uses": "~20 logging/formatting sites — remain valid",
-      "backward_compat": "domain_crossings alias, _domain_of still callable (with warning), include_en still accepted"
+      "papers_to_update": "P1 (Algorithm 1), P5 (§4.1, §10.4, emergent_locality.py), P6 (§4.3, §3.2)",
+      "new_papers_needed": "P7 (Dream/Entropy/Sleep-Wake), P8 (Self-Tuning), P9 (Emergent Structure/GT-7), P10 (Perception/Communication)",
+      "test_infrastructure": "Parameter-default regression tests to prevent future drift"
     },
     "invariants": [
-      "5710+ tests stay green at every commit point",
-      "Prefixes remain as human-readable display labels — readability never lost",
-      "Every commit is independently valuable",
-      "include_en=True still works as explicit opt-in",
-      "Warm-start sessions unaffected (already have no EN, already use seed)"
+      "5741 tests stay green — no paper fix may break existing behavior (1 pre-existing dream threshold failure)",
+      "Papers describe what code does, not what we wish it did",
+      "Each phase (A→B→C→D) completes before the next begins"
     ],
     "what_we_prove": [
-      "The micro level and macro level use the same partitioning mechanism",
-      "Teach creates bridges through structural resonance, not lexical matching",
-      "Communities are always current — new knowledge is immediately integrated",
-      "No production decision depends on prefix identity"
+      "All 16 structural/derived claims hold (8.1 in audit doc)",
+      "All 9 empirical claims pass their benchmarks (8.2 in audit doc)",
+      "4 heuristic claims are superseded or contradicted (8.3 in audit doc)",
+      "27 substantial modules lack paper coverage"
     ],
-    "previous_arc_summary": "Emergent Structure (C255–C262): Community detection from R_eff, NMI validation, Dream+Sleep-Wake+Tune+Diagnostics on communities, unified structural resonance (Dream ↔ Coupling), prefixes as display layer, cold-start capstone test. 181 arc tests. Proved: Historization creates structure, not labels. Domains are E₂ artifacts. Domain Architecture Analysis (C250–C254): 54 arc tests. Multiverse Integration (C245–C249): 74 tests.",
-    "key_result": "C255-C262 proved macro-level emergence works. Post-arc audit exposed: micro level (cold start, teach, navigation) still uses prefix assumptions. Two partitioning worlds coexist. This arc converges them.",
+    "previous_arc_summary": "Micro-Level Emergence (C263–C267): All micro-level prefix assumptions replaced by community membership. Single partitioning mechanism at every level. Emergent Structure (C255–C262): Community detection from R_eff. C268: Bootstrap Topology Fix.",
+    "key_result": "Scientific self-audit complete. Papers are not wrong but are incomplete and stale. 160 commits uncovered. 8 formula mismatches documented. Remediation plan in 4 phases (A–D).",
     "open_threads": [
-      "Layer Audit (docs/E0_LAYER_AUDIT_v1.md): InscriptionContext stores higher-layer context fields — storage contamination, not yet behavioral. Tracked, not in scope.",
-      "Layer Audit: Controller back-coupling from higher layers (inscription threshold, self-graph override). Architecturally intended but weakens strict layering claim. Tracked.",
-      "LLM symmetry: needed at BOTH ends — input structuring (Bootstrapper) AND output formatting",
-      "Dream edge-level equivalences not yet injected (only node-level in C254)"
+      "Phase A: Fix F1–F8 paper/code mismatches (see docs/E0_PAPER_AUDIT_v1.md §7.2)",
+      "SC-11 Scalability study (N>50) — precondition for Phase B, identified as make-or-break in docs/E0_STRUCTURAL_CONTRADICTIONS_v1.md §6.4",
+      "Phase B revised: (1) Scaling benchmark, (2) P9 GT-7/Emergent Structure, (3) P7 Dream/Entropy",
+      "Phase C: Falsification must target the 12 structural contradictions — not generic",
+      "Phase D: SOTA comparison on path-dependent/trap/no-reward domains, not standard RL benchmarks",
+      "Layer Audit (docs/E0_LAYER_AUDIT_v1.md): InscriptionContext storage contamination — tracked, not in scope",
+      "delta_H_trusted is dead code — trust mechanism (C186) not wired into main resistance path"
     ],
-    "next_commit_id": "C268",
+    "next_commit_id": "C270",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",

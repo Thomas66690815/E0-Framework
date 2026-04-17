@@ -815,9 +815,21 @@ theory from §3–4 to make transition decisions.
 
 **Algorithm 1** (Greedy Selection).
 Given current state $x$ and admissible successors $N^+(x)$:
-1. For each $y \in N^+(x)$, compute $S_{\text{eff}}(x \to y)$.
-2. Select $y^* = \arg\min_{y \in N^+(x)} S_{\text{eff}}(x \to y)$.
+1. For each $y \in N^+(x)$, compute the penalized tension:
+   $$\tilde{S}(x \to y) = S_{\text{eff}}(x \to y) \cdot (1 + \alpha \cdot \mathbb{1}[y \in \text{recent}(k)])$$
+   where $\alpha$ is the revisit penalty weight (default $\alpha = 2.0$)
+   and $\text{recent}(k)$ is the set of the last $k$ visited states
+   (default $k = 3$). This penalizes immediate revisits to prevent
+   cycle trapping. *(Heuristic: the penalty form and defaults are
+   empirically chosen, not derived.)*
+2. Select $y^* = \arg\min_{y \in N^+(x)} \tilde{S}(x \to y)$.
 3. If $N^+(x) = \emptyset$, *escalate* (DEAD\_END).
+
+**Note (Addendum, C98–C99):** Paper 5 (§3) introduces two optional
+modulation terms — graduated overlap $M_H$ and inertia factor $I$ —
+that further refine the selection formula to
+$\arg\min \tilde{S}/(M_H \cdot I)$. These are off by default in the
+base controller; see [P5] for the extended formulation.
 
 The greedy controller is deterministic and purely local: it considers only
 single-edge tensions, not multi-hop path structure. This locality makes it

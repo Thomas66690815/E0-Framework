@@ -263,7 +263,12 @@ We define locality as a function of mean trace load across all edges:
 $$\ell = \frac{\bar{m}}{\bar{m} + \mu}$$
 
 where $\bar{m} = \frac{1}{|E|}\sum_{e \in E} m(e)$ and $\mu > 0$ is a
-sensitivity threshold (default $\mu = 5.0$).
+sensitivity threshold. The default is derived from landscape topology:
+$\mu = |E|/|V|$ (mean out-degree), ensuring that sparse graphs ($\mu < 1$)
+localize fast while dense graphs ($\mu > 2$) require more traversal
+experience. This derivation was established in C105; the original default
+$\mu = 5.0$ remains valid for manual specification and appears in
+numerical examples below.
 
 **Properties:**
 - $\ell \in [0, 1)$ (strict upper bound).
@@ -713,35 +718,30 @@ The analogy should not be overstated. E₀ locality is *operational* (based
 on experience), not *geometric* (based on embedding). The distinction is
 important and may itself be investigable.
 
-### 10.4 Open Questions
+### 10.4 Resolved Questions
 
-1. **Optimal $\mu$.** ~~The sensitivity threshold $\mu$ is currently a
-   user parameter. Can it be derived from landscape properties (e.g.,
-   diameter, edge density)?~~ **Resolved (C105):** $\mu = |E|/|V|$
+The following questions were originally open at publication. Each was
+resolved in subsequent commits and is recorded here as a dated addendum.
+
+1. **Optimal $\mu$ (C105).** $\mu = |E|/|V|$
    (mean out-degree). Sparse graphs localize fast ($\mu < 1$); dense
    graphs require more experience ($\mu > 2$). Fresh degeneration
    preserved for any $\mu > 0$.
 
-2. **Adaptive scope.** ~~The current scope is spherical (BFS). Could
-   non-spherical scopes (e.g., along high-trace-load corridors) improve
-   proposal quality?~~ **Resolved (C106):** Corridor scope restricts
+2. **Adaptive scope (C106).** Corridor scope restricts
    BFS to edges with $m(e) > 0$, creating anisotropic scopes that
    follow inscription patterns. On fresh landscapes, corridor
    degenerates to spherical. Corridor $\subseteq$ spherical by
    construction.
 
-3. **Multi-agent locality.** ~~In coupled multiverse systems (C60–C71),
-   each universe develops its own locality. How do locality boundaries
-   interact across coupled systems?~~ **Resolved (C107):** Donor-side
+3. **Multi-agent locality (C107).** Donor-side
    locality via `scoped_cross_propose_edges`. Donor pattern extracted
    from donor's historization-derived scope; coupling discount modulated
    by donor locality: $d_{\text{eff}} = d \times (\gamma_{\min} + (1 -
    \gamma_{\min}) \times \ell_{\text{donor}})$ with $\gamma_{\min} = 0.3$.
    Fresh donor degeneration preserved.
 
-4. ~~**Asymptotic tightness.** Under non-uniform inscription, is the
-   convergence rate of $\ell$ bounded by a function of graph topology?~~
-   **Resolved (C108):** Non-uniform convergence theorem (§5.5).
+4. **Asymptotic tightness (C108).** Non-uniform convergence theorem (§5.5).
    Equilibrium $\ell^* = k/(k + |E| \cdot \mu \cdot (1-\rho))$ is
    topology-dependent via $|E|$; convergence *rate* $\rho^n$ is
    topology-independent. Sparse graphs localize more strongly than
@@ -779,9 +779,11 @@ important and may itself be investigable.
 
 | Claim | Section | Status |
 |-------|---------|--------|
-| ~~$\mu = 5.0$ default is adequate for typical domains~~ | §4.1 | **Resolved (C105):** $\mu = |E|/|V|$ derived from topology |
-| ~~BFS-spherical scope is sufficient~~ | §4.2 | **Resolved (C106):** corridor scope follows inscription corridors |
 | Composition independence (overlap × inertia) | §3.3 | Empirically verified, not formally proven |
+
+**Resolved heuristics (addendum):**
+- $\mu = 5.0$ default (§4.1) → resolved C105: $\mu = |E|/|V|$ derived from topology.
+- BFS-spherical scope (§4.2) → resolved C106: corridor scope follows inscription corridors.
 
 ---
 

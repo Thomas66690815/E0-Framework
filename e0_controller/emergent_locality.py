@@ -40,11 +40,11 @@ from typing import Callable, Dict, List, Optional, Set, Tuple
 
 from e0_controller.primitives import Edge, Outcome
 from e0_controller.landscape import Landscape
-from e0_controller.config import DEFAULTS
 from e0_controller.controller import E0Controller, RunTrace
 from e0_controller.scoped_reflexion import (
     ReflexionScope,
     compute_reflexion_scope,
+    landscape_mu,
     _graph_diameter_estimate,
     _bfs_neighborhood,
 )
@@ -91,7 +91,7 @@ class RegionalProfile:
 class LocalityEvolution:
     """Complete record of locality evolution during navigation."""
     snapshots: List[LocalitySnapshot] = field(default_factory=list)
-    mu: float = DEFAULTS.mu
+    mu: Optional[float] = None
 
     @property
     def initial_locality(self) -> float:
@@ -133,7 +133,8 @@ class LocalityEvolution:
         if not self.snapshots:
             return "No snapshots recorded."
         lines = [
-            f"Locality Evolution: {len(self.snapshots)} snapshots, μ={self.mu}",
+            f"Locality Evolution: {len(self.snapshots)} snapshots, "
+            f"μ={self.mu if self.mu is not None else 'topology-derived'}",
             f"  Initial: locality={self.initial_locality:.4f}, "
             f"radius={self.snapshots[0].radius}, "
             f"scope={self.snapshots[0].scope_size}/{self.snapshots[0].total_states}",
@@ -157,7 +158,7 @@ def snapshot_locality(
     step: int,
     *,
     goal: Optional[str] = None,
-    mu: float = DEFAULTS.mu,
+    mu: Optional[float] = None,
 ) -> LocalitySnapshot:
     """Capture a locality snapshot at the current state."""
     scope = compute_reflexion_scope(landscape, current, goal=goal, mu=mu)
@@ -188,7 +189,7 @@ def track_locality_evolution(
     *,
     max_cycles: int = 50,
     snapshot_interval: int = 1,
-    mu: float = DEFAULTS.mu,
+    mu: Optional[float] = None,
 ) -> LocalityEvolution:
     """Run navigation and track locality at each step.
 
@@ -202,7 +203,8 @@ def track_locality_evolution(
         goal: Goal state
         max_cycles: Maximum navigation steps
         snapshot_interval: Record snapshot every N steps
-        mu: Half-load parameter for locality computation
+        mu: Half-load parameter. If None, derived from topology
+            as |E|/|V| (mean out-degree). See landscape_mu().
     """
     evolution = LocalityEvolution(mu=mu)
     ctrl = E0Controller(landscape, execute_fn, alpha=2.0, recent_k=3)
@@ -240,7 +242,7 @@ def track_inscription_locality(
     *,
     rounds: int = 20,
     goal: Optional[str] = None,
-    mu: float = DEFAULTS.mu,
+    mu: Optional[float] = None,
 ) -> LocalityEvolution:
     """Track locality as uniform inscription rounds accumulate.
 
@@ -253,7 +255,7 @@ def track_inscription_locality(
         current: Center node for scope computation
         rounds: Number of inscription rounds
         goal: Optional goal node
-        mu: Half-load parameter
+        mu: Half-load parameter. If None, derived from topology.
     """
     evolution = LocalityEvolution(mu=mu)
     hist = landscape.historization
@@ -280,7 +282,7 @@ def track_inscription_locality(
 
 def compute_regional_profile(
     landscape: Landscape,
-    mu: float = DEFAULTS.mu,
+    mu: Optional[float] = None,
 ) -> List[RegionalProfile]:
     """Compute per-state locality profile.
 
@@ -296,6 +298,9 @@ def compute_regional_profile(
 
     if not all_edges:
         return []
+
+    if mu is None:
+        mu = landscape_mu(landscape)
 
     # Global mean
     global_loads = [hist.trace_load(e) for e in all_edges]
@@ -345,7 +350,7 @@ def find_phase_transition(
     *,
     max_rounds: int = 100,
     goal: Optional[str] = None,
-    mu: float = DEFAULTS.mu,
+    mu: Optional[float] = None,
 ) -> Optional[int]:
     """Find the inscription round where locality first crosses 0.5.
 
@@ -361,6 +366,9 @@ def find_phase_transition(
 
     if not edges:
         return None
+
+    if mu is None:
+        mu = landscape_mu(landscape)
 
     for r in range(1, max_rounds + 1):
         for e in edges:
@@ -473,7 +481,7 @@ def track_nonuniform_convergence(
     *,
     rounds: int = 30,
     goal: Optional[str] = None,
-    mu: float = DEFAULTS.mu,
+    mu: Optional[float] = None,
 ) -> LocalityEvolution:
     """Track locality under non-uniform inscription.
 
@@ -487,7 +495,7 @@ def track_nonuniform_convergence(
         inscribed_edges: Subset of edges that get inscribed each round
         rounds: Number of inscription rounds
         goal: Optional goal node
-        mu: Half-load parameter
+        mu: Half-load parameter. If None, derived from topology.
     """
     evolution = LocalityEvolution(mu=mu)
     hist = landscape.historization

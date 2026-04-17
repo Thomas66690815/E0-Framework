@@ -191,9 +191,17 @@ The exit edge $e^*$, if never traversed, maintains $S_{\text{eff}}(e^*)
 = S^*$. The gap $S^* - S_\gamma$ *increases* with each cycle traversal
 because $S_\gamma$ decreases while $S^*$ stays constant.
 
+**Saturation regime.** The implementation clips $\delta_H(e)$ at
+$\pm\delta_{\max}$ (default 3.0). For $U(e) < \delta_{\max}/\lambda_s$,
+the analysis above holds and the gap widens monotonically. Beyond this
+point, $\delta_H$ saturates at $-\delta_{\max}$ and the gap stabilizes
+at $S^* - S_\gamma(\delta_{\max})$, which remains positive because
+$S^* > S_\gamma(0) > S_\gamma(\delta_{\max})$. The absorbing property
+holds in both regimes.
+
 Since the controller selects $\arg\min S_{\text{eff}}$, and the gap
-widens monotonically, the controller never selects $e^*$. The cycle
-is absorbing. $\square$
+remains positive (widening before saturation, stable after), the
+controller never selects $e^*$. The cycle is absorbing. $\square$
 
 ### 3.3 Coupled System (Theorem)
 
@@ -258,7 +266,9 @@ where:
   (summed over both universes)
 - $\text{new\_edges} = |\text{edges}_{\text{after}}| - |\text{edges}_{\text{before}}|$
 - $\delta\Delta = \sum_e \Delta_{\text{after}}(e) - \sum_e \Delta_{\text{before}}(e)$
-- $\theta$ is the delta threshold (default 0.5)
+- $\theta$ is the delta threshold (default 0.0; changed from original
+  0.5 after empirical testing showed that any structural change,
+  however small, warrants historization in the coupling landscape)
 
 The gate measures *structural change*, not outcome quality. An
 interaction that adds states or edges is novel regardless of whether
@@ -667,7 +677,7 @@ as a fallback for frontier-stuck scenarios within individual turns.
 
 | Claim | Section | Status |
 |-------|---------|--------|
-| Delta threshold 0.5 for NoveltyGate | §4.3 | Works on tested domains; not derived |
+| Delta threshold 0.0 for NoveltyGate | §4.3 | Changed from 0.5; any structural change historized |
 | Convergence window 3 | §4.6 | Adequate for tested pairings |
 | Default coupling $\Delta = 1.0$, $R_0 = 0.5$ | §4.2 | Convention |
 | Coupling discount 0.5 for cross-reflexion | §5.2 | Empirically adequate; not optimal |
