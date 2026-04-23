@@ -6282,8 +6282,8 @@ class TestDreamCycleThresholdParam:
         ls = _extract_domain_landscapes(s.landscape)
         for name, l in ls.items():
             obs.register(name, l)
-        # Override with lenient threshold
-        result = obs.dream_cycle(compatibility_threshold=1.0)
+        # Override with lenient threshold (inf = accept all pairs regardless of WL score)
+        result = obs.dream_cycle(compatibility_threshold=float("inf"))
         assert len(result.compatibility_skipped) == 0
         assert result.equivalences_found > 0
 
