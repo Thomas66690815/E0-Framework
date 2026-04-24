@@ -253,6 +253,22 @@ class TestPlanning:
         mode, steps, reason = plan(a, 5, [])
         assert mode != "explore_en"
 
+    def test_no_explore_en_without_en_nodes(self):
+        """C276: plan() must not choose explore_en when en_nodes=0."""
+        a = MultiDomainAssessment(
+            total_nodes=80, total_edges=200, visited_nodes=40,
+            coverage=0.5, frontier_size=10, T_s=0.05,
+            mean_quality=0.5, stale_edges=0,
+            # Canon and Bootstrap both well above 0, EN at 0 (no EN domain)
+            canon_coverage=0.6, bootstrap_coverage=0.8, en_coverage=0.0,
+            canon_nodes=50, bootstrap_nodes=30, en_nodes=0,
+            canon_visited=30, bootstrap_visited=24, en_visited=0,
+        )
+        mode, _, reason = plan(a, 2, [])
+        assert mode != "explore_en", (
+            f"plan() chose explore_en despite en_nodes=0 (reason: {reason})"
+        )
+
     def test_stagnation_triggers_llm(self):
         """3 stalled rounds → LLM mode in plan."""
         a = MultiDomainAssessment(

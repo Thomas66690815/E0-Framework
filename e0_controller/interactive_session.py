@@ -373,6 +373,9 @@ def cmd_status(state: SessionState) -> str:
         total_nodes=a.total_nodes,
         visited_nodes=a.visited_nodes,
         stagnation_count=state.stagnation_streak,
+        canon_nodes=a.canon_nodes,
+        bootstrap_nodes=a.bootstrap_nodes,
+        en_nodes=a.en_nodes,
     )
 
     spec = emit_ui_spec(

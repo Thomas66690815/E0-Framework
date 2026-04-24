@@ -830,3 +830,69 @@ class TestRoundIntents:
         statuses = report.by_type(IntentType.STATUS)
         balance = [s for s in statuses if s.subject == "domain_balance"][0]
         assert balance.evidence["goal_reached"] is True
+
+
+# ── C276: Domain filtering when nodes=0 ──────────────────────────────
+
+
+class TestDomainFiltering:
+    """C276: detect_round_intents omits domains with 0 nodes from reports."""
+
+    def test_en_absent_not_in_balance_summary(self):
+        """When en_nodes=0, EN should not appear in the balance summary."""
+        report = detect_round_intents(**_round_kwargs(
+            en_nodes=0,
+            en_coverage=0.0,
+        ))
+        statuses = report.by_type(IntentType.STATUS)
+        balance = [s for s in statuses if s.subject == "domain_balance"][0]
+        assert "EN" not in balance.summary
+
+    def test_en_absent_not_in_crossing_summary(self):
+        """When en_nodes=0, EN↔Canon / EN↔Boot should not appear in crossing summary."""
+        report = detect_round_intents(**_round_kwargs(
+            en_nodes=0,
+            en_coverage=0.0,
+            en_canon_crossings=0,
+            en_bootstrap_crossings=0,
+        ))
+        patterns = report.by_type(IntentType.PATTERN)
+        xing = [p for p in patterns if p.subject == "domain_crossings"]
+        assert len(xing) == 1
+        assert "EN↔" not in xing[0].summary
+
+    def test_en_present_appears_in_balance_summary(self):
+        """When en_nodes > 0, EN appears in the balance summary."""
+        report = detect_round_intents(**_round_kwargs(
+            en_nodes=44,
+            en_coverage=0.3,
+        ))
+        statuses = report.by_type(IntentType.STATUS)
+        balance = [s for s in statuses if s.subject == "domain_balance"][0]
+        assert "EN" in balance.summary
+
+    def test_unknown_nodes_backward_compat(self):
+        """Default -1 sentinel: all three domains appear (backward compat)."""
+        # _round_kwargs does NOT pass node counts → -1 defaults
+        report = detect_round_intents(**_round_kwargs())
+        statuses = report.by_type(IntentType.STATUS)
+        balance = [s for s in statuses if s.subject == "domain_balance"][0]
+        # All three should be present because -1 = assume present
+        assert "Canon" in balance.summary
+        assert "Bootstrap" in balance.summary
+        assert "EN" in balance.summary
+
+    def test_only_canon_mech_in_balance_when_others_zero(self):
+        """Only domains with nodes≠0 appear."""
+        report = detect_round_intents(**_round_kwargs(
+            bootstrap_nodes=0,
+            bootstrap_coverage=0.0,
+            en_nodes=0,
+            en_coverage=0.0,
+        ))
+        statuses = report.by_type(IntentType.STATUS)
+        balance = [s for s in statuses if s.subject == "domain_balance"][0]
+        assert "Canon" in balance.summary
+        assert "Bootstrap" not in balance.summary
+        assert "EN" not in balance.summary
+

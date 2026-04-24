@@ -307,8 +307,9 @@ def plan(assessment: MultiDomainAssessment, round_num: int,
                 f"Stagnation recovery: increased budget ({stagnation_count} stalled rounds)")
 
     # Domain imbalance: EN significantly behind Canon or Bootstrap
+    # C276: Only trigger if EN: nodes actually exist in the landscape.
     en_gap = min(assessment.canon_coverage, assessment.bootstrap_coverage) - assessment.en_coverage
-    if en_gap > 0.2 and assessment.en_coverage < 0.5:
+    if en_gap > 0.2 and assessment.en_coverage < 0.5 and assessment.en_nodes > 0:
         return ("explore_en", int(base_steps * 1.2),
                 f"EN coverage gap ({assessment.en_coverage:.0%} vs "
                 f"Canon {assessment.canon_coverage:.0%}, "
@@ -1083,6 +1084,9 @@ def communicate_round(
         canon_bootstrap_crossings=result.canon_bootstrap_crossings,
         stagnation_count=stagnation_count,
         inscription_stats=stats,
+        canon_nodes=a_after.canon_nodes,
+        bootstrap_nodes=a_after.bootstrap_nodes,
+        en_nodes=a_after.en_nodes,
     )
 
     spec = emit_ui_spec(
@@ -1167,6 +1171,9 @@ def communicate_summary(
         en_bootstrap_crossings=total_en_bs,
         canon_bootstrap_crossings=total_cb,
         stagnation_count=0,
+        canon_nodes=last.canon_nodes,
+        bootstrap_nodes=last.bootstrap_nodes,
+        en_nodes=last.en_nodes,
     )
 
     spec = emit_ui_spec(

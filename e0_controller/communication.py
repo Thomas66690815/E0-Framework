@@ -643,12 +643,20 @@ def detect_round_intents(
     canon_bootstrap_crossings: int = 0,
     stagnation_count: int = 0,
     inscription_stats: Optional[Dict[str, Any]] = None,
+    # C276: node counts — -1 means "unknown/assume present" (backward compat)
+    canon_nodes: int = -1,
+    bootstrap_nodes: int = -1,
+    en_nodes: int = -1,
 ) -> IntentReport:
     """Detect communication intents from a learning cycle round.
 
     Translates multi-domain round results into CommunicationIntents
     that the evidence interpreters can render as prose. Evidence dicts
     are shaped to match existing interpreter signatures.
+
+    C276: canon_nodes / bootstrap_nodes / en_nodes filter which domains
+    appear in the balance and crossing reports.  -1 means "not specified
+    — assume the domain is present" (backward-compatible default).
 
     Returns:
         IntentReport with round-specific intents, sorted by urgency.
@@ -702,27 +710,37 @@ def detect_round_intents(
     ))
 
     # ── 3. Domain Balance (STATUS) ────────────────────
-    coverages = {
-        "Canon": canon_coverage,
-        "Bootstrap": bootstrap_coverage,
-        "EN": en_coverage,
-    }
-    max_cov = max(coverages.values())
-    min_cov = min(coverages.values())
-    imbalance = max_cov - min_cov
-    weakest = min(coverages, key=coverages.get)
+    # C276: Only include domains that actually have nodes in the landscape.
+    # -1 sentinel = unknown / caller didn't specify → assume present.
+    def _has_domain(n: int) -> bool:
+        return n != 0  # -1 (unknown) or >0 → include
+
+    coverages: Dict[str, float] = {}
+    if _has_domain(canon_nodes):
+        coverages["Canon"] = canon_coverage
+    if _has_domain(bootstrap_nodes):
+        coverages["Bootstrap"] = bootstrap_coverage
+    if _has_domain(en_nodes):
+        coverages["EN"] = en_coverage
+
+    if coverages:
+        max_cov = max(coverages.values())
+        min_cov = min(coverages.values())
+        imbalance = max_cov - min_cov
+        weakest = min(coverages, key=coverages.get)
+        balance_summary = ", ".join(
+            f"{name} {cov:.0%}" for name, cov in coverages.items()
+        ) + (f" — {weakest} lagging" if imbalance > 0.15 else "")
+    else:
+        imbalance = 0.0
+        balance_summary = f"Coverage {coverage_after:.1%}"
 
     balance_urgency = min(1.0, 0.2 + imbalance)
     intents.append(CommunicationIntent(
         type=IntentType.STATUS,
         urgency=balance_urgency,
         subject="domain_balance",
-        summary=(
-            f"Canon {canon_coverage:.0%}, "
-            f"Bootstrap {bootstrap_coverage:.0%}, "
-            f"EN {en_coverage:.0%}"
-            + (f" — {weakest} lagging" if imbalance > 0.15 else "")
-        ),
+        summary=balance_summary,
         evidence={
             "task": "Multi-domain learning",
             "goal_reached": coverage_after > 0.9,
@@ -738,18 +756,27 @@ def detect_round_intents(
     ))
 
     # ── 4. Cross-Domain Activity (PATTERN) ────────────
+    # C276: Only show EN-specific crossing stats when EN nodes exist.
     if steps > 0:
+        has_en = _has_domain(en_nodes)
+        crossing_parts = [
+            f"{domain_crossings} domain crossings in {steps} steps "
+            f"({crossing_rate:.0%})"
+        ]
+        if has_en:
+            crossing_parts.append(
+                f"EN↔Canon {en_canon_crossings}, "
+                f"EN↔Boot {en_bootstrap_crossings}, "
+                f"C↔B {canon_bootstrap_crossings}"
+            )
+        else:
+            crossing_parts.append(f"C↔B {canon_bootstrap_crossings}")
+
         intents.append(CommunicationIntent(
             type=IntentType.PATTERN,
             urgency=0.3 if crossing_rate > 0.3 else 0.5,
             subject="domain_crossings",
-            summary=(
-                f"{domain_crossings} domain crossings in {steps} steps "
-                f"({crossing_rate:.0%}): "
-                f"EN↔Canon {en_canon_crossings}, "
-                f"EN↔Boot {en_bootstrap_crossings}, "
-                f"C↔B {canon_bootstrap_crossings}"
-            ),
+            summary=": ".join(crossing_parts),
             evidence={
                 "domain_crossings": domain_crossings,
                 "crossing_rate": round(crossing_rate, 4),
