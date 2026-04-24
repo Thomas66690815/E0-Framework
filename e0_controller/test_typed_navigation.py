@@ -137,7 +137,8 @@ class TestTypedNavigationScoring:
             "C": {"type": "test", "U": 0, "F": 0},
             "D": {"type": "test", "U": 0, "F": 0},
         }
-        result = navigate(ls, nodes, mode="explore", steps=1, start="A")
+        result = navigate(ls, nodes, mode="explore", steps=1, start="A",
+                          communities=[set(nodes.keys())])
         # Should choose B (enables=1.4) over C (opposite_of=0.85)
         assert result["path"] == ["A", "B"]
 
@@ -150,7 +151,8 @@ class TestTypedNavigationScoring:
             "C": {"type": "test", "U": 0, "F": 0},
             "D": {"type": "test", "U": 0, "F": 0},
         }
-        result = navigate(ls, nodes, mode="explore", steps=1, start="A")
+        result = navigate(ls, nodes, mode="explore", steps=1, start="A",
+                          communities=[set(nodes.keys())])
         assert result["path"] == ["A", "B"]
 
     def test_bridge_bonus_attracts_crossing(self):
@@ -171,7 +173,13 @@ class TestTypedNavigationScoring:
             "EN:thing": {"type": "en_vocabulary", "U": 0, "F": 0},
             "EN:other": {"type": "en_vocabulary", "U": 0, "F": 0},
         }
-        result = navigate(ls, nodes, mode="explore", steps=1, start="B:HERE")
+        # Communities: B/C domain vs EN domain → preserves cross-domain bonus
+        communities = [
+            {"B:HERE", "C:diff", "C:other"},
+            {"EN:thing", "EN:other"},
+        ]
+        result = navigate(ls, nodes, mode="explore", steps=1, start="B:HERE",
+                          communities=communities)
         # EN:thing gets bridge bonus (1.25) + cross-domain bonus (1.5)
         # C:diff gets cross-domain bonus (1.5) only
         assert result["path"][1] == "EN:thing"
@@ -193,7 +201,8 @@ class TestTypeUsageTracking:
             "B": {"type": "test", "U": 0, "F": 0},
             "C": {"type": "test", "U": 0, "F": 0},
         }
-        result = navigate(ls, nodes, mode="explore", steps=5, start="A")
+        result = navigate(ls, nodes, mode="explore", steps=5, start="A",
+                          communities=[set(nodes.keys())])
         assert "type_usage" in result
         assert isinstance(result["type_usage"], dict)
 
@@ -209,7 +218,8 @@ class TestTypeUsageTracking:
             "C": {"type": "test", "U": 0, "F": 0},
             "D": {"type": "test", "U": 0, "F": 0},
         }
-        result = navigate(ls, nodes, mode="explore", steps=3, start="A")
+        result = navigate(ls, nodes, mode="explore", steps=3, start="A",
+                          communities=[set(nodes.keys())])
         usage = result["type_usage"]
         assert usage.get("is_a", 0) == 2
         assert usage.get("part_of", 0) == 1
@@ -224,7 +234,8 @@ class TestTypeUsageTracking:
             "B": {"type": "test", "U": 0, "F": 0},
             "C": {"type": "test", "U": 0, "F": 0},
         }
-        result = navigate(ls, nodes, mode="explore", steps=3, start="A")
+        result = navigate(ls, nodes, mode="explore", steps=3, start="A",
+                          communities=[set(nodes.keys())])
         assert result["type_usage"] == {}
 
 

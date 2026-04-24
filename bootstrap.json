@@ -27,11 +27,11 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C273",
-    "latest_commit_hash": "7af7d78",
-    "latest_commit_msg": "C273: Phase D Positioning — SOTA benchmark, reproduction protocol, P8+P10 papers",
-    "test_count": 5793,
-    "test_failures": 1,
+    "latest_commit": "C275",
+    "latest_commit_hash": "pending",
+    "latest_commit_msg": "C275: Warning cleanup — C261/C267 deprecation warnings suppressed (0 warnings)",
+    "test_count": 5794,
+    "test_failures": 0,
     "ci_status": "pending",
     "module_count": "78 production + 12 benchmarks + 17 demos + 69 explorations + 130 test files",
     "line_count": "~33800 production, ~130600 total"

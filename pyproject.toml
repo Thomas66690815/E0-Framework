@@ -69,6 +69,14 @@ norecursedirs = ["_archive", "__pycache__", "*.egg-info"]
 filterwarnings = [
     # Advisory hint for goal+simple geometry — intentional in tests
     "ignore:Goal .* is set but hybrid_geometry='simple':UserWarning",
+    # C261/C267 prefix-based deprecations: tests that explicitly verify the
+    # warnings use pytest.warns()/catch_warnings() which override these filters
+    # locally, so those warning-assertion tests continue to pass.
+    # NOTE: message patterns must not contain ':' (it is the field separator).
+    "ignore:navigate\\(\\) using prefix-based _domain_of:DeprecationWarning",
+    "ignore:_extract_domain_landscapes is deprecated:DeprecationWarning",
+    "ignore:cmd_detail.*falling back to _domain_of:DeprecationWarning",
+    "ignore:cmd_inspect.*falling back to _domain_of:DeprecationWarning",
 ]
 
 [tool.ruff]
