@@ -28,7 +28,7 @@
   },
   "state": {
     "latest_commit": "C277",
-    "latest_commit_hash": "pending",
+    "latest_commit_hash": "64919ba",
     "latest_commit_msg": "C277: Trajectory-level historization — PathSignature, TrajectoryHistorization, non-Markov plan() signal",
     "test_count": 5831,
     "test_failures": 0,
