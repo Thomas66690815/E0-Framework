@@ -58,6 +58,11 @@ from e0_controller.explore_canon_bootstrap import (
 )
 from e0_controller.primitives import Edge, Outcome
 from e0_controller.structural_entropy import structural_temperature
+from e0_controller.trajectory import (
+    TrajectoryHistorization,
+    TrajectoryRecord,
+    compute_path_signature,
+)
 
 
 # ── EN ↔ Canon Bridges ──────────────────────────────────────────────────
@@ -204,6 +209,8 @@ class MultiDomainRoundResult:
     mech_en_crossings: int = 0
     # C266: Community-based crossing count (≤ domain_crossings)
     community_crossings: int = 0
+    # C277: Trajectory-level historization record
+    trajectory: Optional[TrajectoryRecord] = None
 
 
 # ── Phase 1: ASSESS ────────────────────────────────────────────────────
@@ -284,13 +291,34 @@ def assess(landscape, unified_nodes) -> MultiDomainAssessment:
 
 def plan(assessment: MultiDomainAssessment, round_num: int,
          history: List[MultiDomainRoundResult],
-         max_steps: int = 30) -> Tuple[str, int, str]:
+         max_steps: int = 30,
+         trajectory_hist: Optional[TrajectoryHistorization] = None,
+         ) -> Tuple[str, int, str]:
     """Decide round strategy. Returns (mode, steps, reason).
 
     New logic: if EN is significantly behind other domains, bias
     toward EN territory.
+
+    C277: When *trajectory_hist* is provided, proactively switch mode
+    if the last round's trajectory signature has historically been
+    stagnant (quality < -0.3 and load ≥ 2).  This is the first
+    non-Markov signal in plan(): the decision depends on the history
+    of *trajectory shapes*, not just the current assessment.
     """
     base_steps = max_steps
+
+    # C277: Proactive trajectory-quality check (non-Markov signal).
+    # Runs before stagnation check so it can escalate sooner.
+    if trajectory_hist is not None and history:
+        last_sig = history[-1].trajectory.signature if history[-1].trajectory else None
+        if last_sig and trajectory_hist.low_quality_warning(last_sig):
+            return (
+                "explore",
+                base_steps * 2,
+                f"Trajectory pattern {last_sig} historically stagnant "
+                f"(quality={trajectory_hist.trace_quality(last_sig):.2f}, "
+                f"load={trajectory_hist.trace_load(last_sig)})",
+            )
 
     # Stagnation check
     stagnation_count = 0
@@ -1247,6 +1275,8 @@ def run_multidomain_cycle(
     """
     history: List[MultiDomainRoundResult] = []
     stagnation_streak = 0
+    # C277: Trajectory-level historization — accumulates U/F on path signatures
+    trajectory_hist = TrajectoryHistorization()
 
     # Build landscape ONCE
     landscape, unified_nodes, stats = build_multidomain_landscape(include_en=True)
@@ -1290,7 +1320,10 @@ def run_multidomain_cycle(
             break
 
         # Phase 2: PLAN
-        mode, steps, reason = plan(a_before, round_num, history, steps_per_round)
+        mode, steps, reason = plan(
+            a_before, round_num, history, steps_per_round,
+            trajectory_hist=trajectory_hist,
+        )
 
         if verbose:
             print(f"  Plan:       {mode} ({steps} steps)")
@@ -1298,7 +1331,11 @@ def run_multidomain_cycle(
 
         # Phase 3: NAVIGATE
         start_node = _pick_start_node(landscape, unified_nodes, mode)
-        nav = navigate(landscape, unified_nodes, mode, steps, start=start_node)
+        # C277: extract community partition for trajectory signature
+        from e0_controller.community import detect_communities
+        communities = detect_communities(landscape)
+        nav = navigate(landscape, unified_nodes, mode, steps, start=start_node,
+                       communities=communities)
 
         if verbose:
             print(f"\n  Navigation (start={start_node}):")
@@ -1342,6 +1379,17 @@ def run_multidomain_cycle(
             mech_bootstrap_crossings=nav.get("mech_bootstrap_crossings", 0),
             mech_en_crossings=nav.get("mech_en_crossings", 0),
         )
+        # C277: Compute trajectory signature and inscribe into trajectory_hist
+        if communities:
+            sig = compute_path_signature(nav["path"], communities)
+            traj_record = TrajectoryRecord(
+                signature=sig,
+                mode=mode,
+                coverage_delta=coverage_delta,
+                community_crossings=nav.get("community_crossings", 0),
+            )
+            result.trajectory = traj_record
+            trajectory_hist.inscribe(traj_record)
         history.append(result)
 
         if verbose:
