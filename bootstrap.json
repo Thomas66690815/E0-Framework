@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C278",
-    "latest_commit_hash": "3f81847",
-    "latest_commit_msg": "C278: Trajectory experience classification — trajectory_surprise_rate() + classify_trajectory_experience(), 13 new tests",
-    "test_count": 5844,
+    "latest_commit": "C279",
+    "latest_commit_hash": "TBD",
+    "latest_commit_msg": "C279: Trajectory experience benchmark — Stage 1 synthetic validation, benchmark_trajectory.py + 5 TestTrajectoryEndToEnd integration tests",
+    "test_count": 5849,
     "test_failures": 0,
     "ci_status": "pending",
     "module_count": "78 production + 12 benchmarks + 17 demos + 69 explorations + 130 test files",
@@ -319,11 +319,11 @@
       "Layer Audit (docs/E0_LAYER_AUDIT_v1.md): InscriptionContext storage contamination — tracked, not in scope",
       "delta_H_trusted is dead code — trust mechanism (C186) not wired into main resistance path",
       "F3 branching boundary (b≥3): potential improvement via hierarchical revisit penalty or subtree-level decay",
-      "F4 non-Markov limit: would require path-aware historization (credit assignment) to overcome — C277 partially addresses this with TrajectoryHistorization. C278 adds trajectory experience classification (trajectory_surprise_rate + classify_trajectory_experience) as measurement instrumentation before adaptation.",
+      "F4 non-Markov limit: would require path-aware historization (credit assignment) to overcome — C277 partially addresses this with TrajectoryHistorization. C278 adds trajectory experience classification (trajectory_surprise_rate + classify_trajectory_experience) as measurement instrumentation. C279 validates classifier discrimination on 3 synthetic regimes (stable/volatile/exploratory): all 3 correctly classified.",
       "Quality score weights (P8 §12.1) are heuristic — could be meta-tunable but risks infinite regress",
       "Per-user perception landscapes (P10 §9.1) not yet implemented — all users share same perception"
     ],
-    "next_commit_id": "C279",
+    "next_commit_id": "C280",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",

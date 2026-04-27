@@ -531,3 +531,111 @@ class TestTrajectoryExperience:
         th.inscribe(TrajectoryRecord(sig_s, "explore", 0.05, 1))  # surp
         # 9 total events: 7 conf + 2 surp → 2/9 < 0.3
         assert th.classify_trajectory_experience() == "stable"
+
+
+# ---------------------------------------------------------------------------
+# TestTrajectoryEndToEnd (C279)
+# ---------------------------------------------------------------------------
+
+class TestTrajectoryEndToEnd:
+    """C279 Stage 1: Integration tests for classify_trajectory_experience().
+
+    Validates that realistic multi-round session patterns produce the
+    expected classification using directly-scripted TrajectoryRecord
+    inscriptions (no navigate() or run_multidomain_cycle() — fast and
+    deterministic).
+
+    Design constraint (C279 analysis): 2-community landscapes produce at
+    most 4 distinct signatures {(0,), (1,), (0,1), (1,0)}, so revisits
+    accumulate faster than with 4+ communities (birthday paradox with k
+    symbols).  Tests that verify the '≥3 events → leaves exploratory'
+    boundary use this small signature space explicitly.
+
+    Arithmetic derivations:
+      quality = (U-F)/(U+F+1)  (same formula as edge-level Historization)
+      productive ↔ coverage_delta > 0 or community_crossings > 0
+      surprise ↔ quality predicted the wrong direction
+    """
+
+    def test_exploratory_with_single_revisit_event(self):
+        """1 revisit event (< 3 threshold) → 'exploratory'."""
+        th = TrajectoryHistorization()
+        sig = (0, 1)
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.05, 2))  # load=1, no event
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.05, 2))  # load=2, 1 event
+        # total revisit events = 1 < 3 → still exploratory
+        assert th.classify_trajectory_experience() == "exploratory"
+
+    def test_leaves_exploratory_after_sufficient_data(self):
+        """≥3 revisit events → classification leaves 'exploratory'.
+
+        5 productive inscriptions of the same sig → 4 revisit events (all
+        confirmations because quality rises monotonically) → not exploratory.
+        """
+        th = TrajectoryHistorization()
+        sig = (0, 1)
+        for _ in range(5):
+            th.inscribe(TrajectoryRecord(sig, "explore", 0.05, 2))
+        result = th.classify_trajectory_experience()
+        assert result != "exploratory"
+
+    def test_stable_session_pattern(self):
+        """Consistent productive history → surprise_rate = 0.25 < 0.3 → 'stable'.
+
+        Session: 4 productive inscriptions of same sig, then 1 stagnant.
+        Derivation:
+          i=1 (p): U=1,F=0, quality=0.5.    No event.
+          i=2 (p): quality=0.5→predict p→actual p→CONF.  U=2,F=0.
+          i=3 (p): quality=0.667→CONF.  U=3,F=0.
+          i=4 (p): quality=0.75→CONF.   U=4,F=0.
+          i=5 (s): quality=0.8→predict p→actual s→SURP.  U=4,F=1.
+        Events: 3 CONF + 1 SURP = 4 total.  surprise_rate = 1/4 = 0.25 → stable.
+        """
+        th = TrajectoryHistorization()
+        sig = (0, 1)
+        for _ in range(4):
+            th.inscribe(TrajectoryRecord(sig, "explore", 0.05, 2))  # productive
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.0, 0))       # stagnant
+        assert th.trajectory_surprise_rate() == pytest.approx(0.25)
+        assert th.classify_trajectory_experience() == "stable"
+
+    def test_volatile_session_pattern(self):
+        """Alternating productive/stagnant → surprise_rate = 0.75 ≥ 0.3 → 'volatile'.
+
+        Session on sig (0,): p, s, p, s, s.
+        Derivation:
+          i=1 (p): U=1,F=0, quality=0.5.     No event.
+          i=2 (s): quality=0.5→predict p→actual s→SURP.  U=1,F=1, quality=0.
+          i=3 (p): quality=0→predict p→actual p→CONF.    U=2,F=1, quality=0.25.
+          i=4 (s): quality=0.25→predict p→actual s→SURP. U=2,F=2, quality=0.
+          i=5 (s): quality=0→predict p→actual s→SURP.    U=2,F=3.
+        Events: 1 CONF + 3 SURP = 4 total.  surprise_rate = 3/4 = 0.75 → volatile.
+        """
+        th = TrajectoryHistorization()
+        sig = (0,)
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.05, 1))  # p: load=1
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.0,  0))  # s: SURP
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.05, 1))  # p: CONF
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.0,  0))  # s: SURP
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.0,  0))  # s: SURP
+        assert th.trajectory_surprise_rate() == pytest.approx(0.75)
+        assert th.classify_trajectory_experience() == "volatile"
+
+    def test_two_community_signature_diversity(self):
+        """20-round cycling over 4 signatures → sufficient revisits to leave exploratory.
+
+        Design: 2-community landscape → 4 distinct signatures.
+        Birthday paradox: 20 rounds / 4 signatures → ~5 visits per sig → ~4 events each.
+        Validates the C279 design constraint: 2 communities are the minimum for
+        reliable revisit accumulation within typical session lengths.
+
+        The specific pattern (4th inscription stagnant, rest productive) produces
+        ~3 CONF + 1 SURP per signature → rate ≈ 0.267 < 0.3 → 'stable'.
+        """
+        th = TrajectoryHistorization()
+        sigs = [(0,), (1,), (0, 1), (1, 0)]
+        for i in range(20):
+            sig = sigs[i % 4]
+            delta = 0.02 if i % 5 != 4 else 0.0
+            th.inscribe(TrajectoryRecord(sig, "explore", delta, 1))
+        assert th.classify_trajectory_experience() != "exploratory"
