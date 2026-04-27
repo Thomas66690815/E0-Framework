@@ -639,3 +639,173 @@ class TestTrajectoryEndToEnd:
             delta = 0.02 if i % 5 != 4 else 0.0
             th.inscribe(TrajectoryRecord(sig, "explore", delta, 1))
         assert th.classify_trajectory_experience() != "exploratory"
+
+
+# ---------------------------------------------------------------------------
+# TestTrajectoryAdaptation (C280)
+# ---------------------------------------------------------------------------
+
+
+class TestTrajectoryAdaptation:
+    """C280: adapt_from_trajectory_experience() and adaptive plan() thresholds.
+
+    Mirrors C188 adapt_from_experience() at trajectory level.
+    Claims:
+      1. adapt_from_trajectory_experience() returns correct dict for each experience type.
+      2. plan() uses the adaptive quality_threshold (volatile fires at -0.167, stable does not).
+      3. plan() uses the adaptive step_multiplier (volatile → 1.5x, stable → 2.0x).
+
+    Key arithmetic:
+      volatile sig (0,) via (p,s,p,s,s): U=2,F=3 → quality=-1/6 ≈ -0.167
+        volatile threshold=-0.15 → -0.167 < -0.15 → fires
+        stable  threshold=-0.30 → -0.167 > -0.30 → does not fire
+      deeply stagnant sig via 5×stagnant: U=0,F=5 → quality=-5/6 ≈ -0.833
+        fires both thresholds; differentiates only step_multiplier.
+    """
+
+    # --- Helpers ---
+
+    def _make_volatile_session(self) -> TrajectoryHistorization:
+        """Builds volatile session: sig (0,) with pattern p,s,p,s,s → rate=0.75."""
+        th = TrajectoryHistorization()
+        sig = (0,)
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.05, 1))  # p: no event
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.0,  0))  # s: SURP
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.05, 1))  # p: CONF
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.0,  0))  # s: SURP
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.0,  0))  # s: SURP
+        # 1 CONF + 3 SURP → rate=0.75 → volatile; quality=(2-3)/(2+3+1)=-1/6
+        return th
+
+    def _add_stable_base(self, th: TrajectoryHistorization, sig: PathSignature,
+                         n_productive: int) -> None:
+        """Add n_productive inscriptions of sig (all confirmations) to th."""
+        for _ in range(n_productive):
+            th.inscribe(TrajectoryRecord(sig, "explore", 0.05, 2))
+
+    # --- adapt_from_trajectory_experience() ---
+
+    def test_adapt_exploratory_returns_defaults(self):
+        """Fresh hist → exploratory → default thresholds (same as stable)."""
+        th = TrajectoryHistorization()
+        result = th.adapt_from_trajectory_experience()
+        assert result["quality_threshold"] == pytest.approx(-0.3)
+        assert result["step_multiplier"] == pytest.approx(2.0)
+
+    def test_adapt_stable_returns_defaults(self):
+        """Stable session → quality_threshold=-0.3, step_multiplier=2.0."""
+        th = TrajectoryHistorization()
+        sig = (0, 1)
+        for _ in range(5):
+            th.inscribe(TrajectoryRecord(sig, "explore", 0.05, 2))
+        # 4 revisit events, all CONF → rate=0.0 → stable
+        assert th.classify_trajectory_experience() == "stable"
+        result = th.adapt_from_trajectory_experience()
+        assert result["quality_threshold"] == pytest.approx(-0.3)
+        assert result["step_multiplier"] == pytest.approx(2.0)
+
+    def test_adapt_volatile_returns_sensitive_threshold(self):
+        """Volatile session → quality_threshold=-0.15, step_multiplier=1.5."""
+        th = self._make_volatile_session()
+        assert th.classify_trajectory_experience() == "volatile"
+        result = th.adapt_from_trajectory_experience()
+        assert result["quality_threshold"] == pytest.approx(-0.15)
+        assert result["step_multiplier"] == pytest.approx(1.5)
+
+    # --- plan() threshold sensitivity ---
+
+    def test_plan_volatile_fires_at_intermediate_quality(self):
+        """In volatile session, plan() fires for sig with quality ≈ -0.167.
+
+        Derivation: sig (0,) via (p,s,p,s,s) → quality=-1/6 ≈ -0.167.
+        volatile threshold=-0.15 → -0.167 < -0.15 → fires.
+        Reason string must include 'experience' keyword.
+        """
+        th = self._make_volatile_session()
+        # sig (0,) from the volatile session has quality=-1/6, load=5
+        sig = (0,)
+        last_round = _make_round_result(
+            coverage_delta=0.0,
+            trajectory=TrajectoryRecord(sig, "explore", 0.0, 0),
+        )
+        a = _make_assessment(coverage=0.4, frontier_size=8)
+        mode, steps, reason = plan(a, 2, [last_round], max_steps=30,
+                                   trajectory_hist=th)
+        assert mode == "explore"
+        assert "experience" in reason.lower()
+
+    def test_plan_stable_does_not_fire_at_intermediate_quality(self):
+        """In stable session, plan() does NOT fire for sig with quality ≈ -0.167.
+
+        Derivation: sig_test (0,) via (p,s,p,s,s) → quality=-1/6 ≈ -0.167.
+        stable threshold=-0.30 → -0.167 > -0.30 → does not fire.
+        sig_stable (0,1) with 9 productive inscriptions contributes 8 CONF
+        to overwhelm the 3 SURP from sig_test: total 9 CONF, 3 SURP → rate=0.25 → stable.
+        """
+        th = TrajectoryHistorization()
+        # Build stable base: 9 productive inscriptions on sig_stable → 8 CONF, 0 SURP
+        sig_stable = (0, 1)
+        self._add_stable_base(th, sig_stable, n_productive=9)
+        # Add intermediate-quality sig_test via (p,s,p,s,s) → 1 CONF, 3 SURP
+        sig_test = (0,)
+        th.inscribe(TrajectoryRecord(sig_test, "explore", 0.05, 1))  # p: no event
+        th.inscribe(TrajectoryRecord(sig_test, "explore", 0.0,  0))  # s: SURP
+        th.inscribe(TrajectoryRecord(sig_test, "explore", 0.05, 1))  # p: CONF
+        th.inscribe(TrajectoryRecord(sig_test, "explore", 0.0,  0))  # s: SURP
+        th.inscribe(TrajectoryRecord(sig_test, "explore", 0.0,  0))  # s: SURP
+        # Combined: 9 CONF, 3 SURP → rate=3/12=0.25 < 0.3 → stable
+        assert th.classify_trajectory_experience() == "stable"
+        # sig_test quality=-1/6 ≈ -0.167 > -0.30 → does NOT fire stable threshold
+        last_round = _make_round_result(
+            coverage_delta=0.0,
+            trajectory=TrajectoryRecord(sig_test, "explore", 0.0, 0),
+        )
+        a = _make_assessment(coverage=0.4, frontier_size=8)
+        mode, steps, reason = plan(a, 2, [last_round], max_steps=30,
+                                   trajectory_hist=th)
+        # Trajectory check must NOT have fired (no 'experience' in reason)
+        assert "experience" not in reason.lower()
+
+    # --- plan() step_multiplier ---
+
+    def test_plan_volatile_uses_1_5x_steps(self):
+        """Volatile session + deeply stagnant sig → base_steps × 1.5.
+
+        sig_session (0,): (p,s,p,s,s) → 1 CONF, 3 SURP (volatile base)
+        sig_target  (1,): 5×stagnant → 4 CONF (adds to session), quality=-5/6 < -0.15
+        Combined: 5 CONF, 3 SURP → rate=3/8=0.375 → volatile.
+        plan(max_steps=30) → steps = int(30 × 1.5) = 45.
+        """
+        th = self._make_volatile_session()           # sig (0,): 1C+3S
+        sig_target = (1,)
+        for _ in range(5):                           # sig (1,): 4C+0S → rate=5/8=0.375
+            th.inscribe(TrajectoryRecord(sig_target, "explore", 0.0, 0))
+        assert th.classify_trajectory_experience() == "volatile"
+        last_round = _make_round_result(
+            coverage_delta=0.0,
+            trajectory=TrajectoryRecord(sig_target, "explore", 0.0, 0),
+        )
+        a = _make_assessment(coverage=0.4, frontier_size=8)
+        _, steps, _ = plan(a, 2, [last_round], max_steps=30, trajectory_hist=th)
+        assert steps == 45  # int(30 × 1.5)
+
+    def test_plan_stable_uses_2x_steps(self):
+        """Stable session + deeply stagnant sig → base_steps × 2.0.
+
+        sig_stable (0,1): 5 productive → 4 CONF; sig_target (1,): 5 stagnant → 4 CONF
+        Combined: 8 CONF, 0 SURP → rate=0.0 → stable.
+        plan(max_steps=30) → steps = int(30 × 2.0) = 60.
+        """
+        th = TrajectoryHistorization()
+        self._add_stable_base(th, (0, 1), n_productive=5)  # 4 CONF
+        sig_target = (1,)
+        for _ in range(5):                                  # 4 CONF more
+            th.inscribe(TrajectoryRecord(sig_target, "explore", 0.0, 0))
+        assert th.classify_trajectory_experience() == "stable"
+        last_round = _make_round_result(
+            coverage_delta=0.0,
+            trajectory=TrajectoryRecord(sig_target, "explore", 0.0, 0),
+        )
+        a = _make_assessment(coverage=0.4, frontier_size=8)
+        _, steps, _ = plan(a, 2, [last_round], max_steps=30, trajectory_hist=th)
+        assert steps == 60  # int(30 × 2.0)

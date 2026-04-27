@@ -250,3 +250,28 @@ class TrajectoryHistorization:
             self.trace_load(sig) >= min_load
             and self.trace_quality(sig) < quality_threshold
         )
+
+    def adapt_from_trajectory_experience(self) -> dict:
+        """Return threshold adaptations for plan() based on trajectory experience.
+
+        C280: Trajectory-level analogue of C188 adapt_from_experience().
+
+        Maps classify_trajectory_experience() to concrete plan() parameters:
+
+            volatile:     quality_threshold=-0.15 (lower → fires sooner, patterns
+                          are unreliable so catch problems early), step_multiplier=1.5
+                          (moderate response — signal is noisy, avoid over-committing)
+            stable:       quality_threshold=-0.3 (default — signal is trustworthy),
+                          step_multiplier=2.0 (decisive response — act on reliable signal)
+            exploratory:  same as stable (no evidence to deviate from defaults)
+
+        Returns:
+            dict with keys:
+                'quality_threshold': float — passed to low_quality_warning()
+                'step_multiplier':   float — multiplied by base_steps in plan()
+        """
+        experience = self.classify_trajectory_experience()
+        if experience == "volatile":
+            return {"quality_threshold": -0.15, "step_multiplier": 1.5}
+        # stable or exploratory: E₀-safe defaults
+        return {"quality_threshold": -0.3, "step_multiplier": 2.0}

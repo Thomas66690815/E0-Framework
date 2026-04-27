@@ -19,6 +19,7 @@
   "environment": {
     "python_command": "py -3",
     "test_command": "py -3 -m pytest e0_controller/ server/ --tb=short -q",
+    "test_duration_note": "Full suite takes ~500–550 seconds (~9 min). This is NORMAL. Do NOT abort and restart — the suite is simply large (5800+ tests). Use the wait time productively (plan next commit, read bootstrap, update docs).",
     "test_single": "py -3 -m pytest e0_controller/test_FILE.py -v --tb=short",
     "ci_file": ".github/workflows/tests.yml",
     "ci_threshold": 2000,
@@ -27,10 +28,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C279",
-    "latest_commit_hash": "0350698",
-    "latest_commit_msg": "C279: Trajectory experience benchmark — Stage 1 synthetic validation, benchmark_trajectory.py + 5 TestTrajectoryEndToEnd integration tests",
-    "test_count": 5849,
+    "latest_commit": "C280",
+    "latest_commit_hash": "TBD",
+    "latest_commit_msg": "C280: Trajectory adaptation — adapt_from_trajectory_experience() + adaptive plan() thresholds",
+    "test_count": 5856,
     "test_failures": 0,
     "ci_status": "pending",
     "module_count": "78 production + 12 benchmarks + 17 demos + 69 explorations + 130 test files",
@@ -182,9 +183,10 @@
         "name": "Trajectory-Level Epistemic Liveness",
         "when": "C277",
         "insight": "A fixed trajectory shape traps the system at the round level — analogous to BT-3 at edge level. TrajectoryHistorization makes the path pattern an object that can be doubted. plan() gains a non-Markov signal: the decision depends on the history of trajectory shapes, not just current state. F4 gap partially closed: E₀ now has proactive pattern-escape, not just reactive stagnation detection.",
-        "built_upon": 1,
+        "built_upon": 2,
         "built_upon_by": [
-          "C278 trajectory experience classification (trajectory_surprise_rate + classify_trajectory_experience)"
+          "C278 trajectory experience classification (trajectory_surprise_rate + classify_trajectory_experience)",
+          "C280 trajectory adaptation (adapt_from_trajectory_experience, adaptive plan() thresholds)"
         ]
       }
     ]
@@ -319,11 +321,26 @@
       "Layer Audit (docs/E0_LAYER_AUDIT_v1.md): InscriptionContext storage contamination — tracked, not in scope",
       "delta_H_trusted is dead code — trust mechanism (C186) not wired into main resistance path",
       "F3 branching boundary (b≥3): potential improvement via hierarchical revisit penalty or subtree-level decay",
-      "F4 non-Markov limit: would require path-aware historization (credit assignment) to overcome — C277 partially addresses this with TrajectoryHistorization. C278 adds trajectory experience classification (trajectory_surprise_rate + classify_trajectory_experience) as measurement instrumentation. C279 validates classifier discrimination on 3 synthetic regimes (stable/volatile/exploratory): all 3 correctly classified.",
+      "F4 non-Markov limit: would require path-aware historization (credit assignment) to overcome — C277 partially addresses this with TrajectoryHistorization. C278 adds trajectory experience classification (trajectory_surprise_rate + classify_trajectory_experience) as measurement instrumentation. C279 validates classifier discrimination on 3 synthetic regimes (stable/volatile/exploratory): all 3 correctly classified. C280 closes the arc: adapt_from_trajectory_experience() wires classify result into plan() thresholds (volatile → lower threshold + 1.5x steps; stable → defaults + 2.0x steps). Trajectory Arc C277–C280 complete.",
       "Quality score weights (P8 §12.1) are heuristic — could be meta-tunable but risks infinite regress",
       "Per-user perception landscapes (P10 §9.1) not yet implemented — all users share same perception"
     ],
-    "next_commit_id": "C280",
+    "next_commit_id": "C281",
+    "planned_arcs": [
+      {
+        "id": "ARC-B",
+        "title": "LLM Bootstrap Architecture",
+        "planned_start": "C281",
+        "description": "E₀ learns its own structure first (Self-Graph). bootstrapper.py exists. Sequence: C281 Self-Graph (E₀ learns E₀), C282 Bootstrapper (LLM output → Landscape init), C283 LLM Adapter v2 (structured graph output), C284 Mode Controller (Learn/Execute/Combination), C285 Dual Reflection (Domain + Self-Graph update). Key insight: E₀ = Skeleton, LLM = Muscle. Cold-start: empty Landscape → LLM fills initial mass. inertia_factor already encodes LLM-trigger threshold.",
+        "reference": "docs/E0_LLM_BOOTSTRAP_ARCHITECTURE_v1.md"
+      },
+      {
+        "id": "ARC-C",
+        "title": "Dead Code Cleanup: delta_H_trusted",
+        "planned_start": "after ARC-B or standalone",
+        "description": "delta_H_trusted is dead code — trust mechanism (C186) not wired into main resistance path. Small, self-contained cleanup commit. Remove or wire in."
+      }
+    ],
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",

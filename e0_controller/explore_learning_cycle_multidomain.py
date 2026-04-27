@@ -307,17 +307,26 @@ def plan(assessment: MultiDomainAssessment, round_num: int,
     """
     base_steps = max_steps
 
-    # C277: Proactive trajectory-quality check (non-Markov signal).
+    # C277/C280: Proactive trajectory-quality check (non-Markov signal).
+    # C280: Threshold and step budget adapt to trajectory experience
+    # (volatile → more sensitive threshold + moderate steps;
+    #  stable/exploratory → default threshold + full step doubling).
     # Runs before stagnation check so it can escalate sooner.
     if trajectory_hist is not None and history:
+        adaptation = trajectory_hist.adapt_from_trajectory_experience()
         last_sig = history[-1].trajectory.signature if history[-1].trajectory else None
-        if last_sig and trajectory_hist.low_quality_warning(last_sig):
+        if last_sig and trajectory_hist.low_quality_warning(
+            last_sig, quality_threshold=adaptation["quality_threshold"]
+        ):
+            steps = int(base_steps * adaptation["step_multiplier"])
+            experience = trajectory_hist.classify_trajectory_experience()
             return (
                 "explore",
-                base_steps * 2,
+                steps,
                 f"Trajectory pattern {last_sig} historically stagnant "
                 f"(quality={trajectory_hist.trace_quality(last_sig):.2f}, "
-                f"load={trajectory_hist.trace_load(last_sig)})",
+                f"load={trajectory_hist.trace_load(last_sig)}, "
+                f"experience={experience})",
             )
 
     # Stagnation check
