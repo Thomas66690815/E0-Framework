@@ -28,10 +28,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C280",
-    "latest_commit_hash": "1d70a9b",
-    "latest_commit_msg": "C280: Trajectory adaptation — adapt_from_trajectory_experience() + adaptive plan() thresholds",
-    "test_count": 5856,
+    "latest_commit": "C281",
+    "latest_commit_hash": "e24fa4b",
+    "latest_commit_msg": "C281: Trajectory integration — wire trajectory_hist into interactive session pipeline",
+    "test_count": 5863,
     "test_failures": 0,
     "ci_status": "pending",
     "module_count": "78 production + 12 benchmarks + 17 demos + 69 explorations + 130 test files",
@@ -325,20 +325,19 @@
       "Quality score weights (P8 §12.1) are heuristic — could be meta-tunable but risks infinite regress",
       "Per-user perception landscapes (P10 §9.1) not yet implemented — all users share same perception"
     ],
-    "next_commit_id": "C281",
+    "next_commit_id": "C282",
     "planned_arcs": [
       {
         "id": "ARC-B",
         "title": "LLM Bootstrap Architecture",
-        "planned_start": "C281",
-        "description": "E₀ learns its own structure first (Self-Graph). bootstrapper.py exists. Sequence: C281 Self-Graph (E₀ learns E₀), C282 Bootstrapper (LLM output → Landscape init), C283 LLM Adapter v2 (structured graph output), C284 Mode Controller (Learn/Execute/Combination), C285 Dual Reflection (Domain + Self-Graph update). Key insight: E₀ = Skeleton, LLM = Muscle. Cold-start: empty Landscape → LLM fills initial mass. inertia_factor already encodes LLM-trigger threshold.",
-        "reference": "docs/E0_LLM_BOOTSTRAP_ARCHITECTURE_v1.md"
+        "status": "COMPLETE (C43–C47)",
+        "note": "Self-Graph, Bootstrapper, LLM Adapter v2, Mode Controller, Dual Reflection all done. 197 tests. See E0_TEST_REGISTRY_v2.md §Bootstrap Architecture."
       },
       {
         "id": "ARC-C",
         "title": "Dead Code Cleanup: delta_H_trusted",
-        "planned_start": "after ARC-B or standalone",
-        "description": "delta_H_trusted is dead code — trust mechanism (C186) not wired into main resistance path. Small, self-contained cleanup commit. Remove or wire in."
+        "planned_start": "standalone when needed",
+        "description": "NOTE: Open thread may be incorrect — delta_H_trusted IS used in controller._effective_resistance() when epistemic_trust=True. Needs audit before action: verify default setting and whether the note 'not wired into main resistance path' is still accurate."
       }
     ],
     "working_principles": [
