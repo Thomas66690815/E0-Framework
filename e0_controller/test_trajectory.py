@@ -1,9 +1,11 @@
-"""Tests for C277: Trajectory-level historization.
+"""Tests for C277/C278: Trajectory-level historization and experience classification.
 
 Claims validated:
   1. PathSignature is a compressed community-index tuple (domain-invariant)
   2. TrajectoryHistorization accumulates U/F correctly (same formula as Historization)
   3. plan() reacts to low-quality trajectory signals (non-Markov behavior)
+  4. C278: trajectory_surprise_rate() and classify_trajectory_experience() mirror
+     the edge-level C186/C188 mechanism for self-calibrating experience awareness
 """
 
 from __future__ import annotations
@@ -370,3 +372,162 @@ class TestPlanWithTrajectory:
                                    trajectory_hist=th)
         # No escalation — steps should be ≤ 45 (stagnation recovery max)
         assert steps <= 45
+
+
+# ---------------------------------------------------------------------------
+# TestTrajectoryExperience (C278)
+# ---------------------------------------------------------------------------
+
+
+class TestTrajectoryExperience:
+    """C278: trajectory_surprise_rate() and classify_trajectory_experience().
+
+    Mirrors TestAdaptiveObservation at edge level (test_adaptive_observation.py).
+    Structural claim: trajectory-level experience classification uses the same
+    three-state vocabulary (stable / volatile / exploratory) as edge-level,
+    and the surprise_rate formula is identical in structure.
+    """
+
+    # --- trajectory_surprise_rate ---
+
+    def test_surprise_rate_zero_with_no_data(self):
+        """Fresh TrajectoryHistorization has no revisit events → rate = 0.0."""
+        th = TrajectoryHistorization()
+        assert th.trajectory_surprise_rate() == pytest.approx(0.0)
+
+    def test_first_inscription_not_tracked(self):
+        """First inscription of a signature has no prior → no conf/surp event."""
+        th = TrajectoryHistorization()
+        th.inscribe(TrajectoryRecord((0,), "explore", 0.0, 0))
+        # No revisit data yet — rate stays 0.0
+        assert th.trajectory_surprise_rate() == pytest.approx(0.0)
+
+    def test_confirmation_when_quality_positive_and_productive(self):
+        """quality > 0 → predict productive → actual productive → confirmation."""
+        th = TrajectoryHistorization()
+        sig = (0, 1)
+        # First inscription: U=1, F=0 → quality = 0.5 → predicts productive
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.05, 2))
+        # Second inscription: same signature, actual productive → confirmation
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.05, 2))
+        assert th.trajectory_surprise_rate() == pytest.approx(0.0)  # all confirmations
+
+    def test_surprise_when_quality_positive_but_stagnant(self):
+        """quality > 0 → predict productive → actual stagnant → surprise."""
+        th = TrajectoryHistorization()
+        sig = (0, 1)
+        # First inscription: productive → quality = 0.5
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.05, 2))
+        # Second inscription: stagnant → contradicts prediction → surprise
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.0, 0))
+        assert th.trajectory_surprise_rate() == pytest.approx(1.0)  # 1 surp / 1 total
+
+    def test_surprise_when_quality_negative_but_productive(self):
+        """quality < 0 → predict stagnant → actual productive → surprise."""
+        th = TrajectoryHistorization()
+        sig = (0,)
+        # First: stagnant → load=1, no revisit event yet.  quality = -0.5
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.0, 0))
+        # Second: productive → quality = -0.5 < 0 → predict stagnant
+        # → actual productive → contradiction → surprise (1 surp, 0 conf)
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.05, 1))
+        assert th.trajectory_surprise_rate() == pytest.approx(1.0)
+
+    def test_confirmation_when_quality_negative_and_stagnant(self):
+        """quality < 0 → predict stagnant → actual stagnant → confirmation."""
+        th = TrajectoryHistorization()
+        sig = (0,)
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.0, 0))  # load=1
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.0, 0))  # revisit → conf
+        assert th.trajectory_surprise_rate() == pytest.approx(0.0)
+
+    def test_surprise_rate_formula_mixed(self):
+        """2 confirmations, 1 surprise → rate = 1/3."""
+        th = TrajectoryHistorization()
+        sig = (0, 1)
+        # First inscription: productive, quality → 0.5 (no event)
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.05, 2))
+        # Second: productive again → confirmation (1)
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.05, 2))
+        # Third: quality still > 0; actual stagnant → surprise (1)
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.0, 0))
+        # Fourth: quality still > 0 at that moment; actual productive → confirmation (2)
+        # quality after U=2,F=1: (2-1)/(2+1+1) = 0.25 > 0 → predict productive
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.05, 2))
+        # total events = 3 (inscriptions 2,3,4); 2 conf + 1 surp → rate = 1/3
+        assert th.trajectory_surprise_rate() == pytest.approx(1 / 3)
+
+    def test_independent_signatures_aggregate(self):
+        """Confirmations and surprises from different signatures aggregate globally."""
+        th = TrajectoryHistorization()
+        sig_a = (0, 1)
+        sig_b = (1, 0)
+        # sig_a: first productive, second productive → 1 confirmation
+        th.inscribe(TrajectoryRecord(sig_a, "explore", 0.05, 2))
+        th.inscribe(TrajectoryRecord(sig_a, "explore", 0.05, 2))
+        # sig_b: first stagnant, second productive (quality < 0 → surprise)
+        th.inscribe(TrajectoryRecord(sig_b, "explore", 0.0, 0))
+        th.inscribe(TrajectoryRecord(sig_b, "explore", 0.05, 1))
+        # total: 1 conf (sig_a) + 1 surp (sig_b) → rate = 0.5
+        assert th.trajectory_surprise_rate() == pytest.approx(0.5)
+
+    # --- classify_trajectory_experience ---
+
+    def test_classify_exploratory_when_no_data(self):
+        """No revisit events → 'exploratory'."""
+        th = TrajectoryHistorization()
+        assert th.classify_trajectory_experience() == "exploratory"
+
+    def test_classify_exploratory_below_threshold(self):
+        """Fewer than 3 revisit events → 'exploratory', regardless of surprise rate."""
+        th = TrajectoryHistorization()
+        sig = (0,)
+        # 2 inscriptions → 1 revisit event (1 conf or surp), below threshold of 3
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.0, 0))
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.0, 0))
+        # Only 1 total revisit event → still exploratory
+        assert th.classify_trajectory_experience() == "exploratory"
+
+    def test_classify_stable_with_all_confirmations(self):
+        """All confirmations (0% surprise rate) → 'stable'."""
+        th = TrajectoryHistorization()
+        sig = (0, 1)
+        # Build up 3+ revisit events: all productive (quality > 0 → predict → confirm)
+        for _ in range(5):
+            th.inscribe(TrajectoryRecord(sig, "explore", 0.05, 2))
+        # 4 revisit events, 0 surprises → rate = 0.0 → stable
+        assert th.classify_trajectory_experience() == "stable"
+
+    def test_classify_volatile_with_high_surprise_rate(self):
+        """Surprise rate ≥ 0.3 → 'volatile'."""
+        th = TrajectoryHistorization()
+        sig = (0,)
+        # First: stagnant → quality = -0.5
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.0, 0))
+        # Second: stagnant → quality < 0 → predict stagnant → actual stagnant → conf
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.0, 0))
+        # Third: productive → quality < 0 → predict stagnant → actual productive → surp
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.05, 1))
+        # Fourth: productive → quality still ≤ 0 at that point → predict stagnant → surp
+        # quality after U=1,F=2: (1-2)/(1+2+1) = -0.25 < 0 → predict stagnant
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.05, 1))
+        # 3 revisit events: 1 conf + 2 surp → rate = 2/3 ≥ 0.3 → volatile
+        assert th.classify_trajectory_experience() == "volatile"
+
+    def test_classify_stable_boundary_at_30_percent(self):
+        """Surprise rate just below 0.3 → 'stable'."""
+        th = TrajectoryHistorization()
+        # Construct: 7 confirmations, 2 surprises → rate = 2/9 ≈ 0.222 < 0.3
+        sig_c = (0, 1)
+        # Prime with productive history so quality stays positive
+        th.inscribe(TrajectoryRecord(sig_c, "explore", 0.05, 2))  # load=1, no event
+        # 7 more productive → 7 confirmations
+        for _ in range(7):
+            th.inscribe(TrajectoryRecord(sig_c, "explore", 0.05, 2))
+        # Now inject 2 surprises with a different sig that starts stagnant
+        sig_s = (1, 0)
+        th.inscribe(TrajectoryRecord(sig_s, "explore", 0.0, 0))   # load=1, no event
+        th.inscribe(TrajectoryRecord(sig_s, "explore", 0.05, 1))  # surp
+        th.inscribe(TrajectoryRecord(sig_s, "explore", 0.05, 1))  # surp
+        # 9 total events: 7 conf + 2 surp → 2/9 < 0.3
+        assert th.classify_trajectory_experience() == "stable"

@@ -121,18 +121,55 @@ class TrajectoryHistorization:
     trace_load(sig) = U + F
         — how many times this pattern has been observed.
         Low load → insufficient evidence to act on.
+
+    C278 — Experience Classification (mirrors C186/C187 at edge level):
+    At inscription time, if a signature has prior history (load ≥ 1),
+    we predict the expected outcome from trace_quality and compare
+    to the actual outcome.  Matches accumulate as confirmations;
+    mismatches accumulate as surprises.
+
+    trajectory_surprise_rate() is the trajectory-level analogue of
+    surprise_rate() in Historization — a global signal for whether
+    trajectory predictions are reliable.
+
+    classify_trajectory_experience() maps this signal to the same
+    three categories as classify_experience():
+        'stable'      — low trajectory surprise rate (< 30%)
+        'volatile'    — high trajectory surprise rate (≥ 30%)
+        'exploratory' — fewer than 3 revisit events (insufficient data)
     """
 
     def __init__(self) -> None:
         self._traces: Dict[PathSignature, Tuple[int, int]] = {}
+        # C278: per-signature revisit statistics
+        self._confirmations: Dict[PathSignature, int] = {}
+        self._surprises: Dict[PathSignature, int] = {}
 
     def inscribe(self, record: TrajectoryRecord) -> None:
-        """Record one round's outcome for its signature."""
-        u, f = self._traces.get(record.signature, (0, 0))
+        """Record one round's outcome for its signature.
+
+        C278: If the signature has prior history (load ≥ 1), record
+        whether the actual outcome confirms or surprises the prediction
+        derived from trace_quality.  First observations are never
+        tracked — there is no prior to compare against.
+        """
+        sig = record.signature
+        u, f = self._traces.get(sig, (0, 0))
+
+        # C278: track prediction accuracy on revisits
+        if u + f >= 1:
+            q = (u - f) / (u + f + 1)
+            predicted_productive = q >= 0.0
+            actual_productive = record.outcome in ("productive", "improving")
+            if predicted_productive == actual_productive:
+                self._confirmations[sig] = self._confirmations.get(sig, 0) + 1
+            else:
+                self._surprises[sig] = self._surprises.get(sig, 0) + 1
+
         if record.outcome in ("productive", "improving"):
-            self._traces[record.signature] = (u + 1, f)
+            self._traces[sig] = (u + 1, f)
         else:
-            self._traces[record.signature] = (u, f + 1)
+            self._traces[sig] = (u, f + 1)
 
     def trace_load(self, sig: PathSignature) -> int:
         """Number of times this signature has been observed (U + F)."""
@@ -150,6 +187,46 @@ class TrajectoryHistorization:
     def known_signatures(self) -> List[PathSignature]:
         """All signatures that have been observed at least once."""
         return list(self._traces.keys())
+
+    # --- Experience Classification (C278) ---
+
+    def trajectory_surprise_rate(self) -> float:
+        """Global fraction of trajectory revisits that contradicted the prediction.
+
+        Analogous to Historization.surprise_rate() at edge level.
+        Returns float in [0, 1].  0.0 when no revisit data exists.
+        """
+        total_conf = sum(self._confirmations.values())
+        total_surp = sum(self._surprises.values())
+        total = total_conf + total_surp
+        if total < 1e-12:
+            return 0.0
+        return total_surp / total
+
+    def classify_trajectory_experience(self) -> str:
+        """Classify trajectory reliability from accumulated revisit data.
+
+        C278: Trajectory-level analogue of Historization.classify_experience().
+
+        Returns one of:
+            'stable'      — low surprise rate (< 30%), predictions hold
+            'volatile'    — high surprise rate (≥ 30%), patterns are unreliable
+            'exploratory' — fewer than 3 revisit events, insufficient data
+
+        The 'exploratory' guard mirrors the edge-level threshold in
+        classify_experience() (total < 3.0).  Trajectory signatures
+        accumulate data more slowly than edges, so this guard is
+        critical: a single mismatched revisit should not trigger 'volatile'.
+        """
+        total_conf = sum(self._confirmations.values())
+        total_surp = sum(self._surprises.values())
+        total = total_conf + total_surp
+        if total < 3:
+            return "exploratory"
+        sr = total_surp / total
+        if sr >= 0.3:
+            return "volatile"
+        return "stable"
 
     def low_quality_warning(
         self,

@@ -27,10 +27,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C277",
-    "latest_commit_hash": "64919ba",
-    "latest_commit_msg": "C277: Trajectory-level historization — PathSignature, TrajectoryHistorization, non-Markov plan() signal",
-    "test_count": 5831,
+    "latest_commit": "C278",
+    "latest_commit_hash": "TBD",
+    "latest_commit_msg": "C278: Trajectory experience classification — trajectory_surprise_rate() + classify_trajectory_experience(), 13 new tests",
+    "test_count": 5844,
     "test_failures": 0,
     "ci_status": "pending",
     "module_count": "78 production + 12 benchmarks + 17 demos + 69 explorations + 130 test files",
@@ -182,8 +182,10 @@
         "name": "Trajectory-Level Epistemic Liveness",
         "when": "C277",
         "insight": "A fixed trajectory shape traps the system at the round level — analogous to BT-3 at edge level. TrajectoryHistorization makes the path pattern an object that can be doubted. plan() gains a non-Markov signal: the decision depends on the history of trajectory shapes, not just current state. F4 gap partially closed: E₀ now has proactive pattern-escape, not just reactive stagnation detection.",
-        "built_upon": 0,
-        "built_upon_by": []
+        "built_upon": 1,
+        "built_upon_by": [
+          "C278 trajectory experience classification (trajectory_surprise_rate + classify_trajectory_experience)"
+        ]
       }
     ]
   },
@@ -317,11 +319,11 @@
       "Layer Audit (docs/E0_LAYER_AUDIT_v1.md): InscriptionContext storage contamination — tracked, not in scope",
       "delta_H_trusted is dead code — trust mechanism (C186) not wired into main resistance path",
       "F3 branching boundary (b≥3): potential improvement via hierarchical revisit penalty or subtree-level decay",
-      "F4 non-Markov limit: would require path-aware historization (credit assignment) to overcome — C277 partially addresses this with TrajectoryHistorization",
+      "F4 non-Markov limit: would require path-aware historization (credit assignment) to overcome — C277 partially addresses this with TrajectoryHistorization. C278 adds trajectory experience classification (trajectory_surprise_rate + classify_trajectory_experience) as measurement instrumentation before adaptation.",
       "Quality score weights (P8 §12.1) are heuristic — could be meta-tunable but risks infinite regress",
       "Per-user perception landscapes (P10 §9.1) not yet implemented — all users share same perception"
     ],
-    "next_commit_id": "C274",
+    "next_commit_id": "C279",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
