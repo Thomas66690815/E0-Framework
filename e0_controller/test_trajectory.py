@@ -809,3 +809,93 @@ class TestTrajectoryAdaptation:
         a = _make_assessment(coverage=0.4, frontier_size=8)
         _, steps, _ = plan(a, 2, [last_round], max_steps=30, trajectory_hist=th)
         assert steps == 60  # int(30 × 2.0)
+
+
+# ---------------------------------------------------------------------------
+# TestSessionBenchmark (C282)
+# ---------------------------------------------------------------------------
+
+
+class TestSessionBenchmark:
+    """C282: SessionBenchmarkResult structure and invariants.
+
+    These tests validate the shape and consistency of benchmark results,
+    not specific numeric outcomes (which depend on real landscape topology
+    and are non-deterministic).  The benchmark is run with minimal
+    parameters (rounds=2, steps=5) to keep tests fast.
+
+    Claims:
+      1. run_session_benchmark() returns a SessionBenchmarkResult
+      2. rounds_run ≤ requested rounds (saturation may stop early)
+      3. unique_signatures ≤ rounds_run (can't have more sigs than rounds)
+      4. experience_category is a valid label
+      5. adaptation dict has expected keys with valid types
+      6. trajectory_surprise_rate is in [0, 1]
+      7. If escalation fired, escalation_details is non-empty
+      8. signature_diversity is in [0, 1]
+      9. collision_rate = 1 - signature_diversity
+      10. Per-signature revisit_events sum == total_revisit_events
+    """
+
+    @pytest.fixture(scope="class")
+    def result(self):
+        """Run a minimal benchmark once for all tests in this class."""
+        from e0_controller.benchmark_trajectory_session import run_session_benchmark
+        return run_session_benchmark(rounds=2, steps_per_round=5)
+
+    def test_returns_session_benchmark_result(self, result):
+        from e0_controller.benchmark_trajectory_session import SessionBenchmarkResult
+        assert isinstance(result, SessionBenchmarkResult)
+
+    def test_rounds_run_at_most_requested(self, result):
+        """Saturation may stop cmd_run early — rounds_run ≤ 2."""
+        assert result.rounds_run <= 2
+
+    def test_unique_signatures_at_most_rounds_run(self, result):
+        """Can't have more unique signatures than rounds navigated."""
+        assert result.unique_signatures <= result.rounds_run
+
+    def test_experience_category_is_valid(self, result):
+        assert result.experience_category in ("stable", "volatile", "exploratory")
+
+    def test_adaptation_has_expected_keys(self, result):
+        assert "quality_threshold" in result.adaptation
+        assert "step_multiplier" in result.adaptation
+
+    def test_adaptation_quality_threshold_is_float(self, result):
+        assert isinstance(result.adaptation["quality_threshold"], float)
+
+    def test_adaptation_step_multiplier_positive(self, result):
+        assert result.adaptation["step_multiplier"] > 0
+
+    def test_surprise_rate_in_unit_interval(self, result):
+        assert 0.0 <= result.trajectory_surprise_rate <= 1.0
+
+    def test_escalation_consistency(self, result):
+        """If escalation fired, details must be non-empty and vice versa."""
+        if result.trajectory_escalation_fired:
+            assert result.escalation_count > 0
+            assert len(result.escalation_details) > 0
+        else:
+            assert result.escalation_count == 0
+            assert len(result.escalation_details) == 0
+
+    def test_signature_diversity_in_unit_interval(self, result):
+        assert 0.0 <= result.signature_diversity <= 1.0
+
+    def test_collision_rate_complement(self, result):
+        assert result.collision_rate == pytest.approx(1.0 - result.signature_diversity)
+
+    def test_revisit_events_consistent(self, result):
+        """Sum of per-signature revisit_events == total_revisit_events."""
+        computed = sum(sp.revisit_events for sp in result.per_signature)
+        assert computed == result.total_revisit_events
+
+    def test_summary_is_string_with_content(self, result):
+        s = result.summary()
+        assert isinstance(s, str)
+        assert "Stage 2" in s
+        assert result.experience_category in s
+
+    def test_communities_count_nonnegative(self, result):
+        assert result.communities_count >= 0
