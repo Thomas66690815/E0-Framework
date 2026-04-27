@@ -137,6 +137,8 @@ from e0_controller.interactive_session import (
     _inject_dream_bridges,
     _create_bridges,
     refresh_communities,
+    _trajectory_hist_to_dict,
+    _trajectory_hist_from_dict,
 )
 from e0_controller.feedback import HumanAction
 from e0_controller.perception import PerceptionDomain
@@ -8376,3 +8378,125 @@ class TestSinglePartitionWorld:
                 if hist.trace_load(e) > 0:
                     cmd_inspect(s, e.source, e.target)
                     break
+
+
+# ---------------------------------------------------------------------------
+# TestTrajectoryIntegration (C281)
+# ---------------------------------------------------------------------------
+
+
+class TestTrajectoryIntegration:
+    """C281: trajectory_hist wired into SessionState and cmd_run.
+
+    Claims:
+      1. SessionState has a TrajectoryHistorization field by default.
+      2. cmd_run inscribes trajectory records into state.trajectory_hist.
+      3. After N rounds, classify_trajectory_experience() returns a valid value.
+      4. trajectory_hist survives a save/load round-trip (correct U/F + conf/surp).
+      5. load_session without trajectory_hist key (old file) returns fresh TrajectoryHistorization.
+      6. Serialization helpers _trajectory_hist_to_dict / _trajectory_hist_from_dict are inverse.
+    """
+
+    def test_session_state_has_trajectory_hist(self):
+        """Fresh SessionState (from build_session) has a TrajectoryHistorization."""
+        from e0_controller.trajectory import TrajectoryHistorization
+        s = build_session(steps_per_round=10)
+        assert isinstance(s.trajectory_hist, TrajectoryHistorization)
+
+    def test_cmd_run_inscribes_trajectory(self):
+        """After cmd_run, trajectory_hist has accumulated signatures."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 2)
+        # At least some signatures should be known after 2 rounds
+        # (empty communities → no inscription, so we check both branches)
+        th = s.trajectory_hist
+        if s.communities:
+            # Communities exist → signatures must be present
+            assert len(th.known_signatures()) > 0
+        else:
+            # No communities yet (cold start with empty topology) → still valid
+            assert len(th.known_signatures()) == 0
+
+    def test_cmd_run_accumulates_across_rounds(self):
+        """More rounds → more or equal trace load in trajectory_hist."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 1)
+        load_after_1 = sum(
+            s.trajectory_hist.trace_load(sig)
+            for sig in s.trajectory_hist.known_signatures()
+        )
+        cmd_run(s, 2)
+        load_after_3 = sum(
+            s.trajectory_hist.trace_load(sig)
+            for sig in s.trajectory_hist.known_signatures()
+        )
+        # More rounds → load can only increase or stay same
+        assert load_after_3 >= load_after_1
+
+    def test_classify_trajectory_after_runs_is_valid(self):
+        """classify_trajectory_experience() returns a valid category after runs."""
+        s = build_session(steps_per_round=10)
+        cmd_run(s, 3)
+        result = s.trajectory_hist.classify_trajectory_experience()
+        assert result in ("stable", "volatile", "exploratory")
+
+    def test_trajectory_hist_round_trip(self, tmp_path):
+        """trajectory_hist survives save/load with correct trace counts."""
+        from e0_controller.trajectory import TrajectoryHistorization, TrajectoryRecord
+        s = build_session(steps_per_round=10)
+        # Manually inscribe controlled data into trajectory_hist
+        sig = (0, 1)
+        for _ in range(3):
+            s.trajectory_hist.inscribe(TrajectoryRecord(sig, "explore", 0.05, 1))
+        s.trajectory_hist.inscribe(TrajectoryRecord(sig, "explore", 0.0, 0))
+        load_before = s.trajectory_hist.trace_load(sig)
+        quality_before = s.trajectory_hist.trace_quality(sig)
+
+        path = str(tmp_path / "traj_rt.json")
+        save_session(s, path)
+        restored = load_session(path)
+
+        assert restored.trajectory_hist.trace_load(sig) == load_before
+        assert restored.trajectory_hist.trace_quality(sig) == pytest.approx(quality_before)
+
+    def test_load_session_backward_compat_no_trajectory_key(self, tmp_path):
+        """Old session file without 'trajectory_hist' key → fresh TrajectoryHistorization."""
+        import json
+        from e0_controller.trajectory import TrajectoryHistorization
+        s = build_session(steps_per_round=10)
+        path = str(tmp_path / "old_session.json")
+        save_session(s, path)
+
+        # Remove trajectory_hist key to simulate old file format
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        data.pop("trajectory_hist", None)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f)
+
+        restored = load_session(path)
+        assert isinstance(restored.trajectory_hist, TrajectoryHistorization)
+        assert len(restored.trajectory_hist.known_signatures()) == 0
+
+    def test_trajectory_hist_codec_inverse(self):
+        """_trajectory_hist_to_dict followed by _trajectory_hist_from_dict is identity."""
+        from e0_controller.trajectory import TrajectoryHistorization, TrajectoryRecord
+        th = TrajectoryHistorization()
+        sig_a = (0, 1)
+        sig_b = (1,)
+        for _ in range(3):
+            th.inscribe(TrajectoryRecord(sig_a, "explore", 0.05, 1))
+        th.inscribe(TrajectoryRecord(sig_a, "explore", 0.0, 0))
+        th.inscribe(TrajectoryRecord(sig_b, "explore", 0.0, 0))
+        th.inscribe(TrajectoryRecord(sig_b, "explore", 0.05, 1))
+
+        d = _trajectory_hist_to_dict(th)
+        restored = _trajectory_hist_from_dict(d)
+
+        assert restored.trace_load(sig_a) == th.trace_load(sig_a)
+        assert restored.trace_load(sig_b) == th.trace_load(sig_b)
+        assert restored.trace_quality(sig_a) == pytest.approx(th.trace_quality(sig_a))
+        assert restored.trace_quality(sig_b) == pytest.approx(th.trace_quality(sig_b))
+        assert restored.trajectory_surprise_rate() == pytest.approx(
+            th.trajectory_surprise_rate()
+        )

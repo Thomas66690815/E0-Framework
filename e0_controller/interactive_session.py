@@ -161,6 +161,11 @@ from e0_controller.explore_learning_cycle_multidomain import (
     _domain_of,
     _pick_start_node,
 )
+from e0_controller.trajectory import (
+    TrajectoryHistorization,
+    TrajectoryRecord,
+    compute_path_signature,
+)
 from e0_controller.feedback import (
     HumanAction,
     FeedbackResult,
@@ -227,6 +232,10 @@ class SessionState:
     active_universe: str = "main"
     # C265: Cached community partition — refreshed after landscape mutations
     communities: List = field(default_factory=list)
+    # C281: Trajectory-level historization — accumulates across rounds
+    trajectory_hist: TrajectoryHistorization = field(
+        default_factory=TrajectoryHistorization
+    )
 
 
 def refresh_communities(state: SessionState) -> List:
@@ -258,9 +267,10 @@ def cmd_run(state: SessionState, n: int = 1) -> str:
             )
             break
 
-        # Plan
+        # Plan (C281: pass trajectory_hist for adaptive thresholds)
         mode, steps, reason = plan(
             a_before, state.round_num, state.history, state.steps_per_round,
+            trajectory_hist=state.trajectory_hist,
         )
 
         # Navigate
@@ -296,6 +306,20 @@ def cmd_run(state: SessionState, n: int = 1) -> str:
             type_usage=nav.get("type_usage", {}),
             community_crossings=nav["community_crossings"],
         )
+
+        # C281: Compute trajectory signature and inscribe into trajectory_hist
+        traj_record = None
+        if nav["path"] and state.communities:
+            sig = compute_path_signature(nav["path"], state.communities)
+            traj_record = TrajectoryRecord(
+                signature=sig,
+                mode=mode,
+                coverage_delta=coverage_delta,
+                community_crossings=nav["community_crossings"],
+            )
+            state.trajectory_hist.inscribe(traj_record)
+        result.trajectory = traj_record
+
         state.history.append(result)
 
         # Consolidate (persist round results to learning_state.json)
@@ -6253,6 +6277,48 @@ def _perception_to_dict(perception: "PerceptionDomain") -> dict:
     }
 
 
+def _trajectory_hist_to_dict(th: TrajectoryHistorization) -> dict:
+    """Serialize TrajectoryHistorization to a JSON-compatible dict.
+
+    C281: PathSignature tuples become JSON arrays (restored as tuples on load).
+    """
+    return {
+        "traces": {
+            str(list(sig)): list(uf)
+            for sig, uf in th._traces.items()
+        },
+        "confirmations": {
+            str(list(sig)): count
+            for sig, count in th._confirmations.items()
+        },
+        "surprises": {
+            str(list(sig)): count
+            for sig, count in th._surprises.items()
+        },
+    }
+
+
+def _trajectory_hist_from_dict(data: Optional[dict]) -> TrajectoryHistorization:
+    """Restore TrajectoryHistorization from a serialized dict.
+
+    C281: Missing or None data → fresh TrajectoryHistorization (backward compat).
+    """
+    th = TrajectoryHistorization()
+    if not data:
+        return th
+    import ast
+    for key, uf in data.get("traces", {}).items():
+        sig = tuple(ast.literal_eval(key))
+        th._traces[sig] = (int(uf[0]), int(uf[1]))
+    for key, count in data.get("confirmations", {}).items():
+        sig = tuple(ast.literal_eval(key))
+        th._confirmations[sig] = int(count)
+    for key, count in data.get("surprises", {}).items():
+        sig = tuple(ast.literal_eval(key))
+        th._surprises[sig] = int(count)
+    return th
+
+
 def save_session(state: SessionState, path: Optional[str] = None,
                  write_back_perception: bool = False) -> str:
     """Save session state to JSON for later resume.
@@ -6307,6 +6373,8 @@ def save_session(state: SessionState, path: Optional[str] = None,
         "edge_meta": edge_meta,
         "perception": perception_data,
         "history": history_data,
+        # C281: trajectory historization — U/F traces on PathSignatures
+        "trajectory_hist": _trajectory_hist_to_dict(state.trajectory_hist),
     }
 
     os.makedirs(os.path.dirname(os.path.abspath(path)) or ".", exist_ok=True)
@@ -6363,6 +6431,9 @@ def load_session(path: str) -> SessionState:
     # Restore history (C226)
     history = [_dict_to_round(d) for d in data.get("history", [])]
 
+    # C281: Restore trajectory historization (backward-compat: missing key → fresh)
+    trajectory_hist = _trajectory_hist_from_dict(data.get("trajectory_hist"))
+
     return SessionState(
         landscape=landscape,
         unified_nodes=unified_nodes,
@@ -6373,6 +6444,7 @@ def load_session(path: str) -> SessionState:
         stagnation_streak=meta.get("stagnation_streak", 0),
         steps_per_round=meta.get("steps_per_round", 40),
         output_format=meta.get("output_format", "text"),
+        trajectory_hist=trajectory_hist,
     )
 
 
