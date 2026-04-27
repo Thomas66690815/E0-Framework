@@ -251,27 +251,103 @@ class TrajectoryHistorization:
             and self.trace_quality(sig) < quality_threshold
         )
 
+    def stable_quality_profile(self, min_load: int = 1) -> str:
+        """Second axis of the (predictability × quality) profile.
+
+        C283: classify_trajectory_experience() measures *predictability*
+        (stable / volatile / exploratory).  stable_quality_profile() measures
+        the *quality* of that stability — i.e., what kind of outcomes the
+        stable patterns actually produce.
+
+        Only signatures with trace_load ≥ min_load contribute.
+        Default min_load=1 includes every observed signature.
+
+        Returns one of:
+            'productive' — mean trace_quality > 0: patterns are net positive
+                           (stable-and-productive: healthy domain)
+            'stagnant'   — mean trace_quality ≤ 0: patterns are net negative
+                           (stable-and-stagnant: chronic trap — e.g. the (0,3,0)
+                           structural pendulum documented in C282)
+            'unknown'    — no signatures with sufficient load observed yet
+
+        Relationship to open_thread 'Stable Underdetermination' (C282):
+            classify_trajectory_experience() returns 'stable' for both healthy
+            domains and chronic traps.  This method breaks that ambiguity.
+            Used by adapt_from_trajectory_experience() to differentiate the
+            two stable regimes at the adaptation level.
+        """
+        qualifying = [
+            sig for sig in self._traces
+            if self.trace_load(sig) >= min_load
+        ]
+        if not qualifying:
+            return "unknown"
+        mean_q = sum(self.trace_quality(sig) for sig in qualifying) / len(qualifying)
+        if mean_q > 0.0:
+            return "productive"
+        return "stagnant"
+
     def adapt_from_trajectory_experience(self) -> dict:
         """Return threshold adaptations for plan() based on trajectory experience.
 
         C280: Trajectory-level analogue of C188 adapt_from_experience().
+        C283: Extended to differentiate stable-productive from stable-stagnant
+              using stable_quality_profile() — closing the 'Stable Underdetermination'
+              open thread (C282).
 
-        Maps classify_trajectory_experience() to concrete plan() parameters:
+        Maps classify_trajectory_experience() × stable_quality_profile() to
+        concrete plan() parameters:
 
-            volatile:     quality_threshold=-0.15 (lower → fires sooner, patterns
-                          are unreliable so catch problems early), step_multiplier=1.5
-                          (moderate response — signal is noisy, avoid over-committing)
-            stable:       quality_threshold=-0.3 (default — signal is trustworthy),
-                          step_multiplier=2.0 (decisive response — act on reliable signal)
-            exploratory:  same as stable (no evidence to deviate from defaults)
+            volatile:
+                quality_threshold=-0.15 (lower → fires sooner, patterns are
+                unreliable so catch problems early), step_multiplier=1.5
+                (moderate response — signal is noisy, avoid over-committing)
+
+            stable + productive (healthy domain):
+                quality_threshold=-0.3 (default — signal is trustworthy),
+                step_multiplier=2.0 (decisive response — act on reliable signal)
+
+            stable + stagnant (chronic trap — e.g. (0,3,0) structural pendulum):
+                quality_threshold=-0.1 (fires even sooner — stagnation is
+                reliably confirmed, not a noise artifact), step_multiplier=3.0
+                (strong push to break the pattern — stable-stagnant requires
+                more aggressive intervention than volatile, because the trap
+                is structural, not random)
+
+            stable + unknown:
+                same as stable + productive (no negative evidence yet)
+
+            exploratory:
+                same as stable + productive (no evidence to deviate from defaults)
 
         Returns:
             dict with keys:
                 'quality_threshold': float — passed to low_quality_warning()
                 'step_multiplier':   float — multiplied by base_steps in plan()
+                'experience':        str   — classify_trajectory_experience() result
+                'quality_profile':   str   — stable_quality_profile() result
         """
         experience = self.classify_trajectory_experience()
+        quality_profile = self.stable_quality_profile()
+
         if experience == "volatile":
-            return {"quality_threshold": -0.15, "step_multiplier": 1.5}
-        # stable or exploratory: E₀-safe defaults
-        return {"quality_threshold": -0.3, "step_multiplier": 2.0}
+            return {
+                "quality_threshold": -0.15,
+                "step_multiplier": 1.5,
+                "experience": experience,
+                "quality_profile": quality_profile,
+            }
+        if experience == "stable" and quality_profile == "stagnant":
+            return {
+                "quality_threshold": -0.1,
+                "step_multiplier": 3.0,
+                "experience": experience,
+                "quality_profile": quality_profile,
+            }
+        # stable+productive, stable+unknown, exploratory: E₀-safe defaults
+        return {
+            "quality_threshold": -0.3,
+            "step_multiplier": 2.0,
+            "experience": experience,
+            "quality_profile": quality_profile,
+        }

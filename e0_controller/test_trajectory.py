@@ -691,6 +691,9 @@ class TestTrajectoryAdaptation:
         result = th.adapt_from_trajectory_experience()
         assert result["quality_threshold"] == pytest.approx(-0.3)
         assert result["step_multiplier"] == pytest.approx(2.0)
+        # C283: new keys present
+        assert "experience" in result
+        assert "quality_profile" in result
 
     def test_adapt_stable_returns_defaults(self):
         """Stable session → quality_threshold=-0.3, step_multiplier=2.0."""
@@ -711,6 +714,9 @@ class TestTrajectoryAdaptation:
         result = th.adapt_from_trajectory_experience()
         assert result["quality_threshold"] == pytest.approx(-0.15)
         assert result["step_multiplier"] == pytest.approx(1.5)
+        # C283: new keys present
+        assert result["experience"] == "volatile"
+        assert "quality_profile" in result
 
     # --- plan() threshold sensitivity ---
 
@@ -790,18 +796,24 @@ class TestTrajectoryAdaptation:
         assert steps == 45  # int(30 × 1.5)
 
     def test_plan_stable_uses_2x_steps(self):
-        """Stable session + deeply stagnant sig → base_steps × 2.0.
+        """Stable + productive session + stagnant sig fires → base_steps × 2.0.
 
-        sig_stable (0,1): 5 productive → 4 CONF; sig_target (1,): 5 stagnant → 4 CONF
-        Combined: 8 CONF, 0 SURP → rate=0.0 → stable.
+        C283: stable + productive → step_multiplier=2.0.
+        stable + stagnant would give 3.0x — so we ensure mean_quality > 0.
+
+        sig_stable (0,1): 10 productive → quality=10/11≈0.909, 9 CONF
+        sig_target (1,):  3 stagnant → quality=-3/4=-0.75 (< -0.3 → fires), 2 CONF
+        mean_quality = (0.909 + (-0.75)) / 2 ≈ 0.08 > 0 → 'productive'
+        Combined: 11 CONF, 0 SURP → rate=0.0 → stable.
         plan(max_steps=30) → steps = int(30 × 2.0) = 60.
         """
         th = TrajectoryHistorization()
-        self._add_stable_base(th, (0, 1), n_productive=5)  # 4 CONF
+        self._add_stable_base(th, (0, 1), n_productive=10)  # 9 CONF
         sig_target = (1,)
-        for _ in range(5):                                  # 4 CONF more
+        for _ in range(3):                                   # 2 CONF more
             th.inscribe(TrajectoryRecord(sig_target, "explore", 0.0, 0))
         assert th.classify_trajectory_experience() == "stable"
+        assert th.stable_quality_profile() == "productive"
         last_round = _make_round_result(
             coverage_delta=0.0,
             trajectory=TrajectoryRecord(sig_target, "explore", 0.0, 0),
@@ -899,3 +911,211 @@ class TestSessionBenchmark:
 
     def test_communities_count_nonnegative(self, result):
         assert result.communities_count >= 0
+
+
+# ---------------------------------------------------------------------------
+# TestStableQualityProfile (C283)
+# ---------------------------------------------------------------------------
+
+
+class TestStableQualityProfile:
+    """C283: stable_quality_profile() — second axis of (predictability × quality).
+
+    Closes the 'Stable Underdetermination' open thread from C282:
+    classify_trajectory_experience() returns 'stable' for both healthy domains
+    and chronic traps.  stable_quality_profile() breaks that ambiguity.
+
+    Claims:
+      1. Empty hist → 'unknown'
+      2. All-stagnant signatures → 'stagnant'
+      3. All-productive signatures → 'productive'
+      4. Mixed signatures: mean_quality > 0 → 'productive'
+      5. Mixed signatures: mean_quality ≤ 0 → 'stagnant'
+      6. min_load filters signatures below threshold → only qualifying contribute
+      7. adapt_from_trajectory_experience() returns experience + quality_profile keys
+      8. stable + stagnant → quality_threshold=-0.1, step_multiplier=3.0
+      9. stable + productive → quality_threshold=-0.3, step_multiplier=2.0
+     10. volatile → quality_threshold=-0.15, step_multiplier=1.5 (unchanged)
+     11. exploratory → defaults (unchanged)
+     12. (0,3,0) canonical trap pattern → stable + stagnant → aggressive defaults
+    """
+
+    # --- stable_quality_profile() ---
+
+    def test_unknown_when_empty(self):
+        """No signatures observed → 'unknown'."""
+        th = TrajectoryHistorization()
+        assert th.stable_quality_profile() == "unknown"
+
+    def test_stagnant_when_all_stagnant(self):
+        """All stagnant signatures → mean_quality ≤ 0 → 'stagnant'.
+
+        sig (0,3,0) with 5 stagnant inscriptions:
+          U=0, F=5 → quality = (0-5)/(0+5+1) = -5/6 ≈ -0.833
+          mean = -0.833 ≤ 0 → 'stagnant'
+        """
+        th = TrajectoryHistorization()
+        sig = (0, 3, 0)
+        for _ in range(5):
+            th.inscribe(TrajectoryRecord(sig, "explore", 0.0, 0))
+        assert th.stable_quality_profile() == "stagnant"
+
+    def test_productive_when_all_productive(self):
+        """All productive signatures → mean_quality > 0 → 'productive'.
+
+        sig (0, 1) with 5 productive inscriptions:
+          U=5, F=0 → quality = (5-0)/(5+0+1) = 5/6 ≈ 0.833
+          mean = 0.833 > 0 → 'productive'
+        """
+        th = TrajectoryHistorization()
+        sig = (0, 1)
+        for _ in range(5):
+            th.inscribe(TrajectoryRecord(sig, "explore", 0.05, 2))
+        assert th.stable_quality_profile() == "productive"
+
+    def test_productive_when_mean_quality_positive(self):
+        """Mixed: one productive sig dominates → mean > 0 → 'productive'.
+
+        sig_a (0,1): 5 productive → quality=5/6≈0.833
+        sig_b (1,0): 1 stagnant  → quality=-1/2=-0.5
+        mean = (0.833 + (-0.5)) / 2 = 0.167 > 0 → 'productive'
+        """
+        th = TrajectoryHistorization()
+        for _ in range(5):
+            th.inscribe(TrajectoryRecord((0, 1), "explore", 0.05, 2))
+        th.inscribe(TrajectoryRecord((1, 0), "explore", 0.0, 0))
+        assert th.stable_quality_profile() == "productive"
+
+    def test_stagnant_when_mean_quality_nonpositive(self):
+        """Mixed: stagnant sig dominates → mean ≤ 0 → 'stagnant'.
+
+        sig_a (0,3,0): 5 stagnant → quality=-5/6≈-0.833
+        sig_b (0,1):   1 productive → quality=1/2=0.5
+        mean = (-0.833 + 0.5) / 2 = -0.167 ≤ 0 → 'stagnant'
+        """
+        th = TrajectoryHistorization()
+        for _ in range(5):
+            th.inscribe(TrajectoryRecord((0, 3, 0), "explore", 0.0, 0))
+        th.inscribe(TrajectoryRecord((0, 1), "explore", 0.05, 2))
+        assert th.stable_quality_profile() == "stagnant"
+
+    def test_min_load_filters_low_load_signatures(self):
+        """Signatures below min_load are excluded from the mean.
+
+        sig_a (0,): 3 stagnant → load=3, quality=-3/4=-0.75  [qualifies at min_load=2]
+        sig_b (1,): 1 productive → load=1                     [excluded at min_load=2]
+        Without filter: mean = (-0.75 + 0.5) / 2 = -0.125 ≤ 0 → stagnant
+        With min_load=2: only sig_a qualifies → mean=-0.75 ≤ 0 → stagnant (same result,
+          but for different reasons — this test verifies exclusion via the unknown path)
+
+        A cleaner test: sig_a stagnant (load=1), sig_b productive (load=3).
+          min_load=2 → only sig_b qualifies → mean=0.75 → 'productive'
+          min_load=1 → both qualify → mean=(−0.5+0.75)/2=0.125 → 'productive' too
+        Use min_load=2 to exclude sig_a:
+        """
+        th = TrajectoryHistorization()
+        # sig_a: 1 stagnant → load=1, quality=-0.5 (excluded at min_load=2)
+        th.inscribe(TrajectoryRecord((0,), "explore", 0.0, 0))
+        # sig_b: 3 productive → load=3, quality=3/4=0.75
+        for _ in range(3):
+            th.inscribe(TrajectoryRecord((1,), "explore", 0.05, 1))
+        # min_load=1 → both → mean=(-0.5+0.75)/2=0.125 > 0 → productive
+        assert th.stable_quality_profile(min_load=1) == "productive"
+        # min_load=2 → only sig_b → mean=0.75 > 0 → productive
+        assert th.stable_quality_profile(min_load=2) == "productive"
+        # min_load=4 → neither qualifies → unknown
+        assert th.stable_quality_profile(min_load=4) == "unknown"
+
+    # --- adapt_from_trajectory_experience() extended keys ---
+
+    def test_adapt_returns_experience_key(self):
+        """Result dict includes 'experience' key with valid value."""
+        th = TrajectoryHistorization()
+        result = th.adapt_from_trajectory_experience()
+        assert "experience" in result
+        assert result["experience"] in ("stable", "volatile", "exploratory")
+
+    def test_adapt_returns_quality_profile_key(self):
+        """Result dict includes 'quality_profile' key with valid value."""
+        th = TrajectoryHistorization()
+        result = th.adapt_from_trajectory_experience()
+        assert "quality_profile" in result
+        assert result["quality_profile"] in ("productive", "stagnant", "unknown")
+
+    def test_adapt_stable_stagnant_uses_aggressive_defaults(self):
+        """stable + stagnant → quality_threshold=-0.1, step_multiplier=3.0.
+
+        Builds stable (confirmations dominate) but stagnant (quality < 0) session:
+          sig (0,3,0): 5 stagnant → 4 CONF (predictably stagnant), quality=-5/6
+          Then 1 more sig to ensure classify→stable.
+        Total: 4 CONF, 0 SURP → rate=0.0 → stable.
+        mean quality < 0 → 'stagnant'.
+        """
+        th = TrajectoryHistorization()
+        sig = (0, 3, 0)
+        for _ in range(5):
+            th.inscribe(TrajectoryRecord(sig, "explore", 0.0, 0))
+        # 1 load event + 4 revisit CONF (consistently stagnant → prediction holds)
+        assert th.classify_trajectory_experience() == "stable"
+        assert th.stable_quality_profile() == "stagnant"
+        result = th.adapt_from_trajectory_experience()
+        assert result["quality_threshold"] == pytest.approx(-0.1)
+        assert result["step_multiplier"] == pytest.approx(3.0)
+        assert result["experience"] == "stable"
+        assert result["quality_profile"] == "stagnant"
+
+    def test_adapt_stable_productive_uses_default(self):
+        """stable + productive → quality_threshold=-0.3, step_multiplier=2.0."""
+        th = TrajectoryHistorization()
+        sig = (0, 1)
+        for _ in range(5):
+            th.inscribe(TrajectoryRecord(sig, "explore", 0.05, 2))
+        assert th.classify_trajectory_experience() == "stable"
+        assert th.stable_quality_profile() == "productive"
+        result = th.adapt_from_trajectory_experience()
+        assert result["quality_threshold"] == pytest.approx(-0.3)
+        assert result["step_multiplier"] == pytest.approx(2.0)
+        assert result["experience"] == "stable"
+        assert result["quality_profile"] == "productive"
+
+    def test_adapt_volatile_unchanged(self):
+        """volatile → quality_threshold=-0.15, step_multiplier=1.5 (C280 behavior preserved)."""
+        th = TrajectoryHistorization()
+        sig = (0,)
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.05, 1))
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.0,  0))
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.05, 1))
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.0,  0))
+        th.inscribe(TrajectoryRecord(sig, "explore", 0.0,  0))
+        assert th.classify_trajectory_experience() == "volatile"
+        result = th.adapt_from_trajectory_experience()
+        assert result["quality_threshold"] == pytest.approx(-0.15)
+        assert result["step_multiplier"] == pytest.approx(1.5)
+        assert result["experience"] == "volatile"
+
+    def test_adapt_exploratory_returns_defaults(self):
+        """exploratory → quality_threshold=-0.3, step_multiplier=2.0 (unchanged)."""
+        th = TrajectoryHistorization()
+        result = th.adapt_from_trajectory_experience()
+        assert result["quality_threshold"] == pytest.approx(-0.3)
+        assert result["step_multiplier"] == pytest.approx(2.0)
+        assert result["experience"] == "exploratory"
+
+    def test_canonical_trap_pattern_uses_aggressive_defaults(self):
+        """(0,3,0) structural pendulum from C282 → stable+stagnant → 3.0x steps.
+
+        This is the canonical example: the navigator is trapped in community
+        boundary 0↔3, quality=-0.83, 33% escalation in real sessions.
+        The new stable-stagnant regime should request stronger intervention.
+        """
+        th = TrajectoryHistorization()
+        sig = (0, 3, 0)
+        # Replicate the chronic pattern: repeated stagnant visits, consistently stagnant
+        for _ in range(6):
+            th.inscribe(TrajectoryRecord(sig, "explore", 0.0, 0))
+        # 1 load + 5 revisit CONF (all stagnant → prediction=stagnant → actual=stagnant → CONF)
+        assert th.classify_trajectory_experience() == "stable"
+        assert th.stable_quality_profile() == "stagnant"
+        result = th.adapt_from_trajectory_experience()
+        assert result["step_multiplier"] == pytest.approx(3.0)
+        assert result["quality_threshold"] == pytest.approx(-0.1)
