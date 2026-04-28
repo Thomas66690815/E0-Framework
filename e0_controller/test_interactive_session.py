@@ -8618,3 +8618,161 @@ class TestE1OriginTagging:
         s2 = load_session(path)
         assert s2.e1_proposed_states == set()
         assert s2.e1_proposed_functions == {}
+
+
+# ---------------------------------------------------------------------------
+# TestE1ImpactHist (C286)
+# ---------------------------------------------------------------------------
+
+
+class TestE1ImpactHist:
+    """C286: e1_impact_hist rolling feedback on SessionState.
+
+    Claims:
+      1. Fresh SessionState has e1_impact_hist as Historization instance.
+      2. _update_e1_impact records SUCCESS trace for E1 node in known community.
+      3. _update_e1_impact records FAILURE trace for E1 node with failure outcome.
+      4. _update_e1_impact deduplicates (domain, function) pairs within one call.
+      5. _update_e1_impact skips non-E1 nodes (not in e1_proposed_states).
+      6. _update_e1_impact skips nodes not in any community (community_of == -1).
+      7. _update_e1_impact is a no-op when e1_proposed_states is empty.
+      8. e1_impact_hist survives save/load round-trip.
+      9. Old session file without e1_impact_hist key loads with fresh Historization.
+    """
+
+    def test_fresh_state_has_e1_impact_hist(self):
+        """Fresh SessionState has e1_impact_hist as Historization instance."""
+        from e0_controller.historization import Historization
+        s = build_session(steps_per_round=10)
+        assert isinstance(s.e1_impact_hist, Historization)
+
+    def test_update_records_success_trace(self):
+        """SUCCESS outcome → positive U trace for (community, function) edge."""
+        from e0_controller.interactive_session import (
+            _update_e1_impact, _inject_spec_into_landscape,
+        )
+        from e0_controller.primitives import Edge, Outcome
+        s = build_session(steps_per_round=10)
+        spec = {"nodes": ["IMPACT_A"], "edges": []}
+        _inject_spec_into_landscape(s, spec, e1_function="propose_domain_graph")
+        # Manually set community so community_of("IMPACT_A", communities) == 0
+        s.communities = [{"T:IMPACT_A"}]
+        _update_e1_impact(s, ["T:IMPACT_A"], Outcome.SUCCESS)
+        u, f = s.e1_impact_hist._effective_traces(
+            Edge("0", "propose_domain_graph")
+        )
+        assert u > 0
+        assert f == 0.0
+
+    def test_update_records_failure_trace(self):
+        """FAILURE outcome → positive F trace for (community, function) edge."""
+        from e0_controller.interactive_session import (
+            _update_e1_impact, _inject_spec_into_landscape,
+        )
+        from e0_controller.primitives import Edge, Outcome
+        s = build_session(steps_per_round=10)
+        spec = {"nodes": ["IMPACT_B"], "edges": []}
+        _inject_spec_into_landscape(s, spec, e1_function="propose_domain_graph")
+        s.communities = [{"T:IMPACT_B"}]
+        _update_e1_impact(s, ["T:IMPACT_B"], Outcome.FAILURE)
+        u, f = s.e1_impact_hist._effective_traces(
+            Edge("0", "propose_domain_graph")
+        )
+        assert f > 0
+        assert u == 0.0
+
+    def test_update_deduplicates_same_domain_function_pair(self):
+        """Two nodes in the same (domain, function) → only one trace update."""
+        from e0_controller.interactive_session import (
+            _update_e1_impact, _inject_spec_into_landscape,
+        )
+        from e0_controller.primitives import Edge, Outcome
+        s = build_session(steps_per_round=10)
+        spec = {"nodes": ["DUP_X", "DUP_Y"], "edges": []}
+        _inject_spec_into_landscape(s, spec, e1_function="propose_domain_graph")
+        # Both nodes in community 0
+        s.communities = [{"T:DUP_X", "T:DUP_Y"}]
+        _update_e1_impact(s, ["T:DUP_X", "T:DUP_Y"], Outcome.SUCCESS)
+        # trace_load == 1 (one update, not two)
+        assert s.e1_impact_hist.trace_load(
+            Edge("0", "propose_domain_graph")
+        ) == 1
+
+    def test_update_skips_non_e1_nodes(self):
+        """Nodes not in e1_proposed_states do not affect e1_impact_hist."""
+        from e0_controller.interactive_session import _update_e1_impact
+        from e0_controller.primitives import Outcome
+        s = build_session(steps_per_round=10)
+        s.communities = [{"FOREIGN_NODE"}]
+        # No E1 nodes injected → e1_proposed_states empty implicitly
+        _update_e1_impact(s, ["FOREIGN_NODE"], Outcome.SUCCESS)
+        assert s.e1_impact_hist._tau == 0  # no updates occurred
+
+    def test_update_skips_unknown_community(self):
+        """Nodes not found in any community (community_of == -1) are skipped."""
+        from e0_controller.interactive_session import (
+            _update_e1_impact, _inject_spec_into_landscape,
+        )
+        from e0_controller.primitives import Outcome
+        s = build_session(steps_per_round=10)
+        spec = {"nodes": ["ORPHAN"], "edges": []}
+        _inject_spec_into_landscape(s, spec, e1_function="propose_domain_graph")
+        # communities does NOT contain ORPHAN
+        s.communities = [{"OTHER_NODE"}]
+        _update_e1_impact(s, ["ORPHAN"], Outcome.SUCCESS)
+        assert s.e1_impact_hist._tau == 0  # node community unknown → skip
+
+    def test_update_noop_when_proposed_states_empty(self):
+        """No-op when e1_proposed_states is empty."""
+        from e0_controller.interactive_session import _update_e1_impact
+        from e0_controller.primitives import Outcome
+        s = build_session(steps_per_round=10)
+        s.communities = [{"SOME_NODE"}]
+        _update_e1_impact(s, ["SOME_NODE"], Outcome.SUCCESS)
+        assert s.e1_impact_hist._tau == 0
+
+    def test_e1_impact_hist_save_load_round_trip(self, tmp_path):
+        """e1_impact_hist U/F traces survive save/load."""
+        from e0_controller.interactive_session import (
+            _update_e1_impact, _inject_spec_into_landscape,
+            save_session, load_session,
+        )
+        from e0_controller.primitives import Edge, Outcome
+        s = build_session(steps_per_round=10)
+        spec = {"nodes": ["PERSIST_IMPACT"], "edges": []}
+        _inject_spec_into_landscape(s, spec, e1_function="propose_domain_graph")
+        s.communities = [{"T:PERSIST_IMPACT"}]
+        _update_e1_impact(s, ["T:PERSIST_IMPACT"], Outcome.SUCCESS)
+
+        path = str(tmp_path / "e1_impact_test.json")
+        save_session(s, path=path)
+        s2 = load_session(path)
+
+        u_before, _ = s.e1_impact_hist._effective_traces(
+            Edge("0", "propose_domain_graph")
+        )
+        u_after, _ = s2.e1_impact_hist._effective_traces(
+            Edge("0", "propose_domain_graph")
+        )
+        assert u_after == pytest.approx(u_before)
+
+    def test_load_old_session_without_e1_impact_hist_backward_compat(
+        self, tmp_path
+    ):
+        """Old session file without e1_impact_hist key loads with fresh Historization."""
+        import json
+        from e0_controller.historization import Historization
+        from e0_controller.interactive_session import save_session, load_session
+        s = build_session(steps_per_round=10)
+        path = str(tmp_path / "old_session_no_impact.json")
+        save_session(s, path=path)
+
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        data.pop("e1_impact_hist", None)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f)
+
+        s2 = load_session(path)
+        assert isinstance(s2.e1_impact_hist, Historization)
+        assert s2.e1_impact_hist._tau == 0

@@ -173,6 +173,7 @@ from e0_controller.feedback import (
 )
 from e0_controller.perception import PerceptionDomain, build_perception_domain
 from e0_controller.primitives import Edge, Outcome
+from e0_controller.historization import Historization
 from e0_controller.landscape import Landscape
 from e0_controller.ui_emitter import UISpec
 from e0_controller.coupling_router import (
@@ -240,6 +241,9 @@ class SessionState:
     # Key = state_id, value = E1 function name ("propose_domain_graph" etc.)
     e1_proposed_states: Set[str] = field(default_factory=set)
     e1_proposed_functions: Dict[str, str] = field(default_factory=dict)
+    # C286: E1 impact historization — rolling feedback on E1 structural contribution
+    # Edge key: (str(community_idx), e1_function_name)
+    e1_impact_hist: Historization = field(default_factory=Historization)
 
 
 def refresh_communities(state: SessionState) -> List:
@@ -323,6 +327,12 @@ def cmd_run(state: SessionState, n: int = 1) -> str:
             )
             state.trajectory_hist.inscribe(traj_record)
         result.trajectory = traj_record
+
+        # C286: E1 impact historization — update rolling feedback for visited E1 nodes
+        _update_e1_impact(
+            state, nav["path"],
+            Outcome.SUCCESS if coverage_delta > 0 else Outcome.FAILURE,
+        )
 
         state.history.append(result)
 
@@ -6336,6 +6346,76 @@ def _trajectory_hist_from_dict(data: Optional[dict]) -> TrajectoryHistorization:
     return th
 
 
+def _e1_impact_hist_to_dict(h: Historization) -> dict:
+    """Serialize Historization (e1_impact_hist) to a JSON-compatible dict.
+
+    C286: Edge keys (source→target) are serialized as strings.
+    """
+    def ek(e: Edge) -> str:
+        return f"{e.source}→{e.target}"
+    return {
+        "U": {ek(e): v for e, v in h._U.items()},
+        "F": {ek(e): v for e, v in h._F.items()},
+        "tau": h._tau,
+        "tau_last": {ek(e): t for e, t in h._tau_last.items()},
+    }
+
+
+def _e1_impact_hist_from_dict(data: Optional[dict]) -> Historization:
+    """Restore Historization (e1_impact_hist) from a serialized dict.
+
+    C286: Missing or None data → fresh Historization (backward compat).
+    """
+    h = Historization()
+    if not data:
+        return h
+    for key, v in data.get("U", {}).items():
+        parts = key.split("→", 1)
+        if len(parts) == 2:
+            h._U[Edge(parts[0], parts[1])] = float(v)
+    for key, v in data.get("F", {}).items():
+        parts = key.split("→", 1)
+        if len(parts) == 2:
+            h._F[Edge(parts[0], parts[1])] = float(v)
+    h._tau = data.get("tau", 0)
+    for key, t in data.get("tau_last", {}).items():
+        parts = key.split("→", 1)
+        if len(parts) == 2:
+            h._tau_last[Edge(parts[0], parts[1])] = int(t)
+    return h
+
+
+def _update_e1_impact(
+    state: "SessionState",
+    path: List[str],
+    outcome: Outcome,
+) -> None:
+    """C286: Update e1_impact_hist for E1-proposed nodes visited in path.
+
+    For each unique (community_idx, e1_function) pair among E1-proposed
+    nodes in the path, records the round outcome in state.e1_impact_hist.
+
+    Edge key: Edge(str(community_idx), e1_function_name)
+    Nodes not found in any community (community_of == -1) are skipped.
+    Called from cmd_run after each navigation round.
+    """
+    if not (state.e1_proposed_states and state.communities and path):
+        return
+    seen_pairs: Set[tuple] = set()
+    for node in path:
+        if node not in state.e1_proposed_states:
+            continue
+        domain_idx = community_of(node, state.communities)
+        if domain_idx == -1:
+            continue
+        fn = state.e1_proposed_functions.get(node, "propose_domain_graph")
+        pair = (domain_idx, fn)
+        if pair in seen_pairs:
+            continue
+        seen_pairs.add(pair)
+        state.e1_impact_hist.update(Edge(str(domain_idx), fn), outcome)
+
+
 def save_session(state: SessionState, path: Optional[str] = None,
                  write_back_perception: bool = False) -> str:
     """Save session state to JSON for later resume.
@@ -6395,6 +6475,8 @@ def save_session(state: SessionState, path: Optional[str] = None,
         # C285: E1 origin tracking — which states were proposed by E1
         "e1_proposed_states": list(state.e1_proposed_states),
         "e1_proposed_functions": state.e1_proposed_functions,
+        # C286: E1 impact historization — rolling feedback traces
+        "e1_impact_hist": _e1_impact_hist_to_dict(state.e1_impact_hist),
     }
 
     os.makedirs(os.path.dirname(os.path.abspath(path)) or ".", exist_ok=True)
@@ -6458,6 +6540,9 @@ def load_session(path: str) -> SessionState:
     e1_proposed_states: Set[str] = set(data.get("e1_proposed_states", []))
     e1_proposed_functions: Dict[str, str] = data.get("e1_proposed_functions", {})
 
+    # C286: Restore E1 impact historization (backward-compat: missing key → fresh)
+    e1_impact_hist: Historization = _e1_impact_hist_from_dict(data.get("e1_impact_hist"))
+
     return SessionState(
         landscape=landscape,
         unified_nodes=unified_nodes,
@@ -6471,6 +6556,7 @@ def load_session(path: str) -> SessionState:
         trajectory_hist=trajectory_hist,
         e1_proposed_states=e1_proposed_states,
         e1_proposed_functions=e1_proposed_functions,
+        e1_impact_hist=e1_impact_hist,
     )
 
 
