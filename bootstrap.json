@@ -29,7 +29,7 @@
   },
   "state": {
     "latest_commit": "C284",
-    "latest_commit_hash": "PENDING",
+    "latest_commit_hash": "1517575",
     "latest_commit_msg": "C284: ARC-C closure — delta_H_trusted is live opt-in code (epistemic_trust=False default)",
     "test_count": 5890,
     "test_failures": 0,
@@ -506,8 +506,11 @@
   },
   "commit_history_recent": [
     {
-      "hash": "88bfd19",
-      "id": "C283",
+      "hash": "1517575",
+      "id": "C284",
+      "title": "ARC-C closure — delta_H_trusted is live opt-in code (epistemic_trust=False default). Verify-before-assert confirmed++."
+    },
+    {
       "title": "Stable quality profile — second axis of (predictability x quality). 13 new tests (5890 total)"
     },
     {
