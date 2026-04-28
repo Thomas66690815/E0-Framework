@@ -29,7 +29,7 @@
   },
   "state": {
     "latest_commit": "C285",
-    "latest_commit_hash": "PENDING",
+    "latest_commit_hash": "0d82fad",
     "latest_commit_msg": "C285: E1 origin tagging — e1_proposed_states + e1_proposed_functions in SessionState",
     "test_count": 5898,
     "test_failures": 0,
@@ -548,6 +548,11 @@
     }
   },
   "commit_history_recent": [
+    {
+      "hash": "0d82fad",
+      "id": "C285",
+      "title": "E1 origin tagging — e1_proposed_states + e1_proposed_functions in SessionState. ARC-D Phase 1. 8 new tests (5898 total)"
+    },
     {
       "hash": "1517575",
       "id": "C284",
