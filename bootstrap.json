@@ -29,7 +29,7 @@
   },
   "state": {
     "latest_commit": "C286",
-    "latest_commit_hash": "PENDING",
+    "latest_commit_hash": "7401c61",
     "latest_commit_msg": "C286: e1_impact_hist + rolling feedback — E1 feedback loop closed",
     "test_count": 5907,
     "test_failures": 0,
@@ -548,6 +548,11 @@
     }
   },
   "commit_history_recent": [
+    {
+      "hash": "7401c61",
+      "id": "C286",
+      "title": "e1_impact_hist + rolling feedback — E1 feedback loop closed. ARC-D Phase 2. 9 new tests (5907 total)"
+    },
     {
       "hash": "0d82fad",
       "id": "C285",
