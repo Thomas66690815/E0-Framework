@@ -273,9 +273,26 @@
     "planned_arcs": [
       {
         "id": "ARC-D",
-        "title": "E1 Layer: Source-Tagged Historization",
-        "planned_start": "C285+",
-        "description": "Formalize the LLM as E1 (separate from E0=Skeleton). Key extension: source-tagged traces (source='e1') on LLM-derived suggestions. e1_quality_hist: Historization on E1's domain-specific suggestion quality. E1ActivationEvent: captures what was asked + what was answered. inertia_factor already encodes LLM-trigger threshold (low trace_load → activate E1). The E1 Bootstrap Loop (open_thread) suggests communication cost is already decreasing as future LLMs train on E0 vocabulary."
+        "title": "E1 Impact Historization",
+        "planned_start": "C285",
+        "principle": "E1 may extend E0. E1 may not override E0. E0 does not trust E1 — only historized E1 impact. Impact key = Edge(domain, e1_function). Source-tagging is separate from core Historization (Layer 1 untouched).",
+        "commits": [
+          {
+            "id": "C285",
+            "title": "E1 Origin Tagging",
+            "scope": "SessionState.e1_proposed_states: Set[str] + e1_proposed_functions: Dict[str,str] (state→function). Mark which states have E1 origin and which E1 function produced them. Observability only — no feedback loop yet. Domain key: normalized community name from refresh_communities()."
+          },
+          {
+            "id": "C286",
+            "title": "e1_impact_hist + Rolling Feedback",
+            "scope": "SessionState.e1_impact_hist: Historization. In cmd_run: for each visited state in e1_proposed_states → e1_impact_hist.update(Edge(domain, function), outcome). Closes the E1 feedback loop for propose_states and bootstrapper.inject. execute_transition excluded (circular: E1 produces the Outcome it would be measured by)."
+          },
+          {
+            "id": "C287",
+            "title": "cmd_diagnose E1 Profile + ModeController Dampening",
+            "scope": "cmd_diagnose shows E1 impact profile per (domain x function). ModeController uses e1_impact_hist.inertia_factor() as optional dampening (not hard block). Bootstrapper: if e1_impact_hist.trace_quality(domain, 'bootstrapper') < -0.3 → reduce initial confidence for that domain."
+          }
+        ]
       }
     ],
     "working_principles": [
@@ -380,6 +397,32 @@
     }
   },
   "architecture": {
+    "ecosystem_layers": {
+      "_comment": "Map only — no code changes implied. Orientation frame for ARC-D and beyond.",
+      "E0": {
+        "role": "structural core (Nervensystem der Struktur)",
+        "functions": ["state", "difference", "path", "resistance", "historization", "selection", "reflexion", "stability"],
+        "invariant": true,
+        "code": "layers 1-6: primitives, landscape, controller, phase/amplitude, reflexion, multiverse"
+      },
+      "E1": {
+        "role": "interpretive layer (kognitive Oberfl\u00e4che)",
+        "functions": ["delta_extraction", "state_proposal", "bootstrap_injection", "summarization", "translation_human_structure"],
+        "code": "layer 7: llm_adapter.py, bootstrapper.py, mode_controller.py + layer 13: perception, communication, ui_emitter",
+        "arc_d_target": "e1_impact_hist: E0 historizes structural impact of E1 per (domain x function). E1 may extend E0. E1 may not override E0. E0 does not trust E1 — only historized E1 impact."
+      },
+      "E2": {
+        "role": "agentic execution layer",
+        "functions": ["research", "code", "test", "file_operations", "tool_calls"],
+        "status": "future_arc",
+        "principle": "Agents act only within E0-determined paths. E1 formulates the task, E2 executes, E0 evaluates the outcome."
+      },
+      "E3": {
+        "role": "human/system meta-governance (HCP coupling partner)",
+        "status": "conceptual",
+        "note": "Human is not 'above' the system — HCP is a coupling partner in the structure. E3 is governance, not hierarchy. HSCP origin: ko-kognition enabled E0 development."
+      }
+    },
     "layers": {
       "1_primitives": {
         "files": [
