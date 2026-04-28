@@ -281,6 +281,11 @@ def cmd_run(state: SessionState, n: int = 1) -> str:
             trajectory_hist=state.trajectory_hist,
         )
 
+        # C287: E1 ModeController dampening — analog, not hard block
+        e1_damp = _e1_dampening_factor(state)
+        if e1_damp < 1.0:
+            steps = max(1, int(steps * e1_damp))
+
         # Navigate
         start = _pick_start_node(state.landscape, state.unified_nodes, mode)
         nav = navigate(
@@ -1303,6 +1308,31 @@ def cmd_diagnose(state: SessionState) -> str:
             else:
                 display = ", ".join(members)
             lines.append(f"{indent}  C{i}: {display}")
+
+    # C287: E1 impact profile
+    h_e1 = state.e1_impact_hist
+    if h_e1._tau > 0:
+        all_e1_edges = sorted(
+            set(h_e1._U.keys()) | set(h_e1._F.keys()),
+            key=lambda e: (e.source, e.target),
+        )
+        if all_e1_edges:
+            if md:
+                lines.append("")
+                lines.append("### E1 Impact Profile")
+            else:
+                lines.append(f"\n{'\u2500' * 60}")
+                lines.append("  E1 Impact Profile  (community × function):")
+            for edge in all_e1_edges:
+                load = h_e1.trace_load(edge)
+                quality = h_e1.trace_quality(edge)
+                inertia = h_e1.inertia_factor(edge)
+                marker = " ⚠" if quality < -0.3 else ""
+                lines.append(
+                    f"{indent}  C{edge.source} × {edge.target}: "
+                    f"load={load:.2f}  q={quality:+.3f}  "
+                    f"inertia={inertia:.3f}{marker}"
+                )
 
     return "\n".join(lines)
 
@@ -6414,6 +6444,24 @@ def _update_e1_impact(
             continue
         seen_pairs.add(pair)
         state.e1_impact_hist.update(Edge(str(domain_idx), fn), outcome)
+
+
+def _e1_dampening_factor(state: "SessionState") -> float:
+    """C287: Compute analog ModeController dampening from e1_impact_hist.
+
+    Returns mean inertia_factor over all known (domain × function) edges.
+    Returns 1.0 when no data — neutral, no dampening.
+
+    inertia_factor ≈ 1.0 for edges with high-quality (clear) history.
+    inertia_factor < 1.0 for edges with contradictory (confused) history.
+    This creates soft pressure: high-confusion E1 domains get fewer steps.
+    """
+    h = state.e1_impact_hist
+    all_edges = set(h._U.keys()) | set(h._F.keys())
+    if not all_edges:
+        return 1.0
+    factors = [h.inertia_factor(e) for e in all_edges]
+    return sum(factors) / len(factors)
 
 
 def save_session(state: SessionState, path: Optional[str] = None,

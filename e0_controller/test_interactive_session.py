@@ -8776,3 +8776,97 @@ class TestE1ImpactHist:
         s2 = load_session(path)
         assert isinstance(s2.e1_impact_hist, Historization)
         assert s2.e1_impact_hist._tau == 0
+
+
+# ---------------------------------------------------------------------------
+# TestE1Dampening (C287)
+# ---------------------------------------------------------------------------
+
+
+class TestE1Dampening:
+    """C287: _e1_dampening_factor and cmd_diagnose E1 section.
+
+    Claims:
+      1. _e1_dampening_factor returns 1.0 for fresh state (no history).
+      2. After pure-SUCCESS updates, inertia_factor ≈ 1.0 → dampening ≈ 1.0.
+      3. After mixed SUCCESS/FAILURE (confused) updates, factor < 1.0.
+      4. cmd_diagnose includes E1 Impact Profile section when e1_impact_hist has data.
+      5. cmd_diagnose E1 section is absent when e1_impact_hist is empty.
+      6. cmd_diagnose marks edges with quality < -0.3 with a warning marker.
+    """
+
+    def test_dampening_factor_no_history_is_one(self):
+        """Fresh state → dampening factor == 1.0."""
+        from e0_controller.interactive_session import _e1_dampening_factor
+        s = build_session(steps_per_round=10)
+        assert _e1_dampening_factor(s) == pytest.approx(1.0)
+
+    def test_dampening_factor_pure_success_near_one(self):
+        """After clear success history, inertia_factor ≈ 1.0 → dampening ≈ 1.0."""
+        from e0_controller.interactive_session import (
+            _e1_dampening_factor, _inject_spec_into_landscape, _update_e1_impact,
+        )
+        from e0_controller.primitives import Outcome
+        s = build_session(steps_per_round=10)
+        spec = {"nodes": ["SUCC_NODE"], "edges": []}
+        _inject_spec_into_landscape(s, spec, e1_function="propose_domain_graph")
+        s.communities = [{"T:SUCC_NODE"}]
+        for _ in range(10):
+            _update_e1_impact(s, ["T:SUCC_NODE"], Outcome.SUCCESS)
+        factor = _e1_dampening_factor(s)
+        # Pure success → quality → +1 → inertia_factor → 1.0
+        assert factor > 0.95
+
+    def test_dampening_factor_confused_below_one(self):
+        """Mixed SUCCESS/FAILURE history → inertia_factor < 1.0."""
+        from e0_controller.interactive_session import (
+            _e1_dampening_factor, _inject_spec_into_landscape, _update_e1_impact,
+        )
+        from e0_controller.primitives import Outcome
+        s = build_session(steps_per_round=10)
+        spec = {"nodes": ["CONF_NODE"], "edges": []}
+        _inject_spec_into_landscape(s, spec, e1_function="propose_domain_graph")
+        s.communities = [{"T:CONF_NODE"}]
+        # Alternating success/failure → confusion
+        for _ in range(5):
+            _update_e1_impact(s, ["T:CONF_NODE"], Outcome.SUCCESS)
+            _update_e1_impact(s, ["T:CONF_NODE"], Outcome.FAILURE)
+        factor = _e1_dampening_factor(s)
+        assert factor < 1.0
+
+    def test_cmd_diagnose_shows_e1_section_when_data_present(self):
+        """cmd_diagnose includes E1 Impact Profile when e1_impact_hist has traces."""
+        from e0_controller.interactive_session import (
+            cmd_diagnose, _inject_spec_into_landscape, _update_e1_impact,
+        )
+        from e0_controller.primitives import Outcome
+        s = build_session(steps_per_round=10)
+        spec = {"nodes": ["DIAG_NODE"], "edges": []}
+        _inject_spec_into_landscape(s, spec, e1_function="propose_domain_graph")
+        s.communities = [{"T:DIAG_NODE"}]
+        _update_e1_impact(s, ["T:DIAG_NODE"], Outcome.SUCCESS)
+        output = cmd_diagnose(s)
+        assert "E1 Impact Profile" in output
+
+    def test_cmd_diagnose_no_e1_section_when_no_data(self):
+        """cmd_diagnose has no E1 Impact Profile when e1_impact_hist is empty."""
+        from e0_controller.interactive_session import cmd_diagnose
+        s = build_session(steps_per_round=10)
+        output = cmd_diagnose(s)
+        assert "E1 Impact Profile" not in output
+
+    def test_cmd_diagnose_marks_negative_quality_edge(self):
+        """Edges with trace_quality < -0.3 get a warning marker in output."""
+        from e0_controller.interactive_session import (
+            cmd_diagnose, _inject_spec_into_landscape, _update_e1_impact,
+        )
+        from e0_controller.primitives import Outcome
+        s = build_session(steps_per_round=10)
+        spec = {"nodes": ["WARN_NODE"], "edges": []}
+        _inject_spec_into_landscape(s, spec, e1_function="propose_domain_graph")
+        s.communities = [{"T:WARN_NODE"}]
+        # Many failures → quality < -0.3
+        for _ in range(10):
+            _update_e1_impact(s, ["T:WARN_NODE"], Outcome.FAILURE)
+        output = cmd_diagnose(s)
+        assert "⚠" in output
