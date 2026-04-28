@@ -128,7 +128,7 @@ import os
 import time
 import warnings
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from e0_controller.communication import (
     CommunicationIntent,
@@ -236,6 +236,10 @@ class SessionState:
     trajectory_hist: TrajectoryHistorization = field(
         default_factory=TrajectoryHistorization
     )
+    # C285: E1 origin tracking — which states were proposed by E1
+    # Key = state_id, value = E1 function name ("propose_domain_graph" etc.)
+    e1_proposed_states: Set[str] = field(default_factory=set)
+    e1_proposed_functions: Dict[str, str] = field(default_factory=dict)
 
 
 def refresh_communities(state: SessionState) -> List:
@@ -2007,11 +2011,16 @@ def _get_llm_adapter(state: SessionState) -> Any:
 
 def _inject_spec_into_landscape(
     state: SessionState, spec: Dict[str, Any], prefix: str = "T:",
+    e1_function: str = "propose_domain_graph",
 ) -> Tuple[List[str], List[Tuple[str, str]]]:
     """Inject LLM-proposed nodes/edges into the live landscape.
 
     Prefixes nodes with `prefix` to distinguish LLM-generated structure
     from the existing Canon/Bootstrap/EN domains.
+
+    C285: Marks injected nodes in state.e1_proposed_states and
+    state.e1_proposed_functions so E1 origin is tracked for impact
+    historization (ARC-D).
 
     Returns (new_node_ids, new_edge_pairs).
     """
@@ -2034,6 +2043,11 @@ def _inject_spec_into_landscape(
                 "F": 0.0,
             }
             new_nodes.append(node_id)
+
+    # C285: mark E1 origin for all newly added nodes
+    state.e1_proposed_states.update(new_nodes)
+    for nid in new_nodes:
+        state.e1_proposed_functions[nid] = e1_function
 
     # Add edges
     for e in spec.get("edges", []):
@@ -2249,7 +2263,9 @@ def _llm_peer_structure(state: SessionState, text: str) -> str:
         lines.append("  LLM returned no structure.")
         return "\n".join(lines)
 
-    new_nodes, new_edges = _inject_spec_into_landscape(state, spec)
+    new_nodes, new_edges = _inject_spec_into_landscape(
+        state, spec, e1_function="propose_domain_graph"
+    )
 
     lines.append(f"  LLM proposed: {len(spec['nodes'])} nodes, "
                  f"{len(spec['edges'])} edges")
@@ -2600,8 +2616,9 @@ def teach_concept(
         # For deepen rounds, the spec may reference existing L: nodes
         # in edges but only NEW nodes in the nodes list. _inject handles
         # this because it skips nodes that already exist.
+        _e1_fn = "propose_domain_graph" if teach_round == 0 else "deepen_domain_graph"
         new_nodes, new_edges = _inject_spec_into_landscape(
-            state, spec, prefix="L:",
+            state, spec, prefix="L:", e1_function=_e1_fn,
         )
         # C261: Stamp taught_at metadata on newly injected nodes.
         # This enables community-recency preference (replacing L: prefix check)
@@ -6375,6 +6392,9 @@ def save_session(state: SessionState, path: Optional[str] = None,
         "history": history_data,
         # C281: trajectory historization — U/F traces on PathSignatures
         "trajectory_hist": _trajectory_hist_to_dict(state.trajectory_hist),
+        # C285: E1 origin tracking — which states were proposed by E1
+        "e1_proposed_states": list(state.e1_proposed_states),
+        "e1_proposed_functions": state.e1_proposed_functions,
     }
 
     os.makedirs(os.path.dirname(os.path.abspath(path)) or ".", exist_ok=True)
@@ -6434,6 +6454,10 @@ def load_session(path: str) -> SessionState:
     # C281: Restore trajectory historization (backward-compat: missing key → fresh)
     trajectory_hist = _trajectory_hist_from_dict(data.get("trajectory_hist"))
 
+    # C285: Restore E1 origin tracking (backward-compat: missing keys → empty)
+    e1_proposed_states: Set[str] = set(data.get("e1_proposed_states", []))
+    e1_proposed_functions: Dict[str, str] = data.get("e1_proposed_functions", {})
+
     return SessionState(
         landscape=landscape,
         unified_nodes=unified_nodes,
@@ -6445,6 +6469,8 @@ def load_session(path: str) -> SessionState:
         steps_per_round=meta.get("steps_per_round", 40),
         output_format=meta.get("output_format", "text"),
         trajectory_hist=trajectory_hist,
+        e1_proposed_states=e1_proposed_states,
+        e1_proposed_functions=e1_proposed_functions,
     )
 
 

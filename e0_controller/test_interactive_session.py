@@ -8500,3 +8500,121 @@ class TestTrajectoryIntegration:
         assert restored.trajectory_surprise_rate() == pytest.approx(
             th.trajectory_surprise_rate()
         )
+
+
+# ---------------------------------------------------------------------------
+# TestE1OriginTagging (C285)
+# ---------------------------------------------------------------------------
+
+
+class TestE1OriginTagging:
+    """C285: E1 origin tracking in SessionState.
+
+    Claims:
+      1. Fresh SessionState has empty e1_proposed_states and e1_proposed_functions.
+      2. _inject_spec_into_landscape marks new nodes in e1_proposed_states.
+      3. e1_proposed_functions stores the correct e1_function name per node.
+      4. deepen_domain_graph function name is stored correctly.
+      5. Re-injecting existing nodes does not double-mark them (idempotent).
+      6. save/load round-trip preserves e1_proposed_states and e1_proposed_functions.
+      7. Old session file without e1 keys loads with empty sets (backward compat).
+    """
+
+    def test_fresh_state_has_empty_e1_tracking(self):
+        """Fresh SessionState has empty E1 origin containers."""
+        s = build_session(steps_per_round=10)
+        assert s.e1_proposed_states == set()
+        assert s.e1_proposed_functions == {}
+
+    def test_inject_marks_nodes_in_proposed_states(self):
+        """After inject, new node IDs appear in e1_proposed_states."""
+        from e0_controller.interactive_session import _inject_spec_into_landscape
+        s = build_session(steps_per_round=10)
+        spec = {"nodes": ["ALPHA", "BETA"], "edges": []}
+        new_nodes, _ = _inject_spec_into_landscape(s, spec)
+        for nid in new_nodes:
+            assert nid in s.e1_proposed_states
+
+    def test_inject_stores_e1_function_name(self):
+        """e1_proposed_functions maps node_id → e1_function name."""
+        from e0_controller.interactive_session import _inject_spec_into_landscape
+        s = build_session(steps_per_round=10)
+        spec = {"nodes": ["GAMMA"], "edges": []}
+        new_nodes, _ = _inject_spec_into_landscape(
+            s, spec, e1_function="propose_domain_graph"
+        )
+        for nid in new_nodes:
+            assert s.e1_proposed_functions[nid] == "propose_domain_graph"
+
+    def test_inject_deepen_function_name(self):
+        """deepen_domain_graph function name is stored correctly."""
+        from e0_controller.interactive_session import _inject_spec_into_landscape
+        s = build_session(steps_per_round=10)
+        spec = {"nodes": ["DELTA"], "edges": []}
+        new_nodes, _ = _inject_spec_into_landscape(
+            s, spec, e1_function="deepen_domain_graph"
+        )
+        for nid in new_nodes:
+            assert s.e1_proposed_functions[nid] == "deepen_domain_graph"
+
+    def test_reinject_existing_nodes_does_not_duplicate(self):
+        """Re-injecting the same spec does not add duplicate entries."""
+        from e0_controller.interactive_session import _inject_spec_into_landscape
+        s = build_session(steps_per_round=10)
+        spec = {"nodes": ["EPS"], "edges": []}
+        _inject_spec_into_landscape(s, spec)
+        count_before = len(s.e1_proposed_states)
+        _inject_spec_into_landscape(s, spec)  # re-inject same nodes
+        count_after = len(s.e1_proposed_states)
+        assert count_after == count_before  # no new entries added
+
+    def test_different_prefixes_both_tracked(self):
+        """Nodes injected with L: and T: prefix are both tracked."""
+        from e0_controller.interactive_session import _inject_spec_into_landscape
+        s = build_session(steps_per_round=10)
+        spec_l = {"nodes": ["LEARN_NODE"], "edges": []}
+        spec_t = {"nodes": ["TASK_NODE"], "edges": []}
+        _inject_spec_into_landscape(s, spec_l, prefix="L:",
+                                    e1_function="propose_domain_graph")
+        _inject_spec_into_landscape(s, spec_t, prefix="T:",
+                                    e1_function="propose_domain_graph")
+        assert "L:LEARN_NODE" in s.e1_proposed_states
+        assert "T:TASK_NODE" in s.e1_proposed_states
+
+    def test_save_load_round_trip_preserves_e1_tracking(self, tmp_path):
+        """e1_proposed_states and e1_proposed_functions survive save/load."""
+        from e0_controller.interactive_session import (
+            _inject_spec_into_landscape, save_session, load_session,
+        )
+        s = build_session(steps_per_round=10)
+        spec = {"nodes": ["PERSIST_A", "PERSIST_B"], "edges": []}
+        _inject_spec_into_landscape(s, spec, e1_function="propose_domain_graph")
+
+        path = str(tmp_path / "e1_tracking_test.json")
+        save_session(s, path=path)
+        s2 = load_session(path)
+
+        assert s2.e1_proposed_states == s.e1_proposed_states
+        assert s2.e1_proposed_functions == s.e1_proposed_functions
+
+    def test_load_old_session_without_e1_keys_backward_compat(self, tmp_path):
+        """Old session file without e1 keys loads with empty containers."""
+        import json
+        from e0_controller.interactive_session import (
+            save_session, load_session,
+        )
+        s = build_session(steps_per_round=10)
+        path = str(tmp_path / "old_session.json")
+        save_session(s, path=path)
+
+        # Simulate old file: remove e1 keys
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        data.pop("e1_proposed_states", None)
+        data.pop("e1_proposed_functions", None)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f)
+
+        s2 = load_session(path)
+        assert s2.e1_proposed_states == set()
+        assert s2.e1_proposed_functions == {}
