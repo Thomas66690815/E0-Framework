@@ -8508,35 +8508,35 @@ class TestTrajectoryIntegration:
 
 
 class TestE1OriginTagging:
-    """C285: E1 origin tracking in SessionState.
+    """C285/C289: E1 origin tracking — now via E1Monitor.
 
     Claims:
-      1. Fresh SessionState has empty e1_proposed_states and e1_proposed_functions.
-      2. _inject_spec_into_landscape marks new nodes in e1_proposed_states.
-      3. e1_proposed_functions stores the correct e1_function name per node.
+      1. Fresh SessionState has empty e1_monitor (no proposed nodes).
+      2. _inject_spec_into_landscape marks new nodes in e1_monitor.
+      3. e1_monitor stores the correct e1_function name per node.
       4. deepen_domain_graph function name is stored correctly.
       5. Re-injecting existing nodes does not double-mark them (idempotent).
-      6. save/load round-trip preserves e1_proposed_states and e1_proposed_functions.
-      7. Old session file without e1 keys loads with empty sets (backward compat).
+      6. save/load round-trip preserves e1_monitor state.
+      7. Old session file without e1 keys loads with empty e1_monitor (backward compat).
     """
 
     def test_fresh_state_has_empty_e1_tracking(self):
-        """Fresh SessionState has empty E1 origin containers."""
+        """Fresh SessionState has empty E1Monitor."""
         s = build_session(steps_per_round=10)
-        assert s.e1_proposed_states == set()
-        assert s.e1_proposed_functions == {}
+        assert s.e1_monitor.proposed_nodes() == set()
+        assert s.e1_monitor._proposed_functions == {}
 
     def test_inject_marks_nodes_in_proposed_states(self):
-        """After inject, new node IDs appear in e1_proposed_states."""
+        """After inject, new node IDs appear in e1_monitor.proposed_nodes()."""
         from e0_controller.interactive_session import _inject_spec_into_landscape
         s = build_session(steps_per_round=10)
         spec = {"nodes": ["ALPHA", "BETA"], "edges": []}
         new_nodes, _ = _inject_spec_into_landscape(s, spec)
         for nid in new_nodes:
-            assert nid in s.e1_proposed_states
+            assert nid in s.e1_monitor.proposed_nodes()
 
     def test_inject_stores_e1_function_name(self):
-        """e1_proposed_functions maps node_id → e1_function name."""
+        """e1_monitor.function_for(nid) returns the e1_function name."""
         from e0_controller.interactive_session import _inject_spec_into_landscape
         s = build_session(steps_per_round=10)
         spec = {"nodes": ["GAMMA"], "edges": []}
@@ -8544,7 +8544,7 @@ class TestE1OriginTagging:
             s, spec, e1_function="propose_domain_graph"
         )
         for nid in new_nodes:
-            assert s.e1_proposed_functions[nid] == "propose_domain_graph"
+            assert s.e1_monitor.function_for(nid) == "propose_domain_graph"
 
     def test_inject_deepen_function_name(self):
         """deepen_domain_graph function name is stored correctly."""
@@ -8555,7 +8555,7 @@ class TestE1OriginTagging:
             s, spec, e1_function="deepen_domain_graph"
         )
         for nid in new_nodes:
-            assert s.e1_proposed_functions[nid] == "deepen_domain_graph"
+            assert s.e1_monitor.function_for(nid) == "deepen_domain_graph"
 
     def test_reinject_existing_nodes_does_not_duplicate(self):
         """Re-injecting the same spec does not add duplicate entries."""
@@ -8563,9 +8563,9 @@ class TestE1OriginTagging:
         s = build_session(steps_per_round=10)
         spec = {"nodes": ["EPS"], "edges": []}
         _inject_spec_into_landscape(s, spec)
-        count_before = len(s.e1_proposed_states)
+        count_before = len(s.e1_monitor.proposed_nodes())
         _inject_spec_into_landscape(s, spec)  # re-inject same nodes
-        count_after = len(s.e1_proposed_states)
+        count_after = len(s.e1_monitor.proposed_nodes())
         assert count_after == count_before  # no new entries added
 
     def test_different_prefixes_both_tracked(self):
@@ -8578,11 +8578,11 @@ class TestE1OriginTagging:
                                     e1_function="propose_domain_graph")
         _inject_spec_into_landscape(s, spec_t, prefix="T:",
                                     e1_function="propose_domain_graph")
-        assert "L:LEARN_NODE" in s.e1_proposed_states
-        assert "T:TASK_NODE" in s.e1_proposed_states
+        assert "L:LEARN_NODE" in s.e1_monitor.proposed_nodes()
+        assert "T:TASK_NODE" in s.e1_monitor.proposed_nodes()
 
     def test_save_load_round_trip_preserves_e1_tracking(self, tmp_path):
-        """e1_proposed_states and e1_proposed_functions survive save/load."""
+        """e1_monitor state survives save/load."""
         from e0_controller.interactive_session import (
             _inject_spec_into_landscape, save_session, load_session,
         )
@@ -8594,11 +8594,11 @@ class TestE1OriginTagging:
         save_session(s, path=path)
         s2 = load_session(path)
 
-        assert s2.e1_proposed_states == s.e1_proposed_states
-        assert s2.e1_proposed_functions == s.e1_proposed_functions
+        assert s2.e1_monitor.proposed_nodes() == s.e1_monitor.proposed_nodes()
+        assert s2.e1_monitor._proposed_functions == s.e1_monitor._proposed_functions
 
     def test_load_old_session_without_e1_keys_backward_compat(self, tmp_path):
-        """Old session file without e1 keys loads with empty containers."""
+        """Old session file without e1 keys loads with empty e1_monitor."""
         import json
         from e0_controller.interactive_session import (
             save_session, load_session,
@@ -8610,14 +8610,15 @@ class TestE1OriginTagging:
         # Simulate old file: remove e1 keys
         with open(path, encoding="utf-8") as f:
             data = json.load(f)
+        data.pop("e1_monitor", None)
         data.pop("e1_proposed_states", None)
         data.pop("e1_proposed_functions", None)
         with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f)
 
         s2 = load_session(path)
-        assert s2.e1_proposed_states == set()
-        assert s2.e1_proposed_functions == {}
+        assert s2.e1_monitor.proposed_nodes() == set()
+        assert s2.e1_monitor._proposed_functions == {}
 
 
 # ---------------------------------------------------------------------------
@@ -8626,39 +8627,37 @@ class TestE1OriginTagging:
 
 
 class TestE1ImpactHist:
-    """C286: e1_impact_hist rolling feedback on SessionState.
+    """C286/C289: E1 impact historization — now via E1Monitor.
 
     Claims:
-      1. Fresh SessionState has e1_impact_hist as Historization instance.
-      2. _update_e1_impact records SUCCESS trace for E1 node in known community.
-      3. _update_e1_impact records FAILURE trace for E1 node with failure outcome.
-      4. _update_e1_impact deduplicates (domain, function) pairs within one call.
-      5. _update_e1_impact skips non-E1 nodes (not in e1_proposed_states).
-      6. _update_e1_impact skips nodes not in any community (community_of == -1).
-      7. _update_e1_impact is a no-op when e1_proposed_states is empty.
-      8. e1_impact_hist survives save/load round-trip.
-      9. Old session file without e1_impact_hist key loads with fresh Historization.
+      1. Fresh SessionState has a fresh E1Monitor with no history.
+      2. record_round records SUCCESS trace for E1 node in known community.
+      3. record_round records FAILURE trace for E1 node with failure outcome.
+      4. record_round deduplicates (domain, function) pairs within one call.
+      5. record_round skips non-E1 nodes (not in e1_monitor).
+      6. record_round skips nodes not in any community (community_of == -1).
+      7. record_round is a no-op when no nodes are registered.
+      8. E1Monitor state survives save/load round-trip.
+      9. Old session file without e1_impact_hist key loads with fresh E1Monitor.
     """
 
     def test_fresh_state_has_e1_impact_hist(self):
-        """Fresh SessionState has e1_impact_hist as Historization instance."""
-        from e0_controller.historization import Historization
+        """Fresh SessionState has a fresh E1Monitor with no history."""
+        from e0_controller.e1_monitor import E1Monitor
         s = build_session(steps_per_round=10)
-        assert isinstance(s.e1_impact_hist, Historization)
+        assert isinstance(s.e1_monitor, E1Monitor)
+        assert not s.e1_monitor.has_data()
 
     def test_update_records_success_trace(self):
         """SUCCESS outcome → positive U trace for (community, function) edge."""
-        from e0_controller.interactive_session import (
-            _update_e1_impact, _inject_spec_into_landscape,
-        )
+        from e0_controller.interactive_session import _inject_spec_into_landscape
         from e0_controller.primitives import Edge, Outcome
         s = build_session(steps_per_round=10)
         spec = {"nodes": ["IMPACT_A"], "edges": []}
         _inject_spec_into_landscape(s, spec, e1_function="propose_domain_graph")
-        # Manually set community so community_of("IMPACT_A", communities) == 0
         s.communities = [{"T:IMPACT_A"}]
-        _update_e1_impact(s, ["T:IMPACT_A"], Outcome.SUCCESS)
-        u, f = s.e1_impact_hist._effective_traces(
+        s.e1_monitor.record_round(["T:IMPACT_A"], Outcome.SUCCESS, s.communities)
+        u, f = s.e1_monitor._hist._effective_traces(
             Edge("0", "propose_domain_graph")
         )
         assert u > 0
@@ -8666,16 +8665,14 @@ class TestE1ImpactHist:
 
     def test_update_records_failure_trace(self):
         """FAILURE outcome → positive F trace for (community, function) edge."""
-        from e0_controller.interactive_session import (
-            _update_e1_impact, _inject_spec_into_landscape,
-        )
+        from e0_controller.interactive_session import _inject_spec_into_landscape
         from e0_controller.primitives import Edge, Outcome
         s = build_session(steps_per_round=10)
         spec = {"nodes": ["IMPACT_B"], "edges": []}
         _inject_spec_into_landscape(s, spec, e1_function="propose_domain_graph")
         s.communities = [{"T:IMPACT_B"}]
-        _update_e1_impact(s, ["T:IMPACT_B"], Outcome.FAILURE)
-        u, f = s.e1_impact_hist._effective_traces(
+        s.e1_monitor.record_round(["T:IMPACT_B"], Outcome.FAILURE, s.communities)
+        u, f = s.e1_monitor._hist._effective_traces(
             Edge("0", "propose_domain_graph")
         )
         assert f > 0
@@ -8683,75 +8680,64 @@ class TestE1ImpactHist:
 
     def test_update_deduplicates_same_domain_function_pair(self):
         """Two nodes in the same (domain, function) → only one trace update."""
-        from e0_controller.interactive_session import (
-            _update_e1_impact, _inject_spec_into_landscape,
-        )
+        from e0_controller.interactive_session import _inject_spec_into_landscape
         from e0_controller.primitives import Edge, Outcome
         s = build_session(steps_per_round=10)
         spec = {"nodes": ["DUP_X", "DUP_Y"], "edges": []}
         _inject_spec_into_landscape(s, spec, e1_function="propose_domain_graph")
-        # Both nodes in community 0
         s.communities = [{"T:DUP_X", "T:DUP_Y"}]
-        _update_e1_impact(s, ["T:DUP_X", "T:DUP_Y"], Outcome.SUCCESS)
-        # trace_load == 1 (one update, not two)
-        assert s.e1_impact_hist.trace_load(
+        s.e1_monitor.record_round(["T:DUP_X", "T:DUP_Y"], Outcome.SUCCESS, s.communities)
+        assert s.e1_monitor._hist.trace_load(
             Edge("0", "propose_domain_graph")
         ) == 1
 
     def test_update_skips_non_e1_nodes(self):
-        """Nodes not in e1_proposed_states do not affect e1_impact_hist."""
-        from e0_controller.interactive_session import _update_e1_impact
+        """Nodes not registered in e1_monitor do not affect impact history."""
         from e0_controller.primitives import Outcome
         s = build_session(steps_per_round=10)
         s.communities = [{"FOREIGN_NODE"}]
-        # No E1 nodes injected → e1_proposed_states empty implicitly
-        _update_e1_impact(s, ["FOREIGN_NODE"], Outcome.SUCCESS)
-        assert s.e1_impact_hist._tau == 0  # no updates occurred
+        s.e1_monitor.record_round(["FOREIGN_NODE"], Outcome.SUCCESS, s.communities)
+        assert s.e1_monitor._hist._tau == 0
 
     def test_update_skips_unknown_community(self):
         """Nodes not found in any community (community_of == -1) are skipped."""
-        from e0_controller.interactive_session import (
-            _update_e1_impact, _inject_spec_into_landscape,
-        )
+        from e0_controller.interactive_session import _inject_spec_into_landscape
         from e0_controller.primitives import Outcome
         s = build_session(steps_per_round=10)
         spec = {"nodes": ["ORPHAN"], "edges": []}
         _inject_spec_into_landscape(s, spec, e1_function="propose_domain_graph")
-        # communities does NOT contain ORPHAN
-        s.communities = [{"OTHER_NODE"}]
-        _update_e1_impact(s, ["ORPHAN"], Outcome.SUCCESS)
-        assert s.e1_impact_hist._tau == 0  # node community unknown → skip
+        s.communities = [{"OTHER_NODE"}]  # T:ORPHAN not in communities
+        s.e1_monitor.record_round(["T:ORPHAN"], Outcome.SUCCESS, s.communities)
+        assert s.e1_monitor._hist._tau == 0
 
     def test_update_noop_when_proposed_states_empty(self):
-        """No-op when e1_proposed_states is empty."""
-        from e0_controller.interactive_session import _update_e1_impact
+        """No-op when no nodes are registered in e1_monitor."""
         from e0_controller.primitives import Outcome
         s = build_session(steps_per_round=10)
         s.communities = [{"SOME_NODE"}]
-        _update_e1_impact(s, ["SOME_NODE"], Outcome.SUCCESS)
-        assert s.e1_impact_hist._tau == 0
+        s.e1_monitor.record_round(["SOME_NODE"], Outcome.SUCCESS, s.communities)
+        assert s.e1_monitor._hist._tau == 0
 
     def test_e1_impact_hist_save_load_round_trip(self, tmp_path):
-        """e1_impact_hist U/F traces survive save/load."""
+        """E1Monitor history survives save/load."""
         from e0_controller.interactive_session import (
-            _update_e1_impact, _inject_spec_into_landscape,
-            save_session, load_session,
+            _inject_spec_into_landscape, save_session, load_session,
         )
         from e0_controller.primitives import Edge, Outcome
         s = build_session(steps_per_round=10)
         spec = {"nodes": ["PERSIST_IMPACT"], "edges": []}
         _inject_spec_into_landscape(s, spec, e1_function="propose_domain_graph")
         s.communities = [{"T:PERSIST_IMPACT"}]
-        _update_e1_impact(s, ["T:PERSIST_IMPACT"], Outcome.SUCCESS)
+        s.e1_monitor.record_round(["T:PERSIST_IMPACT"], Outcome.SUCCESS, s.communities)
 
         path = str(tmp_path / "e1_impact_test.json")
         save_session(s, path=path)
         s2 = load_session(path)
 
-        u_before, _ = s.e1_impact_hist._effective_traces(
+        u_before, _ = s.e1_monitor._hist._effective_traces(
             Edge("0", "propose_domain_graph")
         )
-        u_after, _ = s2.e1_impact_hist._effective_traces(
+        u_after, _ = s2.e1_monitor._hist._effective_traces(
             Edge("0", "propose_domain_graph")
         )
         assert u_after == pytest.approx(u_before)
@@ -8759,9 +8745,9 @@ class TestE1ImpactHist:
     def test_load_old_session_without_e1_impact_hist_backward_compat(
         self, tmp_path
     ):
-        """Old session file without e1_impact_hist key loads with fresh Historization."""
+        """Old session file without e1 keys loads with fresh E1Monitor."""
         import json
-        from e0_controller.historization import Historization
+        from e0_controller.e1_monitor import E1Monitor
         from e0_controller.interactive_session import save_session, load_session
         s = build_session(steps_per_round=10)
         path = str(tmp_path / "old_session_no_impact.json")
@@ -8769,13 +8755,14 @@ class TestE1ImpactHist:
 
         with open(path, encoding="utf-8") as f:
             data = json.load(f)
+        data.pop("e1_monitor", None)
         data.pop("e1_impact_hist", None)
         with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f)
 
         s2 = load_session(path)
-        assert isinstance(s2.e1_impact_hist, Historization)
-        assert s2.e1_impact_hist._tau == 0
+        assert isinstance(s2.e1_monitor, E1Monitor)
+        assert not s2.e1_monitor.has_data()
 
 
 # ---------------------------------------------------------------------------
@@ -8784,72 +8771,63 @@ class TestE1ImpactHist:
 
 
 class TestE1Dampening:
-    """C287: _e1_dampening_factor and cmd_diagnose E1 section.
+    """C287/C289: E1 dampening and cmd_diagnose E1 section — now via E1Monitor.
 
     Claims:
-      1. _e1_dampening_factor returns 1.0 for fresh state (no history).
-      2. After pure-SUCCESS updates, inertia_factor ≈ 1.0 → dampening ≈ 1.0.
+      1. e1_monitor.dampening_factor() returns 1.0 for fresh state (no history).
+      2. After pure-SUCCESS updates, dampening_factor() ≈ 1.0.
       3. After mixed SUCCESS/FAILURE (confused) updates, factor < 1.0.
-      4. cmd_diagnose includes E1 Impact Profile section when e1_impact_hist has data.
-      5. cmd_diagnose E1 section is absent when e1_impact_hist is empty.
+      4. cmd_diagnose includes E1 Impact Profile section when e1_monitor has data.
+      5. cmd_diagnose E1 section is absent when e1_monitor is fresh.
       6. cmd_diagnose marks edges with quality < -0.3 with a warning marker.
     """
 
     def test_dampening_factor_no_history_is_one(self):
         """Fresh state → dampening factor == 1.0."""
-        from e0_controller.interactive_session import _e1_dampening_factor
         s = build_session(steps_per_round=10)
-        assert _e1_dampening_factor(s) == pytest.approx(1.0)
+        assert s.e1_monitor.dampening_factor() == pytest.approx(1.0)
 
     def test_dampening_factor_pure_success_near_one(self):
-        """After clear success history, inertia_factor ≈ 1.0 → dampening ≈ 1.0."""
-        from e0_controller.interactive_session import (
-            _e1_dampening_factor, _inject_spec_into_landscape, _update_e1_impact,
-        )
+        """After clear success history, dampening_factor() ≈ 1.0."""
+        from e0_controller.interactive_session import _inject_spec_into_landscape
         from e0_controller.primitives import Outcome
         s = build_session(steps_per_round=10)
         spec = {"nodes": ["SUCC_NODE"], "edges": []}
         _inject_spec_into_landscape(s, spec, e1_function="propose_domain_graph")
         s.communities = [{"T:SUCC_NODE"}]
         for _ in range(10):
-            _update_e1_impact(s, ["T:SUCC_NODE"], Outcome.SUCCESS)
-        factor = _e1_dampening_factor(s)
-        # Pure success → quality → +1 → inertia_factor → 1.0
-        assert factor > 0.95
+            s.e1_monitor.record_round(["T:SUCC_NODE"], Outcome.SUCCESS, s.communities)
+        assert s.e1_monitor.dampening_factor() > 0.95
 
     def test_dampening_factor_confused_below_one(self):
-        """Mixed SUCCESS/FAILURE history → inertia_factor < 1.0."""
-        from e0_controller.interactive_session import (
-            _e1_dampening_factor, _inject_spec_into_landscape, _update_e1_impact,
-        )
+        """Mixed SUCCESS/FAILURE history → dampening_factor() < 1.0."""
+        from e0_controller.interactive_session import _inject_spec_into_landscape
         from e0_controller.primitives import Outcome
         s = build_session(steps_per_round=10)
         spec = {"nodes": ["CONF_NODE"], "edges": []}
         _inject_spec_into_landscape(s, spec, e1_function="propose_domain_graph")
         s.communities = [{"T:CONF_NODE"}]
-        # Alternating success/failure → confusion
         for _ in range(5):
-            _update_e1_impact(s, ["T:CONF_NODE"], Outcome.SUCCESS)
-            _update_e1_impact(s, ["T:CONF_NODE"], Outcome.FAILURE)
-        factor = _e1_dampening_factor(s)
-        assert factor < 1.0
+            s.e1_monitor.record_round(["T:CONF_NODE"], Outcome.SUCCESS, s.communities)
+            s.e1_monitor.record_round(["T:CONF_NODE"], Outcome.FAILURE, s.communities)
+        assert s.e1_monitor.dampening_factor() < 1.0
 
     def test_cmd_diagnose_shows_e1_section_when_data_present(self):
-        """cmd_diagnose includes E1 Impact Profile when e1_impact_hist has traces."""
+        """cmd_diagnose includes E1 Impact Profile when e1_monitor has data."""
         from e0_controller.interactive_session import (
-            cmd_diagnose, _inject_spec_into_landscape, _update_e1_impact,
+            cmd_diagnose, _inject_spec_into_landscape,
         )
         from e0_controller.primitives import Outcome
         s = build_session(steps_per_round=10)
         spec = {"nodes": ["DIAG_NODE"], "edges": []}
         _inject_spec_into_landscape(s, spec, e1_function="propose_domain_graph")
         s.communities = [{"T:DIAG_NODE"}]
-        _update_e1_impact(s, ["T:DIAG_NODE"], Outcome.SUCCESS)
+        s.e1_monitor.record_round(["T:DIAG_NODE"], Outcome.SUCCESS, s.communities)
         output = cmd_diagnose(s)
         assert "E1 Impact Profile" in output
 
     def test_cmd_diagnose_no_e1_section_when_no_data(self):
-        """cmd_diagnose has no E1 Impact Profile when e1_impact_hist is empty."""
+        """cmd_diagnose has no E1 Impact Profile when e1_monitor is fresh."""
         from e0_controller.interactive_session import cmd_diagnose
         s = build_session(steps_per_round=10)
         output = cmd_diagnose(s)
@@ -8858,15 +8836,14 @@ class TestE1Dampening:
     def test_cmd_diagnose_marks_negative_quality_edge(self):
         """Edges with trace_quality < -0.3 get a warning marker in output."""
         from e0_controller.interactive_session import (
-            cmd_diagnose, _inject_spec_into_landscape, _update_e1_impact,
+            cmd_diagnose, _inject_spec_into_landscape,
         )
         from e0_controller.primitives import Outcome
         s = build_session(steps_per_round=10)
         spec = {"nodes": ["WARN_NODE"], "edges": []}
         _inject_spec_into_landscape(s, spec, e1_function="propose_domain_graph")
         s.communities = [{"T:WARN_NODE"}]
-        # Many failures → quality < -0.3
         for _ in range(10):
-            _update_e1_impact(s, ["T:WARN_NODE"], Outcome.FAILURE)
+            s.e1_monitor.record_round(["T:WARN_NODE"], Outcome.FAILURE, s.communities)
         output = cmd_diagnose(s)
         assert "⚠" in output

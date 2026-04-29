@@ -237,13 +237,9 @@ class SessionState:
     trajectory_hist: TrajectoryHistorization = field(
         default_factory=TrajectoryHistorization
     )
-    # C285: E1 origin tracking — which states were proposed by E1
-    # Key = state_id, value = E1 function name ("propose_domain_graph" etc.)
-    e1_proposed_states: Set[str] = field(default_factory=set)
-    e1_proposed_functions: Dict[str, str] = field(default_factory=dict)
-    # C286: E1 impact historization — rolling feedback on E1 structural contribution
-    # Edge key: (str(community_idx), e1_function_name)
-    e1_impact_hist: Historization = field(default_factory=Historization)
+    # C289: E1 DifferenzPort — replaces e1_proposed_states / e1_proposed_functions /
+    # e1_impact_hist (C285-C287) with a single typed E1Monitor (ARC-E).
+    e1_monitor: "E1Monitor" = field(default_factory=lambda: __import__('e0_controller.e1_monitor', fromlist=['E1Monitor']).E1Monitor())
 
 
 def refresh_communities(state: SessionState) -> List:
@@ -281,8 +277,8 @@ def cmd_run(state: SessionState, n: int = 1) -> str:
             trajectory_hist=state.trajectory_hist,
         )
 
-        # C287: E1 ModeController dampening — analog, not hard block
-        e1_damp = _e1_dampening_factor(state)
+        # C289: E1 ModeController dampening — delegated to E1Monitor
+        e1_damp = state.e1_monitor.dampening_factor()
         if e1_damp < 1.0:
             steps = max(1, int(steps * e1_damp))
 
@@ -333,10 +329,11 @@ def cmd_run(state: SessionState, n: int = 1) -> str:
             state.trajectory_hist.inscribe(traj_record)
         result.trajectory = traj_record
 
-        # C286: E1 impact historization — update rolling feedback for visited E1 nodes
-        _update_e1_impact(
-            state, nav["path"],
+        # C289: E1 impact — delegated to E1Monitor.record_round()
+        state.e1_monitor.record_round(
+            nav["path"],
             Outcome.SUCCESS if coverage_delta > 0 else Outcome.FAILURE,
+            state.communities,
         )
 
         state.history.append(result)
@@ -1309,29 +1306,23 @@ def cmd_diagnose(state: SessionState) -> str:
                 display = ", ".join(members)
             lines.append(f"{indent}  C{i}: {display}")
 
-    # C287: E1 impact profile
-    h_e1 = state.e1_impact_hist
-    if h_e1._tau > 0:
-        all_e1_edges = sorted(
-            set(h_e1._U.keys()) | set(h_e1._F.keys()),
-            key=lambda e: (e.source, e.target),
-        )
-        if all_e1_edges:
+    # C289: E1 impact profile — delegated to E1Monitor
+    if state.e1_monitor.has_data():
+        profile = state.e1_monitor.impact_profile()
+        if profile:
             if md:
                 lines.append("")
                 lines.append("### E1 Impact Profile")
             else:
                 lines.append(f"\n{'\u2500' * 60}")
-                lines.append("  E1 Impact Profile  (community × function):")
-            for edge in all_e1_edges:
-                load = h_e1.trace_load(edge)
-                quality = h_e1.trace_quality(edge)
-                inertia = h_e1.inertia_factor(edge)
-                marker = " ⚠" if quality < -0.3 else ""
+                lines.append("  E1 Impact Profile  (community \u00d7 function):")
+            for p in profile:
+                edge = p["edge"]
+                marker = " \u26a0" if p["warn"] else ""
                 lines.append(
-                    f"{indent}  C{edge.source} × {edge.target}: "
-                    f"load={load:.2f}  q={quality:+.3f}  "
-                    f"inertia={inertia:.3f}{marker}"
+                    f"{indent}  C{edge.source} \u00d7 {edge.target}: "
+                    f"load={p['load']:.2f}  q={p['quality']:+.3f}  "
+                    f"inertia={p['inertia']:.3f}{marker}"
                 )
 
     return "\n".join(lines)
@@ -2084,10 +2075,9 @@ def _inject_spec_into_landscape(
             }
             new_nodes.append(node_id)
 
-    # C285: mark E1 origin for all newly added nodes
-    state.e1_proposed_states.update(new_nodes)
+    # C289: mark E1 origin via E1Monitor (replaces direct set/dict access)
     for nid in new_nodes:
-        state.e1_proposed_functions[nid] = e1_function
+        state.e1_monitor.register_node(nid, e1_function)
 
     # Add edges
     for e in spec.get("edges", []):
@@ -6376,94 +6366,6 @@ def _trajectory_hist_from_dict(data: Optional[dict]) -> TrajectoryHistorization:
     return th
 
 
-def _e1_impact_hist_to_dict(h: Historization) -> dict:
-    """Serialize Historization (e1_impact_hist) to a JSON-compatible dict.
-
-    C286: Edge keys (source→target) are serialized as strings.
-    """
-    def ek(e: Edge) -> str:
-        return f"{e.source}→{e.target}"
-    return {
-        "U": {ek(e): v for e, v in h._U.items()},
-        "F": {ek(e): v for e, v in h._F.items()},
-        "tau": h._tau,
-        "tau_last": {ek(e): t for e, t in h._tau_last.items()},
-    }
-
-
-def _e1_impact_hist_from_dict(data: Optional[dict]) -> Historization:
-    """Restore Historization (e1_impact_hist) from a serialized dict.
-
-    C286: Missing or None data → fresh Historization (backward compat).
-    """
-    h = Historization()
-    if not data:
-        return h
-    for key, v in data.get("U", {}).items():
-        parts = key.split("→", 1)
-        if len(parts) == 2:
-            h._U[Edge(parts[0], parts[1])] = float(v)
-    for key, v in data.get("F", {}).items():
-        parts = key.split("→", 1)
-        if len(parts) == 2:
-            h._F[Edge(parts[0], parts[1])] = float(v)
-    h._tau = data.get("tau", 0)
-    for key, t in data.get("tau_last", {}).items():
-        parts = key.split("→", 1)
-        if len(parts) == 2:
-            h._tau_last[Edge(parts[0], parts[1])] = int(t)
-    return h
-
-
-def _update_e1_impact(
-    state: "SessionState",
-    path: List[str],
-    outcome: Outcome,
-) -> None:
-    """C286: Update e1_impact_hist for E1-proposed nodes visited in path.
-
-    For each unique (community_idx, e1_function) pair among E1-proposed
-    nodes in the path, records the round outcome in state.e1_impact_hist.
-
-    Edge key: Edge(str(community_idx), e1_function_name)
-    Nodes not found in any community (community_of == -1) are skipped.
-    Called from cmd_run after each navigation round.
-    """
-    if not (state.e1_proposed_states and state.communities and path):
-        return
-    seen_pairs: Set[tuple] = set()
-    for node in path:
-        if node not in state.e1_proposed_states:
-            continue
-        domain_idx = community_of(node, state.communities)
-        if domain_idx == -1:
-            continue
-        fn = state.e1_proposed_functions.get(node, "propose_domain_graph")
-        pair = (domain_idx, fn)
-        if pair in seen_pairs:
-            continue
-        seen_pairs.add(pair)
-        state.e1_impact_hist.update(Edge(str(domain_idx), fn), outcome)
-
-
-def _e1_dampening_factor(state: "SessionState") -> float:
-    """C287: Compute analog ModeController dampening from e1_impact_hist.
-
-    Returns mean inertia_factor over all known (domain × function) edges.
-    Returns 1.0 when no data — neutral, no dampening.
-
-    inertia_factor ≈ 1.0 for edges with high-quality (clear) history.
-    inertia_factor < 1.0 for edges with contradictory (confused) history.
-    This creates soft pressure: high-confusion E1 domains get fewer steps.
-    """
-    h = state.e1_impact_hist
-    all_edges = set(h._U.keys()) | set(h._F.keys())
-    if not all_edges:
-        return 1.0
-    factors = [h.inertia_factor(e) for e in all_edges]
-    return sum(factors) / len(factors)
-
-
 def save_session(state: SessionState, path: Optional[str] = None,
                  write_back_perception: bool = False) -> str:
     """Save session state to JSON for later resume.
@@ -6520,11 +6422,8 @@ def save_session(state: SessionState, path: Optional[str] = None,
         "history": history_data,
         # C281: trajectory historization — U/F traces on PathSignatures
         "trajectory_hist": _trajectory_hist_to_dict(state.trajectory_hist),
-        # C285: E1 origin tracking — which states were proposed by E1
-        "e1_proposed_states": list(state.e1_proposed_states),
-        "e1_proposed_functions": state.e1_proposed_functions,
-        # C286: E1 impact historization — rolling feedback traces
-        "e1_impact_hist": _e1_impact_hist_to_dict(state.e1_impact_hist),
+        # C289: E1 monitor (replaces e1_proposed_states / e1_proposed_functions / e1_impact_hist)
+        "e1_monitor": state.e1_monitor.to_dict(),
     }
 
     os.makedirs(os.path.dirname(os.path.abspath(path)) or ".", exist_ok=True)
@@ -6584,12 +6483,33 @@ def load_session(path: str) -> SessionState:
     # C281: Restore trajectory historization (backward-compat: missing key → fresh)
     trajectory_hist = _trajectory_hist_from_dict(data.get("trajectory_hist"))
 
-    # C285: Restore E1 origin tracking (backward-compat: missing keys → empty)
-    e1_proposed_states: Set[str] = set(data.get("e1_proposed_states", []))
-    e1_proposed_functions: Dict[str, str] = data.get("e1_proposed_functions", {})
-
-    # C286: Restore E1 impact historization (backward-compat: missing key → fresh)
-    e1_impact_hist: Historization = _e1_impact_hist_from_dict(data.get("e1_impact_hist"))
+    # C289: Restore E1 monitor (backward-compat: old keys → migrate, missing → fresh)
+    from e0_controller.e1_monitor import E1Monitor
+    raw_monitor = data.get("e1_monitor")
+    if raw_monitor is None and (
+        data.get("e1_proposed_states") or data.get("e1_impact_hist")
+    ):
+        # Migrate from ARC-D format (C285-C287) to E1Monitor (C289)
+        m = E1Monitor()
+        for nid in data.get("e1_proposed_states", []):
+            fn = data.get("e1_proposed_functions", {}).get(nid, "propose_domain_graph")
+            m.register_node(nid, fn)
+        # Replay e1_impact_hist into monitor's internal hist via from_dict trick
+        hist_data = data.get("e1_impact_hist") or {}
+        for key, v in hist_data.get("U", {}).items():
+            parts = key.split("\u2192", 1)
+            if len(parts) == 2:
+                from e0_controller.primitives import Edge as _Edge
+                m._hist._U[_Edge(parts[0], parts[1])] = float(v)
+        for key, v in hist_data.get("F", {}).items():
+            parts = key.split("\u2192", 1)
+            if len(parts) == 2:
+                from e0_controller.primitives import Edge as _Edge
+                m._hist._F[_Edge(parts[0], parts[1])] = float(v)
+        m._hist._tau = hist_data.get("tau", 0)
+        e1_monitor = m
+    else:
+        e1_monitor = E1Monitor.from_dict(raw_monitor)
 
     return SessionState(
         landscape=landscape,
@@ -6602,9 +6522,7 @@ def load_session(path: str) -> SessionState:
         steps_per_round=meta.get("steps_per_round", 40),
         output_format=meta.get("output_format", "text"),
         trajectory_hist=trajectory_hist,
-        e1_proposed_states=e1_proposed_states,
-        e1_proposed_functions=e1_proposed_functions,
-        e1_impact_hist=e1_impact_hist,
+        e1_monitor=e1_monitor,
     )
 
 
