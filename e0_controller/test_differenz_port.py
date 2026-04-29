@@ -15,6 +15,7 @@ import pytest
 
 from e0_controller.differenz_port import DifferenzPort
 from e0_controller.e1_monitor import E1Monitor
+from e0_controller.observation_port import ObservationPort
 from e0_controller.primitives import Outcome
 
 
@@ -24,7 +25,7 @@ from e0_controller.primitives import Outcome
 
 def _all_port_implementations():
     """Return all known DifferenzPort implementations for parametrize."""
-    return [E1Monitor]
+    return [E1Monitor, ObservationPort]
 
 
 # ──────────────────────────────────────────────────────────────────────────────

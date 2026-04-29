@@ -1328,6 +1328,48 @@ def cmd_diagnose(state: SessionState) -> str:
     return "\n".join(lines)
 
 
+def cmd_ports(state: SessionState) -> str:
+    """C290: Report all active DifferenzPorts and their current impact.
+
+    Lists every port registered on this session with:
+      - port_name()
+      - impact_quality():  mean trace_quality of all port contributions
+      - dampening_factor(): analog step-scaling signal
+      - has_data(): whether any outcomes have been recorded
+
+    This is the observability surface for the DifferenzPort protocol.
+    A port with quality < -0.3 and dampening < 1.0 is dampening navigation.
+    A port with no data is present but has not yet produced outcomes.
+    """
+    ports = _active_ports(state)
+    if not ports:
+        return "No active DifferenzPorts."
+
+    lines = ["DifferenzPorts:", ""]
+    for port in ports:
+        name = port.port_name()
+        if port.has_data():
+            q = port.impact_quality()
+            d = port.dampening_factor()
+            warn = " \u26a0" if q < -0.3 else ""
+            lines.append(
+                f"  {name:20s}  quality={q:+.3f}  dampening={d:.3f}{warn}"
+            )
+        else:
+            lines.append(f"  {name:20s}  (no data yet)")
+    return "\n".join(lines)
+
+
+def _active_ports(state: SessionState) -> list:
+    """C290: Return all DifferenzPorts active on this session.
+
+    Centralizes port enumeration so cmd_ports and any future consumers
+    have a single source of truth. Add new ports here when they are
+    integrated into SessionState.
+    """
+    return [state.e1_monitor]
+
+
 # ── C229: Stagnation Escalation ────────────────────────────────────────
 
 # Escalation levels: each attempts to break stagnation via a different

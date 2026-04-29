@@ -8847,3 +8847,65 @@ class TestE1Dampening:
             s.e1_monitor.record_round(["T:WARN_NODE"], Outcome.FAILURE, s.communities)
         output = cmd_diagnose(s)
         assert "⚠" in output
+
+
+class TestCmdPorts:
+    """C290: cmd_ports — DifferenzPort observability surface.
+
+    Claims:
+      1. cmd_ports returns a string.
+      2. Output contains 'E1' (the E1Monitor port).
+      3. Fresh E1Monitor shows '(no data yet)'.
+      4. After E1 data, shows quality and dampening values.
+      5. Negative quality triggers warning marker (⚠).
+    """
+
+    def test_cmd_ports_returns_string(self):
+        """cmd_ports returns a string."""
+        from e0_controller.interactive_session import cmd_ports
+        s = build_session(steps_per_round=10)
+        assert isinstance(cmd_ports(s), str)
+
+    def test_cmd_ports_shows_e1_port(self):
+        """cmd_ports output contains 'E1' (E1Monitor port name)."""
+        from e0_controller.interactive_session import cmd_ports
+        s = build_session(steps_per_round=10)
+        output = cmd_ports(s)
+        assert "E1" in output
+
+    def test_cmd_ports_fresh_shows_no_data(self):
+        """Fresh E1Monitor → cmd_ports shows '(no data yet)'."""
+        from e0_controller.interactive_session import cmd_ports
+        s = build_session(steps_per_round=10)
+        output = cmd_ports(s)
+        assert "no data" in output
+
+    def test_cmd_ports_with_data_shows_quality(self):
+        """After E1 data, cmd_ports shows quality= and dampening= values."""
+        from e0_controller.interactive_session import (
+            cmd_ports, _inject_spec_into_landscape,
+        )
+        from e0_controller.primitives import Outcome
+        s = build_session(steps_per_round=10)
+        spec = {"nodes": ["PORTS_NODE"], "edges": []}
+        _inject_spec_into_landscape(s, spec, e1_function="propose_domain_graph")
+        s.communities = [{"T:PORTS_NODE"}]
+        s.e1_monitor.record_round(["T:PORTS_NODE"], Outcome.SUCCESS, s.communities)
+        output = cmd_ports(s)
+        assert "quality=" in output
+        assert "dampening=" in output
+
+    def test_cmd_ports_negative_quality_shows_warning(self):
+        """Port with quality < -0.3 shows ⚠ in cmd_ports output."""
+        from e0_controller.interactive_session import (
+            cmd_ports, _inject_spec_into_landscape,
+        )
+        from e0_controller.primitives import Outcome
+        s = build_session(steps_per_round=10)
+        spec = {"nodes": ["PORTS_WARN"], "edges": []}
+        _inject_spec_into_landscape(s, spec, e1_function="propose_domain_graph")
+        s.communities = [{"T:PORTS_WARN"}]
+        for _ in range(10):
+            s.e1_monitor.record_round(["T:PORTS_WARN"], Outcome.FAILURE, s.communities)
+        output = cmd_ports(s)
+        assert "⚠" in output
