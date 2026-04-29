@@ -132,6 +132,16 @@
         "resolution": "C255-C262 Emergent Structure arc: community detection from R_eff (Historization-derived). Macro systems (Dream, Sleep-Wake, Diagnostics) migrated. Post-arc audit revealed micro level (teach bridges, navigation crossing) still prefix-based — addressed in C263-C267 Micro-Level Emergence arc.",
         "lesson": "Coherent errors are the hardest to find because each commit is individually correct. E₀'s own dynamics expose them: the symptoms (teach→ask disconnect, dream dead-end, Dream≠Coupling asymmetry) are the system telling us the assumption is wrong. When two subsystems do the same thing differently, question the partitioning, not the subsystems.",
         "recurred": 0
+      },
+      {
+        "id": "GT-8",
+        "name": "Partial Residual Trap",
+        "when": "C290+ (identified 2026-04-29, not yet manifested as a bug)",
+        "what_happened": "PARTIAL outcome is defined in primitives.py and handled in historization.py (U += 0.5, F += 0.3). Used in domain_invoice.py and benchmark_domain_invariance.py. The signal is operationally correct but structurally incomplete: when a transition produces PARTIAL, the unresolved remainder of the structural difference is silently discarded. E0 historizes the edge but does not create a new Difference object for the residual. The system may then reach a state where Delta=0 nominally (goal state reached) while real structural difference persists outside the model.",
+        "root_cause": "Transitions in E0 are binary (they happen or they don't) but the degree of difference reduction is not. PARTIAL was introduced as a runtime convenience to express 'partial resolution', but the architecture has no channel to carry the residual forward. The rest disappears — it is neither a new node/edge in the landscape, nor a trigger for Dream or Multiverse exploration. The 0.5/0.3 weights are empirical (not canon-derived) and create a slight positive bias with no structural justification.",
+        "resolution": "Not yet resolved. Candidate: a 'Partial Difference Residual' mechanism — PARTIAL outcome creates a new Difference in the landscape rather than historizing the edge alone. Alternatively: explicit residual tracking in SessionState that Dream mode can consume.",
+        "lesson": "When a system introduces a third outcome value (beyond the binary canon), ask: where does the unresolved remainder go? If the answer is 'nowhere' — the architecture is incomplete. Graduation of outcome is not the same as graduation of resolution.",
+        "recurred": 0
       }
     ],
     "breakthroughs": [
@@ -251,6 +261,11 @@
         "question": "Does the paper still match the code? If a formula or default changed since the paper was written, the paper is stale — not the code.",
         "triggered": 2,
         "last_triggered": "C269 Phase A — 8 mismatches fixed"
+      },
+      {
+        "question": "If a transition produces PARTIAL — where does the unresolved structural difference go? If the answer is 'nowhere', the architecture is incomplete (GT-8).",
+        "triggered": 0,
+        "last_triggered": null
       }
     ]
   },
