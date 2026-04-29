@@ -29,7 +29,7 @@
   },
   "state": {
     "latest_commit": "C291",
-    "latest_commit_hash": "TBD",
+    "latest_commit_hash": "6adc194",
     "latest_commit_msg": "C291: MCP Adapter — E₀ as tool server for OpenClaw",
     "test_count": 6008,
     "test_failures": 0,
