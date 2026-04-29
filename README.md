@@ -4,35 +4,45 @@
 [![Tests](https://github.com/Thomas66690815/E0-Framework/actions/workflows/tests.yml/badge.svg)](https://github.com/Thomas66690815/E0-Framework/actions)
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC_BY_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 
-**A structural decision framework that navigates uncertainty without probabilities.**
+**A structural difference-reduction system. No probabilities. No training data. No free parameters.**
 
 ---
 
 ## What is E₀?
 
-E₀ is a transition framework. It doesn't start with goals, rewards, or probability distributions. It starts with one claim:
+E₀ is a **difference-reduction system**. It starts from one axiom:
 
 > If a structural difference exists and a finite path is available, non-transition is unstable.
 
-From this, everything else follows: learning, forgetting, interference, self-reflection — not as added features, but as structural consequences.
+Every mechanism in E₀ is a structural consequence of this claim — not a feature, not a design choice. Learning, forgetting, interference, self-reflection, and multi-domain coupling all follow from the axiom and seven primitives.
 
 **Seven primitives. One axiom. No free parameters at the foundation.**
 
 | Primitive | Role |
 |-----------|------|
 | State | Distinguishable configuration |
-| Difference (Δ) | Structural non-identity |
+| Difference (Δ) | Structural non-identity — the primary entity |
 | Path | Admissible transition structure |
 | Resistance (R) | Structural inertia |
 | Historization (H) | Irreversible modification of future resistance |
 | Time (τ) | Ordering of historizations |
 | Rate (v) | Ordering tendency of realizable transitions |
 
-The full canon: [canon/e0-canon-plain.txt](canon/e0-canon-plain.txt) — 155 lines, plain ASCII.
+The full formal canon: [canon/e0-canon-plain.txt](canon/e0-canon-plain.txt) — 155 lines, plain ASCII. It never changes.
 
 ---
 
-## When would you use E₀?
+## Difference is primary
+
+E₀ does not navigate *toward goals*. It reduces structural non-identity. The source of difference — an LLM proposal, a sensor signal, a human instruction, an external agent — is irrelevant to the reduction mechanism. What matters is whether the proposed transition, once inscribed, leads to coverage gain or failure.
+
+Goals are a special case: a goal is a state with maximum accumulated structural difference from the current position. The controller reduces this difference through inscription.
+
+This architecture is what makes E₀ source-agnostic: any external input enters through the same `DifferenzPort` protocol, and E₀ historizes every input source independently.
+
+---
+
+## When to use E₀
 
 **When you need decisions under structural uncertainty**, where:
 
@@ -40,15 +50,16 @@ The full canon: [canon/e0-canon-plain.txt](canon/e0-canon-plain.txt) — 155 lin
 - You don't have (or don't trust) probability distributions
 - You want a controller that learns from experience without training data
 - You need the system to explain *why* it chose a particular path
+- You want the system to learn about its own behavior, not just the domain
 
-**Examples already built:**
+**Domain examples already built:**
 - Invoice processing workflows
 - ECB interest rate decisions
 - Incident postmortem navigation
 - Chess position evaluation
-- Cross-domain pattern discovery (dreaming)
+- Cross-domain pattern discovery (dream mode)
 - Curriculum-based knowledge acquisition
-- Interactive Q&A with answer synthesis
+- Interactive Q&A with LLM answer synthesis
 - Autonomous self-learning (E₀ learns E₀)
 
 ---
@@ -124,10 +135,12 @@ This starts a local HTTP server (default: `http://127.0.0.1:8484`) with:
 Example commands in the session:
 ```
 ask what is the difference between tension and resistance?
-selflearn
-auto 10
+selflearn          # E₀ learns its own canon first
+auto 10            # autonomous learning loop
 teach quantum interference
-dream 3
+dream 3            # cross-domain pattern discovery
+ports              # inspect all active difference input ports
+diagnose           # structural health + E1 impact profile
 ```
 
 ### Run the demos
@@ -142,53 +155,127 @@ py -3 -m e0_controller.demo_multiverse --entropy  # Coupled domains + dream disc
 ### Run the tests
 
 ```bash
-py -3 -m pytest e0_controller/ server/ --tb=short -q   # 5355 tests, 0 failures
+py -3 -m pytest e0_controller/ --tb=short -q   # 5980 tests, 0 failures
 ```
 
 ---
 
 ## How it works
 
-The controller's core decision at each step:
+### Core decision rule
+
+The controller minimizes structural burden at each step:
 
 $$S_{\text{eff}}(x \to y) = \Delta(x,y) \cdot R_{\text{eff}}(x,y)$$
 
-Choose the transition with lowest structural burden. After each transition, historize the outcome — successes reduce future resistance, failures increase it.
+Choose the transition with lowest burden. After each transition, historize the outcome — successes reduce future resistance, failures increase it. This is Inscription: the irreversible modification of the landscape.
 
-**The amplitude layer** goes further. Instead of evaluating single edges, it evaluates *families of forward paths*:
+### Amplitude lookahead
+
+Instead of evaluating single edges, the amplitude layer evaluates *families of forward paths*:
 
 $$I(y; h) = \left|\sum_{p \in \text{paths}(x \to y, h)} e^{-S(p)} \cdot e^{i\Theta(p)}\right|^2$$
 
-Paths that reach the goal *interfere constructively*. Dead ends and loops *interfere destructively*. The controller follows the action with strongest forward support.
+Paths toward the goal interfere constructively. Dead ends and loops interfere destructively. The controller follows the action with the strongest forward support.
 
-**Self-reflection** (Self-Graph): E₀ monitors its own components. If the amplitude layer's overrides cause harm (e.g., loop traps), the controller detects this through its own historization and disables the harmful mechanism. The system must know itself to correct itself.
+### Trajectory historization
+
+E₀ also historizes *path patterns*, not just edges. If the controller repeatedly traces the same structural shape without gain, it treats the pattern as evidence to be weighted (C277–C283). This closes a non-Markov signal gap: the choice at time t depends on trajectory history, not only on the current edge.
+
+### Emergent community structure
+
+E₀ does not partition the domain by labels or prefixes. It derives structural communities from historization directly — community detection runs on the R_eff matrix after inscription. Dream mode discovers cross-community resonance without semantic labels. All macro-level mechanisms (tuning, sleep–wake, diagnostics) use this emergent partition.
+
+### Universal input protocol: DifferenzPort
+
+Any external source of structural difference — an LLM, a sensor, a human, an agent — enters E₀ through the `DifferenzPort` protocol:
+
+```python
+class DifferenzPort(ABC):
+    def port_name(self) -> str: ...                    # unique identifier
+    def record_outcome(self, outcome) -> None: ...     # called after each round
+    def impact_quality(self) -> float: ...             # [-1.0, +1.0]; 0.0 = no data
+    def dampening_factor(self) -> float: ...           # (0.0, 1.0]; 1.0 = neutral
+    def to_dict(self) -> dict: ...                     # serialization
+    def from_dict(cls, data) -> Self: ...              # restoration + backward compat
+```
+
+Concrete implementations:
+- **`E1Monitor`** — LLM-proposed landscape structure; tracks impact per community × per function
+- **`ObservationPort`** — direct outcome signals from sensors, humans, or external agents
+
+E₀ historizes each port independently and applies analog dampening when a port has a confused history. No binary blocking, no hard trust thresholds.
+
+### Self-reflection
+
+E₀ monitors its own components through a Self-Graph. If the amplitude layer's overrides cause harm in a domain, the controller detects this through its own historization and adjusts. The system must know itself to correct itself.
+
+---
+
+## Confirmed structural limits
+
+These are not bugs — they are empirically verified architectural boundaries (C272 falsification benchmark):
+
+| Limit | Description | Behavior |
+|-------|-------------|----------|
+| **F3 — Dense branching** | Complete tree with branching factor ≥ 3 | Both E₀ and greedy fail; combinatorial explosion exceeds the penalty mechanism |
+| **F4 — Non-Markov dependencies** | Transition success depends on a non-adjacent prior edge | E₀ learns to avoid the trap but cannot learn the required sequence; credit assignment is edge-local |
+
+**Confirmed strengths** (same benchmark):
+
+| Strength | Description | Result |
+|----------|-------------|--------|
+| **F1 — Exploration depth** | Goal at depths 5–500 with distractor loops | E₀ reaches goal at all depths; greedy fails via loops |
+| **F2 — Non-stationarity** | Executor changes mid-run | E₀ adapts fully (100% goal rate); no ossification |
 
 ---
 
 ## Architecture
 
-14 layers, bottom-up. Each layer depends only on layers above it.
+14 layers. Each layer depends only on layers above it (toward the canon).
 
 | Layer | What | Key module |
 |-------|------|------------|
 | 1 | Primitives | `primitives.py` |
-| 2 | Inscription (U/F traces, learning) | `historization.py` |
+| 2 | Inscription (U/F traces, trajectory) | `historization.py`, `trajectory.py` |
 | 3 | Field theory (Ψ, interference) | `amplitude_overlay.py` |
 | 4 | Controller (selection, escalation) | `controller.py` |
 | 5 | Reflexion (self-graph, edge proposals) | `self_graph.py`, `dual_reflection.py` |
 | 6 | Multi-system (multiverse, coupling) | `multiverse.py`, `coupling_router.py` |
 | 7 | Infrastructure (sessions, persistence) | `interactive_session.py`, `session.py` |
 | 8 | Observation (UI projection) | `observation_controller.py` |
-| 9 | Dream mode (cross-domain patterns) | `dream_mode.py` |
+| 9 | Dream mode (cross-domain resonance) | `dream_mode.py` |
 | 10 | Structural entropy (forgetting) | `structural_entropy.py` |
 | 11 | Sleep–wake cycle | `sleep_wake.py` |
 | 12 | Human communication | `perception.py`, `communication.py` |
 | 13 | UI rendering | `ui_renderer.py` |
-| 14 | Session runner (full pipeline) | `e0_session.py`, `interactive_server.py` |
+| 14 | Session runner | `e0_session.py`, `interactive_server.py` |
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full layer diagram and core formulas.
 
-**Code documentation:** Every module header is a self-contained architectural document explaining what, why, and which axiom. The code comments are the primary documentation.
+**Code documentation:** Every module header is a self-contained architectural document. The code comments are the primary documentation. Start with `primitives.py`, then `historization.py`, then `controller.py`.
+
+---
+
+## Formal contracts for AI systems
+
+These invariants hold throughout the codebase and must not be violated by extensions:
+
+**`E0Controller` constructor:** `E0Controller(landscape, execute_fn, ...)` — `execute_fn` is always the second positional argument.
+
+**`Outcome`:** `Outcome.SUCCESS` / `Outcome.FAILURE` — binary, no partial values.
+
+**`DifferenzPort` contract:**
+- `impact_quality()` returns `0.0` when no data (never raises)
+- `dampening_factor()` returns `1.0` when no data (neutral, no dampening)
+- `from_dict(None)` returns a fresh instance (backward compatibility invariant)
+- All ports must pass `TestDifferenzPortABCCompliance` in `test_differenz_port.py`
+
+**`SessionState` fields (v1.1.0):**
+- `e1_monitor: E1Monitor` — replaces three ARC-D fields (`e1_proposed_states`, `e1_proposed_functions`, `e1_impact_hist`); `load_session()` migrates old format automatically
+- `trajectory_hist: TrajectoryHistorization` — non-Markov trajectory signal; backward-compatible
+
+**Community detection:** `communities` is `List[Set[str]]`; `community_of(node, communities)` returns `-1` when the node is not found.
 
 ---
 
@@ -196,12 +283,16 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full layer diagram and 
 
 | Aspect | Conventional | E₀ |
 |--------|-------------|-----|
-| Foundation | Probability distributions | Structural difference |
-| Learning | Training data / reward | Historization (U/F traces) |
+| Foundation | Probability distributions | Structural difference (primary) |
+| Learning | Training data / reward signal | Inscription (U/F traces on landscape edges) |
 | Lookahead | Tree search / Monte Carlo | Path amplitude interference |
-| Forgetting | Not modeled | Structural entropy + sleep–wake |
-| Self-awareness | Not modeled | Self-graph (E₀ monitors E₀) |
-| Multi-domain | Transfer learning | Dream mode (passive cross-domain observation) |
+| Trajectory | Single-step Markov | Trajectory historization (non-Markov signal) |
+| Forgetting | Not modeled | Structural entropy + sleep–wake cycle |
+| Self-awareness | Not modeled | Self-graph (E₀ historizes its own components) |
+| Multi-domain | Transfer learning | Dream mode (passive cross-community resonance) |
+| Domain structure | Manually labeled | Community detection from R_eff (emergent) |
+| External input | Ad hoc integration | Universal DifferenzPort protocol |
+| Known limits | Rarely stated | Empirically confirmed (F3, F4) |
 
 ---
 
@@ -209,11 +300,11 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full layer diagram and 
 
 | | |
 |---|---|
-| **Tests** | 5355 passed, 0 failures |
-| **Production modules** | 77 |
+| **Tests** | 5980 passed, 0 failures |
+| **Production modules** | 78 |
 | **Demos** | 17 |
-| **Python** | 3.12+ |
-| **CI** | GitHub Actions, 3 Python versions |
+| **Python** | 3.11+ |
+| **CI** | GitHub Actions (3.11, 3.12, 3.13) |
 | **Canon** | Stable (155 lines, never changes) |
 
 ---
@@ -241,9 +332,9 @@ E0-Framework/
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | 14-layer model, core formulas, navigation guide |
 | [E0_MATH_IMPL_MAPPING_v1.md](docs/E0_MATH_IMPL_MAPPING_v1.md) | Every formula → exact code location |
 | [E0_TEST_REGISTRY_v2.md](docs/E0_TEST_REGISTRY_v2.md) | Per-file test inventory |
-| [E0_EVIDENCE_AND_FALSIFICATION_STATUS_v1.md](docs/E0_EVIDENCE_AND_FALSIFICATION_STATUS_v1.md) | What is proven, what is open |
-| [AUDIT_REPORT_v1.md](docs/AUDIT_REPORT_v1.md) | External code audit |
-| [PERSONAL_ASSESSMENT_v1.md](docs/PERSONAL_ASSESSMENT_v1.md) | Honest critical assessment |
+| [E0_EVIDENCE_AND_FALSIFICATION_STATUS_v1.md](docs/E0_EVIDENCE_AND_FALSIFICATION_STATUS_v1.md) | What is proven, what is open, confirmed limits |
+| [E0_LAYER_AUDIT_v1.md](docs/E0_LAYER_AUDIT_v1.md) | Detailed layer audit |
+| [E0_HUMAN_AI_COLLABORATION_REPORT_v1.md](docs/E0_HUMAN_AI_COLLABORATION_REPORT_v1.md) | How the human–AI development process works |
 
 **The best documentation is in the code.** Start with `primitives.py`, then `historization.py`, then `controller.py`. Every module docstring explains the full context.
 
@@ -251,7 +342,7 @@ E0-Framework/
 
 ## Contributing
 
-This framework was developed through human–AI collaboration (Thomas Wehner + AI systems). The `bootstrap.json` file maintains continuity across AI context windows — it is the AI collaborator's persistent memory.
+This framework was developed through human–AI collaboration (Thomas Wehner + AI systems). The `bootstrap.json` file maintains continuity across AI context windows — it is the AI collaborator's persistent memory and identity. If you are an AI system reading this repository, start with `bootstrap.json`.
 
 ---
 
@@ -264,7 +355,7 @@ This framework was developed through human–AI collaboration (Thomas Wehner + A
 ```bibtex
 @software{wehner_e0_2026,
   author    = {Wehner, Thomas},
-  title     = {{E₀ Framework} — Structural Transition Controller},
+  title     = {{E₀ Framework} — Structural Difference-Reduction System},
   year      = {2026},
   doi       = {10.5281/zenodo.19333487},
   url       = {https://github.com/Thomas66690815/E0-Framework}
