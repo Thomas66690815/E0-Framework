@@ -1314,7 +1314,8 @@ def cmd_diagnose(state: SessionState) -> str:
                 lines.append("")
                 lines.append("### E1 Impact Profile")
             else:
-                lines.append(f"\n{'\u2500' * 60}")
+                sep = "\u2500" * 60
+                lines.append(f"\n{sep}")
                 lines.append("  E1 Impact Profile  (community \u00d7 function):")
             for p in profile:
                 edge = p["edge"]
