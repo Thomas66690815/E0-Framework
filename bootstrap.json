@@ -28,10 +28,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C292",
-    "latest_commit_hash": "604058b",
-    "latest_commit_msg": "C292: E2Port + E0Turn — universal turn primitive",
-    "test_count": 6080,
+    "latest_commit": "C293",
+    "latest_commit_hash": "TBD",
+    "latest_commit_msg": "C293: LlmE2Port — LLM as E2Port execution target",
+    "test_count": 6124,
     "test_failures": 0,
     "ci_status": "pending",
     "module_count": "79 production + 12 benchmarks + 17 demos + 69 explorations + 131 test files",
@@ -282,10 +282,10 @@
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
     "current_arc": "ARC-G: Universal Turn Primitive (C292+)",
-    "arc_status": "IN PROGRESS. C292: E2Port ABC + E0Turn. E2Port = execution boundary (any domain). E0Turn = persistent turn loop (SELECT → EXECUTE → HISTORIZE). 62 new tests. Full suite 6080 green.",
+    "arc_status": "IN PROGRESS. C292: E2Port ABC + E0Turn (62 tests, 6080 suite). C293: LlmE2Port — wraps E0LLMAdapter as E2Port. E0=Skeleton, LLM=Muscle proven by construction. Injectable call_fn → tests run without API key. 44 new tests, 6124 suite green.",
     "arc_thesis": "E0 = Skeleton (structure/judgment/memory), E2 = Muscle (execution/domain). E2Port abstracts any execution target — factory, traffic, conversation, API. E0Turn wires E0Controller + E2Port into a domain-invariant persistent loop. Hypothesis: same E0 core serves arbitrary domains via E2Port swap.",
     "previous_arc_summary": "ARC-E: DifferenzPort (C288-C290): DifferenzPort ABC + E1Monitor + SessionState + ObservationPort. ARC-D (C285-C287): E1 impact historization live. Trajectory Arc (C277-C283): PathSignature + TrajectoryHistorization.",
-    "key_result": "C292: 62 new tests (TestE2Port/E2PortContract/TurnResult/E0TurnBasic/Run/Escalation/Inertia/Diagnostics/Persistence/Payload/NewState). Full suite 6080/2skip.",
+    "key_result": "C293: 44 new tests (TestLlmE2PortInterface/Execute/ErrorHandling/Configuration/E0Integration). E0=Skeleton, LLM=Muscle proven by construction.",
     "open_threads": [
       "TRAP_GRID domain needs redesign — greedy avoids diagonal traps via edge-path, no differentiation",
       "F3 branching boundary (b>=3): confirmed structural limit (C272). Potential improvement via hierarchical revisit penalty or subtree-level decay.",
@@ -294,7 +294,7 @@
       "GT-8: Partial Residual Trap — PARTIAL outcome discards unresolved structural remainder. No resolution yet.",
       "ARC-H (post-C297): MetaLandscape / Structural Self-Similarity. PathSignature→MetaState, SignatureTransition→MetaEdge, E0Controller unmodified on top. Self-similarity proven by construction. Becomes powerful after C43-C47 (E1-induced PathSignatures available to compress)."
     ],
-    "next_commit_id": "C293",
+    "next_commit_id": "C294",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
