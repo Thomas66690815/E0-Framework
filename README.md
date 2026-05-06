@@ -146,6 +146,8 @@ diagnose           # structural health + E1 impact profile
 ### Run the demos
 
 ```bash
+py -3 -m e0_controller.demo_llm_e2_port           # E₀=Skeleton, LLM=Muscle (E0Turn + LlmE2Port)
+py -3 -m e0_controller.demo_llm_e2_port --show-payloads  # …with LLM output per turn
 py -3 -m e0_controller.demo_greedy_trap          # Hybrid routing vs greedy trap
 py -3 -m e0_controller.demo_invoice_llm --mock   # LLM-bootstrapped workflow
 py -3 -m e0_controller.demo_self_graph            # E₀ reflecting on its own components
@@ -263,7 +265,7 @@ These invariants hold throughout the codebase and must not be violated by extens
 
 **`E0Controller` constructor:** `E0Controller(landscape, execute_fn, ...)` — `execute_fn` is always the second positional argument.
 
-**`Outcome`:** `Outcome.SUCCESS` / `Outcome.FAILURE` — binary, no partial values.
+**`Outcome`:** `Outcome.SUCCESS` / `Outcome.FAILURE` — canonical values. `Outcome.PARTIAL` exists as a runtime extension (`U += 0.5, F += 0.3`) and is used in domain executors, but it is not part of the minimal canonical core.
 
 **`DifferenzPort` contract:**
 - `impact_quality()` returns `0.0` when no data (never raises)
