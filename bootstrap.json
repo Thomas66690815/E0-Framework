@@ -266,6 +266,16 @@
         "question": "If a transition produces PARTIAL — where does the unresolved structural difference go? If the answer is 'nowhere', the architecture is incomplete (GT-8).",
         "triggered": 0,
         "last_triggered": null
+      },
+      {
+        "question": "Is this new primitive operable on two levels? Can E₀ navigate a landscape of X AND a landscape of paths-through-X with the same operators? If no — document why. (MetaLandscape / self-similarity check)",
+        "triggered": 1,
+        "last_triggered": "C292 team discussion — MetaLandscape deferred to ARC-H (post-C297)"
+      },
+      {
+        "question": "Is this new primitive operable on two levels? If E₀ can navigate a landscape of X, can E₀ also navigate a landscape of paths-through-X? If no — document why, don't ignore it. (MetaLandscape check)",
+        "triggered": 1,
+        "last_triggered": "C292 team discussion — MetaLandscape identified as post-C297 arc"
       }
     ]
   },
@@ -275,15 +285,14 @@
     "arc_status": "IN PROGRESS. C292: E2Port ABC + E0Turn. E2Port = execution boundary (any domain). E0Turn = persistent turn loop (SELECT → EXECUTE → HISTORIZE). 62 new tests. Full suite 6080 green.",
     "arc_thesis": "E0 = Skeleton (structure/judgment/memory), E2 = Muscle (execution/domain). E2Port abstracts any execution target — factory, traffic, conversation, API. E0Turn wires E0Controller + E2Port into a domain-invariant persistent loop. Hypothesis: same E0 core serves arbitrary domains via E2Port swap.",
     "previous_arc_summary": "ARC-E: DifferenzPort (C288-C290): DifferenzPort ABC + E1Monitor + SessionState + ObservationPort. ARC-D (C285-C287): E1 impact historization live. Trajectory Arc (C277-C283): PathSignature + TrajectoryHistorization.",
-    "key_result": "C291: 28 new tests (TestObserve/TestRecommend/TestStatus/TestEdgeGrowth/TestPersistence). Full suite pending commit.",
+    "key_result": "C292: 62 new tests (TestE2Port/E2PortContract/TurnResult/E0TurnBasic/Run/Escalation/Inertia/Diagnostics/Persistence/Payload/NewState). Full suite 6080/2skip.",
     "open_threads": [
       "TRAP_GRID domain needs redesign — greedy avoids diagonal traps via edge-path, no differentiation",
       "F3 branching boundary (b>=3): confirmed structural limit (C272). Potential improvement via hierarchical revisit penalty or subtree-level decay.",
-      "F4 non-Markov limit (partial improvement via Trajectory Arc C277-C283): path-shape awareness and (predictability x quality) adaptation now in place. Remaining gap: edge-level credit assignment across non-adjacent edges. Full F4 closure would require sequence-level historization beyond round-level PathSignatures.",
+      "F4 non-Markov limit (partial improvement via Trajectory Arc C277-C283): remaining gap: edge-level credit assignment across non-adjacent edges.",
       "Quality score weights (P8 §12.1) are heuristic — could be meta-tunable but risks infinite regress",
-      "GT-8: Partial Residual Trap — PARTIAL outcome discards unresolved structural remainder. No resolution yet. Candidate: 'Partial Difference Residual' mechanism.",
-      "C292 candidate: demo_openclaw_briefing.py — simulate OpenClaw-style Research Briefing domain. States: task_received → search/llm_direct → synthesize → delivered. Test convergence hypothesis over N sessions.",
-      "C293 candidate: connect real OpenClaw instance via MCP. Requires mcp package + openclaw local install."
+      "GT-8: Partial Residual Trap — PARTIAL outcome discards unresolved structural remainder. No resolution yet.",
+      "ARC-H (post-C297): MetaLandscape / Structural Self-Similarity. PathSignature→MetaState, SignatureTransition→MetaEdge, E0Controller unmodified on top. Self-similarity proven by construction. Becomes powerful after C43-C47 (E1-induced PathSignatures available to compress)."
     ],
     "next_commit_id": "C293",
     "working_principles": [
