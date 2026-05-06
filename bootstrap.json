@@ -28,10 +28,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C293",
-    "latest_commit_hash": "TBD",
-    "latest_commit_msg": "C293: LlmE2Port — LLM as E2Port execution target",
-    "test_count": 6124,
+    "latest_commit": "C295",
+    "latest_commit_hash": "f52bc37",
+    "latest_commit_msg": "C295: RoutingE2Port — E2Port registry with predicate-based routing",
+    "test_count": 6170,
     "test_failures": 0,
     "ci_status": "pending",
     "module_count": "79 production + 12 benchmarks + 17 demos + 69 explorations + 131 test files",
@@ -282,19 +282,19 @@
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
     "current_arc": "ARC-G: Universal Turn Primitive (C292+)",
-    "arc_status": "IN PROGRESS. C292: E2Port ABC + E0Turn (62 tests, 6080 suite). C293: LlmE2Port — wraps E0LLMAdapter as E2Port. E0=Skeleton, LLM=Muscle proven by construction. Injectable call_fn → tests run without API key. 44 new tests, 6124 suite green.",
+    "arc_status": "COMPLETE. C292: E2Port ABC + E0Turn (62t). C293: LlmE2Port — E0=Skeleton, LLM=Muscle (44t). C294: demo_llm_e2_port — briefing domain, mock mode, portability proof (no tests). C295: RoutingE2Port — multi-modal by composition, predicate rules, 4 class-method constructors (46t). Total: 152 new tests, 6170 suite green.",
     "arc_thesis": "E0 = Skeleton (structure/judgment/memory), E2 = Muscle (execution/domain). E2Port abstracts any execution target — factory, traffic, conversation, API. E0Turn wires E0Controller + E2Port into a domain-invariant persistent loop. Hypothesis: same E0 core serves arbitrary domains via E2Port swap.",
     "previous_arc_summary": "ARC-E: DifferenzPort (C288-C290): DifferenzPort ABC + E1Monitor + SessionState + ObservationPort. ARC-D (C285-C287): E1 impact historization live. Trajectory Arc (C277-C283): PathSignature + TrajectoryHistorization.",
-    "key_result": "C293: 44 new tests (TestLlmE2PortInterface/Execute/ErrorHandling/Configuration/E0Integration). E0=Skeleton, LLM=Muscle proven by construction.",
+    "key_result": "C295: RoutingE2Port — multi-modal E0 by composition. One E0Turn, many ports, no architecture change. ARC-H plan: docs/E0_ARC_H_PLAN_v1.md. MetaLandscape (C296-C298) = same E0Controller at PathSignature level = self-similarity proof.",
     "open_threads": [
       "TRAP_GRID domain needs redesign — greedy avoids diagonal traps via edge-path, no differentiation",
       "F3 branching boundary (b>=3): confirmed structural limit (C272). Potential improvement via hierarchical revisit penalty or subtree-level decay.",
       "F4 non-Markov limit (partial improvement via Trajectory Arc C277-C283): remaining gap: edge-level credit assignment across non-adjacent edges.",
       "Quality score weights (P8 §12.1) are heuristic — could be meta-tunable but risks infinite regress",
       "GT-8: Partial Residual Trap — PARTIAL outcome discards unresolved structural remainder. No resolution yet.",
-      "ARC-H (post-C297): MetaLandscape / Structural Self-Similarity. PathSignature→MetaState, SignatureTransition→MetaEdge, E0Controller unmodified on top. Self-similarity proven by construction. Becomes powerful after C43-C47 (E1-induced PathSignatures available to compress)."
+      "ARC-H (post-C297): MetaLandscape / Structural Self-Similarity. Plan: docs/E0_ARC_H_PLAN_v1.md. C296: MetaLandscape.from_records() → Landscape of PathSignatures. C297: make_meta_execute_fn() + self-similarity tests. C298: demo_meta_landscape end-to-end. Proof: E0Controller(MetaLandscape, meta_exec) needs zero changes to controller."
     ],
-    "next_commit_id": "C294",
+    "next_commit_id": "C296",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
