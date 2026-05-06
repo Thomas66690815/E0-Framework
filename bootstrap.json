@@ -28,10 +28,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C291",
-    "latest_commit_hash": "6adc194",
-    "latest_commit_msg": "C291: MCP Adapter — E₀ as tool server for OpenClaw",
-    "test_count": 6008,
+    "latest_commit": "C292",
+    "latest_commit_hash": "TBD",
+    "latest_commit_msg": "C292: E2Port + E0Turn — universal turn primitive",
+    "test_count": 6080,
     "test_failures": 0,
     "ci_status": "pending",
     "module_count": "79 production + 12 benchmarks + 17 demos + 69 explorations + 131 test files",
@@ -271,9 +271,9 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "ARC-F: OpenClaw Integration (C291+)",
-    "arc_status": "IN PROGRESS. C291: MCP Adapter — E₀ exposed as MCP tool server. E0AdapterSession: observe/observe_edge/recommend/status + save/load. 28 tests. landscape grows from observations (structure emerges).",
-    "arc_thesis": "E0 as structural memory for OpenClaw agents. E0 historizes tool-call sequences; after N sessions, recommend() steers agent toward higher-quality paths. Hypothesis: E0 historization improves tool-call sequencing over sessions.",
+    "current_arc": "ARC-G: Universal Turn Primitive (C292+)",
+    "arc_status": "IN PROGRESS. C292: E2Port ABC + E0Turn. E2Port = execution boundary (any domain). E0Turn = persistent turn loop (SELECT → EXECUTE → HISTORIZE). 62 new tests. Full suite 6080 green.",
+    "arc_thesis": "E0 = Skeleton (structure/judgment/memory), E2 = Muscle (execution/domain). E2Port abstracts any execution target — factory, traffic, conversation, API. E0Turn wires E0Controller + E2Port into a domain-invariant persistent loop. Hypothesis: same E0 core serves arbitrary domains via E2Port swap.",
     "previous_arc_summary": "ARC-E: DifferenzPort (C288-C290): DifferenzPort ABC + E1Monitor + SessionState + ObservationPort. ARC-D (C285-C287): E1 impact historization live. Trajectory Arc (C277-C283): PathSignature + TrajectoryHistorization.",
     "key_result": "C291: 28 new tests (TestObserve/TestRecommend/TestStatus/TestEdgeGrowth/TestPersistence). Full suite pending commit.",
     "open_threads": [
@@ -285,7 +285,7 @@
       "C292 candidate: demo_openclaw_briefing.py — simulate OpenClaw-style Research Briefing domain. States: task_received → search/llm_direct → synthesize → delivered. Test convergence hypothesis over N sessions.",
       "C293 candidate: connect real OpenClaw instance via MCP. Requires mcp package + openclaw local install."
     ],
-    "next_commit_id": "C292",
+    "next_commit_id": "C293",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
