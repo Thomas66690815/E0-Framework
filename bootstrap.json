@@ -28,9 +28,9 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C297",
-    "latest_commit_hash": "004cf0b",
-    "latest_commit_msg": "C296-C297: MetaLandscape + MetaController — structural self-similarity proof",
+    "latest_commit": "C298",
+    "latest_commit_hash": "7aa0df1",
+    "latest_commit_msg": "C298: demo_meta_landscape — two-level architecture demo (ARC-H COMPLETE)",
     "test_count": 6228,
     "test_failures": 0,
     "ci_status": "pending",
@@ -282,7 +282,7 @@
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
     "current_arc": "ARC-H: MetaLandscape / Structural Self-Similarity (C296+)",
-    "arc_status": "C296-C297 complete. MetaLandscape.from_records() + from_signatures() (factory for PathSignature Landscape). make_meta_execute_fn() + make_domain_meta_execute_fn(). Self-similarity PROOF BY CONSTRUCTION: E0Controller(MetaLandscape, meta_exec) runs with zero changes to controller. 56 new tests (TestSigConversion/MetaLandscapeEmpty/Edges/Quality/FromSigs/MakeMetaExecuteFn/MetaControllerProof/MetaE0TurnProof). Suite: 6228. C298 remaining: demo_meta_landscape end-to-end.",
+    "arc_status": "ARC-H COMPLETE (C296-C298). MetaLandscape.from_records() + from_signatures(). make_meta_execute_fn() + make_domain_meta_execute_fn(). demo_meta_landscape: Level-1 (5 domain sessions, 2 sigs), Level-2 (MetaLandscape, E0Turn navigates (0,1)->(0,1,0,1) in 1 turn, Inertia=1.0). PROOF BY CONSTRUCTION: E0Controller navigates PathSignature states with zero code changes. Suite: 6228.",
     "arc_thesis": "E0 = Skeleton (structure/judgment/memory), E2 = Muscle (execution/domain). E2Port abstracts any execution target — factory, traffic, conversation, API. E0Turn wires E0Controller + E2Port into a domain-invariant persistent loop. Hypothesis: same E0 core serves arbitrary domains via E2Port swap.",
     "previous_arc_summary": "ARC-E: DifferenzPort (C288-C290): DifferenzPort ABC + E1Monitor + SessionState + ObservationPort. ARC-D (C285-C287): E1 impact historization live. Trajectory Arc (C277-C283): PathSignature + TrajectoryHistorization.",
     "key_result": "C295: RoutingE2Port — multi-modal E0 by composition. One E0Turn, many ports, no architecture change. ARC-H plan: docs/E0_ARC_H_PLAN_v1.md. MetaLandscape (C296-C298) = same E0Controller at PathSignature level = self-similarity proof.",
@@ -292,9 +292,9 @@
       "F4 non-Markov limit (partial improvement via Trajectory Arc C277-C283): remaining gap: edge-level credit assignment across non-adjacent edges.",
       "Quality score weights (P8 §12.1) are heuristic — could be meta-tunable but risks infinite regress",
       "GT-8: Partial Residual Trap — PARTIAL outcome discards unresolved structural remainder. No resolution yet.",
-      "ARC-H C298 (next): demo_meta_landscape.py — 2-level demo: domain session → TrajectoryRecords → MetaLandscape → E0Controller. Show E0 same code at both levels. Then UseCase-Diskussion mit ChatGPT."
+      "ARC-H COMPLETE. Next: UseCase-Diskussion mit ChatGPT — how to structure concrete use cases on top of ARC-G/ARC-H infrastructure. C299+."
     ],
-    "next_commit_id": "C298",
+    "next_commit_id": "C299",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
