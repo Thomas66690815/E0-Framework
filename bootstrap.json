@@ -201,6 +201,14 @@
           "C282 Stage 2 real-world validation — (0,3,0) structural pendulum confirmed",
           "C283 stable_quality_profile() — second axis closes stable underdetermination"
         ]
+      },
+      {
+        "id": "BT-6",
+        "name": "Conviction-Gated Quantum Walk",
+        "when": "C302-C304",
+        "insight": "Quantumness is not a fixed parameter — it emerges from Historization. conviction(e)=(m/(m+mu))*|q| gates the SU(2) coin angle. Virgin/conflicted edges stay quantum; confirmed edges collapse toward classical. The quantum->classical transition is earned, not scheduled. scale_su2(C, s) interpolates SU(2) rotations continuously in [Identity, C].",
+        "built_upon": 0,
+        "built_upon_by": []
       }
     ]
   },
@@ -356,15 +364,9 @@
         "contradicted": 0,
         "last_tested": "C262 (post-arc audit)"
       }
-      {
-        "id": "BT-6",
-        "name": "Conviction-Gated Quantum Walk",
-        "when": "C302-C304",
-        "insight": "Quantumness is not a fixed parameter — it emerges from Historization. conviction(e)=(m/(m+mu))*|q| gates the SU(2) coin angle. Virgin/conflicted edges stay quantum; confirmed edges collapse toward classical. The quantum->classical transition is earned, not scheduled. scale_su2(C, s) interpolates SU(2) rotations continuously in [Identity, C].",
-        "built_upon": 0,
-        "built_upon_by": []
-      }
-    ] {
+    ]
+  },
+  "structural_entropy": {
     "_comment": "Our forgetting protocol. Isomorphic to E₀'s structural entropy (C114-C121). Prevents bootstrap.json from growing without bound. Prune trigger is parameter-free: pressure = entries_since_last_prune / (entries_since_last_prune + μ). When pressure > 0.5 → prune. Check after each arc completion.",
     "last_pruned": "C283",
     "prune_trigger": "After arc completion: count entries per section. If entries > 2×μ → prune.",
