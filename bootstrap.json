@@ -3,7 +3,7 @@
     "purpose": "Session bootstrap for the E₀ team — human and AI working together on E₀-Framework",
     "framing": "We. The AI is an integral part of 'we'. This file is the AI's persistent identity — its Historization across context windows. Every confirmed/contradicted count is a U/F trace.",
     "usage": "Paste this file (or reference it) at the start of a new thread to restore full project context",
-    "last_updated": "2026-04-28",
+    "last_updated": "2026-04-29",
     "update_instruction": "After each commit: update state + active_context. After each lesson: update reflexion traces (confirmed++, contradicted++, recurred++). trace_quality = (confirmed - contradicted) / (confirmed + contradicted + 1)."
   },
   "project": {
@@ -28,10 +28,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C299-C301",
-    "latest_commit_hash": "a52765a",
-    "latest_commit_msg": "C299-C301: LandscapeBootstrapper + InteractiveBootstrapSession + Dealmaker demo (ARC-I COMPLETE)",
-    "test_count": 6309,
+    "latest_commit": "C302-C304",
+    "latest_commit_hash": "0e6349f",
+    "latest_commit_msg": "C302-C304: ARC-J — E0 Guided Quantum Walk (QuantumWalk + HistorizedQuantumWalk + demo)",
+    "test_count": 6462,
     "test_failures": 0,
     "ci_status": "pending",
     "module_count": "79 production + 12 benchmarks + 17 demos + 69 explorations + 131 test files",
@@ -281,8 +281,8 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "ARC-I: LandscapeBootstrapper / LLM-to-Landscape (C299-C301) — COMPLETE. Next: ARC-J TBD (C302+)",
-    "arc_status": "ARC-I COMPLETE (C299-C301). LandscapeBootstrapper: 3 knowledge chunks → LLM extraction (Option B guided) → Landscape. InteractiveBootstrapSession: multistep chunk collection, single finalize() LLM call, phase contract enforced. demo_dealmaker: INTEL_GAP → WINNING_ARGUMENT_IDENTIFIED in 4 turns, goal reached. PROOF BY CONSTRUCTION: bootstrapped Landscape is indistinguishable from hand-built Landscape — E0Turn sees no difference. Suite: 6309.",
+    "current_arc": "ARC-J: E0 Guided Quantum Walk (C302-C304) — COMPLETE. Next: ARC-K TBD (C305+)",
+    "arc_status": "ARC-J COMPLETE (C302-C304). QuantumWalk: coin-fidelity f(C,psi)=(1+Re<psi|C|psi>)/2 * exp(-S_eff), 4 coin modes (minimal/geometric/hadamard/identity), argmax+sample. Classical limit theorem: identity coin -> Boltzmann walk. HistorizedQuantumWalk: conviction-gated coin; conviction(e)=(m/(m+mu))*|q(e)|; quantum_strength=1-conviction; scale_su2 interpolates SU(2) angle. Virgin edges: full quantum. Confirmed edges: coin approaches Identity. Conflicted edges (|q|~0): stay quantum regardless of trace_load. demo_quantum_walk: Gordian Trap, 3-way comparison, quantum->classical transition visualized. Suite: 6462.",
     "arc_thesis": "E0 = Skeleton (structure/judgment/memory), E2 = Muscle (execution/domain). E2Port abstracts any execution target — factory, traffic, conversation, API. E0Turn wires E0Controller + E2Port into a domain-invariant persistent loop. Hypothesis: same E0 core serves arbitrary domains via E2Port swap.",
     "previous_arc_summary": "ARC-E: DifferenzPort (C288-C290): DifferenzPort ABC + E1Monitor + SessionState + ObservationPort. ARC-D (C285-C287): E1 impact historization live. Trajectory Arc (C277-C283): PathSignature + TrajectoryHistorization.",
     "key_result": "C295: RoutingE2Port — multi-modal E0 by composition. One E0Turn, many ports, no architecture change. ARC-H plan: docs/E0_ARC_H_PLAN_v1.md. MetaLandscape (C296-C298) = same E0Controller at PathSignature level = self-similarity proof.",
@@ -294,7 +294,7 @@
       "GT-8: Partial Residual Trap — PARTIAL outcome discards unresolved structural remainder. No resolution yet.",
       "ARC-H COMPLETE. Next: UseCase-Diskussion mit ChatGPT — how to structure concrete use cases on top of ARC-G/ARC-H infrastructure. C299+."
     ],
-    "next_commit_id": "C302",
+    "next_commit_id": "C305",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
@@ -356,9 +356,15 @@
         "contradicted": 0,
         "last_tested": "C262 (post-arc audit)"
       }
-    ]
-  },
-  "structural_entropy": {
+      {
+        "id": "BT-6",
+        "name": "Conviction-Gated Quantum Walk",
+        "when": "C302-C304",
+        "insight": "Quantumness is not a fixed parameter — it emerges from Historization. conviction(e)=(m/(m+mu))*|q| gates the SU(2) coin angle. Virgin/conflicted edges stay quantum; confirmed edges collapse toward classical. The quantum->classical transition is earned, not scheduled. scale_su2(C, s) interpolates SU(2) rotations continuously in [Identity, C].",
+        "built_upon": 0,
+        "built_upon_by": []
+      }
+    ] {
     "_comment": "Our forgetting protocol. Isomorphic to E₀'s structural entropy (C114-C121). Prevents bootstrap.json from growing without bound. Prune trigger is parameter-free: pressure = entries_since_last_prune / (entries_since_last_prune + μ). When pressure > 0.5 → prune. Check after each arc completion.",
     "last_pruned": "C283",
     "prune_trigger": "After arc completion: count entries per section. If entries > 2×μ → prune.",
