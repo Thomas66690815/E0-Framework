@@ -28,10 +28,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C298",
-    "latest_commit_hash": "7aa0df1",
-    "latest_commit_msg": "C298: demo_meta_landscape — two-level architecture demo (ARC-H COMPLETE)",
-    "test_count": 6228,
+    "latest_commit": "C299-C301",
+    "latest_commit_hash": "a52765a",
+    "latest_commit_msg": "C299-C301: LandscapeBootstrapper + InteractiveBootstrapSession + Dealmaker demo (ARC-I COMPLETE)",
+    "test_count": 6309,
     "test_failures": 0,
     "ci_status": "pending",
     "module_count": "79 production + 12 benchmarks + 17 demos + 69 explorations + 131 test files",
@@ -282,7 +282,7 @@
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
     "current_arc": "ARC-H: MetaLandscape / Structural Self-Similarity (C296+)",
-    "arc_status": "ARC-H COMPLETE (C296-C298). MetaLandscape.from_records() + from_signatures(). make_meta_execute_fn() + make_domain_meta_execute_fn(). demo_meta_landscape: Level-1 (5 domain sessions, 2 sigs), Level-2 (MetaLandscape, E0Turn navigates (0,1)->(0,1,0,1) in 1 turn, Inertia=1.0). PROOF BY CONSTRUCTION: E0Controller navigates PathSignature states with zero code changes. Suite: 6228.",
+    "arc_status": "ARC-I COMPLETE (C299-C301). LandscapeBootstrapper: 3 knowledge chunks → LLM extraction (Option B guided) → Landscape. InteractiveBootstrapSession: multistep chunk collection, single finalize() LLM call, phase contract enforced. demo_dealmaker: INTEL_GAP → WINNING_ARGUMENT_IDENTIFIED in 4 turns, goal reached. PROOF BY CONSTRUCTION: bootstrapped Landscape is indistinguishable from hand-built Landscape — E0Turn sees no difference. Suite: 6309.",
     "arc_thesis": "E0 = Skeleton (structure/judgment/memory), E2 = Muscle (execution/domain). E2Port abstracts any execution target — factory, traffic, conversation, API. E0Turn wires E0Controller + E2Port into a domain-invariant persistent loop. Hypothesis: same E0 core serves arbitrary domains via E2Port swap.",
     "previous_arc_summary": "ARC-E: DifferenzPort (C288-C290): DifferenzPort ABC + E1Monitor + SessionState + ObservationPort. ARC-D (C285-C287): E1 impact historization live. Trajectory Arc (C277-C283): PathSignature + TrajectoryHistorization.",
     "key_result": "C295: RoutingE2Port — multi-modal E0 by composition. One E0Turn, many ports, no architecture change. ARC-H plan: docs/E0_ARC_H_PLAN_v1.md. MetaLandscape (C296-C298) = same E0Controller at PathSignature level = self-similarity proof.",
@@ -294,7 +294,7 @@
       "GT-8: Partial Residual Trap — PARTIAL outcome discards unresolved structural remainder. No resolution yet.",
       "ARC-H COMPLETE. Next: UseCase-Diskussion mit ChatGPT — how to structure concrete use cases on top of ARC-G/ARC-H infrastructure. C299+."
     ],
-    "next_commit_id": "C299",
+    "next_commit_id": "C302",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
