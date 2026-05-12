@@ -29,7 +29,7 @@
   },
   "state": {
     "latest_commit": "C307",
-    "latest_commit_hash": "TBD",
+    "latest_commit_hash": "3d4094d",
     "latest_commit_msg": "C307: ARC-K \u2014 Domain Studio REST API (routes_domains.py)",
     "test_count": 6675,
     "test_failures": 0,
