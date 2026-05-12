@@ -23,7 +23,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: pip install numpy scipy pytest fastapi httpx uvicorn websockets
+        run: pip install numpy scipy pytest fastapi httpx uvicorn websockets python-multipart
 
       - name: Run test suite
         run: python -m pytest e0_controller/ server/ --tb=short -q
