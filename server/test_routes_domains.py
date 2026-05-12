@@ -811,22 +811,37 @@ class TestDomainWorkflow:
         assert r.json()["episode_count"] == 0
 
     def test_conviction_improves_over_episodes(self, client):
-        """Conviction should increase after more learning episodes (always_success oracle)."""
+        """Conviction increases after more always-success learning episodes.
+
+        Fix (C309+): explicit start='A' goal='D' on the linear chain so every
+        episode visits A→B, B→C, C→D deterministically.  Without an explicit
+        start, _pick_start() returns next(iter(landscape.states)) from a Python
+        set whose order depends on PYTHONHASHSEED — different CI seeds cause
+        the walk to begin at B, C, or D, making conviction non-monotone.
+        """
         _create(client, name="x")
         _upload_csv(client, "x", MINIMAL_CSV)
 
-        # First learn batch
+        # First learn batch — explicit start/goal for deterministic edge coverage
         client.post("/domains/x/learn", json={
-            "n_episodes": 10, "max_steps": 20, "oracle_type": "always_success"
+            "n_episodes": 10, "max_steps": 20,
+            "oracle_type": "always_success",
+            "start": "A", "goal": "D",
         })
         cm1 = client.get("/domains/x/conviction").json()["edges"]
-        avg1 = sum(cm1.values()) / max(len(cm1), 1)
 
-        # Second learn batch (more episodes → more trace_load → higher conviction)
+        # Second learn batch — same start/goal, more episodes → higher conviction
         client.post("/domains/x/learn", json={
-            "n_episodes": 200, "max_steps": 20, "oracle_type": "always_success"
+            "n_episodes": 50, "max_steps": 20,
+            "oracle_type": "always_success",
+            "start": "A", "goal": "D",
         })
         cm2 = client.get("/domains/x/conviction").json()["edges"]
-        avg2 = sum(cm2.values()) / max(len(cm2), 1)
 
-        assert avg2 >= avg1
+        # Every edge visited in batch 1 must have >= conviction after batch 2.
+        # With always_success + deterministic episodes each edge is visited in
+        # every episode, so U monotonically grows → conviction can only increase.
+        for edge, c1 in cm1.items():
+            assert cm2.get(edge, 0.0) >= c1, (
+                f"{edge}: conviction decreased {c1:.4f} → {cm2.get(edge, 0.0):.4f}"
+            )
