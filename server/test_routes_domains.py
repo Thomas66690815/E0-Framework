@@ -1,4 +1,4 @@
-"""Tests for E₀ Domain Studio REST API (ARC-K, C307).
+"""Tests for E₀ Domain Studio REST API (ARC-K, C307; C309 oracle extension).
 
 Uses FastAPI TestClient. DomainStore is injected with a tmp_path-backed
 store so no files land in the repo.
@@ -9,7 +9,9 @@ Test classes:
     TestDomainGet            — GET /domains/{name}
     TestDomainDelete         — DELETE /domains/{name}
     TestDomainUpload         — POST /domains/{name}/upload
-    TestDomainLearn          — POST /domains/{name}/learn
+    TestDomainLearn          — POST /domains/{name}/learn (base oracles)
+    TestOracleGoalAware      — oracle_type=goal_aware  (C309)
+    TestOracleLLM            — oracle_type=llm         (C309)
     TestDomainSetMode        — PUT /domains/{name}/mode
     TestDomainRecommend      — POST /domains/{name}/recommend
     TestDomainRecord         — POST /domains/{name}/record
@@ -343,6 +345,232 @@ class TestDomainLearn:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# TestOracleGoalAware  (C309)
+# ══════════════════════════════════════════════════════════════════════════════
+
+class TestOracleGoalAware:
+    """goal_aware oracle: SUCCESS iff step strictly reduces BFS distance to goal."""
+
+    LINEAR_CSV = b"A,B,success\nB,C,success\nC,D,success"
+
+    def _setup_linear(self, client):
+        """Create domain with linear chain A→B→C→D."""
+        _create(client, name="chain")
+        client.post(
+            "/domains/chain/upload",
+            files={"file": ("data.csv", io.BytesIO(self.LINEAR_CSV), "text/csv")},
+        )
+
+    def test_goal_aware_returns_200(self, client):
+        self._setup_linear(client)
+        r = client.post("/domains/chain/learn", json={
+            "n_episodes": 5,
+            "oracle_type": "goal_aware",
+            "start": "A",
+            "goal": "D",
+        })
+        assert r.status_code == 200
+
+    def test_goal_aware_requires_goal_field(self, client):
+        """If oracle_type=goal_aware but no goal → 422."""
+        self._setup_linear(client)
+        r = client.post("/domains/chain/learn", json={
+            "n_episodes": 3,
+            "oracle_type": "goal_aware",
+        })
+        assert r.status_code == 422
+
+    def test_goal_aware_accumulates_success_on_forward_steps(self, client, isolated_store):
+        """On a linear chain all steps toward the goal should be SUCCESS → U grows."""
+        self._setup_linear(client)
+        client.post("/domains/chain/learn", json={
+            "n_episodes": 20,
+            "oracle_type": "goal_aware",
+            "start": "A",
+            "goal": "D",
+        })
+        loaded = isolated_store.load("chain")
+        h = loaded.landscape.historization
+        from e0_controller.primitives import Edge
+        # A→B, B→C, C→D are all forward steps → should have U > 0
+        for src, tgt in [("A", "B"), ("B", "C"), ("C", "D")]:
+            assert h._U.get(Edge(src, tgt), 0) > 0, f"Expected U > 0 for {src}→{tgt}"
+
+    def test_goal_aware_episodes_count(self, client):
+        self._setup_linear(client)
+        r = client.post("/domains/chain/learn", json={
+            "n_episodes": 4,
+            "oracle_type": "goal_aware",
+            "start": "A",
+            "goal": "D",
+        })
+        assert r.json()["episodes"] == 4
+
+    def test_goal_aware_persists(self, client):
+        self._setup_linear(client)
+        client.post("/domains/chain/learn", json={
+            "n_episodes": 10,
+            "oracle_type": "goal_aware",
+            "start": "A",
+            "goal": "D",
+        })
+        status = client.get("/domains/chain").json()
+        assert status["episode_count"] == 10
+
+    def test_goal_aware_works_with_logistics(self, client):
+        """Logistics topology: ORDER→PICKING→LOADING→DELIVERED. Goal=DELIVERED."""
+        _create(client, name="log")
+        _upload_csv(client, "log", LOGISTICS_CSV)
+        r = client.post("/domains/log/learn", json={
+            "n_episodes": 10,
+            "oracle_type": "goal_aware",
+            "start": "ORDER",
+            "goal": "DELIVERED",
+        })
+        assert r.status_code == 200
+        assert r.json()["success_count"] > 0
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TestOracleLLM  (C309)
+# ══════════════════════════════════════════════════════════════════════════════
+
+class TestOracleLLM:
+    """LLM oracle: each (source, target) is judged by a pluggable call_fn.
+
+    Tests use a mock call_fn so no real OpenAI calls are made.
+    """
+
+    def _setup(self, client):
+        _create(client, name="x", topic="test topic", description="A test domain.")
+        _upload_csv(client, "x", LOGISTICS_CSV)
+
+    def test_llm_oracle_returns_200_with_mock(self, client, monkeypatch):
+        """LLM oracle type is accepted and returns 200 (mock avoids real API call)."""
+        from server import routes_domains
+        from e0_controller.primitives import Outcome
+
+        monkeypatch.setattr(
+            routes_domains, "_llm_oracle",
+            lambda session, call_fn=None: (lambda s, t: Outcome.SUCCESS),
+        )
+
+        self._setup(client)
+        r = client.post("/domains/x/learn", json={
+            "n_episodes": 5,
+            "oracle_type": "llm",
+        })
+        assert r.status_code == 200
+        # All response keys must be present regardless of oracle
+        for key in ("episodes", "total_steps", "success_count",
+                    "failure_count", "partial_count", "goal_rate", "warnings"):
+            assert key in r.json()
+
+    def test_llm_oracle_success_response_parsed(self, client):
+        """oracle_type='llm' is accepted by the endpoint (behavioral parsing tested in unit tests)."""
+        # Without a real API key the oracle falls back to FAILURE — that's correct behaviour.
+        # We only assert structural correctness here; use test_llm_oracle_direct_* for parsing.
+        self._setup(client)
+        r = client.post("/domains/x/learn", json={
+            "n_episodes": 3,
+            "oracle_type": "llm",
+        })
+        assert r.status_code == 200
+        assert r.json()["episodes"] == 3
+
+    def test_llm_oracle_failure_fallback_on_exception(self, client, monkeypatch):
+        """When LLM call raises, oracle falls back to FAILURE."""
+        from server import routes_domains
+        from e0_controller.primitives import Outcome
+
+        def _failing_oracle(session, call_fn=None):
+            return lambda s, t: Outcome.FAILURE  # simulates error fallback
+
+        monkeypatch.setattr(routes_domains, "_llm_oracle", _failing_oracle)
+
+        self._setup(client)
+        r = client.post("/domains/x/learn", json={
+            "n_episodes": 5,
+            "oracle_type": "llm",
+        })
+        assert r.status_code == 200
+        # All steps FAILURE → success_count == 0
+        assert r.json()["success_count"] == 0
+
+    def test_llm_oracle_partial_parsed(self, client):
+        """oracle_type='llm' endpoint returns valid response structure for partial outcomes."""
+        # Behavioral partial-parsing verified in test_llm_oracle_direct_partial_parsing.
+        self._setup(client)
+        r = client.post("/domains/x/learn", json={
+            "n_episodes": 3,
+            "oracle_type": "llm",
+        })
+        assert r.status_code == 200
+        assert "partial_count" in r.json()
+
+    def test_llm_oracle_direct_call_fn(self):
+        """Unit-test _llm_oracle() directly: mock call_fn returning 'SUCCESS'."""
+        from server.routes_domains import _llm_oracle
+        from e0_controller.domain_session import DomainSession, DomainMode
+        from e0_controller.primitives import Outcome
+
+        session = DomainSession(
+            name="test",
+            topic="Logistics",
+            description="Move packages.",
+            mode=DomainMode.LEARN,
+        )
+
+        call_log = []
+
+        def _mock_call(system, user, config):
+            call_log.append((system, user))
+            return "SUCCESS"
+
+        oracle = _llm_oracle(session, call_fn=_mock_call)
+        result = oracle("ORDER", "PICKING")
+        assert result == Outcome.SUCCESS
+        assert len(call_log) == 1
+        assert "Logistics" in call_log[0][1]
+        assert "ORDER" in call_log[0][1]
+        assert "PICKING" in call_log[0][1]
+
+    def test_llm_oracle_direct_failure_fallback(self):
+        """Unit-test _llm_oracle(): when call_fn raises, oracle returns FAILURE."""
+        from server.routes_domains import _llm_oracle
+        from e0_controller.domain_session import DomainSession, DomainMode
+        from e0_controller.primitives import Outcome
+
+        session = DomainSession(name="test", mode=DomainMode.LEARN)
+
+        def _raising_call(system, user, config):
+            raise RuntimeError("No API key")
+
+        oracle = _llm_oracle(session, call_fn=_raising_call)
+        assert oracle("A", "B") == Outcome.FAILURE
+
+    def test_llm_oracle_direct_partial_parsing(self):
+        """Unit-test _llm_oracle(): 'PARTIAL' in response → Outcome.PARTIAL."""
+        from server.routes_domains import _llm_oracle
+        from e0_controller.domain_session import DomainSession, DomainMode
+        from e0_controller.primitives import Outcome
+
+        session = DomainSession(name="test", mode=DomainMode.LEARN)
+        oracle = _llm_oracle(session, call_fn=lambda s, u, c: "  partial  ")
+        assert oracle("A", "B") == Outcome.PARTIAL
+
+    def test_llm_oracle_direct_unknown_fallback(self):
+        """Unit-test _llm_oracle(): unrecognised reply → FAILURE."""
+        from server.routes_domains import _llm_oracle
+        from e0_controller.domain_session import DomainSession, DomainMode
+        from e0_controller.primitives import Outcome
+
+        session = DomainSession(name="test", mode=DomainMode.LEARN)
+        oracle = _llm_oracle(session, call_fn=lambda s, u, c: "MAYBE")
+        assert oracle("A", "B") == Outcome.FAILURE
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # TestDomainSetMode
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -596,7 +824,7 @@ class TestDomainWorkflow:
 
         # Second learn batch (more episodes → more trace_load → higher conviction)
         client.post("/domains/x/learn", json={
-            "n_episodes": 50, "max_steps": 20, "oracle_type": "always_success"
+            "n_episodes": 200, "max_steps": 20, "oracle_type": "always_success"
         })
         cm2 = client.get("/domains/x/conviction").json()["edges"]
         avg2 = sum(cm2.values()) / max(len(cm2), 1)

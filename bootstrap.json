@@ -297,7 +297,7 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "ARC-K: Domain Studio — Learn/Apply (C305–C308) — IN PROGRESS. C305 complete.",
+    "current_arc": "ARC-K+: Oracle Extension — C309 Goal-Oracle for /domains/{name}/learn",
     "arc_status": "ARC-K COMPLETE. C305 FileSensor + C306 DomainSession+DomainStore + C307 REST API + C308 demo. Key insight: E0 can learn domain knowledge from historical CSV and apply it to live decisions via structured REST API. Two-phase: LEARN (HistorizedQuantumWalk N episodes) \u2192 APPLY (E0Controller recommend+record). Cold-start detection via h._tau. Online learning during APPLY. Topology auto-expansion on new candidates. Suite: 6675.",
     "arc_thesis": "E0 = Skeleton (structure/judgment/memory), E2 = Muscle (execution/domain). E2Port abstracts any execution target — factory, traffic, conversation, API. E0Turn wires E0Controller + E2Port into a domain-invariant persistent loop. Hypothesis: same E0 core serves arbitrary domains via E2Port swap.",
     "previous_arc_summary": "ARC-E: DifferenzPort (C288-C290): DifferenzPort ABC + E1Monitor + SessionState + ObservationPort. ARC-D (C285-C287): E1 impact historization live. Trajectory Arc (C277-C283): PathSignature + TrajectoryHistorization.",
@@ -307,8 +307,7 @@
       "F3 branching boundary (b>=3): confirmed structural limit (C272). Potential improvement via hierarchical revisit penalty or subtree-level decay.",
       "F4 non-Markov limit (partial improvement via Trajectory Arc C277-C283): remaining gap: edge-level credit assignment across non-adjacent edges.",
       "Quality score weights (P8 §12.1) are heuristic — could be meta-tunable but risks infinite regress",
-      "GT-8: Partial Residual Trap — PARTIAL outcome discards unresolved structural remainder. No resolution yet.",
-      "ARC-K: Domain Studio (C305-C308): C305 FileSensor DONE. C306 DomainSession+DomainStore DONE. C307 REST API DONE. C308: demo_domain_studio.py Logistics end-to-end (inject CSV \u2192 learn 50 episodes \u2192 APPLY \u2192 recommend \u2192 record)."
+      "GT-8: Partial Residual Trap — PARTIAL outcome discards unresolved structural remainder. No resolution yet."
     ],
     "next_commit_id": "C309",
     "working_principles": [
@@ -676,6 +675,51 @@
     "status": "8/8 targets RESOLVED",
     "doc": "docs/E0_EVIDENCE_AND_FALSIFICATION_STATUS_v1.md",
     "date_resolved": "2026-03-31"
+  },
+  "idea_backlog": {
+    "_comment": "Strategic ideas not yet scheduled. Review when choosing next arc. Add ideas freely; promote to active_context when starting.",
+    "items": [
+      {
+        "id": "IB-1",
+        "title": "Domain Studio UI",
+        "when_proposed": "2026-05-12",
+        "description": "A minimal HTML/JS frontend (no framework) over the existing /domains/* REST API. Fulfills the original ARC-K promise: a human can manually initiate Learn/Apply via a browser. No new backend code needed — pure UI wiring.",
+        "priority": "high",
+        "estimated_scope": "1 commit (new server/static/ or standalone HTML)"
+      },
+      {
+        "id": "IB-2",
+        "title": "BPI 2017 Empirical Validation of ARC-K",
+        "when_proposed": "2026-05-12",
+        "description": "Take the public BPI 2017 process-mining event log (used in C184b) and feed it into DomainSession via FileSensor CSV. Measure recommendation accuracy against ground truth. First empirical validation of ARC-K on real process data — not a synthetic oracle.",
+        "priority": "medium",
+        "estimated_scope": "1–2 commits (data preprocessing + benchmark script)"
+      },
+      {
+        "id": "IB-3",
+        "title": "ARC-L: Self-Graph — E₀ learns E₀",
+        "when_proposed": "2026-05-12",
+        "description": "Create DomainSession('e0_architecture') using the 14-layer architecture as node topology. States = layers (primitives, landscape, controller, ...). Edges = depends-on / calls relationships. Learn via topology_aware oracle, then recommend navigation paths through the system. Originally planned as C43 Self-Graph. Infrastructure now exists (DomainSession + DomainStore + REST API) — needs only a demo script.",
+        "priority": "medium",
+        "estimated_scope": "1 commit (demo script only, no new infrastructure)"
+      },
+      {
+        "id": "IB-4",
+        "title": "GT-8 Resolution: Partial Residual Mechanism",
+        "when_proposed": "2026-05-12",
+        "description": "When a transition produces PARTIAL, create a new Difference object in the landscape for the unresolved residual rather than silently discarding it. Two candidate approaches: (A) Ephemeral residual node — PARTIAL creates a temporary node that Dream can consume. (B) Residual tracking in SessionState — explicit carry-forward for E1Monitor. Requires conceptual design before coding (erst erarbeiten, dann umsetzen).",
+        "priority": "low (no bug yet, but will become one as PARTIAL usage grows)",
+        "estimated_scope": "1 design session + 1–2 implementation commits"
+      },
+      {
+        "id": "IB-5",
+        "title": "coin_mode and mu exposed in REST API",
+        "when_proposed": "2026-05-12",
+        "description": "DomainSession.learn() accepts coin_mode ('hadamard'|'grover'|'geometric') and mu but LearnRequest does not expose them. Exposing these parameters allows per-domain tuning of exploration/exploitation trade-off via the REST API without code changes.",
+        "priority": "low",
+        "estimated_scope": "1 commit (LearnRequest + routes_domains.py + tests)"
+      }
+    ]
   },
   "learning_state": {
     "_comment": "Learning data (discovered edges, cross-domain bridges, learning history) lives in learning_state.json. Kept separate to prevent identity file bloat from iterative exploration.",

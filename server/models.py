@@ -189,8 +189,11 @@ class LearnRequest(BaseModel):
     n_episodes: int = Field(10, ge=1, le=1000)
     oracle_type: str = Field(
         "always_success",
-        description="Pre-defined oracle: always_success | random | topology_aware",
-        pattern="^(always_success|random|topology_aware)$",
+        description=(
+            "Pre-defined oracle: always_success | random | topology_aware | "
+            "goal_aware | llm"
+        ),
+        pattern="^(always_success|random|topology_aware|goal_aware|llm)$",
     )
     start: Optional[str] = Field(None, description="Start state (defaults to first state)")
     goal: Optional[str] = Field(None, description="Goal state")

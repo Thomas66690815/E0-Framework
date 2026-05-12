@@ -20,6 +20,11 @@ Oracle types (for /learn)
 always_success   — every step is SUCCESS (useful for topology exploration)
 random           — random SUCCESS / FAILURE (50 / 50)
 topology_aware   — SUCCESS on edges that exist with U > F, else FAILURE
+goal_aware       — SUCCESS if the step strictly decreases BFS distance to goal
+                   (requires goal to be set in the request)
+llm              — asks the OpenAI API to judge each transition;
+                   requires OPENAI_API_KEY in .env or environment;
+                   gracefully falls back to FAILURE on API/parse errors
 
 C307.
 """
@@ -27,6 +32,7 @@ C307.
 from __future__ import annotations
 
 import random as _random
+from collections import deque
 from typing import Callable, List, Optional
 
 from fastapi import APIRouter, HTTPException, UploadFile, File
@@ -97,7 +103,75 @@ def _status_response(session: DomainSession) -> DomainStatusResponse:
     )
 
 
-def _oracle_for(oracle_type: str, landscape) -> Callable[[str, str], Outcome]:
+def _bfs_distances_to_goal(landscape, goal: str) -> dict:
+    """Reverse-BFS distances from every node to *goal* in the directed landscape.
+
+    Returns a dict {node: distance}.  Nodes unreachable from *goal* (via reversed
+    edges) are absent from the dict (effectively distance = infinity).
+    """
+    # Build reverse adjacency list (target → list of sources)
+    reverse_adj: dict = {}
+    for e in landscape.edges:
+        reverse_adj.setdefault(e.target, []).append(e.source)
+
+    dist = {goal: 0}
+    queue = deque([goal])
+    while queue:
+        node = queue.popleft()
+        for pred in reverse_adj.get(node, []):
+            if pred not in dist:
+                dist[pred] = dist[node] + 1
+                queue.append(pred)
+    return dist
+
+
+def _llm_oracle(session: "DomainSession", call_fn=None) -> Callable[[str, str], Outcome]:
+    """Return an oracle that calls OpenAI to judge each (source, target) transition.
+
+    Requires OPENAI_API_KEY in .env or environment.  On any error (API,
+    missing key, unparseable response) the transition is scored as FAILURE.
+
+    *call_fn* is injectable for tests: signature (system, user, config) -> str.
+    """
+    from e0_controller.llm_adapter import LLMConfig, openai_call
+
+    config = LLMConfig(temperature=0.0, max_tokens=10)
+    _call = call_fn or openai_call
+
+    topic = session.topic or session.name
+    description = session.description or ""
+    system_msg = (
+        "You evaluate single transitions in a domain workflow. "
+        "Reply with exactly one word: SUCCESS, FAILURE, or PARTIAL."
+    )
+
+    def oracle(s: str, t: str) -> Outcome:
+        user_msg = (
+            f"Domain: {topic}. {description}\n"
+            f"Transition: {s!r} → {t!r}\n"
+            "Is this a successful step? Reply SUCCESS, FAILURE, or PARTIAL."
+        )
+        try:
+            raw = _call(system_msg, user_msg, config).strip().upper()
+        except Exception:
+            return Outcome.FAILURE
+
+        if "PARTIAL" in raw:
+            return Outcome.PARTIAL
+        if "SUCCESS" in raw:
+            return Outcome.SUCCESS
+        return Outcome.FAILURE
+
+    return oracle
+
+
+def _oracle_for(
+    oracle_type: str,
+    landscape,
+    goal: Optional[str] = None,
+    session=None,
+    llm_call_fn=None,
+) -> Callable[[str, str], Outcome]:
     """Return a callable oracle for the given type string."""
     if oracle_type == "always_success":
         return lambda s, t: Outcome.SUCCESS
@@ -115,6 +189,18 @@ def _oracle_for(oracle_type: str, landscape) -> Callable[[str, str], Outcome]:
             f = h._F.get(e, 0.0)
             return Outcome.SUCCESS if u >= f else Outcome.FAILURE
         return _topo_oracle
+
+    if oracle_type == "goal_aware":
+        # goal is validated non-None in the route handler before reaching here
+        dist = _bfs_distances_to_goal(landscape, goal)  # type: ignore[arg-type]
+        def _goal_oracle(s: str, t: str) -> Outcome:
+            d_s = dist.get(s, float("inf"))
+            d_t = dist.get(t, float("inf"))
+            return Outcome.SUCCESS if d_t < d_s else Outcome.FAILURE
+        return _goal_oracle
+
+    if oracle_type == "llm":
+        return _llm_oracle(session, call_fn=llm_call_fn)
 
     # Fallback (should be caught by Pydantic pattern validation)
     return lambda s, t: Outcome.SUCCESS
@@ -207,8 +293,20 @@ async def upload_file(name: str, file: UploadFile = File(...)):
 def learn(name: str, req: LearnRequest):
     """Run N learning episodes using HistorizedQuantumWalk."""
     session = _load_or_404(name)
+
+    if req.oracle_type == "goal_aware" and not req.goal:
+        raise HTTPException(
+            status_code=422,
+            detail="oracle_type='goal_aware' requires a 'goal' state to be set.",
+        )
+
     start = _pick_start(session, req.start)
-    oracle = _oracle_for(req.oracle_type, session.landscape)
+    oracle = _oracle_for(
+        req.oracle_type,
+        session.landscape,
+        goal=req.goal,
+        session=session,
+    )
 
     report = session.learn(
         oracle_fn=oracle,
