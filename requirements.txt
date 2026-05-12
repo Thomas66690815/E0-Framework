@@ -17,3 +17,8 @@ scipy
 
 # Optional — chess engine:
 chess
+
+# Optional — REST API server:
+# fastapi
+# uvicorn
+# python-multipart

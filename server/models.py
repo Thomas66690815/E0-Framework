@@ -154,3 +154,95 @@ class ObservationNavigateRequest(BaseModel):
     node_id: Optional[str] = Field(
         None, description="Target node ID (required for focus and move)"
     )
+
+
+# ── Domain Studio (ARC-K, C307) ──────────────────────────
+
+class CreateDomainRequest(BaseModel):
+    """Create a new named domain workspace."""
+    name: str = Field(..., description="Unique domain name (slug)", min_length=1, max_length=64)
+    description: str = Field("", description="Human-readable description")
+    topic: str = Field("", description="Domain topic / subject area")
+    mode: str = Field("learn", description="Initial mode: learn / apply / hybrid",
+                      pattern="^(learn|apply|hybrid)$")
+
+
+class DomainStatusResponse(BaseModel):
+    name: str
+    description: str
+    topic: str
+    mode: str
+    episode_count: int
+    states: int
+    edges: int
+    total_inscriptions: float
+    cold_start: bool
+    created_at: str
+
+
+class DomainListItem(BaseModel):
+    name: str
+
+
+class LearnRequest(BaseModel):
+    """Trigger a supervised learning run on a domain."""
+    n_episodes: int = Field(10, ge=1, le=1000)
+    oracle_type: str = Field(
+        "always_success",
+        description="Pre-defined oracle: always_success | random | topology_aware",
+        pattern="^(always_success|random|topology_aware)$",
+    )
+    start: Optional[str] = Field(None, description="Start state (defaults to first state)")
+    goal: Optional[str] = Field(None, description="Goal state")
+    max_steps: int = Field(30, ge=1, le=500)
+
+
+class LearnResponse(BaseModel):
+    episodes: int
+    total_steps: int
+    success_count: int
+    failure_count: int
+    partial_count: int
+    edges_explored: int
+    goal_rate: float
+    warnings: List[str]
+
+
+class SetModeRequest(BaseModel):
+    mode: str = Field(..., pattern="^(learn|apply|hybrid)$")
+
+
+class RecommendRequest(BaseModel):
+    state: str = Field(..., description="Current state")
+    candidates: List[str] = Field(..., description="Candidate next states")
+
+
+class RecommendResponse(BaseModel):
+    recommended: Optional[str]
+    reason: str
+    quality: float
+    conviction_score: float
+    candidates: List[str]
+    cold_start: bool
+
+
+class RecordRequest(BaseModel):
+    source: str
+    target: str
+    outcome: str = Field(..., description="success | failure | partial")
+
+
+class RecordResponse(BaseModel):
+    ok: bool
+    message: str
+
+
+class InjectResponse(BaseModel):
+    edges_added: int
+    inscriptions: int
+    skipped: int
+    warnings: List[str]
+
+
+class ConvictionMapResponse(BaseModel):
+    edges: Dict[str, float]

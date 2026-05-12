@@ -17,6 +17,7 @@ from e0_controller.service import SessionManager
 
 from server.routes_sessions import router, set_manager
 from server.routes_tests import router as tests_router
+from server.routes_domains import router as domains_router
 from server.ws_handler import handle_websocket
 
 app = FastAPI(
@@ -32,6 +33,7 @@ set_manager(manager)
 
 app.include_router(router)
 app.include_router(tests_router)
+app.include_router(domains_router)
 
 
 # ── WebSocket endpoint ───────────────────────────────────
