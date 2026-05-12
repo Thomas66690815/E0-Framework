@@ -28,10 +28,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C308",
-    "latest_commit_hash": "7d3bfe8",
-    "latest_commit_msg": "C308: ARC-K \u2014 demo_domain_studio.py: Logistics end-to-end demo",
-    "test_count": 6675,
+    "latest_commit": "C309",
+    "latest_commit_hash": "3c79bf9",
+    "latest_commit_msg": "C309: goal_aware + llm oracle types for /domains/{name}/learn",
+    "test_count": 6689,
     "test_failures": 0,
     "ci_status": "pending",
     "module_count": "81 production + 12 benchmarks + 17 demos + 69 explorations + 133 test files",
@@ -297,8 +297,8 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "ARC-K+: Oracle Extension — C309 Goal-Oracle for /domains/{name}/learn",
-    "arc_status": "ARC-K COMPLETE. C305 FileSensor + C306 DomainSession+DomainStore + C307 REST API + C308 demo. Key insight: E0 can learn domain knowledge from historical CSV and apply it to live decisions via structured REST API. Two-phase: LEARN (HistorizedQuantumWalk N episodes) \u2192 APPLY (E0Controller recommend+record). Cold-start detection via h._tau. Online learning during APPLY. Topology auto-expansion on new candidates. Suite: 6675.",
+    "current_arc": "ARC-K+: Oracle Extension — C309 DONE. Next: C310 Domain Studio UI (IB-1) or IB-3 Self-Domain demo.",
+    "arc_status": "C309 complete: goal_aware oracle (reverse-BFS, requires goal field) + llm oracle (OpenAI call, pluggable call_fn, graceful FAILURE fallback). 74 tests in test_routes_domains.py. Suite: 6689. Next: C310 Domain Studio UI (IB-1) or IB-3 E₀ Self-Domain demo.",
     "arc_thesis": "E0 = Skeleton (structure/judgment/memory), E2 = Muscle (execution/domain). E2Port abstracts any execution target — factory, traffic, conversation, API. E0Turn wires E0Controller + E2Port into a domain-invariant persistent loop. Hypothesis: same E0 core serves arbitrary domains via E2Port swap.",
     "previous_arc_summary": "ARC-E: DifferenzPort (C288-C290): DifferenzPort ABC + E1Monitor + SessionState + ObservationPort. ARC-D (C285-C287): E1 impact historization live. Trajectory Arc (C277-C283): PathSignature + TrajectoryHistorization.",
     "key_result": "C295: RoutingE2Port — multi-modal E0 by composition. One E0Turn, many ports, no architecture change. ARC-H plan: docs/E0_ARC_H_PLAN_v1.md. MetaLandscape (C296-C298) = same E0Controller at PathSignature level = self-similarity proof.",
@@ -309,7 +309,7 @@
       "Quality score weights (P8 §12.1) are heuristic — could be meta-tunable but risks infinite regress",
       "GT-8: Partial Residual Trap — PARTIAL outcome discards unresolved structural remainder. No resolution yet."
     ],
-    "next_commit_id": "C309",
+    "next_commit_id": "C310",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
