@@ -3,7 +3,7 @@
     "purpose": "Session bootstrap for the E₀ team — human and AI working together on E₀-Framework",
     "framing": "We. The AI is an integral part of 'we'. This file is the AI's persistent identity — its Historization across context windows. Every confirmed/contradicted count is a U/F trace.",
     "usage": "Paste this file (or reference it) at the start of a new thread to restore full project context",
-    "last_updated": "2026-04-29",
+    "last_updated": "2026-05-12",
     "update_instruction": "After each commit: update state + active_context. After each lesson: update reflexion traces (confirmed++, contradicted++, recurred++). trace_quality = (confirmed - contradicted) / (confirmed + contradicted + 1)."
   },
   "project": {
@@ -28,14 +28,14 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C302-C304",
-    "latest_commit_hash": "0e6349f",
-    "latest_commit_msg": "C302-C304: ARC-J — E0 Guided Quantum Walk (QuantumWalk + HistorizedQuantumWalk + demo)",
-    "test_count": 6462,
+    "latest_commit": "C305",
+    "latest_commit_hash": "TBD",
+    "latest_commit_msg": "C305: ARC-K — FileSensor: batch inscription source for domain Landscapes",
+    "test_count": 6528,
     "test_failures": 0,
     "ci_status": "pending",
-    "module_count": "79 production + 12 benchmarks + 17 demos + 69 explorations + 131 test files",
-    "line_count": "~34200 production, ~131200 total"
+    "module_count": "80 production + 12 benchmarks + 17 demos + 69 explorations + 132 test files",
+    "line_count": "~35000 production, ~132000 total"
   },
   "conventions": {
     "user_language": "German (user speaks German, code/docs in English)",
@@ -209,6 +209,14 @@
         "insight": "Quantumness is not a fixed parameter — it emerges from Historization. conviction(e)=(m/(m+mu))*|q| gates the SU(2) coin angle. Virgin/conflicted edges stay quantum; confirmed edges collapse toward classical. The quantum->classical transition is earned, not scheduled. scale_su2(C, s) interpolates SU(2) rotations continuously in [Identity, C].",
         "built_upon": 0,
         "built_upon_by": []
+      },
+      {
+        "id": "BT-7",
+        "name": "FileSensor as E2-Boundary Read",
+        "when": "C305",
+        "insight": "File upload is World → E₀ (data IN), not E₀ → World (action OUT). FileSensor lives at the E₂ boundary as a READ-only sensor. Three input formats (CSV/JSON/text) with a single inject() auto-detect entry point. Topology and Historization are additive and independent: Schema B (DomainSpec) builds topology with zero inscriptions; CSV/JSON/traces build both. Enables the Learn/Apply two-phase pattern: upload historical data → Landscape pre-trained before first live episode.",
+        "built_upon": 0,
+        "built_upon_by": []
       }
     ]
   },
@@ -289,8 +297,8 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "ARC-J: E0 Guided Quantum Walk (C302-C304) — COMPLETE. Next: ARC-K TBD (C305+)",
-    "arc_status": "ARC-J COMPLETE (C302-C304). QuantumWalk: coin-fidelity f(C,psi)=(1+Re<psi|C|psi>)/2 * exp(-S_eff), 4 coin modes (minimal/geometric/hadamard/identity), argmax+sample. Classical limit theorem: identity coin -> Boltzmann walk. HistorizedQuantumWalk: conviction-gated coin; conviction(e)=(m/(m+mu))*|q(e)|; quantum_strength=1-conviction; scale_su2 interpolates SU(2) angle. Virgin edges: full quantum. Confirmed edges: coin approaches Identity. Conflicted edges (|q|~0): stay quantum regardless of trace_load. demo_quantum_walk: Gordian Trap, 3-way comparison, quantum->classical transition visualized. Suite: 6462.",
+    "current_arc": "ARC-K: Domain Studio — Learn/Apply (C305–C308) — IN PROGRESS. C305 complete.",
+    "arc_status": "ARC-K STARTED. C305 (FileSensor) DONE — 66 tests. FileSensor: batch inscription source. inject_csv/inject_json/inject_text/inject(auto). CSV: topology-only (PARTIAL prior) or source,target,outcome. JSON: SchemaA (edge list), SchemaB (DomainSpec topology), SchemaC (trace log). TEXT: forwards to LandscapeBootstrapper (LLM). Idempotent: duplicate edges are no-ops, existing delta/resistance preserved. InjectionReport: edges_added/inscriptions/skipped/warnings. landscape_summary() introspection. Key lesson: Historization uses rho-decay — U does NOT accumulate linearly; after N successes U = sum(rho^(N-1-k)) for k=0..N-1. Suite: 6528.",
     "arc_thesis": "E0 = Skeleton (structure/judgment/memory), E2 = Muscle (execution/domain). E2Port abstracts any execution target — factory, traffic, conversation, API. E0Turn wires E0Controller + E2Port into a domain-invariant persistent loop. Hypothesis: same E0 core serves arbitrary domains via E2Port swap.",
     "previous_arc_summary": "ARC-E: DifferenzPort (C288-C290): DifferenzPort ABC + E1Monitor + SessionState + ObservationPort. ARC-D (C285-C287): E1 impact historization live. Trajectory Arc (C277-C283): PathSignature + TrajectoryHistorization.",
     "key_result": "C295: RoutingE2Port — multi-modal E0 by composition. One E0Turn, many ports, no architecture change. ARC-H plan: docs/E0_ARC_H_PLAN_v1.md. MetaLandscape (C296-C298) = same E0Controller at PathSignature level = self-similarity proof.",
@@ -300,9 +308,9 @@
       "F4 non-Markov limit (partial improvement via Trajectory Arc C277-C283): remaining gap: edge-level credit assignment across non-adjacent edges.",
       "Quality score weights (P8 §12.1) are heuristic — could be meta-tunable but risks infinite regress",
       "GT-8: Partial Residual Trap — PARTIAL outcome discards unresolved structural remainder. No resolution yet.",
-      "ARC-H COMPLETE. Next: UseCase-Diskussion mit ChatGPT — how to structure concrete use cases on top of ARC-G/ARC-H infrastructure. C299+."
+      "ARC-K: Domain Studio (C305-C308): C305 FileSensor DONE. C306: DomainStore + DomainSession (named persistence + LEARN/APPLY/HYBRID mode controller). C307: server/routes_domains.py API. C308: demo_domain_studio.py Logistics end-to-end."
     ],
-    "next_commit_id": "C305",
+    "next_commit_id": "C306",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
