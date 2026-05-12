@@ -28,9 +28,9 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C307",
-    "latest_commit_hash": "3d4094d",
-    "latest_commit_msg": "C307: ARC-K \u2014 Domain Studio REST API (routes_domains.py)",
+    "latest_commit": "C308",
+    "latest_commit_hash": "7d3bfe8",
+    "latest_commit_msg": "C308: ARC-K \u2014 demo_domain_studio.py: Logistics end-to-end demo",
     "test_count": 6675,
     "test_failures": 0,
     "ci_status": "pending",
@@ -298,7 +298,7 @@
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
     "current_arc": "ARC-K: Domain Studio — Learn/Apply (C305–C308) — IN PROGRESS. C305 complete.",
-    "arc_status": "ARC-K IN PROGRESS. C305 FileSensor DONE. C306 DomainSession+DomainStore DONE. C307 (REST API routes_domains.py) DONE — 60 tests. Endpoints: POST /domains, GET /domains, GET /domains/{name}, POST /domains/{name}/upload (multipart), POST /domains/{name}/learn (oracle_type: always_success|random|topology_aware), PUT /domains/{name}/mode, POST /domains/{name}/recommend, POST /domains/{name}/record, DELETE /domains/{name}, GET /domains/{name}/conviction. DomainStore injected via set_store() for tests. Requires python-multipart for UploadFile. Suite: 6675. Next: C308 demo_domain_studio.py.",
+    "arc_status": "ARC-K COMPLETE. C305 FileSensor + C306 DomainSession+DomainStore + C307 REST API + C308 demo. Key insight: E0 can learn domain knowledge from historical CSV and apply it to live decisions via structured REST API. Two-phase: LEARN (HistorizedQuantumWalk N episodes) \u2192 APPLY (E0Controller recommend+record). Cold-start detection via h._tau. Online learning during APPLY. Topology auto-expansion on new candidates. Suite: 6675.",
     "arc_thesis": "E0 = Skeleton (structure/judgment/memory), E2 = Muscle (execution/domain). E2Port abstracts any execution target — factory, traffic, conversation, API. E0Turn wires E0Controller + E2Port into a domain-invariant persistent loop. Hypothesis: same E0 core serves arbitrary domains via E2Port swap.",
     "previous_arc_summary": "ARC-E: DifferenzPort (C288-C290): DifferenzPort ABC + E1Monitor + SessionState + ObservationPort. ARC-D (C285-C287): E1 impact historization live. Trajectory Arc (C277-C283): PathSignature + TrajectoryHistorization.",
     "key_result": "C295: RoutingE2Port — multi-modal E0 by composition. One E0Turn, many ports, no architecture change. ARC-H plan: docs/E0_ARC_H_PLAN_v1.md. MetaLandscape (C296-C298) = same E0Controller at PathSignature level = self-similarity proof.",
@@ -310,7 +310,7 @@
       "GT-8: Partial Residual Trap — PARTIAL outcome discards unresolved structural remainder. No resolution yet.",
       "ARC-K: Domain Studio (C305-C308): C305 FileSensor DONE. C306 DomainSession+DomainStore DONE. C307 REST API DONE. C308: demo_domain_studio.py Logistics end-to-end (inject CSV \u2192 learn 50 episodes \u2192 APPLY \u2192 recommend \u2192 record)."
     ],
-    "next_commit_id": "C308",
+    "next_commit_id": "C309",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
