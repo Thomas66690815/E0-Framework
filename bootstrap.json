@@ -29,7 +29,7 @@
   },
   "state": {
     "latest_commit": "C306",
-    "latest_commit_hash": "TBD",
+    "latest_commit_hash": "ae1ebca",
     "latest_commit_msg": "C306: ARC-K — DomainSession + DomainStore: named, persistent domain workspaces",
     "test_count": 6615,
     "test_failures": 0,
