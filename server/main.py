@@ -11,7 +11,11 @@ C84.
 
 from __future__ import annotations
 
+import pathlib
+
 from fastapi import FastAPI, WebSocket
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
 from e0_controller.service import SessionManager
 
@@ -34,6 +38,16 @@ set_manager(manager)
 app.include_router(router)
 app.include_router(tests_router)
 app.include_router(domains_router)
+
+# ── Static UI (Domain Studio) ────────────────────────────
+
+_static_dir = pathlib.Path(__file__).parent / "static"
+app.mount("/studio", StaticFiles(directory=str(_static_dir), html=True), name="studio")
+
+
+@app.get("/", include_in_schema=False)
+def root_redirect():
+    return RedirectResponse(url="/studio/")
 
 
 # ── WebSocket endpoint ───────────────────────────────────

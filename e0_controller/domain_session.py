@@ -231,6 +231,7 @@ class DomainSession:
         max_steps: int = 50,
         coin_mode: str = "geometric",
         mu: float = 5.0,
+        n_walkers: int = 1,
     ) -> LearnReport:
         """
         Run N episodes of HistorizedQuantumWalk on the current Landscape.
@@ -241,6 +242,10 @@ class DomainSession:
         start: initial state for each episode. If None, uses the first state
                (alphabetically) in the landscape.
         goal:  terminal state. If None, each episode runs exactly max_steps.
+        n_walkers: number of concurrent walkers. Each walker runs n_episodes
+               episodes on the shared Landscape. Total episodes = n_episodes *
+               n_walkers. Simulates N simultaneous process instances (e.g.,
+               10 parallel orders) all contributing to shared Historization.
 
         Returns LearnReport with episode counts and edge coverage.
         """
@@ -267,8 +272,9 @@ class DomainSession:
             start_state = states[0]
 
         edges_seen: set = set()
+        total_episodes = n_episodes * max(1, n_walkers)
 
-        for _ in range(n_episodes):
+        for _ in range(total_episodes):
             walk = HistorizedQuantumWalk(
                 landscape=self.landscape,
                 initial_state=start_state,

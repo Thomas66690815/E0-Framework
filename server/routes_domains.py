@@ -7,6 +7,9 @@ Endpoints
 POST   /domains                       Create domain workspace
 GET    /domains                       List all domains
 GET    /domains/{name}                Status
+POST   /domains                       Create domain workspace
+GET    /domains                       List all domains
+GET    /domains/{name}                Status
 POST   /domains/{name}/upload         File upload → inject (multipart)
 POST   /domains/{name}/learn          Run N learning episodes
 PUT    /domains/{name}/mode           Switch mode (learn/apply/hybrid)
@@ -14,28 +17,35 @@ POST   /domains/{name}/recommend      Recommend next state
 POST   /domains/{name}/record         Manual inscription
 DELETE /domains/{name}                Delete domain
 GET    /domains/{name}/conviction     Conviction map
+GET    /domains/{name}/export         Export trained landscape as JSON
+POST   /domains/import                Import a previously exported landscape
 
 Oracle types (for /learn)
 --------------------------
-always_success   — every step is SUCCESS (useful for topology exploration)
-random           — random SUCCESS / FAILURE (50 / 50)
-topology_aware   — SUCCESS on edges that exist with U > F, else FAILURE
-goal_aware       — SUCCESS if the step strictly decreases BFS distance to goal
-                   (requires goal to be set in the request)
-llm              — asks the OpenAI API to judge each transition;
-                   requires OPENAI_API_KEY in .env or environment;
-                   gracefully falls back to FAILURE on API/parse errors
+always_success    — every step is SUCCESS (useful for topology exploration)
+random            — random SUCCESS / FAILURE (50 / 50)
+topology_aware    — SUCCESS on edges that exist with U > F, else FAILURE
+goal_aware        — SUCCESS if the step strictly decreases BFS distance to goal
+                    (requires goal to be set in the request)
+llm               — asks the OpenAI API to judge each transition;
+                    requires OPENAI_API_KEY in .env or environment;
+                    gracefully falls back to FAILURE on API/parse errors
+resource_aware    — SUCCESS if required resources are available for this
+                    transition (resource_rules dict in LearnRequest);
+                    unavailable resource → FAILURE; unknown transition → SUCCESS
 
-C307.
+C307, C310.
 """
 
 from __future__ import annotations
 
+import json as _json
 import random as _random
 from collections import deque
-from typing import Callable, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi.responses import Response
 
 from e0_controller.domain_session import DomainMode, DomainSession, DomainStore
 from e0_controller.primitives import Edge, Outcome
@@ -45,6 +55,7 @@ from server.models import (
     CreateDomainRequest,
     DomainListItem,
     DomainStatusResponse,
+    ImportDomainRequest,
     InjectResponse,
     LearnRequest,
     LearnResponse,
@@ -171,6 +182,8 @@ def _oracle_for(
     goal: Optional[str] = None,
     session=None,
     llm_call_fn=None,
+    resource_rules: Optional[Dict[str, str]] = None,
+    resource_state: Optional[Dict[str, bool]] = None,
 ) -> Callable[[str, str], Outcome]:
     """Return a callable oracle for the given type string."""
     if oracle_type == "always_success":
@@ -201,6 +214,19 @@ def _oracle_for(
 
     if oracle_type == "llm":
         return _llm_oracle(session, call_fn=llm_call_fn)
+
+    if oracle_type == "resource_aware":
+        rules: Dict[str, str] = (resource_rules or {})
+        available: Dict[str, bool] = (resource_state or {})
+
+        def _resource_oracle(s: str, t: str) -> Outcome:
+            edge_key = f"{s},{t}"
+            required = rules.get(edge_key) or rules.get(t)
+            if required is None:
+                return Outcome.SUCCESS
+            return Outcome.SUCCESS if available.get(required, True) else Outcome.FAILURE
+
+        return _resource_oracle
 
     # Fallback (should be caught by Pydantic pattern validation)
     return lambda s, t: Outcome.SUCCESS
@@ -306,6 +332,8 @@ def learn(name: str, req: LearnRequest):
         session.landscape,
         goal=req.goal,
         session=session,
+        resource_rules=req.resource_rules,
+        resource_state=req.resource_state,
     )
 
     report = session.learn(
@@ -314,6 +342,7 @@ def learn(name: str, req: LearnRequest):
         start=start,
         goal=req.goal,
         max_steps=req.max_steps,
+        n_walkers=req.n_walkers,
     )
     _save(session)
 
@@ -374,3 +403,67 @@ def conviction_map(name: str):
     """Return conviction scores for all edges in the domain."""
     session = _load_or_404(name)
     return ConvictionMapResponse(edges=session.conviction_map())
+
+
+@router.get("/{name}/export")
+def export_domain(name: str):
+    """Export a trained domain landscape as a downloadable JSON file.
+
+    The returned file can be imported on another server via POST /domains/import.
+    Includes full Historization (U/F traces) — the trained knowledge is portable.
+    """
+    store = _get_store()
+    # Ensure the latest state is persisted
+    session = _load_or_404(name)
+    path = store.save(session)
+
+    content = path.read_text(encoding="utf-8")
+    return Response(
+        content=content,
+        media_type="application/json",
+        headers={
+            "Content-Disposition": f'attachment; filename="{name}-landscape.json"',
+        },
+    )
+
+
+@router.post("/import", status_code=201, response_model=DomainStatusResponse)
+def import_domain(req: "ImportDomainRequest"):
+    """Import a previously exported domain landscape.
+
+    Accepts the JSON produced by GET /domains/{name}/export.
+    The domain name is taken from the file metadata.
+    Returns 409 if a domain with that name already exists.
+    """
+    store = _get_store()
+
+    # Validate schema
+    if req.data.get("_schema") != "domain_store_v1":
+        raise HTTPException(
+            status_code=422,
+            detail="Invalid export file: missing or unknown _schema. "
+                   "Expected 'domain_store_v1'.",
+        )
+
+    meta = req.data.get("meta", {})
+    name = meta.get("name", "")
+    if not name:
+        raise HTTPException(status_code=422, detail="Export file has no domain name in meta.")
+
+    if store.exists(name):
+        raise HTTPException(
+            status_code=409,
+            detail=f"Domain {name!r} already exists. Delete it first to import.",
+        )
+
+    # Write the raw JSON directly — DomainStore format is already correct
+    import json as _json2
+    store._dir.mkdir(parents=True, exist_ok=True)
+    path = store._path(name)
+    path.write_text(_json2.dumps(req.data, indent=2), encoding="utf-8")
+
+    session = store.load(name)
+    if session is None:
+        raise HTTPException(status_code=500, detail="Import succeeded but domain could not be loaded back.")
+
+    return _status_response(session)

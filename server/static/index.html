@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E₀ Domain Studio</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f1117;
+      --sidebar-bg: #161b27;
+      --surface: #1e2535;
+      --surface2: #252d3d;
+      --border: #2e3a50;
+      --accent: #5b8dee;
+      --accent2: #7c4dff;
+      --success: #3ecf8e;
+      --failure: #f87171;
+      --warn: #f59e0b;
+      --text: #e2e8f0;
+      --muted: #8892a4;
+      --tab-active: #5b8dee;
+      --radius: 8px;
+    }
+    html, body { height: 100%; font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+    /* ── Layout ── */
+    .app { display: flex; height: 100vh; }
+    .sidebar { width: 260px; min-width: 220px; background: var(--sidebar-bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    /* ── Header ── */
+    .header { background: var(--sidebar-bg); border-bottom: 1px solid var(--border); padding: 14px 20px; display: flex; align-items: center; gap: 10px; }
+    .logo { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; color: var(--accent); }
+    .logo span { color: var(--muted); font-weight: 400; font-size: 13px; margin-left: 6px; }
+    /* ── Sidebar ── */
+    .sidebar-header { padding: 16px 14px 10px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+    .domain-selector { padding: 0 12px 12px; }
+    .domain-selector select { width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: var(--radius); padding: 8px 10px; font-size: 13px; cursor: pointer; }
+    .domain-selector select:focus { outline: none; border-color: var(--accent); }
+    .status-card { margin: 0 12px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; }
+    .status-card .sc-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 10px; }
+    .sc-row { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; font-size: 12px; }
+    .sc-row .sc-label { color: var(--muted); }
+    .sc-row .sc-val { font-weight: 600; }
+    .badge { display: inline-block; padding: 1px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+    .badge-learn { background: #1e3a5f; color: var(--accent); }
+    .badge-apply { background: #1a3d2e; color: var(--success); }
+    .badge-hybrid { background: #3d2e1a; color: var(--warn); }
+    .badge-cold { background: #3d1a1a; color: var(--failure); }
+    .badge-warm { background: #1a3d2e; color: var(--success); }
+    .sidebar-actions { padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; margin-top: auto; border-top: 1px solid var(--border); }
+    .sidebar-actions button { width: 100%; padding: 7px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; font-size: 12px; transition: background 0.15s; }
+    .sidebar-actions button:hover { background: var(--surface2); }
+    .sidebar-actions .btn-danger { border-color: #4d1a1a; color: var(--failure); }
+    .sidebar-actions .btn-danger:hover { background: #2a1111; }
+    /* ── Tabs ── */
+    .tabs { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 16px; gap: 2px; }
+    .tab-btn { padding: 12px 16px; font-size: 13px; font-weight: 500; color: var(--muted); background: transparent; border: none; border-bottom: 2px solid transparent; cursor: pointer; transition: color 0.15s, border-color 0.15s; white-space: nowrap; }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+    /* ── Panels ── */
+    .panels { flex: 1; overflow-y: auto; padding: 24px; }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    /* ── Cards ── */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+    .card-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .card-sub { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+    /* ── Forms ── */
+    .form-row { margin-bottom: 14px; }
+    .form-row label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; font-weight: 500; }
+    .form-row input, .form-row select, .form-row textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: var(--radius); padding: 9px 12px; font-size: 13px; font-family: inherit; }
+    .form-row input:focus, .form-row select:focus, .form-row textarea:focus { outline: none; border-color: var(--accent); }
+    .form-row textarea { resize: vertical; min-height: 120px; font-family: 'Consolas', 'Courier New', monospace; font-size: 12px; line-height: 1.5; }
+    .form-row .hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .form-row input[type="range"] { padding: 4px 0; }
+    .row-group { display: flex; gap: 12px; }
+    .row-group .form-row { flex: 1; }
+    /* ── Buttons ── */
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: var(--radius); border: none; cursor: pointer; font-size: 13px; font-weight: 600; transition: opacity 0.15s, transform 0.08s; }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover:not(:disabled) { opacity: 0.88; }
+    .btn-success { background: var(--success); color: #0f1117; }
+    .btn-success:hover:not(:disabled) { opacity: 0.85; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-outline:hover:not(:disabled) { background: var(--surface2); }
+    .btn-sm { padding: 5px 12px; font-size: 12px; }
+    /* ── Result box ── */
+    .result-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-top: 14px; font-size: 12px; line-height: 1.6; }
+    .result-box pre { font-family: 'Consolas', monospace; white-space: pre-wrap; word-break: break-all; }
+    .result-ok { border-left: 3px solid var(--success); }
+    .result-err { border-left: 3px solid var(--failure); }
+    .result-info { border-left: 3px solid var(--accent); }
+    /* ── Conviction map ── */
+    .conv-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .conv-table th { text-align: left; padding: 8px 10px; color: var(--muted); font-weight: 500; border-bottom: 1px solid var(--border); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .conv-table td { padding: 6px 10px; border-bottom: 1px solid var(--border); }
+    .conv-table tr:hover td { background: var(--surface2); }
+    .conv-bar-wrap { width: 100px; height: 8px; background: #1a2035; border-radius: 4px; overflow: hidden; display: inline-block; vertical-align: middle; margin-right: 8px; }
+    .conv-bar { height: 100%; border-radius: 4px; transition: width 0.3s; }
+    .conv-val { font-weight: 600; font-variant-numeric: tabular-nums; }
+    /* ── Graph SVG ── */
+    #graph-svg { width: 100%; background: var(--surface2); border-radius: var(--radius); border: 1px solid var(--border); cursor: grab; }
+    #graph-svg:active { cursor: grabbing; }
+    .graph-node { cursor: pointer; }
+    .graph-node circle { transition: r 0.2s; }
+    .graph-node:hover circle { r: 22; }
+    .graph-edge { pointer-events: none; }
+    /* ── Apply panel ── */
+    .recommend-result { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin: 14px 0; }
+    .recommend-result .rec-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+    .recommend-result .rec-state { font-size: 22px; font-weight: 700; color: var(--success); margin-bottom: 8px; }
+    .recommend-result .rec-detail { font-size: 12px; color: var(--muted); }
+    .candidate-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .chip { padding: 5px 12px; border-radius: 20px; background: var(--surface2); border: 1px solid var(--border); font-size: 12px; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+    .chip.selected { border-color: var(--accent); background: #1e2d4d; color: var(--accent); }
+    /* ── Misc ── */
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.2); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .mode-selector { display: flex; gap: 8px; }
+    .mode-btn { flex: 1; padding: 8px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface2); color: var(--muted); cursor: pointer; font-size: 12px; font-weight: 600; text-align: center; transition: all 0.15s; }
+    .mode-btn.active { border-color: var(--accent); color: var(--accent); background: #1e2d4d; }
+    .alert { padding: 10px 14px; border-radius: var(--radius); font-size: 12px; margin-bottom: 12px; }
+    .alert-info { background: #1a2a40; border: 1px solid #2a4060; color: #8ab4e8; }
+    .alert-warn { background: #3d2e1a; border: 1px solid #5a4020; color: var(--warn); }
+    .steps-indicator { display: flex; align-items: center; gap: 0; margin-bottom: 20px; }
+    .step-dot { width: 28px; height: 28px; border-radius: 50%; background: var(--surface2); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--muted); position: relative; z-index: 1; transition: all 0.2s; }
+    .step-dot.done { background: var(--success); border-color: var(--success); color: #0f1117; }
+    .step-dot.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .step-line { flex: 1; height: 2px; background: var(--border); transition: background 0.2s; }
+    .step-line.done { background: var(--success); }
+    .nodes-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .node-chip { padding: 3px 10px; border-radius: 20px; background: var(--surface2); border: 1px solid var(--border); font-size: 11px; font-family: 'Consolas', monospace; }
+    .legend { display: flex; gap: 16px; font-size: 11px; color: var(--muted); margin-bottom: 8px; align-items: center; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sidebar-header">Active Domain</div>
+    <div class="domain-selector">
+      <select id="domain-select" onchange="onDomainSelect()">
+        <option value="">— select domain —</option>
+      </select>
+    </div>
+    <div class="status-card" id="status-card" style="display:none">
+      <div class="sc-title">Status</div>
+      <div class="sc-row"><span class="sc-label">Mode</span><span class="sc-val" id="sc-mode">—</span></div>
+      <div class="sc-row"><span class="sc-label">Episodes</span><span class="sc-val" id="sc-episodes">—</span></div>
+      <div class="sc-row"><span class="sc-label">States</span><span class="sc-val" id="sc-states">—</span></div>
+      <div class="sc-row"><span class="sc-label">Edges</span><span class="sc-val" id="sc-edges">—</span></div>
+      <div class="sc-row"><span class="sc-label">Cold Start</span><span class="sc-val" id="sc-cold">—</span></div>
+    </div>
+    <div id="no-domain-msg" style="padding:12px;color:var(--muted);font-size:12px;line-height:1.5;">
+      Create a domain in step 1 to begin.
+    </div>
+    <div class="sidebar-actions">
+      <button onclick="refreshStatus()" class="btn-outline">↻ Refresh Status</button>
+      <button id="btn-export" onclick="exportDomain()" style="display:none;border-color:#1a3d5c;color:var(--accent)">↓ Export Landscape</button>
+      <button id="btn-delete" onclick="deleteDomain()" class="btn-danger" style="display:none">✕ Delete Domain</button>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <div class="main">
+    <div class="header">
+      <div class="logo">E₀<span>Domain Studio</span></div>
+      <div style="margin-left:auto;font-size:12px;color:var(--muted)">ARC-K · Universal Process Navigator</div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="showTab('create')">① Create</button>
+      <button class="tab-btn" onclick="showTab('topology')">② Topology</button>
+      <button class="tab-btn" onclick="showTab('learn')">③ Learn</button>
+      <button class="tab-btn" onclick="showTab('conviction')">④ Conviction</button>
+      <button class="tab-btn" onclick="showTab('apply')">⑤ Apply</button>
+    </div>
+
+    <div class="panels">
+
+      <!-- ════ STEP 1: CREATE ════ -->
+      <div class="panel active" id="panel-create">
+        <div class="card">
+          <div class="card-title">① New Domain</div>
+          <div class="card-sub">Define the process domain. Name it anything — E₀ is domain-agnostic.</div>
+          <div class="form-row">
+            <label>Domain Name <small style="color:var(--muted)">(slug, no spaces)</small></label>
+            <input id="inp-name" type="text" placeholder="e.g. logistics, onboarding, clinical-trial" />
+          </div>
+          <div class="row-group">
+            <div class="form-row">
+              <label>Topic <small style="color:var(--muted)">(short label)</small></label>
+              <input id="inp-topic" type="text" placeholder="e.g. Order Fulfillment" />
+            </div>
+            <div class="form-row">
+              <label>Initial Mode</label>
+              <select id="inp-mode">
+                <option value="learn">learn</option>
+                <option value="apply">apply</option>
+                <option value="hybrid">hybrid</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <label>Description <small style="color:var(--muted)">(optional)</small></label>
+            <input id="inp-desc" type="text" placeholder="e.g. B2B order processing from receipt to delivery" />
+          </div>
+          <button class="btn btn-primary" onclick="createDomain()">Create Domain</button>
+          <div id="result-create"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Existing Domains</div>
+          <div class="card-sub">All persisted domain workspaces on this server.</div>
+          <div id="domain-list-table" style="color:var(--muted);font-size:13px;">Loading…</div>
+          <br>
+          <button class="btn btn-outline btn-sm" onclick="loadDomainList()">↻ Refresh</button>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Import Landscape</div>
+          <div class="card-sub">Restore a previously exported domain (including trained Historization). The domain name is read from the file.</div>
+          <div class="form-row">
+            <label>Export JSON File</label>
+            <input type="file" id="inp-import-file" accept=".json" style="padding:6px" />
+          </div>
+          <button class="btn btn-outline" onclick="importDomain()">Import Domain</button>
+          <div id="result-import"></div>
+        </div>
+      </div>
+
+      <!-- ════ STEP 2: TOPOLOGY ════ -->
+      <div class="panel" id="panel-topology">
+        <div class="alert alert-info">
+          <strong>How it works:</strong> Define all process steps (states) and transitions (edges) as a CSV.
+          Each row: <code>SOURCE, TARGET[, outcome_hint]</code>.
+          E₀ is blind to the names — it only learns from the structure and oracle feedback.
+        </div>
+        <div class="card">
+          <div class="card-title">② Process Topology</div>
+          <div class="card-sub">Paste your CSV or use the logistics demo below. Then upload to inject into E₀'s landscape.</div>
+          <div class="form-row">
+            <label>Topology CSV</label>
+            <textarea id="inp-csv" rows="12" spellcheck="false">ORDER_RECEIVED,PICKING
+ORDER_RECEIVED,BACKORDER
+PICKING,QUALITY_CHECK
+QUALITY_CHECK,SHIPPED
+QUALITY_CHECK,REWORK
+REWORK,PICKING
+BACKORDER,PICKING
+SHIPPED,DELIVERED</textarea>
+            <div class="hint">
+              One edge per line: <code>FROM, TO</code> &nbsp;·&nbsp;
+              Optional third column: <code>success</code> / <code>failure</code> / <code>partial</code>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-primary" onclick="uploadTopology()" id="btn-upload">Upload Topology</button>
+            <button class="btn btn-outline btn-sm" onclick="loadDemo('logistics')">▶ Demo: Logistics</button>
+            <button class="btn btn-outline btn-sm" onclick="loadDemo('onboarding')">▶ Demo: Onboarding</button>
+            <button class="btn btn-outline btn-sm" onclick="loadDemo('clinical')">▶ Demo: Clinical</button>
+          </div>
+          <div id="result-topology"></div>
+        </div>
+        <div class="card" id="card-nodes" style="display:none">
+          <div class="card-title">Loaded States</div>
+          <div id="nodes-list" class="nodes-list"></div>
+        </div>
+      </div>
+
+      <!-- ════ STEP 3: LEARN ════ -->
+      <div class="panel" id="panel-learn">
+        <div class="alert alert-info">
+          E₀ runs <strong>HistorizedQuantumWalk</strong> episodes. Each episode is a walk from start
+          to goal (or max steps). The oracle scores each transition. Historization accumulates U/F traces.
+        </div>
+        <div class="card">
+          <div class="card-title">③ Learning Configuration</div>
+          <div class="card-sub">Configure and run a learning session. You can run multiple batches — traces accumulate.</div>
+
+          <div class="row-group">
+            <div class="form-row">
+              <label>Oracle Type</label>
+              <select id="inp-oracle" onchange="onOracleChange()">
+                <option value="goal_aware">goal_aware (recommended)</option>
+                <option value="always_success">always_success (explore topology)</option>
+                <option value="random">random (stress test)</option>
+                <option value="topology_aware">topology_aware (self-referential)</option>
+                <option value="llm">llm (OpenAI)</option>
+                <option value="resource_aware">resource_aware (resources)</option>
+              </select>
+              <div class="hint" id="oracle-hint">Scores each step by BFS-distance to goal. Requires goal state.</div>
+            </div>
+            <div class="form-row" id="goal-row">
+              <label>Goal State</label>
+              <input id="inp-goal" type="text" placeholder="e.g. DELIVERED" />
+              <div class="hint">The terminal state E₀ should navigate towards.</div>
+            </div>
+          </div>
+          <div class="row-group">
+            <div class="form-row">
+              <label>Start State <small style="color:var(--muted)">(optional)</small></label>
+              <input id="inp-start" type="text" placeholder="e.g. ORDER_RECEIVED (leave empty for auto)" />
+            </div>
+            <div class="form-row">
+              <label>Episodes: <span id="ep-label">50</span></label>
+              <input id="inp-episodes" type="range" min="5" max="500" value="50"
+                     oninput="document.getElementById('ep-label').textContent=this.value" />
+            </div>
+            <div class="form-row">
+              <label>Max Steps / Episode</label>
+              <input id="inp-maxsteps" type="number" value="30" min="5" max="500" />
+            </div>
+          </div>
+          <div class="row-group">
+            <div class="form-row">
+              <label>Walkers: <span id="walker-label">1</span> <small style="color:var(--muted)">(parallel instances)</small></label>
+              <input id="inp-walkers" type="range" min="1" max="50" value="1"
+                     oninput="document.getElementById('walker-label').textContent=this.value" />
+              <div class="hint">Total episodes = Episodes × Walkers. Simulates N simultaneous process instances sharing one Landscape.</div>
+            </div>
+          </div>
+          <div id="resource-config" style="display:none">
+            <div class="form-row">
+              <label>Resource Rules <small style="color:var(--muted)">(JSON)</small></label>
+              <textarea id="inp-resource-rules" rows="4" spellcheck="false" placeholder='{"PICKING,QUALITY_CHECK": "forklift", "QUALITY_CHECK": "inspector"}'></textarea>
+              <div class="hint">Maps edge key <code>FROM,TO</code> or target state to a resource name.</div>
+            </div>
+            <div class="form-row">
+              <label>Resource State <small style="color:var(--muted)">(JSON)</small></label>
+              <textarea id="inp-resource-state" rows="3" spellcheck="false" placeholder='{"forklift": true, "inspector": false}'></textarea>
+              <div class="hint">Current availability of each resource (<code>true</code> = available).</div>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" onclick="runLearn()" id="btn-learn">Start Learning</button>
+          <div id="result-learn"></div>
+        </div>
+
+        <div class="card" id="card-learn-history" style="display:none">
+          <div class="card-title">Learning History</div>
+          <div id="learn-history-list"></div>
+        </div>
+      </div>
+
+      <!-- ════ STEP 4: CONVICTION ════ -->
+      <div class="panel" id="panel-conviction">
+        <div class="card">
+          <div class="card-title">④ Conviction Map</div>
+          <div class="card-sub">
+            Conviction = (trace_load / (trace_load + μ)) × |trace_quality|.
+            High conviction (→ 1.0) means E₀ has reliable experience on this edge.
+          </div>
+          <div style="display:flex;gap:10px;margin-bottom:16px">
+            <button class="btn btn-primary" onclick="loadConviction()">↻ Load Conviction Map</button>
+          </div>
+
+          <div class="legend">
+            <span><span class="legend-dot" style="background:var(--success)"></span> High conviction</span>
+            <span><span class="legend-dot" style="background:var(--warn)"></span> Medium</span>
+            <span><span class="legend-dot" style="background:var(--failure)"></span> Low / unexplored</span>
+          </div>
+
+          <table class="conv-table" id="conv-table">
+            <thead><tr><th>Edge</th><th>Conviction</th><th>Score</th></tr></thead>
+            <tbody id="conv-tbody"><tr><td colspan="3" style="color:var(--muted);padding:12px">Click "Load Conviction Map" to refresh.</td></tr></tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Graph View</div>
+          <div class="card-sub">Nodes = states, edge color = conviction (green → red). Drag to explore.</div>
+          <svg id="graph-svg" height="420" viewBox="0 0 800 420">
+            <defs>
+              <marker id="arrow" markerWidth="8" markerHeight="8" refX="16" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="#8892a4"/>
+              </marker>
+              <marker id="arrow-hi" markerWidth="8" markerHeight="8" refX="16" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="#3ecf8e"/>
+              </marker>
+              <marker id="arrow-lo" markerWidth="8" markerHeight="8" refX="16" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="#f87171"/>
+              </marker>
+            </defs>
+            <g id="graph-edges"></g>
+            <g id="graph-nodes"></g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- ════ STEP 5: APPLY ════ -->
+      <div class="panel" id="panel-apply">
+        <div class="alert alert-warn">
+          Switch domain to <strong>apply</strong> or <strong>hybrid</strong> mode before using recommendations.
+          In hybrid mode, E₀ continues learning from real outcomes.
+        </div>
+
+        <div class="card">
+          <div class="card-title">Domain Mode</div>
+          <div class="mode-selector" id="mode-selector">
+            <div class="mode-btn" data-m="learn" onclick="setMode('learn')">learn</div>
+            <div class="mode-btn" data-m="apply" onclick="setMode('apply')">apply</div>
+            <div class="mode-btn" data-m="hybrid" onclick="setMode('hybrid')">hybrid</div>
+          </div>
+          <div id="result-mode" style="margin-top:10px"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">⑤ Recommend Next Step</div>
+          <div class="card-sub">Enter the current state and the possible next steps. E₀ recommends the best one.</div>
+          <div class="form-row">
+            <label>Current State</label>
+            <input id="inp-cur-state" type="text" placeholder="e.g. ORDER_RECEIVED" />
+          </div>
+          <div class="form-row">
+            <label>Candidates <small style="color:var(--muted)">(click to select/deselect, or type comma-separated)</small></label>
+            <input id="inp-candidates-raw" type="text" placeholder="e.g. PICKING, BACKORDER" oninput="renderChips()" />
+            <div class="candidate-chips" id="candidate-chips"></div>
+            <div class="hint">All candidates must be known states in the landscape.</div>
+          </div>
+          <button class="btn btn-primary" onclick="doRecommend()">Recommend</button>
+          <div class="recommend-result" id="recommend-result" style="display:none">
+            <div class="rec-label">E₀ recommends</div>
+            <div class="rec-state" id="rec-state">—</div>
+            <div class="rec-detail" id="rec-detail"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Record Actual Outcome</div>
+          <div class="card-sub">After the step was executed, tell E₀ what actually happened. This updates the Historization.</div>
+          <div class="row-group">
+            <div class="form-row">
+              <label>From State</label>
+              <input id="inp-rec-from" type="text" placeholder="e.g. ORDER_RECEIVED" />
+            </div>
+            <div class="form-row">
+              <label>To State</label>
+              <input id="inp-rec-to" type="text" placeholder="e.g. PICKING" />
+            </div>
+            <div class="form-row">
+              <label>Outcome</label>
+              <select id="inp-rec-outcome">
+                <option value="success">success</option>
+                <option value="failure">failure</option>
+                <option value="partial">partial</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-success btn-sm" onclick="doRecord()">Record Outcome</button>
+          <div id="result-record"></div>
+        </div>
+      </div>
+
+    </div><!-- /panels -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+// ═══════════════════════════════════════════════════════
+// E₀ Domain Studio — Client Logic
+// ═══════════════════════════════════════════════════════
+
+const API = '';  // same origin
+let activeDomain = null;
+let learnHistory = [];
+let knownStates = [];
+let convictionData = {};
+
+// ── Tab navigation ──────────────────────────────────────
+function showTab(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (name === 'conviction') loadConviction();
+  if (name === 'apply') refreshStatus();
+}
+
+// ── API helpers ─────────────────────────────────────────
+async function api(method, path, body = null, isForm = false) {
+  const opts = { method, headers: {} };
+  if (body && !isForm) {
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(body);
+  } else if (body && isForm) {
+    opts.body = body;
+  }
+  const r = await fetch(API + path, opts);
+  const text = await r.text();
+  let json;
+  try { json = JSON.parse(text); } catch { json = { detail: text }; }
+  return { ok: r.ok, status: r.status, data: json };
+}
+
+function setResult(id, { ok, data, status }, extraHtml = '') {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const cls = ok ? 'result-ok' : 'result-err';
+  const msg = ok
+    ? (typeof data === 'object' ? JSON.stringify(data, null, 2) : data)
+    : (data?.detail || JSON.stringify(data, null, 2));
+  el.innerHTML = `<div class="result-box ${cls}"><pre>${escHtml(msg)}</pre>${extraHtml}</div>`;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function setLoading(btnId, loading, label = null) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  btn.disabled = loading;
+  if (loading) {
+    btn.dataset.orig = btn.innerHTML;
+    btn.innerHTML = `<span class="spinner"></span>&nbsp;Working…`;
+  } else {
+    btn.innerHTML = label || btn.dataset.orig || btn.innerHTML;
+  }
+}
+
+// ── Domain list ─────────────────────────────────────────
+async function loadDomainList() {
+  const { ok, data } = await api('GET', '/domains');
+  const el = document.getElementById('domain-list-table');
+  const sel = document.getElementById('domain-select');
+  if (!ok || !Array.isArray(data)) {
+    el.innerHTML = '<span style="color:var(--failure)">Could not load domains.</span>';
+    return;
+  }
+  // Update sidebar select
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— select domain —</option>';
+  data.forEach(d => {
+    const o = document.createElement('option');
+    o.value = d.name; o.textContent = d.name;
+    if (d.name === cur) o.selected = true;
+    sel.appendChild(o);
+  });
+  if (data.length === 0) {
+    el.innerHTML = '<span style="color:var(--muted)">No domains yet. Create one above.</span>';
+    return;
+  }
+  el.innerHTML = data.map(d =>
+    `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+      <span style="font-family:monospace;font-size:13px">${escHtml(d.name)}</span>
+      <button class="btn btn-outline btn-sm" onclick="selectDomain('${escHtml(d.name)}')">Select →</button>
+    </div>`
+  ).join('');
+}
+
+async function selectDomain(name) {
+  document.getElementById('domain-select').value = name;
+  await onDomainSelect(name);
+}
+
+async function onDomainSelect(name) {
+  name = name || document.getElementById('domain-select').value;
+  if (!name) { activeDomain = null; updateStatusCard(null); return; }
+  activeDomain = name;
+  await refreshStatus();
+  document.getElementById('status-card').style.display = 'block';
+  document.getElementById('no-domain-msg').style.display = 'none';
+  document.getElementById('btn-delete').style.display = 'block';
+  document.getElementById('btn-export').style.display = 'block';
+}
+
+async function refreshStatus() {
+  if (!activeDomain) return;
+  const { ok, data } = await api('GET', `/domains/${activeDomain}`);
+  if (ok) updateStatusCard(data);
+}
+
+function updateStatusCard(d) {
+  if (!d) { document.getElementById('status-card').style.display = 'none'; return; }
+  const modeClass = { learn: 'badge-learn', apply: 'badge-apply', hybrid: 'badge-hybrid' }[d.mode] || '';
+  document.getElementById('sc-mode').innerHTML = `<span class="badge ${modeClass}">${d.mode}</span>`;
+  document.getElementById('sc-episodes').textContent = d.episode_count;
+  document.getElementById('sc-states').textContent = d.states;
+  document.getElementById('sc-edges').textContent = d.edges;
+  const cold = d.cold_start;
+  document.getElementById('sc-cold').innerHTML =
+    `<span class="badge ${cold ? 'badge-cold' : 'badge-warm'}">${cold ? 'cold' : 'warm'}</span>`;
+  // Update mode selector in apply panel
+  document.querySelectorAll('.mode-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.m === d.mode);
+  });
+}
+
+// ── Export / Import ─────────────────────────────────────
+function exportDomain() {
+  if (!activeDomain) return;
+  // Trigger browser download via hidden link
+  const a = document.createElement('a');
+  a.href = `/domains/${activeDomain}/export`;
+  a.download = `${activeDomain}-landscape.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+async function importDomain() {
+  const fileInput = document.getElementById('inp-import-file');
+  if (!fileInput.files || fileInput.files.length === 0) {
+    alert('Select a JSON export file first.');
+    return;
+  }
+  const file = fileInput.files[0];
+  const text = await file.text();
+  let data;
+  try { data = JSON.parse(text); } catch (e) {
+    alert('Invalid JSON: ' + e.message);
+    return;
+  }
+  const res = await api('POST', '/domains/import', { data });
+  setResult('result-import', res);
+  if (res.ok) {
+    await loadDomainList();
+    await selectDomain(res.data.name);
+  }
+}
+
+// ── Step 1: Create ──────────────────────────────────────
+async function createDomain() {
+  const name = document.getElementById('inp-name').value.trim();
+  if (!name) { alert('Domain name is required.'); return; }
+  setLoading('btn-upload', true); // repurpose loading on create btn temporarily
+  const body = {
+    name,
+    description: document.getElementById('inp-desc').value.trim(),
+    topic: document.getElementById('inp-topic').value.trim(),
+    mode: document.getElementById('inp-mode').value,
+  };
+  const res = await api('POST', '/domains', body);
+  setResult('result-create', res);
+  if (res.ok) {
+    await loadDomainList();
+    await selectDomain(name);
+  }
+  setLoading('btn-upload', false);
+}
+
+// ── Step 2: Topology ────────────────────────────────────
+async function uploadTopology() {
+  if (!activeDomain) { alert('Select or create a domain first.'); return; }
+  const csv = document.getElementById('inp-csv').value.trim();
+  if (!csv) { alert('CSV is empty.'); return; }
+  setLoading('btn-upload', true);
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const fd = new FormData();
+  fd.append('file', blob, 'topology.csv');
+  const res = await api('POST', `/domains/${activeDomain}/upload`, fd, true);
+  setResult('result-topology', res);
+  if (res.ok) {
+    await refreshStatus();
+    // Extract state names from CSV
+    knownStates = [];
+    const seen = new Set();
+    csv.split('\n').forEach(line => {
+      const parts = line.split(',').map(s => s.trim()).filter(Boolean);
+      [parts[0], parts[1]].forEach(s => { if (s && !seen.has(s)) { seen.add(s); knownStates.push(s); }});
+    });
+    showNodes();
+  }
+  setLoading('btn-upload', false);
+}
+
+function showNodes() {
+  const card = document.getElementById('card-nodes');
+  const list = document.getElementById('nodes-list');
+  card.style.display = 'block';
+  list.innerHTML = knownStates.map(s =>
+    `<span class="node-chip">${escHtml(s)}</span>`
+  ).join('');
+}
+
+function loadDemo(type) {
+  const demos = {
+    logistics: `ORDER_RECEIVED,PICKING\nORDER_RECEIVED,BACKORDER\nPICKING,QUALITY_CHECK\nQUALITY_CHECK,SHIPPED\nQUALITY_CHECK,REWORK\nREWORK,PICKING\nBACKORDER,PICKING\nSHIPPED,DELIVERED`,
+    onboarding: `APPLICATION,SCREENING\nSCREENING,INTERVIEW\nSCREENING,REJECTED\nINTERVIEW,OFFER\nINTERVIEW,REJECTED\nOFFER,ACCEPTED\nOFFER,DECLINED\nACCEPTED,ONBOARDED`,
+    clinical: `REFERRAL,TRIAGE\nTRIAGE,DIAGNOSIS\nTRIAGE,URGENT\nDIAGNOSIS,TREATMENT\nDIAGNOSIS,MONITORING\nURGENT,TREATMENT\nTREATMENT,FOLLOWUP\nFOLLOWUP,DISCHARGED\nFOLLOWUP,TREATMENT`,
+  };
+  if (demos[type]) document.getElementById('inp-csv').value = demos[type];
+}
+
+// ── Step 3: Learn ───────────────────────────────────────
+const oracleHints = {
+  goal_aware: 'Scores each step by BFS-distance to goal. Requires goal state. Recommended.',
+  always_success: 'All steps are scored SUCCESS. Good for topology exploration without bias.',
+  random: 'Random SUCCESS/FAILURE (50/50). Use for stress-testing the historization.',
+  topology_aware: 'Uses existing U/F traces to score. Self-referential — good after initial learning.',
+  llm: 'Calls OpenAI API to judge each transition. Requires OPENAI_API_KEY.',
+  resource_aware: 'SUCCESS if required resource is available for this transition. Configure rules below.',
+};
+
+function onOracleChange() {
+  const val = document.getElementById('inp-oracle').value;
+  document.getElementById('oracle-hint').textContent = oracleHints[val] || '';
+  document.getElementById('goal-row').style.display =
+    (val === 'goal_aware') ? 'block' : 'none';
+  document.getElementById('resource-config').style.display =
+    (val === 'resource_aware') ? 'block' : 'none';
+}
+
+async function runLearn() {
+  if (!activeDomain) { alert('Select or create a domain first.'); return; }
+  setLoading('btn-learn', true);
+  const body = {
+    n_episodes: parseInt(document.getElementById('inp-episodes').value),
+    oracle_type: document.getElementById('inp-oracle').value,
+    max_steps: parseInt(document.getElementById('inp-maxsteps').value),
+    n_walkers: parseInt(document.getElementById('inp-walkers').value),
+  };
+  const goal = document.getElementById('inp-goal').value.trim();
+  const start = document.getElementById('inp-start').value.trim();
+  if (goal) body.goal = goal;
+  if (start) body.start = start;
+  // Resource-aware oracle config
+  if (body.oracle_type === 'resource_aware') {
+    try {
+      const rulesStr = document.getElementById('inp-resource-rules').value.trim();
+      const stateStr = document.getElementById('inp-resource-state').value.trim();
+      if (rulesStr) body.resource_rules = JSON.parse(rulesStr);
+      if (stateStr) body.resource_state = JSON.parse(stateStr);
+    } catch (e) {
+      alert('Invalid JSON in resource rules/state: ' + e.message);
+      setLoading('btn-learn', false);
+      return;
+    }
+  }
+  const res = await api('POST', `/domains/${activeDomain}/learn`, body);
+  setResult('result-learn', res);
+  if (res.ok) {
+    const walkers = body.n_walkers || 1;
+    learnHistory.push({ ts: new Date().toLocaleTimeString(), walkers, ...res.data });
+    renderLearnHistory();
+    await refreshStatus();
+  }
+  setLoading('btn-learn', false);
+}
+
+function renderLearnHistory() {
+  const card = document.getElementById('card-learn-history');
+  const list = document.getElementById('learn-history-list');
+  card.style.display = 'block';
+  list.innerHTML = [...learnHistory].reverse().map(h =>
+    `<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:12px">
+      <span style="color:var(--muted)">${h.ts}</span> &nbsp;
+      <strong>${h.episodes} ep</strong>${h.walkers > 1 ? ` × ${h.walkers} walkers` : ''} ·
+      success rate <strong style="color:var(--success)">${(h.goal_rate*100).toFixed(1)}%</strong> ·
+      ${h.edges_explored} edges explored
+    </div>`
+  ).join('');
+}
+
+// ── Step 4: Conviction Map ──────────────────────────────
+async function loadConviction() {
+  if (!activeDomain) return;
+  const { ok, data } = await api('GET', `/domains/${activeDomain}/conviction`);
+  if (!ok || !data.edges) return;
+  convictionData = data.edges;
+  renderConvictionTable(convictionData);
+  renderGraph(convictionData);
+}
+
+function convictionColor(v) {
+  // green at 1.0, yellow at 0.5, red at 0.0
+  if (v >= 0.7) return '#3ecf8e';
+  if (v >= 0.4) return '#f59e0b';
+  return '#f87171';
+}
+
+function renderConvictionTable(edges) {
+  const sorted = Object.entries(edges).sort((a, b) => b[1] - a[1]);
+  const tbody = document.getElementById('conv-tbody');
+  if (sorted.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" style="color:var(--muted);padding:12px">No edges yet — run learning first.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = sorted.map(([edge, val]) => {
+    const pct = Math.round(val * 100);
+    const col = convictionColor(val);
+    return `<tr>
+      <td style="font-family:monospace">${escHtml(edge)}</td>
+      <td>
+        <span class="conv-bar-wrap"><span class="conv-bar" style="width:${pct}%;background:${col}"></span></span>
+      </td>
+      <td class="conv-val" style="color:${col}">${val.toFixed(3)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Graph rendering (force-directed, vanilla JS) ────────
+function renderGraph(edges) {
+  if (!edges || Object.keys(edges).length === 0) return;
+
+  // Parse edges: "SOURCE→TARGET" → {source, target, conviction}
+  const edgeList = Object.entries(edges).map(([key, val]) => {
+    const [src, tgt] = key.split('→');
+    return { source: src, target: tgt, conviction: val };
+  });
+
+  // Collect unique nodes
+  const nodeSet = new Set();
+  edgeList.forEach(e => { nodeSet.add(e.source); nodeSet.add(e.target); });
+  const nodeIds = [...nodeSet];
+
+  const W = 800, H = 420, cx = W / 2, cy = H / 2;
+  const r = 18;
+
+  // Initialize positions (circle layout as starting point)
+  const pos = {};
+  nodeIds.forEach((id, i) => {
+    const angle = (2 * Math.PI * i) / nodeIds.length - Math.PI / 2;
+    const radius = Math.min(W, H) * 0.35;
+    pos[id] = { x: cx + radius * Math.cos(angle), y: cy + radius * Math.sin(angle) };
+  });
+
+  // Force simulation
+  const K = 80;   // spring rest length
+  const REPEL = 5000;
+  const DAMPING = 0.85;
+  const vel = {};
+  nodeIds.forEach(id => { vel[id] = { x: 0, y: 0 }; });
+
+  for (let iter = 0; iter < 250; iter++) {
+    const force = {};
+    nodeIds.forEach(id => { force[id] = { x: 0, y: 0 }; });
+
+    // Repulsion
+    for (let i = 0; i < nodeIds.length; i++) {
+      for (let j = i + 1; j < nodeIds.length; j++) {
+        const a = nodeIds[i], b = nodeIds[j];
+        const dx = pos[b].x - pos[a].x, dy = pos[b].y - pos[a].y;
+        const d2 = dx * dx + dy * dy + 1;
+        const f = REPEL / d2;
+        force[a].x -= f * dx / Math.sqrt(d2);
+        force[a].y -= f * dy / Math.sqrt(d2);
+        force[b].x += f * dx / Math.sqrt(d2);
+        force[b].y += f * dy / Math.sqrt(d2);
+      }
+    }
+
+    // Spring attraction (edges)
+    edgeList.forEach(({ source, target }) => {
+      const dx = pos[target].x - pos[source].x;
+      const dy = pos[target].y - pos[source].y;
+      const d = Math.sqrt(dx * dx + dy * dy) + 0.001;
+      const f = (d - K) * 0.05;
+      force[source].x += f * dx / d;
+      force[source].y += f * dy / d;
+      force[target].x -= f * dx / d;
+      force[target].y -= f * dy / d;
+    });
+
+    // Center gravity
+    nodeIds.forEach(id => {
+      force[id].x += (cx - pos[id].x) * 0.005;
+      force[id].y += (cy - pos[id].y) * 0.005;
+    });
+
+    // Integrate
+    nodeIds.forEach(id => {
+      vel[id].x = (vel[id].x + force[id].x) * DAMPING;
+      vel[id].y = (vel[id].y + force[id].y) * DAMPING;
+      pos[id].x = Math.max(r + 5, Math.min(W - r - 5, pos[id].x + vel[id].x));
+      pos[id].y = Math.max(r + 5, Math.min(H - r - 5, pos[id].y + vel[id].y));
+    });
+  }
+
+  // Render SVG
+  const edgesG = document.getElementById('graph-edges');
+  const nodesG = document.getElementById('graph-nodes');
+  edgesG.innerHTML = '';
+  nodesG.innerHTML = '';
+
+  // Edges
+  edgeList.forEach(({ source, target, conviction }) => {
+    const col = convictionColor(conviction);
+    const markerSuffix = conviction >= 0.7 ? 'hi' : conviction < 0.4 ? 'lo' : '';
+    const markerId = markerSuffix ? `url(#arrow-${markerSuffix})` : 'url(#arrow)';
+    const sx = pos[source].x, sy = pos[source].y;
+    const tx = pos[target].x, ty = pos[target].y;
+    const dx = tx - sx, dy = ty - sy;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    const ux = dx / len, uy = dy / len;
+    // Shorten to circle boundary
+    const x2 = tx - ux * (r + 2);
+    const y2 = ty - uy * (r + 2);
+    const x1 = sx + ux * r;
+    const y1 = sy + uy * r;
+    // Slight curve for bidirectional
+    const cx2 = (x1 + x2) / 2 - uy * 12;
+    const cy2 = (y1 + y2) / 2 + ux * 12;
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', `M${x1},${y1} Q${cx2},${cy2} ${x2},${y2}`);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', col);
+    path.setAttribute('stroke-width', 1.5 + conviction * 2);
+    path.setAttribute('stroke-opacity', 0.7 + conviction * 0.3);
+    path.setAttribute('marker-end', markerId);
+    path.setAttribute('class', 'graph-edge');
+    edgesG.appendChild(path);
+  });
+
+  // Nodes
+  nodeIds.forEach(id => {
+    const { x, y } = pos[id];
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('class', 'graph-node');
+    g.setAttribute('transform', `translate(${x},${y})`);
+
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('r', r);
+    circle.setAttribute('fill', '#1e2535');
+    circle.setAttribute('stroke', '#5b8dee');
+    circle.setAttribute('stroke-width', '2');
+
+    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    const shortId = id.length > 10 ? id.substring(0, 9) + '…' : id;
+    label.textContent = shortId;
+    label.setAttribute('text-anchor', 'middle');
+    label.setAttribute('dy', '0.35em');
+    label.setAttribute('fill', '#e2e8f0');
+    label.setAttribute('font-size', '9');
+    label.setAttribute('font-family', 'Consolas, monospace');
+
+    // Tooltip
+    const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+    title.textContent = id;
+
+    g.appendChild(circle); g.appendChild(label); g.appendChild(title);
+    nodesG.appendChild(g);
+
+    // Auto-fill current state on click
+    g.addEventListener('click', () => {
+      document.getElementById('inp-cur-state').value = id;
+    });
+  });
+
+  // Simple drag for the whole SVG
+  makeDraggable(document.getElementById('graph-svg'), pos, nodeIds, r, W, H, edgesG, nodesG, edgeList);
+}
+
+function makeDraggable(svg, pos, nodeIds, r, W, H, edgesG, nodesG, edgeList) {
+  let dragging = null, ox = 0, oy = 0;
+  svg.addEventListener('mousedown', e => {
+    const pt = svgPoint(svg, e);
+    for (const id of nodeIds) {
+      const dx = pt.x - pos[id].x, dy = pt.y - pos[id].y;
+      if (dx * dx + dy * dy < r * r * 1.5) { dragging = id; ox = dx; oy = dy; break; }
+    }
+  });
+  svg.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const pt = svgPoint(svg, e);
+    pos[dragging].x = Math.max(r + 5, Math.min(W - r - 5, pt.x - ox));
+    pos[dragging].y = Math.max(r + 5, Math.min(H - r - 5, pt.y - oy));
+    redrawGraph(pos, nodeIds, r, edgesG, nodesG, edgeList);
+  });
+  svg.addEventListener('mouseup', () => { dragging = null; });
+}
+
+function svgPoint(svg, e) {
+  const rect = svg.getBoundingClientRect();
+  const vb = svg.viewBox.baseVal;
+  return {
+    x: (e.clientX - rect.left) / rect.width * vb.width,
+    y: (e.clientY - rect.top) / rect.height * vb.height,
+  };
+}
+
+function redrawGraph(pos, nodeIds, r, edgesG, nodesG, edgeList) {
+  // Redraw edges
+  const paths = edgesG.querySelectorAll('path');
+  edgeList.forEach(({ source, target }, i) => {
+    const sx = pos[source].x, sy = pos[source].y;
+    const tx = pos[target].x, ty = pos[target].y;
+    const dx = tx - sx, dy = ty - sy;
+    const len = Math.sqrt(dx * dx + dy * dy) + 0.001;
+    const ux = dx / len, uy = dy / len;
+    const x2 = tx - ux * (r + 2), y2 = ty - uy * (r + 2);
+    const x1 = sx + ux * r, y1 = sy + uy * r;
+    const cx2 = (x1 + x2) / 2 - uy * 12, cy2 = (y1 + y2) / 2 + ux * 12;
+    if (paths[i]) paths[i].setAttribute('d', `M${x1},${y1} Q${cx2},${cy2} ${x2},${y2}`);
+  });
+  // Redraw node positions
+  const groups = nodesG.querySelectorAll('g');
+  nodeIds.forEach((id, i) => {
+    if (groups[i]) groups[i].setAttribute('transform', `translate(${pos[id].x},${pos[id].y})`);
+  });
+}
+
+// ── Step 5: Apply ───────────────────────────────────────
+async function setMode(mode) {
+  if (!activeDomain) { alert('No domain selected.'); return; }
+  const res = await api('PUT', `/domains/${activeDomain}/mode`, { mode });
+  const el = document.getElementById('result-mode');
+  if (res.ok) {
+    el.innerHTML = `<span style="color:var(--success);font-size:12px">✓ Mode set to <strong>${mode}</strong></span>`;
+    updateStatusCard(res.data);
+  } else {
+    el.innerHTML = `<span style="color:var(--failure);font-size:12px">${escHtml(res.data?.detail || 'Error')}</span>`;
+  }
+}
+
+function renderChips() {
+  const raw = document.getElementById('inp-candidates-raw').value;
+  const names = raw.split(',').map(s => s.trim()).filter(Boolean);
+  const chips = document.getElementById('candidate-chips');
+  chips.innerHTML = names.map(n =>
+    `<span class="chip selected" onclick="toggleChip(this)">${escHtml(n)}</span>`
+  ).join('');
+}
+
+function toggleChip(el) {
+  el.classList.toggle('selected');
+}
+
+async function doRecommend() {
+  if (!activeDomain) { alert('No domain selected.'); return; }
+  const state = document.getElementById('inp-cur-state').value.trim();
+  if (!state) { alert('Enter current state.'); return; }
+  const candidates = [...document.querySelectorAll('#candidate-chips .chip.selected')]
+    .map(c => c.textContent.trim());
+  if (candidates.length === 0) {
+    alert('Select at least one candidate state.');
+    return;
+  }
+  const res = await api('POST', `/domains/${activeDomain}/recommend`, { state, candidates });
+  if (res.ok) {
+    const d = res.data;
+    document.getElementById('recommend-result').style.display = 'block';
+    document.getElementById('rec-state').textContent = d.recommended || '(no recommendation)';
+    document.getElementById('rec-detail').textContent =
+      `${d.reason} · conviction: ${d.conviction_score?.toFixed(3)} · quality: ${d.quality?.toFixed(3)}` +
+      (d.cold_start ? ' · cold start' : '');
+    // Pre-fill record fields
+    document.getElementById('inp-rec-from').value = state;
+    document.getElementById('inp-rec-to').value = d.recommended || '';
+  } else {
+    document.getElementById('recommend-result').style.display = 'block';
+    document.getElementById('rec-state').textContent = '⚠ Error';
+    document.getElementById('rec-detail').textContent = res.data?.detail || 'Unknown error';
+  }
+}
+
+async function doRecord() {
+  if (!activeDomain) { alert('No domain selected.'); return; }
+  const source = document.getElementById('inp-rec-from').value.trim();
+  const target = document.getElementById('inp-rec-to').value.trim();
+  const outcome = document.getElementById('inp-rec-outcome').value;
+  if (!source || !target) { alert('Fill in source and target states.'); return; }
+  const res = await api('POST', `/domains/${activeDomain}/record`, { source, target, outcome });
+  setResult('result-record', res);
+  if (res.ok) await refreshStatus();
+}
+
+// ── Init ────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async () => {
+  onOracleChange();  // show/hide goal row
+  await loadDomainList();
+  // Auto-select first domain if only one exists
+  const sel = document.getElementById('domain-select');
+  if (sel.options.length === 2) {
+    sel.selectedIndex = 1;
+    await onDomainSelect();
+  }
+});
+</script>
+</body>
+</html>

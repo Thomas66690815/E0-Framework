@@ -1,0 +1,141 @@
+{
+  "_schema": "domain_store_v1",
+  "meta": {
+    "name": "logistics_demo",
+    "description": "E-Commerce Order Fulfillment",
+    "topic": "logistics",
+    "mode": "apply",
+    "created_at": "2026-05-12T09:49:56.306674+00:00",
+    "episode_count": 50
+  },
+  "landscape": {
+    "edges": [
+      {
+        "source": "ORDER_RECEIVED",
+        "target": "PICKING",
+        "delta": 1.0,
+        "resistance": 0.3
+      },
+      {
+        "source": "ORDER_RECEIVED",
+        "target": "BACKORDER",
+        "delta": 1.0,
+        "resistance": 0.3
+      },
+      {
+        "source": "PICKING",
+        "target": "QUALITY_CHECK",
+        "delta": 1.0,
+        "resistance": 0.3
+      },
+      {
+        "source": "PICKING",
+        "target": "REWORK",
+        "delta": 1.0,
+        "resistance": 0.3
+      },
+      {
+        "source": "QUALITY_CHECK",
+        "target": "LOADING",
+        "delta": 1.0,
+        "resistance": 0.3
+      },
+      {
+        "source": "QUALITY_CHECK",
+        "target": "REWORK",
+        "delta": 1.0,
+        "resistance": 0.3
+      },
+      {
+        "source": "LOADING",
+        "target": "DISPATCHED",
+        "delta": 1.0,
+        "resistance": 0.3
+      },
+      {
+        "source": "DISPATCHED",
+        "target": "DELIVERED",
+        "delta": 1.0,
+        "resistance": 0.3
+      },
+      {
+        "source": "DISPATCHED",
+        "target": "DAMAGED",
+        "delta": 1.0,
+        "resistance": 0.3
+      },
+      {
+        "source": "DAMAGED",
+        "target": "RETURN",
+        "delta": 1.0,
+        "resistance": 0.3
+      },
+      {
+        "source": "RETURN",
+        "target": "ORDER_RECEIVED",
+        "delta": 1.0,
+        "resistance": 0.3
+      },
+      {
+        "source": "REWORK",
+        "target": "QUALITY_CHECK",
+        "delta": 1.0,
+        "resistance": 0.3
+      },
+      {
+        "source": "BACKORDER",
+        "target": "ORDER_RECEIVED",
+        "delta": 1.0,
+        "resistance": 0.3
+      }
+    ],
+    "hist": {
+      "U": {
+        "ORDER_RECEIVED\u2192PICKING": 2.699414675854481,
+        "ORDER_RECEIVED\u2192BACKORDER": 0.0,
+        "PICKING\u2192QUALITY_CHECK": 1.2211177758545773,
+        "PICKING\u2192REWORK": 0.0,
+        "QUALITY_CHECK\u2192LOADING": 2.2211177758547898,
+        "QUALITY_CHECK\u2192REWORK": 0.0,
+        "LOADING\u2192DISPATCHED": 2.2977485287267676,
+        "DISPATCHED\u2192DELIVERED": 2.2977485287282704,
+        "DISPATCHED\u2192DAMAGED": 0.0,
+        "DAMAGED\u2192RETURN": 0.0,
+        "RETURN\u2192ORDER_RECEIVED": 0.5,
+        "REWORK\u2192QUALITY_CHECK": 0.95,
+        "BACKORDER\u2192ORDER_RECEIVED": 0.5
+      },
+      "F": {
+        "ORDER_RECEIVED\u2192PICKING": 0.9,
+        "ORDER_RECEIVED\u2192BACKORDER": 1.9,
+        "PICKING\u2192QUALITY_CHECK": 1.0,
+        "PICKING\u2192REWORK": 1.0,
+        "QUALITY_CHECK\u2192LOADING": 0.0,
+        "QUALITY_CHECK\u2192REWORK": 1.0,
+        "LOADING\u2192DISPATCHED": 0.0,
+        "DISPATCHED\u2192DELIVERED": 0.0,
+        "DISPATCHED\u2192DAMAGED": 1.0,
+        "DAMAGED\u2192RETURN": 1.0,
+        "RETURN\u2192ORDER_RECEIVED": 0.3,
+        "REWORK\u2192QUALITY_CHECK": 0.5700000000000001,
+        "BACKORDER\u2192ORDER_RECEIVED": 0.3
+      },
+      "tau": 287,
+      "tau_last": {
+        "ORDER_RECEIVED\u2192PICKING": 285,
+        "ORDER_RECEIVED\u2192BACKORDER": 6,
+        "PICKING\u2192QUALITY_CHECK": 286,
+        "PICKING\u2192REWORK": 10,
+        "QUALITY_CHECK\u2192LOADING": 287,
+        "QUALITY_CHECK\u2192REWORK": 14,
+        "LOADING\u2192DISPATCHED": 282,
+        "DISPATCHED\u2192DELIVERED": 283,
+        "DISPATCHED\u2192DAMAGED": 22,
+        "DAMAGED\u2192RETURN": 23,
+        "RETURN\u2192ORDER_RECEIVED": 24,
+        "REWORK\u2192QUALITY_CHECK": 26,
+        "BACKORDER\u2192ORDER_RECEIVED": 27
+      }
+    }
+  }
+}

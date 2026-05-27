@@ -191,13 +191,31 @@ class LearnRequest(BaseModel):
         "always_success",
         description=(
             "Pre-defined oracle: always_success | random | topology_aware | "
-            "goal_aware | llm"
+            "goal_aware | llm | resource_aware"
         ),
-        pattern="^(always_success|random|topology_aware|goal_aware|llm)$",
+        pattern="^(always_success|random|topology_aware|goal_aware|llm|resource_aware)$",
     )
     start: Optional[str] = Field(None, description="Start state (defaults to first state)")
     goal: Optional[str] = Field(None, description="Goal state")
     max_steps: int = Field(30, ge=1, le=500)
+    n_walkers: int = Field(
+        1, ge=1, le=50,
+        description="Concurrent walkers. Total episodes = n_episodes × n_walkers.",
+    )
+    resource_rules: Optional[Dict[str, str]] = Field(
+        None,
+        description=(
+            "For oracle_type='resource_aware': maps edge key 'FROM,TO' or target state "
+            "to a resource name. E.g. {'PICKING,LOADING': 'forklift', 'LOADING': 'dock_free'}."
+        ),
+    )
+    resource_state: Optional[Dict[str, bool]] = Field(
+        None,
+        description=(
+            "For oracle_type='resource_aware': current availability of each resource. "
+            "E.g. {'forklift': True, 'dock_free': False}."
+        ),
+    )
 
 
 class LearnResponse(BaseModel):
@@ -249,3 +267,8 @@ class InjectResponse(BaseModel):
 
 class ConvictionMapResponse(BaseModel):
     edges: Dict[str, float]
+
+
+class ImportDomainRequest(BaseModel):
+    """Body for POST /domains/import — the raw JSON produced by GET /domains/{name}/export."""
+    data: Dict[str, Any] = Field(..., description="Full export JSON (domain_store_v1 schema)")

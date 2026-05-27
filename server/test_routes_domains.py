@@ -1,4 +1,4 @@
-"""Tests for E₀ Domain Studio REST API (ARC-K, C307; C309 oracle extension).
+"""Tests for E₀ Domain Studio REST API (ARC-K, C307; C309 oracle extension; C310 export/import/multi-walker/resource-aware).
 
 Uses FastAPI TestClient. DomainStore is injected with a tmp_path-backed
 store so no files land in the repo.
@@ -17,6 +17,9 @@ Test classes:
     TestDomainRecord         — POST /domains/{name}/record
     TestDomainConviction     — GET /domains/{name}/conviction
     TestDomainWorkflow       — end-to-end: create → upload → learn → apply
+    TestExportImport         — GET /export + POST /import  (C310)
+    TestMultiWalker          — n_walkers parameter         (C310)
+    TestOracleResourceAware  — oracle_type=resource_aware  (C310)
 """
 
 from __future__ import annotations
@@ -845,3 +848,343 @@ class TestDomainWorkflow:
             assert cm2.get(edge, 0.0) >= c1, (
                 f"{edge}: conviction decreased {c1:.4f} → {cm2.get(edge, 0.0):.4f}"
             )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TestExportImport  (C310)
+# ══════════════════════════════════════════════════════════════════════════════
+
+class TestExportImport:
+    """Export trained landscape → JSON → Import on fresh store.
+
+    These tests cover the full portability cycle: train a domain, export it,
+    import it into a new store, and verify that all state is faithfully
+    preserved (topology + Historization traces).
+    """
+
+    def _trained_domain(self, client):
+        """Create and train a minimal logistics domain. Returns name."""
+        _create(client, name="source", topic="Logistics", description="Test export.")
+        _upload_csv(client, "source", LOGISTICS_CSV)
+        client.post("/domains/source/learn", json={
+            "n_episodes": 10,
+            "oracle_type": "goal_aware",
+            "start": "ORDER",
+            "goal": "DELIVERED",
+        })
+        return "source"
+
+    def test_export_returns_200(self, client):
+        self._trained_domain(client)
+        r = client.get("/domains/source/export")
+        assert r.status_code == 200
+
+    def test_export_content_type_json(self, client):
+        self._trained_domain(client)
+        r = client.get("/domains/source/export")
+        assert "application/json" in r.headers["content-type"]
+
+    def test_export_content_disposition(self, client):
+        self._trained_domain(client)
+        r = client.get("/domains/source/export")
+        assert "attachment" in r.headers.get("content-disposition", "")
+        assert "source-landscape.json" in r.headers.get("content-disposition", "")
+
+    def test_export_valid_json(self, client):
+        self._trained_domain(client)
+        r = client.get("/domains/source/export")
+        data = r.json()
+        assert "_schema" in data
+        assert data["_schema"] == "domain_store_v1"
+
+    def test_export_contains_meta(self, client):
+        self._trained_domain(client)
+        data = client.get("/domains/source/export").json()
+        meta = data["meta"]
+        assert meta["name"] == "source"
+        assert meta["topic"] == "Logistics"
+        assert meta["episode_count"] == 10
+
+    def test_export_contains_landscape(self, client):
+        self._trained_domain(client)
+        data = client.get("/domains/source/export").json()
+        assert "landscape" in data
+        assert "edges" in data["landscape"]
+        assert len(data["landscape"]["edges"]) == 4  # LOGISTICS_CSV has 4 edges
+
+    def test_export_contains_historization(self, client):
+        self._trained_domain(client)
+        data = client.get("/domains/source/export").json()
+        hist = data["landscape"].get("hist", {})
+        # After goal_aware learning, there should be U > 0 on forward edges
+        assert hist.get("tau", 0) > 0
+
+    def test_export_nonexistent_returns_404(self, client):
+        r = client.get("/domains/ghost/export")
+        assert r.status_code == 404
+
+    def test_import_returns_201(self, client):
+        self._trained_domain(client)
+        data = client.get("/domains/source/export").json()
+        # Delete source so we can test pure import
+        client.delete("/domains/source")
+        r = client.post("/domains/import", json={"data": data})
+        assert r.status_code == 201
+
+    def test_import_restores_name(self, client):
+        self._trained_domain(client)
+        data = client.get("/domains/source/export").json()
+        client.delete("/domains/source")
+        r = client.post("/domains/import", json={"data": data})
+        assert r.json()["name"] == "source"
+
+    def test_import_restores_episode_count(self, client):
+        self._trained_domain(client)
+        data = client.get("/domains/source/export").json()
+        client.delete("/domains/source")
+        r = client.post("/domains/import", json={"data": data})
+        assert r.json()["episode_count"] == 10
+
+    def test_import_restores_edges(self, client, isolated_store):
+        self._trained_domain(client)
+        data = client.get("/domains/source/export").json()
+        client.delete("/domains/source")
+        client.post("/domains/import", json={"data": data})
+        loaded = isolated_store.load("source")
+        assert len(list(loaded.landscape.edges)) == 4
+
+    def test_import_restores_historization(self, client, isolated_store):
+        self._trained_domain(client)
+        data = client.get("/domains/source/export").json()
+        client.delete("/domains/source")
+        client.post("/domains/import", json={"data": data})
+        loaded = isolated_store.load("source")
+        h = loaded.landscape.historization
+        total = sum(h._U.values()) + sum(h._F.values())
+        assert total > 0, "Historization traces should be preserved on import"
+
+    def test_import_conflict_returns_409(self, client):
+        """If domain already exists, import returns 409."""
+        self._trained_domain(client)
+        data = client.get("/domains/source/export").json()
+        # source still exists → conflict
+        r = client.post("/domains/import", json={"data": data})
+        assert r.status_code == 409
+
+    def test_import_invalid_schema_returns_422(self, client):
+        r = client.post("/domains/import", json={"data": {"_schema": "unknown_v99"}})
+        assert r.status_code == 422
+
+    def test_import_missing_name_returns_422(self, client):
+        r = client.post("/domains/import", json={
+            "data": {"_schema": "domain_store_v1", "meta": {}, "landscape": {}}
+        })
+        assert r.status_code == 422
+
+    def test_full_export_import_cycle(self, client, isolated_store):
+        """Train → export → import → use for recommendations."""
+        # Train
+        self._trained_domain(client)
+        # Add extra episodes so we leave cold start
+        client.post("/domains/source/learn", json={
+            "n_episodes": 30,
+            "oracle_type": "always_success",
+            "start": "ORDER",
+            "goal": "DELIVERED",
+        })
+
+        # Export
+        data = client.get("/domains/source/export").json()
+
+        # Import under new name by patching the meta
+        data["meta"]["name"] = "imported"
+        r = client.post("/domains/import", json={"data": data})
+        assert r.status_code == 201
+
+        # Recommend using the imported landscape
+        r = client.post("/domains/imported/recommend", json={
+            "state": "ORDER", "candidates": ["PICKING", "BACKORDER"]
+        })
+        assert r.status_code == 200
+        assert r.json()["recommended"] in ("PICKING", "BACKORDER", None)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TestMultiWalker  (C310)
+# ══════════════════════════════════════════════════════════════════════════════
+
+class TestMultiWalker:
+    """n_walkers parameter: total episodes = n_episodes × n_walkers."""
+
+    def _setup(self, client):
+        _create(client, name="x")
+        _upload_csv(client, "x", MINIMAL_CSV)
+
+    def test_n_walkers_1_equals_n_episodes(self, client):
+        self._setup(client)
+        r = client.post("/domains/x/learn", json={
+            "n_episodes": 5, "n_walkers": 1, "start": "A", "goal": "D"
+        })
+        assert r.json()["episodes"] == 5
+
+    def test_n_walkers_multiplies_episodes(self, client):
+        self._setup(client)
+        r = client.post("/domains/x/learn", json={
+            "n_episodes": 5, "n_walkers": 3, "start": "A", "goal": "D"
+        })
+        assert r.json()["episodes"] == 15  # 5 × 3
+
+    def test_n_walkers_increments_episode_count(self, client):
+        self._setup(client)
+        client.post("/domains/x/learn", json={
+            "n_episodes": 4, "n_walkers": 5, "start": "A", "goal": "D"
+        })
+        assert client.get("/domains/x").json()["episode_count"] == 20
+
+    def test_n_walkers_accumulates_more_traces(self, client, isolated_store):
+        """More walkers → more total episodes → higher trace_load."""
+        self._setup(client)
+        # Single walker run
+        client.post("/domains/x/learn", json={
+            "n_episodes": 5, "n_walkers": 1,
+            "oracle_type": "always_success", "start": "A", "goal": "D"
+        })
+        from e0_controller.primitives import Edge
+        loaded1 = isolated_store.load("x")
+        u1 = loaded1.landscape.historization._U.get(Edge("A", "B"), 0.0)
+
+        # Reset
+        client.delete("/domains/x")
+        self._setup(client)
+        # Multi-walker run (same n_episodes, more walkers → more total)
+        client.post("/domains/x/learn", json={
+            "n_episodes": 5, "n_walkers": 4,
+            "oracle_type": "always_success", "start": "A", "goal": "D"
+        })
+        loaded4 = isolated_store.load("x")
+        u4 = loaded4.landscape.historization._U.get(Edge("A", "B"), 0.0)
+
+        assert u4 > u1, "4 walkers should produce more U traces than 1 walker"
+
+    def test_n_walkers_returns_200(self, client):
+        self._setup(client)
+        r = client.post("/domains/x/learn", json={
+            "n_episodes": 3, "n_walkers": 10, "start": "A"
+        })
+        assert r.status_code == 200
+
+    def test_n_walkers_default_is_1(self, client):
+        self._setup(client)
+        r = client.post("/domains/x/learn", json={
+            "n_episodes": 7, "start": "A", "goal": "D"
+        })
+        assert r.json()["episodes"] == 7
+
+    def test_n_walkers_invalid_0_returns_422(self, client):
+        self._setup(client)
+        r = client.post("/domains/x/learn", json={"n_episodes": 5, "n_walkers": 0})
+        assert r.status_code == 422
+
+    def test_n_walkers_invalid_51_returns_422(self, client):
+        self._setup(client)
+        r = client.post("/domains/x/learn", json={"n_episodes": 5, "n_walkers": 51})
+        assert r.status_code == 422
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TestOracleResourceAware  (C310)
+# ══════════════════════════════════════════════════════════════════════════════
+
+class TestOracleResourceAware:
+    """resource_aware oracle: SUCCESS iff the required resource is available."""
+
+    def _setup(self, client):
+        _create(client, name="x")
+        _upload_csv(client, "x", LOGISTICS_CSV)
+
+    def test_resource_aware_returns_200(self, client):
+        self._setup(client)
+        r = client.post("/domains/x/learn", json={
+            "n_episodes": 5,
+            "oracle_type": "resource_aware",
+            "start": "ORDER",
+            "resource_rules": {"PICKING": "forklift"},
+            "resource_state": {"forklift": True},
+        })
+        assert r.status_code == 200
+
+    def test_resource_available_scores_success(self, client, isolated_store):
+        self._setup(client)
+        client.post("/domains/x/learn", json={
+            "n_episodes": 10,
+            "oracle_type": "resource_aware",
+            "start": "ORDER",
+            "resource_rules": {"PICKING": "forklift"},
+            "resource_state": {"forklift": True},
+        })
+        from e0_controller.primitives import Edge
+        loaded = isolated_store.load("x")
+        # ORDER→PICKING should be SUCCESS (forklift available)
+        u = loaded.landscape.historization._U.get(Edge("ORDER", "PICKING"), 0.0)
+        assert u > 0, "forklift=True → ORDER→PICKING should have U > 0"
+
+    def test_resource_unavailable_scores_failure(self, client, isolated_store):
+        self._setup(client)
+        client.post("/domains/x/learn", json={
+            "n_episodes": 10,
+            "oracle_type": "resource_aware",
+            "start": "ORDER",
+            "resource_rules": {"PICKING": "forklift"},
+            "resource_state": {"forklift": False},
+        })
+        from e0_controller.primitives import Edge
+        loaded = isolated_store.load("x")
+        # ORDER→PICKING should be FAILURE (forklift unavailable)
+        f = loaded.landscape.historization._F.get(Edge("ORDER", "PICKING"), 0.0)
+        assert f > 0, "forklift=False → ORDER→PICKING should have F > 0"
+
+    def test_resource_unknown_edge_defaults_success(self, client, isolated_store):
+        """Edges not in resource_rules default to SUCCESS."""
+        self._setup(client)
+        client.post("/domains/x/learn", json={
+            "n_episodes": 5,
+            "oracle_type": "resource_aware",
+            "start": "ORDER",
+            "resource_rules": {},   # no rules → all SUCCESS
+            "resource_state": {},
+        })
+        from e0_controller.primitives import Edge
+        loaded = isolated_store.load("x")
+        u = loaded.landscape.historization._U.get(Edge("ORDER", "PICKING"), 0.0)
+        assert u > 0, "No resource rule → default SUCCESS → U > 0"
+
+    def test_resource_edge_key_takes_priority(self, client, isolated_store):
+        """Edge-specific key 'FROM,TO' takes priority over target-only rule."""
+        self._setup(client)
+        client.post("/domains/x/learn", json={
+            "n_episodes": 10,
+            "oracle_type": "resource_aware",
+            "start": "ORDER",
+            "resource_rules": {
+                "ORDER,PICKING": "forklift",  # edge key: forklift required
+                "PICKING": "dock",            # target-only: dock required
+            },
+            "resource_state": {"forklift": True, "dock": False},
+        })
+        from e0_controller.primitives import Edge
+        loaded = isolated_store.load("x")
+        h = loaded.landscape.historization
+        # ORDER→PICKING: edge key matches → forklift=True → SUCCESS
+        u = h._U.get(Edge("ORDER", "PICKING"), 0.0)
+        assert u > 0, "Edge key match forklift=True → U > 0"
+
+    def test_resource_no_rules_all_success(self, client):
+        self._setup(client)
+        r = client.post("/domains/x/learn", json={
+            "n_episodes": 5,
+            "oracle_type": "resource_aware",
+            "start": "ORDER",
+        })
+        assert r.status_code == 200
+        assert r.json()["success_count"] > 0
+
