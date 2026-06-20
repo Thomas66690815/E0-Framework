@@ -1,203 +1,405 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>E₀ Domain Studio</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg: #0f1117;
-      --sidebar-bg: #161b27;
-      --surface: #1e2535;
-      --surface2: #252d3d;
-      --border: #2e3a50;
-      --accent: #5b8dee;
-      --accent2: #7c4dff;
-      --success: #3ecf8e;
-      --failure: #f87171;
-      --warn: #f59e0b;
-      --text: #e2e8f0;
-      --muted: #8892a4;
-      --tab-active: #5b8dee;
-      --radius: 8px;
-    }
-    html, body { height: 100%; font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
-    /* ── Layout ── */
-    .app { display: flex; height: 100vh; }
-    .sidebar { width: 260px; min-width: 220px; background: var(--sidebar-bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
-    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-    /* ── Header ── */
-    .header { background: var(--sidebar-bg); border-bottom: 1px solid var(--border); padding: 14px 20px; display: flex; align-items: center; gap: 10px; }
-    .logo { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; color: var(--accent); }
-    .logo span { color: var(--muted); font-weight: 400; font-size: 13px; margin-left: 6px; }
-    /* ── Sidebar ── */
-    .sidebar-header { padding: 16px 14px 10px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
-    .domain-selector { padding: 0 12px 12px; }
-    .domain-selector select { width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: var(--radius); padding: 8px 10px; font-size: 13px; cursor: pointer; }
-    .domain-selector select:focus { outline: none; border-color: var(--accent); }
-    .status-card { margin: 0 12px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; }
-    .status-card .sc-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 10px; }
-    .sc-row { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; font-size: 12px; }
-    .sc-row .sc-label { color: var(--muted); }
-    .sc-row .sc-val { font-weight: 600; }
-    .badge { display: inline-block; padding: 1px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
-    .badge-learn { background: #1e3a5f; color: var(--accent); }
-    .badge-apply { background: #1a3d2e; color: var(--success); }
-    .badge-hybrid { background: #3d2e1a; color: var(--warn); }
-    .badge-cold { background: #3d1a1a; color: var(--failure); }
-    .badge-warm { background: #1a3d2e; color: var(--success); }
-    .sidebar-actions { padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; margin-top: auto; border-top: 1px solid var(--border); }
-    .sidebar-actions button { width: 100%; padding: 7px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; font-size: 12px; transition: background 0.15s; }
-    .sidebar-actions button:hover { background: var(--surface2); }
-    .sidebar-actions .btn-danger { border-color: #4d1a1a; color: var(--failure); }
-    .sidebar-actions .btn-danger:hover { background: #2a1111; }
-    /* ── Tabs ── */
-    .tabs { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 16px; gap: 2px; }
-    .tab-btn { padding: 12px 16px; font-size: 13px; font-weight: 500; color: var(--muted); background: transparent; border: none; border-bottom: 2px solid transparent; cursor: pointer; transition: color 0.15s, border-color 0.15s; white-space: nowrap; }
-    .tab-btn:hover { color: var(--text); }
-    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
-    /* ── Panels ── */
-    .panels { flex: 1; overflow-y: auto; padding: 24px; }
-    .panel { display: none; }
-    .panel.active { display: block; }
-    /* ── Cards ── */
-    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
-    .card-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
-    .card-sub { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
-    /* ── Forms ── */
-    .form-row { margin-bottom: 14px; }
-    .form-row label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; font-weight: 500; }
-    .form-row input, .form-row select, .form-row textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: var(--radius); padding: 9px 12px; font-size: 13px; font-family: inherit; }
-    .form-row input:focus, .form-row select:focus, .form-row textarea:focus { outline: none; border-color: var(--accent); }
-    .form-row textarea { resize: vertical; min-height: 120px; font-family: 'Consolas', 'Courier New', monospace; font-size: 12px; line-height: 1.5; }
-    .form-row .hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
-    .form-row input[type="range"] { padding: 4px 0; }
-    .row-group { display: flex; gap: 12px; }
-    .row-group .form-row { flex: 1; }
-    /* ── Buttons ── */
-    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: var(--radius); border: none; cursor: pointer; font-size: 13px; font-weight: 600; transition: opacity 0.15s, transform 0.08s; }
-    .btn:active { transform: scale(0.98); }
-    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .btn-primary { background: var(--accent); color: #fff; }
-    .btn-primary:hover:not(:disabled) { opacity: 0.88; }
-    .btn-success { background: var(--success); color: #0f1117; }
-    .btn-success:hover:not(:disabled) { opacity: 0.85; }
-    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
-    .btn-outline:hover:not(:disabled) { background: var(--surface2); }
-    .btn-sm { padding: 5px 12px; font-size: 12px; }
-    /* ── Result box ── */
-    .result-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-top: 14px; font-size: 12px; line-height: 1.6; }
-    .result-box pre { font-family: 'Consolas', monospace; white-space: pre-wrap; word-break: break-all; }
-    .result-ok { border-left: 3px solid var(--success); }
-    .result-err { border-left: 3px solid var(--failure); }
-    .result-info { border-left: 3px solid var(--accent); }
-    /* ── Conviction map ── */
-    .conv-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    .conv-table th { text-align: left; padding: 8px 10px; color: var(--muted); font-weight: 500; border-bottom: 1px solid var(--border); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
-    .conv-table td { padding: 6px 10px; border-bottom: 1px solid var(--border); }
-    .conv-table tr:hover td { background: var(--surface2); }
-    .conv-bar-wrap { width: 100px; height: 8px; background: #1a2035; border-radius: 4px; overflow: hidden; display: inline-block; vertical-align: middle; margin-right: 8px; }
-    .conv-bar { height: 100%; border-radius: 4px; transition: width 0.3s; }
-    .conv-val { font-weight: 600; font-variant-numeric: tabular-nums; }
-    /* ── Graph SVG ── */
-    #graph-svg { width: 100%; background: var(--surface2); border-radius: var(--radius); border: 1px solid var(--border); cursor: grab; }
-    #graph-svg:active { cursor: grabbing; }
-    .graph-node { cursor: pointer; }
-    .graph-node circle { transition: r 0.2s; }
-    .graph-node:hover circle { r: 22; }
-    .graph-edge { pointer-events: none; }
-    /* ── Apply panel ── */
-    .recommend-result { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin: 14px 0; }
-    .recommend-result .rec-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
-    .recommend-result .rec-state { font-size: 22px; font-weight: 700; color: var(--success); margin-bottom: 8px; }
-    .recommend-result .rec-detail { font-size: 12px; color: var(--muted); }
-    .candidate-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-    .chip { padding: 5px 12px; border-radius: 20px; background: var(--surface2); border: 1px solid var(--border); font-size: 12px; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
-    .chip.selected { border-color: var(--accent); background: #1e2d4d; color: var(--accent); }
-    /* ── Misc ── */
-    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.2); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .mode-selector { display: flex; gap: 8px; }
-    .mode-btn { flex: 1; padding: 8px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface2); color: var(--muted); cursor: pointer; font-size: 12px; font-weight: 600; text-align: center; transition: all 0.15s; }
-    .mode-btn.active { border-color: var(--accent); color: var(--accent); background: #1e2d4d; }
-    .alert { padding: 10px 14px; border-radius: var(--radius); font-size: 12px; margin-bottom: 12px; }
-    .alert-info { background: #1a2a40; border: 1px solid #2a4060; color: #8ab4e8; }
-    .alert-warn { background: #3d2e1a; border: 1px solid #5a4020; color: var(--warn); }
-    .steps-indicator { display: flex; align-items: center; gap: 0; margin-bottom: 20px; }
-    .step-dot { width: 28px; height: 28px; border-radius: 50%; background: var(--surface2); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--muted); position: relative; z-index: 1; transition: all 0.2s; }
-    .step-dot.done { background: var(--success); border-color: var(--success); color: #0f1117; }
-    .step-dot.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-    .step-line { flex: 1; height: 2px; background: var(--border); transition: background 0.2s; }
-    .step-line.done { background: var(--success); }
-    .nodes-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-    .node-chip { padding: 3px 10px; border-radius: 20px; background: var(--surface2); border: 1px solid var(--border); font-size: 11px; font-family: 'Consolas', monospace; }
-    .legend { display: flex; gap: 16px; font-size: 11px; color: var(--muted); margin-bottom: 8px; align-items: center; }
-    .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>E&#8320; Domain Studio</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f1117; --bar: #11141d; --surface: #1a2030; --surface2: #161c2b;
+  --surface3: #1e2535; --border: #20283a; --border2: #232c40; --border3: #2a3346;
+  --accent: #5b8dee; --accent-dim: #2c3f63; --success: #3ecf8e; --success-dim: #214636;
+  --failure: #f87171; --warn: #f59e0b; --text: #e6e9f0; --muted: #8b94a8;
+  --muted2: #5b6478; --mono: 'Consolas','SF Mono',Menlo,monospace; --r: 9px;
+}
+html, body { height: 100%; background: var(--bg); color: var(--text);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 14px; overflow: hidden; }
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-thumb { background: #2a3346; border-radius: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+.app { display: flex; flex-direction: column; height: 100vh; min-width: 1280px; }
+
+/* Top bar */
+.topbar { height: 54px; flex: none; display: flex; align-items: center; gap: 14px;
+  padding: 0 18px; background: var(--bar); border-bottom: 1px solid var(--border); }
+.logo-box { width: 30px; height: 30px; display: flex; align-items: center;
+  justify-content: center; border: 1px solid var(--accent); border-radius: 8px;
+  color: var(--accent); font-family: var(--mono); font-weight: 700; font-size: 13px; }
+.logo-label { font-weight: 600; font-size: 15px; }
+.domain-pill { display: flex; align-items: center; gap: 8px; padding: 5px 11px;
+  background: var(--surface3); border: 1px solid var(--border3); border-radius: 8px;
+  cursor: pointer; min-width: 170px; position: relative; user-select: none; }
+.pill-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex: none; }
+.pill-name { font-family: var(--mono); font-size: 13px; color: #c7cdda; flex: 1; }
+.pill-caret { color: var(--muted2); font-size: 11px; }
+.topbar-api { font-family: var(--mono); font-size: 12px; color: var(--muted2); margin-left: auto; }
+.connected-badge { display: flex; align-items: center; gap: 7px; padding: 5px 10px;
+  background: #16241c; border: 1px solid var(--success-dim); border-radius: 20px;
+  font-size: 12px; color: var(--success); }
+.connected-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success);
+  animation: e0pulse 2.4s ease-in-out infinite; }
+
+/* Domain dropdown */
+#domain-dropdown { display: none; position: fixed; top: 54px; left: 168px; width: 240px;
+  background: var(--surface3); border: 1px solid var(--border3); border-radius: 10px;
+  padding: 8px; z-index: 200; box-shadow: 0 12px 30px rgba(0,0,0,.55); }
+
+/* Split pane */
+.split { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0,1.5fr) 420px; }
+
+/* Graph pane */
+.graph-pane { position: relative; display: flex; flex-direction: column;
+  border-right: 1px solid var(--border); }
+.graph-header { height: 44px; flex: none; display: flex; align-items: center; gap: 12px;
+  padding: 0 16px; border-bottom: 1px solid #1c2333; }
+.graph-header-title { font-weight: 600; font-size: 13px; }
+.graph-header-meta { font-size: 12px; color: var(--muted2); }
+.zoom-btns { margin-left: auto; display: flex; gap: 6px; }
+.zoom-btn { height: 28px; min-width: 28px; padding: 0 8px; display: flex; align-items: center;
+  justify-content: center; border: 1px solid var(--border3); border-radius: 7px;
+  color: var(--muted); font-size: 14px; cursor: pointer; background: transparent;
+  transition: background .15s; font-family: inherit; }
+.zoom-btn:hover { background: var(--surface); color: var(--text); }
+.graph-canvas { position: relative; flex: 1; min-height: 0;
+  background: radial-gradient(120% 120% at 50% 30%, #131826 0%, var(--bg) 70%); }
+#graph-svg { position: absolute; inset: 0; width: 100%; height: 100%; cursor: grab; }
+#graph-svg:active { cursor: grabbing; }
+.graph-footer { flex: none; display: flex; align-items: center; gap: 22px;
+  padding: 10px 16px; border-top: 1px solid #1c2333; background: var(--bg); }
+.conv-legend-label { font-size: 10px; letter-spacing: .6px; color: var(--muted2);
+  text-transform: uppercase; margin-bottom: 4px; }
+.conv-legend-row { display: flex; align-items: center; gap: 8px; }
+.conv-grad { width: 180px; height: 7px; border-radius: 4px;
+  background: linear-gradient(90deg, #f87171, var(--accent) 50%, var(--success)); }
+.conv-leg-val { font-family: var(--mono); font-size: 11px; }
+.size-legend { display: flex; align-items: center; gap: 9px; }
+.size-dot-s { width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid var(--muted2); }
+.size-dot-l { width: 17px; height: 17px; border-radius: 50%; border: 1.5px solid var(--muted2); }
+.size-legend-label { font-size: 11px; color: var(--muted2); }
+
+/* Node inspector overlay */
+.node-inspector { position: absolute; top: 14px; left: 14px; width: 220px;
+  background: rgba(24,30,45,.95); backdrop-filter: blur(6px); border: 1px solid var(--border3);
+  border-radius: 11px; padding: 13px; box-shadow: 0 12px 30px rgba(0,0,0,.45);
+  z-index: 10; display: none; }
+.node-inspector.visible { display: block; }
+.ni-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.ni-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.ni-name { font-family: var(--mono); font-size: 13px; font-weight: 600; flex: 1;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ni-badge { font-size: 10px; color: var(--accent); border: 1px solid var(--accent-dim);
+  border-radius: 5px; padding: 2px 5px; white-space: nowrap; }
+.ni-score { display: flex; align-items: baseline; gap: 7px; margin-bottom: 6px; }
+.ni-score-val { font-size: 30px; font-weight: 700; font-family: var(--mono); line-height: 1; }
+.ni-score-label { font-size: 11px; color: var(--muted); }
+.ni-bar { height: 6px; border-radius: 4px; background: var(--border3); overflow: hidden; margin-bottom: 10px; }
+.ni-bar-fill { height: 100%; border-radius: 4px;
+  background: linear-gradient(90deg, var(--accent), #4bb2b8); transition: width .3s; }
+.ni-stats { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+
+/* Live badge */
+.live-badge { position: absolute; top: 14px; right: 14px; display: flex; align-items: center;
+  gap: 8px; padding: 6px 11px; background: rgba(24,30,45,.9); border: 1px solid var(--border3);
+  border-radius: 20px; z-index: 5; font-size: 11px; color: #b6bdcc; }
+.live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success);
+  animation: e0pulse 1.8s ease-in-out infinite; }
+
+/* Workflow pane */
+.workflow-pane { display: flex; flex-direction: column; background: #12151f; }
+.workflow-header { height: 44px; flex: none; display: flex; align-items: center; gap: 10px;
+  padding: 0 16px; border-bottom: 1px solid #1c2333; }
+.workflow-title { font-weight: 600; font-size: 13px; }
+.workflow-progress { font-size: 12px; color: var(--muted); margin-left: auto; }
+.workflow-body { flex: 1; min-height: 0; overflow-y: auto; padding: 14px;
+  display: flex; flex-direction: column; gap: 10px; }
+
+/* Accordion steps */
+.step { background: var(--surface); border: 1px solid var(--border2); border-radius: 12px;
+  overflow: hidden; transition: border-color .2s; }
+.step.step-active { border-color: var(--accent-dim); }
+.step-header { display: flex; align-items: center; gap: 12px; padding: 13px 14px;
+  cursor: pointer; user-select: none; }
+.step-num { width: 24px; height: 24px; flex: none; display: flex; align-items: center;
+  justify-content: center; border-radius: 50%; font-size: 12px; font-weight: 700; transition: all .2s; }
+.sn-pending { background: transparent; border: 1px solid #3c485f; color: var(--muted); }
+.sn-active { background: var(--accent); color: var(--bg); }
+.sn-done { background: #16241c; border: 1px solid var(--success-dim); color: var(--success); font-size: 13px; }
+.step-title { font-size: 13px; font-weight: 600; }
+.step-sub { font-size: 12px; color: var(--muted2); font-family: var(--mono); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.step-caret { color: #3c485f; font-size: 11px; margin-left: auto; transition: transform .2s; flex: none; }
+.step.open .step-caret { transform: rotate(180deg); }
+.step-body { display: none; padding: 0 14px 15px; }
+.step.open .step-body { display: block; }
+
+/* Forms */
+.fr { margin-bottom: 12px; }
+.fr label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; font-weight: 500; }
+.fr input, .fr select, .fr textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border3);
+  color: var(--text); border-radius: 8px; padding: 8px 10px; font-size: 13px; font-family: inherit; }
+.fr input:focus, .fr select:focus, .fr textarea:focus { outline: none; border-color: var(--accent); }
+.fr textarea { resize: vertical; min-height: 90px; font-family: var(--mono); font-size: 12px; line-height: 1.5; }
+.fr .hint { font-size: 11px; color: var(--muted2); margin-top: 3px; }
+input[type="range"] { padding: 4px 0; cursor: pointer; }
+.rg { display: flex; gap: 10px; }
+.rg .fr { flex: 1; }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 15px; border-radius: 8px;
+  border: none; cursor: pointer; font-size: 13px; font-weight: 600; transition: opacity .15s; font-family: inherit; }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover:not(:disabled) { opacity: .88; }
+.btn-success { background: var(--success); color: #08130d; }
+.btn-outline { background: transparent; border: 1px solid var(--border3); color: var(--text); }
+.btn-outline:hover:not(:disabled) { background: var(--surface); }
+.btn-sm { padding: 5px 11px; font-size: 12px; }
+.btn-danger { background: transparent; border: 1px solid #5a2e30; color: var(--failure); }
+.btn-danger:hover { background: rgba(248,113,113,.08); }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+
+/* Result box */
+.rbox { background: var(--surface2); border: 1px solid var(--border3); border-radius: 8px;
+  padding: 9px 12px; margin-top: 10px; font-size: 12px; line-height: 1.5; }
+.rbox pre { font-family: var(--mono); white-space: pre-wrap; word-break: break-all; }
+.rbox-ok { border-left: 3px solid var(--success); }
+.rbox-err { border-left: 3px solid var(--failure); }
+
+/* Domain list */
+.dl-item { display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 0; border-bottom: 1px solid var(--border3); }
+.dl-item:last-child { border-bottom: none; }
+.dl-name { font-family: var(--mono); font-size: 12px; }
+
+/* Learning progress */
+.prog-track { height: 9px; border-radius: 5px; background: var(--border3); overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 5px; transition: width .4s;
+  background-image: linear-gradient(90deg, var(--accent), #6f9bf0),
+    repeating-linear-gradient(45deg, rgba(255,255,255,.1) 0 8px, transparent 8px 16px);
+  background-size: 100% 100%, 40px 40px; animation: e0shimmer .9s linear infinite; }
+.prog-fill.done { background-image: linear-gradient(90deg, var(--success), #5ad8a0); animation: none; }
+.prog-labels { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 12px; margin-top: 6px; }
+.prog-ep { color: var(--muted); }
+.prog-pct { color: #8db1f5; font-weight: 700; }
+.prog-pct.done { color: var(--success); }
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.stat-tile { background: var(--surface2); border: 1px solid var(--border2); border-radius: 9px; padding: 9px 11px; }
+.stat-tile-label { font-size: 10px; letter-spacing: .5px; color: var(--muted2);
+  text-transform: uppercase; margin-bottom: 2px; }
+.stat-tile-val { font-family: var(--mono); font-size: 14px; }
+.running-badge { display: flex; align-items: center; gap: 6px; padding: 4px 9px;
+  border-radius: 6px; background: rgba(91,141,238,.14); border: 1px solid var(--accent-dim);
+  font-size: 11px; color: #8db1f5; }
+.running-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
+  animation: e0pulse 1.1s ease-in-out infinite; }
+
+/* Conviction bar list */
+.conv-list { display: flex; flex-direction: column; gap: 7px; margin-top: 4px; }
+.conv-row { display: flex; align-items: center; gap: 9px; }
+.conv-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.conv-name { font-family: var(--mono); font-size: 12px; width: 96px; flex: none;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.conv-track { flex: 1; height: 6px; border-radius: 4px; background: var(--border3); overflow: hidden; }
+.conv-fill { height: 100%; border-radius: 4px; }
+.conv-val { font-family: var(--mono); font-size: 12px; width: 34px; text-align: right; }
+
+/* Mode selector */
+.mode-sel { display: flex; gap: 7px; margin-bottom: 12px; }
+.mode-btn { flex: 1; padding: 7px; border-radius: 8px; border: 1px solid var(--border3);
+  background: var(--surface2); color: var(--muted); cursor: pointer; font-size: 12px;
+  font-weight: 600; text-align: center; transition: all .15s; font-family: inherit; }
+.mode-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(91,141,238,.1); }
+
+/* Candidate chips */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.chip { padding: 4px 10px; border-radius: 20px; background: var(--surface2);
+  border: 1px solid var(--border3); font-size: 12px; cursor: pointer;
+  font-family: var(--mono); transition: border-color .15s, background .15s; }
+.chip.sel { border-color: var(--accent); background: rgba(91,141,238,.12); color: var(--accent); }
+
+/* Decision card */
+.dc { border-radius: 11px; background: linear-gradient(180deg, #232c40, #1f2738);
+  border: 1px solid var(--accent-dim); border-top: 3px solid var(--accent);
+  padding: 15px; box-shadow: 0 14px 28px rgba(0,0,0,.4); margin-top: 6px; }
+.dc-lbl { display: flex; align-items: center; gap: 8px; margin-bottom: 13px; }
+.dc-lbl-text { font-size: 10px; letter-spacing: 1px; color: #8db1f5; text-transform: uppercase; font-weight: 600; }
+.dc-rank { font-size: 10px; color: #8db1f5; border: 1px solid var(--accent-dim);
+  border-radius: 5px; padding: 2px 7px; margin-left: auto; }
+.dc-trans { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+.dc-state { display: flex; align-items: center; gap: 7px; padding: 7px 11px;
+  background: var(--surface2); border: 1px solid var(--border3); border-radius: 8px;
+  font-family: var(--mono); font-size: 13px; min-width: 0; flex: 1; overflow: hidden; }
+.dc-sdot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.dc-sname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dc-arrow { color: var(--accent); font-size: 18px; flex: none; }
+.dc-conv-row { display: flex; align-items: flex-end; gap: 12px; margin-bottom: 6px; }
+.dc-conv-num { font-family: var(--mono); font-size: 36px; font-weight: 700; line-height: 1; color: var(--success); }
+.dc-conv-lbl { font-size: 11px; color: var(--muted); padding-bottom: 4px; }
+.dc-conv-bar-wrap { flex: 1; padding-bottom: 4px; }
+.dc-conv-bar-track { height: 7px; border-radius: 4px; background: var(--border3); overflow: hidden; }
+.dc-conv-bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--success), #5ad8a0); }
+.dc-stats { display: flex; gap: 18px; padding: 11px 0; border-top: 1px solid var(--border3);
+  border-bottom: 1px solid var(--border3); margin: 12px 0; }
+.dc-sv { font-family: var(--mono); font-size: 14px; }
+.dc-sv.g { color: var(--success); }
+.dc-sl { font-size: 11px; color: var(--muted2); }
+.dc-alt { font-size: 12px; color: var(--muted2); font-family: var(--mono); margin-bottom: 13px; }
+.dc-btns { display: flex; gap: 9px; }
+.dc-ok { flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px;
+  height: 40px; border-radius: 9px; background: var(--success); color: #08130d;
+  font-weight: 700; font-size: 13px; cursor: pointer; border: none; transition: opacity .15s; }
+.dc-ok:hover { opacity: .88; }
+.dc-fail { flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px;
+  height: 40px; border-radius: 9px; background: transparent; border: 1px solid #5a2e30;
+  color: var(--failure); font-weight: 600; font-size: 13px; cursor: pointer;
+  transition: background .15s; font-family: inherit; }
+.dc-fail:hover { background: rgba(248,113,113,.08); }
+.dc-hint { text-align: center; font-size: 11px; color: var(--muted2); margin-top: 9px; }
+
+/* Spinner */
+.spinner { display: inline-block; width: 13px; height: 13px; border: 2px solid rgba(255,255,255,.2);
+  border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
+
+@keyframes e0pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.35;transform:scale(.7)} }
+@keyframes e0dash { to { stroke-dashoffset: -18; } }
+@keyframes e0shimmer { 0%{background-position:0 0} 100%{background-position:40px 0} }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
 </head>
 <body>
 <div class="app">
 
-  <!-- ── Sidebar ── -->
-  <aside class="sidebar">
-    <div class="sidebar-header">Active Domain</div>
-    <div class="domain-selector">
-      <select id="domain-select" onchange="onDomainSelect()">
-        <option value="">— select domain —</option>
-      </select>
-    </div>
-    <div class="status-card" id="status-card" style="display:none">
-      <div class="sc-title">Status</div>
-      <div class="sc-row"><span class="sc-label">Mode</span><span class="sc-val" id="sc-mode">—</span></div>
-      <div class="sc-row"><span class="sc-label">Episodes</span><span class="sc-val" id="sc-episodes">—</span></div>
-      <div class="sc-row"><span class="sc-label">States</span><span class="sc-val" id="sc-states">—</span></div>
-      <div class="sc-row"><span class="sc-label">Edges</span><span class="sc-val" id="sc-edges">—</span></div>
-      <div class="sc-row"><span class="sc-label">Cold Start</span><span class="sc-val" id="sc-cold">—</span></div>
-    </div>
-    <div id="no-domain-msg" style="padding:12px;color:var(--muted);font-size:12px;line-height:1.5;">
-      Create a domain in step 1 to begin.
-    </div>
-    <div class="sidebar-actions">
-      <button onclick="refreshStatus()" class="btn-outline">↻ Refresh Status</button>
-      <button id="btn-export" onclick="exportDomain()" style="display:none;border-color:#1a3d5c;color:var(--accent)">↓ Export Landscape</button>
-      <button id="btn-delete" onclick="deleteDomain()" class="btn-danger" style="display:none">✕ Delete Domain</button>
-    </div>
-  </aside>
+<!-- ── Top bar ── -->
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:10px;flex:none">
+    <div class="logo-box">E&#8320;</div>
+    <span class="logo-label">Domain Studio</span>
+  </div>
+  <div class="domain-pill" onclick="toggleDropdown(event)">
+    <span class="pill-dot"></span>
+    <span class="pill-name" id="pill-name">&#8212; select domain &#8212;</span>
+    <span class="pill-caret">&#9662;</span>
+  </div>
+  <select id="domain-select" style="display:none" onchange="onDomainSelect()"></select>
+  <span class="topbar-api">REST &middot; /domains/&hellip;</span>
+  <div class="connected-badge"><span class="connected-dot"></span>connected</div>
+</div>
 
-  <!-- ── Main ── -->
-  <div class="main">
-    <div class="header">
-      <div class="logo">E₀<span>Domain Studio</span></div>
-      <div style="margin-left:auto;font-size:12px;color:var(--muted)">ARC-K · Universal Process Navigator</div>
-    </div>
+<!-- Domain dropdown -->
+<div id="domain-dropdown">
+  <div id="dd-list" style="font-size:13px;color:var(--muted2)">Loading&hellip;</div>
+  <div style="border-top:1px solid var(--border3);margin-top:8px;padding-top:8px">
+    <button class="btn btn-outline btn-sm" style="width:100%" onclick="openStep('create');closeDropdown()">+ Create New</button>
+  </div>
+</div>
 
-    <div class="tabs">
-      <button class="tab-btn active" onclick="showTab('create')">① Create</button>
-      <button class="tab-btn" onclick="showTab('topology')">② Topology</button>
-      <button class="tab-btn" onclick="showTab('learn')">③ Learn</button>
-      <button class="tab-btn" onclick="showTab('conviction')">④ Conviction</button>
-      <button class="tab-btn" onclick="showTab('apply')">⑤ Apply</button>
+<!-- ── Split pane ── -->
+<div class="split">
+
+  <!-- ▒▒ LEFT: Graph ▒▒ -->
+  <div class="graph-pane">
+    <div class="graph-header">
+      <span class="graph-header-title">Process Graph</span>
+      <span class="graph-header-meta" id="graph-meta">force-directed</span>
+      <div class="zoom-btns">
+        <button class="zoom-btn" onclick="zoomGraph(-1)">&#8722;</button>
+        <button class="zoom-btn" onclick="zoomGraph(1)">+</button>
+        <button class="zoom-btn" style="font-size:12px;padding:0 10px" onclick="fitGraph()">Fit</button>
+      </div>
     </div>
 
-    <div class="panels">
+    <div class="graph-canvas">
+      <!-- Node inspector -->
+      <div class="node-inspector" id="node-inspector">
+        <div class="ni-header">
+          <span class="ni-dot" id="ni-dot"></span>
+          <span class="ni-name" id="ni-name">&#8212;</span>
+          <span class="ni-badge">SELECTED</span>
+        </div>
+        <div class="ni-score">
+          <span class="ni-score-val" id="ni-score-val">&#8212;</span>
+          <span class="ni-score-label">conviction</span>
+        </div>
+        <div class="ni-bar"><div class="ni-bar-fill" id="ni-bar-fill" style="width:0%"></div></div>
+        <div class="ni-stats" id="ni-stats"></div>
+      </div>
 
-      <!-- ════ STEP 1: CREATE ════ -->
-      <div class="panel active" id="panel-create">
-        <div class="card">
-          <div class="card-title">① New Domain</div>
-          <div class="card-sub">Define the process domain. Name it anything — E₀ is domain-agnostic.</div>
-          <div class="form-row">
-            <label>Domain Name <small style="color:var(--muted)">(slug, no spaces)</small></label>
-            <input id="inp-name" type="text" placeholder="e.g. logistics, onboarding, clinical-trial" />
+      <!-- Live badge -->
+      <div class="live-badge"><span class="live-dot"></span>live &middot; updates after each run</div>
+
+      <svg id="graph-svg" viewBox="0 0 800 560">
+        <defs>
+          <pattern id="e0dots" width="22" height="22" patternUnits="userSpaceOnUse">
+            <circle cx="1.2" cy="1.2" r="1.1" fill="#1a2132"></circle>
+          </pattern>
+          <marker id="e0arrow" markerWidth="9" markerHeight="8" refX="7" refY="3" orient="auto" markerUnits="userSpaceOnUse">
+            <path d="M0,0 L7,3 L0,6 Z" fill="#3c485f"></path>
+          </marker>
+          <marker id="e0arrowHi" markerWidth="9" markerHeight="8" refX="7" refY="3" orient="auto" markerUnits="userSpaceOnUse">
+            <path d="M0,0 L7,3 L0,6 Z" fill="#3ecf8e"></path>
+          </marker>
+          <marker id="e0arrowLo" markerWidth="9" markerHeight="8" refX="7" refY="3" orient="auto" markerUnits="userSpaceOnUse">
+            <path d="M0,0 L7,3 L0,6 Z" fill="#f87171"></path>
+          </marker>
+          <marker id="e0arrowRec" markerWidth="10" markerHeight="9" refX="7.5" refY="3.2" orient="auto" markerUnits="userSpaceOnUse">
+            <path d="M0,0 L7.5,3.2 L0,6.4 Z" fill="#5b8dee"></path>
+          </marker>
+        </defs>
+        <rect x="0" y="0" width="800" height="560" fill="url(#e0dots)"></rect>
+        <g id="graph-edges"></g>
+        <g id="graph-nodes"></g>
+        <g id="rec-edge-group" style="display:none">
+          <line id="rec-edge" stroke="#5b8dee" stroke-width="2.4" stroke-dasharray="6 6"
+            marker-end="url(#e0arrowRec)" style="animation:e0dash 1.1s linear infinite"></line>
+        </g>
+      </svg>
+    </div>
+
+    <div class="graph-footer">
+      <div>
+        <div class="conv-legend-label">Conviction</div>
+        <div class="conv-legend-row">
+          <span class="conv-leg-val" style="color:var(--failure)">0.0</span>
+          <div class="conv-grad"></div>
+          <span class="conv-leg-val" style="color:var(--success)">1.0</span>
+        </div>
+      </div>
+      <div class="size-legend">
+        <span class="size-dot-s"></span>
+        <span class="size-dot-l"></span>
+        <span class="size-legend-label">node size = episodes observed</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ▒▒ RIGHT: Workflow ▒▒ -->
+  <div class="workflow-pane">
+    <div class="workflow-header">
+      <span class="workflow-title">Workflow</span>
+      <span class="workflow-progress" id="wf-progress">0 / 5 complete</span>
+    </div>
+
+    <div class="workflow-body">
+
+      <!-- ① Create -->
+      <div class="step" id="step-create">
+        <div class="step-header" onclick="toggleStep('create')">
+          <span class="step-num sn-pending" id="sn-create">1</span>
+          <div style="flex:1;min-width:0">
+            <div class="step-title">Create Domain</div>
+            <div class="step-sub" id="ss-create">Define or load a domain workspace</div>
           </div>
-          <div class="row-group">
-            <div class="form-row">
-              <label>Topic <small style="color:var(--muted)">(short label)</small></label>
-              <input id="inp-topic" type="text" placeholder="e.g. Order Fulfillment" />
-            </div>
-            <div class="form-row">
-              <label>Initial Mode</label>
+          <span class="step-caret">&#9662;</span>
+        </div>
+        <div class="step-body">
+          <div class="fr">
+            <label>Domain Name <small style="color:var(--muted2)">(slug, no spaces)</small></label>
+            <input id="inp-name" type="text" placeholder="e.g. logistics, onboarding" />
+          </div>
+          <div class="rg">
+            <div class="fr"><label>Topic</label><input id="inp-topic" type="text" placeholder="Order Fulfillment" /></div>
+            <div class="fr"><label>Mode</label>
               <select id="inp-mode">
                 <option value="learn">learn</option>
                 <option value="apply">apply</option>
@@ -205,47 +407,49 @@
               </select>
             </div>
           </div>
-          <div class="form-row">
-            <label>Description <small style="color:var(--muted)">(optional)</small></label>
-            <input id="inp-desc" type="text" placeholder="e.g. B2B order processing from receipt to delivery" />
+          <div class="fr">
+            <label>Description <small style="color:var(--muted2)">(optional)</small></label>
+            <input id="inp-desc" type="text" placeholder="e.g. B2B order processing" />
           </div>
-          <button class="btn btn-primary" onclick="createDomain()">Create Domain</button>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="btn-create" onclick="createDomain()">Create Domain</button>
+          </div>
           <div id="result-create"></div>
-        </div>
 
-        <div class="card">
-          <div class="card-title">Existing Domains</div>
-          <div class="card-sub">All persisted domain workspaces on this server.</div>
-          <div id="domain-list-table" style="color:var(--muted);font-size:13px;">Loading…</div>
-          <br>
-          <button class="btn btn-outline btn-sm" onclick="loadDomainList()">↻ Refresh</button>
-        </div>
-
-        <div class="card">
-          <div class="card-title">Import Landscape</div>
-          <div class="card-sub">Restore a previously exported domain (including trained Historization). The domain name is read from the file.</div>
-          <div class="form-row">
-            <label>Export JSON File</label>
-            <input type="file" id="inp-import-file" accept=".json" style="padding:6px" />
+          <div style="margin-top:16px;border-top:1px solid var(--border3);padding-top:14px">
+            <div style="font-size:12px;font-weight:600;margin-bottom:10px">Existing Domains</div>
+            <div id="domain-list-table" style="color:var(--muted2);font-size:13px">Loading&hellip;</div>
+            <div class="btn-row">
+              <button class="btn btn-outline btn-sm" onclick="loadDomainList()">&#8635; Refresh</button>
+            </div>
           </div>
-          <button class="btn btn-outline" onclick="importDomain()">Import Domain</button>
-          <div id="result-import"></div>
+
+          <div style="margin-top:16px;border-top:1px solid var(--border3);padding-top:14px">
+            <div style="font-size:12px;font-weight:600;margin-bottom:10px">Import Landscape</div>
+            <div class="fr">
+              <label>Export JSON File</label>
+              <input type="file" id="inp-import-file" accept=".json" style="padding:5px" />
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="importDomain()">Import Domain</button>
+            <div id="result-import"></div>
+          </div>
         </div>
       </div>
 
-      <!-- ════ STEP 2: TOPOLOGY ════ -->
-      <div class="panel" id="panel-topology">
-        <div class="alert alert-info">
-          <strong>How it works:</strong> Define all process steps (states) and transitions (edges) as a CSV.
-          Each row: <code>SOURCE, TARGET[, outcome_hint]</code>.
-          E₀ is blind to the names — it only learns from the structure and oracle feedback.
+      <!-- ② Topology -->
+      <div class="step" id="step-topology">
+        <div class="step-header" onclick="toggleStep('topology')">
+          <span class="step-num sn-pending" id="sn-topology">2</span>
+          <div style="flex:1;min-width:0">
+            <div class="step-title">Upload Topology</div>
+            <div class="step-sub" id="ss-topology">Define states and transitions as CSV</div>
+          </div>
+          <span class="step-caret">&#9662;</span>
         </div>
-        <div class="card">
-          <div class="card-title">② Process Topology</div>
-          <div class="card-sub">Paste your CSV or use the logistics demo below. Then upload to inject into E₀'s landscape.</div>
-          <div class="form-row">
-            <label>Topology CSV</label>
-            <textarea id="inp-csv" rows="12" spellcheck="false">ORDER_RECEIVED,PICKING
+        <div class="step-body">
+          <div class="fr">
+            <label>Topology CSV &mdash; <small style="color:var(--muted2)">FROM, TO per line</small></label>
+            <textarea id="inp-csv" rows="8" spellcheck="false">ORDER_RECEIVED,PICKING
 ORDER_RECEIVED,BACKORDER
 PICKING,QUALITY_CHECK
 QUALITY_CHECK,SHIPPED
@@ -253,823 +457,793 @@ QUALITY_CHECK,REWORK
 REWORK,PICKING
 BACKORDER,PICKING
 SHIPPED,DELIVERED</textarea>
-            <div class="hint">
-              One edge per line: <code>FROM, TO</code> &nbsp;·&nbsp;
-              Optional third column: <code>success</code> / <code>failure</code> / <code>partial</code>
-            </div>
+            <div class="hint">Optional third column: success / failure / partial</div>
           </div>
-          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-primary" onclick="uploadTopology()" id="btn-upload">Upload Topology</button>
-            <button class="btn btn-outline btn-sm" onclick="loadDemo('logistics')">▶ Demo: Logistics</button>
-            <button class="btn btn-outline btn-sm" onclick="loadDemo('onboarding')">▶ Demo: Onboarding</button>
-            <button class="btn btn-outline btn-sm" onclick="loadDemo('clinical')">▶ Demo: Clinical</button>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="btn-upload" onclick="uploadTopology()">Upload Topology</button>
+            <button class="btn btn-outline btn-sm" onclick="loadDemo('logistics')">&#9654; Logistics</button>
+            <button class="btn btn-outline btn-sm" onclick="loadDemo('onboarding')">&#9654; Onboarding</button>
+            <button class="btn btn-outline btn-sm" onclick="loadDemo('clinical')">&#9654; Clinical</button>
           </div>
           <div id="result-topology"></div>
-        </div>
-        <div class="card" id="card-nodes" style="display:none">
-          <div class="card-title">Loaded States</div>
-          <div id="nodes-list" class="nodes-list"></div>
+          <div id="nodes-display" style="display:none;margin-top:12px">
+            <div style="font-size:11px;color:var(--muted2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Loaded States</div>
+            <div id="nodes-list" style="display:flex;flex-wrap:wrap;gap:5px"></div>
+          </div>
         </div>
       </div>
 
-      <!-- ════ STEP 3: LEARN ════ -->
-      <div class="panel" id="panel-learn">
-        <div class="alert alert-info">
-          E₀ runs <strong>HistorizedQuantumWalk</strong> episodes. Each episode is a walk from start
-          to goal (or max steps). The oracle scores each transition. Historization accumulates U/F traces.
+      <!-- ③ Learning -->
+      <div class="step" id="step-learn">
+        <div class="step-header" onclick="toggleStep('learn')">
+          <span class="step-num sn-pending" id="sn-learn">3</span>
+          <div style="flex:1;min-width:0">
+            <div class="step-title">Run Learning</div>
+            <div class="step-sub" id="ss-learn">HistorizedQuantumWalk episodes</div>
+          </div>
+          <span id="learn-badge" style="display:none" class="running-badge">
+            <span class="running-dot"></span>running
+          </span>
+          <span class="step-caret">&#9662;</span>
         </div>
-        <div class="card">
-          <div class="card-title">③ Learning Configuration</div>
-          <div class="card-sub">Configure and run a learning session. You can run multiple batches — traces accumulate.</div>
-
-          <div class="row-group">
-            <div class="form-row">
-              <label>Oracle Type</label>
-              <select id="inp-oracle" onchange="onOracleChange()">
-                <option value="goal_aware">goal_aware (recommended)</option>
-                <option value="always_success">always_success (explore topology)</option>
-                <option value="random">random (stress test)</option>
-                <option value="topology_aware">topology_aware (self-referential)</option>
-                <option value="llm">llm (OpenAI)</option>
-                <option value="resource_aware">resource_aware (resources)</option>
-              </select>
-              <div class="hint" id="oracle-hint">Scores each step by BFS-distance to goal. Requires goal state.</div>
+        <div class="step-body">
+          <div id="learn-config">
+            <div class="rg">
+              <div class="fr">
+                <label>Oracle Type</label>
+                <select id="inp-oracle" onchange="onOracleChange()">
+                  <option value="goal_aware">goal_aware</option>
+                  <option value="always_success">always_success</option>
+                  <option value="random">random</option>
+                  <option value="topology_aware">topology_aware</option>
+                  <option value="llm">llm (OpenAI)</option>
+                  <option value="resource_aware">resource_aware</option>
+                </select>
+                <div class="hint" id="oracle-hint">Scores steps by BFS-distance to goal.</div>
+              </div>
+              <div class="fr" id="goal-row">
+                <label>Goal State</label>
+                <input id="inp-goal" type="text" placeholder="e.g. DELIVERED" />
+              </div>
             </div>
-            <div class="form-row" id="goal-row">
-              <label>Goal State</label>
-              <input id="inp-goal" type="text" placeholder="e.g. DELIVERED" />
-              <div class="hint">The terminal state E₀ should navigate towards.</div>
+            <div class="rg">
+              <div class="fr">
+                <label>Start State <small style="color:var(--muted2)">(optional)</small></label>
+                <input id="inp-start" type="text" placeholder="auto" />
+              </div>
+              <div class="fr">
+                <label>Max Steps / Episode</label>
+                <input id="inp-maxsteps" type="number" value="30" min="5" max="500" />
+              </div>
             </div>
-          </div>
-          <div class="row-group">
-            <div class="form-row">
-              <label>Start State <small style="color:var(--muted)">(optional)</small></label>
-              <input id="inp-start" type="text" placeholder="e.g. ORDER_RECEIVED (leave empty for auto)" />
+            <div class="rg">
+              <div class="fr">
+                <label>Episodes: <span id="ep-label">50</span></label>
+                <input id="inp-episodes" type="range" min="5" max="500" value="50"
+                  oninput="document.getElementById('ep-label').textContent=this.value" />
+              </div>
+              <div class="fr">
+                <label>Walkers: <span id="walker-label">1</span></label>
+                <input id="inp-walkers" type="range" min="1" max="50" value="1"
+                  oninput="document.getElementById('walker-label').textContent=this.value" />
+              </div>
             </div>
-            <div class="form-row">
-              <label>Episodes: <span id="ep-label">50</span></label>
-              <input id="inp-episodes" type="range" min="5" max="500" value="50"
-                     oninput="document.getElementById('ep-label').textContent=this.value" />
+            <div id="resource-config" style="display:none">
+              <div class="fr">
+                <label>Resource Rules <small style="color:var(--muted2)">(JSON)</small></label>
+                <textarea id="inp-resource-rules" rows="3" spellcheck="false"
+                  placeholder='{"PICKING,QUALITY_CHECK": "forklift"}'></textarea>
+              </div>
+              <div class="fr">
+                <label>Resource State <small style="color:var(--muted2)">(JSON)</small></label>
+                <textarea id="inp-resource-state" rows="2" spellcheck="false"
+                  placeholder='{"forklift": true}'></textarea>
+              </div>
             </div>
-            <div class="form-row">
-              <label>Max Steps / Episode</label>
-              <input id="inp-maxsteps" type="number" value="30" min="5" max="500" />
-            </div>
-          </div>
-          <div class="row-group">
-            <div class="form-row">
-              <label>Walkers: <span id="walker-label">1</span> <small style="color:var(--muted)">(parallel instances)</small></label>
-              <input id="inp-walkers" type="range" min="1" max="50" value="1"
-                     oninput="document.getElementById('walker-label').textContent=this.value" />
-              <div class="hint">Total episodes = Episodes × Walkers. Simulates N simultaneous process instances sharing one Landscape.</div>
-            </div>
-          </div>
-          <div id="resource-config" style="display:none">
-            <div class="form-row">
-              <label>Resource Rules <small style="color:var(--muted)">(JSON)</small></label>
-              <textarea id="inp-resource-rules" rows="4" spellcheck="false" placeholder='{"PICKING,QUALITY_CHECK": "forklift", "QUALITY_CHECK": "inspector"}'></textarea>
-              <div class="hint">Maps edge key <code>FROM,TO</code> or target state to a resource name.</div>
-            </div>
-            <div class="form-row">
-              <label>Resource State <small style="color:var(--muted)">(JSON)</small></label>
-              <textarea id="inp-resource-state" rows="3" spellcheck="false" placeholder='{"forklift": true, "inspector": false}'></textarea>
-              <div class="hint">Current availability of each resource (<code>true</code> = available).</div>
-            </div>
+            <button class="btn btn-primary" id="btn-learn" onclick="runLearn()">Start Learning</button>
           </div>
 
-          <button class="btn btn-primary" onclick="runLearn()" id="btn-learn">Start Learning</button>
+          <!-- Progress UI (shown while running / after) -->
+          <div id="learn-progress-ui" style="display:none">
+            <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+            <div class="prog-labels">
+              <span class="prog-ep" id="prog-ep-lbl">0 / — episodes</span>
+              <span class="prog-pct" id="prog-pct">0%</span>
+            </div>
+            <div class="stat-grid">
+              <div class="stat-tile"><div class="stat-tile-label">Episodes</div><div class="stat-tile-val" id="st-ep">—</div></div>
+              <div class="stat-tile"><div class="stat-tile-label">Walkers</div><div class="stat-tile-val" id="st-wk">—</div></div>
+              <div class="stat-tile"><div class="stat-tile-label">Oracle</div><div class="stat-tile-val" id="st-or" style="font-size:11px">—</div></div>
+              <div class="stat-tile"><div class="stat-tile-label">Max Steps</div><div class="stat-tile-val" id="st-ms">—</div></div>
+            </div>
+          </div>
+
           <div id="result-learn"></div>
-        </div>
-
-        <div class="card" id="card-learn-history" style="display:none">
-          <div class="card-title">Learning History</div>
-          <div id="learn-history-list"></div>
+          <div id="learn-history-card" style="display:none;margin-top:12px;border-top:1px solid var(--border3);padding-top:12px">
+            <div style="font-size:11px;color:var(--muted2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Learning History</div>
+            <div id="learn-history-list"></div>
+          </div>
         </div>
       </div>
 
-      <!-- ════ STEP 4: CONVICTION ════ -->
-      <div class="panel" id="panel-conviction">
-        <div class="card">
-          <div class="card-title">④ Conviction Map</div>
-          <div class="card-sub">
-            Conviction = (trace_load / (trace_load + μ)) × |trace_quality|.
-            High conviction (→ 1.0) means E₀ has reliable experience on this edge.
+      <!-- ④ Conviction -->
+      <div class="step" id="step-conviction">
+        <div class="step-header" onclick="toggleStep('conviction')">
+          <span class="step-num sn-pending" id="sn-conviction">4</span>
+          <div style="flex:1;min-width:0">
+            <div class="step-title">Conviction Inspection</div>
+            <div class="step-sub">click a node in the graph &rarr;</div>
           </div>
-          <div style="display:flex;gap:10px;margin-bottom:16px">
-            <button class="btn btn-primary" onclick="loadConviction()">↻ Load Conviction Map</button>
-          </div>
-
-          <div class="legend">
-            <span><span class="legend-dot" style="background:var(--success)"></span> High conviction</span>
-            <span><span class="legend-dot" style="background:var(--warn)"></span> Medium</span>
-            <span><span class="legend-dot" style="background:var(--failure)"></span> Low / unexplored</span>
-          </div>
-
-          <table class="conv-table" id="conv-table">
-            <thead><tr><th>Edge</th><th>Conviction</th><th>Score</th></tr></thead>
-            <tbody id="conv-tbody"><tr><td colspan="3" style="color:var(--muted);padding:12px">Click "Load Conviction Map" to refresh.</td></tr></tbody>
-          </table>
+          <span class="step-caret">&#9662;</span>
         </div>
-
-        <div class="card">
-          <div class="card-title">Graph View</div>
-          <div class="card-sub">Nodes = states, edge color = conviction (green → red). Drag to explore.</div>
-          <svg id="graph-svg" height="420" viewBox="0 0 800 420">
-            <defs>
-              <marker id="arrow" markerWidth="8" markerHeight="8" refX="16" refY="3" orient="auto">
-                <path d="M0,0 L0,6 L8,3 z" fill="#8892a4"/>
-              </marker>
-              <marker id="arrow-hi" markerWidth="8" markerHeight="8" refX="16" refY="3" orient="auto">
-                <path d="M0,0 L0,6 L8,3 z" fill="#3ecf8e"/>
-              </marker>
-              <marker id="arrow-lo" markerWidth="8" markerHeight="8" refX="16" refY="3" orient="auto">
-                <path d="M0,0 L0,6 L8,3 z" fill="#f87171"/>
-              </marker>
-            </defs>
-            <g id="graph-edges"></g>
-            <g id="graph-nodes"></g>
-          </svg>
+        <div class="step-body">
+          <button class="btn btn-outline btn-sm" onclick="loadConviction()" style="margin-bottom:10px">&#8635; Refresh Graph</button>
+          <div class="conv-list" id="conv-list">
+            <div style="color:var(--muted2);font-size:12px">Run learning first, then refresh.</div>
+          </div>
         </div>
       </div>
 
-      <!-- ════ STEP 5: APPLY ════ -->
-      <div class="panel" id="panel-apply">
-        <div class="alert alert-warn">
-          Switch domain to <strong>apply</strong> or <strong>hybrid</strong> mode before using recommendations.
-          In hybrid mode, E₀ continues learning from real outcomes.
-        </div>
-
-        <div class="card">
-          <div class="card-title">Domain Mode</div>
-          <div class="mode-selector" id="mode-selector">
-            <div class="mode-btn" data-m="learn" onclick="setMode('learn')">learn</div>
-            <div class="mode-btn" data-m="apply" onclick="setMode('apply')">apply</div>
-            <div class="mode-btn" data-m="hybrid" onclick="setMode('hybrid')">hybrid</div>
+      <!-- ⑤ Apply -->
+      <div class="step" id="step-apply">
+        <div class="step-header" onclick="toggleStep('apply')">
+          <span class="step-num sn-pending" id="sn-apply">5</span>
+          <div style="flex:1;min-width:0">
+            <div class="step-title">Recommend &rarr; Record Outcome</div>
+            <div class="step-sub" id="ss-apply">Switch mode, get recommendations</div>
           </div>
-          <div id="result-mode" style="margin-top:10px"></div>
+          <span class="step-caret">&#9662;</span>
         </div>
+        <div class="step-body">
+          <div style="font-size:11px;color:var(--muted2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Domain Mode</div>
+          <div class="mode-sel" id="mode-selector">
+            <button class="mode-btn" data-m="learn" onclick="setMode('learn')">learn</button>
+            <button class="mode-btn" data-m="apply" onclick="setMode('apply')">apply</button>
+            <button class="mode-btn" data-m="hybrid" onclick="setMode('hybrid')">hybrid</button>
+          </div>
+          <div id="result-mode" style="margin-bottom:10px;font-size:12px"></div>
 
-        <div class="card">
-          <div class="card-title">⑤ Recommend Next Step</div>
-          <div class="card-sub">Enter the current state and the possible next steps. E₀ recommends the best one.</div>
-          <div class="form-row">
+          <div class="fr">
             <label>Current State</label>
             <input id="inp-cur-state" type="text" placeholder="e.g. ORDER_RECEIVED" />
           </div>
-          <div class="form-row">
-            <label>Candidates <small style="color:var(--muted)">(click to select/deselect, or type comma-separated)</small></label>
+          <div class="fr">
+            <label>Candidates <small style="color:var(--muted2)">(comma-separated or click)</small></label>
             <input id="inp-candidates-raw" type="text" placeholder="e.g. PICKING, BACKORDER" oninput="renderChips()" />
-            <div class="candidate-chips" id="candidate-chips"></div>
-            <div class="hint">All candidates must be known states in the landscape.</div>
+            <div class="chips" id="candidate-chips"></div>
           </div>
-          <button class="btn btn-primary" onclick="doRecommend()">Recommend</button>
-          <div class="recommend-result" id="recommend-result" style="display:none">
-            <div class="rec-label">E₀ recommends</div>
-            <div class="rec-state" id="rec-state">—</div>
-            <div class="rec-detail" id="rec-detail"></div>
-          </div>
-        </div>
+          <button class="btn btn-primary" onclick="doRecommend()" style="margin-bottom:6px">Recommend</button>
 
-        <div class="card">
-          <div class="card-title">Record Actual Outcome</div>
-          <div class="card-sub">After the step was executed, tell E₀ what actually happened. This updates the Historization.</div>
-          <div class="row-group">
-            <div class="form-row">
-              <label>From State</label>
-              <input id="inp-rec-from" type="text" placeholder="e.g. ORDER_RECEIVED" />
+          <!-- Decision card -->
+          <div id="decision-card" style="display:none" class="dc">
+            <div class="dc-lbl">
+              <span class="dc-lbl-text">Recommended Transition</span>
+              <span class="dc-rank">rank 1</span>
             </div>
-            <div class="form-row">
-              <label>To State</label>
-              <input id="inp-rec-to" type="text" placeholder="e.g. PICKING" />
+            <div class="dc-trans">
+              <div class="dc-state"><span class="dc-sdot" id="dc-from-dot" style="background:#4bb2b8"></span><span class="dc-sname" id="dc-from">—</span></div>
+              <span class="dc-arrow">&rarr;</span>
+              <div class="dc-state" style="border-color:var(--success-dim)"><span class="dc-sdot" id="dc-to-dot" style="background:#43c39f"></span><span class="dc-sname" id="dc-to">—</span></div>
             </div>
-            <div class="form-row">
-              <label>Outcome</label>
-              <select id="inp-rec-outcome">
-                <option value="success">success</option>
-                <option value="failure">failure</option>
-                <option value="partial">partial</option>
-              </select>
+            <div class="dc-conv-row">
+              <div>
+                <div class="dc-conv-num" id="dc-conv-num">—</div>
+                <div class="dc-conv-lbl">conviction</div>
+              </div>
+              <div class="dc-conv-bar-wrap">
+                <div class="dc-conv-bar-track"><div class="dc-conv-bar-fill" id="dc-conv-bar" style="width:0%"></div></div>
+              </div>
             </div>
+            <div class="dc-stats">
+              <div><div class="dc-sv" id="dc-quality">—</div><div class="dc-sl">quality</div></div>
+              <div><div class="dc-sv" id="dc-reason">—</div><div class="dc-sl">reason</div></div>
+              <div><div class="dc-sv" id="dc-cold"></div><div class="dc-sl">status</div></div>
+            </div>
+            <div class="dc-alt" id="dc-alt"></div>
+            <div class="dc-btns">
+              <button class="dc-ok" onclick="doRecord('success')">&#10003;&nbsp;Record Success</button>
+              <button class="dc-fail" onclick="doRecord('failure')">&#10007;&nbsp;Record Failure</button>
+            </div>
+            <div class="dc-hint">recording an outcome updates conviction &amp; re-renders the graph</div>
           </div>
-          <button class="btn btn-success btn-sm" onclick="doRecord()">Record Outcome</button>
-          <div id="result-record"></div>
+
+          <div id="result-record" style="margin-top:10px"></div>
+
+          <div style="margin-top:16px;border-top:1px solid var(--border3);padding-top:14px;display:flex;flex-direction:column;gap:7px">
+            <button id="btn-export" onclick="exportDomain()" style="display:none" class="btn btn-outline btn-sm">&#8595; Export Landscape</button>
+            <button id="btn-delete" onclick="deleteDomain()" style="display:none" class="btn btn-sm btn-danger">&#10005; Delete Domain</button>
+          </div>
         </div>
       </div>
 
-    </div><!-- /panels -->
-  </div><!-- /main -->
+    </div><!-- /workflow-body -->
+  </div><!-- /workflow-pane -->
+</div><!-- /split -->
 </div><!-- /app -->
 
 <script>
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // E₀ Domain Studio — Client Logic
-// ═══════════════════════════════════════════════════════
-
-const API = '';  // same origin
+// ═══════════════════════════════════════════════════════════════
+const API = '';
 let activeDomain = null;
 let learnHistory = [];
 let knownStates = [];
 let convictionData = {};
+let graphPos = {}, graphEdgeList = [], graphNodeIds = [];
+let currentRec = null;
+const GW = 800, GH = 560, NODE_R = 18;
 
-// ── Tab navigation ──────────────────────────────────────
-function showTab(name) {
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('panel-' + name).classList.add('active');
-  event.currentTarget.classList.add('active');
-  if (name === 'conviction') loadConviction();
-  if (name === 'apply') refreshStatus();
-}
-
-// ── API helpers ─────────────────────────────────────────
-async function api(method, path, body = null, isForm = false) {
-  const opts = { method, headers: {} };
-  if (body && !isForm) {
-    opts.headers['Content-Type'] = 'application/json';
-    opts.body = JSON.stringify(body);
-  } else if (body && isForm) {
-    opts.body = body;
-  }
-  const r = await fetch(API + path, opts);
-  const text = await r.text();
-  let json;
-  try { json = JSON.parse(text); } catch { json = { detail: text }; }
-  return { ok: r.ok, status: r.status, data: json };
-}
-
-function setResult(id, { ok, data, status }, extraHtml = '') {
-  const el = document.getElementById(id);
-  if (!el) return;
-  const cls = ok ? 'result-ok' : 'result-err';
-  const msg = ok
-    ? (typeof data === 'object' ? JSON.stringify(data, null, 2) : data)
-    : (data?.detail || JSON.stringify(data, null, 2));
-  el.innerHTML = `<div class="result-box ${cls}"><pre>${escHtml(msg)}</pre>${extraHtml}</div>`;
-}
-
-function escHtml(s) {
+// ── Utilities ──────────────────────────────────────────────────
+function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
-
-function setLoading(btnId, loading, label = null) {
-  const btn = document.getElementById(btnId);
-  if (!btn) return;
-  btn.disabled = loading;
-  if (loading) {
-    btn.dataset.orig = btn.innerHTML;
-    btn.innerHTML = `<span class="spinner"></span>&nbsp;Working…`;
-  } else {
-    btn.innerHTML = label || btn.dataset.orig || btn.innerHTML;
-  }
+async function api(method, path, body=null, isForm=false) {
+  const opts = { method, headers:{} };
+  if (body && !isForm) { opts.headers['Content-Type']='application/json'; opts.body=JSON.stringify(body); }
+  else if (body && isForm) { opts.body=body; }
+  const r = await fetch(API+path, opts);
+  const text = await r.text();
+  let json; try { json=JSON.parse(text); } catch { json={detail:text}; }
+  return { ok:r.ok, status:r.status, data:json };
+}
+function setResult(id, {ok, data}) {
+  const el = document.getElementById(id); if (!el) return;
+  const msg = ok ? (typeof data==='object' ? JSON.stringify(data,null,2) : data)
+                 : (data?.detail || JSON.stringify(data,null,2));
+  el.innerHTML = `<div class="rbox ${ok?'rbox-ok':'rbox-err'}"><pre>${esc(msg)}</pre></div>`;
+}
+function setLoading(id, on) {
+  const b=document.getElementById(id); if(!b) return;
+  b.disabled=on;
+  if(on){b._orig=b.innerHTML;b.innerHTML='<span class="spinner"></span>&nbsp;Working…';}
+  else{b.innerHTML=b._orig||b.innerHTML;}
 }
 
-// ── Domain list ─────────────────────────────────────────
+// ── Accordion ──────────────────────────────────────────────────
+function toggleStep(name) {
+  const el = document.getElementById('step-'+name);
+  const wasOpen = el.classList.contains('open');
+  document.querySelectorAll('.step').forEach(s=>s.classList.remove('open'));
+  if (!wasOpen) el.classList.add('open');
+}
+function openStep(name) {
+  document.querySelectorAll('.step').forEach(s=>s.classList.remove('open'));
+  document.getElementById('step-'+name).classList.add('open');
+}
+function stepDone(name, sub) {
+  const sn = document.getElementById('sn-'+name);
+  sn.className = 'step-num sn-done'; sn.textContent = '✓';
+  const ss = document.getElementById('ss-'+name);
+  if (ss && sub) ss.textContent = sub;
+  document.getElementById('step-'+name).classList.remove('step-active');
+  updateProgress();
+}
+function stepActivate(name) {
+  document.getElementById('sn-'+name).className = 'step-num sn-active';
+  document.getElementById('step-'+name).classList.add('step-active');
+}
+function updateProgress() {
+  const done = document.querySelectorAll('.sn-done').length;
+  document.getElementById('wf-progress').textContent = `${done} / 5 complete`;
+}
+
+// ── Domain dropdown ────────────────────────────────────────────
+function toggleDropdown(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('domain-dropdown');
+  if (dd.style.display==='none'||!dd.style.display) { dd.style.display='block'; renderDDList(); }
+  else dd.style.display='none';
+}
+function closeDropdown() { document.getElementById('domain-dropdown').style.display='none'; }
+async function renderDDList() {
+  const {ok,data} = await api('GET','/domains');
+  const el = document.getElementById('dd-list');
+  if (!ok||!Array.isArray(data)||data.length===0) {
+    el.innerHTML='<span style="color:var(--muted2);font-size:12px">No domains yet</span>'; return;
+  }
+  el.innerHTML = data.map(d=>`
+    <div onclick="selectDomain('${esc(d.name)}');closeDropdown()"
+      style="padding:7px 9px;border-radius:7px;cursor:pointer;display:flex;align-items:center;gap:8px"
+      onmouseover="this.style.background='var(--surface)'" onmouseout="this.style.background=''">
+      <span style="width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none"></span>
+      <span style="font-family:var(--mono);font-size:13px">${esc(d.name)}</span>
+      <span style="font-size:11px;color:var(--muted2);margin-left:auto">${d.mode||''}</span>
+    </div>`).join('');
+}
+document.addEventListener('click', e=>{
+  if (!e.target.closest('.domain-pill')&&!e.target.closest('#domain-dropdown')) closeDropdown();
+});
+
+// ── Domain list ────────────────────────────────────────────────
 async function loadDomainList() {
-  const { ok, data } = await api('GET', '/domains');
+  const {ok,data} = await api('GET','/domains');
   const el = document.getElementById('domain-list-table');
-  const sel = document.getElementById('domain-select');
-  if (!ok || !Array.isArray(data)) {
-    el.innerHTML = '<span style="color:var(--failure)">Could not load domains.</span>';
-    return;
-  }
-  // Update sidebar select
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">— select domain —</option>';
-  data.forEach(d => {
-    const o = document.createElement('option');
-    o.value = d.name; o.textContent = d.name;
-    if (d.name === cur) o.selected = true;
-    sel.appendChild(o);
-  });
-  if (data.length === 0) {
-    el.innerHTML = '<span style="color:var(--muted)">No domains yet. Create one above.</span>';
-    return;
-  }
-  el.innerHTML = data.map(d =>
-    `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
-      <span style="font-family:monospace;font-size:13px">${escHtml(d.name)}</span>
-      <button class="btn btn-outline btn-sm" onclick="selectDomain('${escHtml(d.name)}')">Select →</button>
-    </div>`
-  ).join('');
+  if (!ok||!Array.isArray(data)) { el.innerHTML='<span style="color:var(--failure)">Could not load.</span>'; return; }
+  if (data.length===0) { el.innerHTML='<span style="color:var(--muted2)">No domains yet.</span>'; return; }
+  el.innerHTML = data.map(d=>`
+    <div class="dl-item">
+      <span class="dl-name">${esc(d.name)}</span>
+      <button class="btn btn-outline btn-sm" onclick="selectDomain('${esc(d.name)}')">Select &rarr;</button>
+    </div>`).join('');
 }
-
 async function selectDomain(name) {
-  document.getElementById('domain-select').value = name;
-  await onDomainSelect(name);
-}
-
-async function onDomainSelect(name) {
-  name = name || document.getElementById('domain-select').value;
-  if (!name) { activeDomain = null; updateStatusCard(null); return; }
   activeDomain = name;
+  document.getElementById('pill-name').textContent = name;
   await refreshStatus();
-  document.getElementById('status-card').style.display = 'block';
-  document.getElementById('no-domain-msg').style.display = 'none';
-  document.getElementById('btn-delete').style.display = 'block';
-  document.getElementById('btn-export').style.display = 'block';
+  document.getElementById('btn-delete').style.display='';
+  document.getElementById('btn-export').style.display='';
+  stepActivate('create');
 }
-
 async function refreshStatus() {
   if (!activeDomain) return;
-  const { ok, data } = await api('GET', `/domains/${activeDomain}`);
-  if (ok) updateStatusCard(data);
+  const {ok,data} = await api('GET',`/domains/${activeDomain}`);
+  if (ok) applyStatus(data);
 }
-
-function updateStatusCard(d) {
-  if (!d) { document.getElementById('status-card').style.display = 'none'; return; }
-  const modeClass = { learn: 'badge-learn', apply: 'badge-apply', hybrid: 'badge-hybrid' }[d.mode] || '';
-  document.getElementById('sc-mode').innerHTML = `<span class="badge ${modeClass}">${d.mode}</span>`;
-  document.getElementById('sc-episodes').textContent = d.episode_count;
-  document.getElementById('sc-states').textContent = d.states;
-  document.getElementById('sc-edges').textContent = d.edges;
-  const cold = d.cold_start;
-  document.getElementById('sc-cold').innerHTML =
-    `<span class="badge ${cold ? 'badge-cold' : 'badge-warm'}">${cold ? 'cold' : 'warm'}</span>`;
-  // Update mode selector in apply panel
-  document.querySelectorAll('.mode-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.m === d.mode);
-  });
+function applyStatus(d) {
+  if (!d) return;
+  const ss = document.getElementById('ss-create');
+  if (ss) ss.textContent = `${d.name} · ${d.mode} · ${d.states} states · ${d.edges} edges`;
+  document.getElementById('graph-meta').textContent =
+    `force-directed · ${d.states} states · ${d.edges} edges`;
+  document.querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('active', b.dataset.m===d.mode));
 }
-
-// ── Export / Import ─────────────────────────────────────
 function exportDomain() {
   if (!activeDomain) return;
-  // Trigger browser download via hidden link
-  const a = document.createElement('a');
-  a.href = `/domains/${activeDomain}/export`;
-  a.download = `${activeDomain}-landscape.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  const a=document.createElement('a'); a.href=`/domains/${activeDomain}/export`;
+  a.download=`${activeDomain}-landscape.json`; document.body.appendChild(a); a.click(); a.remove();
 }
-
 async function importDomain() {
-  const fileInput = document.getElementById('inp-import-file');
-  if (!fileInput.files || fileInput.files.length === 0) {
-    alert('Select a JSON export file first.');
-    return;
-  }
-  const file = fileInput.files[0];
-  const text = await file.text();
-  let data;
-  try { data = JSON.parse(text); } catch (e) {
-    alert('Invalid JSON: ' + e.message);
-    return;
-  }
-  const res = await api('POST', '/domains/import', { data });
-  setResult('result-import', res);
+  const fi=document.getElementById('inp-import-file');
+  if (!fi.files?.length) { alert('Select a JSON file first.'); return; }
+  let data; try { data=JSON.parse(await fi.files[0].text()); } catch(e){ alert('Invalid JSON: '+e.message); return; }
+  const res=await api('POST','/domains/import',{data});
+  setResult('result-import',res);
+  if (res.ok) { await loadDomainList(); await selectDomain(res.data.name); }
+}
+async function deleteDomain() {
+  if (!activeDomain||!confirm(`Delete domain "${activeDomain}"?`)) return;
+  const res=await api('DELETE',`/domains/${activeDomain}`);
   if (res.ok) {
+    activeDomain=null; document.getElementById('pill-name').textContent='— select domain —';
+    document.getElementById('btn-delete').style.display='none';
+    document.getElementById('btn-export').style.display='none';
+    document.getElementById('graph-meta').textContent='force-directed';
     await loadDomainList();
-    await selectDomain(res.data.name);
   }
 }
 
-// ── Step 1: Create ──────────────────────────────────────
+// ── Step 1: Create ─────────────────────────────────────────────
 async function createDomain() {
-  const name = document.getElementById('inp-name').value.trim();
+  const name=document.getElementById('inp-name').value.trim();
   if (!name) { alert('Domain name is required.'); return; }
-  setLoading('btn-upload', true); // repurpose loading on create btn temporarily
-  const body = {
-    name,
-    description: document.getElementById('inp-desc').value.trim(),
-    topic: document.getElementById('inp-topic').value.trim(),
-    mode: document.getElementById('inp-mode').value,
-  };
-  const res = await api('POST', '/domains', body);
-  setResult('result-create', res);
+  setLoading('btn-create',true);
+  const res=await api('POST','/domains',{
+    name, topic:document.getElementById('inp-topic').value.trim(),
+    description:document.getElementById('inp-desc').value.trim(),
+    mode:document.getElementById('inp-mode').value
+  });
+  setResult('result-create',res);
   if (res.ok) {
-    await loadDomainList();
-    await selectDomain(name);
+    await loadDomainList(); await selectDomain(name);
+    stepDone('create', `${name} · created`); openStep('topology');
   }
-  setLoading('btn-upload', false);
+  setLoading('btn-create',false);
 }
 
-// ── Step 2: Topology ────────────────────────────────────
+// ── Step 2: Topology ───────────────────────────────────────────
 async function uploadTopology() {
   if (!activeDomain) { alert('Select or create a domain first.'); return; }
-  const csv = document.getElementById('inp-csv').value.trim();
+  const csv=document.getElementById('inp-csv').value.trim();
   if (!csv) { alert('CSV is empty.'); return; }
-  setLoading('btn-upload', true);
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const fd = new FormData();
-  fd.append('file', blob, 'topology.csv');
-  const res = await api('POST', `/domains/${activeDomain}/upload`, fd, true);
-  setResult('result-topology', res);
+  setLoading('btn-upload',true);
+  const fd=new FormData(); fd.append('file',new Blob([csv],{type:'text/csv'}),'topology.csv');
+  const res=await api('POST',`/domains/${activeDomain}/upload`,fd,true);
+  setResult('result-topology',res);
   if (res.ok) {
     await refreshStatus();
-    // Extract state names from CSV
-    knownStates = [];
-    const seen = new Set();
-    csv.split('\n').forEach(line => {
-      const parts = line.split(',').map(s => s.trim()).filter(Boolean);
-      [parts[0], parts[1]].forEach(s => { if (s && !seen.has(s)) { seen.add(s); knownStates.push(s); }});
+    knownStates=[]; const seen=new Set();
+    csv.split('\n').forEach(line=>{
+      line.split(',').slice(0,2).map(s=>s.trim()).filter(Boolean).forEach(s=>{
+        if (!seen.has(s)){seen.add(s);knownStates.push(s);}
+      });
     });
-    showNodes();
+    renderNodeChips();
+    renderEmptyGraph(csv);
+    stepDone('topology',`${knownStates.length} states · ${csv.split('\n').filter(l=>l.trim()).length} transitions`);
+    openStep('learn');
   }
-  setLoading('btn-upload', false);
+  setLoading('btn-upload',false);
 }
-
-function showNodes() {
-  const card = document.getElementById('card-nodes');
-  const list = document.getElementById('nodes-list');
-  card.style.display = 'block';
-  list.innerHTML = knownStates.map(s =>
-    `<span class="node-chip">${escHtml(s)}</span>`
+function renderNodeChips() {
+  document.getElementById('nodes-display').style.display='block';
+  document.getElementById('nodes-list').innerHTML=knownStates.map(s=>
+    `<span style="padding:3px 9px;border-radius:20px;background:var(--surface2);border:1px solid var(--border3);font-size:11px;font-family:var(--mono)">${esc(s)}</span>`
   ).join('');
 }
-
 function loadDemo(type) {
-  const demos = {
-    logistics: `ORDER_RECEIVED,PICKING\nORDER_RECEIVED,BACKORDER\nPICKING,QUALITY_CHECK\nQUALITY_CHECK,SHIPPED\nQUALITY_CHECK,REWORK\nREWORK,PICKING\nBACKORDER,PICKING\nSHIPPED,DELIVERED`,
-    onboarding: `APPLICATION,SCREENING\nSCREENING,INTERVIEW\nSCREENING,REJECTED\nINTERVIEW,OFFER\nINTERVIEW,REJECTED\nOFFER,ACCEPTED\nOFFER,DECLINED\nACCEPTED,ONBOARDED`,
-    clinical: `REFERRAL,TRIAGE\nTRIAGE,DIAGNOSIS\nTRIAGE,URGENT\nDIAGNOSIS,TREATMENT\nDIAGNOSIS,MONITORING\nURGENT,TREATMENT\nTREATMENT,FOLLOWUP\nFOLLOWUP,DISCHARGED\nFOLLOWUP,TREATMENT`,
+  const d={
+    logistics:`ORDER_RECEIVED,PICKING\nORDER_RECEIVED,BACKORDER\nPICKING,QUALITY_CHECK\nQUALITY_CHECK,SHIPPED\nQUALITY_CHECK,REWORK\nREWORK,PICKING\nBACKORDER,PICKING\nSHIPPED,DELIVERED`,
+    onboarding:`APPLICATION,SCREENING\nSCREENING,INTERVIEW\nSCREENING,REJECTED\nINTERVIEW,OFFER\nINTERVIEW,REJECTED\nOFFER,ACCEPTED\nOFFER,DECLINED\nACCEPTED,ONBOARDED`,
+    clinical:`REFERRAL,TRIAGE\nTRIAGE,DIAGNOSIS\nTRIAGE,URGENT\nDIAGNOSIS,TREATMENT\nDIAGNOSIS,MONITORING\nURGENT,TREATMENT\nTREATMENT,FOLLOWUP\nFOLLOWUP,DISCHARGED\nFOLLOWUP,TREATMENT`
   };
-  if (demos[type]) document.getElementById('inp-csv').value = demos[type];
+  if (d[type]) document.getElementById('inp-csv').value=d[type];
+}
+function renderEmptyGraph(csv) {
+  const fake={};
+  csv.split('\n').forEach(line=>{
+    const p=line.split(',').map(s=>s.trim());
+    if (p[0]&&p[1]) fake[`${p[0]}→${p[1]}`]=0;
+  });
+  renderGraph(fake);
 }
 
-// ── Step 3: Learn ───────────────────────────────────────
-const oracleHints = {
-  goal_aware: 'Scores each step by BFS-distance to goal. Requires goal state. Recommended.',
-  always_success: 'All steps are scored SUCCESS. Good for topology exploration without bias.',
-  random: 'Random SUCCESS/FAILURE (50/50). Use for stress-testing the historization.',
-  topology_aware: 'Uses existing U/F traces to score. Self-referential — good after initial learning.',
-  llm: 'Calls OpenAI API to judge each transition. Requires OPENAI_API_KEY.',
-  resource_aware: 'SUCCESS if required resource is available for this transition. Configure rules below.',
+// ── Step 3: Learning ───────────────────────────────────────────
+const oHints={
+  goal_aware:'Scores steps by BFS-distance to goal. Requires goal state.',
+  always_success:'All steps scored SUCCESS. Good for topology exploration.',
+  random:'Random SUCCESS/FAILURE (50/50). Stress-tests historization.',
+  topology_aware:'Uses existing U/F traces. Self-referential.',
+  llm:'Calls OpenAI API to judge each transition. Requires OPENAI_API_KEY.',
+  resource_aware:'SUCCESS if required resource is available for this transition.'
 };
-
 function onOracleChange() {
-  const val = document.getElementById('inp-oracle').value;
-  document.getElementById('oracle-hint').textContent = oracleHints[val] || '';
-  document.getElementById('goal-row').style.display =
-    (val === 'goal_aware') ? 'block' : 'none';
-  document.getElementById('resource-config').style.display =
-    (val === 'resource_aware') ? 'block' : 'none';
+  const v=document.getElementById('inp-oracle').value;
+  document.getElementById('oracle-hint').textContent=oHints[v]||'';
+  document.getElementById('goal-row').style.display=v==='goal_aware'?'':'none';
+  document.getElementById('resource-config').style.display=v==='resource_aware'?'':'none';
 }
 
+let _progInt=null;
 async function runLearn() {
   if (!activeDomain) { alert('Select or create a domain first.'); return; }
-  setLoading('btn-learn', true);
-  const body = {
-    n_episodes: parseInt(document.getElementById('inp-episodes').value),
-    oracle_type: document.getElementById('inp-oracle').value,
-    max_steps: parseInt(document.getElementById('inp-maxsteps').value),
-    n_walkers: parseInt(document.getElementById('inp-walkers').value),
-  };
-  const goal = document.getElementById('inp-goal').value.trim();
-  const start = document.getElementById('inp-start').value.trim();
-  if (goal) body.goal = goal;
-  if (start) body.start = start;
-  // Resource-aware oracle config
-  if (body.oracle_type === 'resource_aware') {
+  const n_ep=parseInt(document.getElementById('inp-episodes').value);
+  const n_wk=parseInt(document.getElementById('inp-walkers').value);
+  const oracle=document.getElementById('inp-oracle').value;
+  const maxst=parseInt(document.getElementById('inp-maxsteps').value);
+  const total=n_ep*n_wk;
+
+  document.getElementById('learn-config').style.display='none';
+  document.getElementById('learn-progress-ui').style.display='block';
+  document.getElementById('learn-badge').style.display='flex';
+  document.getElementById('st-ep').textContent=n_ep;
+  document.getElementById('st-wk').textContent=n_wk;
+  document.getElementById('st-or').textContent=oracle;
+  document.getElementById('st-ms').textContent=maxst;
+  document.getElementById('prog-ep-lbl').textContent=`0 / ${total} episodes`;
+
+  let fp=0;
+  _progInt=setInterval(()=>{
+    fp=Math.min(fp+Math.random()*3.5,88);
+    document.getElementById('prog-fill').style.width=fp+'%';
+    document.getElementById('prog-pct').textContent=Math.round(fp)+'%';
+    document.getElementById('prog-ep-lbl').textContent=`${Math.round(total*fp/100)} / ${total} episodes`;
+  },200);
+
+  const body={n_episodes:n_ep,oracle_type:oracle,max_steps:maxst,n_walkers:n_wk};
+  const goal=document.getElementById('inp-goal').value.trim();
+  const start=document.getElementById('inp-start').value.trim();
+  if (goal) body.goal=goal; if (start) body.start=start;
+  if (oracle==='resource_aware') {
     try {
-      const rulesStr = document.getElementById('inp-resource-rules').value.trim();
-      const stateStr = document.getElementById('inp-resource-state').value.trim();
-      if (rulesStr) body.resource_rules = JSON.parse(rulesStr);
-      if (stateStr) body.resource_state = JSON.parse(stateStr);
-    } catch (e) {
-      alert('Invalid JSON in resource rules/state: ' + e.message);
-      setLoading('btn-learn', false);
-      return;
-    }
+      const rs=document.getElementById('inp-resource-rules').value.trim();
+      const ss=document.getElementById('inp-resource-state').value.trim();
+      if (rs) body.resource_rules=JSON.parse(rs);
+      if (ss) body.resource_state=JSON.parse(ss);
+    } catch(e) { alert('Invalid JSON: '+e.message); resetLearn(); return; }
   }
-  const res = await api('POST', `/domains/${activeDomain}/learn`, body);
-  setResult('result-learn', res);
+
+  const res=await api('POST',`/domains/${activeDomain}/learn`,body);
+  clearInterval(_progInt);
+  document.getElementById('prog-fill').style.width='100%';
+  document.getElementById('prog-fill').classList.add('done');
+  document.getElementById('prog-pct').classList.add('done');
+  document.getElementById('prog-pct').textContent='100%';
+  document.getElementById('prog-ep-lbl').textContent=`${total} / ${total} episodes`;
+  document.getElementById('learn-badge').style.display='none';
+
   if (res.ok) {
-    const walkers = body.n_walkers || 1;
-    learnHistory.push({ ts: new Date().toLocaleTimeString(), walkers, ...res.data });
+    learnHistory.push({ts:new Date().toLocaleTimeString(),walkers:n_wk,...res.data});
     renderLearnHistory();
     await refreshStatus();
+    await loadConviction();
+    stepDone('learn',`${res.data.episodes} ep · ${(res.data.goal_rate*100).toFixed(0)}% success`);
+    openStep('conviction');
+  } else {
+    setResult('result-learn',res);
   }
-  setLoading('btn-learn', false);
+  setTimeout(resetLearn,2000);
 }
-
+function resetLearn() {
+  document.getElementById('learn-config').style.display='';
+  document.getElementById('learn-progress-ui').style.display='none';
+  const pf=document.getElementById('prog-fill');
+  pf.classList.remove('done'); pf.style.width='0%';
+  document.getElementById('prog-pct').classList.remove('done');
+}
 function renderLearnHistory() {
-  const card = document.getElementById('card-learn-history');
-  const list = document.getElementById('learn-history-list');
-  card.style.display = 'block';
-  list.innerHTML = [...learnHistory].reverse().map(h =>
-    `<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:12px">
-      <span style="color:var(--muted)">${h.ts}</span> &nbsp;
-      <strong>${h.episodes} ep</strong>${h.walkers > 1 ? ` × ${h.walkers} walkers` : ''} ·
-      success rate <strong style="color:var(--success)">${(h.goal_rate*100).toFixed(1)}%</strong> ·
-      ${h.edges_explored} edges explored
+  document.getElementById('learn-history-card').style.display='block';
+  document.getElementById('learn-history-list').innerHTML=[...learnHistory].reverse().map(h=>
+    `<div style="padding:6px 0;border-bottom:1px solid var(--border3);font-size:12px">
+      <span style="color:var(--muted2)">${h.ts}</span>&nbsp;
+      <strong>${h.episodes} ep</strong>${h.walkers>1?` × ${h.walkers}`:''} ·
+      <span style="color:var(--success)">${(h.goal_rate*100).toFixed(1)}%</span> ·
+      ${h.edges_explored} edges
     </div>`
   ).join('');
 }
 
-// ── Step 4: Conviction Map ──────────────────────────────
+// ── Step 4: Conviction ─────────────────────────────────────────
 async function loadConviction() {
   if (!activeDomain) return;
-  const { ok, data } = await api('GET', `/domains/${activeDomain}/conviction`);
-  if (!ok || !data.edges) return;
-  convictionData = data.edges;
-  renderConvictionTable(convictionData);
+  const {ok,data}=await api('GET',`/domains/${activeDomain}/conviction`);
+  if (!ok||!data.edges) return;
+  convictionData=data.edges;
+  renderConvList(convictionData);
   renderGraph(convictionData);
 }
-
-function convictionColor(v) {
-  // green at 1.0, yellow at 0.5, red at 0.0
-  if (v >= 0.7) return '#3ecf8e';
-  if (v >= 0.4) return '#f59e0b';
+function cCol(v) {
+  if (v>=0.7) return '#3ecf8e';
+  if (v>=0.4) return '#f59e0b';
   return '#f87171';
 }
-
-function renderConvictionTable(edges) {
-  const sorted = Object.entries(edges).sort((a, b) => b[1] - a[1]);
-  const tbody = document.getElementById('conv-tbody');
-  if (sorted.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="3" style="color:var(--muted);padding:12px">No edges yet — run learning first.</td></tr>';
-    return;
-  }
-  tbody.innerHTML = sorted.map(([edge, val]) => {
-    const pct = Math.round(val * 100);
-    const col = convictionColor(val);
-    return `<tr>
-      <td style="font-family:monospace">${escHtml(edge)}</td>
-      <td>
-        <span class="conv-bar-wrap"><span class="conv-bar" style="width:${pct}%;background:${col}"></span></span>
-      </td>
-      <td class="conv-val" style="color:${col}">${val.toFixed(3)}</td>
-    </tr>`;
-  }).join('');
+function renderConvList(edges) {
+  const nodeConv={};
+  Object.entries(edges).forEach(([key,val])=>{
+    const [src]=key.split('→');
+    if (src&&(nodeConv[src]==null||nodeConv[src]<val)) nodeConv[src]=val;
+  });
+  const sorted=Object.entries(nodeConv).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  document.getElementById('conv-list').innerHTML = sorted.length===0
+    ? '<div style="color:var(--muted2);font-size:12px">No edges yet.</div>'
+    : sorted.map(([node,val])=>{
+        const col=cCol(val), pct=Math.round(val*100);
+        return `<div class="conv-row">
+          <span class="conv-dot" style="background:${col}"></span>
+          <span class="conv-name">${esc(node)}</span>
+          <div class="conv-track"><div class="conv-fill" style="width:${pct}%;background:${col}"></div></div>
+          <span class="conv-val" style="color:${col}">${val.toFixed(2)}</span>
+        </div>`;
+      }).join('');
 }
 
-// ── Graph rendering (force-directed, vanilla JS) ────────
+// ── Graph rendering ────────────────────────────────────────────
 function renderGraph(edges) {
-  if (!edges || Object.keys(edges).length === 0) return;
-
-  // Parse edges: "SOURCE→TARGET" → {source, target, conviction}
-  const edgeList = Object.entries(edges).map(([key, val]) => {
-    const [src, tgt] = key.split('→');
-    return { source: src, target: tgt, conviction: val };
+  if (!edges||Object.keys(edges).length===0) return;
+  const edgeList=Object.entries(edges)
+    .map(([k,v])=>{ const [src,tgt]=k.split('→'); return {source:src,target:tgt,conviction:v}; })
+    .filter(e=>e.source&&e.target);
+  const seen=new Set(); edgeList.forEach(e=>{seen.add(e.source);seen.add(e.target);});
+  const nodeIds=[...seen];
+  const cx=GW/2, cy=GH/2, pos={}, vel={};
+  nodeIds.forEach((id,i)=>{
+    const a=(2*Math.PI*i)/nodeIds.length - Math.PI/2;
+    const rad=Math.min(GW,GH)*0.33;
+    pos[id]={x:cx+rad*Math.cos(a), y:cy+rad*Math.sin(a)};
+    vel[id]={x:0,y:0};
   });
-
-  // Collect unique nodes
-  const nodeSet = new Set();
-  edgeList.forEach(e => { nodeSet.add(e.source); nodeSet.add(e.target); });
-  const nodeIds = [...nodeSet];
-
-  const W = 800, H = 420, cx = W / 2, cy = H / 2;
-  const r = 18;
-
-  // Initialize positions (circle layout as starting point)
-  const pos = {};
-  nodeIds.forEach((id, i) => {
-    const angle = (2 * Math.PI * i) / nodeIds.length - Math.PI / 2;
-    const radius = Math.min(W, H) * 0.35;
-    pos[id] = { x: cx + radius * Math.cos(angle), y: cy + radius * Math.sin(angle) };
-  });
-
-  // Force simulation
-  const K = 80;   // spring rest length
-  const REPEL = 5000;
-  const DAMPING = 0.85;
-  const vel = {};
-  nodeIds.forEach(id => { vel[id] = { x: 0, y: 0 }; });
-
-  for (let iter = 0; iter < 250; iter++) {
-    const force = {};
-    nodeIds.forEach(id => { force[id] = { x: 0, y: 0 }; });
-
-    // Repulsion
-    for (let i = 0; i < nodeIds.length; i++) {
-      for (let j = i + 1; j < nodeIds.length; j++) {
-        const a = nodeIds[i], b = nodeIds[j];
-        const dx = pos[b].x - pos[a].x, dy = pos[b].y - pos[a].y;
-        const d2 = dx * dx + dy * dy + 1;
-        const f = REPEL / d2;
-        force[a].x -= f * dx / Math.sqrt(d2);
-        force[a].y -= f * dy / Math.sqrt(d2);
-        force[b].x += f * dx / Math.sqrt(d2);
-        force[b].y += f * dy / Math.sqrt(d2);
-      }
+  for (let it=0;it<300;it++) {
+    const f={}; nodeIds.forEach(id=>{f[id]={x:0,y:0};});
+    for (let i=0;i<nodeIds.length;i++) for (let j=i+1;j<nodeIds.length;j++) {
+      const a=nodeIds[i],b=nodeIds[j];
+      const dx=pos[b].x-pos[a].x, dy=pos[b].y-pos[a].y;
+      const d2=dx*dx+dy*dy+1, ds=Math.sqrt(d2), fp=6000/d2;
+      f[a].x-=fp*dx/ds; f[a].y-=fp*dy/ds; f[b].x+=fp*dx/ds; f[b].y+=fp*dy/ds;
     }
-
-    // Spring attraction (edges)
-    edgeList.forEach(({ source, target }) => {
-      const dx = pos[target].x - pos[source].x;
-      const dy = pos[target].y - pos[source].y;
-      const d = Math.sqrt(dx * dx + dy * dy) + 0.001;
-      const f = (d - K) * 0.05;
-      force[source].x += f * dx / d;
-      force[source].y += f * dy / d;
-      force[target].x -= f * dx / d;
-      force[target].y -= f * dy / d;
+    edgeList.forEach(({source:s,target:t})=>{
+      const dx=pos[t].x-pos[s].x, dy=pos[t].y-pos[s].y;
+      const d=Math.sqrt(dx*dx+dy*dy)+0.001, fp=(d-90)*0.05;
+      f[s].x+=fp*dx/d; f[s].y+=fp*dy/d; f[t].x-=fp*dx/d; f[t].y-=fp*dy/d;
     });
-
-    // Center gravity
-    nodeIds.forEach(id => {
-      force[id].x += (cx - pos[id].x) * 0.005;
-      force[id].y += (cy - pos[id].y) * 0.005;
-    });
-
-    // Integrate
-    nodeIds.forEach(id => {
-      vel[id].x = (vel[id].x + force[id].x) * DAMPING;
-      vel[id].y = (vel[id].y + force[id].y) * DAMPING;
-      pos[id].x = Math.max(r + 5, Math.min(W - r - 5, pos[id].x + vel[id].x));
-      pos[id].y = Math.max(r + 5, Math.min(H - r - 5, pos[id].y + vel[id].y));
+    nodeIds.forEach(id=>{
+      f[id].x+=(cx-pos[id].x)*0.005; f[id].y+=(cy-pos[id].y)*0.005;
+      vel[id].x=(vel[id].x+f[id].x)*0.85; vel[id].y=(vel[id].y+f[id].y)*0.85;
+      pos[id].x=Math.max(NODE_R+8,Math.min(GW-NODE_R-8,pos[id].x+vel[id].x));
+      pos[id].y=Math.max(NODE_R+8,Math.min(GH-NODE_R-8,pos[id].y+vel[id].y));
     });
   }
-
-  // Render SVG
-  const edgesG = document.getElementById('graph-edges');
-  const nodesG = document.getElementById('graph-nodes');
-  edgesG.innerHTML = '';
-  nodesG.innerHTML = '';
-
-  // Edges
-  edgeList.forEach(({ source, target, conviction }) => {
-    const col = convictionColor(conviction);
-    const markerSuffix = conviction >= 0.7 ? 'hi' : conviction < 0.4 ? 'lo' : '';
-    const markerId = markerSuffix ? `url(#arrow-${markerSuffix})` : 'url(#arrow)';
-    const sx = pos[source].x, sy = pos[source].y;
-    const tx = pos[target].x, ty = pos[target].y;
-    const dx = tx - sx, dy = ty - sy;
-    const len = Math.sqrt(dx * dx + dy * dy);
-    const ux = dx / len, uy = dy / len;
-    // Shorten to circle boundary
-    const x2 = tx - ux * (r + 2);
-    const y2 = ty - uy * (r + 2);
-    const x1 = sx + ux * r;
-    const y1 = sy + uy * r;
-    // Slight curve for bidirectional
-    const cx2 = (x1 + x2) / 2 - uy * 12;
-    const cy2 = (y1 + y2) / 2 + ux * 12;
-
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('d', `M${x1},${y1} Q${cx2},${cy2} ${x2},${y2}`);
-    path.setAttribute('fill', 'none');
-    path.setAttribute('stroke', col);
-    path.setAttribute('stroke-width', 1.5 + conviction * 2);
-    path.setAttribute('stroke-opacity', 0.7 + conviction * 0.3);
-    path.setAttribute('marker-end', markerId);
-    path.setAttribute('class', 'graph-edge');
-    edgesG.appendChild(path);
-  });
-
-  // Nodes
-  nodeIds.forEach(id => {
-    const { x, y } = pos[id];
-    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    g.setAttribute('class', 'graph-node');
-    g.setAttribute('transform', `translate(${x},${y})`);
-
-    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    circle.setAttribute('r', r);
-    circle.setAttribute('fill', '#1e2535');
-    circle.setAttribute('stroke', '#5b8dee');
-    circle.setAttribute('stroke-width', '2');
-
-    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    const shortId = id.length > 10 ? id.substring(0, 9) + '…' : id;
-    label.textContent = shortId;
-    label.setAttribute('text-anchor', 'middle');
-    label.setAttribute('dy', '0.35em');
-    label.setAttribute('fill', '#e2e8f0');
-    label.setAttribute('font-size', '9');
-    label.setAttribute('font-family', 'Consolas, monospace');
-
-    // Tooltip
-    const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-    title.textContent = id;
-
-    g.appendChild(circle); g.appendChild(label); g.appendChild(title);
-    nodesG.appendChild(g);
-
-    // Auto-fill current state on click
-    g.addEventListener('click', () => {
-      document.getElementById('inp-cur-state').value = id;
-    });
-  });
-
-  // Simple drag for the whole SVG
-  makeDraggable(document.getElementById('graph-svg'), pos, nodeIds, r, W, H, edgesG, nodesG, edgeList);
+  graphPos=pos; graphEdgeList=edgeList; graphNodeIds=nodeIds;
+  drawGraph(pos,nodeIds,edgeList);
+  makeDraggable(document.getElementById('graph-svg'),pos,nodeIds,edgeList);
 }
 
-function makeDraggable(svg, pos, nodeIds, r, W, H, edgesG, nodesG, edgeList) {
-  let dragging = null, ox = 0, oy = 0;
-  svg.addEventListener('mousedown', e => {
-    const pt = svgPoint(svg, e);
+function drawGraph(pos,nodeIds,edgeList) {
+  const eg=document.getElementById('graph-edges'), ng=document.getElementById('graph-nodes');
+  eg.innerHTML=''; ng.innerHTML='';
+  const nodeConv={};
+  edgeList.forEach(({source:s,conviction:v})=>{if(nodeConv[s]==null||nodeConv[s]<v)nodeConv[s]=v;});
+
+  edgeList.forEach(({source:s,target:t,conviction:v})=>{
+    const col=v>0?cCol(v):'#2f3a52';
+    const mid=v>=0.7?'e0arrowHi':v<0.4&&v>0?'e0arrowLo':'e0arrow';
+    const {x:sx,y:sy}=pos[s], {x:tx,y:ty}=pos[t];
+    const dx=tx-sx, dy=ty-sy, len=Math.sqrt(dx*dx+dy*dy)+0.001;
+    const ux=dx/len, uy=dy/len;
+    const r=NODE_R+(v>0?v*6:0);
+    const tr=NODE_R+(nodeConv[t]>0?nodeConv[t]*6:0);
+    const x1=sx+ux*r, y1=sy+uy*r, x2=tx-ux*(tr+2), y2=ty-uy*(tr+2);
+    const qx=(x1+x2)/2-uy*14, qy=(y1+y2)/2+ux*14;
+    const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d',`M${x1},${y1} Q${qx},${qy} ${x2},${y2}`);
+    p.setAttribute('fill','none'); p.setAttribute('stroke',col);
+    p.setAttribute('stroke-width', v>0?1.5+v*2:1.5);
+    p.setAttribute('stroke-opacity', v>0?0.7+v*0.3:0.45);
+    p.setAttribute('marker-end',`url(#${mid})`); p.setAttribute('class','graph-edge');
+    eg.appendChild(p);
+  });
+
+  nodeIds.forEach(id=>{
+    const {x,y}=pos[id], v=nodeConv[id]||0;
+    const col=v>0?cCol(v):'#3c485f', nr=NODE_R+v*6;
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('class','graph-node'); g.setAttribute('transform',`translate(${x},${y})`);
+    g.style.cursor='pointer';
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('r',nr); c.setAttribute('fill','#1e2535');
+    c.setAttribute('stroke',col); c.setAttribute('stroke-width','2');
+    const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.textContent=id.length>11?id.slice(0,10)+'…':id;
+    lbl.setAttribute('text-anchor','middle'); lbl.setAttribute('dy','0.35em');
+    lbl.setAttribute('fill','#e6e9f0'); lbl.setAttribute('font-size','9');
+    lbl.setAttribute('font-family','Consolas,monospace');
+    const tt=document.createElementNS('http://www.w3.org/2000/svg','title');
+    tt.textContent=id;
+    g.appendChild(c); g.appendChild(lbl); g.appendChild(tt); ng.appendChild(g);
+    g.addEventListener('click',()=>{
+      showInspector(id,v,col,edgeList);
+      document.getElementById('inp-cur-state').value=id;
+    });
+  });
+}
+
+function showInspector(id,v,col,edgeList) {
+  const ins=document.getElementById('node-inspector'); ins.classList.add('visible');
+  document.getElementById('ni-dot').style.background=col;
+  document.getElementById('ni-name').textContent=id;
+  document.getElementById('ni-score-val').textContent=v.toFixed(2);
+  document.getElementById('ni-score-val').style.color=col;
+  document.getElementById('ni-bar-fill').style.width=(v*100)+'%';
+  const out=edgeList.filter(e=>e.source===id);
+  const avg=out.length?(out.reduce((s,e)=>s+e.conviction,0)/out.length).toFixed(2):'—';
+  document.getElementById('ni-stats').innerHTML=
+    `<span>${out.length} outgoing</span><span style="color:${col}">${avg} avg</span>`;
+}
+
+function redrawEdges(pos,edgeList) {
+  const paths=document.getElementById('graph-edges').querySelectorAll('path');
+  edgeList.forEach(({source:s,target:t},i)=>{
+    const v=edgeList[i].conviction;
+    const nr=NODE_R+v*6, tr=NODE_R+(graphEdgeList.find(e=>e.target===t)?.conviction||0)*6;
+    const {x:sx,y:sy}=pos[s], {x:tx,y:ty}=pos[t];
+    const dx=tx-sx, dy=ty-sy, len=Math.sqrt(dx*dx+dy*dy)+0.001;
+    const ux=dx/len, uy=dy/len;
+    const x1=sx+ux*nr, y1=sy+uy*nr, x2=tx-ux*(tr+2), y2=ty-uy*(tr+2);
+    const qx=(x1+x2)/2-uy*14, qy=(y1+y2)/2+ux*14;
+    if (paths[i]) paths[i].setAttribute('d',`M${x1},${y1} Q${qx},${qy} ${x2},${y2}`);
+  });
+}
+
+function makeDraggable(svg,pos,nodeIds,edgeList) {
+  let drag=null, ox=0, oy=0;
+  svg.addEventListener('mousedown',e=>{
+    const pt=svgPt(svg,e);
     for (const id of nodeIds) {
-      const dx = pt.x - pos[id].x, dy = pt.y - pos[id].y;
-      if (dx * dx + dy * dy < r * r * 1.5) { dragging = id; ox = dx; oy = dy; break; }
+      const dx=pt.x-pos[id].x, dy=pt.y-pos[id].y;
+      const r=NODE_R+(graphEdgeList.find(e=>e.source===id)?.conviction||0)*6+8;
+      if (dx*dx+dy*dy<r*r){drag=id;ox=dx;oy=dy;break;}
     }
   });
-  svg.addEventListener('mousemove', e => {
-    if (!dragging) return;
-    const pt = svgPoint(svg, e);
-    pos[dragging].x = Math.max(r + 5, Math.min(W - r - 5, pt.x - ox));
-    pos[dragging].y = Math.max(r + 5, Math.min(H - r - 5, pt.y - oy));
-    redrawGraph(pos, nodeIds, r, edgesG, nodesG, edgeList);
+  svg.addEventListener('mousemove',e=>{
+    if (!drag) return;
+    const pt=svgPt(svg,e);
+    pos[drag].x=Math.max(NODE_R+8,Math.min(GW-NODE_R-8,pt.x-ox));
+    pos[drag].y=Math.max(NODE_R+8,Math.min(GH-NODE_R-8,pt.y-oy));
+    const gs=document.getElementById('graph-nodes').querySelectorAll('g');
+    nodeIds.forEach((id,i)=>{if(gs[i])gs[i].setAttribute('transform',`translate(${pos[id].x},${pos[id].y})`);});
+    redrawEdges(pos,edgeList);
+    updateRecEdge();
   });
-  svg.addEventListener('mouseup', () => { dragging = null; });
+  svg.addEventListener('mouseup',()=>{drag=null;});
+  svg.addEventListener('mouseleave',()=>{drag=null;});
+}
+function svgPt(svg,e) {
+  const rect=svg.getBoundingClientRect(), vb=svg.viewBox.baseVal;
+  return {x:(e.clientX-rect.left)/rect.width*vb.width, y:(e.clientY-rect.top)/rect.height*vb.height};
 }
 
-function svgPoint(svg, e) {
-  const rect = svg.getBoundingClientRect();
-  const vb = svg.viewBox.baseVal;
-  return {
-    x: (e.clientX - rect.left) / rect.width * vb.width,
-    y: (e.clientY - rect.top) / rect.height * vb.height,
-  };
+// ── Zoom ───────────────────────────────────────────────────────
+function zoomGraph(dir) {
+  const svg=document.getElementById('graph-svg'), vb=svg.viewBox.baseVal;
+  const f=dir>0?0.85:1.18, cx=vb.x+vb.width/2, cy=vb.y+vb.height/2;
+  const nw=vb.width*f, nh=vb.height*f;
+  svg.setAttribute('viewBox',`${cx-nw/2} ${cy-nh/2} ${nw} ${nh}`);
+}
+function fitGraph() {
+  document.getElementById('graph-svg').setAttribute('viewBox',`0 0 ${GW} ${GH}`);
 }
 
-function redrawGraph(pos, nodeIds, r, edgesG, nodesG, edgeList) {
-  // Redraw edges
-  const paths = edgesG.querySelectorAll('path');
-  edgeList.forEach(({ source, target }, i) => {
-    const sx = pos[source].x, sy = pos[source].y;
-    const tx = pos[target].x, ty = pos[target].y;
-    const dx = tx - sx, dy = ty - sy;
-    const len = Math.sqrt(dx * dx + dy * dy) + 0.001;
-    const ux = dx / len, uy = dy / len;
-    const x2 = tx - ux * (r + 2), y2 = ty - uy * (r + 2);
-    const x1 = sx + ux * r, y1 = sy + uy * r;
-    const cx2 = (x1 + x2) / 2 - uy * 12, cy2 = (y1 + y2) / 2 + ux * 12;
-    if (paths[i]) paths[i].setAttribute('d', `M${x1},${y1} Q${cx2},${cy2} ${x2},${y2}`);
-  });
-  // Redraw node positions
-  const groups = nodesG.querySelectorAll('g');
-  nodeIds.forEach((id, i) => {
-    if (groups[i]) groups[i].setAttribute('transform', `translate(${pos[id].x},${pos[id].y})`);
-  });
-}
-
-// ── Step 5: Apply ───────────────────────────────────────
+// ── Step 5: Apply ──────────────────────────────────────────────
 async function setMode(mode) {
-  if (!activeDomain) { alert('No domain selected.'); return; }
-  const res = await api('PUT', `/domains/${activeDomain}/mode`, { mode });
-  const el = document.getElementById('result-mode');
+  if (!activeDomain){alert('No domain selected.');return;}
+  const res=await api('PUT',`/domains/${activeDomain}/mode`,{mode});
+  const el=document.getElementById('result-mode');
   if (res.ok) {
-    el.innerHTML = `<span style="color:var(--success);font-size:12px">✓ Mode set to <strong>${mode}</strong></span>`;
-    updateStatusCard(res.data);
+    el.innerHTML=`<span style="color:var(--success);font-size:12px">✓ Mode set to <strong>${mode}</strong></span>`;
+    applyStatus(res.data);
   } else {
-    el.innerHTML = `<span style="color:var(--failure);font-size:12px">${escHtml(res.data?.detail || 'Error')}</span>`;
+    el.innerHTML=`<span style="color:var(--failure);font-size:12px">${esc(res.data?.detail||'Error')}</span>`;
   }
 }
-
 function renderChips() {
-  const raw = document.getElementById('inp-candidates-raw').value;
-  const names = raw.split(',').map(s => s.trim()).filter(Boolean);
-  const chips = document.getElementById('candidate-chips');
-  chips.innerHTML = names.map(n =>
-    `<span class="chip selected" onclick="toggleChip(this)">${escHtml(n)}</span>`
-  ).join('');
+  const raw=document.getElementById('inp-candidates-raw').value;
+  document.getElementById('candidate-chips').innerHTML=
+    raw.split(',').map(s=>s.trim()).filter(Boolean)
+      .map(n=>`<span class="chip sel" onclick="this.classList.toggle('sel')">${esc(n)}</span>`)
+      .join('');
 }
-
-function toggleChip(el) {
-  el.classList.toggle('selected');
+function updateRecEdge() {
+  if (!currentRec||!graphPos[currentRec.from]||!graphPos[currentRec.to]) return;
+  const {x:sx,y:sy}=graphPos[currentRec.from], {x:tx,y:ty}=graphPos[currentRec.to];
+  const dx=tx-sx, dy=ty-sy, len=Math.sqrt(dx*dx+dy*dy)+0.001;
+  const ux=dx/len, uy=dy/len;
+  const edge=document.getElementById('rec-edge');
+  edge.setAttribute('x1',sx+ux*NODE_R); edge.setAttribute('y1',sy+uy*NODE_R);
+  edge.setAttribute('x2',tx-ux*(NODE_R+2)); edge.setAttribute('y2',ty-uy*(NODE_R+2));
 }
-
 async function doRecommend() {
-  if (!activeDomain) { alert('No domain selected.'); return; }
-  const state = document.getElementById('inp-cur-state').value.trim();
-  if (!state) { alert('Enter current state.'); return; }
-  const candidates = [...document.querySelectorAll('#candidate-chips .chip.selected')]
-    .map(c => c.textContent.trim());
-  if (candidates.length === 0) {
-    alert('Select at least one candidate state.');
-    return;
-  }
-  const res = await api('POST', `/domains/${activeDomain}/recommend`, { state, candidates });
+  if (!activeDomain){alert('No domain selected.');return;}
+  const state=document.getElementById('inp-cur-state').value.trim();
+  if (!state){alert('Enter current state.');return;}
+  const candidates=[...document.querySelectorAll('#candidate-chips .chip.sel')].map(c=>c.textContent.trim());
+  if (!candidates.length){alert('Select at least one candidate.');return;}
+  const res=await api('POST',`/domains/${activeDomain}/recommend`,{state,candidates});
   if (res.ok) {
-    const d = res.data;
-    document.getElementById('recommend-result').style.display = 'block';
-    document.getElementById('rec-state').textContent = d.recommended || '(no recommendation)';
-    document.getElementById('rec-detail').textContent =
-      `${d.reason} · conviction: ${d.conviction_score?.toFixed(3)} · quality: ${d.quality?.toFixed(3)}` +
-      (d.cold_start ? ' · cold start' : '');
-    // Pre-fill record fields
-    document.getElementById('inp-rec-from').value = state;
-    document.getElementById('inp-rec-to').value = d.recommended || '';
+    const d=res.data; currentRec={from:state,to:d.recommended};
+    const conv=d.conviction_score??0, col=cCol(conv);
+    document.getElementById('decision-card').style.display='block';
+    document.getElementById('dc-from').textContent=state;
+    document.getElementById('dc-to').textContent=d.recommended||'—';
+    document.getElementById('dc-to-dot').style.background=col;
+    document.getElementById('dc-conv-num').textContent=conv.toFixed(3);
+    document.getElementById('dc-conv-num').style.color=col;
+    document.getElementById('dc-conv-bar').style.width=(conv*100)+'%';
+    document.getElementById('dc-quality').textContent=d.quality!=null?(d.quality*100).toFixed(0)+'%':'—';
+    document.getElementById('dc-reason').textContent=d.reason||'—';
+    document.getElementById('dc-cold').textContent=d.cold_start?'cold start':'warm';
+    document.getElementById('dc-cold').style.color=d.cold_start?'var(--failure)':'var(--success)';
+    document.getElementById('dc-alt').textContent='';
+    stepActivate('apply');
+    document.getElementById('rec-edge-group').style.display='';
+    updateRecEdge();
   } else {
-    document.getElementById('recommend-result').style.display = 'block';
-    document.getElementById('rec-state').textContent = '⚠ Error';
-    document.getElementById('rec-detail').textContent = res.data?.detail || 'Unknown error';
+    document.getElementById('decision-card').style.display='none';
+    alert(res.data?.detail||'Recommendation failed.');
+  }
+}
+async function doRecord(outcome) {
+  if (!activeDomain||!currentRec) return;
+  const {from:source,to:target}=currentRec;
+  const res=await api('POST',`/domains/${activeDomain}/record`,{source,target,outcome});
+  if (res.ok) {
+    document.getElementById('result-record').innerHTML=
+      `<div class="rbox rbox-ok"><pre>✓ Recorded ${outcome} for ${esc(source)}→${esc(target)}</pre></div>`;
+    await refreshStatus(); await loadConviction();
+    document.getElementById('rec-edge-group').style.display='none';
+    stepDone('apply',`last: ${source}→${target} (${outcome})`);
+  } else {
+    setResult('result-record',res);
   }
 }
 
-async function doRecord() {
-  if (!activeDomain) { alert('No domain selected.'); return; }
-  const source = document.getElementById('inp-rec-from').value.trim();
-  const target = document.getElementById('inp-rec-to').value.trim();
-  const outcome = document.getElementById('inp-rec-outcome').value;
-  if (!source || !target) { alert('Fill in source and target states.'); return; }
-  const res = await api('POST', `/domains/${activeDomain}/record`, { source, target, outcome });
-  setResult('result-record', res);
-  if (res.ok) await refreshStatus();
-}
-
-// ── Init ────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', async () => {
-  onOracleChange();  // show/hide goal row
+// ── Init ───────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async ()=>{
+  onOracleChange();
   await loadDomainList();
-  // Auto-select first domain if only one exists
-  const sel = document.getElementById('domain-select');
-  if (sel.options.length === 2) {
-    sel.selectedIndex = 1;
-    await onDomainSelect();
+  openStep('create');
+  const {ok,data}=await api('GET','/domains');
+  if (ok&&Array.isArray(data)&&data.length===1) {
+    await selectDomain(data[0].name);
+    openStep('topology');
   }
 });
 </script>
