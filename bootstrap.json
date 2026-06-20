@@ -28,9 +28,9 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C310",
-    "latest_commit_hash": "92f49a0",
-    "latest_commit_msg": "C310: Export/Import, Multi-Walker, Resource-aware Oracle",
+    "latest_commit": "C311",
+    "latest_commit_hash": "9091860",
+    "latest_commit_msg": "C311: Domain Studio UI — Split-pane redesign",
     "test_count": 6720,
     "test_failures": 0,
     "ci_status": "pending",
@@ -297,8 +297,8 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "ARC-K+: Domain Studio Extension — C310 DONE. Next: C311 (Chauffeur domain onboarding) or IB-3 Self-Domain demo.",
-    "arc_status": "C310 complete: Export (GET /domains/{name}/export → JSON attachment), Import (POST /domains/import → validates schema_v1, 409 on conflict), Multi-Walker (n_walkers 1-50, total=n_episodes×n_walkers), Resource-aware Oracle (resource_rules + resource_state dicts). 105 tests in test_routes_domains.py (was 74). Suite: ~6720.",
+    "current_arc": "ARC-K+: Domain Studio Extension — C311 DONE. Next: C312 (Chauffeur domain onboarding) or IB-3 Self-Domain demo or README overhaul.",
+    "arc_status": "C311 complete: Domain Studio UI split-pane redesign. Persistent graph left (force-directed, conviction-colored, node inspector overlay, animated recommended edge). Accordion workflow right (5 steps replace 5 tabs). Learning progress bar + stat tiles replace spinner. Decision Card replaces flat recommendation output. Design sourced from claude.ai/design project 9b8f98bd. No new tests (UI-only). Suite: 6720.",
     "arc_thesis": "E0 = Skeleton (structure/judgment/memory), E2 = Muscle (execution/domain). E2Port abstracts any execution target — factory, traffic, conversation, API. E0Turn wires E0Controller + E2Port into a domain-invariant persistent loop. Hypothesis: same E0 core serves arbitrary domains via E2Port swap.",
     "previous_arc_summary": "ARC-E: DifferenzPort (C288-C290): DifferenzPort ABC + E1Monitor + SessionState + ObservationPort. ARC-D (C285-C287): E1 impact historization live. Trajectory Arc (C277-C283): PathSignature + TrajectoryHistorization.",
     "key_result": "C295: RoutingE2Port — multi-modal E0 by composition. One E0Turn, many ports, no architecture change. ARC-H plan: docs/E0_ARC_H_PLAN_v1.md. MetaLandscape (C296-C298) = same E0Controller at PathSignature level = self-similarity proof.",
@@ -309,7 +309,7 @@
       "Quality score weights (P8 §12.1) are heuristic — could be meta-tunable but risks infinite regress",
       "GT-8: Partial Residual Trap — PARTIAL outcome discards unresolved structural remainder. No resolution yet."
     ],
-    "next_commit_id": "C311",
+    "next_commit_id": "C312",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
@@ -585,6 +585,12 @@
   },
   "commit_history_recent": [
     {
+      "id": "C311",
+      "hash": "9091860",
+      "msg": "Domain Studio UI — Split-pane redesign (IB-1)",
+      "tests": 0
+    },
+    {
       "id": "C290",
       "hash": "bed2f1a",
       "msg": "ObservationPort + cmd_ports — ARC-E complete",
@@ -680,12 +686,12 @@
     "_comment": "Strategic ideas not yet scheduled. Review when choosing next arc. Add ideas freely; promote to active_context when starting.",
     "items": [
       {
-        "id": "IB-1",
-        "title": "Domain Studio UI",
-        "when_proposed": "2026-05-12",
-        "description": "A minimal HTML/JS frontend (no framework) over the existing /domains/* REST API. Fulfills the original ARC-K promise: a human can manually initiate Learn/Apply via a browser. No new backend code needed — pure UI wiring.",
+        "id": "IB-1.5",
+        "title": "README overhaul",
+        "when_proposed": "2026-06-20",
+        "description": "README is stale since ~C280. Missing: Domain Studio UI (/studio/ endpoint, split-pane design, ARC-K workflow), updated test count (6720), updated module count (81), repository structure (server/, memos/), layer table corrections. See README analysis in C311 session.",
         "priority": "high",
-        "estimated_scope": "1 commit (new server/static/ or standalone HTML)"
+        "estimated_scope": "1 commit"
       },
       {
         "id": "IB-2",
