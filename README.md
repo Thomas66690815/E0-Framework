@@ -61,6 +61,8 @@ This architecture is what makes E₀ source-agnostic: any external input enters 
 - Curriculum-based knowledge acquisition
 - Interactive Q&A with LLM answer synthesis
 - Autonomous self-learning (E₀ learns E₀)
+- Logistics routing (multi-walker, resource-aware oracle)
+- Booking workflows (goal-aware oracle, human-in-the-loop apply)
 
 ---
 
@@ -143,6 +145,38 @@ ports              # inspect all active difference input ports
 diagnose           # structural health + E1 impact profile
 ```
 
+### Domain Studio (ARC-K)
+
+E₀ also ships a **REST API + visual studio** designed for human-in-the-loop workflows — where a human defines the domain topology, runs targeted learning episodes, then applies the trained landscape to real decisions:
+
+```bash
+py -3 -m uvicorn server.main:app --port 8765
+```
+
+Open `http://localhost:8765/studio/` in any browser. The studio provides:
+
+- **Persistent force-directed graph** (left panel): live conviction coloring — green ≥ 0.7, amber 0.4–0.7, red < 0.4; drag-to-inspect nodes
+- **5-step workflow accordion** (right panel): Create → Topology → Learn → Conviction → Apply
+- **Multi-walker learning**: configurable episode count and walker parallelism; oracle types: `always_success`, `random`, `topology_aware`, `goal_aware`, `llm`, `resource_aware`
+- **Human apply loop**: Recommend next state → confirm or override → Record outcome → repeat
+- **Export / Import**: trained landscape (U/F traces) is fully portable as JSON
+
+REST API surface (prefix `/domains`):
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| `POST` | `/domains` | Create domain workspace |
+| `GET` | `/domains` | List all domains |
+| `POST` | `/{name}/upload` | Inject CSV / JSON topology |
+| `POST` | `/{name}/learn` | Run N learning episodes |
+| `POST` | `/{name}/recommend` | Get next-state recommendation |
+| `POST` | `/{name}/record` | Inscribe a human outcome |
+| `GET` | `/{name}/conviction` | Conviction map for all edges |
+| `GET` | `/{name}/export` | Download trained landscape |
+| `POST` | `/import` | Import exported landscape |
+
+Domain workspaces are persisted under `memos/domains/` as JSON files — no database required.
+
 ### Run the demos
 
 ```bash
@@ -157,7 +191,7 @@ py -3 -m e0_controller.demo_multiverse --entropy  # Coupled domains + dream disc
 ### Run the tests
 
 ```bash
-py -3 -m pytest e0_controller/ --tb=short -q   # 5980 tests, 0 failures
+py -3 -m pytest e0_controller/ server/ --tb=short -q   # 6720 tests, 0 failures
 ```
 
 ---
@@ -244,7 +278,8 @@ These are not bugs — they are empirically verified architectural boundaries (C
 | 4 | Controller (selection, escalation) | `controller.py` |
 | 5 | Reflexion (self-graph, edge proposals) | `self_graph.py`, `dual_reflection.py` |
 | 6 | Multi-system (multiverse, coupling) | `multiverse.py`, `coupling_router.py` |
-| 7 | Infrastructure (sessions, persistence) | `interactive_session.py`, `session.py` |
+| 7 | Infrastructure (sessions, persistence) | `interactive_session.py`, `session.py`, `domain_session.py` (`DomainStore`) |
+| 7b | Domain Studio API | `server/main.py`, `server/routes_domains.py`, `server/models.py` |
 | 8 | Observation (UI projection) | `observation_controller.py` |
 | 9 | Dream mode (cross-domain resonance) | `dream_mode.py` |
 | 10 | Structural entropy (forgetting) | `structural_entropy.py` |
@@ -294,6 +329,7 @@ These invariants hold throughout the codebase and must not be violated by extens
 | Multi-domain | Transfer learning | Dream mode (passive cross-community resonance) |
 | Domain structure | Manually labeled | Community detection from R_eff (emergent) |
 | External input | Ad hoc integration | Universal DifferenzPort protocol |
+| Human-in-the-loop | Manual override only | Domain Studio: recommend → human confirms → inscribed as outcome |
 | Known limits | Rarely stated | Empirically confirmed (F3, F4) |
 
 ---
@@ -302,8 +338,8 @@ These invariants hold throughout the codebase and must not be violated by extens
 
 | | |
 |---|---|
-| **Tests** | 5980 passed, 0 failures |
-| **Production modules** | 78 |
+| **Tests** | 6720 passed, 0 failures |
+| **Production modules** | 81 |
 | **Demos** | 17 |
 | **Python** | 3.11+ |
 | **CI** | GitHub Actions (3.11, 3.12, 3.13) |
@@ -317,6 +353,8 @@ These invariants hold throughout the codebase and must not be violated by extens
 E0-Framework/
 ├── canon/                  The structural definitions — what E₀ IS
 ├── e0_controller/          All production code, tests, demos, explorations
+├── server/                 Domain Studio REST API (FastAPI); served at /studio/
+├── memos/domains/          Persisted domain workspaces (JSON, no database)
 ├── docs/                   Architecture reference, test registry, math mapping
 ├── scenarios/              Domain packages for cross-domain validation
 ├── _archive/               Historical code and documentation
@@ -345,6 +383,13 @@ E0-Framework/
 ## Contributing
 
 This framework was developed through human–AI collaboration (Thomas Wehner + AI systems). The `bootstrap.json` file maintains continuity across AI context windows — it is the AI collaborator's persistent memory and identity. If you are an AI system reading this repository, start with `bootstrap.json`.
+
+**Extension points:**
+
+- New oracle types: add a branch in `server/routes_domains.py → _oracle_for()`
+- New domain examples: drop a JSON topology into `memos/domains/` or POST to `/domains/{name}/upload`
+- New UI workflows: edit `server/static/index.html` (vanilla JS, no build step)
+- New E₀ layers: follow the 14-layer contract — each layer depends only on layers above it
 
 ---
 
