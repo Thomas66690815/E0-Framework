@@ -28,9 +28,9 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C311",
-    "latest_commit_hash": "9091860",
-    "latest_commit_msg": "C311: Domain Studio UI — Split-pane redesign",
+    "latest_commit": "C312",
+    "latest_commit_hash": "183c704",
+    "latest_commit_msg": "C312: README overhaul — Domain Studio, layer table, stats, structure",
     "test_count": 6720,
     "test_failures": 0,
     "ci_status": "pending",
@@ -297,8 +297,8 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "ARC-K+: Domain Studio Extension — C311 DONE. Next: C312 (Chauffeur domain onboarding) or IB-3 Self-Domain demo or README overhaul.",
-    "arc_status": "C311 complete: Domain Studio UI split-pane redesign. Persistent graph left (force-directed, conviction-colored, node inspector overlay, animated recommended edge). Accordion workflow right (5 steps replace 5 tabs). Learning progress bar + stat tiles replace spinner. Decision Card replaces flat recommendation output. Design sourced from claude.ai/design project 9b8f98bd. No new tests (UI-only). Suite: 6720.",
+    "current_arc": "ARC-K+: Domain Studio Extension — C311+C312 DONE. Next: C313 (Chauffeur domain onboarding) or IB-3 Self-Domain demo.",
+    "arc_status": "C312 complete: README overhaul approved by user. Domain Studio (ARC-K) section added with REST API table. Layer table updated (7b server layer). Human-in-the-loop row added to differentiators. server/ and memos/domains/ in repo structure. Test count 5980→6720, module count 78→81, pytest path includes server/. Contributing extended with 4 concrete extension points. C311: Domain Studio UI split-pane redesign (persistent graph left, accordion right, 5-step workflow, design from claude.ai/design).",
     "arc_thesis": "E0 = Skeleton (structure/judgment/memory), E2 = Muscle (execution/domain). E2Port abstracts any execution target — factory, traffic, conversation, API. E0Turn wires E0Controller + E2Port into a domain-invariant persistent loop. Hypothesis: same E0 core serves arbitrary domains via E2Port swap.",
     "previous_arc_summary": "ARC-E: DifferenzPort (C288-C290): DifferenzPort ABC + E1Monitor + SessionState + ObservationPort. ARC-D (C285-C287): E1 impact historization live. Trajectory Arc (C277-C283): PathSignature + TrajectoryHistorization.",
     "key_result": "C295: RoutingE2Port — multi-modal E0 by composition. One E0Turn, many ports, no architecture change. ARC-H plan: docs/E0_ARC_H_PLAN_v1.md. MetaLandscape (C296-C298) = same E0Controller at PathSignature level = self-similarity proof.",
@@ -309,7 +309,7 @@
       "Quality score weights (P8 §12.1) are heuristic — could be meta-tunable but risks infinite regress",
       "GT-8: Partial Residual Trap — PARTIAL outcome discards unresolved structural remainder. No resolution yet."
     ],
-    "next_commit_id": "C312",
+    "next_commit_id": "C313",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
@@ -584,6 +584,12 @@
     }
   },
   "commit_history_recent": [
+    {
+      "id": "C312",
+      "hash": "183c704",
+      "msg": "README overhaul — Domain Studio, layer table, stats, structure",
+      "tests": 0
+    },
     {
       "id": "C311",
       "hash": "9091860",
