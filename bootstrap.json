@@ -1,9 +1,12 @@
 {
   "_meta": {
+    "type": "CODING",
+    "apex": "C:/.gitRepos/_twe/bootstrap_twe.json",
+    "parent_project": "e0-framework",
     "purpose": "Session bootstrap for the E₀ team — human and AI working together on E₀-Framework",
     "framing": "We. The AI is an integral part of 'we'. This file is the AI's persistent identity — its Historization across context windows. Every confirmed/contradicted count is a U/F trace.",
     "usage": "Paste this file (or reference it) at the start of a new thread to restore full project context",
-    "last_updated": "2026-05-12",
+    "last_updated": "2026-06-24",
     "update_instruction": "After each commit: update state + active_context. After each lesson: update reflexion traces (confirmed++, contradicted++, recurred++). trace_quality = (confirmed - contradicted) / (confirmed + contradicted + 1)."
   },
   "project": {

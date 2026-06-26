@@ -57,39 +57,117 @@
         "target": "DELIVERED",
         "delta": 1.0,
         "resistance": 0.3
+      },
+      {
+        "source": "APPLICATION",
+        "target": "SCREENING",
+        "delta": 1.0,
+        "resistance": 0.3
+      },
+      {
+        "source": "SCREENING",
+        "target": "INTERVIEW",
+        "delta": 1.0,
+        "resistance": 0.3
+      },
+      {
+        "source": "SCREENING",
+        "target": "REJECTED",
+        "delta": 1.0,
+        "resistance": 0.3
+      },
+      {
+        "source": "INTERVIEW",
+        "target": "OFFER",
+        "delta": 1.0,
+        "resistance": 0.3
+      },
+      {
+        "source": "INTERVIEW",
+        "target": "REJECTED",
+        "delta": 1.0,
+        "resistance": 0.3
+      },
+      {
+        "source": "OFFER",
+        "target": "ACCEPTED",
+        "delta": 1.0,
+        "resistance": 0.3
+      },
+      {
+        "source": "OFFER",
+        "target": "DECLINED",
+        "delta": 1.0,
+        "resistance": 0.3
+      },
+      {
+        "source": "ACCEPTED",
+        "target": "ONBOARDED",
+        "delta": 1.0,
+        "resistance": 0.3
+      },
+      {
+        "source": "Screening",
+        "target": "Accepted",
+        "delta": 1.0,
+        "resistance": 0.3
       }
     ],
     "hist": {
       "U": {
-        "ORDER_RECEIVED\u2192PICKING": 0.7157111074753985,
-        "ORDER_RECEIVED\u2192BACKORDER": 0.7157111074753985,
-        "PICKING\u2192QUALITY_CHECK": 0.7157111074753985,
-        "QUALITY_CHECK\u2192SHIPPED": 0.7157111074753985,
-        "QUALITY_CHECK\u2192REWORK": 0.7157111074753985,
-        "REWORK\u2192PICKING": 0.7157111074753985,
-        "BACKORDER\u2192PICKING": 0.7157111074753985,
-        "SHIPPED\u2192DELIVERED": 0.7157111074753985
+        "ORDER_RECEIVED\u2192PICKING": 0.808090163600945,
+        "ORDER_RECEIVED\u2192BACKORDER": 0.808090163600945,
+        "PICKING\u2192QUALITY_CHECK": 0.808090163600945,
+        "QUALITY_CHECK\u2192SHIPPED": 0.808090163600945,
+        "QUALITY_CHECK\u2192REWORK": 0.808090163600945,
+        "REWORK\u2192PICKING": 0.808090163600945,
+        "BACKORDER\u2192PICKING": 0.808090163600945,
+        "SHIPPED\u2192DELIVERED": 0.808090163600945,
+        "APPLICATION\u2192SCREENING": 0.5,
+        "SCREENING\u2192INTERVIEW": 0.5,
+        "SCREENING\u2192REJECTED": 0.5,
+        "INTERVIEW\u2192OFFER": 0.5,
+        "INTERVIEW\u2192REJECTED": 0.5,
+        "OFFER\u2192ACCEPTED": 0.5,
+        "OFFER\u2192DECLINED": 0.5,
+        "ACCEPTED\u2192ONBOARDED": 0.5
       },
       "F": {
-        "ORDER_RECEIVED\u2192PICKING": 0.42942666448523903,
-        "ORDER_RECEIVED\u2192BACKORDER": 0.42942666448523903,
-        "PICKING\u2192QUALITY_CHECK": 0.42942666448523903,
-        "QUALITY_CHECK\u2192SHIPPED": 0.42942666448523903,
-        "QUALITY_CHECK\u2192REWORK": 0.42942666448523903,
-        "REWORK\u2192PICKING": 0.42942666448523903,
-        "BACKORDER\u2192PICKING": 0.42942666448523903,
-        "SHIPPED\u2192DELIVERED": 2.2728968038291124
+        "ORDER_RECEIVED\u2192PICKING": 0.48485409816056696,
+        "ORDER_RECEIVED\u2192BACKORDER": 0.48485409816056696,
+        "PICKING\u2192QUALITY_CHECK": 0.48485409816056696,
+        "QUALITY_CHECK\u2192SHIPPED": 0.48485409816056696,
+        "QUALITY_CHECK\u2192REWORK": 0.48485409816056696,
+        "REWORK\u2192PICKING": 0.48485409816056696,
+        "BACKORDER\u2192PICKING": 0.48485409816056696,
+        "SHIPPED\u2192DELIVERED": 1.2784075457622355,
+        "APPLICATION\u2192SCREENING": 0.3,
+        "SCREENING\u2192INTERVIEW": 0.3,
+        "SCREENING\u2192REJECTED": 0.3,
+        "INTERVIEW\u2192OFFER": 0.3,
+        "INTERVIEW\u2192REJECTED": 0.3,
+        "OFFER\u2192ACCEPTED": 0.3,
+        "OFFER\u2192DECLINED": 0.3,
+        "ACCEPTED\u2192ONBOARDED": 0.3
       },
-      "tau": 74,
+      "tau": 90,
       "tau_last": {
-        "ORDER_RECEIVED\u2192PICKING": 67,
-        "ORDER_RECEIVED\u2192BACKORDER": 68,
-        "PICKING\u2192QUALITY_CHECK": 69,
-        "QUALITY_CHECK\u2192SHIPPED": 70,
-        "QUALITY_CHECK\u2192REWORK": 71,
-        "REWORK\u2192PICKING": 72,
-        "BACKORDER\u2192PICKING": 73,
-        "SHIPPED\u2192DELIVERED": 74
+        "ORDER_RECEIVED\u2192PICKING": 75,
+        "ORDER_RECEIVED\u2192BACKORDER": 76,
+        "PICKING\u2192QUALITY_CHECK": 77,
+        "QUALITY_CHECK\u2192SHIPPED": 78,
+        "QUALITY_CHECK\u2192REWORK": 79,
+        "REWORK\u2192PICKING": 80,
+        "BACKORDER\u2192PICKING": 81,
+        "SHIPPED\u2192DELIVERED": 82,
+        "APPLICATION\u2192SCREENING": 83,
+        "SCREENING\u2192INTERVIEW": 84,
+        "SCREENING\u2192REJECTED": 85,
+        "INTERVIEW\u2192OFFER": 86,
+        "INTERVIEW\u2192REJECTED": 87,
+        "OFFER\u2192ACCEPTED": 88,
+        "OFFER\u2192DECLINED": 89,
+        "ACCEPTED\u2192ONBOARDED": 90
       }
     }
   }

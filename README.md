@@ -403,4 +403,10 @@ This framework was developed through human–AI collaboration (Thomas Wehner + A
 
 ```bibtex
 @software{wehner_e0_2026,
-  author    = {
+  author    = {Wehner, Thomas},
+  title     = {{E₀ Framework} — Structural Difference-Reduction System},
+  year      = {2026},
+  doi       = {10.5281/zenodo.19333487},
+  url       = {https://github.com/Thomas66690815/E0-Framework}
+}
+```
