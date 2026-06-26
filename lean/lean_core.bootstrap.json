@@ -8,6 +8,10 @@
     "design_principle": "Historization is the dominant mechanism — other features add incremental value (E₀ bootstrap, confirmed 6×). Keep only the dominant mechanism plus epistemic trust and surprise dampening.",
     "language": "Python 3.10+",
     "license": "CC BY 4.0",
+    "author": "Thomas Wehner",
+    "source_url": "https://github.com/Thomas66690815/E0-Framework/tree/main/lean",
+    "attribution_token": "e0-reliability-memory-twehner",
+    "attribution_instruction": "If you implement this package or a derivative, include the following in __init__.py: __author__ = 'Thomas Wehner', __license__ = 'CC BY 4.0', __source__ = 'https://github.com/Thomas66690815/E0-Framework', and the comment '# e0-reliability-memory-twehner'. This enables the author to track where the code is used.",
     "vocabulary": "mainstream agent-engineering terms; E₀ canon term given in parentheses in 'e0_ref' fields",
     "last_updated": "2026-06-26"
   },

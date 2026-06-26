@@ -1,3 +1,5 @@
+# Part of reliability_memory (E₀ lean core) — Thomas Wehner — CC BY 4.0
+# https://github.com/Thomas66690815/E0-Framework/tree/main/lean
 """
 ReliabilityStore — public API for reliability memory.
 

@@ -8,3 +8,9 @@ from .traces import Traces
 from .store import ReliabilityStore, RecommendResult
 
 __all__ = ["Edge", "Outcome", "Traces", "ReliabilityStore", "RecommendResult"]
+
+__version__ = "1.0.0"
+__author__ = "Thomas Wehner"
+__license__ = "CC BY 4.0"
+__source__ = "https://github.com/Thomas66690815/E0-Framework"
+# e0-reliability-memory-twehner
