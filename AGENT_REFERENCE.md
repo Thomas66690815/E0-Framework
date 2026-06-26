@@ -308,6 +308,116 @@ The Dream Landscape is itself a `Landscape` with `Historization`. When a propose
 
 ---
 
+### M8 — Conviction-Gated Quantum Walk (quantumness earned via historization)
+
+**File:** `e0_controller/quantum_walk_historized.py` → `HistorizedQuantumWalk`
+**Spec:** §C302–C303
+
+**Problem:** Standard quantum walks use a fixed coin operator. The degree of quantum exploration does not respond to accumulated knowledge — a well-known path gets the same quantum treatment as an unknown one.
+
+**Conviction gating:**
+
+```
+conviction(e) = (m / (m + μ)) · |q(e)|    ∈ [0, 1]
+
+quantum_strength(e) = 1 − conviction(e)   ∈ [0, 1]
+
+C_hist(e) = scale_su2(C_base(e), quantum_strength(e))
+```
+
+| Edge state | conviction | quantum_strength | Effect |
+|------------|-----------|-----------------|--------|
+| Virgin (`m=0`) | 0 | 1 | Full quantum coin — maximum exploration |
+| Confirmed (`\|q\|→1`) | → `m/(m+μ)` | decreases | Coin scales toward Identity — near-classical |
+| Conflicted (`q≈0`, `m>>0`) | ≈0 | ≈1 | Full quantum coin — keep exploring |
+
+**The quantum→classical transition is emergent.** It arises solely from trace accumulation — it is not scheduled, not parameterized, not externally triggered.
+
+**Learning cycle:**
+
+```python
+walk = HistorizedQuantumWalk(landscape, "START", coin_mode="geometric")
+for _ in range(max_steps):
+    step = walk.step()
+    outcome = domain.execute(step.state_before, step.state_after)
+    walk.record_outcome(outcome)  # only mutation: writes to Landscape.historization
+```
+
+Over many episodes: confirmed paths → near-classical (tension-driven). Unexplored or contested paths → quantum (spin-driven). No structural changes (`add_edge`/`remove_edge`) ever occur — only historization.
+
+**What this replaces:** Fixed exploration schedules (ε-greedy, temperature annealing, UCB). Exploration intensity is a direct function of epistemic state per edge, not of a global time step.
+
+---
+
+### M9 — NoveltyGate (forced divergence in multi-agent coupling)
+
+**File:** `e0_controller/multiverse.py` → `NoveltyGate`, `MultiverseController`
+**Spec:** §C54 (Coupling Theorem), §C60–C68
+
+**Problem:** When two agents interact, they converge within 5–6 turns. Consensus without structural novelty is indistinguishable from stagnation — and equally unproductive. Standard multi-agent frameworks have no mechanism to detect or penalize sterile consensus.
+
+**NoveltyGate:**
+
+```python
+def evaluate(before_a, after_a, before_b, after_b) -> Outcome:
+    new_states = (after_a.state_count - before_a.state_count) + (...)
+    new_edges  = (after_a.edge_count  - before_a.edge_count)  + (...)
+    delta_growth = (after_a.total_delta - before_a.total_delta) + (...)
+
+    if new_states > 0 or new_edges > 0 or delta_growth > threshold:
+        return Outcome.SUCCESS
+    return Outcome.FAILURE   # consensus without novelty = FAILURE
+```
+
+`FAILURE` is historized on the coupling edge → `R_eff` rises → the coupling becomes expensive → systems are structurally pushed apart. This is forced divergence as a structural primitive, not a heuristic.
+
+**Architecture:**
+
+```
+Universe_A  ←→  Coupling Landscape  ←→  Universe_B
+                      ↑
+               NoveltyGate decides outcome
+               Historization makes stale couplings costly
+```
+
+**Coupling Theorem (C54):** A closed system (all SUCCESS) reinforces existing paths and cannot escape traps. NoveltyGate operationalizes this: productive agreement = novelty produced. Unproductive agreement = structural cost paid.
+
+**What this replaces:** Multi-agent consensus protocols that treat agreement as inherently positive. E₀ treats agreement as positive only when it produces new structure.
+
+---
+
+### M10 — MemOS (persistent runtime substrate across context windows)
+
+**File:** `e0_controller/memory_os.py` → `LandscapeSnapshot`, `HistorizationSnapshot`, `RuntimeSnapshot`
+**Spec:** §K-MemOS-1, §K-MemOS-2
+
+**Problem:** E₀ controller state (Landscape topology + full U/F trace history + runtime metrics) cannot fit in an LLM context window. Standard agent memory systems either truncate (lose history) or use fixed-size buffers (lose structure).
+
+**Three snapshot layers:**
+
+```python
+# Layer 1: Topology
+LandscapeSnapshot.from_landscape(L)
+→ {states: [...], edges: [{source, target, delta, r0}, ...]}
+
+# Layer 2: Full historization
+HistorizationSnapshot.from_historization(H)
+→ {tau, rho, lambda_s, lambda_f, success_traces, failure_traces, tau_last}
+# tau_last enables lazy global decay reconstruction on restore (K2-compatible)
+
+# Layer 3: Runtime context
+RuntimeSnapshot.from_controller(ctrl)
+→ {recent_states, escalation_edges, last_escalation_type, metrics, controller_params}
+```
+
+**Restore is exact:** `HistorizationSnapshot.to_historization()` reconstructs the full U/F trace state including per-edge timestamps. The restored controller behaves identically to the original — no approximation, no forgetting on restore.
+
+**LLM interface:** MemOS produces token-efficient state packages — bounded summaries of the most structurally relevant traces (`strategy_profile(top_n=N)`) rather than dumping all edges. The LLM receives a compressed view; the full state is on disk.
+
+**What this replaces:** Ad-hoc serialization, JSON dumps of agent state, context-window-bound memory. MemOS is a formal persistence contract: any E₀ runtime can be snapshot → persisted → restored → continued without loss.
+
+---
+
 ## Structural Limits (empirically confirmed)
 
 These are not design choices — they are verified boundaries of the current architecture.
