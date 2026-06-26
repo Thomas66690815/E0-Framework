@@ -586,6 +586,30 @@
       "inertia_factor": "I(e) = 1 − α·(m/(m+μ))·(1−|q|), greedy divides S_eff by I"
     }
   },
+  "agent_build_guide": {
+    "_comment": "Distilled from AGENT_BUILDER_GUIDE.md. When an external agent builder asks which layers they need, or when a commit touches a layer entry point, use this table.",
+    "doc": "AGENT_BUILDER_GUIDE.md",
+    "lean_core_relation": "lean/reliability_memory/ is Layer 0 as a standalone zero-dep package. Use when reliability memory is needed WITHOUT the full framework (no E0Controller, no Landscape, no LLM wiring).",
+    "decision_guide": {
+      "stateless_navigator": "Layer 0",
+      "survives_restarts": "Layer 0 + 1",
+      "executes_real_actions": "Layer 0 + 1 + 2",
+      "derives_domain_from_text": "Layer 0 + 1 + 2 + 3",
+      "self_monitoring_long_running": "Layer 0–4",
+      "unbounded_landscape_forgetting": "Layer 0–5",
+      "multi_agent_shared_domain": "Layer 0–3 + 6"
+    },
+    "entry_points": {
+      "0_controller": "E0Controller(landscape, execute_fn) — controller.py, landscape.py",
+      "1_memory": "LandscapeSnapshot, HistorizationSnapshot — memory_os.py",
+      "2_execution": "class MyPort(E2Port) — e2_port.py; E0Turn wires controller + port",
+      "3_llm": "run_session(task=...) — e0_session.py; run_cocognition() for two-LLM",
+      "4_self_graph": "SelfGraph() — self_graph.py; component_quality() / component_inertia()",
+      "5_entropy": "structural_temperature(), dream_pressure(), EntropyController — structural_entropy.py",
+      "6_multiverse": "MultiverseController(a, b) — multiverse.py; NoveltyGate prevents sterile consensus"
+    },
+    "design_boundary": "LLM proposes. E0 decides. E0 historizes. LLM never overrides navigation."
+  },
   "side_paths": {
     "_comment": "Derived standalone artifacts extracted from the framework. An agent working on e0_controller/ should check whether a change to a source module also affects these artifacts.",
     "lean_core": {
