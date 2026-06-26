@@ -296,6 +296,8 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full layer diagram and 
 
 ## Formal contracts for AI systems
 
+Mechanism reference for programmatic consumers: [`AGENT_REFERENCE.md`](AGENT_REFERENCE.md) — module map, formal definitions of M1 (Epistemic Trust), M2 (Inertia Factor), M3 (Adaptive Observation), structural limits, invariants.
+
 These invariants hold throughout the codebase and must not be violated by extensions:
 
 **`E0Controller` constructor:** `E0Controller(landscape, execute_fn, ...)` — `execute_fn` is always the second positional argument.
@@ -401,10 +403,4 @@ This framework was developed through human–AI collaboration (Thomas Wehner + A
 
 ```bibtex
 @software{wehner_e0_2026,
-  author    = {Wehner, Thomas},
-  title     = {{E₀ Framework} — Structural Difference-Reduction System},
-  year      = {2026},
-  doi       = {10.5281/zenodo.19333487},
-  url       = {https://github.com/Thomas66690815/E0-Framework}
-}
-```
+  author    = {
