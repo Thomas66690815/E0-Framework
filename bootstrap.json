@@ -6,7 +6,7 @@
     "purpose": "Session bootstrap for the E₀ team — human and AI working together on E₀-Framework",
     "framing": "We. The AI is an integral part of 'we'. This file is the AI's persistent identity — its Historization across context windows. Every confirmed/contradicted count is a U/F trace.",
     "usage": "Paste this file (or reference it) at the start of a new thread to restore full project context",
-    "last_updated": "2026-06-24",
+    "last_updated": "2026-06-26",
     "update_instruction": "After each commit: update state + active_context. After each lesson: update reflexion traces (confirmed++, contradicted++, recurred++). trace_quality = (confirmed - contradicted) / (confirmed + contradicted + 1)."
   },
   "project": {
@@ -31,14 +31,15 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C312",
-    "latest_commit_hash": "183c704",
-    "latest_commit_msg": "C312: README overhaul — Domain Studio, layer table, stats, structure",
+    "latest_commit": "C317",
+    "latest_commit_hash": "7c6369e",
+    "latest_commit_msg": "C317: AGENT_BUILDER_GUIDE.md + bootstrap.json agent_build_guide section",
     "test_count": 6720,
     "test_failures": 0,
     "ci_status": "pending",
     "module_count": "81 production + 12 benchmarks + 17 demos + 69 explorations + 133 test files",
-    "line_count": "~36000 production, ~133000 total"
+    "line_count": "~36000 production, ~133000 total",
+    "lean_core": "lean/reliability_memory/ — 15 acceptance tests, 0 failures"
   },
   "conventions": {
     "user_language": "German (user speaks German, code/docs in English)",
@@ -290,18 +291,13 @@
         "question": "Is this new primitive operable on two levels? Can E₀ navigate a landscape of X AND a landscape of paths-through-X with the same operators? If no — document why. (MetaLandscape / self-similarity check)",
         "triggered": 1,
         "last_triggered": "C292 team discussion — MetaLandscape deferred to ARC-H (post-C297)"
-      },
-      {
-        "question": "Is this new primitive operable on two levels? If E₀ can navigate a landscape of X, can E₀ also navigate a landscape of paths-through-X? If no — document why, don't ignore it. (MetaLandscape check)",
-        "triggered": 1,
-        "last_triggered": "C292 team discussion — MetaLandscape identified as post-C297 arc"
       }
     ]
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "Lean Core distillation — C313–C315 DONE. Next: C316 (Chauffeur domain onboarding) or IB-3 Self-Domain demo.",
-    "arc_status": "C315 complete: reliability_memory lean package (lean/) — primitives, traces, store, mcp_server, 15 acceptance tests (T1–T8 + invariants), all green. README updated with lean core section + repo structure. bootstrap.json extended with side_paths.lean_core coupling notes. C314: AGENT_REFERENCE.md M8–M10. C313: AGENT_REFERENCE.md M4–M7.",
+    "current_arc": "Lean Core arc complete (C313–C317). C318 = structural entropy pass (bootstrap.json prune + up-to-date). Next open arcs: IB-2 BPI2017, IB-3 Self-Domain, IB-4 GT-8, IB-5 coin_mode.",
+    "arc_status": "C317: AGENT_BUILDER_GUIDE.md (Layer 0–6 progressive build guide) + bootstrap.json agent_build_guide section. C316 (1d69b8f): attribution signature 'e0-reliability-memory-twehner' in lean/ __init__.py, traces.py, store.py headers, lean_core.bootstrap.json. C315-lean (b0ec02d): lean/reliability_memory package — primitives, traces, store, mcp_server, 15 acceptance tests (T1–T8 + invariants), all green. C315-collision (ead8624): pre-existing commit with same ID — README + bootstrap + Logistics. C314 (x2 naming collision — c63fa0f M4-M7, 9e409d6 M8-M10): AGENT_REFERENCE.md complete. C313 (f49154d): AGENT_REFERENCE.md M1-M3 machine-readable reference.",
     "arc_thesis": "E0 = Skeleton (structure/judgment/memory), E2 = Muscle (execution/domain). E2Port abstracts any execution target — factory, traffic, conversation, API. E0Turn wires E0Controller + E2Port into a domain-invariant persistent loop. Hypothesis: same E0 core serves arbitrary domains via E2Port swap.",
     "previous_arc_summary": "ARC-E: DifferenzPort (C288-C290): DifferenzPort ABC + E1Monitor + SessionState + ObservationPort. ARC-D (C285-C287): E1 impact historization live. Trajectory Arc (C277-C283): PathSignature + TrajectoryHistorization.",
     "key_result": "C295: RoutingE2Port — multi-modal E0 by composition. One E0Turn, many ports, no architecture change. ARC-H plan: docs/E0_ARC_H_PLAN_v1.md. MetaLandscape (C296-C298) = same E0Controller at PathSignature level = self-similarity proof.",
@@ -312,7 +308,7 @@
       "Quality score weights (P8 §12.1) are heuristic — could be meta-tunable but risks infinite regress",
       "GT-8: Partial Residual Trap — PARTIAL outcome discards unresolved structural remainder. No resolution yet."
     ],
-    "next_commit_id": "C316",
+    "next_commit_id": "C318",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
@@ -378,39 +374,40 @@
   },
   "structural_entropy": {
     "_comment": "Our forgetting protocol. Isomorphic to E₀'s structural entropy (C114-C121). Prevents bootstrap.json from growing without bound. Prune trigger is parameter-free: pressure = entries_since_last_prune / (entries_since_last_prune + μ). When pressure > 0.5 → prune. Check after each arc completion.",
-    "last_pruned": "C283",
+    "last_pruned": "C317",
     "prune_trigger": "After arc completion: count entries per section. If entries > 2×μ → prune.",
+    "prune_log_C318": "pressure = 35/(35+30) ≈ 0.54 > 0.5 → triggered. Actions: removed duplicate MetaLandscape perspective_check; removed IB-1.5 (done C312). No section exceeded 2×μ — no aggressive removal. Updated all stale state fields (state, active_context, commit_history_recent).",
     "sections": {
       "commit_history_recent": {
         "μ": 30,
         "anchor_rule": "Keep last 30 + any entry referenced by reflexion, perspective_checks, or active_context. Decay rest (git log is permanent source).",
-        "current_count_at_last_prune": 30,
-        "pruned_to": 30
+        "current_count_at_last_prune": 19,
+        "pruned_to": 19
       },
       "gordian_traps": {
         "μ": 8,
         "anchor_rule": "anchor_score = recurred + (referenced_by_perspective_check ? 1 : 0). Keep if recurred > 0 in last 30 commits OR resolution < 50 commits old. Lesson migrates to perspective_checks before removal.",
-        "current_count": 4
+        "current_count": 8
       },
       "breakthroughs": {
         "μ": 8,
         "anchor_rule": "anchor_score = built_upon. Keep if built_upon > 0. If built_upon = 0 after 30 commits → was it really a breakthrough?",
-        "current_count": 3
+        "current_count": 7
       },
       "perspective_checks": {
         "μ": 10,
         "anchor_rule": "anchor_score = triggered. Keep if triggered > 0. If triggered = 0 after 30 commits → reformulate or remove.",
-        "current_count": 11
+        "current_count": 13
       },
       "working_principles": {
         "μ": 10,
         "anchor_rule": "anchor_score = |q| × m (clarity × experience). High |q| + high m → anchor. q ≈ 0 with high m → confused, reformulate. Low m → too fresh for decay.",
-        "current_count": 7
+        "current_count": 9
       },
       "open_threads": {
         "μ": 8,
         "anchor_rule": "Keep if actionable (next arc target) or actively informing current work. Closed threads → remove. Bloated threads → compress to 2-3 sentences.",
-        "current_count": 6
+        "current_count": 5
       }
     }
   },
@@ -636,6 +633,46 @@
   },
   "commit_history_recent": [
     {
+      "id": "C317",
+      "hash": "7c6369e",
+      "msg": "AGENT_BUILDER_GUIDE.md (Layer 0–6 progressive build guide) + bootstrap.json agent_build_guide section",
+      "notes": "Layer 0 = minimal controller, Layer 6 = multi-agent shared domain"
+    },
+    {
+      "id": "C316",
+      "hash": "1d69b8f",
+      "msg": "lean/ — attribution signature for code-spread tracking",
+      "notes": "Token 'e0-reliability-memory-twehner' in __init__.py, traces.py, store.py headers, lean_core.bootstrap.json"
+    },
+    {
+      "id": "C315-lean",
+      "hash": "b0ec02d",
+      "msg": "lean/reliability_memory — standalone Historization package",
+      "notes": "~600 LOC, zero deps; 15 acceptance tests T1-T8+invariants all green; CC BY 4.0. NOTE: naming collision with C315 (ead8624) pre-existing commit"
+    },
+    {
+      "id": "C315",
+      "hash": "ead8624",
+      "msg": "README + bootstrap + Logistics domain updates",
+      "notes": "Pre-existing commit; naming collision with C315-lean above. Use hashes to disambiguate."
+    },
+    {
+      "id": "C314b",
+      "hash": "9e409d6",
+      "msg": "AGENT_REFERENCE.md — M8-M10 (Quantum Walk, NoveltyGate, MemOS)",
+      "notes": "Second commit labeled C314 — naming collision with C314a (c63fa0f)"
+    },
+    {
+      "id": "C314a",
+      "hash": "c63fa0f",
+      "msg": "AGENT_REFERENCE.md — M4-M7 (Self-Graph, Structural Temperature, PathSignature, Dream Mode)"
+    },
+    {
+      "id": "C313",
+      "hash": "f49154d",
+      "msg": "AGENT_REFERENCE.md — M1-M3, machine-readable mechanism reference for programmatic consumers"
+    },
+    {
       "id": "C312",
       "hash": "183c704",
       "msg": "README overhaul — Domain Studio, layer table, stats, structure",
@@ -742,14 +779,6 @@
   "idea_backlog": {
     "_comment": "Strategic ideas not yet scheduled. Review when choosing next arc. Add ideas freely; promote to active_context when starting.",
     "items": [
-      {
-        "id": "IB-1.5",
-        "title": "README overhaul",
-        "when_proposed": "2026-06-20",
-        "description": "README is stale since ~C280. Missing: Domain Studio UI (/studio/ endpoint, split-pane design, ARC-K workflow), updated test count (6720), updated module count (81), repository structure (server/, memos/), layer table corrections. See README analysis in C311 session.",
-        "priority": "high",
-        "estimated_scope": "1 commit"
-      },
       {
         "id": "IB-2",
         "title": "BPI 2017 Empirical Validation of ARC-K",
