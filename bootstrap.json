@@ -300,8 +300,8 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "ARC-K+: Domain Studio Extension — C311+C312 DONE. Next: C313 (Chauffeur domain onboarding) or IB-3 Self-Domain demo.",
-    "arc_status": "C312 complete: README overhaul approved by user. Domain Studio (ARC-K) section added with REST API table. Layer table updated (7b server layer). Human-in-the-loop row added to differentiators. server/ and memos/domains/ in repo structure. Test count 5980→6720, module count 78→81, pytest path includes server/. Contributing extended with 4 concrete extension points. C311: Domain Studio UI split-pane redesign (persistent graph left, accordion right, 5-step workflow, design from claude.ai/design).",
+    "current_arc": "Lean Core distillation — C313–C315 DONE. Next: C316 (Chauffeur domain onboarding) or IB-3 Self-Domain demo.",
+    "arc_status": "C315 complete: reliability_memory lean package (lean/) — primitives, traces, store, mcp_server, 15 acceptance tests (T1–T8 + invariants), all green. README updated with lean core section + repo structure. bootstrap.json extended with side_paths.lean_core coupling notes. C314: AGENT_REFERENCE.md M8–M10. C313: AGENT_REFERENCE.md M4–M7.",
     "arc_thesis": "E0 = Skeleton (structure/judgment/memory), E2 = Muscle (execution/domain). E2Port abstracts any execution target — factory, traffic, conversation, API. E0Turn wires E0Controller + E2Port into a domain-invariant persistent loop. Hypothesis: same E0 core serves arbitrary domains via E2Port swap.",
     "previous_arc_summary": "ARC-E: DifferenzPort (C288-C290): DifferenzPort ABC + E1Monitor + SessionState + ObservationPort. ARC-D (C285-C287): E1 impact historization live. Trajectory Arc (C277-C283): PathSignature + TrajectoryHistorization.",
     "key_result": "C295: RoutingE2Port — multi-modal E0 by composition. One E0Turn, many ports, no architecture change. ARC-H plan: docs/E0_ARC_H_PLAN_v1.md. MetaLandscape (C296-C298) = same E0Controller at PathSignature level = self-similarity proof.",
@@ -312,7 +312,7 @@
       "Quality score weights (P8 §12.1) are heuristic — could be meta-tunable but risks infinite regress",
       "GT-8: Partial Residual Trap — PARTIAL outcome discards unresolved structural remainder. No resolution yet."
     ],
-    "next_commit_id": "C313",
+    "next_commit_id": "C316",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
@@ -584,6 +584,30 @@
       "asymmetric_coupling": "R₀(requester→donor) = base_resistance / donor.weight",
       "graduated_overlap": "M_H(x→y) = max(0.2, Σ_z √(v(x,z)·v(z,y))), greedy divides S_eff by M_H",
       "inertia_factor": "I(e) = 1 − α·(m/(m+μ))·(1−|q|), greedy divides S_eff by I"
+    }
+  },
+  "side_paths": {
+    "_comment": "Derived standalone artifacts extracted from the framework. An agent working on e0_controller/ should check whether a change to a source module also affects these artifacts.",
+    "lean_core": {
+      "path": "lean/reliability_memory/",
+      "spec": "lean/lean_core.bootstrap.json",
+      "doc": "lean/E0_LEAN_CORE.md",
+      "tests": "python -m pytest lean/reliability_memory/tests/ -v",
+      "created": "2026-06-26",
+      "purpose": "Self-contained ~600-LOC reliability-memory package for external agent builders. Zero third-party deps. Optional MCP server (4 tools, lazy import). Distills the dominant E₀ mechanism (Historization, confirmed 6×) into a drop-in sidecar for repetitive, long-running agents.",
+      "derives_from": [
+        "e0_controller/historization.py — U/F traces, lazy global decay (K2), epistemic trust (C186), surprise dampening (C187), adaptive observation (C188)",
+        "e0_controller/primitives.py — Edge (NamedTuple), Outcome (Enum)",
+        "e0_controller/mcp_adapter.py — MCP surface pattern"
+      ],
+      "coupling_notes": [
+        "Default values (rho=0.9, lambda_s=0.15, lambda_f=0.20, delta_max=3.0, tau_base_fallback=10.0, min_observations=5): if changed in historization.py or config.py, update lean_core.bootstrap.json.defaults AND lean/reliability_memory/traces.py module-level constants.",
+        "Lazy-decay formula (K2 — ρ^(τ−τ_last)): if the formula changes, update traces.py._effective_traces() and traces.py.update() catch-up logic. Re-run acceptance test T3.",
+        "Outcome.PARTIAL weights (U+=0.5, F+=0.3): if changed in historization.py, update traces.py.update() PARTIAL branch. GT-8 (Partial Residual Trap) is documented in both bootstrap.json and E0_LEAN_CORE.md §4.",
+        "Epistemic trust formula (trust=exp(−staleness/τ_doubt), stability, τ_base): if formula changes, update traces.py.trust() and traces.py.stability(). Re-run T4, T5.",
+        "Surprise dampening + classify_experience thresholds (rate<0.3=stable, ≥0.3=volatile, events<3=exploratory): if thresholds change, update traces.py.classify_experience(). Re-run T6.",
+        "Modules EXCLUDED from lean core (amplitude, SU(2), dream, multiverse, self-graph, NoveltyGate, PathSignature, curriculum, sleep-wake): changes to these do NOT affect lean/."
+      ]
     }
   },
   "commit_history_recent": [

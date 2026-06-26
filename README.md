@@ -177,6 +177,43 @@ REST API surface (prefix `/domains`):
 
 Domain workspaces are persisted under `memos/domains/` as JSON files — no database required.
 
+### Reliability Memory — standalone lean package
+
+The dominant E₀ mechanism (Historization, confirmed 6×) is also published as a **self-contained, zero-dependency Python package** for external agent builders who don't need the full framework:
+
+```python
+from reliability_memory import ReliabilityStore
+
+mem = ReliabilityStore.load("session.json")        # persists across restarts
+rec = mem.recommend(state, candidates)             # None on cold start → decide freely
+action = rec.recommended or agent_choose(candidates)
+outcome = run_and_verify(action)                   # your verification step
+mem.observe_edge(state, action, outcome)
+mem.save("session.json")
+```
+
+What it includes: U/F decay traces, lazy global decay (O(1) per access), reliability ranking, epistemic trust (staleness-aware doubt), surprise dampening, adaptive observation (learn-to-learn), JSON persistence, optional MCP server surface (4 tools).
+
+What it deliberately excludes: amplitude/SU(2), dream mode, multiverse, self-graph, NoveltyGate, perception/UI — anything that isn't the dominant mechanism.
+
+```text
+lean/
+├── E0_LEAN_CORE.md            Concept document for external readers
+├── lean_core.bootstrap.json   Machine-readable build spec (hand to a coding agent)
+└── reliability_memory/        The package (~600 LOC, zero third-party deps)
+    ├── primitives.py          Edge, Outcome
+    ├── traces.py              Traces engine — U/F + decay + trust + adaptive
+    ├── store.py               ReliabilityStore, RecommendResult — public API
+    ├── mcp_server.py          Optional MCP surface (4 tools, lazy import)
+    └── tests/                 Acceptance tests T1–T8
+```
+
+Install (no packaging yet — add to `sys.path` or copy the folder):
+
+```bash
+cd lean && python -m pytest reliability_memory/tests/ -v   # 15 tests, 0 failures
+```
+
 ### Run the demos
 
 ```bash
@@ -351,11 +388,12 @@ These invariants hold throughout the codebase and must not be violated by extens
 
 ## Repository structure
 
-```
+```text
 E0-Framework/
 ├── canon/                  The structural definitions — what E₀ IS
 ├── e0_controller/          All production code, tests, demos, explorations
 ├── server/                 Domain Studio REST API (FastAPI); served at /studio/
+├── lean/                   Standalone lean package (reliability_memory) — zero deps
 ├── memos/domains/          Persisted domain workspaces (JSON, no database)
 ├── docs/                   Architecture reference, test registry, math mapping
 ├── scenarios/              Domain packages for cross-domain validation

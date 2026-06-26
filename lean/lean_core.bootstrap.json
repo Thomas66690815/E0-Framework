@@ -1,0 +1,171 @@
+{
+  "_meta": {
+    "type": "BUILD_SPEC",
+    "name": "reliability-memory (E₀ lean core)",
+    "purpose": "Self-contained build specification for a coding agent to implement the lean reliability-memory core distilled from the E₀ Framework. Hand this file to a coding agent; it contains every signature, formula, default, invariant, and acceptance test needed to build the package from scratch without reading the 36k-LOC parent repo.",
+    "derived_from": "https://github.com/Thomas66690815/E0-Framework (e0_controller: primitives.py, historization.py, observation_port.py, mcp_adapter.py, tension.py, config.py)",
+    "companion_doc": "E0_LEAN_CORE.md",
+    "design_principle": "Historization is the dominant mechanism — other features add incremental value (E₀ bootstrap, confirmed 6×). Keep only the dominant mechanism plus epistemic trust and surprise dampening.",
+    "language": "Python 3.10+",
+    "license": "CC BY 4.0",
+    "vocabulary": "mainstream agent-engineering terms; E₀ canon term given in parentheses in 'e0_ref' fields",
+    "last_updated": "2026-06-26"
+  },
+  "scope": {
+    "include": [
+      "Edge / Outcome primitives",
+      "U/F success-failure traces with lazy global decay (ρ)",
+      "reliability q = (U−F)/(U+F), evidence m = U+F",
+      "penalty (δ_H) = clip(λ_f·F − λ_s·U, ±δ_max) and cost R_eff = base_cost + penalty·trust",
+      "epistemic trust: trust = exp(−staleness/τ_doubt), self-calibrated τ_base",
+      "surprise dampening + adaptive observation (learn-to-learn)",
+      "ReliabilityStore: observe / observe_edge / recommend / status with cold-start gate",
+      "JSON persistence (save/load)",
+      "MCP server surface (4 tools), optional dependency"
+    ],
+    "exclude": [
+      "amplitude / Born / SU(2) interference routing",
+      "dream-mode cross-domain fingerprint transfer",
+      "multiverse coupling, NoveltyGate, CouplingRouter",
+      "structural-entropy pruning, sleep-wake, curriculum",
+      "self-graph metacognition",
+      "trajectory / PathSignature non-Markov layer",
+      "inertia_factor and overlap modulation (not selected for lean core)",
+      "perception / communication / UI / server / client"
+    ]
+  },
+  "defaults": {
+    "rho": 0.9,
+    "lambda_s": 0.15,
+    "lambda_f": 0.20,
+    "delta_max": 3.0,
+    "epsilon": 1e-12,
+    "trust_epsilon": 0.01,
+    "tau_base_fallback": 10.0,
+    "inter_visit_window": 200,
+    "default_delta": 0.5,
+    "default_base_cost": 0.3,
+    "min_observations_cold_start": 5,
+    "epistemic_trust": true,
+    "surprise_dampening": false,
+    "adaptive": true,
+    "_notes": "epistemic_trust and adaptive default ON in the lean core (the two refinements are the point). surprise_dampening starts OFF and is toggled by the adaptive loop. delta/base_cost are per-edge; constants here are the auto-create defaults."
+  },
+  "formulas": {
+    "update": "on outcome: U ← ρ·U + w·1[success]; F ← ρ·F + w·1[failure]   (w=0.5 on a dampened surprise, else 1.0)",
+    "lazy_decay": "effective U,F at time τ = stored·ρ^(τ − τ_last). O(1) per access, identical to decaying every edge each step (E₀ K2).",
+    "reliability_q": "q = (U − F) / (U + F + ε)   ∈ (−1, +1)",
+    "evidence_m": "m = U + F   ∈ [0, ∞)",
+    "penalty": "penalty = clip(λ_f·F − λ_s·U, −δ_max, +δ_max)   (E₀: δ_H)",
+    "cost": "R_eff = max(base_cost + penalty·trust, 1e-10)   (trust=1 when epistemic_trust off)",
+    "ranking_cost": "S_eff = delta · R_eff ; recommend = argmin over candidates (lower = more reliable)",
+    "stability": "stability = confirmations / (confirmations + surprises + 1)   ∈ [0,1)",
+    "tau_doubt": "τ_doubt = τ_base / (1 − stability + trust_epsilon)",
+    "tau_base": "median of recent inter-visit intervals; fallback 10.0 when none",
+    "trust": "trust = exp(−staleness / τ_doubt) ; 1.0 for virgin or just-visited edges",
+    "surprise": "on a revisit (gap>1), predicted_success = (q_prev ≥ 0); surprise = (predicted_success ≠ actual_success)",
+    "surprise_rate": "Σ surprises / (Σ confirmations + Σ surprises)",
+    "classify": "events<3 → 'exploratory' (hold); rate<0.3 → 'stable' (dampening off); rate≥0.3 → 'volatile' (dampening on)"
+  },
+  "modules": [
+    {
+      "file": "primitives.py",
+      "e0_ref": "primitives.py",
+      "exports": ["Edge", "Outcome"],
+      "spec": {
+        "Edge": "NamedTuple(source: str, target: str); __repr__ = 'source→target'",
+        "Outcome": "Enum SUCCESS='success' FAILURE='failure' PARTIAL='partial' (PARTIAL is a non-canonical convenience; document the dropped-residual caveat)"
+      }
+    },
+    {
+      "file": "traces.py",
+      "e0_ref": "historization.py (Historization)",
+      "exports": ["Traces"],
+      "purpose": "The trace engine. Holds per-edge U/F + decay + epistemic trust + surprise/adaptive. ~300 LOC.",
+      "state": "_U:dict[Edge,float], _F:dict[Edge,float], _tau:int, _tau_last:dict[Edge,int], _confirmations:dict[Edge,float], _surprises:dict[Edge,float], _inter_visit_intervals:list[int]; params rho,lambda_s,lambda_f,delta_max,surprise_dampening:bool",
+      "methods": {
+        "_effective_traces(edge)->(u,f)": "apply lazy decay ρ^(τ−τ_last); return (0,0) for virgin",
+        "update(edge, outcome)->None": "catch-up decay; if gap>1 and edge seen: record confirmation/surprise (decayed by ρ^gap) and append gap to inter_visit window (cap=inter_visit_window, keep last 100 when exceeded); w=0.5 if surprise and surprise_dampening else 1.0; apply update formula; τ+=1; τ_last[edge]=τ",
+        "trace_quality(edge)->float": "q formula (alias: quality)",
+        "trace_load(edge)->float": "m formula (alias: mass)",
+        "penalty(edge)->float": "clip(λ_f·F − λ_s·U, ±δ_max)   (E₀: delta_H)",
+        "stability(edge)->float": "confirmations/(confirmations+surprises+1), decayed",
+        "_tau_base()->float": "median inter-visit interval, fallback 10.0",
+        "trust(edge)->float": "exp(−staleness/τ_doubt); 1.0 virgin/just-visited",
+        "penalty_trusted(edge)->float": "penalty(edge) * trust(edge)   (E₀: delta_H_trusted)",
+        "surprise_rate()->float": "global Σsurprises/(Σconf+Σsurp), 0 if none",
+        "classify_experience()->str": "'stable'|'volatile'|'exploratory'",
+        "adapt_from_experience()->bool": "set surprise_dampening from classify (volatile=on, stable=off, exploratory=hold); return changed?",
+        "to_snapshot_dict()/from_snapshot_dict(d, edge_parser)": "serialize U,F,tau,tau_last,confirmations,surprises + params; backward-compatible restore"
+      }
+    },
+    {
+      "file": "store.py",
+      "e0_ref": "mcp_adapter.py (E0AdapterSession) + minimal landscape + selection (replaces controller.py/landscape.py)",
+      "exports": ["ReliabilityStore", "RecommendResult"],
+      "purpose": "Public API. Holds edges (delta, base_cost) + a Traces instance. Auto-creates edges on demand (bottom-up). ~200 LOC.",
+      "state": "_traces:Traces, _delta:dict[Edge,float], _base_cost:dict[Edge,float], _count:int, epistemic_trust:bool, adaptive:bool",
+      "methods": {
+        "observe(signal_id, outcome_str)->dict": "aggregate outcome on Edge('port', signal_id); _count++; return {ok, signal_id, outcome, reliability, observations}",
+        "observe_edge(source, target, outcome_str)->dict": "ensure_edge; traces.update(Edge(source,target), outcome); if adaptive: traces.adapt_from_experience(); _count++; return ack",
+        "recommend(state, candidates)->RecommendResult": "if no candidates or _count<min_observations: recommended=None with reason 'cold start (n/min)'. else ensure edges; pick argmin S_eff = delta·R_eff (R_eff uses penalty_trusted when epistemic_trust else penalty); reliability = q of chosen; reason = 'reliability selection (lowest cost)'",
+        "status()->dict": "{observations, nodes, edges, cold_start: _count<min}",
+        "save(path)/load(path)": "JSON: edges[{source,target,delta,base_cost}] + traces snapshot; load returns fresh store if file absent or malformed",
+        "_ensure_edge(source,target)": "add edge with default_delta, default_base_cost if absent",
+        "_effective_cost(source,target)->float": "max(base_cost + (penalty_trusted if epistemic_trust else penalty), 1e-10)"
+      },
+      "RecommendResult": "dataclass(recommended: Optional[str], reason: str, reliability: float, observations: int)"
+    },
+    {
+      "file": "mcp_server.py",
+      "e0_ref": "mcp_adapter.run_mcp_server",
+      "purpose": "Optional MCP surface. Requires `mcp` package; import lazily so the core works without it.",
+      "tools": {
+        "observe(signal_id, outcome)": "session.observe -> save",
+        "observe_edge(source, target, outcome)": "session.observe_edge -> save",
+        "recommend(state, candidates)": "session.recommend -> dict",
+        "status()": "session.status"
+      },
+      "notes": "load store at startup, save after each mutating tool call. SESSION path from env var, default ~/.reliability_memory/session.json"
+    }
+  ],
+  "invariants": [
+    "Virgin edge (no traces) and just-visited edge: trust = 1.0.",
+    "recommend() returns recommended=None below min_observations_cold_start — never fabricate a recommendation on cold start.",
+    "Outcome.SUCCESS / Outcome.FAILURE are canonical; PARTIAL is a runtime convenience and its unresolved residual is dropped (document this; do not silently expand it).",
+    "Lazy decay must be mathematically identical to per-step global decay (verify with a test).",
+    "Edges are created bottom-up from observed outcomes; never require a pre-declared topology.",
+    "Persistence round-trip is exact: save → load reproduces identical recommend() behavior.",
+    "The core package has zero third-party dependencies; `mcp` is optional and imported lazily."
+  ],
+  "acceptance_tests": [
+    {"id": "T1_learns_better_action", "given": "observe_edge('A','B',success)×6 and ('A','C',failure)×6", "expect": "recommend('A',['B','C']).recommended == 'B' and reliability ≈ 1.0"},
+    {"id": "T2_cold_start_honest", "given": "fewer than 5 observations", "expect": "recommend(...).recommended is None and reason starts with 'cold start'"},
+    {"id": "T3_decay", "given": "many successes on e, then long gap with no visits", "expect": "effective U decays toward 0 by ρ^gap (assert within tolerance)"},
+    {"id": "T4_trust_decays_for_stale", "given": "edge with strong penalty, then staleness grows", "expect": "penalty_trusted → 0 as staleness → ∞; cost returns toward base_cost"},
+    {"id": "T5_stable_vs_volatile", "given": "stable edge (always confirmed) vs volatile edge (often surprised)", "expect": "trust(stable) > trust(volatile) at equal staleness"},
+    {"id": "T6_adaptive_toggles", "given": "surprise_rate ≥ 0.3 over ≥3 events", "expect": "classify_experience()=='volatile' and adapt_from_experience() sets surprise_dampening True"},
+    {"id": "T7_persistence_roundtrip", "given": "a trained store saved then loaded", "expect": "recommend() identical before and after; tau, tau_last, confirmations, surprises preserved"},
+    {"id": "T8_no_topology_required", "given": "fresh store, observe_edge on never-declared nodes", "expect": "edges auto-created; status().edges increases"}
+  ],
+  "build_order": [
+    "1. primitives.py (Edge, Outcome) — no deps",
+    "2. traces.py (Traces) — depends on primitives; implement update + lazy decay first, verify T3",
+    "3. add trust/stability/tau_base to traces.py, verify T4/T5",
+    "4. add surprise tracking + classify + adapt, verify T6",
+    "5. store.py (ReliabilityStore) — observe/observe_edge/recommend/status, verify T1/T2/T8",
+    "6. save/load on store + traces snapshot, verify T7",
+    "7. mcp_server.py (optional) — wrap store in 4 MCP tools",
+    "8. run all acceptance_tests; ~600 LOC total target"
+  ],
+  "integration": {
+    "pattern": "sidecar memory beside the LLM agent",
+    "loop": "rec = mem.recommend(state, candidates); action = rec.recommended or agent_choose(candidates); outcome = run_and_verify(action); mem.observe_edge(state, action, outcome); mem.save()",
+    "sweet_spot": "repetitive, long-running agents (support, ops, pipelines, recurring workflows) where context→action pairs recur",
+    "preconditions": [
+      "a reliable SUCCESS/FAILURE signal (verification step preferred over LLM-judge)",
+      "a stable, deliberately-bucketed context_id scheme (too fine → no revisits; too coarse → collapse)",
+      "tolerance for cold start: recommend() returns None until min_observations reached"
+    ]
+  }
+}
