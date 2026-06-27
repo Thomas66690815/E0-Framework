@@ -292,6 +292,67 @@ print(f"Convergence at turn: {result.convergence_turn}")
 
 ---
 
+## Layer 7 — Reflexion (topology repair when stuck)
+
+**Add when:** the agent navigates unknown terrain and may reach states from which the goal is structurally unreachable.
+
+**What you need:** `reflexive_edge_proposal.py` + `integrated_reflexion.py`
+
+```python
+from e0_controller.reflexive_edge_proposal import run_with_proactive_reflexion
+from e0_controller.integrated_reflexion import run_with_integrated_reflexion
+
+# Option A: proactive (reflect at every new frontier before navigation)
+trace, proposals = run_with_proactive_reflexion(
+    landscape, execute_fn, "S", "GOAL", max_cycles=50
+)
+print(f"Proposed {len(proposals)} hypothesis edges from experience")
+
+# Option B: integrated (flag reflexion + topology reflexion, with SelfGraph)
+trace, result, journal = run_with_integrated_reflexion(
+    landscape, execute_fn, "S", "GOAL",
+    diagnosis_interval=10,
+    scoped=True,   # use historization-derived locality (C102)
+)
+# result.restore(landscape) — atomic undo if reflexion made things worse
+```
+
+**How proposals work:** Experience from successful edges → `experienced_pattern()` → `(median_δ, median_R₀)` → hypothesis edges to unreachable states. Navigation validates or falsifies. Falsified proposals raise their effective resistance via normal historization — no special cleanup required.
+
+**What you get:** The agent extends its own topology from structural priors. Instead of failing at unknown territory, it hypothesizes and tests.
+
+---
+
+## Fast Path — Lean Core Sidecar
+
+**Use when:** You need only M1+M2+M3 (reliability memory) without the full navigation stack. Suitable for agents that already have their own navigation logic and want to add learning-from-experience.
+
+**Location:** `lean/reliability_memory/` — ~600 lines, self-contained
+**Build spec for coding agents:** `lean/lean_core.bootstrap.json`
+
+```python
+from lean.reliability_memory.store import ReliabilityStore
+
+mem = ReliabilityStore.load("agent_state.json")  # persists across restarts
+
+# Before acting:
+rec = mem.recommend(current_state, candidate_actions)
+action = rec.recommended or agent_choose(candidate_actions)  # None on cold start → decide freely
+
+# After acting:
+outcome = run(action)   # your verification → SUCCESS/FAILURE
+mem.observe_edge(current_state, action, outcome)
+mem.save()
+```
+
+**Or via MCP (no code changes):** Drop-in for any MCP-capable agent — exposes `observe`, `observe_edge`, `recommend`, `status` as MCP tools.
+
+**Cold start:** Returns `null`/`None` until 5 observations per edge. No false confidence on first use.
+
+**Honest scope:** Works for repetitive agents where the same context→action pairs recur. Adds nothing on genuinely one-shot tasks. Not a replacement for the full controller stack when goal-directed navigation is required.
+
+---
+
 ## Decision Guide: Which Layers Do You Need?
 
 | Use case | Minimum layers |
@@ -303,6 +364,8 @@ print(f"Convergence at turn: {result.convergence_turn}")
 | Long-running agent with self-monitoring | Layer 0–4 |
 | Long-running agent, unbounded landscape | Layer 0–5 |
 | Multiple agents, shared domain | Layer 0–3 + 6 |
+| Agent in unknown / incomplete topology | Layer 0–2 + 7 |
+| Just reliability memory, no navigation | Fast Path (Lean Core) |
 
 ---
 
@@ -333,6 +396,8 @@ These are not gaps — they are explicit design boundaries:
 | 4 | `self_graph.py` | `SelfGraph()` |
 | 5 | `structural_entropy.py` | `structural_temperature()`, `dream_pressure()` |
 | 6 | `multiverse.py` | `MultiverseController(a, b)` |
+| 7 | `reflexive_edge_proposal.py`, `integrated_reflexion.py` | `run_with_proactive_reflexion()` |
+| Fast Path | `lean/reliability_memory/` | `ReliabilityStore` or MCP tools |
 
 Full mechanism reference: [`AGENT_REFERENCE.md`](../AGENT_REFERENCE.md)
 Formal canon: [`canon/e0-canon-plain.txt`](canon/e0-canon-plain.txt)

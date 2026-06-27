@@ -15,14 +15,23 @@ Full formal canon: [`canon/e0-canon-plain.txt`](canon/e0-canon-plain.txt) — 15
 | Landscape | `e0_controller/landscape.py` | `Landscape` |
 | Controller | `e0_controller/controller.py` | `E0Controller` |
 | Amplitude | `e0_controller/amplitude_overlay.py` | `AmplitudeOverlay` |
-| Reflexion | `e0_controller/self_graph.py` | `SelfGraph` |
+| Self-Graph | `e0_controller/self_graph.py` | `SelfGraph` |
 | Multiverse | `e0_controller/multiverse.py` | `MultiverseController` |
 | Dream | `e0_controller/dream_mode.py` | `DreamObserver` |
 | Trajectory | `e0_controller/trajectory.py` | `TrajectoryHistorization` |
 | Structural entropy | `e0_controller/structural_entropy.py` | `structural_temperature()` |
+| Reflexive edge proposal | `e0_controller/reflexive_edge_proposal.py` | `propose_edges()`, `ProposedEdge` |
+| Integrated reflexion | `e0_controller/integrated_reflexion.py` | `IntegratedReflexionResult`, `run_with_integrated_reflexion()` |
+| Coupling router | `e0_controller/coupling_router.py` | `CouplingRouter`, `CouplingSelfGraph` |
+| Sleep–wake | `e0_controller/sleep_wake.py` | `SleepWakeCycle` |
 | Input protocol | `e0_controller/observation_port.py` | `DifferenzPort` (ABC) |
+| World boundary | `e0_controller/e2_port.py` | `E2Port` (ABC), `ExecutionResult` |
 | Session runner | `e0_controller/e0_session.py` | `run_session()` |
+| LLM co-cognition | `e0_controller/llm_cocognition.py` | `run_cocognition()` |
 | MCP adapter | `e0_controller/mcp_adapter.py` | `MCPAdapter` |
+| Memory OS | `e0_controller/memory_os.py` | `LandscapeSnapshot`, `HistorizationSnapshot` |
+| Quantum walk | `e0_controller/quantum_walk_historized.py` | `HistorizedQuantumWalk` |
+| Lean core (standalone) | `lean/reliability_memory/` | `ReliabilityStore`, MCP server |
 
 ---
 
@@ -252,11 +261,6 @@ th.quality(signature)                   # → trace_quality ∈ (-1, +1)
 th.should_escape(signature)             # → True when shape has negative quality
 ```
 
-**Relationship to BT-3 / BT-5:**
-
-> BT-3: `F=0` traps the system at the edge level — allowing doubt is structurally necessary.
-> BT-5: A fixed trajectory *shape* traps at the round level — trajectory historization is structurally necessary for pattern-level escape.
-
 **What this replaces:** Coverage-delta as the only stagnation signal (reactive). PathSignature enables proactive escape before stagnation is measured.
 
 ---
@@ -418,6 +422,262 @@ RuntimeSnapshot.from_controller(ctrl)
 
 ---
 
+### M11 — Reflexive Edge Proposal (topology reflexion from experience)
+
+**File:** `e0_controller/reflexive_edge_proposal.py` → `propose_edges()`, `is_frontier()`, `experienced_pattern()`
+**Spec:** §C56–C57, §C101–C102
+
+**Problem:** The controller cannot navigate to a goal that is structurally unreachable in the current topology. Standard response: fail. E₀ response: derive candidate edges from accumulated experience.
+
+**Frontier detection:**
+
+```
+is_frontier(L, current, goal) ⟺ goal not BFS-reachable from current
+
+experienced_pattern(L):
+  → sample all edges with trace_load > 0 AND trace_quality > 0
+  → return EdgePattern(median_δ, median_R₀, sample_size, coverage)
+  → fallback to landscape-wide medians if no successful experience yet
+```
+
+**Proposal engine:**
+
+```
+candidates = states in L not directly reachable from current
+
+For each candidate target:
+  ProposedEdge(
+    delta      = pattern.median_delta,
+    resistance = median_R₀ if proactive else median_R₀ / confidence,
+    confidence = min(coverage, 0.8)   # cap: never fully certain
+  )
+
+Sort by goal_proximity(target, goal):
+  0 if target == goal
+  1 if goal reachable from target
+  2 if target is also a dead end
+```
+
+**Two modes:**
+
+| Mode | `proactive` | Resistance | Trigger |
+|------|-------------|-----------|---------|
+| Reactive (C56) | `False` | `median_R₀ / confidence` (cautious) | Detected stuckness (window ≥ 8 steps cycling) |
+| Proactive (C57) | `True` | `median_R₀` (best guess) | Immediately at every new frontier node |
+
+**Entry points:**
+
+```python
+# Reactive (wait for stuckness)
+trace, proposals = run_with_reflexion(landscape, execute_fn, "S", "GOAL")
+
+# Proactive (reflect before navigation)
+trace, proposals = run_with_proactive_reflexion(landscape, execute_fn, "S", "GOAL")
+```
+
+**Invariant:** Proposals are hypothesis edges only. Navigation historizes them — SUCCESS confirms, FAILURE falsifies. They are not verified before insertion.
+
+**What this replaces:** Terminal failure at topological gaps. The system extends its own map from structural priors rather than stopping.
+
+---
+
+### M12 — Integrated Reflexion (flag + topology in one pipeline)
+
+**File:** `e0_controller/integrated_reflexion.py` → `integrated_reflexion()`, `run_with_integrated_reflexion()`
+**Spec:** §C59, §C101–C102
+
+**Problem:** Flag reflexion (C49 — deactivate harmful modulations via SelfGraph diagnosis) and topology reflexion (C57 — propose edges at frontiers) are triggered by the same condition — no progress — but applied separately, creating ordering dependencies and inconsistent state.
+
+**Pipeline:**
+
+```
+SelfGraphDiagnosis (C47)
+    ↓
+1. Flag reflexion (C49):
+   → diagnose_self_graph(sg) → deactivation_candidates
+   → toggle harmful modulation flags (e.g. landscape.curvature_modulation = False)
+
+2. Topology reflexion (C57 or C101):
+   → is_frontier(landscape, current, goal)?
+   → scoped=False: global candidates
+   → scoped=True:  historization-scoped (C101/C102 — prefer locally relevant states)
+   → apply_proposals(landscape, proposals)
+
+3. IntegratedReflexionResult — unified, undoable
+```
+
+**Undo capability:**
+
+```python
+result = integrated_reflexion(landscape, current, goal, report=report)
+# if reflexion made things worse:
+result.restore(landscape)   # removes all proposed edges, reverts all flags
+```
+
+**scoped=True (C102):** Fresh systems → same as global. Historized systems → propose toward states structurally adjacent to known-good paths. Avoids injecting random topology into a mature landscape.
+
+**Full run entry point:**
+
+```python
+trace, result, journal = run_with_integrated_reflexion(
+    landscape, execute_fn, "S", "GOAL",
+    diagnosis_interval=10,   # SelfGraph diagnosis every 10 cycles
+    scoped=True,
+)
+# journal records all flag changes with cycle timestamps
+```
+
+**What this replaces:** Separate, uncoordinated reflexion calls. Unified pipeline ensures atomic application and atomic undo.
+
+---
+
+### M13 — CouplingRouter (partner selection as landscape navigation)
+
+**File:** `e0_controller/coupling_router.py` → `CouplingRouter`, `CouplingSelfGraph`, `CouplingReason`
+**Spec:** §C66–C68, §C157, Ontodynamics §3.4
+
+**Problem:** With N > 2 agents, naive coupling picks a random or nearest partner. Partner selection should reflect coupling history (who helped before) and structural distance (who brings new structure).
+
+**Dual selection pressure:**
+
+```
+CouplingReason.RECOVERY    → argmax(trace_quality) on coupling edges
+                              "I'm stuck. Who has helped before?"
+
+CouplingReason.EXPLORATION → argmax(Δ) on coupling edges
+                              "I need novelty. Who is most different?"
+
+Δ(A, B) = 1 − Jaccard(states_A, states_B)
+```
+
+**Routing landscape:** Directed complete graph over all universes. Coupling outcomes are historized — M1/M2/M3 runs on the coupling graph exactly as on domain edges.
+
+**Asymmetric coupling weights (C67):**
+
+```
+R₀(A → B) = base_resistance / weight(B)
+
+High-weight universe = cheap donor (domain expert)
+Low-weight universe  = expensive donor (generalist)
+
+Historization is directional: SUCCESS on A→B does NOT update B→A.
+```
+
+**CouplingSelfGraph (C68):** M4 architecture applied to coupling components:
+
+```
+trigger → selection → exchange → evaluation → recording → trigger
+                ↑           ↑
+          weight_mod   distance_mod  (optional modulations)
+```
+
+**Dream → weights (C157):** `update_weights_from_dream(router, observer)`:
+
+```
+weight = max(weight_floor, 1.0 + mean_dream_quality)
+
+mean_quality = +1.0 → weight = 2.0 (expert donor)
+mean_quality =  0.0 → weight = 1.0 (neutral)
+mean_quality = −0.5 → weight = 0.5 (poor donor)
+```
+
+**Entry point:**
+
+```python
+router = CouplingRouter([agent_a, agent_b, agent_c])
+peer_fn = make_routed_peer_fn(
+    router, "agent_a", goal="G", reason=CouplingReason.RECOVERY
+)
+```
+
+**What this replaces:** Static partner assignment. The routing landscape learns which partnerships produce progress — without any external oracle.
+
+---
+
+### M14 — SleepWakeCycle (automatic wake/consolidation rhythm)
+
+**File:** `e0_controller/sleep_wake.py` → `SleepWakeCycle`
+**Spec:** §C121
+
+**Problem:** Dream mode (M7) triggered manually or on a fixed schedule. Both are wrong: manual requires external monitoring; fixed schedules ignore actual knowledge state.
+
+**Trigger — parameter-free:**
+
+```
+should_dream(L) ⟺ T_s > μ
+```
+
+Same `μ` used by inertia_factor, inscription threshold, and adaptive_mu. No new parameter.
+
+**Cycle:**
+
+```
+Wake:  E0Controller.run()          → traces inscribed → T_s rises
+                                                       → inscription slows (M5 Type 1)
+Check: T_s > μ?
+
+Sleep: DreamObserver.dream_cycle() → decay applied → T_s falls
+                                                    → Dream Landscape consolidates
+
+Wake:  inscription resumes …
+```
+
+`SleepWakeCycle` holds references to controllers and `DreamObserver`. It decides *when* to call `dream_cycle()`. It does not own or mutate them directly.
+
+**Entry point:**
+
+```python
+swc = SleepWakeCycle(dream_observer, mu=5.0)
+swc.register("domain_a", ctrl_a, start="S", goal="G")
+swc.register("domain_b", ctrl_b, start="S", goal="G")
+swc.wire_peer_fns()            # auto-wires dream equivalences as peer_fn
+results = swc.run(n_episodes=30, max_cycles_per_run=40)
+print(swc.pressure_report())   # T_s and dream_pressure per domain
+```
+
+**What this replaces:** Manual dream triggers, external monitoring daemons. The system self-regulates its consolidation rhythm from the same `μ` that governs all other E₀ parameters.
+
+---
+
+## Lean Core — Standalone Sidecar for Agent Builders
+
+**Location:** `lean/reliability_memory/`
+**Documentation:** `lean/E0_LEAN_CORE.md`
+**Build spec (for coding agents):** `lean/lean_core.bootstrap.json`
+
+~600 lines, self-contained. Implements M1 + M2 + M3 only — the dominant mechanism without the full stack.
+
+```
+agent (LLM)
+    │ recommend(context, candidates)        ← best action given history
+    │ observe_edge(context, action, outcome) → write trace
+    ▼
+ReliabilityStore
+    per (context → action): U/F traces, trust (M1), inertia (M2)
+    → surprise_dampening adapts automatically (M3)
+```
+
+**MCP tools exposed:**
+
+| Tool | Returns |
+|------|---------|
+| `observe(signal_id, outcome)` | written trace |
+| `observe_edge(source, target, outcome)` | written trace |
+| `recommend(state, candidates)` | `{recommended, quality, load}` or `null` on cold start |
+| `status()` | `{landscape_size, observations, cold_start}` |
+
+**Cold start:** Returns `null` until `MIN_INSCRIPTIONS` (default 5) per edge. No false confidence.
+
+**Honest scope:** Works for repetitive, long-running agents where the same context→action pairs recur many times. Adds nothing on genuinely one-shot tasks — the store is empty and reports `cold_start: true`. Not a replacement for the full controller if goal-directed path selection is required.
+
+**Rebuild from spec:**
+
+```
+lean/lean_core.bootstrap.json → coding agent → reconstructs store.py + traces.py + mcp_server.py
+```
+
+---
+
 ## Structural Limits (empirically confirmed)
 
 These are not design choices — they are verified boundaries of the current architecture.
@@ -442,6 +702,8 @@ These must hold in any extension or fork:
 - `DifferenzPort.dampening_factor()` returns `1.0` when no data (neutral)
 - `DifferenzPort.from_dict(None)` returns fresh instance
 - All ports must pass `TestDifferenzPortABCCompliance` in `e0_controller/test_differenz_port.py`
+- `dream_cycle()` never mutates any domain landscape — writes to Dream Landscape only
+- `E2Port.execute()` must never raise — catch all domain errors, return `FAILURE`
 - Domain partitioning must emerge from `R_eff` (community detection), not from string labels
 
 ---
