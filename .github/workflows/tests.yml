@@ -28,6 +28,12 @@ jobs:
       - name: Run test suite
         run: python -m pytest e0_controller/ server/ --tb=short -q
 
+      - name: Run lean package suites
+        # The lean packages are standalone and dependency-free; they resolve
+        # their own imports only when `lean/` is the working directory.
+        working-directory: lean
+        run: python -m pytest reliability_memory/tests/ structural_geometry/tests/ --tb=short -q
+
       - name: Verify test count
         if: always()
         run: |

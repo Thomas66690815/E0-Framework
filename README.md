@@ -64,6 +64,11 @@ This architecture is what makes E₀ source-agnostic: any external input enters 
 - Logistics routing (multi-walker, resource-aware oracle)
 - Booking workflows (goal-aware oracle, human-in-the-loop apply)
 
+**Building games or simulations?** [`GAME_AI.md`](GAME_AI.md) maps every E₀ concept onto the
+term you already use — influence map, flow field, HPA\* clusters, AI director — with the
+benchmark numbers, the confirmed failure modes, and the four mechanisms that have no
+equivalent in shipped middleware.
+
 ---
 
 ## Quickstart
@@ -177,9 +182,20 @@ REST API surface (prefix `/domains`):
 
 Domain workspaces are persisted under `memos/domains/` as JSON files — no database required.
 
-### Reliability Memory — standalone lean package
+### Standalone lean packages
 
-The dominant E₀ mechanism (Historization, confirmed 6×) is also published as a **self-contained, zero-dependency Python package** for external agent builders who don't need the full framework:
+Two halves of E₀ are published as **self-contained, zero-dependency Python packages** for
+people who don't need the full framework. They are independent, and they compose: feed
+`reliability_memory`'s learned `R_eff` into `structural_geometry`'s `cost`.
+
+| Package | Half | What it answers |
+|---------|------|-----------------|
+| [`reliability_memory`](lean/E0_LEAN_CORE.md) | memory | Which action has been reliable in this context? |
+| [`structural_geometry`](lean/E0_STRUCTURAL_GEOMETRY.md) | geometry | Where does this field circulate, and which move has forward support? |
+
+#### Reliability Memory
+
+The dominant E₀ mechanism (Historization, confirmed 6×), for external agent builders:
 
 ```python
 from reliability_memory import ReliabilityStore
@@ -196,22 +212,67 @@ What it includes: U/F decay traces, lazy global decay (O(1) per access), reliabi
 
 What it deliberately excludes: amplitude/SU(2), dream mode, multiverse, self-graph, NoveltyGate, perception/UI — anything that isn't the dominant mechanism.
 
+#### Structural Geometry
+
+The navigation-field half: the Helmholtz split, the connection it induces, and the
+complex-valued influence map built on top. This is the layer that has no prior art —
+quantum walks and Projective Simulation cover interference on graphs, but not the
+orthogonal field decomposition that produces the phase in the first place.
+
+```python
+from structural_geometry import NavField, influence_map, circulation_ratio, phase_regime
+
+field = NavField()
+for (u, v), dist in nav_graph_edges():
+    field.add_edge(u, v, cost=dist)
+
+circulation_ratio(field)        # how much of this field is wasted motion, in [0, 1]
+phase_regime(field)["regime"]   # 'gradient' | 'interfering' | 'wrapped'
+
+field.update_costs(congestion)  # costs move, the geometry follows
+report = influence_map(field, agent.node, horizon=3, goals={agent.goal})
+agent.step_to(report.decide())  # gated: interference only when the margin is large
+```
+
+What it includes: exact per-component Helmholtz decomposition (pure-Python Cholesky and
+conjugate-gradient solvers, no numpy), `circulation_ratio`, connection ω / phase Θ / holonomy /
+curvature, `phase_regime` regime diagnostics, complex path amplitudes, the per-move influence
+map, and the empirically validated override gate.
+
+What it deliberately excludes: historization, the controller loop, SU(2) transport and the
+quantum walk, dream mode, multiverse, entropy, sleep–wake, self-graph, perception/UI.
+
 ```text
 lean/
-├── E0_LEAN_CORE.md            Concept document for external readers
-├── lean_core.bootstrap.json   Machine-readable build spec (hand to a coding agent)
-└── reliability_memory/        The package (~600 LOC, zero third-party deps)
-    ├── primitives.py          Edge, Outcome
-    ├── traces.py              Traces engine — U/F + decay + trust + adaptive
-    ├── store.py               ReliabilityStore, RecommendResult — public API
-    ├── mcp_server.py          Optional MCP surface (4 tools, lazy import)
-    └── tests/                 Acceptance tests T1–T8
+├── E0_LEAN_CORE.md                     Concept doc — the memory half
+├── lean_core.bootstrap.json            Machine-readable build spec
+├── E0_STRUCTURAL_GEOMETRY.md           Concept doc — the geometry half
+├── structural_geometry.bootstrap.json  Machine-readable build spec
+├── reliability_memory/                 ~600 LOC, zero third-party deps
+│   ├── primitives.py                   Edge, Outcome
+│   ├── traces.py                       U/F + decay + trust + adaptive
+│   ├── store.py                        ReliabilityStore — public API
+│   ├── mcp_server.py                   Optional MCP surface (4 tools)
+│   └── tests/                          Acceptance tests T1–T8
+└── structural_geometry/                ~1150 LOC, zero third-party deps
+    ├── linalg.py                       Cholesky + conjugate gradients
+    ├── field.py                        NavField — graph, weight, cost, flow
+    ├── helmholtz.py                    Φ, v_grad, v_rot, circulation_ratio
+    ├── connection.py                   ω, Θ, holonomy, κ, phase_regime
+    ├── amplitude.py                    Ψ, superposition, interference
+    ├── overlay.py                      influence_map + override gate
+    ├── demo.py                         Three runnable scenes
+    └── tests/                          Acceptance tests G1–G10
 ```
 
 Install (no packaging yet — add to `sys.path` or copy the folder):
 
 ```bash
-cd lean && python -m pytest reliability_memory/tests/ -v   # 15 tests, 0 failures
+cd lean && python -m pytest reliability_memory/tests/ structural_geometry/tests/ -q
+```
+
+```bash
+cd lean && python -m structural_geometry.demo
 ```
 
 ### Run the demos
@@ -223,6 +284,7 @@ py -3 -m e0_controller.demo_greedy_trap          # Hybrid routing vs greedy trap
 py -3 -m e0_controller.demo_invoice_llm --mock   # LLM-bootstrapped workflow
 py -3 -m e0_controller.demo_self_graph            # E₀ reflecting on its own components
 py -3 -m e0_controller.demo_multiverse --entropy  # Coupled domains + dream discovery
+py -3 -m e0_controller.demo_traffic_visual        # Congestion: BFS vs greedy vs E₀ → HTML
 ```
 
 ### Run the tests
@@ -250,6 +312,30 @@ Instead of evaluating single edges, the amplitude layer evaluates *families of f
 $$I(y; h) = \left|\sum_{p \in \text{paths}(x \to y, h)} e^{-S(p)} \cdot e^{i\Theta(p)}\right|^2$$
 
 Paths toward the goal interfere constructively. Dead ends and loops interfere destructively. The controller follows the action with the strongest forward support.
+
+### The geometry underneath
+
+The phase Θ is not a heuristic — it is derived from the field's own circulation. Every flow
+field on a graph splits uniquely into a conservative part and a rotational part, and E₀ solves
+that split exactly:
+
+$$\text{flow} = v_{\text{grad}} + v_{\text{rot}}, \qquad v_{\text{grad}}(x,y) = \Phi(x) - \Phi(y), \qquad L\Phi = \operatorname{div}(\text{flow})$$
+
+Because Φ solves the graph-Laplacian equation, the two parts are **orthogonal in edge space**.
+`v_rot` is the only source of path-dependence in the entire framework: it induces the
+connection ω, hence the path phase Θ, hence holonomy and curvature. No circulation → no phase
+→ interference degenerates into plain summation.
+
+This is the chain to read if you came here for the navigation mathematics:
+
+| Module | What it derives |
+|--------|-----------------|
+| [`potential.py`](e0_controller/potential.py) | Discrete Helmholtz decomposition — Φ, `v_grad`, `v_rot` |
+| [`connection.py`](e0_controller/connection.py) | Connection ω, path phase Θ, holonomy, edge curvature κ |
+| [`wavepath.py`](e0_controller/wavepath.py) | Complex path amplitudes Ψ = e^(−S) · e^(iΘ), path summation |
+| [`amplitude_overlay.py`](e0_controller/amplitude_overlay.py) | Per-action interfering support, override confidence |
+
+Available standalone and dependency-free as [`lean/structural_geometry`](lean/E0_STRUCTURAL_GEOMETRY.md).
 
 ### Trajectory historization
 
@@ -282,6 +368,58 @@ E₀ historizes each port independently and applies analog dampening when a port
 ### Self-reflection
 
 E₀ monitors its own components through a Self-Graph. If the amplitude layer's overrides cause harm in a domain, the controller detects this through its own historization and adjusts. The system must know itself to correct itself.
+
+---
+
+## Measured results
+
+### Multi-agent congestion — 20 agents, 1000 ticks, grid city with chokepoints
+
+Vehicles navigate a grid with capacity-limited intersections. Each agent has its own
+historization; the amplitude overlay looks three hops ahead before committing.
+
+| Strategy | Trips | Throughput / 100 | Stuck |
+|---|---|---|---|
+| BFS shortest path | 1112 | 111.2 | 11 270 |
+| Greedy Δ (no memory) | 2071 | 207.1 | 8 535 |
+| E₀ greedy (memory, never overrides) | 2462 | 246.2 | 6 623 |
+| E₀ full — overrides on every disagreement (conf ≥ 0.5) | 2229 | 222.9 | 8 107 |
+| **E₀ conservative — gated overrides (conf ≥ 0.85)** | **2565** | **256.5** | 6 913 |
+
+**E₀ moves 2.3× the traffic of precomputed shortest paths with 41 % fewer blockages.**
+Rigid routing sends every agent through the same chokepoint; per-agent memory does not.
+
+The row that matters most is the fourth: overriding greedy on *every* disagreement scored
+**worse than never overriding at all**. Interference is only worth acting on when its margin
+is large — the gate is the finding, not a safety blanket.
+
+**Watch it run:**
+
+```bash
+py -3 -m e0_controller.demo_traffic_visual
+```
+
+Writes a self-contained HTML page (`server/static/traffic_demo.html`, no dependencies, opens
+straight from disk) that replays both topologies under all three strategies side by side —
+including the river city, where E₀ *loses*.
+
+Full report, including where E₀ *loses*: [C185_TRAFFIC_VALIDATION_REPORT_v1.md](docs/research/C185_TRAFFIC_VALIDATION_REPORT_v1.md).
+In the two-bridge river city, stale congestion memory drives agents sideways and E₀ greedy
+drops 29 % below memoryless greedy. The overlay recovers it at low traffic (+56 %) and cannot
+at high traffic. Both directions are reported.
+
+### Navigation without a map — 5×5 grids with walls, dead ends and trap loops
+
+`py -3 -m e0_controller.benchmark_gridworld`
+
+| Domain | A\* (knows the map) | Naive greedy | E₀ (learns by failing) |
+|---|---|---|---|
+| Detour wall | 8 steps | **0 % success** | 100 %, 16 steps |
+| Dead-end lure | 8 steps | **0 % success** | 100 %, 10 steps |
+| Trap loop | 8 steps | **0 % success** | 100 %, 8 steps |
+
+A\* is given the topology. E₀ is not — it reaches the goal in all three by inscribing its own
+failures. No training, no reward signal, no heuristic.
 
 ---
 
@@ -393,7 +531,7 @@ E0-Framework/
 ├── canon/                  The structural definitions — what E₀ IS
 ├── e0_controller/          All production code, tests, demos, explorations
 ├── server/                 Domain Studio REST API (FastAPI); served at /studio/
-├── lean/                   Standalone lean package (reliability_memory) — zero deps
+├── lean/                   Standalone lean packages (memory + geometry) — zero deps
 ├── memos/domains/          Persisted domain workspaces (JSON, no database)
 ├── docs/                   Architecture reference, test registry, math mapping
 ├── scenarios/              Domain packages for cross-domain validation
@@ -409,6 +547,7 @@ E0-Framework/
 
 | Document | Purpose |
 |----------|---------|
+| [GAME_AI.md](GAME_AI.md) | E₀ for game and simulation developers — vocabulary map, benchmarks, entry points |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | 14-layer model, core formulas, navigation guide |
 | [E0_MATH_IMPL_MAPPING_v1.md](docs/E0_MATH_IMPL_MAPPING_v1.md) | Every formula → exact code location |
 | [E0_TEST_REGISTRY_v2.md](docs/E0_TEST_REGISTRY_v2.md) | Per-file test inventory |
