@@ -5,8 +5,8 @@
     "parent_project": "e0-framework",
     "purpose": "Session bootstrap for the E₀ team — human and AI working together on E₀-Framework",
     "framing": "We. The AI is an integral part of 'we'. This file is the AI's persistent identity — its Historization across context windows. Every confirmed/contradicted count is a U/F trace.",
-    "usage": "Paste this file (or reference it) at the start of a new thread to restore full project context",
-    "last_updated": "2026-06-26",
+    "usage": "Paste this file (or reference it) at the start of a new thread to restore full project context. READ strategic_plan FIRST — it is the binding frame since 2026-07-27.",
+    "last_updated": "2026-07-27",
     "update_instruction": "After each commit: update state + active_context. After each lesson: update reflexion traces (confirmed++, contradicted++, recurred++). trace_quality = (confirmed - contradicted) / (confirmed + contradicted + 1)."
   },
   "project": {
@@ -31,24 +31,27 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C317",
-    "latest_commit_hash": "7c6369e",
-    "latest_commit_msg": "C317: AGENT_BUILDER_GUIDE.md + bootstrap.json agent_build_guide section",
+    "latest_commit": "C319",
+    "latest_commit_hash": "754cabf",
+    "latest_commit_msg": "C319: structural_geometry lean package + GAME_AI.md + visual traffic demo",
     "test_count": 6720,
     "test_failures": 0,
     "ci_status": "pending",
     "module_count": "81 production + 12 benchmarks + 17 demos + 69 explorations + 133 test files",
     "line_count": "~36000 production, ~133000 total",
-    "lean_core": "lean/reliability_memory/ — 15 acceptance tests, 0 failures"
+    "lean_packages": "lean/reliability_memory (15 acceptance tests) + lean/structural_geometry (37 tests), 0 failures",
+    "strategy": "ARC-M consolidation since 2026-07-27 — see strategic_plan section + docs/E0_UMSETZUNGSPLAN_v1.md"
   },
   "conventions": {
     "user_language": "German (user speaks German, code/docs in English)",
     "commit_prefix": "C{N}: descriptive title",
     "commit_style": "Detailed multi-line: what, why, key properties, test count, suite total",
-    "workflow": "feature → test → docs update (registry + README) → commit → push",
+    "workflow": "check WP mapping (strategic_plan L3) → feature → test → docs update (registry + plan WP status) → commit → push",
+    "commit_id_check": "Before committing: git log --oneline -5 to verify C{N} is unused — three C315 and two C314 collisions have happened. Disambiguate by hash.",
     "test_style": "Grouped in classes by claim (e.g., TestStructuralDistance, TestRecoverySelection)",
     "docs_to_update_per_commit": [
-      "docs/E0_TEST_REGISTRY_v2.md (test count + scope line)"
+      "docs/E0_TEST_REGISTRY_v2.md (test count + scope line)",
+      "docs/E0_UMSETZUNGSPLAN_v1.md (WP status column, when a WP was advanced)"
     ],
     "execute_fn_mock": "lambda s, t: Outcome.SUCCESS",
     "controller_constructor": "E0Controller(landscape, execute_fn, ...)",
@@ -291,22 +294,32 @@
         "question": "Is this new primitive operable on two levels? Can E₀ navigate a landscape of X AND a landscape of paths-through-X with the same operators? If no — document why. (MetaLandscape / self-similarity check)",
         "triggered": 1,
         "last_triggered": "C292 team discussion — MetaLandscape deferred to ARC-H (post-C297)"
+      },
+      {
+        "question": "Does this work map to a WP in docs/E0_UMSETZUNGSPLAN_v1.md? If not — stop: amend the plan deliberately or drop the work. (Feature freeze layers 5-14 until Gate G1; see strategic_plan.)",
+        "triggered": 0,
+        "last_triggered": null
+      },
+      {
+        "question": "Would this result convince an external skeptic, or only us? If the evidence is internal-only (own domains, own baselines, own reviewers) — it does not count toward G1.",
+        "triggered": 0,
+        "last_triggered": null
       }
     ]
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "ARC-L: Discovery/adoption arc (C319). Clone spike traced via GitHub traffic API to the geometry chain (wavepath.py / amplitude_overlay.py / canon), not the AgentBuilder guide — referrer github.com only, i.e. code search. Response: surface the geometry axis. Next open arcs: IB-2 BPI2017, IB-3 Self-Domain, IB-4 GT-8, IB-5 coin_mode.",
-    "arc_status": "C319: lean/structural_geometry — second lean package (~1150 LOC, zero deps, 37 tests): NavField + per-component Helmholtz (pure-Python Cholesky/CG, no numpy) + connection/holonomy/curvature + complex path amplitudes + influence_map with the C185-validated override gate (min_confidence=0.85, max_imbalance=3.0). Attribution token 'e0-structural-geometry-twehner'. New: phase_regime() — measures the route-to-route phase gap as mean edge curvature and reports gradient/interfering/wrapped. Found while testing: at typical weights interference is purely constructive; cancellation needs a gap ~pi, which is already past the stable ranking range. Docs corrected accordingly rather than softened. Also C319: GAME_AI.md (vocabulary bridge + honest limits), README Measured-results section (C185 + gridworld tables) and geometry-chain entry table, demo_traffic_visual.py (self-contained HTML replay of both topologies incl. the river-city failure mode), CI now runs both lean suites, GitHub topics set (repo previously had none). C317: AGENT_BUILDER_GUIDE.md (Layer 0–6 progressive build guide) + bootstrap.json agent_build_guide section. C316 (1d69b8f): attribution signature 'e0-reliability-memory-twehner' in lean/ __init__.py, traces.py, store.py headers, lean_core.bootstrap.json. C315-lean (b0ec02d): lean/reliability_memory package — primitives, traces, store, mcp_server, 15 acceptance tests (T1–T8 + invariants), all green. C315-collision (ead8624): pre-existing commit with same ID — README + bootstrap + Logistics. C314 (x2 naming collision — c63fa0f M4-M7, 9e409d6 M8-M10): AGENT_REFERENCE.md complete. C313 (f49154d): AGENT_REFERENCE.md M1-M3 machine-readable reference.",
-    "arc_thesis": "E0 = Skeleton (structure/judgment/memory), E2 = Muscle (execution/domain). E2Port abstracts any execution target — factory, traffic, conversation, API. E0Turn wires E0Controller + E2Port into a domain-invariant persistent loop. Hypothesis: same E0 core serves arbitrary domains via E2Port swap.",
-    "previous_arc_summary": "ARC-E: DifferenzPort (C288-C290): DifferenzPort ABC + E1Monitor + SessionState + ObservationPort. ARC-D (C285-C287): E1 impact historization live. Trajectory Arc (C277-C283): PathSignature + TrajectoryHistorization.",
-    "key_result": "C295: RoutingE2Port — multi-modal E0 by composition. One E0Turn, many ports, no architecture change. ARC-H plan: docs/E0_ARC_H_PLAN_v1.md. MetaLandscape (C296-C298) = same E0Controller at PathSignature level = self-similarity proof.",
+    "current_arc": "ARC-M: Consolidation & Decision (C320+). Strategy pivot 2026-07-27 after repeated external usefulness reviews. Verdict: value is concentrated in Historization + the lean packages; the amplitude/geometry layer has unproven marginal value (+4% only with hard gate in C185; purely constructive interference at typical weights per C319; no external baselines; no scaling evidence past N~50 = SC-11). Response: productize the lean packages, run ONE decision experiment (scaling + external baselines), let Gate G1 decide the geometry layer's future. Binding plan: docs/E0_UMSETZUNGSPLAN_v1.md + strategic_plan section below.",
+    "arc_status": "Plan written (docs/E0_UMSETZUNGSPLAN_v1.md), bootstrap restructured, no WP started yet. Parallel-safe entry points: WP-1.1 (packaging both lean packages) or WP-2.1 (benchmark harness — the priority path). Feature freeze on layers 5-14 is in effect (strategic_plan L2).",
+    "arc_thesis": "Product = lean packages. Framework = research carrier. Every commit maps to a Work Package (L3). Reduce before extending: the decision experiment (WP-2.x) resolves SC-11 and the no-external-baseline gap before any new mechanism is built.",
+    "previous_arc_summary": "ARC-L (C313-C319): adoption surface — AGENT_REFERENCE.md, AGENT_BUILDER_GUIDE.md, lean/reliability_memory (C315-lean), lean/structural_geometry (C319), GAME_AI.md, README measured-results overhaul. Clone spike traced via GitHub traffic API to the geometry chain (code search). Earlier: ARC-E DifferenzPort (C288-C290), ARC-D E1 impact historization (C285-C287), Trajectory Arc (C277-C283).",
+    "key_result": "Two facts drive ARC-M: (1) the 6x-confirmed dominant mechanism (Historization) fits in ~600 LOC (lean/reliability_memory); (2) C185 shows the amplitude layer adds only +4% over pure historization and only with a hard gate (conf >= 0.85) — ungated it is net-negative. C319 adds: at typical weights interference is purely constructive (cancellation needs a phase gap ~pi, beyond the stable ranking range).",
     "open_threads": [
-      "TRAP_GRID domain needs redesign — greedy avoids diagonal traps via edge-path, no differentiation",
-      "F3 branching boundary (b>=3): confirmed structural limit (C272). Potential improvement via hierarchical revisit penalty or subtree-level decay.",
-      "F4 non-Markov limit (partial improvement via Trajectory Arc C277-C283): remaining gap: edge-level credit assignment across non-adjacent edges.",
-      "Quality score weights (P8 §12.1) are heuristic — could be meta-tunable but risks infinite regress",
-      "GT-8: Partial Residual Trap — PARTIAL outcome discards unresolved structural remainder. No resolution yet."
+      "G1 decision experiment (WP-2.1..2.5): scaling N=100/500/1000 + external baselines (tabular Q-learning, UCB1, D*-Lite, random-restart greedy). THE priority — resolves SC-11 and the no-external-baseline gap in one shot.",
+      "F3 branching boundary (b>=3) and F4 non-Markov limit: confirmed structural limits (C272). Improvement work FROZEN until after G1 — report honestly, do not engineer around them before the gate.",
+      "GT-8 Partial Residual Trap: documented, unresolved, deferred until after G1 (only relevant if the framework core continues as a product).",
+      "TRAP_GRID domain redesign: folded into WP-2.1 benchmark harness (domain generators need clean trap semantics anyway).",
+      "Quality score weights (P8 12.1) are heuristic — frozen until after G1."
     ],
     "next_commit_id": "C320",
     "working_principles": [
@@ -369,7 +382,50 @@
         "confirmed": 1,
         "contradicted": 0,
         "last_tested": "C262 (post-arc audit)"
+      },
+      {
+        "principle": "Value is concentrated — the product is the lean core; every framework layer must earn its keep via ablation against a simpler alternative",
+        "confirmed": 0,
+        "contradicted": 0,
+        "last_tested": "2026-07-27 (strategy pivot — untested as principle, G1 will test it)"
       }
+    ]
+  },
+  "strategic_plan": {
+    "_comment": "Binding development frame since 2026-07-27 (ARC-M). Full plan with acceptance criteria: docs/E0_UMSETZUNGSPLAN_v1.md. Update WP status THERE; record the G1 gate result HERE and there.",
+    "doc": "docs/E0_UMSETZUNGSPLAN_v1.md",
+    "based_on": [
+      "docs/E0_PAPER_AUDIT_v1.md (8 formula mismatches fixed C269; 27 uncovered modules; zero external benchmarks; no scaling past N~50)",
+      "docs/E0_STRUCTURAL_CONTRADICTIONS_v1.md (SC-11 scalability = make-or-break)",
+      "docs/research/C185_TRAFFIC_VALIDATION_REPORT_v1.md (+4% gated amplitude value; river-city failure)",
+      "C319 finding: interference purely constructive at typical weights"
+    ],
+    "decisions": {
+      "L1": "Product = lean packages (reliability_memory, structural_geometry). Framework (e0_controller/, server/) = research carrier, not a product.",
+      "L2": "FEATURE FREEZE layers 5-14 (reflexion, multiverse, llm-integration extensions, observation, dream, entropy, sleep-wake, curriculum, communication, session runner): bugfixes only. Unfreeze per mechanism ONLY via ablation showing measurable value over a simpler alternative on >=2 domains.",
+      "L3": "Every commit maps to a Work Package (WP-x.y) in the plan. No WP -> no commit; amend the plan deliberately first if work is genuinely needed.",
+      "L4": "Claims discipline: no AGI framing. Positioning: 'learned edge-cost memory + gated lookahead for graph navigation under uncertainty'. Every README claim cites a benchmark artefact."
+    },
+    "phases": {
+      "P1_productize": "WP-1.1 packaging both lean packages; WP-1.2 PyPI (USER DECISION required); WP-1.3 LLM-agent tool-reliability example; WP-1.4 game-AI example consuming structural_geometry",
+      "P2_decision_experiment": "WP-2.1 benchmark harness (domain generators N=100/500/1000, fixed protocol); WP-2.2 external baselines (tabular Q-learning, UCB1, D*-Lite, random-restart greedy — literature hyperparameters, no strawmen); WP-2.3 E0 ablations (historization-only / +gated amplitude / +full); WP-2.4 report docs/research/E0_DECISION_BENCHMARK_v1.md; WP-2.5 BPI2017 real-data validation",
+      "P3_gate": "Gate G1 — see gate_g1",
+      "P4_conditional": "4a: productize geometry (if G1-A passes) OR 4b: research-freeze geometry (if not)",
+      "P5_repositioning": "WP-5.1 README claims rewrite + AGI blueprint to _archive; WP-5.2 external short paper on Historization incl. F3/F4 (USER DECISION on submission); WP-5.3 one-command reproduction protocol"
+    },
+    "gate_g1": {
+      "criteria_fixed_in_advance": true,
+      "G1_A_geometry": "Amplitude/geometry keeps >=10% value over historization-only on >=2 domain classes at N>=100 -> stays product (4a). Else -> research freeze (4b).",
+      "G1_B_vs_baselines": "Historization-only competitive (>= baseline median) -> keep positioning. Else -> reposition lean packages as lightweight, explainable, training-free alternative with documented trade-offs; no superiority claims.",
+      "status": "OPEN — decide after WP-2.4",
+      "result": null
+    },
+    "non_goals_until_g1": [
+      "new layers or new mechanisms in layers 5-14",
+      "new domain demos, UI/studio extensions",
+      "papers on layer-5-14 mechanisms (P7-P10 deferred)",
+      "GT-8 implementation",
+      "further 'E0 learns E0' self-validation work"
     ]
   },
   "structural_entropy": {
@@ -629,9 +685,39 @@
         "Surprise dampening + classify_experience thresholds (rate<0.3=stable, ≥0.3=volatile, events<3=exploratory): if thresholds change, update traces.py.classify_experience(). Re-run T6.",
         "Modules EXCLUDED from lean core (amplitude, SU(2), dream, multiverse, self-graph, NoveltyGate, PathSignature, curriculum, sleep-wake): changes to these do NOT affect lean/."
       ]
+    },
+    "structural_geometry": {
+      "path": "lean/structural_geometry/",
+      "spec": "lean/structural_geometry.bootstrap.json",
+      "doc": "lean/E0_STRUCTURAL_GEOMETRY.md",
+      "tests": "python -m pytest lean/structural_geometry/tests/ -v",
+      "created": "2026-07-25",
+      "purpose": "Self-contained ~1150-LOC geometry package, zero deps: NavField, exact per-component Helmholtz split (pure-Python Cholesky/CG), connection/phase/holonomy/curvature, phase_regime diagnostics, complex path amplitudes, influence_map with the C185-validated override gate (min_confidence=0.85, max_imbalance=3.0). Attribution token 'e0-structural-geometry-twehner'.",
+      "coupling_notes": [
+        "Derives from potential.py, connection.py, wavepath.py, amplitude_overlay.py — formula changes there require a port + re-run of the G1-G10 acceptance tests.",
+        "Known finding (C319): at typical weights interference is purely constructive; the docs state this explicitly — do not soften.",
+        "Future of this package depends on Gate G1 (strategic_plan): 4a productize / 4b research freeze."
+      ]
     }
   },
   "commit_history_recent": [
+    {
+      "id": "C319",
+      "hash": "754cabf",
+      "msg": "structural_geometry lean package + GAME_AI.md + visual traffic demo",
+      "notes": "Second lean package (~1150 LOC, zero deps, 37 tests). Key finding: at typical weights interference is purely constructive; cancellation needs phase gap ~pi — docs corrected, not softened."
+    },
+    {
+      "id": "C315-ref",
+      "hash": "6b50f39",
+      "msg": "AGENT_REFERENCE.md M11-M14 + Lean Core; AGENT_BUILDER_GUIDE.md Layer 7 + Fast Path",
+      "notes": "THIRD commit labeled C315 — ID collision; disambiguate by hash."
+    },
+    {
+      "id": "C318",
+      "hash": "20a3fd8",
+      "msg": "bootstrap.json — structural entropy pass + up-to-date state"
+    },
     {
       "id": "C317",
       "hash": "7c6369e",
@@ -772,44 +858,49 @@
     "paper6": "docs/papers/PAPER6_MANUSCRIPT_v1.md — Coupled transition systems, multiverse, cross-reflexion, overload"
   },
   "falsification": {
-    "status": "8/8 targets RESOLVED",
+    "status": "8/8 targets RESOLVED (internal)",
     "doc": "docs/E0_EVIDENCE_AND_FALSIFICATION_STATUS_v1.md",
-    "date_resolved": "2026-03-31"
+    "date_resolved": "2026-03-31",
+    "caveat": "All 8 targets were internal — zero external baselines, no scaling past N~50 (paper audit 6.3). Gate G1 (strategic_plan) is the first external falsification pass; treat '8/8 resolved' as necessary, not sufficient."
   },
   "idea_backlog": {
-    "_comment": "Strategic ideas not yet scheduled. Review when choosing next arc. Add ideas freely; promote to active_context when starting.",
+    "_comment": "Strategic ideas not yet scheduled. Since ARC-M (2026-07-27): every promotion must map to a WP in docs/E0_UMSETZUNGSPLAN_v1.md (L3); items touching frozen layers stay frozen until Gate G1.",
     "items": [
       {
         "id": "IB-2",
-        "title": "BPI 2017 Empirical Validation of ARC-K",
+        "title": "BPI 2017 Empirical Validation",
         "when_proposed": "2026-05-12",
-        "description": "Take the public BPI 2017 process-mining event log (used in C184b) and feed it into DomainSession via FileSensor CSV. Measure recommendation accuracy against ground truth. First empirical validation of ARC-K on real process data — not a synthetic oracle.",
-        "priority": "medium",
+        "status": "PROMOTED to WP-2.5 (decision experiment, real-data evidence source)",
+        "description": "Take the public BPI 2017 process-mining event log (used in C184b) and feed it into DomainSession via FileSensor CSV. Measure recommendation accuracy against ground truth.",
+        "priority": "high (part of G1 evidence)",
         "estimated_scope": "1–2 commits (data preprocessing + benchmark script)"
       },
       {
         "id": "IB-3",
-        "title": "ARC-L: Self-Graph — E₀ learns E₀",
+        "title": "Self-Graph demo — E₀ learns E₀",
         "when_proposed": "2026-05-12",
-        "description": "Create DomainSession('e0_architecture') using the 14-layer architecture as node topology. States = layers (primitives, landscape, controller, ...). Edges = depends-on / calls relationships. Learn via topology_aware oracle, then recommend navigation paths through the system. Originally planned as C43 Self-Graph. Infrastructure now exists (DomainSession + DomainStore + REST API) — needs only a demo script.",
-        "priority": "medium",
-        "estimated_scope": "1 commit (demo script only, no new infrastructure)"
+        "status": "FROZEN until after G1 (L2 freeze + non-goal: self-validation work increases the closed epistemic loop that P2/P5 are meant to break)",
+        "description": "DomainSession('e0_architecture') using the 14-layer architecture as node topology.",
+        "priority": "low",
+        "estimated_scope": "1 commit"
       },
       {
         "id": "IB-4",
         "title": "GT-8 Resolution: Partial Residual Mechanism",
         "when_proposed": "2026-05-12",
-        "description": "When a transition produces PARTIAL, create a new Difference object in the landscape for the unresolved residual rather than silently discarding it. Two candidate approaches: (A) Ephemeral residual node — PARTIAL creates a temporary node that Dream can consume. (B) Residual tracking in SessionState — explicit carry-forward for E1Monitor. Requires conceptual design before coding (erst erarbeiten, dann umsetzen).",
-        "priority": "low (no bug yet, but will become one as PARTIAL usage grows)",
+        "status": "DEFERRED until after G1 (only relevant if the framework core continues as a product)",
+        "description": "When a transition produces PARTIAL, create a new Difference object for the unresolved residual instead of silently discarding it. Candidates: (A) ephemeral residual node consumable by Dream; (B) residual tracking in SessionState. Requires design before coding (erst erarbeiten, dann umsetzen).",
+        "priority": "low",
         "estimated_scope": "1 design session + 1–2 implementation commits"
       },
       {
         "id": "IB-5",
         "title": "coin_mode and mu exposed in REST API",
         "when_proposed": "2026-05-12",
-        "description": "DomainSession.learn() accepts coin_mode ('hadamard'|'grover'|'geometric') and mu but LearnRequest does not expose them. Exposing these parameters allows per-domain tuning of exploration/exploitation trade-off via the REST API without code changes.",
+        "status": "FROZEN until after G1 (REST/studio surface = framework product work under L2)",
+        "description": "Expose DomainSession.learn() coin_mode and mu in LearnRequest.",
         "priority": "low",
-        "estimated_scope": "1 commit (LearnRequest + routes_domains.py + tests)"
+        "estimated_scope": "1 commit"
       }
     ]
   },
