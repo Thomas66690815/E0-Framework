@@ -31,9 +31,9 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C321",
-    "latest_commit_hash": "02e6199",
-    "latest_commit_msg": "C321: reconcile ARC-M claims with repository evidence",
+    "latest_commit": "C322",
+    "latest_commit_hash": "b605e7f",
+    "latest_commit_msg": "C322: preregister Gate G1 causal benchmark protocol",
     "test_count": 6720,
     "test_failures": 0,
     "ci_status": "pending",
@@ -309,19 +309,19 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "ARC-M / WP-0: Evidence Reconciliation (C320+). WP-0.1/0.2 reconciled claims with repository evidence; WP-0.3 preregisters Gate G1 as E0-G1-v1. Existing C270/C273 work covers historization scaling and in-repo baselines, while geometry/amplitude value and scaling remain open. Binding sources: docs/E0_EVIDENCE_LEDGER_v1.json, docs/E0_G1_PROTOCOL_v1.json, and docs/E0_UMSETZUNGSPLAN_v1.md.",
-    "arc_status": "WP-0.1/0.2 completed in C321. WP-0.3 design completed in C322: four domain families, N=100/500/1000, 30 paired holdout seeds, equal interactions, five causal E0 ablations, fair baseline protocol, fixed metrics/gates/failure rules. Holdout execution has not started. Next: WP-0.4 status/archive inventory, then implementation on development seeds in WP-2.1. Feature freeze on layers 5-14 remains in effect.",
-    "arc_thesis": "Lean packages are product candidates, not empirically proven products. Framework remains the research carrier through G1. Every strategic claim maps to an Evidence Ledger ID; every commit maps to a Work Package. No repository split before evidence reconciliation and G1.",
+    "current_arc": "ARC-M / WP-0 Evidence Reconciliation is complete in C321-C323. Claims, G1 measurement design, and repository lifecycle now have separate authorities: Evidence Ledger, E0-G1-v1, and E0-REPO-STATUS-v1. The next execution arc implements the preregistered G1 harness on development seeds without holdout access.",
+    "arc_status": "WP-0.1/0.2 completed in C321, WP-0.3 in C322, WP-0.4 in C323. Repository inventory covers all 27 tracked top-level entries plus strategic document groups. Nothing was moved, deleted, archived, or split. Holdout execution has not started. Next: WP-2.1, with WP-1.1 independently available.",
+    "arc_thesis": "Lean packages are product candidates, not empirically proven products. e0_controller remains the research carrier through G1; UI/session/layers 5-14 remain frozen. Every strategic claim maps to an Evidence Ledger ID and every commit to a Work Package. No repository split before Gate G1 plus WP-1.1 packaging evidence.",
     "previous_arc_summary": "ARC-L (C313-C319): adoption surface — AGENT_REFERENCE.md, AGENT_BUILDER_GUIDE.md, lean/reliability_memory (C315-lean), lean/structural_geometry (C319), GAME_AI.md, README measured-results overhaul. Clone spike traced via GitHub traffic API to the geometry chain (code search). Earlier: ARC-E DifferenzPort (C288-C290), ARC-D E1 impact historization (C285-C287), Trajectory Arc (C277-C283).",
-    "key_result": "WP-0 inventory plus preregistration: internal evidence supports scoped historization results, but general dominance is mixed; C185 does not isolate phase; historization scaling exists while geometry scaling does not; in-repo baselines exist while independent replication does not. E0-G1-v1 fixes how the open phase, geometry-scaling, and baseline questions will be tested; it contains no result.",
+    "key_result": "WP-0 establishes three non-overlapping controls: the Evidence Ledger says what is supported, E0-G1-v1 says how open causal/scaling questions will be tested, and E0-REPO-STATUS-v1 says which repository surfaces are active, research, frozen, superseded, or archive candidates. No document frequency or historical reuse is treated as validation.",
     "open_threads": [
-      "WP-0.4 status/archive inventory without moves or repo split; then implement E0-G1-v1 in WP-2.1..2.3 on development seeds before any holdout access.",
+      "WP-2.1: consolidate the G1 harness and implement/test domain generators using development seeds only; no holdout access. WP-1.1 package hardening may proceed independently.",
       "F3 branching boundary (b>=3) and F4 non-Markov limit: confirmed structural limits (C272). Improvement work FROZEN until after G1 — report honestly, do not engineer around them before the gate.",
       "GT-8 Partial Residual Trap: documented, unresolved, deferred until after G1 (only relevant if the framework core continues as a product).",
       "TRAP_GRID domain redesign: folded into WP-2.1 benchmark harness (domain generators need clean trap semantics anyway).",
       "Quality score weights (P8 12.1) are heuristic — frozen until after G1."
     ],
-    "next_commit_id": "C323",
+    "next_commit_id": "C324",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
@@ -400,6 +400,7 @@
     "evidence_ledger": "docs/E0_EVIDENCE_LEDGER_v1.json",
     "evidence_policy": "docs/E0_EVIDENCE_POLICY_v1.md",
     "g1_protocol": "docs/E0_G1_PROTOCOL_v1.json",
+    "repository_status": "docs/E0_REPOSITORY_STATUS_v1.json",
     "based_on": [
       "docs/E0_EVIDENCE_LEDGER_v1.json (authoritative scoped claim status and evidence gaps)",
       "docs/E0_PAPER_AUDIT_v1.md (historical audit; baseline/scaling absence statements superseded in part by C270/C273)",
@@ -411,10 +412,11 @@
       "L1": "Product candidates = lean packages (reliability_memory, structural_geometry). Framework (e0_controller/, server/) remains the research carrier through G1. Governance decision E0-PRODUCT-LEAN-001, not an empirical finding.",
       "L2": "FEATURE FREEZE layers 5-14 (reflexion, multiverse, llm-integration extensions, observation, dream, entropy, sleep-wake, curriculum, communication, session runner): bugfixes only. Unfreeze per mechanism ONLY via ablation showing measurable value over a simpler alternative on >=2 domains.",
       "L3": "Every commit maps to a Work Package (WP-x.y) in the plan. No WP -> no commit; amend the plan deliberately first if work is genuinely needed.",
-      "L4": "Claims discipline: no AGI framing. Every strategic README/paper claim cites an Evidence Ledger ID; the ledger links scoped claims to commands, artifacts, and limitations."
+      "L4": "Claims discipline: no AGI framing. Every strategic README/paper claim cites an Evidence Ledger ID; the ledger links scoped claims to commands, artifacts, and limitations.",
+      "L5": "Repository lifecycle: E0-REPO-STATUS-v1 is authoritative. No move/delete/archive in WP-0.4 and no new repo before Gate G1 plus WP-1.1 packaging evidence. A positive gate alone does not force a split."
     },
     "phases": {
-      "P0_evidence_reconciliation": "WP-0.1 evidence policy/ledger; WP-0.2 repository-plan reconciliation; WP-0.3 G1 preregistration; WP-0.4 status/archive inventory without moving or splitting",
+      "P0_evidence_reconciliation": "COMPLETE C321-C323: evidence policy/ledger, repository-plan reconciliation, G1 preregistration, and status/archive inventory without moving or splitting",
       "P1_productize": "WP-1.1 packaging both lean packages; WP-1.2 PyPI (USER DECISION required); WP-1.3 LLM-agent tool-reliability example; WP-1.4 game-AI example consuming structural_geometry",
       "P2_decision_experiment": "WP-2.1 consolidate/extend existing harnesses at N=100/500/1000; WP-2.2 audit existing A*/BFS/Q-learning/epsilon-greedy/random and add UCB1/D*-Lite/random-restart; WP-2.3 five-level causal ablation (no lookahead / phase-free / Theta=0 / U(1) / full); WP-2.4 raw-data report; WP-2.5 held-out BPI2017 validation without outcome leakage",
       "P3_gate": "Gate G1 — see gate_g1",
@@ -712,6 +714,12 @@
     }
   },
   "commit_history_recent": [
+    {
+      "id": "C322",
+      "hash": "b605e7f",
+      "msg": "preregister Gate G1 causal benchmark protocol",
+      "notes": "WP-0.3: E0-G1-v1 fixes domains, scales, seeds, budgets, causal ablations, baselines, metrics, statistics, resource caps, and gates before holdout access; contains no result."
+    },
     {
       "id": "C321",
       "hash": "02e6199",

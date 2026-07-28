@@ -1,0 +1,508 @@
+{
+  "inventory_id": "E0-REPO-STATUS-v1",
+  "version": "1.0",
+  "inventoried_on": "2026-07-28",
+  "commit_basis": "b605e7f",
+  "document": "docs/E0_REPOSITORY_STATUS_v1.md",
+  "scope": {
+    "top_level_rule": "All entries returned by git ls-tree HEAD at the repository root.",
+    "strategic_document_rule": "Documents that currently govern work, claims, architecture, reproduction, publication positioning, or repository lifecycle.",
+    "ignored_local_artifacts": "Recorded as a class, not promoted to repository components."
+  },
+  "allowed_statuses": [
+    "active",
+    "research",
+    "frozen",
+    "superseded",
+    "archive-candidate"
+  ],
+  "status_definitions": {
+    "active": "Current maintained authority, product candidate, or required repository infrastructure.",
+    "research": "Retained experimental surface; changes require a mapped work package and do not imply product status.",
+    "frozen": "Retained and readable, but feature or claim expansion is stopped; corrections and compatibility fixes only.",
+    "superseded": "Retained for history or compatibility, but another named path is the current authority.",
+    "archive-candidate": "Eligible for a later planned move out of the active surface; no move, deletion, or archival is authorized by this inventory."
+  },
+  "decisions": {
+    "physical_moves_in_wp_0_4": false,
+    "deletions_in_wp_0_4": false,
+    "new_repository_now": false,
+    "split_decision_deferred_until": "Gate G1 plus WP-1.1 packaging evidence",
+    "current_repository_role": "Single source repository containing active lean product candidates and the E0 research carrier through Gate G1.",
+    "possible_post_g1_split": "Only a lean package may graduate when it has an independent release cadence, package boundary, ownership, and consumer need. Gate success alone does not force a split."
+  },
+  "top_level_components": [
+    {
+      "path": ".env.example",
+      "kind": "file",
+      "status": "active",
+      "role": "Non-secret environment configuration template.",
+      "successor": null,
+      "rule": "Maintain with supported integrations; never copy secrets into tracked files."
+    },
+    {
+      "path": ".github",
+      "kind": "directory",
+      "status": "active",
+      "role": "Continuous-integration configuration.",
+      "successor": null,
+      "rule": "Keep aligned with supported Python versions and active test surfaces."
+    },
+    {
+      "path": ".gitignore",
+      "kind": "file",
+      "status": "active",
+      "role": "Repository hygiene and secret/generated-artifact boundary.",
+      "successor": null,
+      "rule": "Maintain as the authoritative ignore policy."
+    },
+    {
+      "path": "AGENT_BUILDER_GUIDE.md",
+      "kind": "file",
+      "status": "active",
+      "role": "Current integration guide for agent builders.",
+      "successor": null,
+      "rule": "Correct against active APIs; do not use it to unfreeze mechanisms."
+    },
+    {
+      "path": "AGENT_REFERENCE.md",
+      "kind": "file",
+      "status": "active",
+      "role": "Current machine-oriented mechanism and API reference.",
+      "successor": null,
+      "rule": "Maintain against code; empirical claims defer to the Evidence Ledger."
+    },
+    {
+      "path": "CHANGELOG.md",
+      "kind": "file",
+      "status": "active",
+      "role": "Historical release and change record.",
+      "successor": null,
+      "rule": "Append factual changes; not an evidence authority."
+    },
+    {
+      "path": "GAME_AI.md",
+      "kind": "file",
+      "status": "active",
+      "role": "Current game/simulation adoption guide for structural geometry.",
+      "successor": null,
+      "rule": "Maintain as a usage guide; geometry-value claims remain gated by E0-G1-v1."
+    },
+    {
+      "path": "LICENSE",
+      "kind": "file",
+      "status": "active",
+      "role": "Repository license authority.",
+      "successor": null,
+      "rule": "Any licensing change requires an explicit user decision."
+    },
+    {
+      "path": "README.md",
+      "kind": "file",
+      "status": "active",
+      "role": "Current public repository entry point.",
+      "successor": "WP-5.1 revision after Gate G1",
+      "rule": "Remain current; claim-to-ledger rewrite and AGI-language cleanup are scheduled, not silently performed here."
+    },
+    {
+      "path": "REPRODUCTION.md",
+      "kind": "file",
+      "status": "active",
+      "role": "Current quick-reproduction guide.",
+      "successor": "WP-5.3 immutable-artifact extension",
+      "rule": "Use for existing scoped reproduction; it is not the G1 execution protocol."
+    },
+    {
+      "path": "_archive",
+      "kind": "directory",
+      "status": "frozen",
+      "role": "Historical code and documentation retained for traceability.",
+      "successor": "Current paths named by _archive/ARCHIVE_README.md, subject to this inventory when that README is stale",
+      "rule": "No active development, imports, or claim authority."
+    },
+    {
+      "path": "bootstrap.json",
+      "kind": "file",
+      "status": "active",
+      "role": "Persistent collaboration state and strategic pointer index.",
+      "successor": null,
+      "rule": "Maintain after commits; claim status always defers to the Evidence Ledger."
+    },
+    {
+      "path": "canon",
+      "kind": "directory",
+      "status": "frozen",
+      "role": "Canonical and historical conceptual texts.",
+      "successor": "Evidence Ledger for empirical status; active code/docs for implementation truth",
+      "rule": "No conceptual expansion before G1; canon/e0-agi-blueprint.md is a named archive candidate."
+    },
+    {
+      "path": "client",
+      "kind": "directory",
+      "status": "superseded",
+      "role": "Legacy React/Cytoscape interface.",
+      "successor": "server/static/index.html",
+      "rule": "Compatibility fixes only; do not add UI workflows."
+    },
+    {
+      "path": "docs",
+      "kind": "directory",
+      "status": "active",
+      "role": "Documentation container with per-collection lifecycle rules.",
+      "successor": null,
+      "rule": "Current authorities, research notes, papers, and archives must retain their distinct statuses."
+    },
+    {
+      "path": "e0_controller",
+      "kind": "directory",
+      "status": "research",
+      "role": "Framework research carrier and implementation source for Gate G1.",
+      "successor": "Post-G1 decision: retain as research carrier, narrow, or freeze; lean packages remain separate product candidates",
+      "rule": "Only mapped WP work, G1 implementation, tests, and fixes; layers 5-14 remain frozen."
+    },
+    {
+      "path": "e0_session_e0-session.txt",
+      "kind": "file",
+      "status": "archive-candidate",
+      "role": "Tracked generated session-output example.",
+      "successor": "Regenerable runtime output outside the tracked root",
+      "rule": "Retain in place through G1; a later cleanup WP may move or remove it."
+    },
+    {
+      "path": "lean",
+      "kind": "directory",
+      "status": "active",
+      "role": "Standalone reliability_memory and structural_geometry product candidates.",
+      "successor": "Possible independent package repositories only after Gate G1 and WP-1.1 readiness evidence",
+      "rule": "Package hardening and examples are allowed by Phase 1; structural_geometry product positioning depends on G1-A."
+    },
+    {
+      "path": "learning_state.json",
+      "kind": "file",
+      "status": "frozen",
+      "role": "Persisted state used by existing self-learning and exploration paths.",
+      "successor": "Existing runtime persistence interfaces; no new strategic authority",
+      "rule": "Retain for compatibility/reproduction; no self-validation expansion before G1."
+    },
+    {
+      "path": "memos",
+      "kind": "directory",
+      "status": "frozen",
+      "role": "Tracked examples, seeds, and state for session, dream, tuning, and Domain Studio paths.",
+      "successor": "Explicit test fixtures or external runtime storage when a future WP migrates an item",
+      "rule": "Read for compatibility; corrections only and no new product claims."
+    },
+    {
+      "path": "memos_interference",
+      "kind": "directory",
+      "status": "archive-candidate",
+      "role": "Isolated historical interference-demo session artifact.",
+      "successor": "docs/research/C185_TRAFFIC_VALIDATION_REPORT_v1.md and future artifacts/g1/E0-G1-v1 results",
+      "rule": "Do not use as current evidence; retain in place until an explicit post-G1 cleanup."
+    },
+    {
+      "path": "pyproject.toml",
+      "kind": "file",
+      "status": "active",
+      "role": "Canonical Python build and dependency configuration.",
+      "successor": null,
+      "rule": "WP-1.1 must reconcile package metadata and actual product boundaries."
+    },
+    {
+      "path": "reproduce.py",
+      "kind": "file",
+      "status": "active",
+      "role": "Current quick-reproduction command.",
+      "successor": "WP-5.3 immutable-artifact reproduction path",
+      "rule": "Preserve existing scoped checks; do not present it as an E0-G1-v1 runner."
+    },
+    {
+      "path": "requirements.txt",
+      "kind": "file",
+      "status": "superseded",
+      "role": "Compatibility dependency list with non-canonical extras.",
+      "successor": "pyproject.toml plus explicit CI dependencies in .github/workflows/tests.yml",
+      "rule": "Do not add new dependency authority here; reconcile or remove only in a packaging WP."
+    },
+    {
+      "path": "scenarios",
+      "kind": "directory",
+      "status": "frozen",
+      "role": "Existing scenario packets for the session-runner surface.",
+      "successor": "No active successor; G1 uses dedicated domain generators under its protocol",
+      "rule": "Retain examples and schema; no new domain demos before G1."
+    },
+    {
+      "path": "server",
+      "kind": "directory",
+      "status": "frozen",
+      "role": "Existing Domain Studio API, static UI, and demonstrations.",
+      "successor": "No product successor selected; G1 runs through the research harness, not the UI",
+      "rule": "Bug, compatibility, and test fixes only; no UI/studio expansion before G1."
+    },
+    {
+      "path": "tools",
+      "kind": "directory",
+      "status": "active",
+      "role": "Repository-maintenance utilities.",
+      "successor": null,
+      "rule": "Maintain only tools required by active governance or reproducibility workflows."
+    }
+  ],
+  "strategic_documents": [
+    {
+      "path": "README.md",
+      "status": "active",
+      "successor": "WP-5.1 evidence-linked revision",
+      "authority": "Public orientation, not claim adjudication."
+    },
+    {
+      "path": "bootstrap.json",
+      "status": "active",
+      "successor": null,
+      "authority": "Working context and pointers; Evidence Ledger overrides claim summaries."
+    },
+    {
+      "path": "docs/E0_UMSETZUNGSPLAN_v1.md",
+      "status": "active",
+      "successor": null,
+      "authority": "Work-package and phase authority."
+    },
+    {
+      "path": "docs/E0_EVIDENCE_POLICY_v1.md",
+      "status": "active",
+      "successor": null,
+      "authority": "Evidence classification rules."
+    },
+    {
+      "path": "docs/E0_EVIDENCE_LEDGER_v1.json",
+      "status": "active",
+      "successor": null,
+      "authority": "Scoped claim status."
+    },
+    {
+      "path": "docs/E0_G1_PREREGISTRATION_v1.md",
+      "status": "active",
+      "successor": "E0-G1-v2 only after a recorded semantic amendment",
+      "authority": "Human-readable G1 design; contains no result."
+    },
+    {
+      "path": "docs/E0_G1_PROTOCOL_v1.json",
+      "status": "active",
+      "successor": "E0-G1-v2 only after a recorded semantic amendment",
+      "authority": "Machine-readable G1 design; contains no result."
+    },
+    {
+      "path": "docs/E0_REPOSITORY_STATUS_v1.md",
+      "status": "active",
+      "successor": "Versioned amendment after Gate G1 or a deliberate lifecycle decision",
+      "authority": "Repository lifecycle and archive/split status."
+    },
+    {
+      "path": "docs/E0_REPOSITORY_STATUS_v1.json",
+      "status": "active",
+      "successor": "Versioned amendment after Gate G1 or a deliberate lifecycle decision",
+      "authority": "Machine-readable repository lifecycle inventory."
+    },
+    {
+      "path": "docs/E0_EVIDENCE_AND_FALSIFICATION_STATUS_v1.md",
+      "status": "superseded",
+      "successor": "docs/E0_EVIDENCE_LEDGER_v1.json",
+      "authority": "Historical evidence snapshot only."
+    },
+    {
+      "path": "docs/E0_PAPER_AUDIT_v1.md",
+      "status": "superseded",
+      "successor": "docs/E0_EVIDENCE_LEDGER_v1.json",
+      "authority": "Historical audit input; not current repository inventory or claim status."
+    },
+    {
+      "path": "docs/E0_STRUCTURAL_CONTRADICTIONS_v1.md",
+      "status": "research",
+      "successor": "Claim outcomes in the Evidence Ledger and E0-G1-v1 artifacts",
+      "authority": "Research questions and falsification pressure, not resolved findings."
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "status": "active",
+      "successor": null,
+      "authority": "Current architectural orientation; lifecycle status comes from this inventory."
+    },
+    {
+      "path": "docs/E0_MATH_IMPL_MAPPING_v1.md",
+      "status": "active",
+      "successor": null,
+      "authority": "Current formula-to-code map."
+    },
+    {
+      "path": "docs/E0_TEST_REGISTRY_v2.md",
+      "status": "active",
+      "successor": null,
+      "authority": "Current test inventory, not empirical claim status."
+    },
+    {
+      "path": "docs/E0_LAYER_AUDIT_v1.md",
+      "status": "research",
+      "successor": "docs/E0_REPOSITORY_STATUS_v1.md for lifecycle; code/tests for implementation truth",
+      "authority": "Retained layer audit snapshot."
+    },
+    {
+      "path": "docs/E0_ARC_H_PLAN_v1.md",
+      "status": "frozen",
+      "successor": "No successor; reopening requires a post-G1 work package",
+      "authority": "Historical plan for a frozen mechanism."
+    },
+    {
+      "path": "docs/E0_HUMAN_AI_COLLABORATION_REPORT_v1.md",
+      "status": "research",
+      "successor": null,
+      "authority": "Process report, not framework-performance evidence."
+    },
+    {
+      "path": "AGENT_REFERENCE.md",
+      "status": "active",
+      "successor": null,
+      "authority": "Current implementation reference."
+    },
+    {
+      "path": "AGENT_BUILDER_GUIDE.md",
+      "status": "active",
+      "successor": null,
+      "authority": "Current integration guide."
+    },
+    {
+      "path": "GAME_AI.md",
+      "status": "active",
+      "successor": "Post-G1 revision if geometry positioning changes",
+      "authority": "Usage guide under the E0-PHASE-CAUSAL-001 and E0-SCALE-GEOMETRY-001 caveats."
+    },
+    {
+      "path": "REPRODUCTION.md",
+      "status": "active",
+      "successor": "WP-5.3 extension",
+      "authority": "Current quick-reproduction scope."
+    },
+    {
+      "path": "CHANGELOG.md",
+      "status": "active",
+      "successor": null,
+      "authority": "Historical change record."
+    },
+    {
+      "path": "canon/e0-agi-blueprint.md",
+      "status": "archive-candidate",
+      "successor": "Move to _archive under WP-5.1; no replacement as an empirical authority",
+      "authority": "Historical conceptual artifact."
+    },
+    {
+      "path": "canon/e0-canonical-reference.txt",
+      "status": "frozen",
+      "successor": "Evidence Ledger for empirical claims",
+      "authority": "Conceptual canon only."
+    },
+    {
+      "path": "canon/e0-canon-plain.txt",
+      "status": "frozen",
+      "successor": "Evidence Ledger for empirical claims",
+      "authority": "Plain-language conceptual canon only."
+    },
+    {
+      "path": "canon/ontodynamics.txt",
+      "status": "frozen",
+      "successor": "Evidence Ledger for empirical claims",
+      "authority": "Historical ontodynamics text."
+    },
+    {
+      "path": "docs/archive/E0_STRATEGIC_ROADMAP_v1.md",
+      "status": "superseded",
+      "successor": "docs/E0_UMSETZUNGSPLAN_v1.md",
+      "authority": "Archived roadmap only."
+    },
+    {
+      "path": "docs/archive/E0_REPOSITORY_ANALYSIS_2026-03-30.md",
+      "status": "superseded",
+      "successor": "docs/E0_REPOSITORY_STATUS_v1.md",
+      "authority": "Archived repository snapshot only."
+    }
+  ],
+  "document_collections": [
+    {
+      "path_pattern": "docs/research/**",
+      "default_status": "research",
+      "successor": "Promoted claim status in docs/E0_EVIDENCE_LEDGER_v1.json; G1 decision data in artifacts/g1/E0-G1-v1",
+      "exceptions": []
+    },
+    {
+      "path_pattern": "docs/archive/**",
+      "default_status": "frozen",
+      "successor": "Current authority named by the applicable document or docs/E0_REPOSITORY_STATUS_v1.md",
+      "exceptions": [
+        "docs/archive/E0_STRATEGIC_ROADMAP_v1.md",
+        "docs/archive/E0_REPOSITORY_ANALYSIS_2026-03-30.md"
+      ]
+    },
+    {
+      "path_pattern": "docs/papers/**",
+      "default_status": "frozen",
+      "successor": "WP-5.2 post-G1 external paper",
+      "exceptions": [
+        "docs/papers/E0_FORMAL_PAPER_DRAFT_v1.md",
+        "docs/papers/E0_PUBLICATION_OUTLINE_v1.md",
+        "docs/papers/PAPER1_SKELETON_v1.md",
+        "docs/papers/PAPER2_SKELETON_v1.md",
+        "docs/papers/related-work-research-report.md"
+      ]
+    }
+  ],
+  "collection_exceptions": [
+    {
+      "path": "docs/papers/E0_FORMAL_PAPER_DRAFT_v1.md",
+      "status": "superseded",
+      "successor": "docs/papers/E0_FORMAL_PAPER_DRAFT_v2.md"
+    },
+    {
+      "path": "docs/papers/E0_PUBLICATION_OUTLINE_v1.md",
+      "status": "superseded",
+      "successor": "docs/papers/E0_PUBLICATION_DRAFT_v1.md"
+    },
+    {
+      "path": "docs/papers/PAPER1_SKELETON_v1.md",
+      "status": "superseded",
+      "successor": "docs/papers/PAPER1_MANUSCRIPT_v1.md"
+    },
+    {
+      "path": "docs/papers/PAPER2_SKELETON_v1.md",
+      "status": "superseded",
+      "successor": "docs/papers/PAPER2_MANUSCRIPT_v1.md"
+    },
+    {
+      "path": "docs/papers/related-work-research-report.md",
+      "status": "research",
+      "successor": "WP-5.2 literature review"
+    }
+  ],
+  "ignored_local_artifact_classes": [
+    {
+      "examples": [
+        ".env",
+        ".pytest_cache",
+        "__pycache__",
+        "e0_framework.egg-info",
+        "client/node_modules",
+        "client/dist",
+        "data",
+        "provenance",
+        "e0_session_*.html"
+      ],
+      "classification": "local-only/generated",
+      "successor": "Regenerate from tracked sources or local secrets/configuration",
+      "rule": "Not repository components and never lifecycle evidence."
+    }
+  ],
+  "review_triggers": [
+    "Gate G1 decision",
+    "WP-1.1 packaging result",
+    "Any proposal to move, delete, publish, or split a component",
+    "A successor path becoming invalid"
+  ]
+}
