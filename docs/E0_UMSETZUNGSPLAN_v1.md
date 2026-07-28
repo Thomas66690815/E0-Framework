@@ -53,7 +53,7 @@ Geschätzter Gesamtumfang bis Phase 5: **15–25 Commits**.
 |---|---|---|---|
 | **WP-0.1** | Evidence Policy + maschinenlesbares Claim-Ledger; Aussage-Status, Replikationsgrad und Datenherkunft trennen | Strategische C320-Claims besitzen eindeutige IDs, Scope, Quellen, Befehle und Grenzen; JSON validiert | done C321 |
 | **WP-0.2** | Repository-Abgleich: C270/C273, A*/Q-Learning, Scaling, BPI2017 und bestehendes Reproduktionsprotokoll in Plan/Bootstrap richtig einordnen | Keine „fehlt"-Aussage widerspricht vorhandenem Code; Historisierungs- und Geometrie-Skalierung getrennt | done C321 |
-| **WP-0.3** | G1-Protokoll präregistrieren: Metriken, Seeds, Budgets, Tuning/Holdout, Rohdatenformat und Kausalablation | Protokoll ist vor dem ersten G1-Ergebnis eingefroren; fünf Ablationsstufen ausführbar spezifiziert | offen |
+| **WP-0.3** | G1-Protokoll präregistrieren: Metriken, Seeds, Budgets, Tuning/Holdout, Rohdatenformat und Kausalablation | Protokoll ist vor dem ersten G1-Ergebnis eingefroren; fünf Ablationsstufen ausführbar spezifiziert | done C322 |
 | **WP-0.4** | Archiv-/Repo-Statusinventur ohne Verschieben: active, research, frozen, superseded, archive-candidate | Jede Top-Level-Komponente und strategische Doku hat Status und Nachfolger; Split-Entscheidung bleibt bis G1 vertagt | offen |
 
 ### Phase 1 — Lean-Pakete produktisieren (parallel zu Phase 2 möglich)
@@ -145,5 +145,6 @@ Grobschätzung: Phase 0 ≈ 1–3 Commits, Phase 1 ≈ 4–6, Phase 2 ≈ 5–8,
 
 | Datum | Änderung |
 |---|---|
+| 2026-07-28 | WP-0.3 abgeschlossen: `E0-G1-v1` präregistriert vier Domänenfamilien × drei Größen × 30 Holdout-Seeds, gleiche Interaktionsbudgets, fünf kausale Ablationen, faire Baselines, Statistik-, Fehler- und Freeze-Regeln; Holdout noch nicht ausgeführt |
 | 2026-07-27 | v1 erstellt (Strategie-Pivot nach Nützlichkeits-Reviews) |
 | 2026-07-28 | WP-0 Evidence Reconciliation ergänzt; vorhandene C270/C273-Benchmarks, BPI2017 und Reproduktion berücksichtigt; Historisierungs- vs. Geometrie-Skalierung sowie Overlay- vs. Phasenursache getrennt |

@@ -1,0 +1,333 @@
+{
+  "protocol_id": "E0-G1-v1",
+  "version": "1.0",
+  "status": "preregistered_design",
+  "preregistered_on": "2026-07-28",
+  "holdout_execution_started": false,
+  "document": "docs/E0_G1_PREREGISTRATION_v1.md",
+  "evidence_policy": "docs/E0_EVIDENCE_POLICY_v1.md",
+  "questions": {
+    "G1_A": "Does causally isolated geometry/phase add practical value over the best simpler equal-interaction control at N >= 100?",
+    "G1_B": "Is historization without lookahead competitive with fairly trained standard baselines on the same holdout instances?"
+  },
+  "unit": [
+    "domain_family",
+    "scale",
+    "generator_seed",
+    "method"
+  ],
+  "splits": {
+    "development": {
+      "generator_seeds": {
+        "start": 0,
+        "stop_inclusive": 9
+      },
+      "allowed_uses": [
+        "debugging",
+        "global hyperparameter selection",
+        "G1-A primary simpler-control selection"
+      ]
+    },
+    "holdout": {
+      "generator_seeds": {
+        "start": 1000,
+        "stop_inclusive": 1029
+      },
+      "replicates_per_cell": 30,
+      "outcome_seed_formula": "200000 + generator_seed",
+      "outcome_schedule_key": [
+        "generator_seed",
+        "episode_index",
+        "edge_id",
+        "edge_attempt_index"
+      ],
+      "outcome_rng_rule": "counter-based/keyed; never one shared sequential environment RNG across methods",
+      "policy_seed_formula": "300000 + generator_seed",
+      "access_rule": "No method, metric, generator, or gate change after first holdout result is read; semantic changes require protocol v2."
+    }
+  },
+  "scales": [
+    100,
+    500,
+    1000
+  ],
+  "domain_families": [
+    {
+      "id": "wall_grid",
+      "purpose": "static detour against the local gradient",
+      "required_invariants": [
+        "start and goal connected",
+        "direct gradient route blocked",
+        "oracle route exists",
+        "actual node count recorded"
+      ]
+    },
+    {
+      "id": "trap_grid_v2",
+      "purpose": "semantic trap rather than a merely unattractive diagonal",
+      "required_invariants": [
+        "locally attractive trap entry",
+        "downstream failure, dead end, or measurable return cost",
+        "non-trap oracle route exists",
+        "trap semantics tested automatically"
+      ]
+    },
+    {
+      "id": "decoy_dag",
+      "purpose": "late credit assignment without cycles",
+      "parameters": {
+        "failed_path_fraction": 0.4,
+        "failure_depth_fraction_min": 0.7,
+        "failure_depth_fraction_max": 0.9
+      },
+      "required_invariants": [
+        "acyclic",
+        "at least one successful path",
+        "decoys locally attractive",
+        "failure depth within preregistered range"
+      ]
+    },
+    {
+      "id": "nonstationary_parallel",
+      "purpose": "adaptation after corridor outcome reversal",
+      "switch_before_evaluation_episode": 11,
+      "required_invariants": [
+        "at least two alternative corridors",
+        "pre-switch preferred corridor becomes post-switch failing corridor",
+        "previously failing corridor becomes successful",
+        "same topology before and after switch"
+      ]
+    }
+  ],
+  "interaction_protocol": {
+    "learning_state_at_replicate_start": "empty",
+    "adaptation_episodes": 10,
+    "evaluation_episodes": 20,
+    "max_steps_per_episode_formula": "4 * actual_node_count",
+    "wall_time_timeout_seconds_per_episode": 60,
+    "wall_time_timeout_seconds_per_replicate": 1800,
+    "peak_rss_limit_bytes_per_method_worker": 4294967296,
+    "episode_reset": [
+      "position",
+      "episodic executor state"
+    ],
+    "preserved_within_replicate": [
+      "method learning state"
+    ],
+    "learning_during_evaluation": true,
+    "primary_metrics_use": "evaluation episodes only",
+    "budget_fairness": "identical environment interactions; compute is measured, not converted into additional interactions"
+  },
+  "ablation_constants": {
+    "path_horizon": 3,
+    "min_confidence": 0.85,
+    "max_imbalance": 3.0,
+    "max_paths_per_decision": 100000,
+    "same_candidates": true,
+    "same_path_family_for_B_to_E": true,
+    "same_override_rule_for_B_to_E": true
+  },
+  "e0_ablations": [
+    {
+      "id": "A_HIST",
+      "lookahead": false,
+      "aggregation": "none",
+      "phase": "none",
+      "purpose": "historization and revisit baseline"
+    },
+    {
+      "id": "B_INCOHERENT",
+      "lookahead": true,
+      "aggregation": "sum(exp(-2*S(path)))",
+      "phase": "none",
+      "purpose": "lookahead without coherent cross terms"
+    },
+    {
+      "id": "C_THETA_ZERO",
+      "lookahead": true,
+      "aggregation": "abs(sum(exp(-S(path))))**2",
+      "phase": "theta_forced_zero",
+      "purpose": "coherent path mass without phase differences"
+    },
+    {
+      "id": "D_U1_PHASE",
+      "lookahead": true,
+      "aggregation": "abs(sum(exp(-S(path) + i*theta(path))))**2",
+      "phase": "U1",
+      "purpose": "causal phase effect relative to C_THETA_ZERO"
+    },
+    {
+      "id": "E_FULL_GEOMETRY",
+      "lookahead": true,
+      "aggregation": "structural_geometry.influence_map",
+      "phase": "full_structural_geometry",
+      "purpose": "complete geometry-stack product candidate"
+    }
+  ],
+  "baselines": {
+    "competitive_G1_B": [
+      "Q_LEARNING",
+      "UCB1_EDGE",
+      "RANDOM_RESTART_GREEDY"
+    ],
+    "diagnostic": [
+      "MEMORYLESS_GREEDY",
+      "EPSILON_GREEDY",
+      "UNIFORM_RANDOM"
+    ],
+    "map_informed_upper_references": [
+      "A_STAR",
+      "D_STAR_LITE"
+    ],
+    "upper_reference_rule": "Report but exclude from the G1-B comparator because they receive map information unavailable to equal-information methods.",
+    "configuration_rule": "Literature-informed global configs selected only on development seeds and frozen before holdout access."
+  },
+  "primary_metric": {
+    "id": "success_adjusted_efficiency",
+    "range": [
+      0.0,
+      1.0
+    ],
+    "success_formula": "oracle_cost / max(observed_cost, oracle_cost)",
+    "failure_value": 0.0,
+    "oracle_visibility": "evaluator only"
+  },
+  "secondary_metrics": [
+    "goal_rate",
+    "steps",
+    "total_cost",
+    "oracle_regret",
+    "revisits",
+    "failure_count",
+    "post_switch_recovery_episodes",
+    "wall_time_ms",
+    "peak_rss_bytes",
+    "paths_expanded",
+    "path_cap_hits",
+    "override_count",
+    "override_success_rate",
+    "phase_regime_gradient_count",
+    "phase_regime_interfering_count",
+    "phase_regime_wrapped_count"
+  ],
+  "statistics": {
+    "paired_by": [
+      "domain_family",
+      "scale",
+      "generator_seed"
+    ],
+    "resampling_unit": "domain_instance",
+    "stratified_by": [
+      "domain_family",
+      "scale"
+    ],
+    "bootstrap_resamples": 10000,
+    "bootstrap_seed": 20260728,
+    "confidence_level": 0.95,
+    "cell_aggregate": "mean across 30 generator seeds",
+    "family_aggregate": "unweighted mean of N=100, N=500, and N=1000 cell aggregates",
+    "scale_weighting": "equal",
+    "optional_stopping": false,
+    "negative_seed_removal": false
+  },
+  "gate_G1_A": {
+    "primary_treatment": "E_FULL_GEOMETRY",
+    "control_selection": {
+      "candidates": [
+        "A_HIST",
+        "B_INCOHERENT",
+        "C_THETA_ZERO"
+      ],
+      "data": "development only",
+      "criterion": "highest pooled mean success_adjusted_efficiency",
+      "tie_breaker": "lower median wall_time_ms",
+      "freeze_before_holdout": true
+    },
+    "family_qualification": {
+      "relative_primary_lift_min": 0.1,
+      "absolute_difference_ci_lower_bound_min_exclusive": 0.0,
+      "goal_rate_degradation_max": 0.02,
+      "N1000_effect_must_not_reverse": true,
+      "low_control_mean_threshold": 0.05,
+      "low_control_absolute_gain_min": 0.1
+    },
+    "overall_pass": {
+      "qualifying_families_min": 2,
+      "N1000_timeout_or_path_cap_rate_max": 0.05,
+      "N1000_median_wall_time_ratio_max": 10.0
+    },
+    "phase_attribution": {
+      "treatment": "D_U1_PHASE",
+      "control": "C_THETA_ZERO",
+      "pass_rule": "Apply gate_G1_A.family_qualification and gate_G1_A.overall_pass unchanged with D_U1_PHASE as treatment and C_THETA_ZERO as control.",
+      "rule": "A full-stack pass without a D-vs-C pass permits a geometry-stack claim but not a practical phase/interference claim."
+    }
+  },
+  "gate_G1_B": {
+    "treatment": "A_HIST",
+    "per_instance_comparator": "median(Q_LEARNING, UCB1_EDGE, RANDOM_RESTART_GREEDY)",
+    "family_qualification": {
+      "point_estimate_difference_min": 0.0,
+      "absolute_difference_ci_lower_bound_min": -0.05,
+      "goal_rate_degradation_max": 0.1
+    },
+    "overall_pass": {
+      "qualifying_families_min": 3,
+      "N1000_goal_rate_catastrophic_gap_max": 0.2
+    }
+  },
+  "failure_rules": {
+    "algorithm_timeout": "valid_negative_result",
+    "path_cap_hit": "valid_negative_result",
+    "nan": "valid_negative_result",
+    "method_out_of_memory": "valid_negative_result",
+    "primary_score_for_valid_negative": 0.0,
+    "infrastructure_failure": "rerun entire method-family-scale cell with identical seeds after fix and retain failed artifact",
+    "undecided_threshold": "more than 10% of planned cells infrastructure-invalid"
+  },
+  "artifacts": {
+    "root": "artifacts/g1/E0-G1-v1",
+    "required": [
+      "manifest.json",
+      "frozen_configs.json",
+      "raw_runs.jsonl",
+      "episodes.jsonl.gz",
+      "summary.json",
+      "environment.json"
+    ],
+    "minimum_raw_fields": [
+      "protocol_id",
+      "commit",
+      "run_id",
+      "domain_family",
+      "target_node_count",
+      "actual_node_count",
+      "generator_seed",
+      "outcome_seed",
+      "policy_seed",
+      "method",
+      "config_hash",
+      "interaction_budget",
+      "interactions_used",
+      "success_adjusted_efficiency",
+      "goal_rate",
+      "wall_time_ms",
+      "peak_rss_bytes",
+      "paths_expanded",
+      "status"
+    ]
+  },
+  "implementation_prerequisites": [
+    "Implement and test trap_grid_v2 semantics.",
+    "Replace single-run Q-learning comparison with the shared adaptation/evaluation protocol.",
+    "Implement UCB1 edge and random-restart greedy baselines.",
+    "Implement B_INCOHERENT and C_THETA_ZERO without changing the B-E path family.",
+    "Add raw artifact and environment capture.",
+    "Freeze literature-informed configs and selected G1-A control before holdout execution."
+  ],
+  "amendment_policy": {
+    "before_holdout": "Implementation details may be completed if they do not change questions, holdout seeds, metrics, or gate rules.",
+    "after_holdout_access": "Any semantic change requires protocol v2; v1 results remain visible.",
+    "all_amendments_recorded": true
+  }
+}

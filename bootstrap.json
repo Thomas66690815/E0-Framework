@@ -6,7 +6,7 @@
     "purpose": "Session bootstrap for the E₀ team — human and AI working together on E₀-Framework",
     "framing": "We. The AI is an integral part of 'we'. This file is the AI's persistent identity — its Historization across context windows. Every confirmed/contradicted count is a U/F trace.",
     "usage": "Paste this file (or reference it) at the start of a new thread to restore full project context. READ strategic_plan FIRST — it is the binding frame since 2026-07-27.",
-    "last_updated": "2026-07-27",
+    "last_updated": "2026-07-28",
     "update_instruction": "After each commit: update state + active_context. After each lesson: update reflexion traces (confirmed++, contradicted++, recurred++). trace_quality = (confirmed - contradicted) / (confirmed + contradicted + 1)."
   },
   "project": {
@@ -31,9 +31,9 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C320",
-    "latest_commit_hash": "87ff88d",
-    "latest_commit_msg": "C320: ARC-M Umsetzungsplan + bootstrap strategic_plan — consolidation, feature freeze L5-14, Gate G1",
+    "latest_commit": "C321",
+    "latest_commit_hash": "02e6199",
+    "latest_commit_msg": "C321: reconcile ARC-M claims with repository evidence",
     "test_count": 6720,
     "test_failures": 0,
     "ci_status": "pending",
@@ -309,19 +309,19 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "ARC-M / WP-0: Evidence Reconciliation (C320+). The C320 strategy direction is retained, but its evidence claims are being reconciled with the actual repository. Existing C270/C273 work already provides historization scaling to N~225/500 and in-repo A*/Q-learning/epsilon-greedy/random baselines; the unresolved SC-11 question is specifically geometry/amplitude scaling and value. C185 establishes a small gated overlay effect, not a phase-causal effect. Binding sources: docs/E0_EVIDENCE_LEDGER_v1.json + docs/E0_UMSETZUNGSPLAN_v1.md.",
-    "arc_status": "WP-0.1/0.2 completed and validated in C321: evidence policy + 12-claim ledger; plan/bootstrap reconciled with existing baseline, scaling, BPI2017, and reproduction work. Next: WP-0.3 G1 preregistration. Feature freeze on layers 5-14 remains in effect.",
+    "current_arc": "ARC-M / WP-0: Evidence Reconciliation (C320+). WP-0.1/0.2 reconciled claims with repository evidence; WP-0.3 preregisters Gate G1 as E0-G1-v1. Existing C270/C273 work covers historization scaling and in-repo baselines, while geometry/amplitude value and scaling remain open. Binding sources: docs/E0_EVIDENCE_LEDGER_v1.json, docs/E0_G1_PROTOCOL_v1.json, and docs/E0_UMSETZUNGSPLAN_v1.md.",
+    "arc_status": "WP-0.1/0.2 completed in C321. WP-0.3 design completed in C322: four domain families, N=100/500/1000, 30 paired holdout seeds, equal interactions, five causal E0 ablations, fair baseline protocol, fixed metrics/gates/failure rules. Holdout execution has not started. Next: WP-0.4 status/archive inventory, then implementation on development seeds in WP-2.1. Feature freeze on layers 5-14 remains in effect.",
     "arc_thesis": "Lean packages are product candidates, not empirically proven products. Framework remains the research carrier through G1. Every strategic claim maps to an Evidence Ledger ID; every commit maps to a Work Package. No repository split before evidence reconciliation and G1.",
     "previous_arc_summary": "ARC-L (C313-C319): adoption surface — AGENT_REFERENCE.md, AGENT_BUILDER_GUIDE.md, lean/reliability_memory (C315-lean), lean/structural_geometry (C319), GAME_AI.md, README measured-results overhaul. Clone spike traced via GitHub traffic API to the geometry chain (code search). Earlier: ARC-E DifferenzPort (C288-C290), ARC-D E1 impact historization (C285-C287), Trajectory Arc (C277-C283).",
-    "key_result": "WP-0 inventory: (1) historization/revisit value is internally reproducible on designed traps, but general mechanism dominance remains mixed/internal (E0-HIST-DOMINANCE-001); (2) C185 reports +4.2-6% for a gated overlay but does not isolate phase from lookahead/gating (E0-PHASE-CAUSAL-001 is OPEN); (3) historization scaling exists, geometry scaling does not; (4) standard baselines exist in-repo, independent replication does not.",
+    "key_result": "WP-0 inventory plus preregistration: internal evidence supports scoped historization results, but general dominance is mixed; C185 does not isolate phase; historization scaling exists while geometry scaling does not; in-repo baselines exist while independent replication does not. E0-G1-v1 fixes how the open phase, geometry-scaling, and baseline questions will be tested; it contains no result.",
     "open_threads": [
-      "WP-0.3 preregistration, then G1 (WP-2.1..2.5): five-level causal ablation + geometry scaling N=100/500/1000 + audit/extension of existing baselines. Priority: isolate phase value and obtain equal-budget, held-out evidence.",
+      "WP-0.4 status/archive inventory without moves or repo split; then implement E0-G1-v1 in WP-2.1..2.3 on development seeds before any holdout access.",
       "F3 branching boundary (b>=3) and F4 non-Markov limit: confirmed structural limits (C272). Improvement work FROZEN until after G1 — report honestly, do not engineer around them before the gate.",
       "GT-8 Partial Residual Trap: documented, unresolved, deferred until after G1 (only relevant if the framework core continues as a product).",
       "TRAP_GRID domain redesign: folded into WP-2.1 benchmark harness (domain generators need clean trap semantics anyway).",
       "Quality score weights (P8 12.1) are heuristic — frozen until after G1."
     ],
-    "next_commit_id": "C322",
+    "next_commit_id": "C323",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
@@ -399,6 +399,7 @@
     "doc": "docs/E0_UMSETZUNGSPLAN_v1.md",
     "evidence_ledger": "docs/E0_EVIDENCE_LEDGER_v1.json",
     "evidence_policy": "docs/E0_EVIDENCE_POLICY_v1.md",
+    "g1_protocol": "docs/E0_G1_PROTOCOL_v1.json",
     "based_on": [
       "docs/E0_EVIDENCE_LEDGER_v1.json (authoritative scoped claim status and evidence gaps)",
       "docs/E0_PAPER_AUDIT_v1.md (historical audit; baseline/scaling absence statements superseded in part by C270/C273)",
@@ -422,9 +423,12 @@
     },
     "gate_g1": {
       "criteria_fixed_in_advance": true,
-      "G1_A_geometry": "Causally isolated phase/geometry beats the best simpler equal-budget control by median >=10%, with uncertainty interval excluding 0, on >=2 held-out domain classes at N>=100 -> stays product (4a). Else -> research freeze (4b).",
-      "G1_B_vs_baselines": "Historization-only competitive with the baseline median under identical interaction and compute budgets on preregistered primary metrics -> keep positioning. Else -> reposition as lightweight, explainable, training-free with documented trade-offs.",
-      "status": "OPEN — decide after WP-2.4",
+      "protocol_id": "E0-G1-v1",
+      "protocol": "docs/E0_G1_PROTOCOL_v1.json",
+      "holdout_execution_started": false,
+      "G1_A_geometry": "E_FULL_GEOMETRY versus a development-selected simpler equal-interaction control; family and overall thresholds, phase attribution, N=1000 scale checks, and compute caps are fixed in E0-G1-v1.",
+      "G1_B_vs_baselines": "A_HIST versus the per-instance median of fairly trained Q-learning, UCB1-edge, and random-restart-greedy under the E0-G1-v1 adaptation/evaluation budget.",
+      "status": "PREREGISTERED DESIGN — holdout not started; decide after WP-2.4",
       "result": null
     },
     "non_goals_until_g1": [
@@ -708,6 +712,12 @@
     }
   },
   "commit_history_recent": [
+    {
+      "id": "C321",
+      "hash": "02e6199",
+      "msg": "reconcile ARC-M claims with repository evidence",
+      "notes": "WP-0.1/0.2: evidence policy plus 12-claim ledger; corrected stale baseline/scaling/BPI2017/reproduction inventory without promoting internal evidence to external support."
+    },
     {
       "id": "C320",
       "hash": "87ff88d",

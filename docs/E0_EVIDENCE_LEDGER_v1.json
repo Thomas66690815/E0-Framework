@@ -13,6 +13,7 @@
     "test inventory"
   ],
   "policy": "docs/E0_EVIDENCE_POLICY_v1.md",
+  "g1_protocol": "docs/E0_G1_PROTOCOL_v1.json",
   "status_definitions": {
     "open": "Not decided or not sufficiently tested.",
     "supported_internal": "Supported by analysis or experiments produced inside this repository.",
@@ -169,6 +170,10 @@
         {
           "path": "lean/E0_STRUCTURAL_GEOMETRY.md",
           "role": "warning that typical tested regimes can remain constructive"
+        },
+        {
+          "path": "docs/E0_G1_PROTOCOL_v1.json",
+          "role": "preregistered measurement design; not executed evidence"
         }
       ],
       "commands": [],
@@ -178,7 +183,7 @@
         "C319 indicates that cancellation may require wrapped or unstable phase regimes."
       ],
       "required_next_evidence": [
-        "Run the five-level causal ablation defined in docs/E0_EVIDENCE_POLICY_v1.md.",
+        "Execute the five-level causal ablation preregistered in docs/E0_G1_PROTOCOL_v1.json without reading or tuning on holdout results.",
         "Store per-seed machine-readable results and confidence intervals."
       ],
       "related_claims": [
@@ -289,6 +294,10 @@
         {
           "path": "e0_controller/benchmark_scaling.py",
           "role": "existing scaling benchmark explicitly covers historization/revisit controller, not amplitude"
+        },
+        {
+          "path": "docs/E0_G1_PROTOCOL_v1.json",
+          "role": "preregistered N=100/500/1000 measurement design; not executed evidence"
         }
       ],
       "commands": [],
@@ -298,7 +307,7 @@
         "Asymptotic implementation complexity alone does not establish practical value or failure."
       ],
       "required_next_evidence": [
-        "Equal-budget G1 runs at N=100, 500, and 1000.",
+        "Execute the equal-budget G1 runs at N=100, 500, and 1000 preregistered in docs/E0_G1_PROTOCOL_v1.json.",
         "Separate wall time, expanded paths, memory, goal rate, steps, and regret.",
         "Five-level causal ablation from the evidence policy."
       ],
