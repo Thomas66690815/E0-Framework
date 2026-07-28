@@ -1,0 +1,102 @@
+{
+  "protocol_id": "E0-G1-v1",
+  "protocol_sha256": "e1017c197346e2176a6ddefb5e9d6a24cf140b59d80c7b7615265a4d8a1e3bbd",
+  "config_version": "1.0",
+  "work_package": "WP-2.2",
+  "frozen_on": "2026-07-28",
+  "frozen_before_holdout": true,
+  "holdout_execution_started": false,
+  "selection_rule": "Literature-informed global defaults fixed without holdout access; no per-family or per-scale tuning.",
+  "references": {
+    "Q_LEARNING": {
+      "citation": "Watkins and Dayan (1992), Q-learning",
+      "doi": "10.1007/BF00992698"
+    },
+    "UCB1_EDGE": {
+      "citation": "Auer, Cesa-Bianchi, and Fischer (2002), Finite-time Analysis of the Multiarmed Bandit Problem",
+      "doi": "10.1023/A:1013689704352"
+    },
+    "A_STAR": {
+      "citation": "Hart, Nilsson, and Raphael (1968), A Formal Basis for the Heuristic Determination of Minimum Cost Paths",
+      "doi": "10.1109/TSSC.1968.300136"
+    },
+    "D_STAR_LITE": {
+      "citation": "Koenig and Likhachev (2002), D* Lite",
+      "url": "https://publications.ri.cmu.edu/d-lite"
+    }
+  },
+  "methods": {
+    "Q_LEARNING": {
+      "category": "competitive_G1_B",
+      "parameters": {
+        "learning_rate": 0.3,
+        "discount_factor": 0.95,
+        "epsilon_start": 0.2,
+        "epsilon_end": 0.05,
+        "reward_goal": 1.0,
+        "reward_failure": -1.0,
+        "reward_step": -0.01
+      },
+      "implementation_note": "Tabular off-policy Q-learning; epsilon decays linearly by protocol episode while learning continues during evaluation."
+    },
+    "UCB1_EDGE": {
+      "category": "competitive_G1_B",
+      "parameters": {
+        "exploration_coefficient": 1.4142135623730951,
+        "reward": "binary_episode_goal"
+      },
+      "implementation_note": "Project operationalization: outgoing edges are arms and receive bounded Monte-Carlo episode reward. This adapts UCB1 to delayed path credit; it is not claimed as a canonical graph UCB procedure."
+    },
+    "RANDOM_RESTART_GREEDY": {
+      "category": "competitive_G1_B",
+      "parameters": {
+        "restart_exploration_probability": 0.1,
+        "immediate_failure_penalty": 1.0,
+        "failed_episode_credit_penalty": 0.25,
+        "success_penalty_decay": 0.9
+      },
+      "implementation_note": "Project operationalization: each protocol episode is a position restart; randomized exploration and persistent path penalties vary greedy restarts. No free within-episode teleport is allowed."
+    },
+    "MEMORYLESS_GREEDY": {
+      "category": "diagnostic",
+      "parameters": {},
+      "implementation_note": "Deterministic argmin of local delta times base resistance; lexicographic tie-break; no learning state."
+    },
+    "EPSILON_GREEDY": {
+      "category": "diagnostic",
+      "parameters": {
+        "epsilon": 0.2
+      },
+      "implementation_note": "Fixed-epsilon local exploration without learned values."
+    },
+    "UNIFORM_RANDOM": {
+      "category": "diagnostic",
+      "parameters": {},
+      "implementation_note": "Uniform choice among currently outgoing edges."
+    },
+    "A_STAR": {
+      "category": "map_informed_upper_references",
+      "parameters": {
+        "edge_cost": "one_environment_interaction",
+        "heuristic": "zero",
+        "failed_edge_handling": "block_for_current_episode_and_replan"
+      },
+      "implementation_note": "Full static topology, no hidden outcome probabilities. Zero heuristic is admissible for all heterogeneous state IDs and makes optimality cross-checkable against BFS."
+    },
+    "D_STAR_LITE": {
+      "category": "map_informed_upper_references",
+      "parameters": {
+        "edge_cost": "one_environment_interaction",
+        "heuristic": "zero",
+        "failed_edge_handling": "incremental_cost_infinity_for_current_episode"
+      },
+      "implementation_note": "D* Lite incremental replanning over full static topology, with observed failed edges changed to infinite cost for the current episode. Hidden outcome schedules are not exposed."
+    }
+  },
+  "audit": {
+    "legacy_benchmark_sota": "Not reused: single-episode Q-learning and inconsistent FAILURE movement do not satisfy E0-G1-v1.",
+    "legacy_benchmark_gridworld_astar": "Algorithmic idea retained, but replaced by a protocol adapter with explicit map-information labeling and FAILURE replanning.",
+    "bfs": "Not a preregistered method. Retained only as a unit-cost oracle to verify A* and D* Lite path optimality.",
+    "upper_reference_exclusion": "A_STAR and D_STAR_LITE are excluded from the G1-B comparator because they receive full topology."
+  }
+}
