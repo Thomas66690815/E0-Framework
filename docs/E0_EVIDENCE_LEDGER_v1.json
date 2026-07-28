@@ -1,0 +1,513 @@
+{
+  "schema_version": "1.0",
+  "title": "E0 strategic evidence ledger",
+  "last_updated": "2026-07-28",
+  "authoritative_for": [
+    "strategic empirical claims",
+    "Gate G1 evidence status",
+    "README and paper claim status"
+  ],
+  "not_authoritative_for": [
+    "API documentation",
+    "implementation defaults",
+    "test inventory"
+  ],
+  "policy": "docs/E0_EVIDENCE_POLICY_v1.md",
+  "status_definitions": {
+    "open": "Not decided or not sufficiently tested.",
+    "supported_internal": "Supported by analysis or experiments produced inside this repository.",
+    "mixed_internal": "Internal evidence contains both support and material counterevidence.",
+    "contradicted_internal": "Weakened or contradicted by evidence produced inside this repository.",
+    "supported_external": "Supported by an identified independent replication.",
+    "falsified": "A preregistered falsification condition was met.",
+    "decision": "Governance or product decision; not an empirical finding."
+  },
+  "replication_definitions": {
+    "none": "No executed experiment attached.",
+    "executable": "Executable code exists but the result is not pinned by the quick reproduction protocol.",
+    "same_repo": "Reproducible from the current repository.",
+    "independent": "Reproduced by an independent party or implementation."
+  },
+  "claims": [
+    {
+      "id": "E0-HIST-TRAPS-001",
+      "kind": "empirical",
+      "statement": "Edge-level historization plus revisit handling escapes the repository's designed cycle and trap domains more reliably than memoryless greedy.",
+      "status": "supported_internal",
+      "replication": "same_repo",
+      "data_origin": "synthetic_designed",
+      "scope": "Designed gridworld, domain-invariance, and falsification domains in this repository; not arbitrary graph navigation.",
+      "sources": [
+        {
+          "path": "e0_controller/benchmark_gridworld.py",
+          "role": "A* and memoryless-greedy comparison"
+        },
+        {
+          "path": "e0_controller/benchmark_domain_invariance.py",
+          "role": "canonical trap domains"
+        },
+        {
+          "path": "reproduce.py",
+          "role": "quick reproduction claims C1-C3"
+        }
+      ],
+      "commands": [
+        "python reproduce.py",
+        "python -m pytest e0_controller/test_benchmark_gridworld.py e0_controller/test_sota.py -q"
+      ],
+      "raw_artifacts": [],
+      "limitations": [
+        "Domains and implementations were designed by the same project.",
+        "Memoryless greedy is intentionally weak on cycle traps.",
+        "No independent replication is recorded."
+      ],
+      "related_claims": [
+        "E0-HIST-DOMINANCE-001",
+        "E0-BASELINES-001"
+      ],
+      "last_verified": {
+        "date": "2026-07-28",
+        "commit": "87ff88d",
+        "result": "Quick reproduction passed 8/8 claims; targeted baseline tests passed in the same run before sandbox-only tmp_path setup errors in unrelated persistence tests."
+      }
+    },
+    {
+      "id": "E0-HIST-DOMINANCE-001",
+      "kind": "strategic_hypothesis",
+      "statement": "Historization is the dominant generally useful mechanism in E0 and should be the primary product surface.",
+      "status": "mixed_internal",
+      "replication": "same_repo",
+      "data_origin": "mixed",
+      "scope": "Cross-mechanism product value, not merely success on designed trap domains.",
+      "sources": [
+        {
+          "path": "bootstrap.json",
+          "role": "manually maintained 'confirmed: 6' working principle"
+        },
+        {
+          "path": "docs/research/C185_TRAFFIC_VALIDATION_REPORT_v1.md",
+          "role": "traffic comparison and river-city counterexample"
+        },
+        {
+          "path": "e0_controller/benchmark_sota.py",
+          "role": "small-domain standard baseline comparison"
+        }
+      ],
+      "commands": [
+        "python reproduce.py",
+        "python -m e0_controller.benchmark_sota --json"
+      ],
+      "raw_artifacts": [],
+      "limitations": [
+        "The '6x confirmed' count has no six-item independent evidence mapping.",
+        "River City contains a stale-memory case where historization hurts.",
+        "No independent adoption or replication establishes general product value.",
+        "Mechanism dominance has not been measured by a complete causal ablation."
+      ],
+      "related_claims": [
+        "E0-HIST-TRAPS-001",
+        "E0-OVERLAY-C185-001",
+        "E0-PRODUCT-LEAN-001"
+      ],
+      "last_verified": {
+        "date": "2026-07-28",
+        "commit": "87ff88d",
+        "result": "Retained as a strategic hypothesis; removed as an unqualified fact."
+      }
+    },
+    {
+      "id": "E0-OVERLAY-C185-001",
+      "kind": "empirical",
+      "statement": "In the reported C185 grid-city setup, the conservative overlay at confidence 0.85 improved completed trips by about 4.2% to 6% over E0 greedy, while confidence 0.5 was worse.",
+      "status": "supported_internal",
+      "replication": "executable",
+      "data_origin": "synthetic_designed",
+      "scope": "C185 5x4 traffic simulation with 10 and 20 vehicles and the report's fixed configuration.",
+      "sources": [
+        {
+          "path": "docs/research/C185_TRAFFIC_VALIDATION_REPORT_v1.md",
+          "role": "reported setup, results, and limitations"
+        },
+        {
+          "path": "e0_controller/explore_traffic.py",
+          "role": "executable simulation"
+        }
+      ],
+      "commands": [
+        "python -m e0_controller.explore_traffic"
+      ],
+      "raw_artifacts": [],
+      "limitations": [
+        "The main 4.2%-6% result is tied to one synthetic topology family and fixed simulator design.",
+        "No committed machine-readable raw result artifact exists.",
+        "The experiment does not isolate phase from lookahead, path aggregation, or gating.",
+        "River City produces negative historization and overlay cases at other congestion levels."
+      ],
+      "related_claims": [
+        "E0-PHASE-CAUSAL-001",
+        "E0-HIST-DOMINANCE-001"
+      ],
+      "last_verified": {
+        "date": "2026-07-28",
+        "commit": "87ff88d",
+        "result": "Report and executable inspected; result not promoted beyond its original scope."
+      }
+    },
+    {
+      "id": "E0-PHASE-CAUSAL-001",
+      "kind": "causal_hypothesis",
+      "statement": "The practical advantage attributed to the amplitude overlay is caused by phase interference rather than by lookahead, path aggregation, or confidence gating.",
+      "status": "open",
+      "replication": "none",
+      "data_origin": "synthetic_designed",
+      "scope": "C185-style navigation and future G1 domains.",
+      "sources": [
+        {
+          "path": "docs/research/C185_TRAFFIC_VALIDATION_REPORT_v1.md",
+          "role": "overlay result without phase-free causal control"
+        },
+        {
+          "path": "lean/E0_STRUCTURAL_GEOMETRY.md",
+          "role": "warning that typical tested regimes can remain constructive"
+        }
+      ],
+      "commands": [],
+      "raw_artifacts": [],
+      "limitations": [
+        "No identical-horizon phase-free lookahead control is currently reported.",
+        "C319 indicates that cancellation may require wrapped or unstable phase regimes."
+      ],
+      "required_next_evidence": [
+        "Run the five-level causal ablation defined in docs/E0_EVIDENCE_POLICY_v1.md.",
+        "Store per-seed machine-readable results and confidence intervals."
+      ],
+      "related_claims": [
+        "E0-OVERLAY-C185-001",
+        "E0-GEOMETRY-REGIME-001"
+      ],
+      "last_verified": {
+        "date": "2026-07-28",
+        "commit": "87ff88d",
+        "result": "Open causal question."
+      }
+    },
+    {
+      "id": "E0-GEOMETRY-REGIME-001",
+      "kind": "empirical_scope",
+      "statement": "In the constructed C319 examples, typical weights produce mostly constructive phase aggregation; outright cancellation appears only after the measured phase gap enters a wrapped regime.",
+      "status": "supported_internal",
+      "replication": "same_repo",
+      "data_origin": "synthetic_designed",
+      "scope": "Fields and weight sweeps implemented in lean/structural_geometry; not a representative survey of operational domains.",
+      "sources": [
+        {
+          "path": "lean/structural_geometry/demo.py",
+          "role": "weight sweep and interpretation"
+        },
+        {
+          "path": "lean/structural_geometry/tests/test_acceptance.py",
+          "role": "acceptance properties"
+        },
+        {
+          "path": "lean/E0_STRUCTURAL_GEOMETRY.md",
+          "role": "documented regime boundary"
+        }
+      ],
+      "commands": [
+        "python -m lean.structural_geometry.demo",
+        "python -m pytest lean/structural_geometry/tests -q"
+      ],
+      "raw_artifacts": [],
+      "limitations": [
+        "The examples are constructed, not sampled from a preregistered domain population.",
+        "The result weakens broad cancellation language but does not prove cancellation is absent in all useful domains."
+      ],
+      "related_claims": [
+        "E0-PHASE-CAUSAL-001",
+        "E0-SCALE-GEOMETRY-001"
+      ],
+      "last_verified": {
+        "date": "2026-07-28",
+        "commit": "87ff88d",
+        "result": "Acceptance suite included in targeted run."
+      }
+    },
+    {
+      "id": "E0-SCALE-HIST-001",
+      "kind": "empirical",
+      "statement": "The historization/revisit controller has executable synthetic scaling benchmarks through approximately 225 to 500 nodes.",
+      "status": "supported_internal",
+      "replication": "same_repo",
+      "data_origin": "synthetic_designed",
+      "scope": "Greedy controller with historization and revisit handling; not the amplitude/path-family layer.",
+      "sources": [
+        {
+          "path": "e0_controller/benchmark_scaling.py",
+          "role": "N approximately 25-500 benchmark levels"
+        },
+        {
+          "path": "reproduce.py",
+          "role": "quick protocol pins the approximately 225-node wall grid"
+        },
+        {
+          "path": "REPRODUCTION.md",
+          "role": "reproduction instructions"
+        }
+      ],
+      "commands": [
+        "python reproduce.py",
+        "python -m e0_controller.benchmark_scaling --json"
+      ],
+      "raw_artifacts": [],
+      "limitations": [
+        "The quick protocol verifies approximately 225 nodes, despite older wording mentioning N=500.",
+        "The full benchmark is synthetic and does not exercise amplitude path enumeration.",
+        "No independent implementation or external workload is recorded."
+      ],
+      "related_claims": [
+        "E0-SCALE-GEOMETRY-001"
+      ],
+      "last_verified": {
+        "date": "2026-07-28",
+        "commit": "87ff88d",
+        "result": "Quick reproduction scaling claim passed."
+      }
+    },
+    {
+      "id": "E0-SCALE-GEOMETRY-001",
+      "kind": "evidence_gap",
+      "statement": "The practical value and runtime behavior of the amplitude/path-family layer remain unverified at N >= 100.",
+      "status": "open",
+      "replication": "none",
+      "data_origin": "not_applicable",
+      "scope": "Amplitude overlay and structural geometry, with value measured against equal-budget simpler controls.",
+      "sources": [
+        {
+          "path": "docs/E0_STRUCTURAL_CONTRADICTIONS_v1.md",
+          "role": "SC-11 path-structure scaling concern"
+        },
+        {
+          "path": "e0_controller/benchmark_scaling.py",
+          "role": "existing scaling benchmark explicitly covers historization/revisit controller, not amplitude"
+        }
+      ],
+      "commands": [],
+      "raw_artifacts": [],
+      "limitations": [
+        "The prior phrase 'no scaling beyond N approximately 50' incorrectly conflated the full framework with the geometry layer.",
+        "Asymptotic implementation complexity alone does not establish practical value or failure."
+      ],
+      "required_next_evidence": [
+        "Equal-budget G1 runs at N=100, 500, and 1000.",
+        "Separate wall time, expanded paths, memory, goal rate, steps, and regret.",
+        "Five-level causal ablation from the evidence policy."
+      ],
+      "related_claims": [
+        "E0-SCALE-HIST-001",
+        "E0-PHASE-CAUSAL-001"
+      ],
+      "last_verified": {
+        "date": "2026-07-28",
+        "commit": "87ff88d",
+        "result": "Confirmed as a geometry-specific evidence gap, not a framework-wide absence."
+      }
+    },
+    {
+      "id": "E0-BASELINES-001",
+      "kind": "repository_fact",
+      "statement": "The repository already contains in-house implementations of A*, BFS, tabular Q-learning, epsilon-greedy, random, and memoryless-greedy baselines.",
+      "status": "supported_internal",
+      "replication": "same_repo",
+      "data_origin": "not_applicable",
+      "scope": "Existence and executability of baseline code, not fairness or external validity.",
+      "sources": [
+        {
+          "path": "e0_controller/benchmark_gridworld.py",
+          "role": "A* and memoryless greedy"
+        },
+        {
+          "path": "e0_controller/benchmark_sota.py",
+          "role": "Q-learning, epsilon-greedy, random, and greedy"
+        },
+        {
+          "path": "e0_controller/explore_traffic.py",
+          "role": "BFS and traffic strategies"
+        }
+      ],
+      "commands": [
+        "python -m e0_controller.benchmark_gridworld --json",
+        "python -m e0_controller.benchmark_sota --json"
+      ],
+      "raw_artifacts": [],
+      "limitations": [
+        "These are project-owned implementations, not independent reference packages.",
+        "The SOTA comparison uses small custom domains of 4-22 nodes.",
+        "Existing hyperparameters and budget parity require a fresh G1 audit."
+      ],
+      "related_claims": [
+        "E0-HIST-TRAPS-001",
+        "E0-EXTERNAL-REPLICATION-001"
+      ],
+      "last_verified": {
+        "date": "2026-07-28",
+        "commit": "87ff88d",
+        "result": "Code and targeted tests inspected."
+      }
+    },
+    {
+      "id": "E0-BPI2017-001",
+      "kind": "empirical",
+      "statement": "The C184b adapter navigates a graph derived from BPI 2017, but the report attributes the successful choice primarily to the Delta mapping rather than to interference.",
+      "status": "supported_internal",
+      "replication": "executable",
+      "data_origin": "external_observational",
+      "scope": "The repository's filtered 24-activity process graph and hand-defined navigation objective; not held-out case-level prediction accuracy.",
+      "sources": [
+        {
+          "path": "docs/research/C184b_BPI2017_VALIDATION_REPORT_v1.md",
+          "role": "completed report and honest limitation"
+        },
+        {
+          "path": "e0_controller/explore_bpi2017.py",
+          "role": "adapter and executable analysis"
+        },
+        {
+          "path": "data/bpi2017/BPI_Challenge_2017.xes.gz",
+          "role": "external observational dataset"
+        }
+      ],
+      "commands": [
+        "python -m e0_controller.explore_bpi2017"
+      ],
+      "raw_artifacts": [],
+      "limitations": [
+        "The adapter uses outcome knowledge in Delta/R0 construction.",
+        "This is not held-out case-level prediction or recommendation accuracy.",
+        "External data does not make the project-owned analysis an independent replication."
+      ],
+      "related_claims": [
+        "E0-PHASE-CAUSAL-001",
+        "E0-EXTERNAL-REPLICATION-001"
+      ],
+      "last_verified": {
+        "date": "2026-07-28",
+        "commit": "87ff88d",
+        "result": "Existing C184b work must be audited and extended, not described as absent."
+      }
+    },
+    {
+      "id": "E0-EXTERNAL-REPLICATION-001",
+      "kind": "evidence_gap",
+      "statement": "No independent reproduction of the central E0 performance claims is recorded in the repository.",
+      "status": "open",
+      "replication": "none",
+      "data_origin": "not_applicable",
+      "scope": "Independent party or independently maintained implementation; external datasets and project-owned standard baselines do not qualify.",
+      "sources": [
+        {
+          "path": "docs/E0_PAPER_AUDIT_v1.md",
+          "role": "single-author and independent-verification limitation"
+        },
+        {
+          "path": "REPRODUCTION.md",
+          "role": "same-repository reproduction protocol"
+        }
+      ],
+      "commands": [],
+      "raw_artifacts": [],
+      "limitations": [
+        "Repository inventory cannot prove that no unrecorded external use exists.",
+        "Traffic or clone counts would show interest, not scientific replication."
+      ],
+      "required_next_evidence": [
+        "Named independent reproducer and immutable commit/tag.",
+        "Machine-readable result bundle and environment manifest.",
+        "Disclosure of deviations from the original protocol."
+      ],
+      "related_claims": [
+        "E0-BASELINES-001",
+        "E0-PRODUCT-LEAN-001"
+      ],
+      "last_verified": {
+        "date": "2026-07-28",
+        "commit": "87ff88d",
+        "result": "No independent reproduction artifact identified during WP-0 inventory."
+      }
+    },
+    {
+      "id": "E0-REPRO-QUICK-001",
+      "kind": "repository_fact",
+      "statement": "The current quick reproduction command executes eight internally defined claims successfully at commit 87ff88d.",
+      "status": "supported_internal",
+      "replication": "same_repo",
+      "data_origin": "synthetic_designed",
+      "scope": "The predicates encoded in reproduce.py; not all repository claims and not independent replication.",
+      "sources": [
+        {
+          "path": "reproduce.py",
+          "role": "eight executable claim predicates"
+        },
+        {
+          "path": "REPRODUCTION.md",
+          "role": "usage and scope documentation"
+        }
+      ],
+      "commands": [
+        "python reproduce.py"
+      ],
+      "raw_artifacts": [],
+      "limitations": [
+        "Predicates are broad pass/fail checks and do not emit confidence intervals.",
+        "Several claims share domains and implementation components.",
+        "The command currently prints results but does not persist an immutable result bundle."
+      ],
+      "related_claims": [
+        "E0-HIST-TRAPS-001",
+        "E0-SCALE-HIST-001"
+      ],
+      "last_verified": {
+        "date": "2026-07-28",
+        "commit": "87ff88d",
+        "result": "8/8 passed in 0.6 seconds."
+      }
+    },
+    {
+      "id": "E0-PRODUCT-LEAN-001",
+      "kind": "governance_decision",
+      "statement": "The lean packages are the current product candidates; the full framework remains the research carrier until Gate G1.",
+      "status": "decision",
+      "replication": "none",
+      "data_origin": "not_applicable",
+      "scope": "ARC-M portfolio and repository governance.",
+      "sources": [
+        {
+          "path": "docs/E0_UMSETZUNGSPLAN_v1.md",
+          "role": "binding ARC-M decision"
+        },
+        {
+          "path": "bootstrap.json",
+          "role": "session-level strategic context"
+        }
+      ],
+      "commands": [],
+      "raw_artifacts": [],
+      "limitations": [
+        "This is a reversible management decision, not proof of market value.",
+        "A separate product repository is deferred until evidence reconciliation and Gate G1."
+      ],
+      "decision_review": {
+        "trigger": "Gate G1 or material external adoption evidence",
+        "current_action": "Keep one research repository; package in place before any history-preserving split."
+      },
+      "related_claims": [
+        "E0-HIST-DOMINANCE-001",
+        "E0-EXTERNAL-REPLICATION-001"
+      ],
+      "last_verified": {
+        "date": "2026-07-28",
+        "commit": "87ff88d",
+        "result": "Recorded explicitly as a governance decision."
+      }
+    }
+  ]
+}

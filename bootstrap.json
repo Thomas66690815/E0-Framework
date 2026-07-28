@@ -31,9 +31,9 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C319",
-    "latest_commit_hash": "754cabf",
-    "latest_commit_msg": "C319: structural_geometry lean package + GAME_AI.md + visual traffic demo",
+    "latest_commit": "C320",
+    "latest_commit_hash": "87ff88d",
+    "latest_commit_msg": "C320: ARC-M Umsetzungsplan + bootstrap strategic_plan — consolidation, feature freeze L5-14, Gate G1",
     "test_count": 6720,
     "test_failures": 0,
     "ci_status": "pending",
@@ -309,19 +309,19 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "ARC-M: Consolidation & Decision (C320+). Strategy pivot 2026-07-27 after repeated external usefulness reviews. Verdict: value is concentrated in Historization + the lean packages; the amplitude/geometry layer has unproven marginal value (+4% only with hard gate in C185; purely constructive interference at typical weights per C319; no external baselines; no scaling evidence past N~50 = SC-11). Response: productize the lean packages, run ONE decision experiment (scaling + external baselines), let Gate G1 decide the geometry layer's future. Binding plan: docs/E0_UMSETZUNGSPLAN_v1.md + strategic_plan section below.",
-    "arc_status": "Plan written (docs/E0_UMSETZUNGSPLAN_v1.md), bootstrap restructured, no WP started yet. Parallel-safe entry points: WP-1.1 (packaging both lean packages) or WP-2.1 (benchmark harness — the priority path). Feature freeze on layers 5-14 is in effect (strategic_plan L2).",
-    "arc_thesis": "Product = lean packages. Framework = research carrier. Every commit maps to a Work Package (L3). Reduce before extending: the decision experiment (WP-2.x) resolves SC-11 and the no-external-baseline gap before any new mechanism is built.",
+    "current_arc": "ARC-M / WP-0: Evidence Reconciliation (C320+). The C320 strategy direction is retained, but its evidence claims are being reconciled with the actual repository. Existing C270/C273 work already provides historization scaling to N~225/500 and in-repo A*/Q-learning/epsilon-greedy/random baselines; the unresolved SC-11 question is specifically geometry/amplitude scaling and value. C185 establishes a small gated overlay effect, not a phase-causal effect. Binding sources: docs/E0_EVIDENCE_LEDGER_v1.json + docs/E0_UMSETZUNGSPLAN_v1.md.",
+    "arc_status": "WP-0.1/0.2 completed and validated in C321: evidence policy + 12-claim ledger; plan/bootstrap reconciled with existing baseline, scaling, BPI2017, and reproduction work. Next: WP-0.3 G1 preregistration. Feature freeze on layers 5-14 remains in effect.",
+    "arc_thesis": "Lean packages are product candidates, not empirically proven products. Framework remains the research carrier through G1. Every strategic claim maps to an Evidence Ledger ID; every commit maps to a Work Package. No repository split before evidence reconciliation and G1.",
     "previous_arc_summary": "ARC-L (C313-C319): adoption surface — AGENT_REFERENCE.md, AGENT_BUILDER_GUIDE.md, lean/reliability_memory (C315-lean), lean/structural_geometry (C319), GAME_AI.md, README measured-results overhaul. Clone spike traced via GitHub traffic API to the geometry chain (code search). Earlier: ARC-E DifferenzPort (C288-C290), ARC-D E1 impact historization (C285-C287), Trajectory Arc (C277-C283).",
-    "key_result": "Two facts drive ARC-M: (1) the 6x-confirmed dominant mechanism (Historization) fits in ~600 LOC (lean/reliability_memory); (2) C185 shows the amplitude layer adds only +4% over pure historization and only with a hard gate (conf >= 0.85) — ungated it is net-negative. C319 adds: at typical weights interference is purely constructive (cancellation needs a phase gap ~pi, beyond the stable ranking range).",
+    "key_result": "WP-0 inventory: (1) historization/revisit value is internally reproducible on designed traps, but general mechanism dominance remains mixed/internal (E0-HIST-DOMINANCE-001); (2) C185 reports +4.2-6% for a gated overlay but does not isolate phase from lookahead/gating (E0-PHASE-CAUSAL-001 is OPEN); (3) historization scaling exists, geometry scaling does not; (4) standard baselines exist in-repo, independent replication does not.",
     "open_threads": [
-      "G1 decision experiment (WP-2.1..2.5): scaling N=100/500/1000 + external baselines (tabular Q-learning, UCB1, D*-Lite, random-restart greedy). THE priority — resolves SC-11 and the no-external-baseline gap in one shot.",
+      "WP-0.3 preregistration, then G1 (WP-2.1..2.5): five-level causal ablation + geometry scaling N=100/500/1000 + audit/extension of existing baselines. Priority: isolate phase value and obtain equal-budget, held-out evidence.",
       "F3 branching boundary (b>=3) and F4 non-Markov limit: confirmed structural limits (C272). Improvement work FROZEN until after G1 — report honestly, do not engineer around them before the gate.",
       "GT-8 Partial Residual Trap: documented, unresolved, deferred until after G1 (only relevant if the framework core continues as a product).",
       "TRAP_GRID domain redesign: folded into WP-2.1 benchmark harness (domain generators need clean trap semantics anyway).",
       "Quality score weights (P8 12.1) are heuristic — frozen until after G1."
     ],
-    "next_commit_id": "C320",
+    "next_commit_id": "C322",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
@@ -330,10 +330,12 @@
         "last_tested": "C166b"
       },
       {
-        "principle": "Historization is the dominant mechanism — other features add incremental value",
+        "principle": "Strategic hypothesis: Historization is the dominant mechanism — other features add incremental value",
         "confirmed": 6,
         "contradicted": 0,
-        "last_tested": "C262"
+        "last_tested": "C262",
+        "evidence_id": "E0-HIST-DOMINANCE-001",
+        "evidence_note": "Legacy count is not an independent evidence map; authoritative status is mixed_internal in the ledger."
       },
       {
         "principle": "Cooperation > Competition — always check for shared knowledge first",
@@ -384,39 +386,44 @@
         "last_tested": "C262 (post-arc audit)"
       },
       {
-        "principle": "Value is concentrated — the product is the lean core; every framework layer must earn its keep via ablation against a simpler alternative",
+        "principle": "Governance decision: value is provisionally concentrated in the lean core; every framework layer must earn its keep via ablation against a simpler alternative",
         "confirmed": 0,
         "contradicted": 0,
-        "last_tested": "2026-07-27 (strategy pivot — untested as principle, G1 will test it)"
+        "last_tested": "2026-07-27 (strategy pivot — untested as principle, G1 will test it)",
+        "evidence_id": "E0-PRODUCT-LEAN-001"
       }
     ]
   },
   "strategic_plan": {
-    "_comment": "Binding development frame since 2026-07-27 (ARC-M). Full plan with acceptance criteria: docs/E0_UMSETZUNGSPLAN_v1.md. Update WP status THERE; record the G1 gate result HERE and there.",
+    "_comment": "Binding development frame since 2026-07-27 (ARC-M), corrected by WP-0 on 2026-07-28. The Evidence Ledger is authoritative for claim status; the plan is authoritative for work packages.",
     "doc": "docs/E0_UMSETZUNGSPLAN_v1.md",
+    "evidence_ledger": "docs/E0_EVIDENCE_LEDGER_v1.json",
+    "evidence_policy": "docs/E0_EVIDENCE_POLICY_v1.md",
     "based_on": [
-      "docs/E0_PAPER_AUDIT_v1.md (8 formula mismatches fixed C269; 27 uncovered modules; zero external benchmarks; no scaling past N~50)",
+      "docs/E0_EVIDENCE_LEDGER_v1.json (authoritative scoped claim status and evidence gaps)",
+      "docs/E0_PAPER_AUDIT_v1.md (historical audit; baseline/scaling absence statements superseded in part by C270/C273)",
       "docs/E0_STRUCTURAL_CONTRADICTIONS_v1.md (SC-11 scalability = make-or-break)",
-      "docs/research/C185_TRAFFIC_VALIDATION_REPORT_v1.md (+4% gated amplitude value; river-city failure)",
-      "C319 finding: interference purely constructive at typical weights"
+      "docs/research/C185_TRAFFIC_VALIDATION_REPORT_v1.md (+4.2-6% gated overlay in one synthetic setup; phase cause not isolated; river-city failures)",
+      "C319 examples: mostly constructive aggregation at typical tested weights; cancellation in wrapped regime"
     ],
     "decisions": {
-      "L1": "Product = lean packages (reliability_memory, structural_geometry). Framework (e0_controller/, server/) = research carrier, not a product.",
+      "L1": "Product candidates = lean packages (reliability_memory, structural_geometry). Framework (e0_controller/, server/) remains the research carrier through G1. Governance decision E0-PRODUCT-LEAN-001, not an empirical finding.",
       "L2": "FEATURE FREEZE layers 5-14 (reflexion, multiverse, llm-integration extensions, observation, dream, entropy, sleep-wake, curriculum, communication, session runner): bugfixes only. Unfreeze per mechanism ONLY via ablation showing measurable value over a simpler alternative on >=2 domains.",
       "L3": "Every commit maps to a Work Package (WP-x.y) in the plan. No WP -> no commit; amend the plan deliberately first if work is genuinely needed.",
-      "L4": "Claims discipline: no AGI framing. Positioning: 'learned edge-cost memory + gated lookahead for graph navigation under uncertainty'. Every README claim cites a benchmark artefact."
+      "L4": "Claims discipline: no AGI framing. Every strategic README/paper claim cites an Evidence Ledger ID; the ledger links scoped claims to commands, artifacts, and limitations."
     },
     "phases": {
+      "P0_evidence_reconciliation": "WP-0.1 evidence policy/ledger; WP-0.2 repository-plan reconciliation; WP-0.3 G1 preregistration; WP-0.4 status/archive inventory without moving or splitting",
       "P1_productize": "WP-1.1 packaging both lean packages; WP-1.2 PyPI (USER DECISION required); WP-1.3 LLM-agent tool-reliability example; WP-1.4 game-AI example consuming structural_geometry",
-      "P2_decision_experiment": "WP-2.1 benchmark harness (domain generators N=100/500/1000, fixed protocol); WP-2.2 external baselines (tabular Q-learning, UCB1, D*-Lite, random-restart greedy — literature hyperparameters, no strawmen); WP-2.3 E0 ablations (historization-only / +gated amplitude / +full); WP-2.4 report docs/research/E0_DECISION_BENCHMARK_v1.md; WP-2.5 BPI2017 real-data validation",
+      "P2_decision_experiment": "WP-2.1 consolidate/extend existing harnesses at N=100/500/1000; WP-2.2 audit existing A*/BFS/Q-learning/epsilon-greedy/random and add UCB1/D*-Lite/random-restart; WP-2.3 five-level causal ablation (no lookahead / phase-free / Theta=0 / U(1) / full); WP-2.4 raw-data report; WP-2.5 held-out BPI2017 validation without outcome leakage",
       "P3_gate": "Gate G1 — see gate_g1",
       "P4_conditional": "4a: productize geometry (if G1-A passes) OR 4b: research-freeze geometry (if not)",
-      "P5_repositioning": "WP-5.1 README claims rewrite + AGI blueprint to _archive; WP-5.2 external short paper on Historization incl. F3/F4 (USER DECISION on submission); WP-5.3 one-command reproduction protocol"
+      "P5_repositioning": "WP-5.1 README claims-to-ledger rewrite + AGI blueprint to _archive; WP-5.2 external short paper on Historization incl. F3/F4 (USER DECISION on submission); WP-5.3 extend existing reproduction protocol with immutable raw artifacts"
     },
     "gate_g1": {
       "criteria_fixed_in_advance": true,
-      "G1_A_geometry": "Amplitude/geometry keeps >=10% value over historization-only on >=2 domain classes at N>=100 -> stays product (4a). Else -> research freeze (4b).",
-      "G1_B_vs_baselines": "Historization-only competitive (>= baseline median) -> keep positioning. Else -> reposition lean packages as lightweight, explainable, training-free alternative with documented trade-offs; no superiority claims.",
+      "G1_A_geometry": "Causally isolated phase/geometry beats the best simpler equal-budget control by median >=10%, with uncertainty interval excluding 0, on >=2 held-out domain classes at N>=100 -> stays product (4a). Else -> research freeze (4b).",
+      "G1_B_vs_baselines": "Historization-only competitive with the baseline median under identical interaction and compute budgets on preregistered primary metrics -> keep positioning. Else -> reposition as lightweight, explainable, training-free with documented trade-offs.",
       "status": "OPEN — decide after WP-2.4",
       "result": null
     },
@@ -702,6 +709,12 @@
   },
   "commit_history_recent": [
     {
+      "id": "C320",
+      "hash": "87ff88d",
+      "msg": "ARC-M implementation plan + bootstrap strategic_plan",
+      "notes": "Initial consolidation strategy; WP-0 later corrected stale baseline/scaling inventory and separated overlay effect from phase causality."
+    },
+    {
       "id": "C319",
       "hash": "754cabf",
       "msg": "structural_geometry lean package + GAME_AI.md + visual traffic demo",
@@ -861,7 +874,7 @@
     "status": "8/8 targets RESOLVED (internal)",
     "doc": "docs/E0_EVIDENCE_AND_FALSIFICATION_STATUS_v1.md",
     "date_resolved": "2026-03-31",
-    "caveat": "All 8 targets were internal — zero external baselines, no scaling past N~50 (paper audit 6.3). Gate G1 (strategic_plan) is the first external falsification pass; treat '8/8 resolved' as necessary, not sufficient."
+    "caveat": "All 8 targets were internal. In-repo standard baselines and historization scaling now exist, but no independent replication and no geometry/amplitude scaling at N>=100 are recorded. Gate G1 is the first preregistered equal-budget causal pass; treat '8/8 resolved' as necessary, not sufficient."
   },
   "idea_backlog": {
     "_comment": "Strategic ideas not yet scheduled. Since ARC-M (2026-07-27): every promotion must map to a WP in docs/E0_UMSETZUNGSPLAN_v1.md (L3); items touching frozen layers stay frozen until Gate G1.",
