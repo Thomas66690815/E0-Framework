@@ -22,7 +22,7 @@
   "environment": {
     "python_command": "py -3",
     "test_command": "py -3 -m pytest e0_controller/ server/ --tb=short -q",
-    "test_duration_note": "Latest full local run (C325 workspace): 1442.96 seconds (~24 min) for 6773 tests; runtime is machine/load dependent. Do NOT abort while CPU and progress output continue.",
+    "test_duration_note": "Latest full local run (C326 workspace): 1845.90 seconds (~31 min) for 6805 tests; runtime is machine/load dependent. Do NOT abort while CPU and progress output continue.",
     "test_single": "py -3 -m pytest e0_controller/test_FILE.py -v --tb=short",
     "ci_file": ".github/workflows/tests.yml",
     "ci_threshold": 2000,
@@ -31,13 +31,13 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C324",
-    "latest_commit_hash": "6226127",
-    "latest_commit_msg": "C324: implement G1 development domain harness",
-    "test_count": 6773,
+    "latest_commit": "C325",
+    "latest_commit_hash": "136013f",
+    "latest_commit_msg": "C325: implement fair G1 baseline adapters",
+    "test_count": 6805,
     "test_failures": 0,
     "ci_status": "pending",
-    "module_count": "160 test files; non-test taxonomy not recounted in WP-2.2",
+    "module_count": "161 test files; non-test taxonomy not recounted in WP-2.3",
     "line_count": "~36000 production, ~133000 total",
     "lean_packages": "lean/reliability_memory (15 acceptance tests) + lean/structural_geometry (37 tests), 0 failures",
     "strategy": "ARC-M consolidation since 2026-07-27 — see strategic_plan section + docs/E0_UMSETZUNGSPLAN_v1.md"
@@ -309,19 +309,19 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "ARC-N / Gate G1 implementation. WP-2.2 is complete in C325: all eight preregistered baselines share a fair development-only interaction contract and frozen global configurations.",
-    "arc_status": "Q-learning, UCB1-edge, random-restart-greedy, memoryless greedy, epsilon-greedy, uniform random, A*, and D* Lite complete 960/960 compatibility runs across all 120 development domains. A*/D* Lite are map-informed upper references and excluded from G1-B. Next: WP-2.3 five-level E0 causal ablations.",
+    "current_arc": "ARC-N / Gate G1 implementation. WP-2.3 is complete in C326: five preregistered E0 ablations share one causal development-only contract and frozen global operationalization.",
+    "arc_status": "A_HIST, B_INCOHERENT, C_THETA_ZERO, D_U1_PHASE, and E_FULL_GEOMETRY complete 600/600 bounded compatibility runs across all 120 development domains with 0 path-cap hits. Full 30-episode development raw data and simpler-control selection remain WP-2.4.",
     "arc_thesis": "Lean packages are product candidates, not empirically proven products. e0_controller remains the research carrier through G1; UI/session/layers 5-14 remain frozen. Every strategic claim maps to an Evidence Ledger ID and every commit to a Work Package. No repository split before Gate G1 plus WP-1.1 packaging evidence.",
     "previous_arc_summary": "ARC-L (C313-C319): adoption surface — AGENT_REFERENCE.md, AGENT_BUILDER_GUIDE.md, lean/reliability_memory (C315-lean), lean/structural_geometry (C319), GAME_AI.md, README measured-results overhaul. Clone spike traced via GitHub traffic API to the geometry chain (code search). Earlier: ARC-E DifferenzPort (C288-C290), ARC-D E1 impact historization (C285-C287), Trajectory Arc (C277-C283).",
-    "key_result": "WP-2.2 fixes method IDs, information boundaries, FAILURE semantics, budgets, and global configurations before holdout access. Compatibility is engineering evidence only: no method ranking, selected winner, causal effect, holdout result, or Gate-G1 finding exists yet.",
+    "key_result": "WP-2.3 fixes the five causal method IDs, shared history/revisit behavior, the B-E path family and gate, cap handling, and full-geometry call boundary before holdout access. Compatibility is engineering evidence only: no full-budget comparison, selected control, causal effect, holdout result, or Gate-G1 finding exists yet.",
     "open_threads": [
-      "WP-2.3: implement five E0 causal ablations on the same WP-2.1 domains and WP-2.2 episode/budget contract; development seeds only, no holdout access.",
+      "WP-2.4: execute full 10-adaptation + 20-evaluation development raw-data runs, report positive and negative results, apply the preregistered simpler-control selection, and freeze it before holdout access.",
       "F3 branching boundary (b>=3) and F4 non-Markov limit: confirmed structural limits (C272). Improvement work FROZEN until after G1 — report honestly, do not engineer around them before the gate.",
       "GT-8 Partial Residual Trap: documented, unresolved, deferred until after G1 (only relevant if the framework core continues as a product).",
-      "WP-2.2 compatibility artifacts are not G1 results; keep ranking, result-shaped claims, and holdout execution blocked until the preregistered later work packages authorize them.",
+      "WP-2.3 bounded compatibility artifacts are not performance results; keep ranking, control selection, result-shaped claims, and holdout execution blocked until WP-2.4 produces the preregistered full development raw data.",
       "Quality score weights (P8 12.1) are heuristic — frozen until after G1."
     ],
-    "next_commit_id": "C326",
+    "next_commit_id": "C327",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
@@ -418,7 +418,7 @@
     "phases": {
       "P0_evidence_reconciliation": "COMPLETE C321-C323: evidence policy/ledger, repository-plan reconciliation, G1 preregistration, and status/archive inventory without moving or splitting",
       "P1_productize": "WP-1.1 packaging both lean packages; WP-1.2 PyPI (USER DECISION required); WP-1.3 LLM-agent tool-reliability example; WP-1.4 game-AI example consuming structural_geometry",
-      "P2_decision_experiment": "WP-2.1 COMPLETE C324: four exact-N domain families, keyed outcomes, development-only harness, holdout guard. WP-2.2 COMPLETE C325: eight fair baseline adapters, frozen configs, 960/960 development compatibility runs. WP-2.3 five-level causal ablation (no lookahead / phase-free / Theta=0 / U(1) / full); WP-2.4 raw-data report; WP-2.5 held-out BPI2017 validation without outcome leakage",
+      "P2_decision_experiment": "WP-2.1 COMPLETE C324: four exact-N domain families, keyed outcomes, development-only harness, holdout guard. WP-2.2 COMPLETE C325: eight fair baseline adapters, frozen configs, 960/960 development compatibility runs. WP-2.3 COMPLETE C326: five causal ablations, frozen operationalization, 600/600 bounded development compatibility runs. WP-2.4 full development raw-data report and simpler-control selection; WP-2.5 held-out BPI2017 validation without outcome leakage",
       "P3_gate": "Gate G1 — see gate_g1",
       "P4_conditional": "4a: productize geometry (if G1-A passes) OR 4b: research-freeze geometry (if not)",
       "P5_repositioning": "WP-5.1 README claims-to-ledger rewrite + AGI blueprint to _archive; WP-5.2 external short paper on Historization incl. F3/F4 (USER DECISION on submission); WP-5.3 extend existing reproduction protocol with immutable raw artifacts"
@@ -430,6 +430,10 @@
       "baseline_configs_frozen": true,
       "baseline_configs": "docs/E0_G1_BASELINE_CONFIGS_v1.json",
       "baseline_audit": "docs/E0_G1_BASELINE_AUDIT_v1.md",
+      "ablation_configs_frozen": true,
+      "ablation_configs": "docs/E0_G1_ABLATION_CONFIGS_v1.json",
+      "ablation_audit": "docs/E0_G1_ABLATION_AUDIT_v1.md",
+      "g1_a_primary_control_selected": null,
       "holdout_execution_started": false,
       "G1_A_geometry": "E_FULL_GEOMETRY versus a development-selected simpler equal-interaction control; family and overall thresholds, phase attribution, N=1000 scale checks, and compute caps are fixed in E0-G1-v1.",
       "G1_B_vs_baselines": "A_HIST versus the per-instance median of fairly trained Q-learning, UCB1-edge, and random-restart-greedy under the E0-G1-v1 adaptation/evaluation budget.",
@@ -717,6 +721,12 @@
     }
   },
   "commit_history_recent": [
+    {
+      "id": "C325",
+      "hash": "136013f",
+      "msg": "implement fair G1 baseline adapters",
+      "notes": "WP-2.2: eight fair protocol adapters, frozen configs, explicit information boundaries, and 960/960 development compatibility runs; no G1 result."
+    },
     {
       "id": "C324",
       "hash": "6226127",

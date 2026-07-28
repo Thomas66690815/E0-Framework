@@ -1,0 +1,89 @@
+{
+  "protocol_id": "E0-G1-v1",
+  "protocol_sha256": "e1017c197346e2176a6ddefb5e9d6a24cf140b59d80c7b7615265a4d8a1e3bbd",
+  "config_version": "1.0",
+  "work_package": "WP-2.3",
+  "frozen_on": "2026-07-28",
+  "frozen_before_holdout": true,
+  "holdout_execution_started": false,
+  "selection_rule": "Protocol constants and existing E0 defaults fixed globally without holdout access; no family-specific or scale-specific tuning.",
+  "information_access": {
+    "shared_by_A_to_E": "static topology and edge delta/base resistance, local actions, and own observed outcomes",
+    "hidden_from_A_to_E": [
+      "outcome probabilities",
+      "future keyed outcomes",
+      "nonstationary switch",
+      "oracle cost",
+      "other methods' observations"
+    ],
+    "A_HIST_note": "Receives the shared representation but performs no lookahead."
+  },
+  "shared": {
+    "historization": {
+      "rho": 0.9,
+      "lambda_s": 0.15,
+      "lambda_f": 0.2,
+      "delta_max": 3.0
+    },
+    "revisit": {
+      "alpha": 2.0,
+      "recent_k": 3,
+      "reset": "episode_boundary"
+    },
+    "path_horizon": 3,
+    "path_geometry": "simple",
+    "max_paths_per_decision": 100000,
+    "min_confidence": 0.85,
+    "max_imbalance": 3.0,
+    "candidate_order": "lexicographic",
+    "tie_breaker": "lexicographically smallest action",
+    "field_mapping": {
+      "weight": "delta",
+      "cost": "delta * (base_resistance + clipped_historization_correction)"
+    },
+    "override_rule": "Override historized/revisit greedy only on disagreement, confidence >= 0.85, path-count imbalance <= 3.0, and no path-cap hit.",
+    "path_cap_rule": "Stop the episode decision, mark path_cap_hit, and assign primary score 0.0.",
+    "failure_rule": "FAILURE consumes one interaction, leaves position at source, and is inscribed in historization."
+  },
+  "methods": {
+    "A_HIST": {
+      "lookahead": false,
+      "aggregation": "none",
+      "phase": "none",
+      "implementation": "Historized effective-tension greedy with multiplicative recent-state penalty."
+    },
+    "B_INCOHERENT": {
+      "lookahead": true,
+      "aggregation": "sum(exp(-2*S(path)))",
+      "phase": "none",
+      "implementation": "Non-coherent sum of per-path intensities over the common bounded path family."
+    },
+    "C_THETA_ZERO": {
+      "lookahead": true,
+      "aggregation": "abs(sum(exp(-S(path))))**2",
+      "phase": "theta_forced_zero",
+      "implementation": "Coherent positive-real path mass over the common bounded path family."
+    },
+    "D_U1_PHASE": {
+      "lookahead": true,
+      "aggregation": "abs(sum(exp(-S(path) + i*theta(path))))**2",
+      "phase": "U1",
+      "implementation": "Manual U(1) superposition using structural_geometry.theta over the common bounded path family."
+    },
+    "E_FULL_GEOMETRY": {
+      "lookahead": true,
+      "aggregation": "structural_geometry.influence_map",
+      "phase": "full_structural_geometry",
+      "implementation": "Direct lean.structural_geometry.influence_map call; returned paths are checked against the B-D family."
+    }
+  },
+  "primary_control_selection": {
+    "candidates": [
+      "A_HIST",
+      "B_INCOHERENT",
+      "C_THETA_ZERO"
+    ],
+    "selected": null,
+    "status": "pending WP-2.4 development raw-data execution and preregistered selection rule; must be frozen before holdout"
+  }
+}
