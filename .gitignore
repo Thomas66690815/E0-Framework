@@ -37,6 +37,9 @@ experiments/results/
 # External datasets (large, downloaded)
 data/
 
+# Resumable G1 worker shards (large, regenerable)
+artifacts/g1/**/shards/
+
 # Secrets
 .env
 
