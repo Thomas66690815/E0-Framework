@@ -12,7 +12,6 @@ from __future__ import annotations
 import math
 
 import pytest
-
 from structural_geometry import (
     NavField,
     circulation_ratio,
@@ -20,10 +19,10 @@ from structural_geometry import (
     divergence,
     edge_curvature,
     enumerate_continuations,
+    helmholtz,
     holonomy,
     influence_map,
     interference_analysis,
-    intensity,
     omega,
     orthogonality_residual,
     path_intensity,
@@ -33,8 +32,7 @@ from structural_geometry import (
     v_grad,
     v_rot,
 )
-from structural_geometry import helmholtz
-
+from structural_geometry.linalg import solve_cg
 
 # ── fixtures ────────────────────────────────────────────────────────
 
@@ -386,11 +384,40 @@ def test_G8_cg_matches_cholesky(monkeypatch):
     dense = potential_map(f)
 
     monkeypatch.setattr(helmholtz, "DENSE_THRESHOLD", 0)
+    monkeypatch.setattr(helmholtz, "factorized", None)
     g = grid_field(5)
     sparse = potential_map(g)
 
     for node in dense:
         assert sparse[node] == pytest.approx(dense[node], abs=1e-6)
+
+
+def test_G8b_sparse_direct_matches_cholesky(monkeypatch):
+    """The cached SciPy factorization solves the same reduced Laplacian."""
+    if helmholtz.factorized is None:
+        pytest.skip("SciPy is not installed")
+    dense = potential_map(grid_field(5))
+
+    monkeypatch.setattr(helmholtz, "DENSE_THRESHOLD", 0)
+    direct = potential_map(grid_field(5))
+
+    for node in dense:
+        assert direct[node] == pytest.approx(dense[node], abs=1e-10)
+
+
+def test_G8c_cg_warm_start_matches_cold_solution():
+    """A previous solution changes convergence work, not the solved system."""
+
+    def matvec(values):
+        return [
+            4.0 * values[0] - values[1],
+            -values[0] + 3.0 * values[1],
+        ]
+
+    rhs = [1.0, 2.0]
+    cold = solve_cg(matvec, rhs)
+    warm = solve_cg(matvec, rhs, x0=[cold[0] + 0.1, cold[1] - 0.1])
+    assert warm == pytest.approx(cold, abs=1e-12)
 
 
 # ── G9: determinism and persistence ─────────────────────────────────
@@ -423,6 +450,18 @@ def test_G9c_cost_update_invalidates_cache():
     i_after = next(a.intensity for a in after.actions if a.action == "B")
     assert i_after < i_before / 10.0
     assert after.best == "C"
+
+
+def test_G9d_cost_update_preserves_topology_revision():
+    """Cost changes retain reusable topology data; edge changes do not."""
+    f = loop_trap_field()
+    topology_token = f.topology_token
+
+    f.set_cost("A", "B", 0.6)
+    assert f.topology_token == topology_token
+
+    f.add_edge("GOAL", "A", cost=0.5)
+    assert f.topology_token > topology_token
 
 
 # ── G10: input validation ───────────────────────────────────────────

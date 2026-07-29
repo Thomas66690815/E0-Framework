@@ -20,15 +20,16 @@ import math
 import time
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Set, Tuple
 
 from lean.structural_geometry import (
     NavField,
     enumerate_continuations,
     influence_map,
     phase_regime,
-    theta,
+    sum_paths,
 )
+from lean.structural_geometry.connection import _omega_table
 
 from .g1_baselines import (
     ActionView,
@@ -389,6 +390,7 @@ def _manual_scores(
     family: PathFamily,
 ) -> Dict[str, float]:
     scores: Dict[str, float] = {}
+    connection_table = _omega_table(field) if method_id == "D_U1_PHASE" else None
     for action in family.candidates:
         paths = family.paths_by_action[action]
         if method_id == "B_INCOHERENT":
@@ -397,13 +399,10 @@ def _manual_scores(
             mass = sum(math.exp(-field.path_cost(path)) for path in paths)
             scores[action] = mass * mass
         elif method_id == "D_U1_PHASE":
-            amplitude = sum(
-                (
-                    math.exp(-field.path_cost(path))
-                    * complex(math.cos(theta(field, path)), math.sin(theta(field, path)))
-                    for path in paths
-                ),
-                start=0j,
+            amplitude = sum_paths(
+                field,
+                paths,
+                _connection_table=connection_table,
             )
             scores[action] = abs(amplitude) ** 2
         else:
@@ -430,6 +429,8 @@ class E0AblationAdapter(BaselineAdapter):
         self.document = dict(config_document)
         self.shared = dict(config_document["shared"])
         self.landscape = _clone_landscape(domain, config_document)
+        self._field = _nav_field(self.landscape) if self.contract.lookahead else None
+        self._observed_edges: Set[Edge] = set()
         self.recent: List[str] = []
         self.decision_records: List[DecisionRecord] = []
         self._episode_records: List[DecisionRecord] = []
@@ -461,7 +462,9 @@ class E0AblationAdapter(BaselineAdapter):
         greedy: ActionView,
     ) -> DecisionRecord:
         candidates = tuple(sorted(action.target for action in actions))
-        field = _nav_field(self.landscape)
+        if self._field is None:
+            raise RuntimeError("lookahead method has no navigation field")
+        field = self._field
         family = _path_family(field, state, candidates, self.shared)
         if self.method_id == "E_FULL_GEOMETRY":
             report = influence_map(
@@ -581,6 +584,17 @@ class E0AblationAdapter(BaselineAdapter):
             r_before,
             self.landscape.effective_resistance(edge.source, edge.target),
         )
+        if self._field is not None:
+            self._observed_edges.add(edge)
+            self._field.update_costs(
+                {
+                    (observed.source, observed.target): self.landscape.effective_tension(
+                        observed.source,
+                        observed.target,
+                    )
+                    for observed in self._observed_edges
+                }
+            )
         if self._last_override and transition.outcome == Outcome.SUCCESS:
             self._override_success_count += 1
         self.recent.append(transition.state)

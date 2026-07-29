@@ -41,11 +41,12 @@ Summation geometries
 
 from __future__ import annotations
 
-import math
-from dataclasses import dataclass, field as _dc_field
+from dataclasses import dataclass
+from dataclasses import field as _dc_field
 from typing import Callable, Dict, Iterable, List, Optional, Sequence, Set
 
-from .amplitude import psi, sum_paths
+from .amplitude import sum_paths
+from .connection import _omega_table
 from .field import NavField
 
 __all__ = [
@@ -273,6 +274,7 @@ def influence_map(
 
     supports: List[ActionSupport] = []
     total = 0.0
+    connection_table = _omega_table(field)
     for m in moves:
         paths = by_first[m]
         # The direct one-hop path always belongs to the family, unless
@@ -282,7 +284,11 @@ def influence_map(
             if geometry != "goal_reaching" or m in goal_set:
                 paths = [direct] + paths
 
-        total_psi = sum_paths(field, paths)
+        total_psi = sum_paths(
+            field,
+            paths,
+            _connection_table=connection_table,
+        )
         i = abs(total_psi) ** 2
         supports.append(
             ActionSupport(

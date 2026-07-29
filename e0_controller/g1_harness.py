@@ -97,6 +97,7 @@ def environment_record() -> Dict[str, Any]:
         "packages": {
             "numpy": _package_version("numpy"),
             "pytest": _package_version("pytest"),
+            "scipy": _package_version("scipy"),
         },
     }
 

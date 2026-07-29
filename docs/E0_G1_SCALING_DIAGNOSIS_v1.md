@@ -10,6 +10,8 @@
 
 **Source run:** GitHub Actions `30438690300`, commit `af2ae45`
 
+**Remediation:** `E0_G1_SCALING_REMEDIATION_v1.md`
+
 ## Finding
 
 The WP-2.4 timeout pattern has a specific implementation cause. The phase-aware

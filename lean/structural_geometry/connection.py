@@ -37,10 +37,10 @@ curled → toward 0.
 from __future__ import annotations
 
 import math
-from typing import Dict, Iterable, List, Sequence
+from typing import Dict, Sequence, Tuple
 
 from .field import Edge, NavField
-from .helmholtz import v_grad
+from .helmholtz import _solve_potential, v_grad
 
 __all__ = [
     "omega",
@@ -56,6 +56,8 @@ __all__ = [
 ]
 
 _CACHE_KEY = "connection.omega"
+_CONNECTION_TOPOLOGY_KEY = "connection.edge_pairs"
+_TRIANGLE_CACHE_KEY = "connection.triangles"
 
 
 def _raw_v_rot(field: NavField, u: str, v: str) -> float:
@@ -73,14 +75,99 @@ def _omega_table(field: NavField) -> Dict[Edge, float]:
         if token == field.token:
             return value  # type: ignore[return-value]
 
-    table: Dict[Edge, float] = {}
-    for e in field.edges:
-        table[e] = 0.5 * (
-            _raw_v_rot(field, e.source, e.target)
-            - _raw_v_rot(field, e.target, e.source)
+    phi = _solve_potential(field)
+    topology = field.topology_cache_get(_CONNECTION_TOPOLOGY_KEY)
+    if topology is None:
+        edges = tuple(field.edges)
+        edge_set = set(edges)
+        topology = tuple(
+            (
+                edge,
+                Edge(edge.target, edge.source)
+                if Edge(edge.target, edge.source) in edge_set
+                else None,
+            )
+            for edge in edges
         )
+        field.topology_cache_put(_CONNECTION_TOPOLOGY_KEY, topology)
+
+    table: Dict[Edge, float] = {}
+    for edge, reverse_edge in topology:  # type: ignore[union-attr]
+        gradient = phi.get(edge.source, 0.0) - phi.get(edge.target, 0.0)
+        forward = field._weight[edge] * math.exp(-field._cost[edge]) - gradient
+        # Preserve _raw_v_rot's explicit missing-edge convention.
+        reverse = 0.0
+        if reverse_edge is not None:
+            reverse_gradient = phi.get(edge.target, 0.0) - phi.get(edge.source, 0.0)
+            reverse = (
+                field._weight[reverse_edge] * math.exp(-field._cost[reverse_edge])
+                - reverse_gradient
+            )
+        table[edge] = 0.5 * (forward - reverse)
     field.cache_put(_CACHE_KEY, (field.token, table))
     return table
+
+
+def _triangle_table(field: NavField) -> Dict[Edge, Tuple[str, ...]]:
+    """Directed triangles per edge, cached across cost-only updates."""
+    cached = field.topology_cache_get(_TRIANGLE_CACHE_KEY)
+    if cached is not None:
+        token, value = cached  # type: ignore[misc]
+        if token == field.topology_token:
+            return value  # type: ignore[return-value]
+
+    table = {
+        edge: tuple(
+            sorted(
+                (set(field.neighbors(edge.target)) & set(field.predecessors(edge.source)))
+                - {edge.source, edge.target}
+            )
+        )
+        for edge in field.edges
+    }
+    field.topology_cache_put(
+        _TRIANGLE_CACHE_KEY,
+        (field.topology_token, table),
+    )
+    return table
+
+
+def _oriented_omega(table: Dict[Edge, float], source: str, target: str) -> float:
+    edge = Edge(source, target)
+    if edge in table:
+        return table[edge]
+    reverse = Edge(target, source)
+    if reverse in table:
+        return -table[reverse]
+    return 0.0
+
+
+def _theta_from_table(table: Dict[Edge, float], path: Sequence[str]) -> float:
+    """Accumulate path phase from one already-computed connection table."""
+    nodes = list(path)
+    return sum(
+        _oriented_omega(table, nodes[index], nodes[index + 1])
+        for index in range(len(nodes) - 1)
+    )
+
+
+def _edge_curvature_from_tables(
+    table: Dict[Edge, float],
+    triangles: Dict[Edge, Tuple[str, ...]],
+    edge: Edge,
+) -> float:
+    closing_nodes = triangles.get(edge, ())
+    if not closing_nodes:
+        return 0.0
+    holonomies = [
+        abs(
+            _oriented_omega(table, edge.source, edge.target)
+            + _oriented_omega(table, edge.target, node)
+            + _oriented_omega(table, node, edge.source)
+        )
+        for node in closing_nodes
+    ]
+    return sum(holonomies) / len(holonomies)
 
 
 def omega(field: NavField, source: str, target: str) -> float:
@@ -112,10 +199,7 @@ def theta(field: NavField, path: Sequence[str]) -> float:
 
     A path of fewer than two nodes has ``Θ = 0``.
     """
-    nodes = list(path)
-    if len(nodes) < 2:
-        return 0.0
-    return sum(omega(field, nodes[i], nodes[i + 1]) for i in range(len(nodes) - 1))
+    return _theta_from_table(_omega_table(field), path)
 
 
 def is_closed(path: Sequence[str]) -> bool:
@@ -150,17 +234,12 @@ def edge_curvature(field: NavField, source: str, target: str) -> float:
     ``κ = 0``.  Curvature is unsigned: it measures how much the field curls
     nearby, not which way.
     """
-    v_targets = set(field.neighbors(target))
-    z_closing = set(field.predecessors(source))
-    triangles = (v_targets & z_closing) - {source, target}
-    if not triangles:
-        return 0.0
-    w_uv = omega(field, source, target)
-    hols = [
-        abs(w_uv + omega(field, target, z) + omega(field, z, source))
-        for z in sorted(triangles)
-    ]
-    return sum(hols) / len(hols)
+    edge = Edge(source, target)
+    return _edge_curvature_from_tables(
+        _omega_table(field),
+        _triangle_table(field),
+        edge,
+    )
 
 
 def curvature_map(field: NavField) -> Dict[str, float]:
@@ -226,8 +305,9 @@ def phase_regime(field: NavField, *, horizon: int = 3) -> Dict[str, object]:
     mags = [abs(w) for w in table.values()]
     mean_abs = sum(mags) / len(mags)
 
+    triangles = _triangle_table(field)
     curvatures = [
-        edge_curvature(field, e.source, e.target) for e in field.edges
+        _edge_curvature_from_tables(table, triangles, edge) for edge in field.edges
     ]
     curved = [k for k in curvatures if k > 0.0]
     if curved:

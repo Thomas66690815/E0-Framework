@@ -61,10 +61,10 @@ from __future__ import annotations
 
 import cmath
 import math
-from typing import Dict, List, Sequence
+from typing import Dict, Sequence
 
-from .connection import theta
-from .field import NavField
+from .connection import _omega_table, _theta_from_table, theta
+from .field import Edge, NavField
 
 __all__ = [
     "psi",
@@ -97,16 +97,25 @@ def path_intensity(field: NavField, path: Sequence[str]) -> float:
     return abs(psi(field, path)) ** 2
 
 
-def sum_paths(field: NavField, paths: Sequence[Sequence[str]]) -> complex:
+def sum_paths(
+    field: NavField,
+    paths: Sequence[Sequence[str]],
+    *,
+    _connection_table: Dict[Edge, float] | None = None,
+) -> complex:
     """``Ψ(z) = Σ Ψ(p)`` — superposition. This is where interference happens.
 
     Paths are supplied explicitly; nothing is enumerated for you.  Use
     ``overlay.enumerate_continuations`` when you want the bounded family
     of forward paths from a node.
     """
+    table = _connection_table if _connection_table is not None else _omega_table(field)
     total = 0j
     for p in paths:
-        total += psi(field, p)
+        cost = field.path_cost(p)
+        if math.isinf(cost):
+            continue
+        total += cmath.exp(complex(-cost, _theta_from_table(table, p)))
     return total
 
 

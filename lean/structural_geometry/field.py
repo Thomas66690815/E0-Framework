@@ -59,7 +59,17 @@ class NavField:
     ['B']
     """
 
-    __slots__ = ("_nodes", "_weight", "_cost", "_out", "_in", "_token", "_cache")
+    __slots__ = (
+        "_nodes",
+        "_weight",
+        "_cost",
+        "_out",
+        "_in",
+        "_token",
+        "_cache",
+        "_topology_token",
+        "_topology_cache",
+    )
 
     def __init__(self) -> None:
         self._nodes: Set[str] = set()
@@ -69,6 +79,8 @@ class NavField:
         self._in: Dict[str, List[str]] = {}
         self._token: int = 0
         self._cache: Dict[str, object] = {}
+        self._topology_token: int = 0
+        self._topology_cache: Dict[str, object] = {}
 
     # ── construction ────────────────────────────────────────────────
 
@@ -78,7 +90,7 @@ class NavField:
             self._nodes.add(name)
             self._out.setdefault(name, [])
             self._in.setdefault(name, [])
-            self._invalidate()
+            self._invalidate(topology=True)
 
     def add_edge(
         self,
@@ -100,12 +112,13 @@ class NavField:
         self.add_node(source)
         self.add_node(target)
         e = Edge(source, target)
-        if e not in self._weight:
+        new_edge = e not in self._weight
+        if new_edge:
             self._out[source].append(target)
             self._in[target].append(source)
         self._weight[e] = float(weight)
         self._cost[e] = float(cost)
-        self._invalidate()
+        self._invalidate(topology=new_edge)
 
     def remove_edge(self, source: str, target: str) -> None:
         """Remove a directed edge. Raises ``KeyError`` if absent."""
@@ -116,7 +129,7 @@ class NavField:
         del self._cost[e]
         self._out[source].remove(target)
         self._in[target].remove(source)
-        self._invalidate()
+        self._invalidate(topology=True)
 
     def set_cost(self, source: str, target: str, cost: float) -> None:
         """Update an existing edge's cost. This is the hot path."""
@@ -223,20 +236,36 @@ class NavField:
 
     # ── cache plumbing (used by helmholtz/connection) ───────────────
 
-    def _invalidate(self) -> None:
+    def _invalidate(self, *, topology: bool = False) -> None:
         self._token += 1
         self._cache.clear()
+        if topology:
+            self._topology_token += 1
+            self._topology_cache.clear()
 
     @property
     def token(self) -> int:
-        """Monotonic revision counter — bumps on every structural change."""
+        """Monotonic revision counter for every topology or value change."""
         return self._token
+
+    @property
+    def topology_token(self) -> int:
+        """Revision counter that changes only when nodes or edges change."""
+        return self._topology_token
 
     def cache_get(self, key: str) -> Optional[object]:
         return self._cache.get(key)
 
     def cache_put(self, key: str, value: object) -> None:
         self._cache[key] = value
+
+    def topology_cache_get(self, key: str) -> Optional[object]:
+        """Return topology-dependent data that survives cost-only updates."""
+        return self._topology_cache.get(key)
+
+    def topology_cache_put(self, key: str, value: object) -> None:
+        """Cache topology-dependent data until a node or edge changes."""
+        self._topology_cache[key] = value
 
     # ── serialization ───────────────────────────────────────────────
 

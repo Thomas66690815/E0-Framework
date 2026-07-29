@@ -247,6 +247,7 @@ class TestWorkerRecords(unittest.TestCase):
         self.assertIn("logical_cpu_count", environment)
         self.assertIn("total_physical_memory_bytes", environment)
         self.assertIn("resolution_seconds", environment["timer"])
+        self.assertIn("scipy", environment["packages"])
 
 
 class TestControlSelectionAndStatistics(unittest.TestCase):

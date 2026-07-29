@@ -25,7 +25,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install project
-        run: python -m pip install -e .
+        run: python -m pip install -e ".[science]"
 
       - name: Emit 240 balanced batches
         id: matrix
@@ -52,7 +52,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install project
-        run: python -m pip install -e .
+        run: python -m pip install -e ".[science]"
 
       - name: Execute bounded batch
         run: |
@@ -86,7 +86,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install project
-        run: python -m pip install -e .
+        run: python -m pip install -e ".[science]"
 
       - name: Download and merge shard artifacts
         uses: actions/download-artifact@v4

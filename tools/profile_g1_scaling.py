@@ -18,6 +18,7 @@ from e0_controller.g1_ablations import (
     _nav_field,
     _path_family,
     build_ablation_adapter,
+    run_ablation_replicate,
 )
 from e0_controller.g1_baselines import _local_actions
 from e0_controller.g1_domains import build_domain, validate_development_seed
@@ -107,6 +108,42 @@ def profile_decision(family: str, scale: int, seed: int, method: str) -> Dict[st
     }
 
 
+def profile_episode(
+    family: str,
+    scale: int,
+    seed: int,
+    method: str,
+    interaction_budget: int,
+) -> Dict[str, Any]:
+    """Time one bounded development episode through the real adapter path."""
+    validate_development_seed(seed)
+    domain = build_domain(family, scale, seed)
+    started = time.perf_counter()
+    result = run_ablation_replicate(
+        domain,
+        method,
+        episode_count=1,
+        interaction_budget=interaction_budget,
+    )
+    elapsed_ms = (time.perf_counter() - started) * 1000.0
+    episode = result.episodes[0]
+    return {
+        "family": family,
+        "scale": scale,
+        "actual_nodes": domain.actual_node_count,
+        "edges": domain.landscape.edge_count(),
+        "seed": seed,
+        "method": method,
+        "interaction_budget": interaction_budget,
+        "elapsed_ms": elapsed_ms,
+        "decision_count": episode.decision_count,
+        "paths_expanded": episode.paths_expanded,
+        "path_cap_hits": episode.path_cap_hits,
+        "status": episode.status,
+        "terminal_reason": episode.summary.terminal_reason,
+    }
+
+
 def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -122,12 +159,26 @@ def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--scale", type=int, choices=(100, 500, 1000), default=100)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--method", choices=LOOKAHEAD_METHODS, default="D_U1_PHASE")
+    parser.add_argument(
+        "--episode-budget",
+        type=int,
+        help="Profile one real episode with this bounded interaction budget.",
+    )
     return parser.parse_args(argv)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parse_args(argv)
-    result = profile_decision(args.family, args.scale, args.seed, args.method)
+    if args.episode_budget is None:
+        result = profile_decision(args.family, args.scale, args.seed, args.method)
+    else:
+        result = profile_episode(
+            args.family,
+            args.scale,
+            args.seed,
+            args.method,
+            args.episode_budget,
+        )
     print(json.dumps(result, indent=2, sort_keys=True))
     return 0
 

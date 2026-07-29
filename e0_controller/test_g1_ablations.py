@@ -8,8 +8,9 @@ import math
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
-from lean.structural_geometry import theta
+from lean.structural_geometry import helmholtz, influence_map, theta
 
 from .g1_ablation_harness import run_ablation_compatibility
 from .g1_ablations import (
@@ -224,6 +225,62 @@ class TestCausalAggregations(unittest.TestCase):
         self.assertEqual(self.family.signature, second.signature)
         self.assertEqual(self.family.paths_by_action, second.paths_by_action)
 
+    def test_persistent_field_matches_cold_reference_after_learning(self):
+        for method in LOOKAHEAD_METHODS:
+            with self.subTest(method=method):
+                domain = _small_domain(failing_first_edge=True)
+                adapter = build_ablation_adapter(method, domain)
+                run_ablation_episode(
+                    domain,
+                    adapter,
+                    0,
+                    interaction_budget=1,
+                )
+
+                actions = _local_actions(domain, "S")
+                adapter.select_action(1, "S", actions)
+                record = adapter.decision_records[-1]
+                cold_field = _nav_field(adapter.landscape)
+                self.assertIsNotNone(adapter._field)
+                for edge in adapter.landscape.edges:
+                    self.assertAlmostEqual(
+                        cold_field.cost(edge.source, edge.target),
+                        adapter._field.cost(edge.source, edge.target),
+                        places=15,
+                    )
+
+                candidates = tuple(sorted(action.target for action in actions))
+                family = _path_family(
+                    cold_field,
+                    "S",
+                    candidates,
+                    adapter.shared,
+                )
+                if method == "E_FULL_GEOMETRY":
+                    report = influence_map(
+                        cold_field,
+                        "S",
+                        horizon=int(adapter.shared["path_horizon"]),
+                        geometry=str(adapter.shared["path_geometry"]),
+                        candidates=candidates,
+                        max_paths=int(adapter.shared["max_paths_per_decision"]),
+                        keep_paths=True,
+                    )
+                    expected_scores = {
+                        item.action: item.intensity for item in report.actions
+                    }
+                else:
+                    expected_scores = _manual_scores(method, cold_field, family)
+
+                self.assertEqual(family.signature, record.path_family_signature)
+                self.assertEqual(expected_scores.keys(), record.scores.keys())
+                for action, expected in expected_scores.items():
+                    self.assertAlmostEqual(
+                        expected,
+                        record.scores[action],
+                        places=10,
+                    )
+
     def test_cap_hit_stops_decision_and_scores_zero(self):
         config = copy.deepcopy(self.config)
         config["shared"]["max_paths_per_decision"] = 1
@@ -241,6 +298,29 @@ class TestCausalAggregations(unittest.TestCase):
 
 
 class TestLearningAndFairness(unittest.TestCase):
+    def test_sparse_direct_and_cg_choose_same_development_action(self):
+        domain = build_domain("wall_grid", 500, 0)
+        actions = _local_actions(domain, domain.start)
+
+        direct_adapter = build_ablation_adapter("D_U1_PHASE", domain)
+        direct_action = direct_adapter.select_action(0, domain.start, actions)
+        direct_record = direct_adapter.decision_records[-1]
+
+        with patch.object(helmholtz, "factorized", None):
+            cg_adapter = build_ablation_adapter("D_U1_PHASE", domain)
+            cg_action = cg_adapter.select_action(0, domain.start, actions)
+            cg_record = cg_adapter.decision_records[-1]
+
+        self.assertEqual(direct_action, cg_action)
+        self.assertEqual(direct_record.selected_action, cg_record.selected_action)
+        self.assertEqual(direct_record.phase_regime, cg_record.phase_regime)
+        for action, expected in cg_record.scores.items():
+            self.assertAlmostEqual(
+                expected,
+                direct_record.scores[action],
+                places=9,
+            )
+
     def test_domain_landscape_is_not_mutated(self):
         domain = _small_domain(failing_first_edge=True)
         before = domain.topology_sha256()

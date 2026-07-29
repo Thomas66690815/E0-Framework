@@ -40,20 +40,30 @@ symmetric positive definite, so the solve is exact — no least-squares
 pseudo-inverse needed, and disconnected graphs are handled correctly rather
 than incidentally.
 
-Small components use dense Cholesky; large ones use sparse conjugate
-gradients, which never materialises the matrix.  Results are cached on the
-field and invalidated automatically whenever a cost or edge changes.
+Small components use dense Cholesky. Large ones reuse a sparse factorization
+when SciPy is available and fall back to warm-started sparse conjugate
+gradients otherwise. Topology-dependent solve data survives cost changes;
+cost-dependent results are invalidated whenever a field value changes.
 
 # e0-structural-geometry-twehner
 """
 
 from __future__ import annotations
 
-import math
-from typing import Dict, List, Optional, Sequence
+from dataclasses import dataclass
+from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
-from .field import Edge, NavField
+from .field import NavField
 from .linalg import CholeskyError, solve_cg, solve_spd_dense
+
+try:
+    import numpy as np
+    from scipy.sparse import coo_matrix
+    from scipy.sparse.linalg import factorized
+except ImportError:  # pragma: no cover - exercised in minimal installations
+    np = None  # type: ignore[assignment]
+    coo_matrix = None  # type: ignore[assignment]
+    factorized = None  # type: ignore[assignment]
 
 __all__ = [
     "divergence",
@@ -74,6 +84,19 @@ __all__ = [
 DENSE_THRESHOLD = 256
 
 _CACHE_KEY = "helmholtz.phi"
+_TOPOLOGY_CACHE_KEY = "helmholtz.component_plans"
+
+
+@dataclass
+class _ComponentPlan:
+    """Topology-only solve data plus the last cost-dependent solution."""
+
+    nodes: Tuple[str, ...]
+    pinned: int
+    local_edges: Tuple[Tuple[int, int], ...]
+    matvec: Callable[[Sequence[float]], List[float]]
+    direct_solver: Optional[Callable[[Sequence[float]], List[float]]] = None
+    warm_solution: Optional[List[float]] = None
 
 
 # ── divergence ──────────────────────────────────────────────────────
@@ -92,64 +115,160 @@ def divergence(field: NavField, node: str) -> float:
 
 def divergence_map(field: NavField) -> Dict[str, float]:
     """``div(flow)`` for every node."""
-    return {n: divergence(field, n) for n in sorted(field.nodes)}
+    outgoing = {node: 0.0 for node in field.nodes}
+    incoming = {node: 0.0 for node in field.nodes}
+    for edge in field.edges:
+        flow = field.flow(edge.source, edge.target)
+        outgoing[edge.source] += flow
+        incoming[edge.target] += flow
+    return {
+        node: outgoing[node] - incoming[node]
+        for node in sorted(field.nodes)
+    }
 
 
 # ── potential ───────────────────────────────────────────────────────
 
 def _component_laplacian_matvec(
-    field: NavField, index: Dict[str, int], pinned: int
+    size: int,
+    local_edges: Sequence[Tuple[int, int]],
+    pinned: int,
 ):
     """Return a matvec for the component Laplacian with row/col ``pinned`` removed.
 
     The reduced vector omits the pinned node; it is re-inserted as 0.0
     before applying the operator and dropped again afterwards.
     """
-    nodes = [None] * len(index)  # type: List[Optional[str]]
-    for name, i in index.items():
-        nodes[i] = name
-    local_edges = [
-        (index[e.source], index[e.target])
-        for e in field.edges
-        if e.source in index and e.target in index
-    ]
-    n = len(index)
-
     def matvec(reduced: Sequence[float]) -> List[float]:
-        full = [0.0] * n
+        full = [0.0] * size
         k = 0
-        for i in range(n):
+        for i in range(size):
             if i == pinned:
                 continue
             full[i] = reduced[k]
             k += 1
-        out = [0.0] * n
+        out = [0.0] * size
         for i, j in local_edges:
             d = full[i] - full[j]
             out[i] += d
             out[j] -= d
-        return [out[i] for i in range(n) if i != pinned]
+        return [out[i] for i in range(size) if i != pinned]
 
     return matvec
 
 
 def _component_laplacian_dense(
-    field: NavField, index: Dict[str, int], pinned: int
+    size: int,
+    local_edges: Sequence[Tuple[int, int]],
+    pinned: int,
 ) -> List[List[float]]:
     """Dense reduced Laplacian for one component (pinned row/col removed)."""
-    n = len(index)
-    lap = [[0.0] * n for _ in range(n)]
-    for e in field.edges:
-        if e.source not in index or e.target not in index:
-            continue
-        i = index[e.source]
-        j = index[e.target]
+    lap = [[0.0] * size for _ in range(size)]
+    for i, j in local_edges:
         lap[i][j] -= 1.0
         lap[j][i] -= 1.0
         lap[i][i] += 1.0
         lap[j][j] += 1.0
-    keep = [i for i in range(n) if i != pinned]
+    keep = [i for i in range(size) if i != pinned]
     return [[lap[i][j] for j in keep] for i in keep]
+
+
+def _component_sparse_direct_solver(
+    size: int,
+    local_edges: Sequence[Tuple[int, int]],
+    pinned: int,
+) -> Optional[Callable[[Sequence[float]], List[float]]]:
+    """Factor the fixed reduced Laplacian once when SciPy is available."""
+    if coo_matrix is None or factorized is None or np is None or size <= 1:
+        return None
+
+    reduced = {}
+    cursor = 0
+    for index in range(size):
+        if index == pinned:
+            continue
+        reduced[index] = cursor
+        cursor += 1
+
+    rows: List[int] = []
+    columns: List[int] = []
+    values: List[float] = []
+    for source, target in local_edges:
+        if source != pinned:
+            i = reduced[source]
+            rows.append(i)
+            columns.append(i)
+            values.append(1.0)
+        if target != pinned:
+            j = reduced[target]
+            rows.append(j)
+            columns.append(j)
+            values.append(1.0)
+        if source != pinned and target != pinned:
+            i = reduced[source]
+            j = reduced[target]
+            rows.extend((i, j))
+            columns.extend((j, i))
+            values.extend((-1.0, -1.0))
+
+    matrix = coo_matrix(
+        (values, (rows, columns)),
+        shape=(size - 1, size - 1),
+        dtype=float,
+    ).tocsc()
+    solve = factorized(matrix)
+
+    def direct(rhs: Sequence[float]) -> List[float]:
+        return list(solve(np.asarray(rhs, dtype=float)))
+
+    return direct
+
+
+def _component_plans(field: NavField) -> List[_ComponentPlan]:
+    """Return solve structures that remain valid across cost-only updates."""
+    cached = field.topology_cache_get(_TOPOLOGY_CACHE_KEY)
+    if cached is not None:
+        token, plans = cached  # type: ignore[misc]
+        if token == field.topology_token:
+            return plans  # type: ignore[return-value]
+
+    plans: List[_ComponentPlan] = []
+    edges = field.edges
+    for component in field.components():
+        nodes = tuple(component)
+        index = {name: i for i, name in enumerate(nodes)}
+        local_edges = tuple(
+            (index[edge.source], index[edge.target])
+            for edge in edges
+            if edge.source in index and edge.target in index
+        )
+        pinned = 0
+        plans.append(
+            _ComponentPlan(
+                nodes=nodes,
+                pinned=pinned,
+                local_edges=local_edges,
+                matvec=_component_laplacian_matvec(
+                    len(nodes),
+                    local_edges,
+                    pinned,
+                ),
+                direct_solver=(
+                    _component_sparse_direct_solver(
+                        len(nodes),
+                        local_edges,
+                        pinned,
+                    )
+                    if len(nodes) > DENSE_THRESHOLD
+                    else None
+                ),
+            )
+        )
+    field.topology_cache_put(
+        _TOPOLOGY_CACHE_KEY,
+        (field.topology_token, plans),
+    )
+    return plans
 
 
 def _solve_potential(field: NavField) -> Dict[str, float]:
@@ -162,35 +281,45 @@ def _solve_potential(field: NavField) -> Dict[str, float]:
 
     phi: Dict[str, float] = {}
 
-    for comp in field.components():
+    divergences = divergence_map(field)
+    for plan in _component_plans(field):
+        comp = plan.nodes
         n = len(comp)
         if n <= 1:
             for name in comp:
                 phi[name] = 0.0
             continue
 
-        index = {name: i for i, name in enumerate(comp)}
-        pinned = 0  # comp is sorted → deterministic pin
-        div_full = [divergence(field, name) for name in comp]
-        b = [div_full[i] for i in range(n) if i != pinned]
+        div_full = [divergences[name] for name in comp]
+        b = [div_full[i] for i in range(n) if i != plan.pinned]
 
         solved: Optional[List[float]] = None
-        if n <= DENSE_THRESHOLD:
+        if plan.direct_solver is not None:
+            solved = plan.direct_solver(b)
+        elif n <= DENSE_THRESHOLD:
             try:
                 solved = solve_spd_dense(
-                    _component_laplacian_dense(field, index, pinned), b
+                    _component_laplacian_dense(
+                        n,
+                        plan.local_edges,
+                        plan.pinned,
+                    ),
+                    b,
                 )
             except CholeskyError:
                 solved = None
         if solved is None:
             solved = solve_cg(
-                _component_laplacian_matvec(field, index, pinned), b
+                plan.matvec,
+                b,
+                x0=plan.warm_solution,
             )
+        plan.warm_solution = list(solved)
 
-        phi[comp[pinned]] = 0.0
+        phi[comp[plan.pinned]] = 0.0
         k = 0
         for i, name in enumerate(comp):
-            if i == pinned:
+            if i == plan.pinned:
                 continue
             phi[name] = solved[k]
             k += 1

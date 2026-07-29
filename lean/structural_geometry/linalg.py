@@ -91,6 +91,7 @@ def solve_cg(
     *,
     tol: float = 1e-10,
     max_iter: int | None = None,
+    x0: Sequence[float] | None = None,
 ) -> List[float]:
     """Solve ``A x = b`` by conjugate gradients, given only ``A``'s action.
 
@@ -105,19 +106,28 @@ def solve_cg(
         Relative residual tolerance ``‖r‖ / ‖b‖``.
     max_iter:
         Iteration cap.  Defaults to ``max(2 · len(b), 64)``.
+    x0:
+        Optional initial solution. Reusing the previous solution is effective
+        when the matrix is unchanged and only the right-hand side moved.
     """
     n = len(b)
     if n == 0:
         return []
     if max_iter is None:
         max_iter = max(2 * n, 64)
+    if x0 is not None and len(x0) != n:
+        raise ValueError(f"dimension mismatch: x0 has {len(x0)}, expected {n}")
 
     b_norm = math.sqrt(sum(v * v for v in b))
     if b_norm == 0.0:
         return [0.0] * n
 
-    x = [0.0] * n
-    r = list(b)                      # r = b − A·0
+    x = list(x0) if x0 is not None else [0.0] * n
+    if x0 is None:
+        r = list(b)                  # r = b − A·0
+    else:
+        ax = matvec(x)
+        r = [b[i] - ax[i] for i in range(n)]
     p = list(r)
     rs_old = sum(v * v for v in r)
 
