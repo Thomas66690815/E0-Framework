@@ -1,0 +1,45 @@
+{
+  "protocol_id": "E0-G1-v1",
+  "protocol_sha256": "e1017c197346e2176a6ddefb5e9d6a24cf140b59d80c7b7615265a4d8a1e3bbd",
+  "baseline_config_sha256": "b1d1b81d93841de717fb3ac144390ce84f3f7e128ff4ce15344a1f5ee94c88a8",
+  "ablation_config_sha256": "8741234e7343444e549de35e619712f7b9fb783158f8a006265d37377648303f",
+  "artifact_kind": "aborted_development_engineering_run",
+  "source_commit": "3e753fc7ba79bac56b87b3df4146fa653935f88c",
+  "started_at_local": "2026-07-28T14:45:18+02:00",
+  "stopped_at_local": "2026-07-29T08:45:00+02:00",
+  "status": "aborted_after_timeout_enforcement_defect",
+  "not_g1_result": true,
+  "holdout_accessed": false,
+  "holdout_execution_started": false,
+  "counts": {
+    "planned_replicates": 1560,
+    "completed_shards": 196,
+    "algorithm_timeout_shards": 10,
+    "infrastructure_failures": 0,
+    "in_flight_discarded_at_stop": 4,
+    "shard_bytes": 48098256
+  },
+  "coverage": {
+    "wall_grid_N100": "130/130",
+    "wall_grid_N500": "66/130",
+    "all_other_family_scale_cells": "0/130"
+  },
+  "reason": "C327 evaluated episode and replicate wall-time limits only after an unbounded computation returned. N500 replicates consumed up to multiple hours before being labeled algorithm_timeout, making full execution practically non-terminating.",
+  "disposition": "Retained as engineering and scalability evidence only. Do not merge these shards into the corrected full WP-2.4 evidence bundle.",
+  "files": {
+    "shards": {
+      "path": "shards/",
+      "tracked": false,
+      "retained_locally": true
+    },
+    "runner_stdout.log": {
+      "sha256": "bc80f54c9777af3261bd01fba111dfc02ae7c5644c724360b348d0c9dffac788",
+      "tracked": false
+    },
+    "runner_stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tracked": false,
+      "bytes": 0
+    }
+  }
+}

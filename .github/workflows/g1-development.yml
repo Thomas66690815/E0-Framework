@@ -1,0 +1,118 @@
+name: G1 Development Benchmark
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONUNBUFFERED: "1"
+  G1_OUTPUT: artifacts/g1/E0-G1-v1/development/wp2_4
+  G1_BATCH_COUNT: "240"
+
+jobs:
+  plan:
+    name: Build deterministic task matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install project
+        run: python -m pip install -e .
+
+      - name: Emit 240 balanced batches
+        id: matrix
+        shell: bash
+        run: |
+          matrix="$(python -m e0_controller.g1_development_distributed matrix \
+            --batch-count "$G1_BATCH_COUNT")"
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
+  run:
+    name: Batch ${{ matrix.batch_index }} (${{ matrix.task_count }} replicates)
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install project
+        run: python -m pip install -e .
+
+      - name: Execute bounded batch
+        run: |
+          python -m e0_controller.g1_development_distributed run-batch \
+            --output "$G1_OUTPUT" \
+            --batch-index "${{ matrix.batch_index }}" \
+            --batch-count "$G1_BATCH_COUNT" \
+            --workers 4
+
+      - name: Upload compressed atomic shards
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: g1-shards-${{ matrix.batch_index }}
+          path: ${{ env.G1_OUTPUT }}/shards/*.json
+          if-no-files-found: error
+          compression-level: 9
+          retention-days: 7
+
+  consolidate:
+    name: Validate and consolidate all shards
+    needs: run
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install project
+        run: python -m pip install -e .
+
+      - name: Download and merge shard artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: g1-shards-*
+          path: ${{ env.G1_OUTPUT }}/shards
+          merge-multiple: true
+
+      - name: Validate completeness and build evidence bundle
+        run: |
+          python -m e0_controller.g1_development_distributed consolidate \
+            --output "$G1_OUTPUT" \
+            --report docs/research/E0_DECISION_BENCHMARK_v1.md
+
+      - name: Upload consolidated development evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: g1-development-evidence
+          path: |
+            ${{ env.G1_OUTPUT }}/manifest.json
+            ${{ env.G1_OUTPUT }}/frozen_configs.json
+            ${{ env.G1_OUTPUT }}/raw_runs.jsonl
+            ${{ env.G1_OUTPUT }}/episodes.jsonl.gz
+            ${{ env.G1_OUTPUT }}/summary.json
+            ${{ env.G1_OUTPUT }}/environment.json
+            docs/research/E0_DECISION_BENCHMARK_v1.md
+          if-no-files-found: error
+          compression-level: 9
+          retention-days: 14

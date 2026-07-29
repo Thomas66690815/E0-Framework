@@ -20,6 +20,7 @@ import heapq
 import json
 import math
 import random
+import time
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
@@ -907,6 +908,10 @@ def run_episode(
     )
     if budget <= 0:
         raise ValueError("interaction_budget must be positive")
+    timeout_seconds = float(
+        load_g1_protocol()["interaction_protocol"]["wall_time_timeout_seconds_per_episode"]
+    )
+    deadline = time.perf_counter() + timeout_seconds
 
     executor = domain.executor(episode_index)
     state = domain.start
@@ -920,7 +925,13 @@ def run_episode(
 
     while interactions < budget and state != domain.goal:
         actions = _local_actions(domain, state)
+        if time.perf_counter() >= deadline:
+            terminal_reason = "algorithm_timeout"
+            break
         action = adapter.select_action(episode_index, state, actions)
+        if time.perf_counter() >= deadline:
+            terminal_reason = "algorithm_timeout"
+            break
         if action is None:
             terminal_reason = "no_action"
             break
@@ -953,14 +964,18 @@ def run_episode(
         state = next_state
 
     goal_reached = state == domain.goal
-    if goal_reached:
+    if goal_reached and terminal_reason != "algorithm_timeout":
         terminal_reason = "goal_reached"
     oracle = _oracle_cost(domain, episode_index)
-    score = oracle / max(interactions, oracle) if goal_reached else 0.0
+    score = (
+        oracle / max(interactions, oracle)
+        if goal_reached and terminal_reason != "algorithm_timeout"
+        else 0.0
+    )
     summary = EpisodeSummary(
         episode_index=episode_index,
         phase=_episode_phase(episode_index),
-        goal_reached=goal_reached,
+        goal_reached=goal_reached and terminal_reason != "algorithm_timeout",
         interactions_used=interactions,
         interaction_budget=budget,
         total_cost=round(total_cost, 9),

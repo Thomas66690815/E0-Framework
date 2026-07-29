@@ -254,7 +254,7 @@ def _timed_baseline_episodes(
         summary = run_episode(domain, adapter, index)
         wall_ms = (time.perf_counter() - episode_started) * 1000.0
         status = "completed"
-        if wall_ms > episode_timeout * 1000.0:
+        if summary.terminal_reason == "algorithm_timeout" or wall_ms >= episode_timeout * 1000.0:
             status = "algorithm_timeout"
             summary = replace(
                 summary,
@@ -343,12 +343,7 @@ def _summarize_replicate(
         status = "completed"
     scores = [float(item["success_adjusted_efficiency"]) for item in evaluation]
     if status != "completed":
-        scores = [
-            0.0 if item["status"] != "completed" else float(item["success_adjusted_efficiency"])
-            for item in evaluation
-        ]
-        if wall_time_ms > replicate_timeout_ms or peak_rss_bytes > rss_limit:
-            scores = [0.0 for _ in evaluation]
+        scores = [0.0 for _ in evaluation]
     goal_rate = _mean([1.0 if item["goal_reached"] else 0.0 for item in evaluation])
     mean_steps = _mean([float(item["interactions_used"]) for item in evaluation])
     mean_oracle = _mean([float(item["oracle_cost"]) for item in evaluation])

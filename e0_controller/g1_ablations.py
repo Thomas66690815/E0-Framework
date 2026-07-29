@@ -643,7 +643,7 @@ def run_ablation_episode(
     )
     if diagnostics["path_cap_hits"]:
         status = "path_cap_hit"
-    elif wall_time_ms > timeout_seconds * 1000.0:
+    elif summary.terminal_reason == "algorithm_timeout" or wall_time_ms >= timeout_seconds * 1000.0:
         status = "algorithm_timeout"
     else:
         status = "completed"

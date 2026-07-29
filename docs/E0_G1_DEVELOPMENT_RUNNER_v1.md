@@ -21,28 +21,31 @@ The complete matrix contains:
 
 ## Reproducible execution
 
-From the repository root:
+The authoritative full execution path is the bounded distributed runner:
 
 ```powershell
-py -3 -m e0_controller.g1_development_report --workers 4
+py -3 -m e0_controller.g1_development_distributed matrix --batch-count 240
 ```
 
-The default output directory is:
+`.github/workflows/g1-development.yml` consumes this deterministic matrix,
+executes bounded batches, and consolidates only after all 1,560 shards validate.
+See `E0_G1_DISTRIBUTED_EXECUTION_v1.md` for limits, artifact flow, cost boundary,
+and the archived C327 run.
+
+The default output directory remains:
 
 ```text
 artifacts/g1/E0-G1-v1/development/wp2_4
 ```
 
-The command resumes from valid per-replicate shards. Each pending replicate is
-executed in a fresh worker process so peak-memory measurements and mutable
-controller state do not leak between replicates. The shard directory is
-regenerable and therefore ignored by Git; the six consolidated artifacts are
-the reviewable evidence bundle.
+`e0_controller.g1_development_report` remains the local consolidation and
+small-selection engineering interface. Its `--families`, `--scales`, `--seeds`,
+and `--methods` options are not substitutes for the full WP-2.4 run.
 
-Use `--no-resume` to reject an existing output directory or `--overwrite` to
-replace consolidated artifacts and rerun the selected matrix. Narrow
-`--families`, `--scales`, `--seeds`, and `--methods` selections exist for
-engineering tests only and are not substitutes for the full WP-2.4 run.
+Every distributed replicate executes in a dedicated killable child process.
+Valid shards are atomic and resumable. Mutable controller state cannot leak
+between replicates, and a computation cannot exceed the preregistered
+replicate timeout.
 
 ## Evidence bundle
 

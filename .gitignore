@@ -38,6 +38,7 @@ experiments/results/
 data/
 
 # Resumable G1 worker shards (large, regenerable)
+artifacts/g1/**/runner_*.log
 artifacts/g1/**/shards/
 
 # Secrets
