@@ -323,6 +323,16 @@ WP-GATE-0.3 freezes that concrete instance in
 
 The accompanying validator checks the frozen boundary without importing or
 constructing a domain. WP-GATE-0.3 does not execute calibration, select a
-threshold, implement the runner, read a holdout, or change runtime behavior.
-The next boundary is a reviewed runner implementation and dry-run plan;
-outcome-producing execution remains a separate explicit step.
+threshold, read a holdout, or change runtime behavior.
+
+WP-GATE-0.4 adds the domain-free execution scaffold documented in
+`E0_OVERRIDE_GATE_CALIBRATION_RUNNER_v1.md`. It deterministically plans all
+tasks and matrix batches, fixes disabled-control pairing, validates
+protected-split authorization and artifact shapes, and seals a dry-run
+manifest. Its CLI exposes only planning commands: it has no domain import and
+no outcome-producing command.
+
+The next boundary is the calibration-only domain and paired-branch engine,
+hard process isolation, atomic shards, and frozen statistics implementation.
+That implementation must be reviewed and its execution commit frozen before
+the first calibration outcome is produced.
