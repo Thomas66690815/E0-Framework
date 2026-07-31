@@ -332,7 +332,17 @@ protected-split authorization and artifact shapes, and seals a dry-run
 manifest. Its CLI exposes only planning commands: it has no domain import and
 no outcome-producing command.
 
-The next boundary is the calibration-only domain and paired-branch engine,
-hard process isolation, atomic shards, and frozen statistics implementation.
-That implementation must be reviewed and its execution commit frozen before
-the first calibration outcome is produced.
+WP-GATE-0.5 adds the calibration-only domain and paired-branch engine described
+in `E0_OVERRIDE_GATE_CALIBRATION_ENGINE_v1.md`. The G1-v1 public builders keep
+their development-only default; a separate namespace accepts exactly
+calibration seeds 2000–2019, while verification and protected-holdout
+namespaces remain unavailable. The engine materializes only exact frozen
+candidates, snapshots all decision-relevant mutable state, and proves on a
+synthetic fixture that diagnostic branches do not mutate the parent episode.
+Calibration domains were instantiated only for structure and invariants; no
+calibration outcome was observed.
+
+The next boundary is hard process isolation, atomic task shards, resume and
+consolidation validation, and the frozen statistical selection implementation.
+That runner must be reviewed and its execution commit frozen before the first
+preregistered calibration outcome is produced.

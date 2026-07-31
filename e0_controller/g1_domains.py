@@ -28,6 +28,8 @@ from .primitives import Edge, Outcome
 PROTOCOL_ID = "E0-G1-v1"
 GENERATOR_VERSION = "1.0"
 PROTOCOL_PATH = Path(__file__).resolve().parents[1] / "docs" / "E0_G1_PROTOCOL_v1.json"
+DEVELOPMENT_SEED_NAMESPACE = "g1_v1_development"
+CALIBRATION_SEED_NAMESPACE = "override_gate_calibration"
 
 
 class HoldoutAccessError(ValueError):
@@ -77,6 +79,22 @@ def validate_development_seed(seed: int) -> None:
         raise ValueError(
             f"Seed {seed} is outside development range {allowed.start}..{allowed.stop - 1}"
         )
+
+
+def _validate_seed_namespace(seed: int, namespace: str) -> None:
+    """Validate the explicit generator namespace without enabling protected splits."""
+    if namespace == DEVELOPMENT_SEED_NAMESPACE:
+        validate_development_seed(seed)
+        return
+    if namespace == CALIBRATION_SEED_NAMESPACE:
+        from .override_gate_calibration import seeds_for_split
+
+        if seed not in seeds_for_split("calibration"):
+            raise HoldoutAccessError(
+                f"Seed {seed} is not in the override-gate calibration split"
+            )
+        return
+    raise HoldoutAccessError(f"Unknown or protected seed namespace {namespace!r}")
 
 
 def edge_id(source: str, target: str) -> str:
@@ -169,9 +187,10 @@ class G1DomainInstance:
     outcome_rules: Tuple[OutcomeRule, ...] = ()
     metadata: Dict[str, Any] = field(default_factory=dict)
     generator_version: str = GENERATOR_VERSION
+    seed_namespace: str = DEVELOPMENT_SEED_NAMESPACE
 
     def __post_init__(self) -> None:
-        validate_development_seed(self.generator_seed)
+        _validate_seed_namespace(self.generator_seed, self.seed_namespace)
         if len(self.landscape.states) != self.target_node_count:
             raise ValueError(
                 f"{self.family} generated {len(self.landscape.states)} nodes "
@@ -204,6 +223,11 @@ class G1DomainInstance:
 
     @property
     def run_id(self) -> str:
+        if self.seed_namespace == CALIBRATION_SEED_NAMESPACE:
+            return (
+                f"gate-cal-{self.family}-N{self.target_node_count}-"
+                f"s{self.generator_seed:04d}"
+            )
         return f"dev-{self.family}-N{self.target_node_count}-s{self.generator_seed:04d}"
 
     def success_probability(self, source: str, target: str, episode_index: int) -> float:
@@ -247,6 +271,11 @@ class G1DomainInstance:
         return hashlib.sha256(encoded).hexdigest()
 
     def to_record(self) -> Dict[str, Any]:
+        if self.seed_namespace != DEVELOPMENT_SEED_NAMESPACE:
+            raise RuntimeError(
+                "G1DomainInstance.to_record is development-only; use the "
+                "calibration-specific domain record"
+            )
         invariants = validate_domain(self)
         return {
             "protocol_id": PROTOCOL_ID,
@@ -372,9 +401,14 @@ def _edge_cost(landscape: Landscape, source: str, target: str) -> float:
     return landscape._delta[edge] * landscape._R0[edge]
 
 
-def build_wall_grid(target_node_count: int, seed: int) -> G1DomainInstance:
+def build_wall_grid(
+    target_node_count: int,
+    seed: int,
+    *,
+    seed_namespace: str = DEVELOPMENT_SEED_NAMESPACE,
+) -> G1DomainInstance:
     """Build an exact-N grid whose only wall crossing requires a detour."""
-    validate_development_seed(seed)
+    _validate_seed_namespace(seed, seed_namespace)
     if target_node_count < 16:
         raise ValueError("wall_grid requires at least 16 nodes")
 
@@ -423,6 +457,7 @@ def build_wall_grid(target_node_count: int, seed: int) -> G1DomainInstance:
         start=start,
         goal=goal,
         oracle_cost_by_regime={"stationary": len(path) - 1},
+        seed_namespace=seed_namespace,
         metadata={
             "rows": rows,
             "cols": cols,
@@ -434,9 +469,14 @@ def build_wall_grid(target_node_count: int, seed: int) -> G1DomainInstance:
     )
 
 
-def build_trap_grid_v2(target_node_count: int, seed: int) -> G1DomainInstance:
+def build_trap_grid_v2(
+    target_node_count: int,
+    seed: int,
+    *,
+    seed_namespace: str = DEVELOPMENT_SEED_NAMESPACE,
+) -> G1DomainInstance:
     """Build an exact-N comb grid with locally attractive terminal traps."""
-    validate_development_seed(seed)
+    _validate_seed_namespace(seed, seed_namespace)
     if target_node_count < 20:
         raise ValueError("trap_grid_v2 requires at least 20 nodes")
 
@@ -534,6 +574,7 @@ def build_trap_grid_v2(target_node_count: int, seed: int) -> G1DomainInstance:
         goal=goal,
         oracle_cost_by_regime={"stationary": len(safe_path) - 1},
         outcome_rules=tuple(outcome_rules),
+        seed_namespace=seed_namespace,
         metadata={
             "rows": max(branch_lengths.values()) + 1,
             "cols": cols,
@@ -544,9 +585,14 @@ def build_trap_grid_v2(target_node_count: int, seed: int) -> G1DomainInstance:
     )
 
 
-def build_decoy_dag(target_node_count: int, seed: int) -> G1DomainInstance:
+def build_decoy_dag(
+    target_node_count: int,
+    seed: int,
+    *,
+    seed_namespace: str = DEVELOPMENT_SEED_NAMESPACE,
+) -> G1DomainInstance:
     """Build exact-N parallel paths with 40% attractive late failures."""
-    validate_development_seed(seed)
+    _validate_seed_namespace(seed, seed_namespace)
     if target_node_count < 30:
         raise ValueError("decoy_dag requires at least 30 nodes")
 
@@ -664,6 +710,7 @@ def build_decoy_dag(target_node_count: int, seed: int) -> G1DomainInstance:
         goal="GOAL",
         oracle_cost_by_regime={"stationary": 0},
         outcome_rules=tuple(rules),
+        seed_namespace=seed_namespace,
         metadata={
             "path_count": path_count,
             "failed_path_count": failed_count,
@@ -679,9 +726,14 @@ def build_decoy_dag(target_node_count: int, seed: int) -> G1DomainInstance:
     return temporary
 
 
-def build_nonstationary_parallel(target_node_count: int, seed: int) -> G1DomainInstance:
+def build_nonstationary_parallel(
+    target_node_count: int,
+    seed: int,
+    *,
+    seed_namespace: str = DEVELOPMENT_SEED_NAMESPACE,
+) -> G1DomainInstance:
     """Build two fixed corridors whose terminal outcomes reverse at episode 20."""
-    validate_development_seed(seed)
+    _validate_seed_namespace(seed, seed_namespace)
     if target_node_count < 10:
         raise ValueError("nonstationary_parallel requires at least 10 nodes")
 
@@ -748,6 +800,7 @@ def build_nonstationary_parallel(target_node_count: int, seed: int) -> G1DomainI
         goal="GOAL",
         oracle_cost_by_regime={"pre_switch": 0, "post_switch": 0},
         outcome_rules=tuple(rules),
+        seed_namespace=seed_namespace,
         metadata={
             "corridor_count": 2,
             "corridor_lengths": lengths,

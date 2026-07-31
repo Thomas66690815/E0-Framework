@@ -101,18 +101,20 @@ The dry-run hash changes when the execution commit or any planned task changes.
 The final implementation review must supply the actual execution commit and
 rerun the dry plan before outcome production.
 
-## Remaining boundary
+## WP-GATE-0.5 extension and remaining boundary
 
-The following are deliberately not implemented:
+WP-GATE-0.5 implements calibration-only domain construction, exact frozen
+policy materialization, the policy-parameterized `E_FULL_GEOMETRY` adapter, and
+deterministic complete-state branch replay. Its engineering tests are
+documented in `E0_OVERRIDE_GATE_CALIBRATION_ENGINE_v1.md`.
 
-- calibration-specific domain construction for seeds 2000–2019;
-- deterministic complete-state snapshot and branch replay;
-- the policy-parameterized `E_FULL_GEOMETRY` closed loop;
+The following remain deliberately unavailable:
+
 - hard process timeout and atomic result shards;
 - statistical selection and verification reports;
 - outcome-producing GitHub Actions jobs; and
 - any verification or protected-holdout access.
 
-Those components form the next reviewed work package. They must not weaken or
-reuse the G1-v1 development-only seed validator, and they must preserve the
-task, control, artifact, and lifecycle contracts frozen here.
+Those components form the next reviewed work package. They must preserve the
+task, control, artifact, seed-namespace, branch, and lifecycle contracts frozen
+here.

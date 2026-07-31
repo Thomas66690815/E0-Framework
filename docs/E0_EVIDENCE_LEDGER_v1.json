@@ -538,6 +538,10 @@
           "role": "domain-free execution scaffold, task/control model, lifecycle guards, and verified dry run"
         },
         {
+          "path": "docs/E0_OVERRIDE_GATE_CALIBRATION_ENGINE_v1.md",
+          "role": "calibration-only seed namespace, frozen-policy adapter, complete-state snapshot, and deterministic paired branches"
+        },
+        {
           "path": "docs/research/C185_TRAFFIC_VALIDATION_REPORT_v1.md",
           "role": "traffic-specific comparison of support-margin thresholds 0.5 and 0.85"
         },
@@ -559,24 +563,25 @@
         "python -m json.tool docs/E0_OVERRIDE_GATE_CALIBRATION_INSTANCE_v1.json",
         "python -m pytest e0_controller/test_override_gate_calibration.py -q",
         "python -m pytest e0_controller/test_override_gate_calibration_runner.py -q",
+        "python -m pytest e0_controller/test_override_gate_calibration_engine.py -q",
         "python -m e0_controller.override_gate_calibration_runner dry-run",
         "python -m json.tool docs/E0_EVIDENCE_LEDGER_v1.json"
       ],
       "raw_artifacts": [],
       "limitations": [
-        "WP-GATE-0.1 is a design and governance result; WP-GATE-0.2 implements policy infrastructure; WP-GATE-0.3 freezes one scoped experiment; WP-GATE-0.4 implements only its domain-free execution scaffold. None is an executed calibration.",
+        "WP-GATE-0.1 is a design and governance result; WP-GATE-0.2 implements policy infrastructure; WP-GATE-0.3 freezes one scoped experiment; WP-GATE-0.4 implements its domain-free execution scaffold; WP-GATE-0.5 implements the calibration-only domain and branch engine. None is an executed calibration.",
         "The utility, risk budget, candidate grid, and fresh split manifests are preregistered, but no replacement policy or threshold is selected.",
         "The frozen instance applies only to E_FULL_GEOMETRY at horizon 3 in its four declared domain families; it cannot establish a universal E0 threshold.",
         "The existing scalar APIs retain their historical names and legacy behavior."
       ],
       "required_next_evidence": [
-        "Implement and review calibration-specific domain construction, deterministic state branching, hard process isolation, and atomic shards without opening verification or holdout.",
+        "Implement and review the fresh-process calibration worker, hard timeouts, atomic shards, resume validation, and frozen statistical consolidation without opening verification or holdout.",
         "Collect paired decision branches and closed-loop calibration replicates.",
         "Verify the frozen selected policy on fresh instances before any new protected holdout."
       ],
       "decision_review": {
         "trigger": "Completed fresh calibration and verification artifact",
-        "current_action": "Keep all legacy defaults unchanged and implement the calibration-only domain/branch engine against the frozen WP-GATE-0.4 task and artifact contracts."
+        "current_action": "Keep all legacy defaults unchanged and implement the bounded calibration-only worker and consolidation against the frozen WP-GATE-0.5 engine contracts."
       },
       "related_claims": [
         "E0-PHASE-CAUSAL-001",
@@ -584,8 +589,8 @@
       ],
       "last_verified": {
         "date": "2026-07-31",
-        "commit": "7b2a134",
-        "result": "WP-GATE-0.4 deterministically plans 2880 calibration, 360 verification, and 360 protected-holdout tasks in a sealed dry run with zero domain instances and outcomes; no execution command or holdout access exists."
+        "commit": "cecf618",
+        "result": "WP-GATE-0.5 adds a calibration-only seed namespace and deterministic non-mutating paired branch engine. Calibration domains were structure-tested, while all branch outcomes came from a synthetic non-experiment fixture; no calibration, verification, or holdout outcome was observed."
       }
     },
     {
