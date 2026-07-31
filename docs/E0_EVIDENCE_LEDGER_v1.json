@@ -509,6 +509,70 @@
       }
     },
     {
+      "id": "E0-OVERRIDE-GATE-001",
+      "kind": "governance_decision",
+      "statement": "Override support margin is not a universally calibrated confidence probability; new experiments must use a complete versioned gate policy and a separate calibration protocol.",
+      "status": "decision",
+      "replication": "none",
+      "data_origin": "mixed",
+      "scope": "Future amplitude and structural-geometry override experiments; existing controller, Structural Geometry, G1-v1, and snapshot behavior remain unchanged.",
+      "sources": [
+        {
+          "path": "docs/E0_OVERRIDE_GATE_POLICY_v1.md",
+          "role": "normative terminology, policy interface, migration, and calibration rules"
+        },
+        {
+          "path": "docs/E0_OVERRIDE_GATE_CALIBRATION_PROTOCOL_v1.json",
+          "role": "machine-readable design contract"
+        },
+        {
+          "path": "docs/research/C185_TRAFFIC_VALIDATION_REPORT_v1.md",
+          "role": "traffic-specific comparison of support-margin thresholds 0.5 and 0.85"
+        },
+        {
+          "path": "docs/E0_G1_MECHANISM_DIAGNOSIS_v1.md",
+          "role": "complete G1-v1 zero-override result and bounded margin reachability"
+        },
+        {
+          "path": "e0_controller/config.py",
+          "role": "general controller legacy default 0.0"
+        },
+        {
+          "path": "lean/structural_geometry/overlay.py",
+          "role": "Structural Geometry legacy defaults 0.85 and 3.0"
+        }
+      ],
+      "commands": [
+        "python -m json.tool docs/E0_OVERRIDE_GATE_CALIBRATION_PROTOCOL_v1.json",
+        "python -m json.tool docs/E0_EVIDENCE_LEDGER_v1.json"
+      ],
+      "raw_artifacts": [],
+      "limitations": [
+        "WP-GATE-0.1 is a design and governance result, not an executed calibration.",
+        "No new threshold, utility, risk budget, seed manifest, or policy implementation is selected.",
+        "The existing scalar APIs retain their historical names and behavior until a separate implementation work package."
+      ],
+      "required_next_evidence": [
+        "Implement versioned policy objects and exact legacy mappings without behavior drift.",
+        "Freeze a fresh calibration experiment instance including utilities, risk budgets, domains, and split manifests.",
+        "Collect paired decision branches and closed-loop calibration replicates.",
+        "Verify the frozen selected policy on fresh instances before any new protected holdout."
+      ],
+      "decision_review": {
+        "trigger": "Completed fresh calibration and verification artifact",
+        "current_action": "Keep all runtime defaults unchanged and require explicit policy provenance in new experiments."
+      },
+      "related_claims": [
+        "E0-PHASE-CAUSAL-001",
+        "E0-PRODUCT-LEAN-001"
+      ],
+      "last_verified": {
+        "date": "2026-07-31",
+        "commit": "83b87c9",
+        "result": "Repository audit found distinct 0.0, 0.3, 0.5, and 0.85 usages and three non-equivalent gate contracts; no runtime or holdout change was made."
+      }
+    },
+    {
       "id": "E0-PRODUCT-LEAN-001",
       "kind": "governance_decision",
       "statement": "The lean packages are the current product candidates; the full framework remains the research carrier until Gate G1.",

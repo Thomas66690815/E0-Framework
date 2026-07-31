@@ -1,0 +1,218 @@
+{
+  "protocol_id": "E0-OVERRIDE-GATE-CAL-v1",
+  "schema_version": "1.0",
+  "status": "design_specification",
+  "work_package": "WP-GATE-0.1",
+  "authority": "docs/E0_OVERRIDE_GATE_POLICY_v1.md",
+  "created_on": "2026-07-31",
+  "runtime_behavior_changed": false,
+  "calibration_executed": false,
+  "holdout_accessed": false,
+  "not_gate_result": true,
+  "terminology": {
+    "support_margin": "P_best - P_second over the normalized support values for the current candidates",
+    "calibrated_confidence": "P(delta_utility > 0 | recorded decision context), supported by a frozen calibration artifact",
+    "delta_utility": "utility(lookahead branch) - utility(greedy branch)"
+  },
+  "legacy_profiles": [
+    {
+      "policy_id": "legacy_controller_v1",
+      "component": "e0_controller.E0Controller",
+      "min_support_margin": 0.0,
+      "max_path_imbalance": null,
+      "forbid_path_cap_hit": false,
+      "additional_guards": [
+        "admissibility",
+        "revisit_guard_when_self_graph_present",
+        "self_graph_override_quality_when_self_graph_present"
+      ],
+      "scope_note": "The scalar is inert under the default greedy hybrid mode."
+    },
+    {
+      "policy_id": "legacy_structural_geometry_v1",
+      "component": "lean.structural_geometry.InfluenceReport",
+      "min_support_margin": 0.85,
+      "max_path_imbalance": 3.0,
+      "forbid_path_cap_hit": false,
+      "additional_guards": [
+        "disagreement"
+      ],
+      "scope_note": "The implementation surfaces truncation but does not gate on it."
+    },
+    {
+      "policy_id": "legacy_g1_v1",
+      "component": "E0-G1-v1 variants B-E",
+      "min_support_margin": 0.85,
+      "max_path_imbalance": 3.0,
+      "forbid_path_cap_hit": true,
+      "additional_guards": [
+        "disagreement"
+      ],
+      "scope_note": "Frozen protocol; zero overrides in the complete development bundle."
+    }
+  ],
+  "policy_contract": {
+    "required_fields": [
+      "policy_id",
+      "policy_version",
+      "mode",
+      "score_semantics",
+      "min_support_margin",
+      "max_path_imbalance",
+      "forbid_path_cap_hit",
+      "revisit_guard",
+      "health_guard",
+      "scope",
+      "provenance",
+      "calibration_artifact"
+    ],
+    "allowed_modes": [
+      "disabled",
+      "legacy_fixed",
+      "fixed",
+      "calibrated"
+    ],
+    "score_semantics": "probability_gap_best_minus_second",
+    "calibrated_policy_requires_artifact": true,
+    "portable_outside_declared_scope": false
+  },
+  "migration_contract": {
+    "legacy_scalar_fields_remain_readable": true,
+    "existing_snapshot_behavior_is_immutable": true,
+    "missing_policy_maps_to_named_legacy_profile": true,
+    "silent_default_change_forbidden": true,
+    "g1_v1_rewrite_forbidden": true,
+    "default_change_requires_separate_work_package": true
+  },
+  "split_roles": [
+    {
+      "name": "exploration",
+      "fresh": false,
+      "may_select_policy": false,
+      "may_confirm_policy": false
+    },
+    {
+      "name": "calibration",
+      "fresh": true,
+      "may_select_policy": true,
+      "may_confirm_policy": false
+    },
+    {
+      "name": "verification",
+      "fresh": true,
+      "may_select_policy": false,
+      "may_confirm_policy": true
+    },
+    {
+      "name": "protected_holdout",
+      "fresh": true,
+      "may_select_policy": false,
+      "may_confirm_policy": true
+    }
+  ],
+  "g1_v1_holdout_reusable": false,
+  "paired_decision_record": {
+    "required_fields": [
+      "state_hash",
+      "random_stream_id",
+      "domain_family",
+      "scale",
+      "geometry",
+      "horizon",
+      "action_count",
+      "phase_regime",
+      "support_margin",
+      "path_imbalance",
+      "path_cap_hit",
+      "greedy_action",
+      "lookahead_action",
+      "greedy_utility",
+      "lookahead_utility",
+      "delta_utility"
+    ],
+    "common_random_numbers_required": true,
+    "equal_rollout_budget_required": true,
+    "complete_state_snapshot_required": true
+  },
+  "closed_loop_record": {
+    "primary_statistical_unit": "replicate",
+    "required_aggregates": [
+      "paired_utility_difference",
+      "override_count",
+      "eligible_disagreement_count",
+      "beneficial_overrides",
+      "neutral_overrides",
+      "harmful_overrides",
+      "unresolved_overrides",
+      "harmful_override_severity",
+      "domain_family_results",
+      "scale_results",
+      "path_cap_hits",
+      "infrastructure_failures",
+      "runtime"
+    ]
+  },
+  "experiment_instance_must_freeze_before_calibration": [
+    "source_commit",
+    "environment",
+    "domain_manifest",
+    "calibration_seed_manifest",
+    "verification_seed_manifest",
+    "protected_holdout_manifest",
+    "candidate_policy_set_or_model",
+    "primary_utility",
+    "risk_budget",
+    "minimum_activation_support",
+    "domain_family_noninferiority_margin",
+    "confidence_interval_method",
+    "multiplicity_method",
+    "tie_breaker",
+    "rollout_horizon",
+    "rollout_budget"
+  ],
+  "selection_rule": {
+    "eligibility": "All frozen safety, support, and domain-family non-inferiority constraints pass.",
+    "optimization": "Maximize primary paired utility among eligible candidates.",
+    "tie_breaker": "Use the frozen deterministic rule favoring the simpler or safer policy.",
+    "no_eligible_candidate": "disabled",
+    "zero_override_is_valid_negative": true
+  },
+  "calibrated_confidence_requirements": [
+    "cross_fit_predictions",
+    "reliability_bins",
+    "brier_score",
+    "calibration_error",
+    "sample_counts",
+    "artifact_hash"
+  ],
+  "verification_contract": {
+    "policy_frozen_before_verification": true,
+    "single_use_verification": true,
+    "retuning_after_verification_forbidden": true,
+    "fresh_holdout_requires_preregistered_verification_pass": true,
+    "retuning_after_holdout_forbidden": true
+  },
+  "required_artifacts": [
+    "protocol_instance",
+    "split_manifests",
+    "source_environment_manifest",
+    "policy_record",
+    "paired_branch_records",
+    "closed_loop_replicate_records",
+    "selection_report",
+    "calibration_diagnostics_if_applicable",
+    "verification_report",
+    "checksums"
+  ],
+  "unresolved_by_design_specification": [
+    "candidate thresholds or model",
+    "domain families",
+    "seed values",
+    "utility weights",
+    "risk budget",
+    "minimum activation support",
+    "non-inferiority margins",
+    "rollout horizon",
+    "verification and holdout sample sizes"
+  ]
+}
