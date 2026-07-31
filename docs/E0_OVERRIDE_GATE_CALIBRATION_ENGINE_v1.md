@@ -120,18 +120,14 @@ deliberate local/global disagreement and verifies:
 
 These are engineering tests, not calibration results.
 
-## Remaining boundary
+## WP-GATE-0.6 extension and remaining boundary
 
-WP-GATE-0.6 must add:
+WP-GATE-0.6 implements the bounded calibration worker, hard limits, atomic
+task shards, strict resume validation, whole-cell infrastructure retries,
+complete consolidation, frozen clustered statistics, and planning-only GitHub
+workflow. The implementation and its no-outcome validation are documented in
+`E0_OVERRIDE_GATE_CALIBRATION_PIPELINE_v1.md`.
 
-- a fresh-process calibration-only task worker;
-- hard episode and replicate timeouts;
-- atomic paired-branch and closed-loop shards;
-- resume validation tied to task and execution-commit hashes;
-- complete calibration consolidation;
-- the frozen clustered bootstrap, multiplicity, eligibility, and selection
-  report; and
-- a planning-only GitHub workflow until explicit calibration authorization.
-
-Verification and protected holdout remain out of scope until a selected policy
-and the required predecessor artifacts actually exist.
+No execution authorization, outcome-producing CLI, or outcome-producing
+GitHub job exists. Verification and protected holdout remain out of scope
+until calibration is explicitly authorized, completed, and frozen.

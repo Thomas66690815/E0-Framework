@@ -542,6 +542,22 @@
           "role": "calibration-only seed namespace, frozen-policy adapter, complete-state snapshot, and deterministic paired branches"
         },
         {
+          "path": "docs/E0_OVERRIDE_GATE_CALIBRATION_PIPELINE_v1.md",
+          "role": "bounded worker, atomic shards, whole-cell resume, frozen statistics, consolidation, and no-outcome execution boundary"
+        },
+        {
+          "path": "e0_controller/override_gate_calibration_pipeline.py",
+          "role": "calibration-only authorization, fresh-process task execution, shard validation, resume, and consolidation"
+        },
+        {
+          "path": "e0_controller/override_gate_calibration_statistics.py",
+          "role": "frozen clustered bootstrap, Holm-Bonferroni eligibility, safety tie-breaker, and disabled fallback"
+        },
+        {
+          "path": ".github/workflows/override-gate-calibration-plan.yml",
+          "role": "manual planning-only workflow with no outcome-producing command"
+        },
+        {
           "path": "docs/research/C185_TRAFFIC_VALIDATION_REPORT_v1.md",
           "role": "traffic-specific comparison of support-margin thresholds 0.5 and 0.85"
         },
@@ -564,24 +580,25 @@
         "python -m pytest e0_controller/test_override_gate_calibration.py -q",
         "python -m pytest e0_controller/test_override_gate_calibration_runner.py -q",
         "python -m pytest e0_controller/test_override_gate_calibration_engine.py -q",
+        "python -m pytest e0_controller/test_override_gate_calibration_pipeline.py e0_controller/test_override_gate_calibration_statistics.py -q -p no:cacheprovider",
         "python -m e0_controller.override_gate_calibration_runner dry-run",
         "python -m json.tool docs/E0_EVIDENCE_LEDGER_v1.json"
       ],
       "raw_artifacts": [],
       "limitations": [
-        "WP-GATE-0.1 is a design and governance result; WP-GATE-0.2 implements policy infrastructure; WP-GATE-0.3 freezes one scoped experiment; WP-GATE-0.4 implements its domain-free execution scaffold; WP-GATE-0.5 implements the calibration-only domain and branch engine. None is an executed calibration.",
+        "WP-GATE-0.1 is a design and governance result; WP-GATE-0.2 implements policy infrastructure; WP-GATE-0.3 freezes one scoped experiment; WP-GATE-0.4 implements its domain-free execution scaffold; WP-GATE-0.5 implements the calibration-only domain and branch engine; WP-GATE-0.6 implements the bounded worker and frozen selection pipeline. None is an executed calibration.",
         "The utility, risk budget, candidate grid, and fresh split manifests are preregistered, but no replacement policy or threshold is selected.",
         "The frozen instance applies only to E_FULL_GEOMETRY at horizon 3 in its four declared domain families; it cannot establish a universal E0 threshold.",
         "The existing scalar APIs retain their historical names and legacy behavior."
       ],
       "required_next_evidence": [
-        "Implement and review the fresh-process calibration worker, hard timeouts, atomic shards, resume validation, and frozen statistical consolidation without opening verification or holdout.",
-        "Collect paired decision branches and closed-loop calibration replicates.",
+        "Review and freeze the WP-GATE-0.6 execution commit and its planning-only GitHub manifest.",
+        "Create a separate calibration-only authorization record, then collect complete cell-aligned paired decision branches and closed-loop calibration replicates.",
         "Verify the frozen selected policy on fresh instances before any new protected holdout."
       ],
       "decision_review": {
         "trigger": "Completed fresh calibration and verification artifact",
-        "current_action": "Keep all legacy defaults unchanged and implement the bounded calibration-only worker and consolidation against the frozen WP-GATE-0.5 engine contracts."
+        "current_action": "Keep all legacy defaults unchanged; review and freeze the bounded calibration pipeline before creating any calibration execution authorization."
       },
       "related_claims": [
         "E0-PHASE-CAUSAL-001",
@@ -589,8 +606,8 @@
       ],
       "last_verified": {
         "date": "2026-07-31",
-        "commit": "cecf618",
-        "result": "WP-GATE-0.5 adds a calibration-only seed namespace and deterministic non-mutating paired branch engine. Calibration domains were structure-tested, while all branch outcomes came from a synthetic non-experiment fixture; no calibration, verification, or holdout outcome was observed."
+        "commit": "8c2ff90",
+        "result": "WP-GATE-0.6 adds a calibration-only bounded worker, hard limits, atomic resumable shards, whole-cell infrastructure retry, complete consolidation, frozen clustered selection, and a planning-only GitHub workflow. Validation used synthetic records and substitute workers only; no calibration, verification, or holdout outcome was observed."
       }
     },
     {

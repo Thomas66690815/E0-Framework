@@ -342,7 +342,16 @@ synthetic fixture that diagnostic branches do not mutate the parent episode.
 Calibration domains were instantiated only for structure and invariants; no
 calibration outcome was observed.
 
-The next boundary is hard process isolation, atomic task shards, resume and
-consolidation validation, and the frozen statistical selection implementation.
-That runner must be reviewed and its execution commit frozen before the first
-preregistered calibration outcome is produced.
+WP-GATE-0.6 adds the bounded calibration pipeline described in
+`E0_OVERRIDE_GATE_CALIBRATION_PIPELINE_v1.md`: fresh-process execution, hard
+limits, atomic task shards, strict nested resume validation, whole-cell
+infrastructure retries, complete consolidation, the frozen clustered
+statistics, and a planning-only GitHub workflow. Engineering tests use only
+synthetic records and substitute workers; no preregistered calibration task
+was executed.
+
+The next boundary is authorization, not another threshold choice. The
+WP-GATE-0.6 commit and planning manifest must first be reviewed and frozen.
+Only then may a separate, calibration-only authorization record enable a
+cell-aligned execution workflow. Verification and protected holdout remain
+unavailable, and no legacy default changes.

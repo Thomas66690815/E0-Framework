@@ -1,0 +1,47 @@
+name: Override Gate Calibration Plan
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PLAN_OUTPUT: artifacts/override_gate/calibration-plan.json
+
+jobs:
+  preflight:
+    name: Validate frozen calibration plan without outcomes
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install project
+        run: python -m pip install -e ".[science]"
+
+      - name: Run no-outcome contract tests
+        run: |
+          python -m pytest \
+            e0_controller/test_override_gate_calibration.py \
+            e0_controller/test_override_gate_calibration_runner.py \
+            e0_controller/test_override_gate_calibration_pipeline.py \
+            e0_controller/test_override_gate_calibration_statistics.py \
+            -q -p no:cacheprovider
+
+      - name: Seal planning-only manifest
+        run: |
+          python -m e0_controller.override_gate_calibration_runner dry-run \
+            --execution-commit "$GITHUB_SHA" \
+            --output "$PLAN_OUTPUT"
+
+      - name: Upload planning evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: override-gate-calibration-plan
+          path: ${{ env.PLAN_OUTPUT }}
+          if-no-files-found: error
+          retention-days: 14
