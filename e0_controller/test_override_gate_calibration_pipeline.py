@@ -343,6 +343,7 @@ def test_github_workflow_is_planning_only():
         / "override-gate-calibration-plan.yml"
     ).read_text(encoding="utf-8")
     assert "workflow_dispatch:" in workflow
+    assert 'python -m pip install -e ".[science]" pytest' in workflow
     assert "override_gate_calibration_runner dry-run" in workflow
     assert "python -m e0_controller.override_gate_calibration_pipeline" not in workflow
     assert "run-batch" not in workflow

@@ -21,7 +21,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install project
-        run: python -m pip install -e ".[science]"
+        run: python -m pip install -e ".[science]" pytest
 
       - name: Run no-outcome contract tests
         run: |
