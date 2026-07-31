@@ -189,3 +189,15 @@ Before the first calibration outcome:
 The calibration result, when eventually produced, may select a scoped margin
 policy for one-time verification. It cannot by itself establish a universal E0
 confidence threshold or justify changing legacy defaults.
+
+## WP-GATE-0.7 extension
+
+WP-GATE-0.7 implements the separate authorization-consuming distribution layer
+described in `E0_OVERRIDE_GATE_CALIBRATION_EXECUTION_v1.md`. It uses 144
+complete 20-seed cells, immutable per-attempt artifacts, a highest-attempt
+no-fallback rule, and complete-matrix consolidation. Its GitHub workflow is
+manual and cannot run without the exact external authorization JSON, digest,
+execution commit, and confirmation phrase.
+
+No operational authorization record is part of WP-GATE-0.7, so all no-outcome
+statements above remain true.

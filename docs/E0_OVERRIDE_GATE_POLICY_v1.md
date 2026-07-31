@@ -355,3 +355,15 @@ WP-GATE-0.6 commit and planning manifest must first be reviewed and frozen.
 Only then may a separate, calibration-only authorization record enable a
 cell-aligned execution workflow. Verification and protected holdout remain
 unavailable, and no legacy default changes.
+
+WP-GATE-0.7 implements that still-inert execution workflow and its distributed
+CLI, as specified in `E0_OVERRIDE_GATE_CALIBRATION_EXECUTION_v1.md`. The
+execution topology is 144 complete candidate-family-scale cells with 20 seeds
+each. Every attempt is commit-, authorization-, task-, and artifact-bound;
+consolidation selects the latest attempt per cell without falling back to an
+older success.
+
+The workflow has no automatic trigger and WP-GATE-0.7 commits no operational
+authorization record. Calibration, verification, and protected holdout remain
+unexecuted. The next act is an explicit human authorization after the final
+execution commit and its planning artifact have been reviewed.

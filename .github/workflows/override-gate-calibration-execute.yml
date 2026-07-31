@@ -1,0 +1,199 @@
+name: Override Gate Calibration Execute
+
+on:
+  workflow_dispatch:
+    inputs:
+      execution_commit:
+        description: Full commit SHA containing the reviewed execution workflow
+        required: true
+        type: string
+      authorization_sha256:
+        description: Canonical SHA-256 of the external authorization JSON
+        required: true
+        type: string
+      authorization_record:
+        description: Complete calibration-only authorization JSON
+        required: true
+        type: string
+      confirmation:
+        description: Explicit calibration-only execution confirmation
+        required: true
+        type: choice
+        options:
+          - AUTHORIZE_FROZEN_CALIBRATION_ONLY
+
+permissions:
+  contents: read
+
+concurrency:
+  group: override-gate-calibration-${{ inputs.execution_commit }}
+  cancel-in-progress: false
+
+env:
+  CALIBRATION_OUTPUT: artifacts/override_gate/E0-OVERRIDE-GATE-CAL-INSTANCE-v1/calibration
+  AUTHORIZATION_DIR: artifacts/override_gate/authorization
+  CELL_DOWNLOADS: artifacts/override_gate/cell-downloads
+
+jobs:
+  authorize:
+    name: Validate external authorization and freeze 144-cell matrix
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    env:
+      EXPECTED_EXECUTION_COMMIT: ${{ inputs.execution_commit }}
+      AUTHORIZATION_SHA256: ${{ inputs.authorization_sha256 }}
+      AUTHORIZATION_RECORD: ${{ inputs.authorization_record }}
+      AUTHORIZATION_CONFIRMATION: ${{ inputs.confirmation }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install project and no-outcome test dependency
+        run: python -m pip install -e ".[science]" pytest
+
+      - name: Require exact checked-out execution commit
+        shell: bash
+        run: test "$GITHUB_SHA" = "$EXPECTED_EXECUTION_COMMIT"
+
+      - name: Materialize and validate external authorization record
+        shell: bash
+        run: |
+          mkdir -p "$AUTHORIZATION_DIR"
+          printf '%s\n' "$AUTHORIZATION_RECORD" > "$AUTHORIZATION_DIR/authorization.json"
+          python -m e0_controller.override_gate_calibration_distributed \
+            validate-authorization \
+            --authorization "$AUTHORIZATION_DIR/authorization.json" \
+            --authorization-sha256 "$AUTHORIZATION_SHA256" \
+            --execution-commit "$GITHUB_SHA" \
+            --confirmation "$AUTHORIZATION_CONFIRMATION"
+
+      - name: Run no-outcome distribution contracts
+        run: |
+          python -m pytest \
+            e0_controller/test_override_gate_calibration_distributed.py \
+            -q -p no:cacheprovider
+
+      - name: Emit 144 complete 20-seed cells
+        id: matrix
+        shell: bash
+        run: |
+          matrix="$(python -m e0_controller.override_gate_calibration_distributed \
+            matrix --execution-commit "$GITHUB_SHA")"
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
+      - name: Retain exact authorization record
+        uses: actions/upload-artifact@v4
+        with:
+          name: override-gate-calibration-authorization
+          path: ${{ env.AUTHORIZATION_DIR }}/authorization.json
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 14
+
+  run:
+    name: Cell ${{ matrix.cell_index }} - ${{ matrix.cell_id }}
+    needs: authorize
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix: ${{ fromJSON(needs.authorize.outputs.matrix) }}
+    env:
+      AUTHORIZATION_SHA256: ${{ inputs.authorization_sha256 }}
+      AUTHORIZATION_CONFIRMATION: ${{ inputs.confirmation }}
+      CELL_OUTPUT: artifacts/override_gate/cells/cell-${{ matrix.cell_index }}-attempt-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install frozen runtime
+        run: python -m pip install -e ".[science]"
+
+      - name: Download validated authorization
+        uses: actions/download-artifact@v4
+        with:
+          name: override-gate-calibration-authorization
+          path: ${{ env.AUTHORIZATION_DIR }}
+
+      - name: Execute one complete bounded cell
+        run: |
+          python -m e0_controller.override_gate_calibration_distributed \
+            run-cell \
+            --output "$CELL_OUTPUT" \
+            --cell-index "${{ matrix.cell_index }}" \
+            --workers 4 \
+            --run-attempt "${{ github.run_attempt }}" \
+            --authorization "$AUTHORIZATION_DIR/authorization.json" \
+            --authorization-sha256 "$AUTHORIZATION_SHA256" \
+            --execution-commit "$GITHUB_SHA" \
+            --confirmation "$AUTHORIZATION_CONFIRMATION"
+
+      - name: Retain atomic shards and infrastructure failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gate-cal-cell-${{ matrix.cell_index }}-attempt-${{ github.run_attempt }}
+          path: ${{ env.CELL_OUTPUT }}
+          if-no-files-found: warn
+          compression-level: 9
+          retention-days: 14
+
+  consolidate:
+    name: Select latest complete attempts and consolidate calibration
+    needs: run
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      AUTHORIZATION_SHA256: ${{ inputs.authorization_sha256 }}
+      AUTHORIZATION_CONFIRMATION: ${{ inputs.confirmation }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install frozen runtime
+        run: python -m pip install -e ".[science]"
+
+      - name: Download validated authorization
+        uses: actions/download-artifact@v4
+        with:
+          name: override-gate-calibration-authorization
+          path: ${{ env.AUTHORIZATION_DIR }}
+
+      - name: Download every retained cell attempt separately
+        uses: actions/download-artifact@v4
+        with:
+          pattern: gate-cal-cell-*-attempt-*
+          path: ${{ env.CELL_DOWNLOADS }}
+
+      - name: Fail closed unless all latest attempts form the exact matrix
+        run: |
+          python -m e0_controller.override_gate_calibration_distributed \
+            consolidate \
+            --input "$CELL_DOWNLOADS" \
+            --output "$CALIBRATION_OUTPUT" \
+            --authorization "$AUTHORIZATION_DIR/authorization.json" \
+            --authorization-sha256 "$AUTHORIZATION_SHA256" \
+            --execution-commit "$GITHUB_SHA" \
+            --confirmation "$AUTHORIZATION_CONFIRMATION"
+
+      - name: Upload calibration development evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: override-gate-calibration-evidence-attempt-${{ github.run_attempt }}
+          path: ${{ env.CALIBRATION_OUTPUT }}
+          if-no-files-found: warn
+          compression-level: 9
+          retention-days: 14
