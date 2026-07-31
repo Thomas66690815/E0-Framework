@@ -26,6 +26,7 @@ from .primitives import Edge, Outcome
 from .landscape import Landscape
 from .tension import tension, coherence
 from .config import DEFAULTS
+from .override_gate import OverrideGatePolicy
 
 if TYPE_CHECKING:
     from .amplitude_overlay import OverlayReport
@@ -209,6 +210,12 @@ class E0Controller:
         hybrid_geometry: Summation geometry for overlay (default "simple")
         horizon_strategy: Optional callable(controller, current) → int.
             When set, overrides hybrid_horizon with a per-decision dynamic value.
+        confidence_threshold: Backward-compatible support-margin scalar
+            (default 0.0). It maps to legacy_controller_v1 when no explicit
+            override_policy is supplied.
+        override_policy: Optional versioned OverrideGatePolicy. When supplied,
+            it is authoritative for margin, imbalance, path-cap, revisit, and
+            health guards.
         peer_fn: Optional callable(landscape, current, neighbors) → Optional[str].
             C63: Called when overload is detected — consults an external
             system to help prioritize among too many low-experience paths.
@@ -247,6 +254,7 @@ class E0Controller:
         inscription_threshold: bool = False,
         epistemic_trust: bool = False,
         adaptive_dampening: bool = False,
+        override_policy: Optional[OverrideGatePolicy | Dict[str, Any]] = None,
     ):
         self.landscape = landscape
         self.execute_fn = execute_fn
@@ -264,7 +272,31 @@ class E0Controller:
         self.hybrid_goals = hybrid_goals  # 3l: goal states for overlay
         self.hybrid_geometry = hybrid_geometry  # 3l: summation geometry
         self.horizon_strategy = horizon_strategy  # 3i: dynamic horizon
-        self.confidence_threshold = confidence_threshold  # 3f: override gating
+        if override_policy is None:
+            self._override_policy = OverrideGatePolicy.legacy_controller(
+                confidence_threshold
+            )
+            self._override_policy_explicit = False
+        else:
+            if isinstance(override_policy, dict):
+                override_policy = OverrideGatePolicy.from_dict(override_policy)
+            if not isinstance(override_policy, OverrideGatePolicy):
+                raise TypeError(
+                    "override_policy must be OverrideGatePolicy, dict, or None"
+                )
+            if (
+                confidence_threshold != DEFAULTS.confidence_threshold
+                and not math.isclose(
+                    confidence_threshold,
+                    override_policy.legacy_threshold_alias,
+                )
+            ):
+                raise ValueError(
+                    "Explicit confidence_threshold conflicts with "
+                    "override_policy"
+                )
+            self._override_policy = override_policy
+            self._override_policy_explicit = True
         self.use_su2 = use_su2  # Paper 2: ℂ² spinor interference
         self.axis_fn = axis_fn  # B1: per-edge SU(2) rotation axis
         self.resonator_modulation = resonator_modulation  # C39: resonator intensity boost
@@ -287,6 +319,22 @@ class E0Controller:
         """TransportRegime derived from use_su2 (backward-compatible)."""
         from .envelope import use_su2_to_transport
         return use_su2_to_transport(self.use_su2)
+
+    @property
+    def override_policy(self) -> OverrideGatePolicy:
+        """Authoritative versioned override policy."""
+        return self._override_policy
+
+    @property
+    def confidence_threshold(self) -> float:
+        """Backward-compatible scalar alias for the policy support margin."""
+        return self._override_policy.legacy_threshold_alias
+
+    @confidence_threshold.setter
+    def confidence_threshold(self, value: float) -> None:
+        self._override_policy = self._override_policy.with_legacy_support_margin(
+            value
+        )
 
     # --- Edge resolution (landscape + escalation overlay) ---
 
@@ -635,7 +683,12 @@ class E0Controller:
         admissible = self._admissible_neighbors(current)
         if amp_choice in admissible:
             conf = overlay.override_confidence
-            if conf >= self.confidence_threshold:
+            if self.override_policy.allows_override(
+                disagrees=True,
+                support_margin=conf,
+                path_imbalance=overlay.path_count_imbalance,
+                path_cap_hit=None,
+            ):
                 # C193: Revisit-aware override gate — amplitude must respect
                 # the same revisit window as greedy.  If amplitude wants to
                 # override to a recently-visited state, that's a loop-causing
@@ -643,12 +696,20 @@ class E0Controller:
                 # (one bad override can permanently reduce S_eff on loop edges).
                 # Requires self-graph: without self-reflection, amplitude is
                 # "blind" to its own harm (GT-5 persists by design).
-                if self.self_graph is not None and amp_choice in self._recent:
+                if (
+                    self.override_policy.revisit_guard
+                    == "controller_if_self_graph_present"
+                    and self.self_graph is not None
+                    and amp_choice in self._recent
+                ):
                     return greedy_target, escalated, esc_type, overlay, False
                 # C193: Self-Graph health gate — learned long-term signal.
                 # If the self-graph has accumulated evidence that amplitude's
                 # overrides are net harmful, block even non-recent overrides.
-                if self.self_graph is not None:
+                if (
+                    self.override_policy.health_guard == "self_graph_if_present"
+                    and self.self_graph is not None
+                ):
                     if self.self_graph.override_quality() < 0.0:
                         return greedy_target, escalated, esc_type, overlay, False
                 return amp_choice, escalated, esc_type, overlay, True

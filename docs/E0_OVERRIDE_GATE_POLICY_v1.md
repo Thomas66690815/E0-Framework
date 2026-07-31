@@ -2,7 +2,7 @@
 
 **Work package:** WP-GATE-0.1
 
-**Status:** design authority; no runtime behavior change
+**Status:** policy infrastructure implemented; no legacy behavior change
 
 **Date:** 2026-07-31
 
@@ -159,9 +159,9 @@ artifact hash, creation date, and whether protected data were accessed. A
 
 ## 6. Compatibility and migration
 
-WP-GATE-0.1 specifies migration but does not implement it.
-
-Future implementation must obey these rules:
+WP-GATE-0.1 specified the migration contract. WP-GATE-0.2 implements its
+policy value object, general-controller legacy mapping, Envelope and MemOS
+round trips, and public API export. The implementation obeys these rules:
 
 1. Existing `confidence_threshold` and `min_confidence` fields remain readable.
 2. Existing snapshots restore the exact prior behavior.
@@ -169,8 +169,8 @@ Future implementation must obey these rules:
    silently select a new threshold.
 4. New serialized records store both the legacy scalar alias, while required
    for compatibility, and the authoritative `policy_id`.
-5. Enabling a hybrid override mode without an explicit policy eventually emits
-   a deprecation warning, but the warning must not alter behavior.
+5. Whether to warn when hybrid override mode uses an implicit legacy policy
+   remains a later API-lifecycle decision; no warning alters current behavior.
 6. Changing the controller default requires a separate versioned work package,
    migration tests, and release note.
 7. G1-v1 files and artifacts are never rewritten to the new schema.
@@ -284,9 +284,30 @@ A completed calibration must emit:
 
 Calibration artifacts are development evidence. They are not Gate G1 results.
 
-## 9. Next implementation boundary
+## 9. Implementation status and next boundary
 
-The next work package may implement the policy value object, legacy mappings,
-serialization compatibility, and warnings. It must not simultaneously select
-a new threshold. Calibration execution begins only after a separate experiment
-instance freezes domains, seeds, utilities, risk budgets, and selection rules.
+WP-GATE-0.2 provides:
+
+- immutable `OverrideGatePolicy` and `OverrideGateMode`;
+- exact `legacy_controller_v1`, `legacy_structural_geometry_v1`, and
+  `legacy_g1_v1` constructors;
+- fail-closed margin, imbalance, and path-cap evaluation;
+- policy-controlled revisit and Self-Graph health guards;
+- the historical `confidence_threshold` scalar as a mutable alias only for
+  `legacy_controller_v1`;
+- rejection of scalar mutation for disabled, fixed, calibrated, Structural
+  Geometry, and frozen G1 policies;
+- serializable calibrated-policy records that remain deliberately
+  non-executable until a frozen artifact evaluator exists;
+- optional policy support in `E0Envelope`;
+- policy plus scalar persistence in MemOS and session provenance; and
+- old-record restoration when no policy field exists.
+
+Structural Geometry and G1-v1 retain their existing package-local execution
+paths. Their policy constructors are authoritative compatibility mappings, not
+rewrites of frozen code.
+
+The next work package must freeze a concrete calibration experiment instance.
+It must not mix policy-infrastructure implementation with outcome-based
+threshold selection. Calibration execution begins only after domains, seeds,
+utilities, risk budgets, candidate policies, and selection rules are fixed.

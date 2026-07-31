@@ -90,6 +90,7 @@ __all__ = [
     "Landscape",
     # Controller
     "E0Controller", "StepResult", "RunTrace", "EscalationType", "HybridMode",
+    "OverrideGatePolicy", "OverrideGateMode",
     # Potential / Helmholtz
     "phi", "phi_map", "v_raw", "v_grad", "v_rot", "decomposition",
     "div_v", "graph_laplacian",
@@ -167,6 +168,7 @@ from .historization import Historization, TraceRecord, InscriptionContext
 from .tension import tension, path_tension, coherence
 from .landscape import Landscape
 from .controller import E0Controller, StepResult, RunTrace, EscalationType, HybridMode
+from .override_gate import OverrideGatePolicy, OverrideGateMode
 from .potential import (
     phi, phi_map, v_raw, v_grad, v_rot, decomposition,
     div_v, graph_laplacian,

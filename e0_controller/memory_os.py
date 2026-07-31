@@ -31,6 +31,7 @@ from .primitives import Edge, Outcome
 from .historization import Historization
 from .landscape import Landscape
 from .controller import E0Controller, EscalationType, HybridMode, RunTrace
+from .override_gate import OverrideGatePolicy
 from .tension import coherence
 
 
@@ -154,7 +155,7 @@ class RuntimeSnapshot:
     escalation_edges: List[Dict[str, Any]]  # [{source, target, delta, r0}]
     last_escalation_type: str               # K-MemOS-2: EscalationType value
     metrics: Dict[str, float]
-    controller_params: Dict[str, float]     # alpha, recent_k, s_max, c_min, ...
+    controller_params: Dict[str, Any]       # scalar params plus policy metadata
 
     @staticmethod
     def from_controller(ctrl: E0Controller,
@@ -193,6 +194,7 @@ class RuntimeSnapshot:
                 "hybrid_goals": sorted(ctrl.hybrid_goals) if ctrl.hybrid_goals else [],
                 "hybrid_geometry": ctrl.hybrid_geometry,
                 "confidence_threshold": ctrl.confidence_threshold,
+                "override_policy": ctrl.override_policy.to_dict(),
                 "use_su2": bool(ctrl.use_su2),
             },
         )
@@ -369,6 +371,12 @@ class E0MemoryOS:
             hybrid_mode = HybridMode.GREEDY
         hybrid_goals_raw = params.get("hybrid_goals", [])
         hybrid_goals = set(hybrid_goals_raw) if hybrid_goals_raw else None
+        policy_raw = params.get("override_policy")
+        override_policy = (
+            OverrideGatePolicy.from_dict(policy_raw)
+            if policy_raw is not None
+            else None
+        )
 
         ctrl = E0Controller(
             landscape=landscape,
@@ -384,6 +392,7 @@ class E0MemoryOS:
             hybrid_geometry=params.get("hybrid_geometry", "simple"),
             confidence_threshold=params.get("confidence_threshold", 0.0),
             use_su2=params.get("use_su2", False),
+            override_policy=override_policy,
         )
 
         # Restore mutable runtime state

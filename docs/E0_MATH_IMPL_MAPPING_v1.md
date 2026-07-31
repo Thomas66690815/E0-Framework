@@ -1165,20 +1165,28 @@ Implementation source:
 ### Mathematics
 
 ```text
-override_confidence = 1 − 2 · min(P_greedy, 1 − P_greedy)
+support_margin = P_best − P_second
 ```
 
-Override is applied only if:
+The historical API calls this quantity `override_confidence`, but it is not a
+calibrated probability of a beneficial override. The former expression
+`1 − 2 · min(P, 1 − P)` is equivalent only when exactly two actions exhaust
+the probability mass.
+
+The versioned policy applies an override only if all of its configured guards
+pass. The legacy controller's measurable gate reduces to:
 
 ```text
-override_confidence ≥ confidence_threshold
+support_margin ≥ confidence_threshold
 ```
 
 ### Implementation
 
 - `OverlayReport.override_confidence` — computed in amplitude overlay
-- `E0Controller.confidence_threshold` — configurable parameter (default 0.0)
-- Gating check in `select_hybrid()` DISAGREE branch
+- `OverrideGatePolicy` — authoritative versioned gate contract
+- `E0Controller.confidence_threshold` — backward-compatible support-margin
+  alias; implicit callers map to `legacy_controller_v1`
+- Policy gating in `select_hybrid()` DISAGREE branch
 - `StepResult.override_confidence` — recorded per step
 - `avg_override_confidence` — aggregated in run metrics
 
@@ -1186,6 +1194,12 @@ Implementation sources:
 
 - `amplitude_overlay.py`
 - `controller.py`
+- `override_gate.py`
+
+Policy and calibration authority:
+
+- `docs/E0_OVERRIDE_GATE_POLICY_v1.md`
+- `docs/E0_OVERRIDE_GATE_CALIBRATION_PROTOCOL_v1.json`
 
 ---
 

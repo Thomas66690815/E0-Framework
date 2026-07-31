@@ -548,19 +548,18 @@
       ],
       "raw_artifacts": [],
       "limitations": [
-        "WP-GATE-0.1 is a design and governance result, not an executed calibration.",
-        "No new threshold, utility, risk budget, seed manifest, or policy implementation is selected.",
-        "The existing scalar APIs retain their historical names and behavior until a separate implementation work package."
+        "WP-GATE-0.1 is a design and governance result; WP-GATE-0.2 implements policy infrastructure but is not an executed calibration.",
+        "No new threshold, utility, risk budget, seed manifest, or calibrated/fixed replacement policy is selected.",
+        "The existing scalar APIs retain their historical names and legacy behavior."
       ],
       "required_next_evidence": [
-        "Implement versioned policy objects and exact legacy mappings without behavior drift.",
         "Freeze a fresh calibration experiment instance including utilities, risk budgets, domains, and split manifests.",
         "Collect paired decision branches and closed-loop calibration replicates.",
         "Verify the frozen selected policy on fresh instances before any new protected holdout."
       ],
       "decision_review": {
         "trigger": "Completed fresh calibration and verification artifact",
-        "current_action": "Keep all runtime defaults unchanged and require explicit policy provenance in new experiments."
+        "current_action": "Use the versioned policy infrastructure, keep all legacy defaults unchanged, and freeze a calibration instance before selecting any replacement policy."
       },
       "related_claims": [
         "E0-PHASE-CAUSAL-001",
@@ -568,8 +567,8 @@
       ],
       "last_verified": {
         "date": "2026-07-31",
-        "commit": "83b87c9",
-        "result": "Repository audit found distinct 0.0, 0.3, 0.5, and 0.85 usages and three non-equivalent gate contracts; no runtime or holdout change was made."
+        "commit": "d6ab453",
+        "result": "WP-GATE-0.2 implements immutable policies, exact legacy mappings, fail-closed guards, Envelope/MemOS compatibility, and regression coverage without changing defaults or accessing holdout data."
       }
     },
     {

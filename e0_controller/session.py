@@ -268,6 +268,7 @@ class Session:
                 "hybrid_horizon": ctrl.hybrid_horizon,
                 "alpha": ctrl.alpha,
                 "confidence_threshold": ctrl.confidence_threshold,
+                "override_policy": ctrl.override_policy.to_dict(),
             }
             self._provenance.record_run(trace, config)
 

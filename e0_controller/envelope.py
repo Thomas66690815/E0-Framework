@@ -25,6 +25,7 @@ from enum import Enum
 from typing import Any, Dict, FrozenSet, Optional, Set
 
 from .primitives import TransportRegime
+from .override_gate import OverrideGatePolicy
 
 
 # Re-import HybridMode here to avoid forcing users to import from controller
@@ -90,6 +91,17 @@ class E0Envelope:
     s_max: float = math.inf
     c_min: float = 0.0
     confidence_threshold: float = 0.0
+    override_policy: Optional[OverrideGatePolicy] = None
+
+    def __post_init__(self) -> None:
+        if self.override_policy is None:
+            return
+        expected = self.override_policy.legacy_threshold_alias
+        if not math.isclose(self.confidence_threshold, expected):
+            raise ValueError(
+                "confidence_threshold must match override_policy "
+                f"compatibility alias ({expected})"
+            )
 
     def to_controller_kwargs(self) -> Dict[str, Any]:
         """Convert to kwargs dict for E0Controller.__init__.
@@ -109,6 +121,8 @@ class E0Envelope:
         }
         if self.goals is not None:
             kwargs["hybrid_goals"] = set(self.goals)
+        if self.override_policy is not None:
+            kwargs["override_policy"] = self.override_policy
         return kwargs
 
     def to_dict(self) -> Dict[str, Any]:
@@ -126,6 +140,8 @@ class E0Envelope:
         d["s_max"] = None if math.isinf(self.s_max) else self.s_max
         if self.goals is not None:
             d["goals"] = sorted(self.goals)
+        if self.override_policy is not None:
+            d["override_policy"] = self.override_policy.to_dict()
         return d
 
     @classmethod
@@ -136,6 +152,12 @@ class E0Envelope:
         s_max = d.get("s_max")
         if s_max is None:
             s_max = math.inf
+        policy_raw = d.get("override_policy")
+        override_policy = (
+            OverrideGatePolicy.from_dict(policy_raw)
+            if policy_raw is not None
+            else None
+        )
         return cls(
             mode=HybridMode(d.get("mode", "greedy")),
             geometry=d.get("geometry", "simple"),
@@ -146,6 +168,7 @@ class E0Envelope:
             s_max=s_max,
             c_min=d.get("c_min", 0.0),
             confidence_threshold=d.get("confidence_threshold", 0.0),
+            override_policy=override_policy,
         )
 
     @classmethod
@@ -162,6 +185,7 @@ class E0Envelope:
             s_max=ctrl.s_max,
             c_min=ctrl.c_min,
             confidence_threshold=ctrl.confidence_threshold,
+            override_policy=ctrl.override_policy,
         )
 
     def summary(self) -> str:
@@ -176,6 +200,8 @@ class E0Envelope:
             parts.append(f"goals={{{','.join(sorted(self.goals))}}}")
         if self.confidence_threshold > 0:
             parts.append(f"conf={self.confidence_threshold}")
+        if self.override_policy is not None:
+            parts.append(f"policy={self.override_policy.policy_id}")
         if self.alpha != 2.0:
             parts.append(f"α={self.alpha}")
         return f"E0Envelope({', '.join(parts)})"
