@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "title": "E0 strategic evidence ledger",
-  "last_updated": "2026-07-28",
+  "last_updated": "2026-07-31",
   "authoritative_for": [
     "strategic empirical claims",
     "Gate G1 evidence status",
@@ -158,10 +158,10 @@
       "id": "E0-PHASE-CAUSAL-001",
       "kind": "causal_hypothesis",
       "statement": "The practical advantage attributed to the amplitude overlay is caused by phase interference rather than by lookahead, path aggregation, or confidence gating.",
-      "status": "open",
-      "replication": "none",
+      "status": "contradicted_internal",
+      "replication": "same_repo",
       "data_origin": "synthetic_designed",
-      "scope": "C185-style navigation and future G1 domains.",
+      "scope": "The preregistered E0-G1-v1 development distribution; no claim that phase is impossible in every constructed field.",
       "sources": [
         {
           "path": "docs/research/C185_TRAFFIC_VALIDATION_REPORT_v1.md",
@@ -173,27 +173,41 @@
         },
         {
           "path": "docs/E0_G1_PROTOCOL_v1.json",
-          "role": "preregistered measurement design; not executed evidence"
+          "role": "preregistered measurement design executed on the full development split"
+        },
+        {
+          "path": "docs/E0_G1_MECHANISM_DIAGNOSIS_v1.md",
+          "role": "C331 per-decision neutralization diagnosis"
+        },
+        {
+          "path": "artifacts/g1/E0-G1-v1/development/c331/mechanism_diagnosis.json",
+          "role": "machine-readable full-episode aggregate and bounded decision probe"
         }
       ],
-      "commands": [],
-      "raw_artifacts": [],
+      "commands": [
+        "python -m e0_controller.g1_mechanism_diagnosis --episode-count 1 --interaction-budget 20 --episodes-evidence <bundle>/episodes.jsonl.gz"
+      ],
+      "raw_artifacts": [
+        "GitHub Actions run 30526724307 / g1-development-evidence",
+        "artifacts/g1/E0-G1-v1/development/c331/mechanism_diagnosis.json"
+      ],
       "limitations": [
-        "No identical-horizon phase-free lookahead control is currently reported.",
-        "C319 indicates that cancellation may require wrapped or unstable phase regimes."
+        "The completed evidence is development-only; protected holdout seeds remain unread.",
+        "All 4,482,410 persisted D decisions remained in the gradient regime, so E0-G1-v1 did not sample an operationally phase-active regime.",
+        "C331 contradicts a practical phase advantage in the G1-v1 distribution but does not prove phase interference is impossible in every constructed domain."
       ],
       "required_next_evidence": [
-        "Execute the five-level causal ablation preregistered in docs/E0_G1_PROTOCOL_v1.json without reading or tuning on holdout results.",
-        "Store per-seed machine-readable results and confidence intervals."
+        "Close E0-G1-v1 as development-negative without spending its holdout, or record an explicit E0-G1-v2 amendment.",
+        "Any G1-v2 must use a separate calibration split, preregister phase-excitation checks, and create fresh protected holdout seeds."
       ],
       "related_claims": [
         "E0-OVERLAY-C185-001",
         "E0-GEOMETRY-REGIME-001"
       ],
       "last_verified": {
-        "date": "2026-07-28",
-        "commit": "87ff88d",
-        "result": "Open causal question."
+        "date": "2026-07-31",
+        "commit": "3990b5d",
+        "result": "Development contradicted practical phase attribution: D-vs-C mean difference 0.0; zero overrides; all D decisions gradient."
       }
     },
     {
@@ -280,12 +294,12 @@
     },
     {
       "id": "E0-SCALE-GEOMETRY-001",
-      "kind": "evidence_gap",
-      "statement": "The practical value and runtime behavior of the amplitude/path-family layer remain unverified at N >= 100.",
-      "status": "open",
-      "replication": "none",
-      "data_origin": "not_applicable",
-      "scope": "Amplitude overlay and structural geometry, with value measured against equal-budget simpler controls.",
+      "kind": "empirical",
+      "statement": "At N = 100, 500, and 1000, the remediated amplitude/path-family layer is executable at full development scale, but it shows no practical advantage over the selected simpler control.",
+      "status": "supported_internal",
+      "replication": "same_repo",
+      "data_origin": "synthetic_designed",
+      "scope": "The complete E0-G1-v1 development matrix: 120 instances x 13 methods, with holdout unread.",
       "sources": [
         {
           "path": "docs/E0_STRUCTURAL_CONTRADICTIONS_v1.md",
@@ -297,28 +311,42 @@
         },
         {
           "path": "docs/E0_G1_PROTOCOL_v1.json",
-          "role": "preregistered N=100/500/1000 measurement design; not executed evidence"
+          "role": "preregistered N=100/500/1000 measurement design"
+        },
+        {
+          "path": "docs/E0_G1_SCALING_REMEDIATION_v1.md",
+          "role": "C330 scaling repair and local parity evidence"
+        },
+        {
+          "path": "docs/E0_G1_MECHANISM_DIAGNOSIS_v1.md",
+          "role": "C331 result interpretation and neutralization boundary"
         }
       ],
-      "commands": [],
-      "raw_artifacts": [],
+      "commands": [
+        "python -m e0_controller.g1_development_distributed consolidate --output <bundle>",
+        "python -m e0_controller.g1_mechanism_diagnosis --episode-count 1 --interaction-budget 20 --episodes-evidence <bundle>/episodes.jsonl.gz"
+      ],
+      "raw_artifacts": [
+        "GitHub Actions run 30526724307 / g1-development-evidence",
+        "artifacts/g1/E0-G1-v1/development/c331/mechanism_diagnosis.json"
+      ],
       "limitations": [
-        "The prior phrase 'no scaling beyond N approximately 50' incorrectly conflated the full framework with the geometry layer.",
-        "Asymptotic implementation complexity alone does not establish practical value or failure."
+        "Three E_FULL_GEOMETRY wall_grid N=1000 replicates remained valid algorithmic timeouts.",
+        "Runtime feasibility does not establish product value; E-vs-A_HIST development difference was exactly 0.0.",
+        "The result is development-only and not a Gate G1 holdout finding."
       ],
       "required_next_evidence": [
-        "Execute the equal-budget G1 runs at N=100, 500, and 1000 preregistered in docs/E0_G1_PROTOCOL_v1.json.",
-        "Separate wall time, expanded paths, memory, goal rate, steps, and regret.",
-        "Five-level causal ablation from the evidence policy."
+        "Record the E0-G1-v1 lifecycle decision without reading holdout.",
+        "If research continues, define and preregister a fresh E0-G1-v2 with an independently calibrated action gate and phase-active development domains."
       ],
       "related_claims": [
         "E0-SCALE-HIST-001",
         "E0-PHASE-CAUSAL-001"
       ],
       "last_verified": {
-        "date": "2026-07-28",
-        "commit": "87ff88d",
-        "result": "Confirmed as a geometry-specific evidence gap, not a framework-wide absence."
+        "date": "2026-07-31",
+        "commit": "3990b5d",
+        "result": "Full development execution completed: 1557/1560 regular completions, 3 algorithmic timeouts, 0 infrastructure failures, 0 path-cap hits, and no E-vs-control benefit."
       }
     },
     {

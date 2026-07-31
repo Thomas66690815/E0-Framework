@@ -1,0 +1,294 @@
+{
+  "artifact_kind": "development_g1_mechanism_diagnosis",
+  "full_episode_evidence": {
+    "gate_flag_violations": 0,
+    "holdout_violations": 0,
+    "methods": {
+      "B_INCOHERENT": {
+        "decisions": 4482410,
+        "episodes": 2400,
+        "override_successes": 0,
+        "overrides": 0,
+        "path_cap_hits": 0,
+        "phase_regimes": {
+          "gradient": 0,
+          "interfering": 0,
+          "wrapped": 0
+        }
+      },
+      "C_THETA_ZERO": {
+        "decisions": 4482410,
+        "episodes": 2400,
+        "override_successes": 0,
+        "overrides": 0,
+        "path_cap_hits": 0,
+        "phase_regimes": {
+          "gradient": 0,
+          "interfering": 0,
+          "wrapped": 0
+        }
+      },
+      "D_U1_PHASE": {
+        "decisions": 4482410,
+        "episodes": 2400,
+        "override_successes": 0,
+        "overrides": 0,
+        "path_cap_hits": 0,
+        "phase_regimes": {
+          "gradient": 4482410,
+          "interfering": 0,
+          "wrapped": 0
+        }
+      },
+      "E_FULL_GEOMETRY": {
+        "decisions": 4482410,
+        "episodes": 2400,
+        "override_successes": 0,
+        "overrides": 0,
+        "path_cap_hits": 0,
+        "phase_regimes": {
+          "gradient": 4482410,
+          "interfering": 0,
+          "wrapped": 0
+        }
+      }
+    },
+    "source_commits": [
+      "3990b5dbd4195b6d4f3dd21bd4a48b0bb0efaa12"
+    ],
+    "source_file": {
+      "name": "episodes.jsonl.gz",
+      "sha256": "df0e9e953d6b9805b4492ce92182291b451586f3c87e2631720286c5fc57fad9"
+    },
+    "total_lookahead_decisions": 17929640,
+    "total_overrides": 0,
+    "total_path_cap_hits": 0
+  },
+  "holdout_accessed": false,
+  "not_g1_result": true,
+  "pairwise": {
+    "B_INCOHERENT_vs_C_THETA_ZERO": {
+      "aligned_steps": 2400,
+      "comparable_decisions": 2400,
+      "context_divergences": 0,
+      "greedy_action_divergences": 0,
+      "max_probability_delta": 0.18030386535277187,
+      "mean_max_probability_delta": 0.037003122220306515,
+      "missing_steps": 0,
+      "path_family_divergences": 0,
+      "preferred_action_divergences": 8,
+      "probability_vector_divergences": 1210,
+      "score_ranking_divergences": 36,
+      "selected_action_divergences": 0
+    },
+    "B_INCOHERENT_vs_E_FULL_GEOMETRY": {
+      "aligned_steps": 2400,
+      "comparable_decisions": 2400,
+      "context_divergences": 0,
+      "greedy_action_divergences": 0,
+      "max_probability_delta": 0.18030386535277187,
+      "mean_max_probability_delta": 0.0370031677125348,
+      "missing_steps": 0,
+      "path_family_divergences": 0,
+      "preferred_action_divergences": 8,
+      "probability_vector_divergences": 1230,
+      "score_ranking_divergences": 55,
+      "selected_action_divergences": 0
+    },
+    "C_THETA_ZERO_vs_D_U1_PHASE": {
+      "aligned_steps": 2400,
+      "comparable_decisions": 2400,
+      "context_divergences": 0,
+      "greedy_action_divergences": 0,
+      "max_probability_delta": 6.680616394583172e-06,
+      "mean_max_probability_delta": 3.292226600785005e-07,
+      "missing_steps": 0,
+      "path_family_divergences": 0,
+      "preferred_action_divergences": 0,
+      "probability_vector_divergences": 623,
+      "score_ranking_divergences": 19,
+      "selected_action_divergences": 0
+    },
+    "D_U1_PHASE_vs_E_FULL_GEOMETRY": {
+      "aligned_steps": 2400,
+      "comparable_decisions": 2400,
+      "context_divergences": 0,
+      "greedy_action_divergences": 0,
+      "max_probability_delta": 0.0,
+      "mean_max_probability_delta": 0.0,
+      "missing_steps": 0,
+      "path_family_divergences": 0,
+      "preferred_action_divergences": 0,
+      "probability_vector_divergences": 0,
+      "score_ranking_divergences": 0,
+      "selected_action_divergences": 0
+    }
+  },
+  "per_method": {
+    "B_INCOHERENT": {
+      "blocked_by_both": 40,
+      "blocked_by_confidence": 532,
+      "blocked_by_imbalance": 40,
+      "confidence_max": 0.8404586678098973,
+      "confidence_mean": 0.2016874181396699,
+      "confidence_p95": 0.8404586678098973,
+      "confidence_passes": 0,
+      "counterfactual_confidence_sweep": {
+        "0.00": 492,
+        "0.05": 316,
+        "0.10": 304,
+        "0.20": 0,
+        "0.30": 0,
+        "0.40": 0,
+        "0.50": 0,
+        "0.85": 0
+      },
+      "decisions": 2400,
+      "disagreement_confidence_max": 0.19446842746349735,
+      "disagreement_confidence_p95": 0.16654669811760514,
+      "disagreement_confidence_passes": 0,
+      "disagreement_imbalance_passes": 492,
+      "disagreement_joint_passes": 0,
+      "greedy_preferred_agreements": 1868,
+      "greedy_preferred_disagreements": 532,
+      "imbalance_passes": 2360,
+      "overrides": 0,
+      "path_cap_hits": 0,
+      "phase_regimes": {
+        "gradient": 0,
+        "interfering": 0,
+        "wrapped": 0
+      },
+      "preferred_missing": 0,
+      "single_candidate_decisions": 1170
+    },
+    "C_THETA_ZERO": {
+      "blocked_by_both": 40,
+      "blocked_by_confidence": 540,
+      "blocked_by_imbalance": 40,
+      "confidence_max": 0.8807544111599669,
+      "confidence_mean": 0.2263262809498565,
+      "confidence_p95": 0.8807544111599669,
+      "confidence_passes": 382,
+      "counterfactual_confidence_sweep": {
+        "0.00": 500,
+        "0.05": 360,
+        "0.10": 320,
+        "0.20": 306,
+        "0.30": 258,
+        "0.40": 0,
+        "0.50": 0,
+        "0.85": 0
+      },
+      "decisions": 2400,
+      "disagreement_confidence_max": 0.4240162226460816,
+      "disagreement_confidence_p95": 0.42285723380933277,
+      "disagreement_confidence_passes": 0,
+      "disagreement_imbalance_passes": 500,
+      "disagreement_joint_passes": 0,
+      "greedy_preferred_agreements": 1860,
+      "greedy_preferred_disagreements": 540,
+      "imbalance_passes": 2360,
+      "overrides": 0,
+      "path_cap_hits": 0,
+      "phase_regimes": {
+        "gradient": 0,
+        "interfering": 0,
+        "wrapped": 0
+      },
+      "preferred_missing": 0,
+      "single_candidate_decisions": 1170
+    },
+    "D_U1_PHASE": {
+      "blocked_by_both": 40,
+      "blocked_by_confidence": 540,
+      "blocked_by_imbalance": 40,
+      "confidence_max": 0.8807544111599669,
+      "confidence_mean": 0.22632638816201814,
+      "confidence_p95": 0.8807544111599669,
+      "confidence_passes": 382,
+      "counterfactual_confidence_sweep": {
+        "0.00": 500,
+        "0.05": 360,
+        "0.10": 320,
+        "0.20": 306,
+        "0.30": 258,
+        "0.40": 0,
+        "0.50": 0,
+        "0.85": 0
+      },
+      "decisions": 2400,
+      "disagreement_confidence_max": 0.4240162226460815,
+      "disagreement_confidence_p95": 0.42285723380933277,
+      "disagreement_confidence_passes": 0,
+      "disagreement_imbalance_passes": 500,
+      "disagreement_joint_passes": 0,
+      "greedy_preferred_agreements": 1860,
+      "greedy_preferred_disagreements": 540,
+      "imbalance_passes": 2360,
+      "overrides": 0,
+      "path_cap_hits": 0,
+      "phase_regimes": {
+        "gradient": 2400,
+        "interfering": 0,
+        "wrapped": 0
+      },
+      "preferred_missing": 0,
+      "single_candidate_decisions": 1170
+    },
+    "E_FULL_GEOMETRY": {
+      "blocked_by_both": 40,
+      "blocked_by_confidence": 540,
+      "blocked_by_imbalance": 40,
+      "confidence_max": 0.8807544111599669,
+      "confidence_mean": 0.22632638816201814,
+      "confidence_p95": 0.8807544111599669,
+      "confidence_passes": 382,
+      "counterfactual_confidence_sweep": {
+        "0.00": 500,
+        "0.05": 360,
+        "0.10": 320,
+        "0.20": 306,
+        "0.30": 258,
+        "0.40": 0,
+        "0.50": 0,
+        "0.85": 0
+      },
+      "decisions": 2400,
+      "disagreement_confidence_max": 0.4240162226460815,
+      "disagreement_confidence_p95": 0.42285723380933277,
+      "disagreement_confidence_passes": 0,
+      "disagreement_imbalance_passes": 500,
+      "disagreement_joint_passes": 0,
+      "greedy_preferred_agreements": 1860,
+      "greedy_preferred_disagreements": 540,
+      "imbalance_passes": 2360,
+      "overrides": 0,
+      "path_cap_hits": 0,
+      "phase_regimes": {
+        "gradient": 2400,
+        "interfering": 0,
+        "wrapped": 0
+      },
+      "preferred_missing": 0,
+      "single_candidate_decisions": 1170
+    }
+  },
+  "probe": {
+    "domain_count": 120,
+    "episode_count_per_method_domain": 1,
+    "gate": {
+      "max_imbalance": 3.0,
+      "min_confidence": 0.85
+    },
+    "interaction_budget_per_episode": 20,
+    "methods": [
+      "B_INCOHERENT",
+      "C_THETA_ZERO",
+      "D_U1_PHASE",
+      "E_FULL_GEOMETRY"
+    ]
+  },
+  "protocol_id": "E0-G1-v1",
+  "split": "development"
+}

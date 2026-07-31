@@ -10,6 +10,8 @@
 
 **Predecessor:** `E0_G1_SCALING_DIAGNOSIS_v1.md`
 
+**Development-result diagnosis:** `E0_G1_MECHANISM_DIAGNOSIS_v1.md`
+
 ## Result
 
 C330 removes the implementation bottleneck identified after the first complete
@@ -95,20 +97,21 @@ the purpose of the remediation, not a change to the action policy.
 The first WP-2.4 bundle remains the valid result for commit `af2ae45` and its
 implementation. It must not be overwritten or silently reinterpreted.
 
-C330 requires a new, source-commit-bound full development execution. That rerun
-must:
+C330 required a new, source-commit-bound full development execution. That
+requirement was satisfied by GitHub Actions run `30526724307` on source commit
+`3990b5d`; the resulting mechanism diagnosis is recorded in
+`E0_G1_MECHANISM_DIAGNOSIS_v1.md`. The completed rerun:
 
-1. retain the same development seeds and protocol constants;
-2. report the SciPy version and clean source commit;
-3. validate all 1,560 shards and every timeout/path-cap status;
-4. regenerate the development summary;
-5. repeat and freeze the preregistered simpler-control selection;
-6. remain explicitly marked `not_g1_result`;
-7. leave all holdout seeds unread.
+1. retained the same development seeds and protocol constants;
+2. reported the SciPy version and clean source commit;
+3. validated all 1,560 shards and every timeout/path-cap status;
+4. regenerated the development summary;
+5. repeated and froze the preregistered simpler-control selection;
+6. remained explicitly marked `not_g1_result`; and
+7. left all holdout seeds unread.
 
-Only after that rerun should the project decide whether the fixed implementation
-has sufficient resource margin and development behavior to justify a held-out
-Gate G1 execution.
+The fixed implementation now has sufficient resource margin, but C331 finds no
+development behavior that justifies spending the protected Gate G1 holdout.
 
 ## Remaining boundary issue
 
