@@ -1,9 +1,11 @@
 {
   "protocol_id": "E0-OVERRIDE-GATE-CAL-v1",
   "schema_version": "1.0",
-  "status": "design_specification",
-  "work_package": "WP-GATE-0.1",
+  "status": "concrete_instance_frozen",
+  "work_package": "WP-GATE-0.3",
   "authority": "docs/E0_OVERRIDE_GATE_POLICY_v1.md",
+  "frozen_instance": "docs/E0_OVERRIDE_GATE_CALIBRATION_INSTANCE_v1.json",
+  "preregistration": "docs/E0_OVERRIDE_GATE_CALIBRATION_PREREGISTRATION_v1.md",
   "created_on": "2026-07-31",
   "runtime_behavior_changed": false,
   "policy_infrastructure_implemented": true,
@@ -208,15 +210,13 @@
     "verification_report",
     "checksums"
   ],
-  "unresolved_by_design_specification": [
-    "candidate thresholds or model",
-    "domain families",
-    "seed values",
-    "utility weights",
-    "risk budget",
-    "minimum activation support",
-    "non-inferiority margins",
-    "rollout horizon",
-    "verification and holdout sample sizes"
-  ]
+  "unresolved_by_design_specification": [],
+  "instance_resolution": {
+    "status": "resolved_before_outcomes",
+    "runtime_behavior_changed": false,
+    "calibration_executed": false,
+    "verification_executed": false,
+    "protected_holdout_accessed": false,
+    "not_gate_result": true
+  }
 }

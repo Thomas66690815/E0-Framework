@@ -526,6 +526,14 @@
           "role": "machine-readable design contract"
         },
         {
+          "path": "docs/E0_OVERRIDE_GATE_CALIBRATION_INSTANCE_v1.json",
+          "role": "frozen concrete domains, splits, candidates, utility, risk budget, and selection rule"
+        },
+        {
+          "path": "docs/E0_OVERRIDE_GATE_CALIBRATION_PREREGISTRATION_v1.md",
+          "role": "human-readable preregistration and scope boundary"
+        },
+        {
           "path": "docs/research/C185_TRAFFIC_VALIDATION_REPORT_v1.md",
           "role": "traffic-specific comparison of support-margin thresholds 0.5 and 0.85"
         },
@@ -544,22 +552,25 @@
       ],
       "commands": [
         "python -m json.tool docs/E0_OVERRIDE_GATE_CALIBRATION_PROTOCOL_v1.json",
+        "python -m json.tool docs/E0_OVERRIDE_GATE_CALIBRATION_INSTANCE_v1.json",
+        "python -m pytest e0_controller/test_override_gate_calibration.py -q",
         "python -m json.tool docs/E0_EVIDENCE_LEDGER_v1.json"
       ],
       "raw_artifacts": [],
       "limitations": [
-        "WP-GATE-0.1 is a design and governance result; WP-GATE-0.2 implements policy infrastructure but is not an executed calibration.",
-        "No new threshold, utility, risk budget, seed manifest, or calibrated/fixed replacement policy is selected.",
+        "WP-GATE-0.1 is a design and governance result; WP-GATE-0.2 implements policy infrastructure; WP-GATE-0.3 freezes one scoped experiment. None is an executed calibration.",
+        "The utility, risk budget, candidate grid, and fresh split manifests are preregistered, but no replacement policy or threshold is selected.",
+        "The frozen instance applies only to E_FULL_GEOMETRY at horizon 3 in its four declared domain families; it cannot establish a universal E0 threshold.",
         "The existing scalar APIs retain their historical names and legacy behavior."
       ],
       "required_next_evidence": [
-        "Freeze a fresh calibration experiment instance including utilities, risk budgets, domains, and split manifests.",
+        "Implement and review the calibration-specific runner, deterministic state branching, artifact schemas, and dry-run plan without opening verification or holdout.",
         "Collect paired decision branches and closed-loop calibration replicates.",
         "Verify the frozen selected policy on fresh instances before any new protected holdout."
       ],
       "decision_review": {
         "trigger": "Completed fresh calibration and verification artifact",
-        "current_action": "Use the versioned policy infrastructure, keep all legacy defaults unchanged, and freeze a calibration instance before selecting any replacement policy."
+        "current_action": "Keep all legacy defaults unchanged and implement the frozen WP-GATE-0.3 runner before any outcome-producing calibration."
       },
       "related_claims": [
         "E0-PHASE-CAUSAL-001",
@@ -567,8 +578,8 @@
       ],
       "last_verified": {
         "date": "2026-07-31",
-        "commit": "d6ab453",
-        "result": "WP-GATE-0.2 implements immutable policies, exact legacy mappings, fail-closed guards, Envelope/MemOS compatibility, and regression coverage without changing defaults or accessing holdout data."
+        "commit": "46313f60a1bf0ed8590ec1e05d8a71d31200481a",
+        "result": "WP-GATE-0.3 freezes a scoped E_FULL_GEOMETRY experiment with fresh disjoint seeds, exact candidates, utility, risk and activation budgets, inference, selection, and verification rules; no experiment or holdout was executed."
       }
     },
     {

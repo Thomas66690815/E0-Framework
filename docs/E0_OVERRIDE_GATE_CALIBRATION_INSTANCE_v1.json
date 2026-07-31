@@ -1,0 +1,398 @@
+{
+  "instance_id": "E0-OVERRIDE-GATE-CAL-INSTANCE-v1",
+  "protocol_id": "E0-OVERRIDE-GATE-CAL-v1",
+  "schema_version": "1.0",
+  "work_package": "WP-GATE-0.3",
+  "status": "frozen_not_executed",
+  "frozen_on": "2026-07-31",
+  "source_commit": "46313f60a1bf0ed8590ec1e05d8a71d31200481a",
+  "source_commit_role": "Last behavior-changing commit. WP-GATE-0.3 adds only the preregistration and its validator.",
+  "execution_commit_policy": "The later runner commit must be frozen and recorded before calibration. It may implement only the listed prerequisites; any change to scorer, generator, policy, utility, statistics, or split semantics requires a new versioned instance.",
+  "runtime_behavior_changed": false,
+  "calibration_executed": false,
+  "verification_executed": false,
+  "protected_holdout_accessed": false,
+  "not_gate_result": true,
+  "scope": {
+    "treatment": "E_FULL_GEOMETRY with a fixed support-margin gate",
+    "control": "E_FULL_GEOMETRY with the override gate disabled",
+    "score_semantics": "probability_gap_best_minus_second",
+    "path_horizon": 3,
+    "path_geometry": "all",
+    "max_paths_per_decision": 100000,
+    "max_path_imbalance": 3.0,
+    "forbid_path_cap_hit": true,
+    "revisit_guard": "none",
+    "health_guard": "none",
+    "portable": false,
+    "out_of_scope": [
+      "E0Controller outside the G1 adapter",
+      "B_INCOHERENT, C_THETA_ZERO, and D_U1_PHASE score implementations",
+      "other path horizons or path geometries",
+      "domains outside the four frozen families",
+      "a universal E0 confidence threshold",
+      "calibrated probability claims"
+    ]
+  },
+  "environment": {
+    "runner_image": "ubuntu-24.04",
+    "python": "3.12",
+    "installation": "python -m pip install -e \".[science]\"",
+    "dependency_capture_required": [
+      "python --version",
+      "python -m pip freeze",
+      "uname -a",
+      "source commit",
+      "workflow run id"
+    ],
+    "execution_commit_required": true,
+    "numeric_determinism_rule": "Every replicate records its generator, outcome, policy, and branch random-stream seeds. Any environment deviation is a new instance."
+  },
+  "domain_manifest": {
+    "generator_semantics": "The four E0-G1-v1 generators at source_commit, copied into a calibration-specific namespace whose validator accepts only the split seeds below.",
+    "g1_v1_generator_code_reused": true,
+    "g1_v1_split_validator_reused": false,
+    "families": [
+      "wall_grid",
+      "trap_grid_v2",
+      "decoy_dag",
+      "nonstationary_parallel"
+    ],
+    "scales": [
+      100,
+      500,
+      1000
+    ],
+    "adaptation_episodes": 10,
+    "evaluation_episodes": 20,
+    "max_steps_per_episode_formula": "4 * actual_node_count",
+    "learning_during_evaluation": true,
+    "family_scale_weighting": "Each of 12 family-scale cells has equal weight.",
+    "required_invariants": "Identical to docs/E0_G1_PROTOCOL_v1.json at source_commit.",
+    "phase_excitation_is_not_required": true,
+    "reason": "This instance estimates the value of E_FULL_GEOMETRY gate decisions in the declared domain population; it does not test a phase-attribution claim."
+  },
+  "split_manifests": {
+    "exploration": {
+      "generator_seeds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "may_execute": false,
+      "role": "Historical G1-v1 development evidence only; may motivate candidates but may not select or confirm them."
+    },
+    "calibration": {
+      "generator_seeds": [
+        2000,
+        2001,
+        2002,
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019
+      ],
+      "replicates_per_family_scale_cell": 20,
+      "may_select_policy": true,
+      "may_confirm_policy": false
+    },
+    "verification": {
+      "generator_seeds": [
+        3000,
+        3001,
+        3002,
+        3003,
+        3004,
+        3005,
+        3006,
+        3007,
+        3008,
+        3009,
+        3010,
+        3011,
+        3012,
+        3013,
+        3014,
+        3015,
+        3016,
+        3017,
+        3018,
+        3019,
+        3020,
+        3021,
+        3022,
+        3023,
+        3024,
+        3025,
+        3026,
+        3027,
+        3028,
+        3029
+      ],
+      "replicates_per_family_scale_cell": 30,
+      "single_use": true,
+      "may_select_policy": false,
+      "may_confirm_policy": true
+    },
+    "protected_holdout": {
+      "generator_seeds": [
+        4000,
+        4001,
+        4002,
+        4003,
+        4004,
+        4005,
+        4006,
+        4007,
+        4008,
+        4009,
+        4010,
+        4011,
+        4012,
+        4013,
+        4014,
+        4015,
+        4016,
+        4017,
+        4018,
+        4019,
+        4020,
+        4021,
+        4022,
+        4023,
+        4024,
+        4025,
+        4026,
+        4027,
+        4028,
+        4029
+      ],
+      "replicates_per_family_scale_cell": 30,
+      "single_use": true,
+      "access_condition": "Open only after the frozen selected policy passes verification without retuning.",
+      "may_select_policy": false,
+      "may_confirm_policy": true
+    }
+  },
+  "seed_derivation": {
+    "outcome_seed_formula": "200000 + generator_seed",
+    "policy_seed_formula": "300000 + generator_seed",
+    "paired_branch_seed_formula": "500000 + generator_seed",
+    "outcome_schedule_key": [
+      "generator_seed",
+      "episode_index",
+      "edge_id",
+      "edge_attempt_index"
+    ],
+    "common_random_numbers_across_candidates": true
+  },
+  "candidate_policies": [
+    {
+      "policy_id": "gate_disabled",
+      "mode": "disabled",
+      "min_support_margin": null
+    },
+    {
+      "policy_id": "margin_000",
+      "mode": "fixed",
+      "min_support_margin": 0.0
+    },
+    {
+      "policy_id": "margin_005",
+      "mode": "fixed",
+      "min_support_margin": 0.05
+    },
+    {
+      "policy_id": "margin_010",
+      "mode": "fixed",
+      "min_support_margin": 0.1
+    },
+    {
+      "policy_id": "margin_015",
+      "mode": "fixed",
+      "min_support_margin": 0.15
+    },
+    {
+      "policy_id": "margin_020",
+      "mode": "fixed",
+      "min_support_margin": 0.2
+    },
+    {
+      "policy_id": "margin_025",
+      "mode": "fixed",
+      "min_support_margin": 0.25
+    },
+    {
+      "policy_id": "margin_030",
+      "mode": "fixed",
+      "min_support_margin": 0.3
+    },
+    {
+      "policy_id": "margin_035",
+      "mode": "fixed",
+      "min_support_margin": 0.35
+    },
+    {
+      "policy_id": "margin_040",
+      "mode": "fixed",
+      "min_support_margin": 0.4
+    },
+    {
+      "policy_id": "margin_050",
+      "mode": "fixed",
+      "min_support_margin": 0.5
+    },
+    {
+      "policy_id": "margin_085",
+      "mode": "fixed",
+      "min_support_margin": 0.85
+    }
+  ],
+  "candidate_common_guards": {
+    "disagreement_required": true,
+    "max_path_imbalance": 3.0,
+    "forbid_path_cap_hit": true,
+    "missing_or_nonfinite_measurement": "fail_closed"
+  },
+  "paired_decision_stage": {
+    "record_every_eligible_disagreement": true,
+    "source_trajectory": "At every common-guard-eligible disagreement on each candidate's own closed-loop trajectory, before the parent action is applied.",
+    "parent_run_mutation": false,
+    "complete_state_snapshot_required": true,
+    "branch_actions": [
+      "greedy_action",
+      "lookahead_preferred_action"
+    ],
+    "post_branch_rollout_policy": "The disabled-gate E_FULL_GEOMETRY control from the branched state.",
+    "rollout_horizon": "Until terminal state or the original episode's remaining 4 * actual_node_count interaction budget is exhausted.",
+    "rollout_budget": "Equal remaining interaction budget in both branches.",
+    "common_random_numbers": true,
+    "branch_utility": "success_adjusted_efficiency in [0,1], using the G1-v1 oracle-cost definition",
+    "delta_utility": "lookahead_branch_utility - greedy_branch_utility",
+    "neutral_band_inclusive": [
+      -0.01,
+      0.01
+    ],
+    "harmful_override": "delta_utility < -0.01",
+    "severe_harmful_override": "delta_utility <= -0.10",
+    "candidate_risk_attribution": "For each threshold, evaluate harm only on recorded disagreements whose support margin meets that threshold and that the candidate would therefore override.",
+    "diagnostic_only": false
+  },
+  "closed_loop_stage": {
+    "primary_statistical_unit": "generator-seed replicate",
+    "control": "gate_disabled",
+    "paired_by": [
+      "domain_family",
+      "scale",
+      "generator_seed"
+    ],
+    "primary_utility": "Mean success_adjusted_efficiency over the 20 evaluation episodes.",
+    "primary_effect": "candidate primary_utility - gate_disabled primary_utility",
+    "algorithm_timeout_score": 0.0,
+    "path_cap_hit_score": 0.0,
+    "method_out_of_memory_score": 0.0,
+    "infrastructure_failure": "Invalid cell; fix infrastructure and rerun the entire candidate-family-scale cell with identical seeds while retaining the failed artifact."
+  },
+  "risk_budget": {
+    "harmful_override_rate_upper_confidence_bound_max": 0.10,
+    "severe_harmful_override_rate_upper_confidence_bound_max": 0.02,
+    "family_primary_effect_lower_confidence_bound_min": -0.02,
+    "overall_primary_effect_lower_confidence_bound_min_exclusive": 0.0,
+    "path_cap_rate_max": 0.0,
+    "infrastructure_invalid_cell_fraction_max": 0.0
+  },
+  "minimum_activation_support": {
+    "override_decisions_min": 200,
+    "replicates_with_override_min": 24,
+    "overridden_fraction_of_eligible_disagreements_min": 0.01,
+    "applies_to": "Each non-disabled candidate on calibration and again to the selected policy on verification."
+  },
+  "statistics": {
+    "confidence_level": 0.95,
+    "bootstrap_resamples": 20000,
+    "calibration_bootstrap_seed": 2026073101,
+    "verification_bootstrap_seed": 2026073102,
+    "protected_holdout_bootstrap_seed": 2026073103,
+    "resampling_unit": "generator-seed replicate",
+    "stratified_by": [
+      "domain_family",
+      "scale"
+    ],
+    "interval": "Percentile paired stratified cluster bootstrap.",
+    "proportion_interval": "The same replicate-cluster bootstrap over replicate-level harmful and severe-harm counts; decisions are not treated as independent.",
+    "multiplicity": "Holm-Bonferroni at family-wise alpha 0.05 across every non-disabled candidate and every eligibility constraint within a split.",
+    "optional_stopping": false,
+    "negative_seed_removal": false
+  },
+  "selection_rule": {
+    "calibration_only": true,
+    "eligible_if": [
+      "all risk-budget constraints pass after multiplicity correction",
+      "all minimum-activation constraints pass",
+      "all 12 family-scale cells are infrastructure-valid"
+    ],
+    "optimization": "Largest pooled equal-cell-weight mean primary effect among eligible non-disabled candidates.",
+    "practical_tie_band": 0.005,
+    "tie_breaker": "Among eligible candidates within 0.005 primary-effect units of the best point estimate, choose the largest min_support_margin; remaining exact ties sort by policy_id.",
+    "no_eligible_candidate": "gate_disabled",
+    "zero_override_is_valid_negative": true,
+    "selection_artifact_required_before_verification": true
+  },
+  "verification_rule": {
+    "policy_frozen_before_access": true,
+    "same_eligibility_constraints": true,
+    "same_risk_budget": true,
+    "retuning_forbidden": true,
+    "failure_action": "Select gate_disabled and do not open protected_holdout.",
+    "pass_action": "Freeze verification artifact and permit one protected_holdout execution."
+  },
+  "protected_holdout_rule": {
+    "policy_frozen_before_access": true,
+    "retuning_forbidden": true,
+    "result_scope": "Only the declared E_FULL_GEOMETRY/domain/horizon scope.",
+    "failure_does_not_reopen_calibration": true
+  },
+  "planned_counts": {
+    "domain_family_scale_cells": 12,
+    "calibration_replicates_per_candidate": 240,
+    "calibration_candidates_including_disabled": 12,
+    "calibration_closed_loop_replicates_total": 2880,
+    "verification_replicates_selected_policy": 360,
+    "protected_holdout_replicates_selected_policy": 360
+  },
+  "implementation_prerequisites": [
+    "Implement a calibration-specific domain namespace without weakening the E0-G1-v1 holdout guard.",
+    "Implement complete deterministic state snapshots and paired branch rollouts.",
+    "Implement policy-parameterized E_FULL_GEOMETRY without changing E0-G1-v1.",
+    "Implement split-aware artifact schemas, checksums, and infrastructure-failure retention.",
+    "Implement the frozen clustered statistics and selection report.",
+    "Add a dry-run plan that proves counts and seed separation before execution."
+  ],
+  "forbidden_before_execution": [
+    "Changing candidates after reading any calibration outcome.",
+    "Using G1-v1 holdout seeds 1000 through 1029.",
+    "Instantiating verification or protected-holdout domains during runner development.",
+    "Calling support_margin calibrated confidence.",
+    "Changing a framework default from this preregistration alone."
+  ]
+}

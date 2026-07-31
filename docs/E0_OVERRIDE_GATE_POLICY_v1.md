@@ -307,7 +307,22 @@ Structural Geometry and G1-v1 retain their existing package-local execution
 paths. Their policy constructors are authoritative compatibility mappings, not
 rewrites of frozen code.
 
-The next work package must freeze a concrete calibration experiment instance.
-It must not mix policy-infrastructure implementation with outcome-based
-threshold selection. Calibration execution begins only after domains, seeds,
-utilities, risk budgets, candidate policies, and selection rules are fixed.
+WP-GATE-0.3 freezes that concrete instance in
+`E0_OVERRIDE_GATE_CALIBRATION_INSTANCE_v1.json`, with its rationale in
+`E0_OVERRIDE_GATE_CALIBRATION_PREREGISTRATION_v1.md`. It fixes:
+
+- `E_FULL_GEOMETRY` at horizon 3 as the only treatment scope;
+- the same scorer with overrides disabled as the causal control;
+- four domain families, three scales, and three fresh disjoint seed spaces;
+- 11 fixed margin candidates plus the disabled control;
+- paired branch and closed-loop utility;
+- activation, harm, non-inferiority, path-cap, and infrastructure budgets;
+- clustered inference, multiplicity correction, and a safety-favoring
+  deterministic tie-breaker; and
+- single-use verification before any protected-holdout access.
+
+The accompanying validator checks the frozen boundary without importing or
+constructing a domain. WP-GATE-0.3 does not execute calibration, select a
+threshold, implement the runner, read a holdout, or change runtime behavior.
+The next boundary is a reviewed runner implementation and dry-run plan;
+outcome-producing execution remains a separate explicit step.
