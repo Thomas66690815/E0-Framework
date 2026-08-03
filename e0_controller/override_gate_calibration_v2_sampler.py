@@ -7,6 +7,7 @@ import json
 import re
 from typing import Any, Dict, List, Mapping, Sequence
 
+from .g1_domains import validate_development_seed
 from .override_gate_calibration_v2 import (
     instance_sha256,
     load_calibration_instance_v2,
@@ -40,6 +41,15 @@ def _active_policy_ids(instance: Mapping[str, Any]) -> set[str]:
         for candidate in instance["candidate_policies"]
         if candidate["policy_id"] != "gate_disabled"
     }
+
+
+def _validate_split_seed(seed: int, split: str, instance: Mapping[str, Any]) -> None:
+    """Permit seed 0 only for explicitly labelled no-result diagnostics."""
+    if split == "development":
+        validate_development_seed(seed)
+        return
+    if seed not in seeds_for_split_v2(split, instance):
+        raise ValueError("Seed lies outside its frozen split")
 
 
 def _identity_from_trace(trace: Mapping[str, Any]) -> Dict[str, Any]:
@@ -95,8 +105,10 @@ def validate_stage_b_trace(
         raise ValueError("Unknown Stage-B domain family")
     if int(trace["scale"]) not in document["domain_manifest"]["scales"]:
         raise ValueError("Unknown Stage-B scale")
-    if int(trace["generator_seed"]) not in seeds_for_split_v2(split, document):
-        raise ValueError("Stage-B seed lies outside its frozen split")
+    try:
+        _validate_split_seed(int(trace["generator_seed"]), split, document)
+    except ValueError as error:
+        raise ValueError("Stage-B seed lies outside its frozen split") from error
     if trace["trace_complete"] is not True:
         raise ValueError("Stage-A sampling requires a complete Stage-B trace")
     if not _full_sha256(trace["parent_decision_trace_sha256"]):
@@ -106,6 +118,16 @@ def validate_stage_b_trace(
         raise ValueError("Stage-B holdout flag contradicts its split")
     if trace["not_gate_result"] is not True:
         raise ValueError("Stage-B trace must remain not_gate_result=true")
+    if split == "development":
+        for field in (
+            "calibration_executed",
+            "verification_executed",
+            "protected_holdout_accessed",
+        ):
+            if trace.get(field) is not False:
+                raise ValueError(
+                    f"Development Stage-B trace requires {field}=false"
+                )
     records = trace["decision_records"]
     if not isinstance(records, list):
         raise ValueError("Stage-B decision_records must be a list")
@@ -276,8 +298,10 @@ def validate_stage_a_sample_manifest(
         raise ValueError("Stage-A manifest split mismatch")
     if manifest["policy_id"] not in _active_policy_ids(document):
         raise ValueError("Stage-A manifest policy is not active")
-    if int(manifest["generator_seed"]) not in seeds_for_split_v2(split, document):
-        raise ValueError("Stage-A manifest seed lies outside its split")
+    try:
+        _validate_split_seed(int(manifest["generator_seed"]), split, document)
+    except ValueError as error:
+        raise ValueError("Stage-A manifest seed lies outside its split") from error
     if manifest["manual_sampling_permitted"] is not False:
         raise ValueError("Manual Stage-A sampling is forbidden")
     if manifest["outcome_fields_in_priority"] is not False:

@@ -270,3 +270,15 @@ cell identities while recording zero domains and zero outcomes.
 This remains pre-execution infrastructure. There is no Stage-B outcome worker,
 Stage-A replay/branch worker, authorization validator, consolidation path, or
 outcome workflow. See `E0_OVERRIDE_GATE_CALIBRATION_IMPLEMENTATION_v2.md`.
+
+## WP-GATE-0.13 development workers
+
+Killable Stage-B and exact Stage-A replay workers now pass a development-only
+pilot. Stage B collected a complete branch-free parent trace. Stage A replayed
+the same trace digest and evaluated only the four frozen hash-selected
+decisions, one killable process per pair. Immutable atomic attempt files and
+newest-attempt/no-fallback consolidation also passed their failure tests.
+
+This does not expose a fresh-split builder or outcome workflow. Authorization
+validation remains the next boundary. See
+`E0_OVERRIDE_GATE_CALIBRATION_WORKERS_v2.md`.

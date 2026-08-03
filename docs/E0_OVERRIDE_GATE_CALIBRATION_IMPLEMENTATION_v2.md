@@ -140,6 +140,15 @@ distribution boundaries without instantiating seeds 5000–7029. Only after an
 execution commit is frozen and independently reviewed may a separate
 calibration authorization be created.
 
+## WP-GATE-0.13 development worker follow-up
+
+The first three missing components above are now implemented and exercised at
+the development boundary: killable branch-free Stage B, exact Stage-A replay
+with an independent process per selected pair, and immutable atomic attempts
+with latest-attempt/no-fallback consolidation. The production split remains
+unreachable and the authorization validator and outcome workflow remain
+unimplemented. See `E0_OVERRIDE_GATE_CALIBRATION_WORKERS_v2.md`.
+
 ## Evidence
 
 - `artifacts/override_gate/development/wp_gate_0_12/dry_run.json`

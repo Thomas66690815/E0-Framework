@@ -11,7 +11,7 @@ import copy
 import hashlib
 import json
 from dataclasses import dataclass, replace
-from typing import Any, Dict, List, Mapping, Optional, Tuple
+from typing import AbstractSet, Any, Dict, List, Mapping, Optional, Tuple
 
 from .g1_ablations import (
     DecisionRecord,
@@ -567,14 +567,16 @@ def run_instrumented_episode(
     config_document: Optional[Mapping[str, Any]] = None,
     collect_paired_branches: bool = True,
     max_paired_branches: Optional[int] = None,
+    paired_branch_decision_keys: Optional[AbstractSet[Tuple[int, int]]] = None,
 ) -> InstrumentedEpisodeResult:
     """Run one parent episode and branch every common-guard disagreement.
 
     This function has no artifact writer and no matrix loop.  The later
     bounded runner is responsible for process timeouts and persistence.
-    ``collect_paired_branches=False`` and ``max_paired_branches`` exist only
-    for development diagnostics that isolate parent runtime or bound Stage-A
-    instrumentation.  Authorized v1 calibration uses the unchanged defaults.
+    ``collect_paired_branches=False``, ``max_paired_branches``, and exact
+    ``paired_branch_decision_keys`` exist only for development diagnostics
+    that isolate parent runtime or replay a frozen Stage-A sample.  Authorized
+    v1 calibration uses the unchanged defaults.
     """
     budget = (
         int(interaction_budget)
@@ -605,6 +607,30 @@ def run_instrumented_episode(
             raise PermissionError(
                 "Paired-branch caps are development-diagnostic only"
             )
+    if paired_branch_decision_keys is not None:
+        if domain.seed_namespace != DEVELOPMENT_SEED_NAMESPACE:
+            raise PermissionError(
+                "Exact paired-branch selection is development-diagnostic only"
+            )
+        if not collect_paired_branches:
+            raise ValueError(
+                "paired_branch_decision_keys requires paired branch collection"
+            )
+        if max_paired_branches is not None:
+            raise ValueError(
+                "Exact paired-branch selection cannot be combined with a cap"
+            )
+        normalized_keys = {
+            (int(key[0]), int(key[1])) for key in paired_branch_decision_keys
+        }
+        if len(normalized_keys) != len(paired_branch_decision_keys):
+            raise ValueError("Paired-branch decision keys must be unique pairs")
+        if any(key[0] != episode_index or key[1] < 0 for key in normalized_keys):
+            raise ValueError(
+                "Paired-branch decision keys must target this episode"
+            )
+    else:
+        normalized_keys = None
     adapter = CalibrationEFullAdapter(
         domain,
         policy,
@@ -623,8 +649,13 @@ def run_instrumented_episode(
 
     while episode.interactions < budget and episode.state != domain.goal:
         actions = _local_actions(domain, episode.state)
+        decision_key = (episode_index, episode.interactions)
         can_sample_branch = bool(
             collect_paired_branches
+            and (
+                normalized_keys is None
+                or decision_key in normalized_keys
+            )
             and (
                 max_paired_branches is None
                 or len(paired) < max_paired_branches
