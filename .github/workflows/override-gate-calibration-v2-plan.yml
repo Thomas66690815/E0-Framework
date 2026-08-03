@@ -1,0 +1,59 @@
+name: Override Gate Calibration v2 Plan
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PLAN_DIR: artifacts/override_gate/v2-planning
+
+jobs:
+  preflight:
+    name: Validate frozen v2 plan without domains or outcomes
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install project and tests
+        run: python -m pip install -e ".[science]" pytest
+
+      - name: Run v2 no-outcome contracts
+        run: |
+          python -m pytest \
+            e0_controller/test_override_gate_calibration_v2.py \
+            e0_controller/test_override_gate_calibration_v2_sampler.py \
+            e0_controller/test_override_gate_calibration_v2_runner.py \
+            e0_controller/test_override_gate_calibration_v2_statistics.py \
+            -q -p no:cacheprovider
+
+      - name: Seal planning-only manifest and separate matrices
+        shell: bash
+        run: |
+          mkdir -p "$PLAN_DIR"
+          python -m e0_controller.override_gate_calibration_v2_runner dry-run \
+            --execution-commit "$GITHUB_SHA" \
+            --output "$PLAN_DIR/dry-run.json"
+          python -m e0_controller.override_gate_calibration_v2_runner matrix \
+            --split calibration \
+            --stage stage_b_closed_loop_parent \
+            --execution-commit "$GITHUB_SHA" \
+            > "$PLAN_DIR/stage-b-matrix.json"
+          python -m e0_controller.override_gate_calibration_v2_runner matrix \
+            --split calibration \
+            --stage stage_a_paired_evidence \
+            --execution-commit "$GITHUB_SHA" \
+            > "$PLAN_DIR/stage-a-matrix.json"
+
+      - name: Upload planning evidence only
+        uses: actions/upload-artifact@v4
+        with:
+          name: override-gate-calibration-v2-plan
+          path: ${{ env.PLAN_DIR }}
+          if-no-files-found: error
+          retention-days: 14

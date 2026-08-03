@@ -1,0 +1,43 @@
+{
+  "artifact_kind": "override_gate_v2_no_outcome_implementation_diagnosis",
+  "work_package": "WP-GATE-0.12",
+  "instance_id": "E0-OVERRIDE-GATE-CAL-INSTANCE-v2",
+  "split": "planning_only",
+  "implementation": {
+    "immutable_instance_validator": "implemented",
+    "outcome_blind_stage_a_sampler": "implemented_not_executed",
+    "stage_a_branch_runner": "not_implemented",
+    "stage_b_outcome_runner": "not_implemented",
+    "cell_planner_and_artifact_contracts": "implemented_no_outcomes",
+    "joint_stage_a_stage_b_statistics": "implemented_with_synthetic_complete_matrices",
+    "github_workflow": "manual_planning_only",
+    "authorization_gate": "not_implemented"
+  },
+  "planning_counts": {
+    "calibration_stage_b_cells": 144,
+    "calibration_stage_b_replicates": 2880,
+    "calibration_stage_a_cells": 132,
+    "calibration_stage_a_replicates": 2640,
+    "calibration_stage_a_sampled_pairs_max": 10560,
+    "verification_stage_b_cells": 12,
+    "verification_stage_a_cells": 12,
+    "protected_holdout_stage_b_cells": 12,
+    "protected_holdout_stage_a_cells": 12
+  },
+  "dry_run": {
+    "execution_prohibited": true,
+    "outcome_commands_exposed": false,
+    "domains_instantiated": 0,
+    "outcomes_observed": 0,
+    "manifest_sha256": "b145f556f491d2e773a8e765d67e46554b021655ce5b271365f37381272e8114",
+    "file_sha256": "ee4a92013add1ade15ca4d7294274aff6322ff34731a59b4651d61550aba4a25"
+  },
+  "scientific_status": "No threshold evidence. Sampler semantics and joint selection logic are mechanically specified, but only synthetic complete matrices and planning identities were exercised.",
+  "next_requirement": "Implement killable Stage-B parent and Stage-A replay/branch workers in development namespaces, then implement immutable attempts, authorization validation, and outcome execution without opening any v2 fresh split.",
+  "calibration_executed": false,
+  "verification_executed": false,
+  "protected_holdout_accessed": false,
+  "holdout_accessed": false,
+  "not_gate_result": true,
+  "dry_run_artifact": "artifacts/override_gate/development/wp_gate_0_12/dry_run.json"
+}

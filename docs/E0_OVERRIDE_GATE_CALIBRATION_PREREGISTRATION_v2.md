@@ -123,7 +123,7 @@ An active candidate must satisfy all of the following:
 - zero observed severe harms (`delta_utility <= -0.10`) in Stage A;
 - zero unresolved Stage-A samples;
 - zero Stage-B algorithm timeouts and path-cap outcomes;
-- every family-scale primary-effect lower bound at least -0.02; and
+- every domain-family primary-effect lower bound at least -0.02; and
 - overall primary-effect lower bound strictly greater than zero.
 
 The severe-harm rule is deliberately a zero-tolerance sample sentinel, not a
@@ -189,6 +189,18 @@ WP-GATE-0.12 may implement those components and perform only no-outcome dry
 runs. It must then freeze an execution commit and produce an externally
 reviewable authorization template. Calibration execution requires a later,
 explicit authorization. Verification and protected holdout remain closed.
+
+## WP-GATE-0.12 implementation status
+
+The deterministic sampler, domain-free cell plans, artifact contracts, and
+joint Stage-A/Stage-B statistics are implemented and tested without fresh
+domains. A manual GitHub workflow can produce planning evidence only. It
+exposes no outcome command.
+
+The parent and branch workers, immutable attempt consolidation, authorization
+validator, and outcome workflow remain unimplemented. Therefore no execution
+commit or authorization can yet be frozen. See
+`E0_OVERRIDE_GATE_CALIBRATION_IMPLEMENTATION_v2.md`.
 
 ## Evidence
 

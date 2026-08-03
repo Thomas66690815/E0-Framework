@@ -1,0 +1,250 @@
+{
+  "artifact_contract": {
+    "global_invariants": {
+      "authorization_required_for_any_outcome_command": true,
+      "execution_commit_must_be_full_sha": true,
+      "fallback_to_earlier_attempt": false,
+      "highest_attempt_only": true,
+      "instance_sha256": "0210d41d5e76c7c6fd8be8da79040a3e99f55906d62393007356d8aa86678692",
+      "source_commit_must_match_instance": true,
+      "stage_a_time_is_parent_performance": false,
+      "stage_a_unresolved_is_parent_algorithm_timeout": false
+    },
+    "selection_record": {
+      "both_stages_required": true,
+      "required_fields": [
+        "instance_id",
+        "instance_sha256",
+        "source_commit",
+        "execution_commit",
+        "split",
+        "stage_a_record_count",
+        "stage_b_record_count",
+        "candidate_reports",
+        "selected_policy_id",
+        "no_eligible_candidate",
+        "statistics",
+        "artifact_hashes",
+        "holdout_accessed",
+        "not_gate_result"
+      ],
+      "split_must_be": "calibration"
+    },
+    "stage_a_replicate_record": {
+      "parent_replay_trace_match_must_be": true,
+      "required_fields": [
+        "instance_id",
+        "instance_sha256",
+        "source_commit",
+        "execution_commit",
+        "split",
+        "stage",
+        "domain_family",
+        "scale",
+        "generator_seed",
+        "policy_id",
+        "sample_manifest_sha256",
+        "sampling_frame_override_count",
+        "sample_count",
+        "parent_replay_trace_match",
+        "paired_decisions",
+        "unresolved_count",
+        "infrastructure_failure",
+        "instrumentation_wall_time_ms",
+        "holdout_accessed",
+        "not_gate_result"
+      ],
+      "sample_count_max": 4
+    },
+    "stage_b_replicate_record": {
+      "branch_time_charged_to_parent_must_be": false,
+      "required_fields": [
+        "instance_id",
+        "instance_sha256",
+        "source_commit",
+        "execution_commit",
+        "split",
+        "stage",
+        "domain_family",
+        "scale",
+        "generator_seed",
+        "policy_id",
+        "primary_utility",
+        "observed_disagreement_count",
+        "guard_eligible_disagreement_count",
+        "executed_override_count",
+        "algorithm_timeout_count",
+        "path_cap_count",
+        "infrastructure_failure",
+        "parent_wall_time_ms",
+        "holdout_accessed",
+        "not_gate_result"
+      ]
+    }
+  },
+  "artifact_kind": "override_gate_v2_planning_dry_run",
+  "calibration_executed": false,
+  "domains_instantiated": 0,
+  "dry_run_schema_version": 1,
+  "dry_run_sha256": "b145f556f491d2e773a8e765d67e46554b021655ce5b271365f37381272e8114",
+  "execution_commit": "UNFROZEN",
+  "execution_commit_frozen": false,
+  "execution_prohibited": true,
+  "holdout_accessed": false,
+  "instance_id": "E0-OVERRIDE-GATE-CAL-INSTANCE-v2",
+  "instance_sha256": "0210d41d5e76c7c6fd8be8da79040a3e99f55906d62393007356d8aa86678692",
+  "not_gate_result": true,
+  "outcome_commands_exposed": false,
+  "outcomes_observed": 0,
+  "protected_holdout_accessed": false,
+  "source_commit": "91c1f63cbfda3891be851acafa3beee3b6f9baa7",
+  "splits": {
+    "calibration": {
+      "generator_seeds": [
+        5000,
+        5001,
+        5002,
+        5003,
+        5004,
+        5005,
+        5006,
+        5007,
+        5008,
+        5009,
+        5010,
+        5011,
+        5012,
+        5013,
+        5014,
+        5015,
+        5016,
+        5017,
+        5018,
+        5019
+      ],
+      "stages": {
+        "stage_a_paired_evidence": {
+          "cell_count": 132,
+          "first_cell_id": "gate-v2-calibration-stage-a-wall_grid-N100-margin_000",
+          "last_cell_id": "gate-v2-calibration-stage-a-nonstationary_parallel-N1000-margin_085",
+          "matrix_sha256": "3b5ad30529302b3303f84c2dccb46876a691bf5e8d8a4a4bed5c59b2a2d657d4",
+          "replicate_count": 2640,
+          "sampled_pairs_max": 10560
+        },
+        "stage_b_closed_loop_parent": {
+          "cell_count": 144,
+          "first_cell_id": "gate-v2-calibration-stage-b-wall_grid-N100-gate_disabled",
+          "last_cell_id": "gate-v2-calibration-stage-b-nonstationary_parallel-N1000-margin_085",
+          "matrix_sha256": "64e5be39111dffcac5a0a34fe76eef741662288fb190a52000fc021de484eb4e",
+          "replicate_count": 2880,
+          "sampled_pairs_max": 0
+        }
+      }
+    },
+    "protected_holdout": {
+      "generator_seeds": [
+        7000,
+        7001,
+        7002,
+        7003,
+        7004,
+        7005,
+        7006,
+        7007,
+        7008,
+        7009,
+        7010,
+        7011,
+        7012,
+        7013,
+        7014,
+        7015,
+        7016,
+        7017,
+        7018,
+        7019,
+        7020,
+        7021,
+        7022,
+        7023,
+        7024,
+        7025,
+        7026,
+        7027,
+        7028,
+        7029
+      ],
+      "stages": {
+        "stage_a_paired_evidence": {
+          "cell_count": 12,
+          "first_cell_id": "gate-v2-protected_holdout-stage-a-wall_grid-N100-__selected_policy__",
+          "last_cell_id": "gate-v2-protected_holdout-stage-a-nonstationary_parallel-N1000-__selected_policy__",
+          "matrix_sha256": "3785c324f64012c183aae05f34360c505bc38b851377c5bf18a2ff5e0e822bf5",
+          "replicate_count": 360,
+          "sampled_pairs_max": 1440
+        },
+        "stage_b_closed_loop_parent": {
+          "cell_count": 12,
+          "first_cell_id": "gate-v2-protected_holdout-stage-b-wall_grid-N100-__selected_policy__",
+          "last_cell_id": "gate-v2-protected_holdout-stage-b-nonstationary_parallel-N1000-__selected_policy__",
+          "matrix_sha256": "295849e07d44e7b9d4ef3f884fefc58deb971075521067fb699cd0f0909cdbe8",
+          "replicate_count": 360,
+          "sampled_pairs_max": 0
+        }
+      }
+    },
+    "verification": {
+      "generator_seeds": [
+        6000,
+        6001,
+        6002,
+        6003,
+        6004,
+        6005,
+        6006,
+        6007,
+        6008,
+        6009,
+        6010,
+        6011,
+        6012,
+        6013,
+        6014,
+        6015,
+        6016,
+        6017,
+        6018,
+        6019,
+        6020,
+        6021,
+        6022,
+        6023,
+        6024,
+        6025,
+        6026,
+        6027,
+        6028,
+        6029
+      ],
+      "stages": {
+        "stage_a_paired_evidence": {
+          "cell_count": 12,
+          "first_cell_id": "gate-v2-verification-stage-a-wall_grid-N100-__selected_policy__",
+          "last_cell_id": "gate-v2-verification-stage-a-nonstationary_parallel-N1000-__selected_policy__",
+          "matrix_sha256": "614aa7e1914e383dc941f3935b0640232da8545d3a558951a1b29fc66e73ff52",
+          "replicate_count": 360,
+          "sampled_pairs_max": 1440
+        },
+        "stage_b_closed_loop_parent": {
+          "cell_count": 12,
+          "first_cell_id": "gate-v2-verification-stage-b-wall_grid-N100-__selected_policy__",
+          "last_cell_id": "gate-v2-verification-stage-b-nonstationary_parallel-N1000-__selected_policy__",
+          "matrix_sha256": "4c1bf45a248048bce80a29fa8eca1291cc2fd51eb8066bec67ccb0be41340cb4",
+          "replicate_count": 360,
+          "sampled_pairs_max": 0
+        }
+      }
+    }
+  },
+  "verification_executed": false
+}

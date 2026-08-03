@@ -135,17 +135,22 @@ def test_v2_protocol_is_inert_and_contains_no_authorization():
         / "E0_OVERRIDE_GATE_CALIBRATION_PROTOCOL_v2.json"
     )
     protocol = json.loads(path.read_text(encoding="utf-8"))
-    assert protocol["status"] == "frozen_design_not_implemented_not_authorized"
+    assert protocol["status"] == (
+        "frozen_design_implementation_in_progress_not_authorized"
+    )
     assert protocol["authorization_record_present"] is False
     assert protocol["calibration_execution_authorized"] is False
     assert protocol["verification_execution_authorized"] is False
     assert protocol["protected_holdout_execution_authorized"] is False
     assert protocol["not_gate_result"] is True
-    assert all(
-        value == "not_implemented"
-        for key, value in protocol["implementation_status"].items()
-        if key != "immutable_instance_validator"
-    )
+    status = protocol["implementation_status"]
+    assert status["immutable_instance_validator"] == "implemented"
+    assert status["stage_a_sampler"] == "implemented_not_executed"
+    assert status["stage_a_branch_runner"] == "not_implemented"
+    assert status["stage_b_runner"] == "planning_and_artifact_contracts_only"
+    assert status["v2_statistics"] == "implemented_with_synthetic_records_only"
+    assert status["v2_distributed_workflow"] == "planning_only"
+    assert status["v2_authorization_gate"] == "not_implemented"
 
 
 @pytest.mark.parametrize(

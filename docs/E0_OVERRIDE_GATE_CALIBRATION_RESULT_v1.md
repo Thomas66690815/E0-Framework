@@ -201,3 +201,14 @@ This is not a reinterpretation of v1 and not a new result. The v2 runner and
 statistics are not implemented, no authorization exists, and no v2
 fresh-split domain has been instantiated. See
 `E0_OVERRIDE_GATE_CALIBRATION_PREREGISTRATION_v2.md`.
+
+## WP-GATE-0.12 implementation boundary
+
+The v2 sampler, matrix planner, artifact contracts, and joint statistics now
+exist and pass no-outcome tests, including full synthetic record populations.
+The planning manifest reports zero domains instantiated and zero outcomes
+observed.
+
+No empirical conclusion changes: outcome workers and authorization do not yet
+exist, so v2 cannot run. See
+`E0_OVERRIDE_GATE_CALIBRATION_IMPLEMENTATION_v2.md`.

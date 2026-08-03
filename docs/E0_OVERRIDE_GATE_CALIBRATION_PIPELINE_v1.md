@@ -259,3 +259,14 @@ fail-closed unresolved evidence, activation minima, multiplicity, missingness,
 tie-breaking, and the disabled fallback. Its implementation and authorization
 remain future work. See
 `E0_OVERRIDE_GATE_CALIBRATION_PREREGISTRATION_v2.md`.
+
+## WP-GATE-0.12 no-outcome implementation
+
+The v2 hash sampler, separate Stage-A/Stage-B cell plans, record validators,
+joint fail-closed statistics, and manual planning workflow are now
+implemented. A sealed dry-run produces 144 Stage-B and 132 Stage-A calibration
+cell identities while recording zero domains and zero outcomes.
+
+This remains pre-execution infrastructure. There is no Stage-B outcome worker,
+Stage-A replay/branch worker, authorization validator, consolidation path, or
+outcome workflow. See `E0_OVERRIDE_GATE_CALIBRATION_IMPLEMENTATION_v2.md`.
