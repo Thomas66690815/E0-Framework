@@ -1,0 +1,486 @@
+{
+  "instance_id": "E0-OVERRIDE-GATE-CAL-INSTANCE-v2",
+  "protocol_id": "E0-OVERRIDE-GATE-CAL-v2",
+  "schema_version": "2.0",
+  "work_package": "WP-GATE-0.11",
+  "status": "frozen_not_executed",
+  "frozen_on": "2026-08-03",
+  "source_commit": "91c1f63cbfda3891be851acafa3beee3b6f9baa7",
+  "source_commit_role": "Last behavior-changing commit. It contains only the development-only Stage-A/Stage-B prototype and leaves v1 execution defaults unchanged.",
+  "execution_commit_policy": "A later commit may implement only this frozen v2 contract. Any change to generators, candidates, sampling, utility, statistics, timeouts, split semantics, or selection requires a new versioned instance.",
+  "runtime_behavior_changed": false,
+  "calibration_executed": false,
+  "verification_executed": false,
+  "protected_holdout_accessed": false,
+  "holdout_accessed": false,
+  "not_gate_result": true,
+  "scope": {
+    "treatment": "E_FULL_GEOMETRY with a fixed support-margin gate",
+    "control": "E_FULL_GEOMETRY with the override gate disabled",
+    "score_semantics": "probability_gap_best_minus_second",
+    "path_horizon": 3,
+    "path_geometry": "all",
+    "max_paths_per_decision": 100000,
+    "max_path_imbalance": 3.0,
+    "forbid_path_cap_hit": true,
+    "portable": false,
+    "out_of_scope": [
+      "E0Controller outside the G1 adapter",
+      "B_INCOHERENT, C_THETA_ZERO, and D_U1_PHASE score implementations",
+      "other path horizons or geometries",
+      "domains outside the four frozen families",
+      "a universal E0 confidence threshold",
+      "calibrated probability claims"
+    ]
+  },
+  "environment": {
+    "runner_image": "ubuntu-24.04",
+    "python": "3.12",
+    "installation": "python -m pip install -e \".[science]\"",
+    "execution_commit_required": true,
+    "dependency_capture_required": [
+      "python --version",
+      "python -m pip freeze",
+      "uname -a",
+      "source commit",
+      "execution commit",
+      "workflow run id"
+    ],
+    "numeric_determinism_rule": "Every record binds generator, outcome, policy, sampler, and branch random-stream seeds. Any environment deviation is a new instance."
+  },
+  "domain_manifest": {
+    "generator_semantics": "The four E0-G1-v1 generators at source_commit, exposed only through new v2 split namespaces.",
+    "g1_v1_generator_code_reused": true,
+    "g1_v1_split_validator_reused": false,
+    "families": [
+      "wall_grid",
+      "trap_grid_v2",
+      "decoy_dag",
+      "nonstationary_parallel"
+    ],
+    "scales": [
+      100,
+      500,
+      1000
+    ],
+    "adaptation_episodes": 10,
+    "evaluation_episodes": 20,
+    "max_steps_per_episode_formula": "4 * actual_node_count",
+    "learning_during_evaluation": true,
+    "family_scale_weighting": "Each of 12 family-scale cells has equal weight.",
+    "required_invariants": "Identical to docs/E0_G1_PROTOCOL_v1.json at source_commit."
+  },
+  "split_manifests": {
+    "exploration": {
+      "generator_seeds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "may_execute": false,
+      "role": "Historical development evidence only; may motivate this preregistration but may not select or confirm a policy."
+    },
+    "calibration": {
+      "generator_seeds": [
+        5000,
+        5001,
+        5002,
+        5003,
+        5004,
+        5005,
+        5006,
+        5007,
+        5008,
+        5009,
+        5010,
+        5011,
+        5012,
+        5013,
+        5014,
+        5015,
+        5016,
+        5017,
+        5018,
+        5019
+      ],
+      "replicates_per_family_scale_cell": 20,
+      "may_select_policy": true,
+      "may_confirm_policy": false
+    },
+    "verification": {
+      "generator_seeds": [
+        6000,
+        6001,
+        6002,
+        6003,
+        6004,
+        6005,
+        6006,
+        6007,
+        6008,
+        6009,
+        6010,
+        6011,
+        6012,
+        6013,
+        6014,
+        6015,
+        6016,
+        6017,
+        6018,
+        6019,
+        6020,
+        6021,
+        6022,
+        6023,
+        6024,
+        6025,
+        6026,
+        6027,
+        6028,
+        6029
+      ],
+      "replicates_per_family_scale_cell": 30,
+      "single_use": true,
+      "may_select_policy": false,
+      "may_confirm_policy": true
+    },
+    "protected_holdout": {
+      "generator_seeds": [
+        7000,
+        7001,
+        7002,
+        7003,
+        7004,
+        7005,
+        7006,
+        7007,
+        7008,
+        7009,
+        7010,
+        7011,
+        7012,
+        7013,
+        7014,
+        7015,
+        7016,
+        7017,
+        7018,
+        7019,
+        7020,
+        7021,
+        7022,
+        7023,
+        7024,
+        7025,
+        7026,
+        7027,
+        7028,
+        7029
+      ],
+      "replicates_per_family_scale_cell": 30,
+      "single_use": true,
+      "access_condition": "Open only after the frozen selected policy passes v2 verification without retuning.",
+      "may_select_policy": false,
+      "may_confirm_policy": true
+    }
+  },
+  "excluded_seed_ranges": {
+    "g1_v1_holdout": [
+      1000,
+      1029
+    ],
+    "observed_v1_calibration": [
+      2000,
+      2019
+    ],
+    "reserved_unopened_v1_verification": [
+      3000,
+      3029
+    ],
+    "reserved_unopened_v1_holdout": [
+      4000,
+      4029
+    ]
+  },
+  "seed_derivation": {
+    "outcome_seed_formula": "200000 + generator_seed",
+    "policy_seed_formula": "300000 + generator_seed",
+    "stage_a_sampler_salt": "E0-OVERRIDE-GATE-v2-stage-a-sample-v1",
+    "paired_branch_seed_formula": "500000 + generator_seed",
+    "outcome_schedule_key": [
+      "generator_seed",
+      "episode_index",
+      "edge_id",
+      "edge_attempt_index"
+    ],
+    "common_random_numbers_across_candidates": true
+  },
+  "candidate_policies": [
+    {
+      "policy_id": "gate_disabled",
+      "mode": "disabled",
+      "min_support_margin": null
+    },
+    {
+      "policy_id": "margin_000",
+      "mode": "fixed",
+      "min_support_margin": 0.0
+    },
+    {
+      "policy_id": "margin_005",
+      "mode": "fixed",
+      "min_support_margin": 0.05
+    },
+    {
+      "policy_id": "margin_010",
+      "mode": "fixed",
+      "min_support_margin": 0.1
+    },
+    {
+      "policy_id": "margin_015",
+      "mode": "fixed",
+      "min_support_margin": 0.15
+    },
+    {
+      "policy_id": "margin_020",
+      "mode": "fixed",
+      "min_support_margin": 0.2
+    },
+    {
+      "policy_id": "margin_025",
+      "mode": "fixed",
+      "min_support_margin": 0.25
+    },
+    {
+      "policy_id": "margin_030",
+      "mode": "fixed",
+      "min_support_margin": 0.3
+    },
+    {
+      "policy_id": "margin_035",
+      "mode": "fixed",
+      "min_support_margin": 0.35
+    },
+    {
+      "policy_id": "margin_040",
+      "mode": "fixed",
+      "min_support_margin": 0.4
+    },
+    {
+      "policy_id": "margin_050",
+      "mode": "fixed",
+      "min_support_margin": 0.5
+    },
+    {
+      "policy_id": "margin_085",
+      "mode": "fixed",
+      "min_support_margin": 0.85
+    }
+  ],
+  "candidate_common_guards": {
+    "disagreement_required": true,
+    "max_path_imbalance": 3.0,
+    "forbid_path_cap_hit": true,
+    "missing_or_nonfinite_measurement": "fail_closed"
+  },
+  "stage_b_closed_loop": {
+    "runs_before_stage_a": true,
+    "paired_branch_collection": false,
+    "snapshot_cloning_for_branch_evidence": false,
+    "primary_statistical_unit": "generator-seed replicate",
+    "control": "gate_disabled",
+    "paired_by": [
+      "domain_family",
+      "scale",
+      "generator_seed"
+    ],
+    "primary_utility": "Mean success_adjusted_efficiency over the 20 evaluation episodes.",
+    "primary_effect": "candidate primary_utility - gate_disabled primary_utility",
+    "required_decision_counts": [
+      "observed_disagreement_count",
+      "guard_eligible_disagreement_count",
+      "executed_override_count"
+    ],
+    "decision_trace_required": true,
+    "algorithm_timeout_score": 0.0,
+    "path_cap_hit_score": 0.0,
+    "method_out_of_memory_score": 0.0,
+    "infrastructure_failure": "Invalid cell; retain it and rerun the whole candidate-family-scale cell with identical seeds."
+  },
+  "stage_a_paired_evidence": {
+    "eligible_candidates": "Every non-disabled candidate.",
+    "sampling_frame": "Executed overrides in evaluation episodes of that candidate's complete Stage-B trace.",
+    "sample_cap_per_candidate_replicate": 4,
+    "sample_priority": "Ascending SHA-256 of the frozen sampler salt and decision identity; choose the first four unique priorities.",
+    "sample_priority_fields": [
+      "instance_id",
+      "policy_id",
+      "domain_family",
+      "scale",
+      "generator_seed",
+      "episode_index",
+      "interaction_index",
+      "state",
+      "greedy_action",
+      "preferred_action"
+    ],
+    "outcome_fields_in_sample_priority": false,
+    "manual_sampling_permitted": false,
+    "fewer_than_cap_rule": "Sample every executed override if a replicate has fewer than four.",
+    "zero_override_rule": "Emit an empty, valid sampling manifest; activation support fails if the frozen minimum is not met.",
+    "parent_replay_required": true,
+    "parent_replay_trace_digest_must_match_stage_b": true,
+    "trace_mismatch_classification": "infrastructure_invalid",
+    "parent_replay_time_is_parent_performance": false,
+    "complete_state_snapshot_required_at_selected_decision": true,
+    "branch_actions": [
+      "greedy_action",
+      "lookahead_preferred_action"
+    ],
+    "post_first_action_policy": "The disabled-gate E_FULL_GEOMETRY control from the branched state.",
+    "rollout_horizon": "Until terminal state or the original episode's remaining 4 * actual_node_count interaction budget is exhausted.",
+    "equal_remaining_interaction_budget": true,
+    "common_random_numbers": true,
+    "branch_utility": "success_adjusted_efficiency in [0,1], using the G1-v1 oracle-cost definition",
+    "delta_utility": "lookahead_branch_utility - greedy_branch_utility",
+    "neutral_band_inclusive": [
+      -0.01,
+      0.01
+    ],
+    "harmful_override": "delta_utility < -0.01",
+    "severe_harmful_override": "delta_utility <= -0.10",
+    "branch_algorithm_timeout_classification": "stage_a_unresolved",
+    "stage_a_unresolved_is_parent_algorithm_timeout": false,
+    "stage_a_unresolved_candidate_action": "ineligible",
+    "diagnostic_only": false
+  },
+  "timeouts": {
+    "stage_b_episode_seconds": 60,
+    "stage_b_replicate_seconds": 1800,
+    "stage_a_parent_replay_episode_seconds": 60,
+    "stage_a_individual_branch_seconds": 60,
+    "stage_a_branch_pair_process_seconds": 150,
+    "stage_a_cell_seconds": 3600,
+    "infrastructure_retry": "Whole cell, identical inputs, immutable attempt artifacts, highest attempt only, no fallback to earlier attempts.",
+    "branch_time_charged_to_parent": false
+  },
+  "risk_budget": {
+    "stage_a_harmful_override_rate_upper_confidence_bound_max": 0.10,
+    "stage_a_severe_harmful_override_count_max": 0,
+    "stage_a_unresolved_count_max": 0,
+    "stage_b_family_primary_effect_lower_confidence_bound_min": -0.02,
+    "stage_b_overall_primary_effect_lower_confidence_bound_min_exclusive": 0.0,
+    "stage_b_algorithm_timeout_rate_max": 0.0,
+    "stage_b_path_cap_rate_max": 0.0,
+    "infrastructure_invalid_cell_fraction_max": 0.0
+  },
+  "minimum_activation_support": {
+    "stage_b_override_decisions_min": 200,
+    "stage_b_replicates_with_override_min": 24,
+    "stage_b_overridden_fraction_of_guard_eligible_disagreements_min": 0.01,
+    "stage_a_sampled_override_decisions_min": 400,
+    "stage_a_replicates_with_sample_min": 120,
+    "applies_to": "Each non-disabled candidate on calibration and again to the selected active policy on verification."
+  },
+  "statistics": {
+    "confidence_level": 0.95,
+    "bootstrap_resamples": 20000,
+    "calibration_bootstrap_seed": 2026080301,
+    "verification_bootstrap_seed": 2026080302,
+    "protected_holdout_bootstrap_seed": 2026080303,
+    "resampling_unit": "generator-seed replicate",
+    "stratified_by": [
+      "domain_family",
+      "scale"
+    ],
+    "stage_b_interval": "One-sided percentile paired stratified cluster bootstrap.",
+    "stage_a_harm_interval": "One-sided percentile stratified cluster bootstrap of the conditional harmful fraction over sampled executed overrides; resample seed replicates and retain each replicate's complete sample cluster.",
+    "stage_a_zero_sample_replicates": "Excluded from the conditional harm denominator but included in activation-support accounting.",
+    "stage_a_severe_harm_rule": "Zero-tolerance observed sentinel, not a population-rate estimate.",
+    "multiplicity": "Holm-Bonferroni at family-wise alpha 0.05 across all non-disabled candidates and every inferential eligibility constraint within a split.",
+    "optional_stopping": false,
+    "negative_seed_removal": false,
+    "post_authorization_candidate_removal": false
+  },
+  "selection_rule": {
+    "calibration_only": true,
+    "stage_a_role": "Safety and support eligibility filter only.",
+    "stage_b_role": "Closed-loop benefit, reliability, and optimization.",
+    "eligible_if": [
+      "complete infrastructure-valid Stage A and Stage B matrices",
+      "all Stage-A harm, severe-harm, unresolved, and sample-support constraints pass",
+      "all Stage-B benefit, family non-inferiority, activation, algorithm-timeout, and path-cap constraints pass"
+    ],
+    "optimization": "Largest pooled equal-cell-weight Stage-B primary effect among eligible non-disabled candidates.",
+    "practical_tie_band": 0.005,
+    "tie_breaker": "Among eligible candidates within 0.005 primary-effect units of the best point estimate, choose the largest min_support_margin; remaining exact ties sort by policy_id.",
+    "no_eligible_candidate": "gate_disabled",
+    "zero_override_is_valid_negative": true,
+    "selection_artifact_required_before_verification": true
+  },
+  "missingness_and_retry": {
+    "stage_b_algorithm_timeout": "Valid parent outcome scored 0.0 and candidate fails the zero-timeout eligibility constraint.",
+    "stage_a_branch_timeout": "Valid unresolved safety outcome; never imputed and candidate is ineligible.",
+    "stage_a_trace_mismatch": "Infrastructure-invalid cell; retain and rerun whole cell.",
+    "runner_or_upload_failure": "Infrastructure-invalid cell; retain and rerun whole cell.",
+    "partial_latest_attempt": "Invalid; no fallback to an earlier attempt.",
+    "missing_candidate_cell": "Selection forbidden.",
+    "negative_seed_removal": false
+  },
+  "verification_rule": {
+    "policy_frozen_before_access": true,
+    "same_stage_a_and_stage_b_contract": true,
+    "same_eligibility_constraints": true,
+    "same_risk_budget": true,
+    "retuning_forbidden": true,
+    "failure_action": "Select gate_disabled and do not open protected_holdout.",
+    "pass_action": "Freeze verification artifact and permit one protected-holdout execution."
+  },
+  "protected_holdout_rule": {
+    "policy_frozen_before_access": true,
+    "same_stage_a_and_stage_b_contract": true,
+    "retuning_forbidden": true,
+    "result_scope": "Only the declared E_FULL_GEOMETRY/domain/horizon scope.",
+    "failure_does_not_reopen_calibration": true
+  },
+  "planned_counts": {
+    "domain_family_scale_cells": 12,
+    "calibration_replicates_per_candidate": 240,
+    "calibration_candidates_including_disabled": 12,
+    "calibration_stage_b_replicates_total": 2880,
+    "calibration_stage_a_active_candidates": 11,
+    "calibration_stage_a_sampled_pairs_max": 10560,
+    "verification_stage_b_replicates_selected_policy": 360,
+    "verification_stage_a_sampled_pairs_max": 1440,
+    "protected_holdout_stage_b_replicates_selected_policy": 360,
+    "protected_holdout_stage_a_sampled_pairs_max": 1440
+  },
+  "implementation_prerequisites": [
+    "Implement new v2 split namespaces without weakening any earlier holdout guard.",
+    "Implement complete branch-free Stage-B traces and parent-only timeouts.",
+    "Implement the deterministic hash-priority Stage-A sampler.",
+    "Implement exact Stage-A parent replay, trace matching, branch timeouts, and unresolved statuses.",
+    "Implement split-aware atomic artifacts, immutable retries, and complete-matrix consolidation.",
+    "Implement the frozen joint Stage-A/Stage-B statistics and selection report.",
+    "Validate a no-outcome dry-run before requesting authorization."
+  ],
+  "forbidden_before_execution": [
+    "Generating a calibration authorization before implementation and no-outcome dry-run review.",
+    "Changing candidates or sampling after any v2 calibration outcome.",
+    "Using G1-v1 holdout seeds 1000 through 1029.",
+    "Reusing observed v1 calibration seeds 2000 through 2019.",
+    "Repurposing reserved v1 verification or holdout seeds.",
+    "Instantiating v2 calibration, verification, or protected-holdout domains during implementation.",
+    "Charging Stage-A work to Stage-B parent timing.",
+    "Calling support_margin calibrated confidence.",
+    "Changing a framework default from this preregistration alone."
+  ]
+}

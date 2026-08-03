@@ -105,6 +105,19 @@ before execution. At minimum it must freeze:
 No GitHub full calibration should start until that contract is frozen and
 explicitly authorized.
 
+## WP-GATE-0.11 freeze
+
+The v2 contract is now frozen in
+`E0_OVERRIDE_GATE_CALIBRATION_INSTANCE_v2.json`. It uses new 5000/6000/7000
+split ranges, branch-free Stage-B parents, and at most four deterministic
+hash-priority Stage-A samples per active candidate and seed replicate. Stage-A
+timeouts fail safety eligibility but cannot relabel the parent.
+
+A development-only cap-four feasibility run completed all cases and preserved
+all three parent invariance checks. This freezes a design; it does not
+authorize execution or select a threshold. See
+`E0_OVERRIDE_GATE_CALIBRATION_PREREGISTRATION_v2.md`.
+
 ## Evidence
 
 - `artifacts/override_gate/development/wp_gate_0_10/pilot.json`

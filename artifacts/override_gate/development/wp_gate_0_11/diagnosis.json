@@ -1,0 +1,41 @@
+{
+  "artifact_kind": "override_gate_v2_sampling_cap_feasibility_diagnosis",
+  "work_package": "WP-GATE-0.11",
+  "split": "development",
+  "family": "wall_grid",
+  "generator_seed": 0,
+  "interaction_budget": 40,
+  "stage_a_sample_cap_per_case": 4,
+  "case_timeout_seconds": 30.0,
+  "case_count": 8,
+  "completed_case_count": 8,
+  "prototype_timeout_count": 0,
+  "prototype_error_count": 0,
+  "all_parent_invariance_checks_pass": true,
+  "stage_a_cases": [
+    {
+      "scale": 100,
+      "sampled_paired_branch_count": 4,
+      "instrumentation_wall_time_ms": 4791.6848
+    },
+    {
+      "scale": 500,
+      "sampled_paired_branch_count": 4,
+      "instrumentation_wall_time_ms": 3681.5204
+    },
+    {
+      "scale": 1000,
+      "sampled_paired_branch_count": 4,
+      "instrumentation_wall_time_ms": 8588.3036
+    }
+  ],
+  "interpretation": "A four-pair Stage-A cap is operationally feasible under the bounded development fixture at every target scale and preserves the replayed parent trace.",
+  "scientific_limit": "The prototype samples the first four eligible disabled-control disagreements. It validates only the cap and process separation, not the frozen v2 hash-priority sampler, active-candidate sampling frame, full interaction budgets, or population inference.",
+  "calibration_executed": false,
+  "verification_executed": false,
+  "protected_holdout_accessed": false,
+  "holdout_accessed": false,
+  "not_gate_result": true,
+  "pilot_artifact": "artifacts/override_gate/development/wp_gate_0_11/sampling_cap4_pilot.json",
+  "pilot_sha256": "dc46c47f59ca6e7907870c5a4895704aa739608bff8fc42d4a42849adb9435fb"
+}

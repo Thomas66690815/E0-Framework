@@ -188,3 +188,16 @@ overrides. This removes the v1 timing confound from that scoped mechanism
 observation, but it remains single-seed development evidence. No threshold was
 selected. The next prerequisite is a frozen v2 sampling, inference, selection,
 and timeout contract plus a fresh authorization.
+
+## WP-GATE-0.11 design freeze
+
+That prerequisite is now satisfied at the specification level. The immutable
+v2 instance reserves new 5000/6000/7000 split ranges and freezes bounded,
+outcome-blind Stage-A sampling separately from branch-free Stage-B parent
+evaluation. It also defines explicit unresolved-evidence, timeout, support,
+multiplicity, retry, and disabled-fallback rules.
+
+This is not a reinterpretation of v1 and not a new result. The v2 runner and
+statistics are not implemented, no authorization exists, and no v2
+fresh-split domain has been instantiated. See
+`E0_OVERRIDE_GATE_CALIBRATION_PREREGISTRATION_v2.md`.

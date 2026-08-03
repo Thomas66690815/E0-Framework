@@ -244,3 +244,18 @@ matrix, a new immutable instance must freeze Stage-A sampling and inference,
 Stage-B selection and timing, cross-stage decision rules, and a fresh
 authorization digest. See
 `E0_OVERRIDE_GATE_V2_DEVELOPMENT_ARCHITECTURE_v1.md`.
+
+## WP-GATE-0.11 frozen successor contract
+
+The successor is now preregistered as
+`E0-OVERRIDE-GATE-CAL-INSTANCE-v2`. It reserves new calibration,
+verification, and protected-holdout seed ranges; earlier observed or reserved
+ranges are not repurposed. Stage B is branch-free and snapshot-free. Stage A
+samples at most four executed overrides per active candidate and seed replicate
+using a frozen outcome-blind hash priority.
+
+The v2 instance also freezes separate parent/branch timeout namespaces,
+fail-closed unresolved evidence, activation minima, multiplicity, missingness,
+tie-breaking, and the disabled fallback. Its implementation and authorization
+remain future work. See
+`E0_OVERRIDE_GATE_CALIBRATION_PREREGISTRATION_v2.md`.
