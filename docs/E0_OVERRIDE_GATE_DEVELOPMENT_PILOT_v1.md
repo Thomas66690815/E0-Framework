@@ -106,3 +106,16 @@ whether Stage-A evidence is collected separately.
 Because timeout semantics and the evidence-generation contract change, this
 requires a new versioned experiment instance and a new authorization. The
 current verification and protected holdout remain closed.
+
+## WP-GATE-0.10 follow-up
+
+The required development-only stage-separation pilot is complete. Stage A now
+uses a separate instrumentation process and a one-pair sample cap; Stage B
+runs the closed-loop parent without branches. All eight bounded cases
+completed, including N=1000, with no timeout or worker error.
+
+At N=100, N=500, and N=1000, the independent Stage-A and Stage-B disabled
+control replays had identical parent summaries and identical parent decision
+trace digests. The branch-free N=100 `margin_000` parent also reproduced nine
+executed overrides and budget exhaustion. This validates the architecture,
+not a threshold. See `E0_OVERRIDE_GATE_V2_DEVELOPMENT_ARCHITECTURE_v1.md`.

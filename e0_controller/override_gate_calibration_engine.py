@@ -566,13 +566,15 @@ def run_instrumented_episode(
     interaction_budget: Optional[int] = None,
     config_document: Optional[Mapping[str, Any]] = None,
     collect_paired_branches: bool = True,
+    max_paired_branches: Optional[int] = None,
 ) -> InstrumentedEpisodeResult:
     """Run one parent episode and branch every common-guard disagreement.
 
     This function has no artifact writer and no matrix loop.  The later
     bounded runner is responsible for process timeouts and persistence.
-    ``collect_paired_branches=False`` exists only for development diagnostics
-    that isolate parent runtime; authorized calibration uses the default.
+    ``collect_paired_branches=False`` and ``max_paired_branches`` exist only
+    for development diagnostics that isolate parent runtime or bound Stage-A
+    instrumentation.  Authorized v1 calibration uses the unchanged defaults.
     """
     budget = (
         int(interaction_budget)
@@ -588,6 +590,21 @@ def run_instrumented_episode(
         raise PermissionError(
             "Parent-only branch suppression is development-diagnostic only"
         )
+    if max_paired_branches is not None:
+        if (
+            isinstance(max_paired_branches, bool)
+            or not isinstance(max_paired_branches, int)
+            or max_paired_branches <= 0
+        ):
+            raise ValueError("max_paired_branches must be a positive integer")
+        if not collect_paired_branches:
+            raise ValueError(
+                "max_paired_branches requires paired branch collection"
+            )
+        if domain.seed_namespace != DEVELOPMENT_SEED_NAMESPACE:
+            raise PermissionError(
+                "Paired-branch caps are development-diagnostic only"
+            )
     adapter = CalibrationEFullAdapter(
         domain,
         policy,
@@ -606,20 +623,28 @@ def run_instrumented_episode(
 
     while episode.interactions < budget and episode.state != domain.goal:
         actions = _local_actions(domain, episode.state)
-        adapter_snapshot = _clone_adapter(adapter)
-        executor_snapshot = copy.deepcopy(executor)
-        episode_snapshot = episode.clone()
-        state_hash = _state_hash(
-            domain,
-            adapter_snapshot,
-            executor_snapshot,
-            episode_index,
-            episode_snapshot,
+        can_sample_branch = bool(
+            collect_paired_branches
+            and (
+                max_paired_branches is None
+                or len(paired) < max_paired_branches
+            )
         )
+        if can_sample_branch:
+            adapter_snapshot = _clone_adapter(adapter)
+            executor_snapshot = copy.deepcopy(executor)
+            episode_snapshot = episode.clone()
+            state_hash = _state_hash(
+                domain,
+                adapter_snapshot,
+                executor_snapshot,
+                episode_index,
+                episode_snapshot,
+            )
         action = adapter.select_action(episode_index, episode.state, actions)
         record = adapter.decision_records[-1]
         if (
-            collect_paired_branches
+            can_sample_branch
             and not record.path_cap_hit
             and record.preferred_action is not None
             and record.greedy_action is not None

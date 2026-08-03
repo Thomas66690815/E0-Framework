@@ -229,3 +229,18 @@ Accordingly, v1 `algorithm_timeout` is a frozen record label but not a clean
 scientific attribution to parent algorithm performance. A future version must
 time closed-loop parents separately from paired branch evidence. Raising the
 existing timeout without that separation is forbidden.
+
+## WP-GATE-0.10 development architecture
+
+The required separation has now passed a bounded development pilot. Stage A
+sampled one paired decision in a dedicated process at N=100, N=500, and
+N=1000. Stage B ran five branch-free closed-loop parents. All cases completed
+within their 30-second process limits, and the disabled-control parent summary
+plus decision-trace digest matched across stages at every scale.
+
+These changes are development diagnostics only; they do not alter the frozen
+v1 execution defaults or authorize a v2 calibration. Before another GitHub
+matrix, a new immutable instance must freeze Stage-A sampling and inference,
+Stage-B selection and timing, cross-stage decision rules, and a fresh
+authorization digest. See
+`E0_OVERRIDE_GATE_V2_DEVELOPMENT_ARCHITECTURE_v1.md`.

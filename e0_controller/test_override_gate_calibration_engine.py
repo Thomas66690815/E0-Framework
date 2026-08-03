@@ -61,6 +61,14 @@ def test_calibration_builder_accepts_only_frozen_population():
             interaction_budget=1,
             collect_paired_branches=False,
         )
+    with pytest.raises(PermissionError, match="development-diagnostic only"):
+        run_instrumented_episode(
+            domain,
+            candidate_policy("gate_disabled"),
+            0,
+            interaction_budget=1,
+            max_paired_branches=1,
+        )
 
 
 @pytest.mark.parametrize("family", tuple(BUILDERS))
@@ -207,7 +215,7 @@ def test_disabled_and_zero_margin_change_only_gate_decision():
     assert zero_action.target == zero_record.preferred_action
 
 
-def test_instrumented_episode_records_paired_disagreement():
+def test_instrumented_episode_records_paired_disagreement(monkeypatch):
     result = run_instrumented_episode(
         _synthetic_domain(),
         candidate_policy("gate_disabled"),
@@ -224,6 +232,31 @@ def test_instrumented_episode_records_paired_disagreement():
         first.lookahead.utility - first.greedy.utility
     )
     assert first.to_record()["delta_utility"] == first.delta_utility
+    capped = run_instrumented_episode(
+        _synthetic_domain(),
+        candidate_policy("gate_disabled"),
+        0,
+        interaction_budget=8,
+        max_paired_branches=1,
+    )
+    assert len(capped.paired_decisions) == 1
+    assert capped.summary == result.summary
+
+    from . import override_gate_calibration_engine as engine
+
+    def reject_snapshot(*args, **kwargs):
+        raise AssertionError("parent-only execution must not snapshot")
+
+    monkeypatch.setattr(engine, "_clone_adapter", reject_snapshot)
+    parent_only = run_instrumented_episode(
+        _synthetic_domain(),
+        candidate_policy("gate_disabled"),
+        0,
+        interaction_budget=8,
+        collect_paired_branches=False,
+    )
+    assert parent_only.paired_decisions == ()
+    assert parent_only.summary == result.summary
 
 
 def test_branches_do_not_mutate_parent_episode():

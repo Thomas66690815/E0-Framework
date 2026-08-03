@@ -1,0 +1,90 @@
+{
+  "artifact_kind": "override_gate_v2_stage_separation_diagnosis",
+  "work_package": "WP-GATE-0.10",
+  "split": "development",
+  "family": "wall_grid",
+  "generator_seed": 0,
+  "interaction_budget": 40,
+  "stage_a_sample_cap_per_case": 1,
+  "stage_a_case_timeout_seconds": 30.0,
+  "stage_b_case_timeout_seconds": 30.0,
+  "case_count": 8,
+  "completed_case_count": 8,
+  "prototype_timeout_count": 0,
+  "prototype_error_count": 0,
+  "control_replay_scales": [
+    100,
+    500,
+    1000
+  ],
+  "parent_summary_invariance_pass_count": 3,
+  "parent_decision_trace_invariance_pass_count": 3,
+  "all_parent_invariance_checks_pass": true,
+  "stage_b_results": [
+    {
+      "scale": 100,
+      "policy_id": "gate_disabled",
+      "parent_wall_time_ms": 195.9748,
+      "parent_decision_count": 21,
+      "observed_disagreement_count": 17,
+      "guard_eligible_disagreement_count": 17,
+      "executed_override_count": 0,
+      "goal_reached": true,
+      "terminal_reason": "goal_reached"
+    },
+    {
+      "scale": 100,
+      "policy_id": "margin_000",
+      "parent_wall_time_ms": 400.7618,
+      "parent_decision_count": 40,
+      "observed_disagreement_count": 9,
+      "guard_eligible_disagreement_count": 9,
+      "executed_override_count": 9,
+      "goal_reached": false,
+      "terminal_reason": "interaction_budget_exhausted"
+    },
+    {
+      "scale": 100,
+      "policy_id": "margin_040",
+      "parent_wall_time_ms": 168.5825,
+      "parent_decision_count": 21,
+      "observed_disagreement_count": 17,
+      "guard_eligible_disagreement_count": 17,
+      "executed_override_count": 0,
+      "goal_reached": true,
+      "terminal_reason": "goal_reached"
+    },
+    {
+      "scale": 500,
+      "policy_id": "gate_disabled",
+      "parent_wall_time_ms": 251.2756,
+      "parent_decision_count": 40,
+      "observed_disagreement_count": 29,
+      "guard_eligible_disagreement_count": 29,
+      "executed_override_count": 0,
+      "goal_reached": false,
+      "terminal_reason": "interaction_budget_exhausted"
+    },
+    {
+      "scale": 1000,
+      "policy_id": "gate_disabled",
+      "parent_wall_time_ms": 486.8762,
+      "parent_decision_count": 40,
+      "observed_disagreement_count": 36,
+      "guard_eligible_disagreement_count": 35,
+      "executed_override_count": 0,
+      "goal_reached": false,
+      "terminal_reason": "interaction_budget_exhausted"
+    }
+  ],
+  "conclusion": "Stage-separated measurement is feasible on all three development scales. Bounded Stage-A evidence does not alter the replayed disabled parent, and Stage-B parent timing is free of synchronous paired rollouts.",
+  "scientific_limit": "This single-seed development pilot neither estimates a population effect nor selects an override-gate threshold.",
+  "next_requirement": "Freeze a new v2 experiment instance and authorization with a deterministic Stage-A sampling and inference contract before any full calibration.",
+  "calibration_executed": false,
+  "verification_executed": false,
+  "protected_holdout_accessed": false,
+  "holdout_accessed": false,
+  "not_gate_result": true,
+  "pilot_artifact": "artifacts/override_gate/development/wp_gate_0_10/pilot.json",
+  "pilot_sha256": "d31f8e5d8d37645cc3e2cddbf7a7d94280bf0a9b110696240d8390bcad2f52b3"
+}

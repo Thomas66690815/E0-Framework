@@ -174,3 +174,17 @@ exhausted its 40-interaction budget. See
 A new full run is blocked until a versioned design separates paired branch
 evidence from closed-loop parent timing. Increasing the old timeout is not an
 adequate correction.
+
+## WP-GATE-0.10 stage-separation result
+
+The development prototype now implements that separation. Three bounded
+Stage-A cases sampled one paired decision each, while five independent Stage-B
+cases measured branch-free parents. All eight completed without timeout or
+worker error. Disabled-control parent summaries and decision-trace digests
+matched at N=100, N=500, and N=1000.
+
+The clean Stage-B N=100 run also reproduced the nine harmful `margin_000`
+overrides. This removes the v1 timing confound from that scoped mechanism
+observation, but it remains single-seed development evidence. No threshold was
+selected. The next prerequisite is a frozen v2 sampling, inference, selection,
+and timeout contract plus a fresh authorization.
