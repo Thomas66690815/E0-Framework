@@ -1,0 +1,110 @@
+{
+  "artifact_kind": "override_gate_calibration_postrun_diagnosis",
+  "work_package": "WP-GATE-0.8",
+  "diagnosed_on": "2026-08-03",
+  "github": {
+    "repository": "Thomas66690815/E0-Framework",
+    "run_id": 30631675731,
+    "run_url": "https://github.com/Thomas66690815/E0-Framework/actions/runs/30631675731",
+    "jobs": {
+      "authorization": 1,
+      "matrix_cells": 144,
+      "consolidate": 1,
+      "success": 146,
+      "failure": 0,
+      "cancelled": 0,
+      "timed_out": 0
+    },
+    "artifact_id": 8799409311,
+    "artifact_name": "override-gate-calibration-evidence-attempt-1",
+    "github_artifact_expires_on": "2026-08-14"
+  },
+  "provenance": {
+    "source_commit": "46313f60a1bf0ed8590ec1e05d8a71d31200481a",
+    "execution_commit": "814653694f5eb41f9faed1417ae865953886308c",
+    "authorization_sha256": "9f7f2b41e4f25b100783b819d00dd86d8673ba616e8aba70864ce48ef0c93a13",
+    "instance_id": "E0-OVERRIDE-GATE-CAL-INSTANCE-v1",
+    "instance_sha256": "0ec61ef75d1a80966518a050351b1e5933e9ef0221ab9be4352815722072d597",
+    "zip_sha256": "768cefc986e40d392e22de4dff48dba09659b168d0a635eda84e9a61ab6d0d6d",
+    "manifest_sha256": "2165fdcdbdde32b5cf2ba5ec12c2e0b49d7e8977043841281b8730c852d37a62"
+  },
+  "evidence_counts": {
+    "task_shards": 2880,
+    "closed_loop_records": 2880,
+    "paired_branch_records": 17397,
+    "completed": 764,
+    "algorithm_timeouts": 2116,
+    "algorithm_timeout_fraction": 0.7347222222222223,
+    "infrastructure_failures": 0,
+    "path_cap_hits": 0
+  },
+  "status_by_scale": {
+    "100": {"total": 960, "completed": 764, "algorithm_timeouts": 196},
+    "500": {"total": 960, "completed": 0, "algorithm_timeouts": 960},
+    "1000": {"total": 960, "completed": 0, "algorithm_timeouts": 960}
+  },
+  "status_by_family": {
+    "decoy_dag": {"total": 720, "completed": 240, "algorithm_timeouts": 480},
+    "nonstationary_parallel": {"total": 720, "completed": 240, "algorithm_timeouts": 480},
+    "trap_grid_v2": {"total": 720, "completed": 240, "algorithm_timeouts": 480},
+    "wall_grid": {"total": 720, "completed": 44, "algorithm_timeouts": 676}
+  },
+  "status_by_policy": {
+    "gate_disabled": {"total": 240, "completed": 79, "algorithm_timeouts": 161},
+    "margin_000": {"total": 240, "completed": 60, "algorithm_timeouts": 180},
+    "margin_005": {"total": 240, "completed": 60, "algorithm_timeouts": 180},
+    "margin_010": {"total": 240, "completed": 60, "algorithm_timeouts": 180},
+    "margin_015": {"total": 240, "completed": 60, "algorithm_timeouts": 180},
+    "margin_020": {"total": 240, "completed": 60, "algorithm_timeouts": 180},
+    "margin_025": {"total": 240, "completed": 60, "algorithm_timeouts": 180},
+    "margin_030": {"total": 240, "completed": 60, "algorithm_timeouts": 180},
+    "margin_035": {"total": 240, "completed": 60, "algorithm_timeouts": 180},
+    "margin_040": {"total": 240, "completed": 75, "algorithm_timeouts": 165},
+    "margin_050": {"total": 240, "completed": 65, "algorithm_timeouts": 175},
+    "margin_085": {"total": 240, "completed": 65, "algorithm_timeouts": 175}
+  },
+  "activation_evidence": {
+    "executed_overrides_all_candidates": 0,
+    "counter_semantics_v1": {
+      "observed_disagreement_count": "not emitted by v1",
+      "eligible_disagreement_count": "preferred/greedy disagreements passing common non-confidence guards and receiving paired branch evidence",
+      "override_count": "eligible disagreements also passing the candidate support-margin threshold and executed by the parent"
+    },
+    "eligible_support_margins": {
+      "gate_disabled": {"count": 7700, "minimum": 0.000309310571845467, "maximum": 0.398949264404075},
+      "margin_040": {"count": 6297, "minimum": 0.000309310571845467, "maximum": 0.398949264404075},
+      "margin_050": {"count": 1700, "minimum": 0.000309310571845467, "maximum": 0.398949264404075},
+      "margin_085": {"count": 1700, "minimum": 0.000309310571845467, "maximum": 0.398949264404075}
+    },
+    "threshold_interpretation": "The 0.40, 0.50, and 0.85 candidates observed guard-eligible disagreements, but their maximum support margin was below 0.40; therefore zero overrides is internally consistent. Candidates 0.00 through 0.35 retained no evaluation-stage eligible disagreement records and were dominated by algorithm timeouts."
+  },
+  "diagnostic_branch": {
+    "run_id": "gate-calibration-wall_grid-N100-s2000-gate_disabled",
+    "state_hash": "8419889d1c608657b07d0b3e0f467a8aa4fa2d356a400a2211bbb69032e7063d",
+    "support_margin": 0.29437236663855526,
+    "path_imbalance": 3.0,
+    "greedy": {"goal_reached": true, "interactions_used": 21, "utility": 1.0},
+    "lookahead": {"goal_reached": false, "interactions_used": 400, "utility": 0.0, "terminal_reason": "interaction_budget_exhausted"},
+    "interpretation": "A threshold at or below this margin would admit a harmful branch unless an additional deterministic safety guard prevents the cycle."
+  },
+  "existing_guard_audit": {
+    "calibration_v1_revisit_guard": "none",
+    "general_controller_guard": "controller_if_self_graph_present blocks only an override whose immediate target is already in the recent-state window",
+    "diagnostic_branch_first_target_recent": false,
+    "paired_rollout_after_first_action": "disabled gate with the shared greedy revisit penalty",
+    "finding": "The existing optional guard would not block the diagnostic branch's first override and is not a demonstrated remedy. Enabling or extending a cycle guard would be a new behavior-changing hypothesis requiring a new versioned instance."
+  },
+  "selection": {
+    "selected_policy_id": "gate_disabled",
+    "no_eligible_candidate": true,
+    "calibration_executed": true,
+    "verification_executed": false,
+    "protected_holdout_accessed": false,
+    "not_gate_result": true
+  },
+  "scientific_scope": {
+    "established": "No active candidate satisfied the preregistered calibration contract; gate_disabled is the scoped fail-closed result.",
+    "not_established": "No globally optimal confidence threshold, universal gate result, or causal benefit of disabling the gate was established.",
+    "next_boundary": "Do not execute verification or protected holdout. Repair measurement semantics, isolate the timeout/cycle mechanism, and require a small calibration-only pilot before a new full matrix."
+  }
+}

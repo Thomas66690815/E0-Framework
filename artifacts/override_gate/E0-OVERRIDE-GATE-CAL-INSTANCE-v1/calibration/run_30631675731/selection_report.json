@@ -1,0 +1,1342 @@
+{
+  "artifact_hashes": {
+    "paired_branches.jsonl.gz": "2bb2e773db8589d3f5fb488fd907da1a01f555c0c9f93562e754991c6c03e808",
+    "raw_runs.jsonl": "cb6aeda529cbfafe804e30721851ad67d772fac80e72c0b2cf43974b1cd2fce3"
+  },
+  "artifact_kind": "calibration_selection_report",
+  "bootstrap_resamples": 20000,
+  "candidate_reports": [
+    {
+      "bootstrap_resamples": 20000,
+      "bootstrap_seed": 2026073101,
+      "constraints": [
+        {
+          "boundary": 0.1,
+          "direction": "upper",
+          "estimate": 1.0,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "harmful_override_rate",
+          "nominal_bound": 1.0,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": 0.02,
+          "direction": "upper",
+          "estimate": 1.0,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "severe_harmful_override_rate",
+          "nominal_bound": 1.0,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:decoy_dag",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:nonstationary_parallel",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:trap_grid_v2",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": -0.31666666666666665,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "family_noninferiority:wall_grid",
+          "nominal_bound": -0.3333333333333333,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": 0.0,
+          "direction": "lower",
+          "estimate": -0.07916666666666666,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "overall_positive_effect",
+          "nominal_bound": -0.08333333333333333,
+          "raw_p": 1.0
+        }
+      ],
+      "eligibility_checks": {
+        "all_holm_tests": false,
+        "all_nominal_bounds": false,
+        "infrastructure_invalid_fraction": true,
+        "override_decisions": false,
+        "override_fraction": false,
+        "path_cap_rate": true,
+        "replicates_with_override": false
+      },
+      "eligible": false,
+      "eligible_disagreement_count": 0,
+      "family_results": {
+        "decoy_dag": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "nonstationary_parallel": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "trap_grid_v2": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "wall_grid": {
+          "mean_effect": -0.31666666666666665,
+          "nominal_lower_bound": -0.3333333333333333
+        }
+      },
+      "harmful_override_rate": 1.0,
+      "infrastructure_invalid_fraction": 0.0,
+      "mean_primary_effect": -0.07916666666666666,
+      "min_support_margin": 0.0,
+      "nominal_overall_lower_bound": -0.08333333333333333,
+      "overridden_fraction_of_eligible_disagreements": 0.0,
+      "override_count": 0,
+      "path_cap_rate": 0.0,
+      "policy_id": "margin_000",
+      "replicates": 240,
+      "replicates_with_override": 0,
+      "severe_harmful_override_rate": 1.0
+    },
+    {
+      "bootstrap_resamples": 20000,
+      "bootstrap_seed": 2026073102,
+      "constraints": [
+        {
+          "boundary": 0.1,
+          "direction": "upper",
+          "estimate": 1.0,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "harmful_override_rate",
+          "nominal_bound": 1.0,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": 0.02,
+          "direction": "upper",
+          "estimate": 1.0,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "severe_harmful_override_rate",
+          "nominal_bound": 1.0,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:decoy_dag",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:nonstationary_parallel",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:trap_grid_v2",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": -0.31666666666666665,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "family_noninferiority:wall_grid",
+          "nominal_bound": -0.3333333333333333,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": 0.0,
+          "direction": "lower",
+          "estimate": -0.07916666666666666,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "overall_positive_effect",
+          "nominal_bound": -0.08333333333333333,
+          "raw_p": 1.0
+        }
+      ],
+      "eligibility_checks": {
+        "all_holm_tests": false,
+        "all_nominal_bounds": false,
+        "infrastructure_invalid_fraction": true,
+        "override_decisions": false,
+        "override_fraction": false,
+        "path_cap_rate": true,
+        "replicates_with_override": false
+      },
+      "eligible": false,
+      "eligible_disagreement_count": 0,
+      "family_results": {
+        "decoy_dag": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "nonstationary_parallel": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "trap_grid_v2": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "wall_grid": {
+          "mean_effect": -0.31666666666666665,
+          "nominal_lower_bound": -0.3333333333333333
+        }
+      },
+      "harmful_override_rate": 1.0,
+      "infrastructure_invalid_fraction": 0.0,
+      "mean_primary_effect": -0.07916666666666666,
+      "min_support_margin": 0.05,
+      "nominal_overall_lower_bound": -0.08333333333333333,
+      "overridden_fraction_of_eligible_disagreements": 0.0,
+      "override_count": 0,
+      "path_cap_rate": 0.0,
+      "policy_id": "margin_005",
+      "replicates": 240,
+      "replicates_with_override": 0,
+      "severe_harmful_override_rate": 1.0
+    },
+    {
+      "bootstrap_resamples": 20000,
+      "bootstrap_seed": 2026073103,
+      "constraints": [
+        {
+          "boundary": 0.1,
+          "direction": "upper",
+          "estimate": 1.0,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "harmful_override_rate",
+          "nominal_bound": 1.0,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": 0.02,
+          "direction": "upper",
+          "estimate": 1.0,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "severe_harmful_override_rate",
+          "nominal_bound": 1.0,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:decoy_dag",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:nonstationary_parallel",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:trap_grid_v2",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": -0.31666666666666665,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "family_noninferiority:wall_grid",
+          "nominal_bound": -0.3333333333333333,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": 0.0,
+          "direction": "lower",
+          "estimate": -0.07916666666666666,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "overall_positive_effect",
+          "nominal_bound": -0.08333333333333333,
+          "raw_p": 1.0
+        }
+      ],
+      "eligibility_checks": {
+        "all_holm_tests": false,
+        "all_nominal_bounds": false,
+        "infrastructure_invalid_fraction": true,
+        "override_decisions": false,
+        "override_fraction": false,
+        "path_cap_rate": true,
+        "replicates_with_override": false
+      },
+      "eligible": false,
+      "eligible_disagreement_count": 0,
+      "family_results": {
+        "decoy_dag": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "nonstationary_parallel": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "trap_grid_v2": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "wall_grid": {
+          "mean_effect": -0.31666666666666665,
+          "nominal_lower_bound": -0.3333333333333333
+        }
+      },
+      "harmful_override_rate": 1.0,
+      "infrastructure_invalid_fraction": 0.0,
+      "mean_primary_effect": -0.07916666666666666,
+      "min_support_margin": 0.1,
+      "nominal_overall_lower_bound": -0.08333333333333333,
+      "overridden_fraction_of_eligible_disagreements": 0.0,
+      "override_count": 0,
+      "path_cap_rate": 0.0,
+      "policy_id": "margin_010",
+      "replicates": 240,
+      "replicates_with_override": 0,
+      "severe_harmful_override_rate": 1.0
+    },
+    {
+      "bootstrap_resamples": 20000,
+      "bootstrap_seed": 2026073104,
+      "constraints": [
+        {
+          "boundary": 0.1,
+          "direction": "upper",
+          "estimate": 1.0,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "harmful_override_rate",
+          "nominal_bound": 1.0,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": 0.02,
+          "direction": "upper",
+          "estimate": 1.0,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "severe_harmful_override_rate",
+          "nominal_bound": 1.0,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:decoy_dag",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:nonstationary_parallel",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:trap_grid_v2",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": -0.31666666666666665,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "family_noninferiority:wall_grid",
+          "nominal_bound": -0.3333333333333333,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": 0.0,
+          "direction": "lower",
+          "estimate": -0.07916666666666666,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "overall_positive_effect",
+          "nominal_bound": -0.08333333333333333,
+          "raw_p": 1.0
+        }
+      ],
+      "eligibility_checks": {
+        "all_holm_tests": false,
+        "all_nominal_bounds": false,
+        "infrastructure_invalid_fraction": true,
+        "override_decisions": false,
+        "override_fraction": false,
+        "path_cap_rate": true,
+        "replicates_with_override": false
+      },
+      "eligible": false,
+      "eligible_disagreement_count": 0,
+      "family_results": {
+        "decoy_dag": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "nonstationary_parallel": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "trap_grid_v2": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "wall_grid": {
+          "mean_effect": -0.31666666666666665,
+          "nominal_lower_bound": -0.3333333333333333
+        }
+      },
+      "harmful_override_rate": 1.0,
+      "infrastructure_invalid_fraction": 0.0,
+      "mean_primary_effect": -0.07916666666666666,
+      "min_support_margin": 0.15,
+      "nominal_overall_lower_bound": -0.08333333333333333,
+      "overridden_fraction_of_eligible_disagreements": 0.0,
+      "override_count": 0,
+      "path_cap_rate": 0.0,
+      "policy_id": "margin_015",
+      "replicates": 240,
+      "replicates_with_override": 0,
+      "severe_harmful_override_rate": 1.0
+    },
+    {
+      "bootstrap_resamples": 20000,
+      "bootstrap_seed": 2026073105,
+      "constraints": [
+        {
+          "boundary": 0.1,
+          "direction": "upper",
+          "estimate": 1.0,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "harmful_override_rate",
+          "nominal_bound": 1.0,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": 0.02,
+          "direction": "upper",
+          "estimate": 1.0,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "severe_harmful_override_rate",
+          "nominal_bound": 1.0,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:decoy_dag",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:nonstationary_parallel",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:trap_grid_v2",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": -0.31666666666666665,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "family_noninferiority:wall_grid",
+          "nominal_bound": -0.3333333333333333,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": 0.0,
+          "direction": "lower",
+          "estimate": -0.07916666666666666,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "overall_positive_effect",
+          "nominal_bound": -0.08333333333333333,
+          "raw_p": 1.0
+        }
+      ],
+      "eligibility_checks": {
+        "all_holm_tests": false,
+        "all_nominal_bounds": false,
+        "infrastructure_invalid_fraction": true,
+        "override_decisions": false,
+        "override_fraction": false,
+        "path_cap_rate": true,
+        "replicates_with_override": false
+      },
+      "eligible": false,
+      "eligible_disagreement_count": 0,
+      "family_results": {
+        "decoy_dag": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "nonstationary_parallel": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "trap_grid_v2": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "wall_grid": {
+          "mean_effect": -0.31666666666666665,
+          "nominal_lower_bound": -0.3333333333333333
+        }
+      },
+      "harmful_override_rate": 1.0,
+      "infrastructure_invalid_fraction": 0.0,
+      "mean_primary_effect": -0.07916666666666666,
+      "min_support_margin": 0.2,
+      "nominal_overall_lower_bound": -0.08333333333333333,
+      "overridden_fraction_of_eligible_disagreements": 0.0,
+      "override_count": 0,
+      "path_cap_rate": 0.0,
+      "policy_id": "margin_020",
+      "replicates": 240,
+      "replicates_with_override": 0,
+      "severe_harmful_override_rate": 1.0
+    },
+    {
+      "bootstrap_resamples": 20000,
+      "bootstrap_seed": 2026073106,
+      "constraints": [
+        {
+          "boundary": 0.1,
+          "direction": "upper",
+          "estimate": 1.0,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "harmful_override_rate",
+          "nominal_bound": 1.0,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": 0.02,
+          "direction": "upper",
+          "estimate": 1.0,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "severe_harmful_override_rate",
+          "nominal_bound": 1.0,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:decoy_dag",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:nonstationary_parallel",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:trap_grid_v2",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": -0.31666666666666665,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "family_noninferiority:wall_grid",
+          "nominal_bound": -0.3333333333333333,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": 0.0,
+          "direction": "lower",
+          "estimate": -0.07916666666666666,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "overall_positive_effect",
+          "nominal_bound": -0.08333333333333333,
+          "raw_p": 1.0
+        }
+      ],
+      "eligibility_checks": {
+        "all_holm_tests": false,
+        "all_nominal_bounds": false,
+        "infrastructure_invalid_fraction": true,
+        "override_decisions": false,
+        "override_fraction": false,
+        "path_cap_rate": true,
+        "replicates_with_override": false
+      },
+      "eligible": false,
+      "eligible_disagreement_count": 0,
+      "family_results": {
+        "decoy_dag": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "nonstationary_parallel": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "trap_grid_v2": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "wall_grid": {
+          "mean_effect": -0.31666666666666665,
+          "nominal_lower_bound": -0.3333333333333333
+        }
+      },
+      "harmful_override_rate": 1.0,
+      "infrastructure_invalid_fraction": 0.0,
+      "mean_primary_effect": -0.07916666666666666,
+      "min_support_margin": 0.25,
+      "nominal_overall_lower_bound": -0.08333333333333333,
+      "overridden_fraction_of_eligible_disagreements": 0.0,
+      "override_count": 0,
+      "path_cap_rate": 0.0,
+      "policy_id": "margin_025",
+      "replicates": 240,
+      "replicates_with_override": 0,
+      "severe_harmful_override_rate": 1.0
+    },
+    {
+      "bootstrap_resamples": 20000,
+      "bootstrap_seed": 2026073107,
+      "constraints": [
+        {
+          "boundary": 0.1,
+          "direction": "upper",
+          "estimate": 1.0,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "harmful_override_rate",
+          "nominal_bound": 1.0,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": 0.02,
+          "direction": "upper",
+          "estimate": 1.0,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "severe_harmful_override_rate",
+          "nominal_bound": 1.0,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:decoy_dag",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:nonstationary_parallel",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:trap_grid_v2",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": -0.31666666666666665,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "family_noninferiority:wall_grid",
+          "nominal_bound": -0.3333333333333333,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": 0.0,
+          "direction": "lower",
+          "estimate": -0.07916666666666666,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "overall_positive_effect",
+          "nominal_bound": -0.08333333333333333,
+          "raw_p": 1.0
+        }
+      ],
+      "eligibility_checks": {
+        "all_holm_tests": false,
+        "all_nominal_bounds": false,
+        "infrastructure_invalid_fraction": true,
+        "override_decisions": false,
+        "override_fraction": false,
+        "path_cap_rate": true,
+        "replicates_with_override": false
+      },
+      "eligible": false,
+      "eligible_disagreement_count": 0,
+      "family_results": {
+        "decoy_dag": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "nonstationary_parallel": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "trap_grid_v2": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "wall_grid": {
+          "mean_effect": -0.31666666666666665,
+          "nominal_lower_bound": -0.3333333333333333
+        }
+      },
+      "harmful_override_rate": 1.0,
+      "infrastructure_invalid_fraction": 0.0,
+      "mean_primary_effect": -0.07916666666666666,
+      "min_support_margin": 0.3,
+      "nominal_overall_lower_bound": -0.08333333333333333,
+      "overridden_fraction_of_eligible_disagreements": 0.0,
+      "override_count": 0,
+      "path_cap_rate": 0.0,
+      "policy_id": "margin_030",
+      "replicates": 240,
+      "replicates_with_override": 0,
+      "severe_harmful_override_rate": 1.0
+    },
+    {
+      "bootstrap_resamples": 20000,
+      "bootstrap_seed": 2026073108,
+      "constraints": [
+        {
+          "boundary": 0.1,
+          "direction": "upper",
+          "estimate": 1.0,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "harmful_override_rate",
+          "nominal_bound": 1.0,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": 0.02,
+          "direction": "upper",
+          "estimate": 1.0,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "severe_harmful_override_rate",
+          "nominal_bound": 1.0,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:decoy_dag",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:nonstationary_parallel",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:trap_grid_v2",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": -0.31666666666666665,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "family_noninferiority:wall_grid",
+          "nominal_bound": -0.3333333333333333,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": 0.0,
+          "direction": "lower",
+          "estimate": -0.07916666666666666,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "overall_positive_effect",
+          "nominal_bound": -0.08333333333333333,
+          "raw_p": 1.0
+        }
+      ],
+      "eligibility_checks": {
+        "all_holm_tests": false,
+        "all_nominal_bounds": false,
+        "infrastructure_invalid_fraction": true,
+        "override_decisions": false,
+        "override_fraction": false,
+        "path_cap_rate": true,
+        "replicates_with_override": false
+      },
+      "eligible": false,
+      "eligible_disagreement_count": 0,
+      "family_results": {
+        "decoy_dag": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "nonstationary_parallel": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "trap_grid_v2": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "wall_grid": {
+          "mean_effect": -0.31666666666666665,
+          "nominal_lower_bound": -0.3333333333333333
+        }
+      },
+      "harmful_override_rate": 1.0,
+      "infrastructure_invalid_fraction": 0.0,
+      "mean_primary_effect": -0.07916666666666666,
+      "min_support_margin": 0.35,
+      "nominal_overall_lower_bound": -0.08333333333333333,
+      "overridden_fraction_of_eligible_disagreements": 0.0,
+      "override_count": 0,
+      "path_cap_rate": 0.0,
+      "policy_id": "margin_035",
+      "replicates": 240,
+      "replicates_with_override": 0,
+      "severe_harmful_override_rate": 1.0
+    },
+    {
+      "bootstrap_resamples": 20000,
+      "bootstrap_seed": 2026073109,
+      "constraints": [
+        {
+          "boundary": 0.1,
+          "direction": "upper",
+          "estimate": 1.0,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "harmful_override_rate",
+          "nominal_bound": 1.0,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": 0.02,
+          "direction": "upper",
+          "estimate": 1.0,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "severe_harmful_override_rate",
+          "nominal_bound": 1.0,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:decoy_dag",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:nonstationary_parallel",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:trap_grid_v2",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": -0.06666666666666667,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "family_noninferiority:wall_grid",
+          "nominal_bound": -0.11666666666666665,
+          "raw_p": 0.912454377281136
+        },
+        {
+          "boundary": 0.0,
+          "direction": "lower",
+          "estimate": -0.016666666666666666,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "overall_positive_effect",
+          "nominal_bound": -0.029166666666666664,
+          "raw_p": 0.9893505324733763
+        }
+      ],
+      "eligibility_checks": {
+        "all_holm_tests": false,
+        "all_nominal_bounds": false,
+        "infrastructure_invalid_fraction": true,
+        "override_decisions": false,
+        "override_fraction": false,
+        "path_cap_rate": true,
+        "replicates_with_override": false
+      },
+      "eligible": false,
+      "eligible_disagreement_count": 6297,
+      "family_results": {
+        "decoy_dag": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "nonstationary_parallel": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "trap_grid_v2": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "wall_grid": {
+          "mean_effect": -0.06666666666666667,
+          "nominal_lower_bound": -0.11666666666666665
+        }
+      },
+      "harmful_override_rate": 1.0,
+      "infrastructure_invalid_fraction": 0.0,
+      "mean_primary_effect": -0.016666666666666666,
+      "min_support_margin": 0.4,
+      "nominal_overall_lower_bound": -0.029166666666666664,
+      "overridden_fraction_of_eligible_disagreements": 0.0,
+      "override_count": 0,
+      "path_cap_rate": 0.0,
+      "policy_id": "margin_040",
+      "replicates": 240,
+      "replicates_with_override": 0,
+      "severe_harmful_override_rate": 1.0
+    },
+    {
+      "bootstrap_resamples": 20000,
+      "bootstrap_seed": 2026073110,
+      "constraints": [
+        {
+          "boundary": 0.1,
+          "direction": "upper",
+          "estimate": 1.0,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "harmful_override_rate",
+          "nominal_bound": 1.0,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": 0.02,
+          "direction": "upper",
+          "estimate": 1.0,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "severe_harmful_override_rate",
+          "nominal_bound": 1.0,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:decoy_dag",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:nonstationary_parallel",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:trap_grid_v2",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": -0.2333333333333333,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "family_noninferiority:wall_grid",
+          "nominal_bound": -0.2833333333333333,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": 0.0,
+          "direction": "lower",
+          "estimate": -0.05833333333333333,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "overall_positive_effect",
+          "nominal_bound": -0.07083333333333333,
+          "raw_p": 1.0
+        }
+      ],
+      "eligibility_checks": {
+        "all_holm_tests": false,
+        "all_nominal_bounds": false,
+        "infrastructure_invalid_fraction": true,
+        "override_decisions": false,
+        "override_fraction": false,
+        "path_cap_rate": true,
+        "replicates_with_override": false
+      },
+      "eligible": false,
+      "eligible_disagreement_count": 1700,
+      "family_results": {
+        "decoy_dag": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "nonstationary_parallel": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "trap_grid_v2": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "wall_grid": {
+          "mean_effect": -0.2333333333333333,
+          "nominal_lower_bound": -0.2833333333333333
+        }
+      },
+      "harmful_override_rate": 1.0,
+      "infrastructure_invalid_fraction": 0.0,
+      "mean_primary_effect": -0.05833333333333333,
+      "min_support_margin": 0.5,
+      "nominal_overall_lower_bound": -0.07083333333333333,
+      "overridden_fraction_of_eligible_disagreements": 0.0,
+      "override_count": 0,
+      "path_cap_rate": 0.0,
+      "policy_id": "margin_050",
+      "replicates": 240,
+      "replicates_with_override": 0,
+      "severe_harmful_override_rate": 1.0
+    },
+    {
+      "bootstrap_resamples": 20000,
+      "bootstrap_seed": 2026073111,
+      "constraints": [
+        {
+          "boundary": 0.1,
+          "direction": "upper",
+          "estimate": 1.0,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "harmful_override_rate",
+          "nominal_bound": 1.0,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": 0.02,
+          "direction": "upper",
+          "estimate": 1.0,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "severe_harmful_override_rate",
+          "nominal_bound": 1.0,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:decoy_dag",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:nonstationary_parallel",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": 0.0,
+          "holm_adjusted_p": 0.0038498075096245186,
+          "holm_pass": true,
+          "id": "family_noninferiority:trap_grid_v2",
+          "nominal_bound": 0.0,
+          "raw_p": 4.999750012499375e-05
+        },
+        {
+          "boundary": -0.02,
+          "direction": "lower",
+          "estimate": -0.2333333333333333,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "family_noninferiority:wall_grid",
+          "nominal_bound": -0.2833333333333333,
+          "raw_p": 1.0
+        },
+        {
+          "boundary": 0.0,
+          "direction": "lower",
+          "estimate": -0.05833333333333333,
+          "holm_adjusted_p": 1.0,
+          "holm_pass": false,
+          "id": "overall_positive_effect",
+          "nominal_bound": -0.07083333333333333,
+          "raw_p": 1.0
+        }
+      ],
+      "eligibility_checks": {
+        "all_holm_tests": false,
+        "all_nominal_bounds": false,
+        "infrastructure_invalid_fraction": true,
+        "override_decisions": false,
+        "override_fraction": false,
+        "path_cap_rate": true,
+        "replicates_with_override": false
+      },
+      "eligible": false,
+      "eligible_disagreement_count": 1700,
+      "family_results": {
+        "decoy_dag": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "nonstationary_parallel": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "trap_grid_v2": {
+          "mean_effect": 0.0,
+          "nominal_lower_bound": 0.0
+        },
+        "wall_grid": {
+          "mean_effect": -0.2333333333333333,
+          "nominal_lower_bound": -0.2833333333333333
+        }
+      },
+      "harmful_override_rate": 1.0,
+      "infrastructure_invalid_fraction": 0.0,
+      "mean_primary_effect": -0.05833333333333333,
+      "min_support_margin": 0.85,
+      "nominal_overall_lower_bound": -0.07083333333333333,
+      "overridden_fraction_of_eligible_disagreements": 0.0,
+      "override_count": 0,
+      "path_cap_rate": 0.0,
+      "policy_id": "margin_085",
+      "replicates": 240,
+      "replicates_with_override": 0,
+      "severe_harmful_override_rate": 1.0
+    }
+  ],
+  "execution_commit": "814653694f5eb41f9faed1417ae865953886308c",
+  "holdout_accessed": false,
+  "holm_family_size": 77,
+  "instance_id": "E0-OVERRIDE-GATE-CAL-INSTANCE-v1",
+  "instance_sha256": "0ec61ef75d1a80966518a050351b1e5933e9ef0221ab9be4352815722072d597",
+  "no_eligible_candidate": true,
+  "not_gate_result": true,
+  "protocol_id": "E0-OVERRIDE-GATE-CAL-v1",
+  "record_count": 2880,
+  "selected_policy_id": "gate_disabled",
+  "selection_rule": {
+    "calibration_only": true,
+    "eligible_if": [
+      "all risk-budget constraints pass after multiplicity correction",
+      "all minimum-activation constraints pass",
+      "all 12 family-scale cells are infrastructure-valid"
+    ],
+    "no_eligible_candidate": "gate_disabled",
+    "optimization": "Largest pooled equal-cell-weight mean primary effect among eligible non-disabled candidates.",
+    "practical_tie_band": 0.005,
+    "selection_artifact_required_before_verification": true,
+    "tie_breaker": "Among eligible candidates within 0.005 primary-effect units of the best point estimate, choose the largest min_support_margin; remaining exact ties sort by policy_id.",
+    "zero_override_is_valid_negative": true
+  },
+  "source_commit": "46313f60a1bf0ed8590ec1e05d8a71d31200481a",
+  "split": "calibration",
+  "statistics": {
+    "bootstrap_resamples": 20000,
+    "calibration_bootstrap_seed": 2026073101,
+    "confidence_level": 0.95,
+    "interval": "Percentile paired stratified cluster bootstrap.",
+    "multiplicity": "Holm-Bonferroni at family-wise alpha 0.05 across every non-disabled candidate and every eligibility constraint within a split.",
+    "negative_seed_removal": false,
+    "optional_stopping": false,
+    "proportion_interval": "The same replicate-cluster bootstrap over replicate-level harmful and severe-harm counts; decisions are not treated as independent.",
+    "protected_holdout_bootstrap_seed": 2026073103,
+    "resampling_unit": "generator-seed replicate",
+    "stratified_by": [
+      "domain_family",
+      "scale"
+    ],
+    "verification_bootstrap_seed": 2026073102
+  },
+  "test_only_resample_override": false,
+  "tie_set_safety_order": []
+}

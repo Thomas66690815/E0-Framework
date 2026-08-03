@@ -41,7 +41,7 @@ from .override_gate_calibration_runner import (
 )
 from .override_gate_calibration_statistics import select_calibration_policy
 
-CALIBRATION_SHARD_VERSION = 1
+CALIBRATION_SHARD_VERSION = 2
 AUTHORIZATION_SCHEMA_VERSION = 1
 DEFAULT_OUTPUT = Path(
     "artifacts/override_gate/E0-OVERRIDE-GATE-CAL-INSTANCE-v1/calibration"
@@ -373,6 +373,12 @@ def build_completed_shard(
         if episode.summary.episode_index >= adaptation
         for record in episode.decision_records
     ]
+    observed_disagreement_count = sum(
+        record.preferred_action is not None
+        and record.greedy_action is not None
+        and record.preferred_action != record.greedy_action
+        for record in decision_records
+    )
     classified = _classify_branches(
         policy.mode,
         policy.min_support_margin,
@@ -398,6 +404,11 @@ def build_completed_shard(
             0.0 if task.policy_id == "gate_disabled" else None
         ),
         "override_count": sum(record.override for record in decision_records),
+        # Every preferred/greedy disagreement observed on the parent trajectory,
+        # before the common path guards or candidate confidence threshold.
+        "observed_disagreement_count": observed_disagreement_count,
+        # Disagreements that pass the common non-confidence guards and therefore
+        # receive paired branch evidence.  The threshold may still reject them.
         "eligible_disagreement_count": len(branch_records),
         **classified,
         "path_cap_hits": path_cap_hits,
@@ -413,6 +424,10 @@ def build_completed_shard(
     if raw["override_count"] != raw["attributed_override_count"]:
         raise RuntimeError(
             "Parent override count differs from attributed paired decisions"
+        )
+    if raw["eligible_disagreement_count"] > raw["observed_disagreement_count"]:
+        raise RuntimeError(
+            "Guard-eligible disagreements exceed observed disagreements"
         )
     validate_artifact_record("closed_loop_replicate_record", raw)
     episode_records = [
@@ -702,6 +717,14 @@ def validate_calibration_shard(
         raise ValueError("Shard paired branches must be a list")
     if raw.get("eligible_disagreement_count") != len(paired_records):
         raise ValueError("Raw disagreement count differs from paired branches")
+    if not (
+        int(raw.get("override_count", -1))
+        <= int(raw.get("eligible_disagreement_count", -1))
+        <= int(raw.get("observed_disagreement_count", -1))
+    ):
+        raise ValueError(
+            "Disagreement counts must satisfy override <= eligible <= observed"
+        )
     for record in shard.get("paired_branch_records", []):
         validate_artifact_record("paired_branch_record", record)
         branch_identity = {

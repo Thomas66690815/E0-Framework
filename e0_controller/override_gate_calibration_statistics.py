@@ -100,6 +100,7 @@ def validate_calibration_records(
         for field in (
             "primary_utility",
             "override_count",
+            "observed_disagreement_count",
             "eligible_disagreement_count",
             "harmful_overrides",
             "severe_harmful_overrides",
@@ -114,6 +115,7 @@ def validate_calibration_records(
             raise ValueError("Calibration record primary_utility exceeds one")
         for field in (
             "override_count",
+            "observed_disagreement_count",
             "eligible_disagreement_count",
             "harmful_overrides",
             "severe_harmful_overrides",
@@ -123,6 +125,10 @@ def validate_calibration_records(
                 raise ValueError(f"Calibration record {field} must be integral")
         if int(row["override_count"]) > int(row["eligible_disagreement_count"]):
             raise ValueError("Override count exceeds eligible disagreements")
+        if int(row["eligible_disagreement_count"]) > int(
+            row["observed_disagreement_count"]
+        ):
+            raise ValueError("Eligible disagreements exceed observed disagreements")
         if int(row["harmful_overrides"]) > int(row["override_count"]):
             raise ValueError("Harmful count exceeds overrides")
         if int(row["severe_harmful_overrides"]) > int(row["harmful_overrides"]):
@@ -168,6 +174,9 @@ def _paired_rows(
                 "effect": float(row["primary_utility"])
                 - float(controls[unit]["primary_utility"]),
                 "override_count": int(row["override_count"]),
+                "observed_disagreement_count": int(
+                    row["observed_disagreement_count"]
+                ),
                 "eligible_disagreement_count": int(
                     row["eligible_disagreement_count"]
                 ),
@@ -314,6 +323,9 @@ def _candidate_report(
     lower_probability = 1.0 - confidence
     upper_probability = confidence
     override_count = sum(int(row["override_count"]) for row in rows)
+    observed_count = sum(
+        int(row["observed_disagreement_count"]) for row in rows
+    )
     eligible_count = sum(int(row["eligible_disagreement_count"]) for row in rows)
     path_cap_replicates = sum(int(row["path_cap_hits"]) > 0 for row in rows)
     infrastructure_replicates = sum(
@@ -406,6 +418,7 @@ def _candidate_report(
         "harmful_override_rate": harmful,
         "severe_harmful_override_rate": severe,
         "override_count": override_count,
+        "observed_disagreement_count": observed_count,
         "replicates_with_override": sum(
             int(row["override_count"]) > 0 for row in rows
         ),

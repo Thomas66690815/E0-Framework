@@ -1,0 +1,56 @@
+{
+  "calibration_artifact": null,
+  "execution_commit": "814653694f5eb41f9faed1417ae865953886308c",
+  "forbid_path_cap_hit": true,
+  "health_guard": "none",
+  "holdout_accessed": false,
+  "max_path_imbalance": 3.0,
+  "min_support_margin": null,
+  "mode": "disabled",
+  "not_gate_result": true,
+  "policy_id": "gate_disabled",
+  "policy_version": "1.0",
+  "provenance": {
+    "instance_id": "E0-OVERRIDE-GATE-CAL-INSTANCE-v1",
+    "kind": "preregistered_candidate",
+    "protected_holdout_accessed": false,
+    "protocol_id": "E0-OVERRIDE-GATE-CAL-v1",
+    "source_commit": "46313f60a1bf0ed8590ec1e05d8a71d31200481a"
+  },
+  "revisit_guard": "none",
+  "scope": {
+    "control": "E_FULL_GEOMETRY with the override gate disabled",
+    "domain_families": [
+      "wall_grid",
+      "trap_grid_v2",
+      "decoy_dag",
+      "nonstationary_parallel"
+    ],
+    "forbid_path_cap_hit": true,
+    "health_guard": "none",
+    "max_path_imbalance": 3.0,
+    "max_paths_per_decision": 100000,
+    "out_of_scope": [
+      "E0Controller outside the G1 adapter",
+      "B_INCOHERENT, C_THETA_ZERO, and D_U1_PHASE score implementations",
+      "other path horizons or path geometries",
+      "domains outside the four frozen families",
+      "a universal E0 confidence threshold",
+      "calibrated probability claims"
+    ],
+    "path_geometry": "all",
+    "path_horizon": 3,
+    "portable": false,
+    "revisit_guard": "none",
+    "scales": [
+      100,
+      500,
+      1000
+    ],
+    "score_semantics": "probability_gap_best_minus_second",
+    "treatment": "E_FULL_GEOMETRY with a fixed support-margin gate"
+  },
+  "score_semantics": "probability_gap_best_minus_second",
+  "selection_artifact": "selection_report.json",
+  "selection_artifact_sha256": "2a9c5c18afb86f030c423f9ceaa04552028f1d9bcdd893b5d2dfdbf80e71cebc"
+}

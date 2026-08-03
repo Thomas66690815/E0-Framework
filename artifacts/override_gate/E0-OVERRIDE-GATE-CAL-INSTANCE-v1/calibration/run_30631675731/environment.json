@@ -1,0 +1,12 @@
+{
+  "artifact_kind": "calibration_environment",
+  "executable": "/opt/hostedtoolcache/Python/3.12.13/x64/bin/python",
+  "execution_commit": "814653694f5eb41f9faed1417ae865953886308c",
+  "holdout_accessed": false,
+  "instance_sha256": "0ec61ef75d1a80966518a050351b1e5933e9ef0221ab9be4352815722072d597",
+  "not_gate_result": true,
+  "platform": "Linux-6.17.0-1020-azure-x86_64-with-glibc2.39",
+  "posix_episode_alarm_available": true,
+  "python": "3.12.13 (main, Jun 16 2026, 22:05:08) [GCC 13.3.0]",
+  "source_commit": "46313f60a1bf0ed8590ec1e05d8a71d31200481a"
+}

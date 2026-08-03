@@ -33,6 +33,7 @@ def _synthetic_records(*, beneficial_policy: str | None = "margin_020"):
                             "generator_seed": seed,
                             "primary_utility": 0.60 if beneficial else 0.50,
                             "override_count": 1 if beneficial else 0,
+                            "observed_disagreement_count": 12,
                             "eligible_disagreement_count": 10,
                             "harmful_overrides": 0,
                             "severe_harmful_overrides": 0,
@@ -62,6 +63,10 @@ def test_exact_complete_synthetic_matrix_is_valid():
         lambda records: records[0].update(primary_utility=float("nan")),
         lambda records: records[0].update(primary_utility=1.01),
         lambda records: records[0].update(override_count=11),
+        lambda records: records[0].update(
+            observed_disagreement_count=9,
+            eligible_disagreement_count=10,
+        ),
         lambda records: records[0].update(harmful_overrides=2, override_count=1),
         lambda records: records[0].update(
             severe_harmful_overrides=2,
@@ -95,6 +100,8 @@ def test_synthetic_beneficial_policy_passes_all_constraints():
     assert selected["eligible"] is True
     assert selected["mean_primary_effect"] == pytest.approx(0.1)
     assert selected["override_count"] == 240
+    assert selected["observed_disagreement_count"] == 2880
+    assert selected["eligible_disagreement_count"] == 2400
     assert selected["replicates_with_override"] == 240
     assert selected["harmful_override_rate"] == 0.0
     assert selected["severe_harmful_override_rate"] == 0.0

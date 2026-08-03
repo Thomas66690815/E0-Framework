@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 
+from .g1_ablations import DecisionRecord
 from .g1_baselines import EpisodeSummary
 from .override_gate import OverrideGateMode
 from .override_gate_calibration import load_calibration_instance
@@ -64,7 +65,7 @@ def _authorization():
     }
 
 
-def _episode(index: int, *, override: bool = False):
+def _episode(index: int, *, decision_records=()):
     summary = EpisodeSummary(
         episode_index=index,
         phase="adaptation" if index < 10 else "evaluation",
@@ -83,9 +84,30 @@ def _episode(index: int, *, override: bool = False):
     return InstrumentedEpisodeResult(
         summary=summary,
         policy_id="gate_disabled",
-        decision_records=(),
+        decision_records=tuple(decision_records),
         paired_decisions=(),
         path_cap_hits=0,
+    )
+
+
+def _guard_blocked_disagreement() -> DecisionRecord:
+    return DecisionRecord(
+        method="E_FULL_GEOMETRY",
+        state="S",
+        candidates=("A", "B"),
+        greedy_action="A",
+        preferred_action="B",
+        selected_action="A",
+        scores={"A": 0.4, "B": 0.6},
+        probabilities={"A": 0.4, "B": 0.6},
+        path_counts={"A": 1, "B": 4},
+        path_family_signature="synthetic",
+        paths_expanded=5,
+        path_cap_hit=False,
+        confidence=0.2,
+        path_imbalance=4.0,
+        override=False,
+        phase_regime="gradient",
     )
 
 
@@ -186,6 +208,30 @@ def test_completed_disabled_shard_has_exact_contract():
     assert shard["raw_run"]["override_count"] == 0
     assert shard["raw_run"]["holdout_accessed"] is False
     assert len(shard["episodes"]) == 30
+    validate_calibration_shard(shard, task)
+
+
+def test_shard_separates_observed_guard_eligible_and_executed_counts():
+    task = _task()
+    episodes = [
+        _episode(
+            index,
+            decision_records=(
+                (_guard_blocked_disagreement(),) if index >= 10 else ()
+            ),
+        )
+        for index in range(30)
+    ]
+    shard = build_completed_shard(
+        task,
+        episodes,
+        wall_time_ms=12.5,
+        peak_rss_bytes=1234,
+    )
+    raw = shard["raw_run"]
+    assert raw["observed_disagreement_count"] == 20
+    assert raw["eligible_disagreement_count"] == 0
+    assert raw["override_count"] == 0
     validate_calibration_shard(shard, task)
 
 

@@ -1,0 +1,31 @@
+{
+  "artifact_kind": "calibration_manifest",
+  "calibration_executed": true,
+  "counts": {
+    "algorithm_timeouts": 2116,
+    "closed_loop_records": 2880,
+    "infrastructure_failures": 0,
+    "paired_branch_records": 17397,
+    "path_cap_hits": 0,
+    "task_shards": 2880
+  },
+  "execution_commit": "814653694f5eb41f9faed1417ae865953886308c",
+  "files": {
+    "environment.json": "96d6e8e9703050a4c0875b7955f278bd3746a3bc61df90ee2372e899ef5699a4",
+    "paired_branches.jsonl.gz": "2bb2e773db8589d3f5fb488fd907da1a01f555c0c9f93562e754991c6c03e808",
+    "policy_record.json": "c87803dcdd41750dc55c0c1141d646fa64b1bf4a7c0c24b18828667b14d3bcf6",
+    "raw_runs.jsonl": "cb6aeda529cbfafe804e30721851ad67d772fac80e72c0b2cf43974b1cd2fce3",
+    "selection_report.json": "2a9c5c18afb86f030c423f9ceaa04552028f1d9bcdd893b5d2dfdbf80e71cebc"
+  },
+  "holdout_accessed": false,
+  "instance_id": "E0-OVERRIDE-GATE-CAL-INSTANCE-v1",
+  "instance_sha256": "0ec61ef75d1a80966518a050351b1e5933e9ef0221ab9be4352815722072d597",
+  "manifest_sha256": "2165fdcdbdde32b5cf2ba5ec12c2e0b49d7e8977043841281b8730c852d37a62",
+  "no_eligible_candidate": true,
+  "not_gate_result": true,
+  "protected_holdout_accessed": false,
+  "selected_policy_id": "gate_disabled",
+  "source_commit": "46313f60a1bf0ed8590ec1e05d8a71d31200481a",
+  "split": "calibration",
+  "verification_executed": false
+}

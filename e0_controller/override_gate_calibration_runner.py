@@ -79,6 +79,7 @@ CLOSED_LOOP_REQUIRED_FIELDS = (
     "primary_utility",
     "primary_effect_vs_disabled",
     "override_count",
+    "observed_disagreement_count",
     "eligible_disagreement_count",
     "beneficial_overrides",
     "neutral_overrides",

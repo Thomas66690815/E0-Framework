@@ -2,7 +2,8 @@
 
 **Work package:** WP-GATE-0.7
 **Date:** 2026-07-31
-**Status:** authorization-gated execution implemented; not authorized or run
+**Status:** historical implementation boundary; calibration later authorized
+and completed — see `E0_OVERRIDE_GATE_CALIBRATION_RESULT_v1.md`
 
 ## Purpose
 
@@ -159,3 +160,17 @@ not_gate_result                   = true
 5. explicitly create and review the external authorization JSON and digest;
 6. manually dispatch the execution workflow once; and
 7. do not inspect or use partial outcomes for retuning.
+
+## Post-execution status (WP-GATE-0.8)
+
+The sequence above was subsequently authorized and executed in GitHub Actions
+run `30631675731` at execution commit
+`814653694f5eb41f9faed1417ae865953886308c`. All 144 cells and consolidation
+completed. The selected scoped fallback is `gate_disabled`; verification and
+protected holdout remain closed. Provenance, the complete retained artifact,
+result limits, and the next boundary are recorded in
+`E0_OVERRIDE_GATE_CALIBRATION_RESULT_v1.md`.
+
+The earlier `calibration_executed=false` block describes the state when
+WP-GATE-0.7 itself was committed. It must not be read as the current project
+state.

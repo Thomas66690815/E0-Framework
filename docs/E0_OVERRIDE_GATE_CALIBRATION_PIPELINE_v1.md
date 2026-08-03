@@ -2,7 +2,8 @@
 
 **Work package:** WP-GATE-0.6
 **Date:** 2026-07-31
-**Status:** bounded calibration pipeline implemented; execution not authorized
+**Status:** historical pipeline boundary; calibration later authorized and
+completed — see `E0_OVERRIDE_GATE_CALIBRATION_RESULT_v1.md`
 
 ## Purpose
 
@@ -199,5 +200,18 @@ no-fallback rule, and complete-matrix consolidation. Its GitHub workflow is
 manual and cannot run without the exact external authorization JSON, digest,
 execution commit, and confirmation phrase.
 
-No operational authorization record is part of WP-GATE-0.7, so all no-outcome
-statements above remain true.
+No operational authorization record was part of the WP-GATE-0.7 commit, so the
+no-outcome statements above were true at that historical boundary.
+
+## WP-GATE-0.8 post-run status
+
+GitHub Actions run `30631675731` subsequently completed the authorized 144-cell
+calibration and consolidation. The immutable result selected `gate_disabled`
+with `no_eligible_candidate=true`; verification and protected holdout remain
+closed. See `E0_OVERRIDE_GATE_CALIBRATION_RESULT_v1.md` and the retained bundle
+under `artifacts/override_gate/E0-OVERRIDE-GATE-CAL-INSTANCE-v1/calibration/`.
+
+Future shards use schema v2 to add the previously absent
+`observed_disagreement_count` while retaining the v1 meanings of
+`eligible_disagreement_count` and `override_count`. The executed v1 artifact
+is not rewritten or reconsolidated under the new schema.
