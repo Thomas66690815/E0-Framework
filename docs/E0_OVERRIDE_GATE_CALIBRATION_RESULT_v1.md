@@ -152,3 +152,25 @@ must be a calibration-only pilot that:
 Only a successful pilot permits a new versioned instance, new authorization,
 and a fresh full calibration. Verification and protected holdout remain
 forbidden throughout that work.
+
+## WP-GATE-0.9 development diagnosis
+
+The required pilot is now complete on development seed 0. It isolated a
+measurement confound: synchronous paired rollouts amplify geometry decisions
+by 24.67× at `N=100` and 33.9× at `N=500`. At `N=1000`, the parent-only case
+completed in 6.762 seconds while paired instrumentation exceeded the 30-second
+hard limit.
+
+The v1 timeout encloses parent execution and paired diagnostic work. Therefore
+the 2,116 `algorithm_timeout` labels cannot all be interpreted as clean parent
+algorithm failures. The formal frozen fallback remains `gate_disabled`, but
+the experiment does not supply a clean causal threshold ranking.
+
+The pilot also executed nine real `margin_000` overrides: the disabled parent
+reached its goal in 21 interactions, whereas the active zero-margin parent
+exhausted its 40-interaction budget. See
+`E0_OVERRIDE_GATE_DEVELOPMENT_PILOT_v1.md` for the complete diagnosis.
+
+A new full run is blocked until a versioned design separates paired branch
+evidence from closed-loop parent timing. Increasing the old timeout is not an
+adequate correction.

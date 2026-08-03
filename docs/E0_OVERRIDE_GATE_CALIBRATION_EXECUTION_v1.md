@@ -174,3 +174,10 @@ result limits, and the next boundary are recorded in
 The earlier `calibration_executed=false` block describes the state when
 WP-GATE-0.7 itself was committed. It must not be read as the current project
 state.
+
+WP-GATE-0.9 later established on development seed 0 that the execution timeout
+also covers synchronous paired branch instrumentation. The resulting v1
+`algorithm_timeout` labels are therefore mechanically valid under the frozen
+runner but scientifically confounded. No rerun may merely increase those
+timeouts; the next versioned design must separate parent timing from branch
+evidence as specified in `E0_OVERRIDE_GATE_DEVELOPMENT_PILOT_v1.md`.

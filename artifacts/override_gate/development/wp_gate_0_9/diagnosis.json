@@ -1,0 +1,87 @@
+{
+  "artifact_kind": "override_gate_development_scaling_diagnosis",
+  "work_package": "WP-GATE-0.9",
+  "diagnosed_on": "2026-08-03",
+  "split": "development",
+  "generator_seeds": [0],
+  "family": "wall_grid",
+  "calibration_executed": false,
+  "verification_executed": false,
+  "protected_holdout_accessed": false,
+  "holdout_accessed": false,
+  "not_gate_result": true,
+  "source_artifacts": {
+    "pilot.json": "afa40516dfdce679a65dfaeacb47315b207d1d31b9bd264911fb8afe49968a47",
+    "pilot_budget40.json": "a5dd05a4d61a7aaaec274cdb633a32d74b8a055e16c7a65f2798d7c5bce5b47f"
+  },
+  "budget_40_parent_vs_paired": {
+    "N100": {
+      "parent_only_wall_time_ms": 438.2144,
+      "paired_wall_time_ms": 8098.0683,
+      "wall_time_ratio": 18.479694,
+      "parent_geometry_decisions": 21,
+      "paired_geometry_decisions_lower_bound": 518,
+      "geometry_decision_amplification": 24.666666666666668,
+      "paired_branch_interactions": 497,
+      "paired_status": "completed"
+    },
+    "N500": {
+      "parent_only_wall_time_ms": 2950.6748,
+      "paired_wall_time_ms": 16224.8941,
+      "wall_time_ratio": 5.498706,
+      "parent_geometry_decisions": 40,
+      "paired_geometry_decisions_lower_bound": 1356,
+      "geometry_decision_amplification": 33.9,
+      "paired_branch_interactions": 1316,
+      "paired_status": "completed"
+    },
+    "N1000": {
+      "parent_only_wall_time_ms": 6761.7161,
+      "paired_wall_time_lower_bound_ms": 30232.1794,
+      "wall_time_ratio_lower_bound": 4.471081,
+      "parent_geometry_decisions": 40,
+      "paired_status": "pilot_timeout"
+    }
+  },
+  "activation_probe_N100_budget40": {
+    "gate_disabled": {
+      "override_count": 0,
+      "parent_interactions": 21,
+      "goal_reached": true,
+      "eligible_disagreements": 17,
+      "beneficial_branches": 0,
+      "harmful_branches": 15,
+      "neutral_branches": 2,
+      "support_margin_max": 0.3989492644040752
+    },
+    "margin_000": {
+      "override_count": 9,
+      "parent_interactions": 40,
+      "goal_reached": false,
+      "terminal_reason": "interaction_budget_exhausted",
+      "eligible_disagreements": 9,
+      "beneficial_branches": 1,
+      "harmful_branches": 2,
+      "neutral_branches": 6,
+      "support_margin_max": 0.29437236663855526
+    },
+    "margin_040": {
+      "override_count": 0,
+      "parent_interactions": 21,
+      "goal_reached": true,
+      "eligible_disagreements": 17,
+      "support_margin_max": 0.3989492644040752
+    }
+  },
+  "root_cause": {
+    "mechanism": "Every guard-eligible parent disagreement synchronously launches one greedy and one lookahead rollout. Each rollout can consume the remaining full interaction budget and recomputes E_FULL_GEOMETRY at every branch step.",
+    "timeout_confound": "The v1 episode and replicate deadlines include both parent execution and diagnostic paired rollouts. A timeout can therefore be caused by measurement work rather than the closed-loop candidate trajectory.",
+    "consequence_for_v1": "The frozen selection remains mechanically gate_disabled, but the 2116 algorithm_timeout labels cannot all be interpreted as clean algorithm-performance failures. They are confounded by instrumentation cost.",
+    "confidence_gate_finding": "The gate code is active: margin_000 executed nine overrides. On this development case those overrides changed a goal-reaching 21-step parent into a 40-step budget exhaustion. margin_040 remained behaviorally identical to disabled because all observed margins were below 0.40."
+  },
+  "required_v2_boundary": {
+    "stage_a": "Collect or sample paired branch evidence under a separately bounded instrumentation contract and never score its wall time as parent algorithm timeout.",
+    "stage_b": "Run closed-loop candidate policies without synchronous paired rollouts; time and score only the parent trajectory while retaining observed, guard-eligible, and executed-override counts.",
+    "governance": "Changing this timeout and measurement contract requires a new versioned instance, new development pilot, and new authorization. Verification and protected holdout remain closed."
+  }
+}

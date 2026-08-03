@@ -215,3 +215,17 @@ Future shards use schema v2 to add the previously absent
 `observed_disagreement_count` while retaining the v1 meanings of
 `eligible_disagreement_count` and `override_count`. The executed v1 artifact
 is not rewritten or reconsolidated under the new schema.
+
+## WP-GATE-0.9 timeout diagnosis
+
+A development-only parent-versus-paired pilot subsequently showed that the v1
+episode deadline includes synchronous diagnostic branch work. At budget 40,
+paired collection expanded 21 parent geometry decisions to 518 at `N=100` and
+40 to 1,356 at `N=500`; at `N=1000`, parent-only completed while paired
+collection hit its hard timeout. See
+`E0_OVERRIDE_GATE_DEVELOPMENT_PILOT_v1.md`.
+
+Accordingly, v1 `algorithm_timeout` is a frozen record label but not a clean
+scientific attribution to parent algorithm performance. A future version must
+time closed-loop parents separately from paired branch evidence. Raising the
+existing timeout without that separation is forbidden.

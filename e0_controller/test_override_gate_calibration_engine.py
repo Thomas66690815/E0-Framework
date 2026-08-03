@@ -53,6 +53,14 @@ def test_calibration_builder_accepts_only_frozen_population():
     assert domain.actual_node_count == 100
     assert all(item["passed"] for item in validate_domain(domain))
     assert domain.run_id.startswith("gate-cal-")
+    with pytest.raises(PermissionError, match="development-diagnostic only"):
+        run_instrumented_episode(
+            domain,
+            candidate_policy("gate_disabled"),
+            0,
+            interaction_budget=1,
+            collect_paired_branches=False,
+        )
 
 
 @pytest.mark.parametrize("family", tuple(BUILDERS))

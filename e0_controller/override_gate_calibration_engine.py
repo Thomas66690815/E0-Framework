@@ -27,6 +27,7 @@ from .g1_baselines import (
 from .g1_domains import (
     BUILDERS,
     CALIBRATION_SEED_NAMESPACE,
+    DEVELOPMENT_SEED_NAMESPACE,
     G1DomainInstance,
     G1EpisodeExecutor,
     validate_domain,
@@ -564,11 +565,14 @@ def run_instrumented_episode(
     *,
     interaction_budget: Optional[int] = None,
     config_document: Optional[Mapping[str, Any]] = None,
+    collect_paired_branches: bool = True,
 ) -> InstrumentedEpisodeResult:
     """Run one parent episode and branch every common-guard disagreement.
 
     This function has no artifact writer and no matrix loop.  The later
     bounded runner is responsible for process timeouts and persistence.
+    ``collect_paired_branches=False`` exists only for development diagnostics
+    that isolate parent runtime; authorized calibration uses the default.
     """
     budget = (
         int(interaction_budget)
@@ -577,6 +581,13 @@ def run_instrumented_episode(
     )
     if budget <= 0:
         raise ValueError("interaction_budget must be positive")
+    if (
+        not collect_paired_branches
+        and domain.seed_namespace != DEVELOPMENT_SEED_NAMESPACE
+    ):
+        raise PermissionError(
+            "Parent-only branch suppression is development-diagnostic only"
+        )
     adapter = CalibrationEFullAdapter(
         domain,
         policy,
@@ -608,7 +619,8 @@ def run_instrumented_episode(
         action = adapter.select_action(episode_index, episode.state, actions)
         record = adapter.decision_records[-1]
         if (
-            not record.path_cap_hit
+            collect_paired_branches
+            and not record.path_cap_hit
             and record.preferred_action is not None
             and record.greedy_action is not None
             and record.preferred_action != record.greedy_action
