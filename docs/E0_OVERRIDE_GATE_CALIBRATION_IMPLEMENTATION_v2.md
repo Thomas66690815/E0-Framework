@@ -149,6 +149,15 @@ with latest-attempt/no-fallback consolidation. The production split remains
 unreachable and the authorization validator and outcome workflow remain
 unimplemented. See `E0_OVERRIDE_GATE_CALIBRATION_WORKERS_v2.md`.
 
+## WP-GATE-0.14 authorization follow-up
+
+The canonical external authorization schema, deliberately inert review
+template, execution-manifest contract, and fail-closed validator are now
+implemented. No operational authorization record exists. Because the
+production execution layer and outcome workflow remain absent, no execution
+commit is frozen and the validator cannot currently be satisfied by repository
+artifacts. See `E0_OVERRIDE_GATE_CALIBRATION_AUTHORIZATION_v2.md`.
+
 ## Evidence
 
 - `artifacts/override_gate/development/wp_gate_0_12/dry_run.json`

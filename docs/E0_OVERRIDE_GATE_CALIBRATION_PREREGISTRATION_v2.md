@@ -202,6 +202,19 @@ validator, and outcome workflow remain unimplemented. Therefore no execution
 commit or authorization can yet be frozen. See
 `E0_OVERRIDE_GATE_CALIBRATION_IMPLEMENTATION_v2.md`.
 
+## WP-GATE-0.13 and WP-GATE-0.14 implementation status
+
+Development-only killable workers, exact replay, immutable attempts, and
+latest-attempt/no-fallback consolidation are implemented. The external
+calibration-only authorization schema and validator are also implemented, but
+the committed template is deliberately non-operational.
+
+The production fresh-split runner, execution manifest, and outcome workflow
+remain absent. Consequently no execution commit is frozen, no external
+authorization record exists, and calibration remains prohibited. See
+`E0_OVERRIDE_GATE_CALIBRATION_WORKERS_v2.md` and
+`E0_OVERRIDE_GATE_CALIBRATION_AUTHORIZATION_v2.md`.
+
 ## Evidence
 
 - `docs/E0_OVERRIDE_GATE_CALIBRATION_PROTOCOL_v2.json`

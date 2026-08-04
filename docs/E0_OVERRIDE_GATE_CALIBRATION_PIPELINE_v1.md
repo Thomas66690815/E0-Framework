@@ -282,3 +282,15 @@ newest-attempt/no-fallback consolidation also passed their failure tests.
 This does not expose a fresh-split builder or outcome workflow. Authorization
 validation remains the next boundary. See
 `E0_OVERRIDE_GATE_CALIBRATION_WORKERS_v2.md`.
+
+## WP-GATE-0.14 authorization boundary
+
+The v2 external authorization schema, inert review template, execution
+manifest contract, and fail-closed validator are implemented. A valid record
+must bind the exact instance, protocol, execution commit, manifest, workflow,
+and reviewed development evidence while keeping verification and protected
+holdout closed.
+
+No operational authorization record, execution manifest, or outcome workflow
+is present. Therefore calibration remains technically and procedurally
+blocked. See `E0_OVERRIDE_GATE_CALIBRATION_AUTHORIZATION_v2.md`.

@@ -95,6 +95,13 @@ reviewable authorization record and validator, and expose the production
 workflow only behind that exact digest. No fresh seed should be instantiated
 before those controls pass review.
 
+## WP-GATE-0.14 follow-up
+
+The authorization schema, inert review template, and validator are now
+implemented. The execution commit is intentionally still unfrozen because the
+production runner and workflow do not yet exist. No operational authorization
+record was created. See `E0_OVERRIDE_GATE_CALIBRATION_AUTHORIZATION_v2.md`.
+
 ## Evidence
 
 - implementation: `e0_controller/override_gate_calibration_v2_workers.py`

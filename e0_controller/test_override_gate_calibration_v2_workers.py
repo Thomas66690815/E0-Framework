@@ -32,10 +32,6 @@ def _sleep_worker(payload):
     raise AssertionError("bounded worker should have been terminated")
 
 
-def _error_worker(payload):
-    raise RuntimeError("synthetic child failure")
-
-
 def test_worker_case_rejects_control_and_non_development_seed():
     with pytest.raises(ValueError, match="active candidate"):
         DevelopmentReplicateCase(policy_id="gate_disabled")
@@ -102,10 +98,20 @@ def test_stage_b_timeout_is_algorithm_timeout_not_infrastructure_error():
     assert result["not_gate_result"] is True
 
 
-def test_stage_b_child_exception_is_infrastructure_error():
-    result = execute_stage_b_bounded(
-        DevelopmentReplicateCase(), timeout_seconds=1.0, worker=_error_worker
+def test_stage_b_child_exception_is_infrastructure_error(monkeypatch):
+    from . import override_gate_calibration_v2_workers as workers
+
+    monkeypatch.setattr(
+        workers,
+        "_execute_bounded",
+        lambda *args, **kwargs: {
+            "kind": "error",
+            "worker_wall_time_ms": 1.0,
+            "error_type": "RuntimeError",
+            "error_message": "synthetic child failure",
+        },
     )
+    result = execute_stage_b_bounded(DevelopmentReplicateCase())
     assert result["worker_status"] == "infrastructure_error"
     assert result["error_type"] == "RuntimeError"
 

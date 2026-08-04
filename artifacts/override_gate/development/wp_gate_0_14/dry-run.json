@@ -1,0 +1,21 @@
+{
+  "artifact_kind": "override_gate_v2_authorization_boundary_dry_run",
+  "authorization_request_ready": false,
+  "authorization_validator_implemented": true,
+  "calibration_executed": false,
+  "domains_instantiated": 0,
+  "execution_commit_frozen": false,
+  "execution_manifest_present": false,
+  "fresh_split_builders_exposed": false,
+  "holdout_accessed": false,
+  "not_gate_result": true,
+  "operational_authorization_record_present": false,
+  "outcome_commands_exposed": false,
+  "outcome_workflow_present": false,
+  "outcomes_observed": 0,
+  "preauthorization_baseline_commit": "d279f587bb8ad2d4e8a3235a472c4ccb4b802781",
+  "protected_holdout_accessed": false,
+  "review_template_sha256": "e888963c62743dcfd537c8e7c086aa08d4df00634bfbcd3982c6f627b670368f",
+  "verification_executed": false,
+  "work_package": "WP-GATE-0.14"
+}
