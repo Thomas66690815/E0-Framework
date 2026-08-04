@@ -76,14 +76,25 @@ verification, holdout, or gate result.
 No actual seed 5000–5019 domain was constructed in WP-GATE-0.15. Synthetic
 records and development seed 0 are not empirical calibration evidence.
 
+## WP-GATE-0.16 audit closeout
+
+The externally supplied audit of WP-GATE-0.1 through WP-GATE-0.15 found no
+critical defect in the execution or authorization boundary. Its three
+documentation findings are closed by the recorded audit, new Evidence Ledger
+claims, an explicit preregistration erratum, and the current bootstrap state.
+
+WP-GATE-0.16 changes no production code, workflow, frozen instance, candidate,
+criterion, seed range, authorization rule, or observed outcome. Its commit is
+therefore the post-audit candidate to declare as the execution commit. That
+declaration still does not authorize calibration.
+
 ## Next authorization act
 
-After this package is committed, that exact commit may be audited as the
-candidate execution commit. If no code or workflow change is required, the
-execution manifest can be generated from that checkout and reviewed. Only
-afterward may the user create an external authorization and explicitly dispatch
-the workflow. Any edit requires a new commit, manifest, workflow hash, and
-authorization digest.
+After WP-GATE-0.16 is committed, its exact commit may be declared as the
+candidate execution commit and the execution manifest generated from that
+checkout. The manifest must be reviewed before the user creates a separate
+external authorization and explicitly dispatches the workflow. Any subsequent
+edit requires a new commit, manifest, workflow hash, and authorization digest.
 
 ## Evidence
 
@@ -97,3 +108,4 @@ authorization digest.
   `4d5d89bcc5d47e0c01f845c6fa76d6a62d7ea4ab5c89dd6990918d818bccb40a`
 - focused execution-layer validation: 92 tests passed
 - adjacent G1/engine/worker/sampler validation: 81 tests plus 20 subtests passed
+- audit closeout: `docs/E0_OVERRIDE_GATE_AUDIT_WP_GATE_0_15.md`

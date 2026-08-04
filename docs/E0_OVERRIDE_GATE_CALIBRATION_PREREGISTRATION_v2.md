@@ -4,8 +4,8 @@
 
 **Date:** 2026-08-03
 
-**Status:** immutable design frozen; execution not implemented or authorized;
-no v2 fresh-split outcomes observed
+**Status:** immutable design frozen; execution layer implemented but not
+authorized; no v2 fresh-split outcomes observed
 
 ## Purpose
 
@@ -24,6 +24,23 @@ The instance binds to source commit
 `91c1f63cbfda3891be851acafa3beee3b6f9baa7`, the completed development-only
 Stage-A/Stage-B prototype. A later execution commit may only implement this
 contract. It may not revise it after outcomes are visible.
+
+## Post-freeze editorial correction record
+
+WP-GATE-0.12 (`f1a6473ea97435b6e75c87df2c28596dbf7d2609`) changed
+one eligibility bullet in this prose document from “every family-scale
+primary-effect lower bound” to “every domain-family primary-effect lower
+bound.” This was an editorial correction after the WP-GATE-0.11 freeze
+(`1e76681e9b61b6d13153b48f20f7104bfea2966d`), but it was not labeled as
+such until the WP-GATE-0.16 audit closeout.
+
+The authoritative machine-readable instance was not changed. Before, during,
+and after that prose edit it used
+`stage_b_family_primary_effect_lower_confidence_bound_min`, whose constraint
+is indexed by domain family rather than by family-scale cell. The correction
+therefore aligned the prose with the already-frozen criterion; it did not
+alter the eligible population, threshold, statistic, code path, or observed
+outcome. No v2 fresh-split outcome existed at either edit.
 
 ## Evidence boundary
 

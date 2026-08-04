@@ -6,7 +6,7 @@
     "purpose": "Session bootstrap for the E₀ team — human and AI working together on E₀-Framework",
     "framing": "We. The AI is an integral part of 'we'. This file is the AI's persistent identity — its Historization across context windows. Every confirmed/contradicted count is a U/F trace.",
     "usage": "Paste this file (or reference it) at the start of a new thread to restore full project context. READ strategic_plan FIRST — it is the binding frame since 2026-07-27.",
-    "last_updated": "2026-07-28",
+    "last_updated": "2026-08-04",
     "update_instruction": "After each commit: update state + active_context. After each lesson: update reflexion traces (confirmed++, contradicted++, recurred++). trace_quality = (confirmed - contradicted) / (confirmed + contradicted + 1)."
   },
   "project": {
@@ -22,7 +22,7 @@
   "environment": {
     "python_command": "py -3",
     "test_command": "py -3 -m pytest e0_controller/ server/ --tb=short -q",
-    "test_duration_note": "Latest full local run (C326 workspace): 1845.90 seconds (~31 min) for 6805 tests; runtime is machine/load dependent. Do NOT abort while CPU and progress output continue.",
+    "test_duration_note": "Latest full local run (C328 workspace): 3349.45 seconds wall time (~56 min) for 6840 tests; the run included a system/monitoring suspension and is not representative. Last non-suspended C327 run: 921.14 seconds (~15 min) for 6828 tests. Full suites routinely exceed 10 minutes. WP-2.4 benchmark runs are separate: monitor shard progress, but rely on the enforced 60-second episode and 1800-second replicate boundaries rather than unbounded waiting.",
     "test_single": "py -3 -m pytest e0_controller/test_FILE.py -v --tb=short",
     "ci_file": ".github/workflows/tests.yml",
     "ci_threshold": 2000,
@@ -31,13 +31,13 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C325",
-    "latest_commit_hash": "136013f",
-    "latest_commit_msg": "C325: implement fair G1 baseline adapters",
-    "test_count": 6805,
+    "latest_commit": "WP-GATE-0.15",
+    "latest_commit_hash": "a699c0e",
+    "latest_commit_msg": "WP-GATE-0.15: add locked v2 execution layer",
+    "test_count": 7166,
     "test_failures": 0,
-    "ci_status": "pending",
-    "module_count": "161 test files; non-test taxonomy not recounted in WP-2.3",
+    "ci_status": "G1 development run 30526724307 successful; Override-Gate v2 execution not authorized or dispatched",
+    "module_count": "181 test files; non-test taxonomy not recounted in WP-GATE-0.15",
     "line_count": "~36000 production, ~133000 total",
     "lean_packages": "lean/reliability_memory (15 acceptance tests) + lean/structural_geometry (37 tests), 0 failures",
     "strategy": "ARC-M consolidation since 2026-07-27 — see strategic_plan section + docs/E0_UMSETZUNGSPLAN_v1.md"
@@ -309,19 +309,20 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "ARC-N / Gate G1 implementation. WP-2.3 is complete in C326: five preregistered E0 ablations share one causal development-only contract and frozen global operationalization.",
-    "arc_status": "A_HIST, B_INCOHERENT, C_THETA_ZERO, D_U1_PHASE, and E_FULL_GEOMETRY complete 600/600 bounded compatibility runs across all 120 development domains with 0 path-cap hits. Full 30-episode development raw data and simpler-control selection remain WP-2.4.",
+    "current_arc": "ARC-N / Gate G1 evidence closure and Override-Gate calibration. G1-v1 is development-negative with its holdout unopened; WP-GATE-0.15 implements the corrected v2 calibration execution layer behind an external authorization boundary.",
+    "arc_status": "C329-C331 diagnosed and repaired G1 development scaling, completed 1560/1560 records with 3 valid algorithmic timeouts and 0 infrastructure failures, and established that the confidence gate blocked every lookahead override. WP-GATE-0.8 then produced the scoped gate_disabled v1 calibration result; WP-GATE-0.9/0.10 exposed its timing confound; WP-GATE-0.11-0.15 froze and implemented a fresh v2 design without observing v2 outcomes.",
     "arc_thesis": "Lean packages are product candidates, not empirically proven products. e0_controller remains the research carrier through G1; UI/session/layers 5-14 remain frozen. Every strategic claim maps to an Evidence Ledger ID and every commit to a Work Package. No repository split before Gate G1 plus WP-1.1 packaging evidence.",
     "previous_arc_summary": "ARC-L (C313-C319): adoption surface — AGENT_REFERENCE.md, AGENT_BUILDER_GUIDE.md, lean/reliability_memory (C315-lean), lean/structural_geometry (C319), GAME_AI.md, README measured-results overhaul. Clone spike traced via GitHub traffic API to the geometry chain (code search). Earlier: ARC-E DifferenzPort (C288-C290), ARC-D E1 impact historization (C285-C287), Trajectory Arc (C277-C283).",
-    "key_result": "WP-2.3 fixes the five causal method IDs, shared history/revisit behavior, the B-E path family and gate, cap handling, and full-geometry call boundary before holdout access. Compatibility is engineering evidence only: no full-budget comparison, selected control, causal effect, holdout result, or Gate-G1 finding exists yet.",
+    "key_result": "G1-v1 development selected A_HIST as the simpler control and found no E_FULL_GEOMETRY advantage, no executed overrides, and no phase-active decisions; the protected holdout remains unread. Override-Gate v1 mechanically selected gate_disabled but cannot cleanly rank thresholds because 2116/2880 timeout labels include branch instrumentation. Corrected v2 calibration is implemented but still unauthorized and unexecuted.",
     "open_threads": [
-      "WP-2.4: execute full 10-adaptation + 20-evaluation development raw-data runs, report positive and negative results, apply the preregistered simpler-control selection, and freeze it before holdout access.",
+      "WP-GATE-0.16: record the external audit, close Ledger and preregistration provenance gaps, and update this bootstrap without changing the frozen v2 instance or observing outcomes.",
+      "After WP-GATE-0.16 review: declare the exact v2 execution commit, generate its execution manifest, and obtain a separate explicit calibration-only authorization before dispatch.",
+      "G1-v1 lifecycle: retain the development-negative result and leave its protected holdout unopened; any G1-v2 requires a new calibration split, phase-excitation criterion, and fresh holdout seeds.",
       "F3 branching boundary (b>=3) and F4 non-Markov limit: confirmed structural limits (C272). Improvement work FROZEN until after G1 — report honestly, do not engineer around them before the gate.",
       "GT-8 Partial Residual Trap: documented, unresolved, deferred until after G1 (only relevant if the framework core continues as a product).",
-      "WP-2.3 bounded compatibility artifacts are not performance results; keep ranking, control selection, result-shaped claims, and holdout execution blocked until WP-2.4 produces the preregistered full development raw data.",
       "Quality score weights (P8 12.1) are heuristic — frozen until after G1."
     ],
-    "next_commit_id": "C327",
+    "next_commit_id": "WP-GATE-0.16",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
@@ -418,7 +419,7 @@
     "phases": {
       "P0_evidence_reconciliation": "COMPLETE C321-C323: evidence policy/ledger, repository-plan reconciliation, G1 preregistration, and status/archive inventory without moving or splitting",
       "P1_productize": "WP-1.1 packaging both lean packages; WP-1.2 PyPI (USER DECISION required); WP-1.3 LLM-agent tool-reliability example; WP-1.4 game-AI example consuming structural_geometry",
-      "P2_decision_experiment": "WP-2.1 COMPLETE C324: four exact-N domain families, keyed outcomes, development-only harness, holdout guard. WP-2.2 COMPLETE C325: eight fair baseline adapters, frozen configs, 960/960 development compatibility runs. WP-2.3 COMPLETE C326: five causal ablations, frozen operationalization, 600/600 bounded development compatibility runs. WP-2.4 full development raw-data report and simpler-control selection; WP-2.5 held-out BPI2017 validation without outcome leakage",
+      "P2_decision_experiment": "WP-2.1 COMPLETE C324: four exact-N domain families, keyed outcomes, development-only harness, holdout guard. WP-2.2 COMPLETE C325: eight fair baseline adapters. WP-2.3 COMPLETE C326: five causal ablations and frozen operationalization. WP-2.4 COMPLETE C327-C331: corrected distributed run produced all 1560 development records, selected A_HIST, and diagnosed G1-v1 as development-negative with holdout unopened. Override-Gate WP-GATE-0.1-0.15 then specified, executed, diagnosed, and redesigned the free support-margin calibration path; v2 outcomes remain absent. WP-2.5 held-out BPI2017 validation remains unexecuted.",
       "P3_gate": "Gate G1 — see gate_g1",
       "P4_conditional": "4a: productize geometry (if G1-A passes) OR 4b: research-freeze geometry (if not)",
       "P5_repositioning": "WP-5.1 README claims-to-ledger rewrite + AGI blueprint to _archive; WP-5.2 external short paper on Historization incl. F3/F4 (USER DECISION on submission); WP-5.3 extend existing reproduction protocol with immutable raw artifacts"
@@ -433,12 +434,12 @@
       "ablation_configs_frozen": true,
       "ablation_configs": "docs/E0_G1_ABLATION_CONFIGS_v1.json",
       "ablation_audit": "docs/E0_G1_ABLATION_AUDIT_v1.md",
-      "g1_a_primary_control_selected": null,
+      "g1_a_primary_control_selected": "A_HIST",
       "holdout_execution_started": false,
       "G1_A_geometry": "E_FULL_GEOMETRY versus a development-selected simpler equal-interaction control; family and overall thresholds, phase attribution, N=1000 scale checks, and compute caps are fixed in E0-G1-v1.",
       "G1_B_vs_baselines": "A_HIST versus the per-instance median of fairly trained Q-learning, UCB1-edge, and random-restart-greedy under the E0-G1-v1 adaptation/evaluation budget.",
-      "status": "PREREGISTERED DESIGN — holdout not started; decide after WP-2.4",
-      "result": null
+      "status": "DEVELOPMENT-NEGATIVE — holdout not started and should remain unopened for G1-v1",
+      "result": "Development only: E_FULL_GEOMETRY minus A_HIST mean difference 0.0; 3 algorithmic timeouts, 0 infrastructure failures, 0 path-cap hits, 0 overrides, and no interfering or wrapped phase decision. This is not a holdout Gate-G1 result."
     },
     "non_goals_until_g1": [
       "new layers or new mechanisms in layers 5-14",
@@ -721,6 +722,30 @@
     }
   },
   "commit_history_recent": [
+    {
+      "id": "WP-GATE-0.1..0.15",
+      "hash": "d6ab453..a699c0e",
+      "msg": "specify, execute, diagnose, redesign, and lock Override-Gate calibration",
+      "notes": "WP-GATE-0.8 v1 selected gate_disabled from 2880 shards but was timing-confounded; 0.9-0.10 isolated and removed parent/branch timing conflation; 0.11-0.15 froze and implemented v2 behind external authorization. No v2 calibration, verification, or protected holdout outcome exists."
+    },
+    {
+      "id": "C331",
+      "hash": "83b87c9",
+      "msg": "diagnose G1 mechanism neutrality",
+      "notes": "All persisted B-E evaluation decisions had zero overrides; D remained in the gradient regime and E was packaged-D parity. G1-v1 closed development-negative with holdout unopened."
+    },
+    {
+      "id": "C330",
+      "hash": "3990b5d",
+      "msg": "remediate G1 scaling bottleneck",
+      "notes": "Completed 1560/1560 corrected development records: 1557 regular completions, 3 valid algorithmic timeouts, 0 infrastructure failures, and 0 path-cap hits; selected A_HIST as simpler control."
+    },
+    {
+      "id": "C329",
+      "hash": "69a497c",
+      "msg": "diagnose G1 scaling bottleneck",
+      "notes": "Located superlinear geometry/path-family work as the dominant execution bottleneck without reading holdout outcomes."
+    },
     {
       "id": "C325",
       "hash": "136013f",

@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "title": "E0 strategic evidence ledger",
-  "last_updated": "2026-07-31",
+  "last_updated": "2026-08-04",
   "authoritative_for": [
     "strategic empirical claims",
     "Gate G1 evidence status",
@@ -570,6 +570,18 @@
           "role": "manual authorization-gated 144-cell execution and consolidation workflow"
         },
         {
+          "path": "docs/E0_OVERRIDE_GATE_CALIBRATION_RESULT_v1.md",
+          "role": "executed scoped v1 result and disclosed timing limitation"
+        },
+        {
+          "path": "docs/E0_OVERRIDE_GATE_CALIBRATION_INSTANCE_v2.json",
+          "role": "frozen corrected Stage-A/Stage-B calibration contract"
+        },
+        {
+          "path": "docs/E0_OVERRIDE_GATE_CALIBRATION_EXECUTION_v2.md",
+          "role": "locked v2 execution layer and remaining authorization boundary"
+        },
+        {
           "path": "docs/research/C185_TRAFFIC_VALIDATION_REPORT_v1.md",
           "role": "traffic-specific comparison of support-margin thresholds 0.5 and 0.85"
         },
@@ -600,27 +612,225 @@
       "raw_artifacts": [],
       "limitations": [
         "WP-GATE-0.1 is a design and governance result; WP-GATE-0.2 implements policy infrastructure; WP-GATE-0.3 freezes one scoped experiment; WP-GATE-0.4 implements its domain-free execution scaffold; WP-GATE-0.5 implements the calibration-only domain and branch engine; WP-GATE-0.6 implements the bounded worker and frozen selection pipeline; WP-GATE-0.7 implements authorization-gated cell-aligned distribution. None is an executed calibration.",
-        "The utility, risk budget, candidate grid, and fresh split manifests are preregistered, but no replacement policy or threshold is selected.",
+        "WP-GATE-0.8 executed v1 and selected gate_disabled within scope, but the later timing diagnosis prevents treating that result as a clean portable threshold ranking.",
+        "The v2 utility, risk budget, candidate grid, and fresh split are preregistered, but no v2 replacement policy or threshold is selected.",
         "The frozen instance applies only to E_FULL_GEOMETRY at horizon 3 in its four declared domain families; it cannot establish a universal E0 threshold.",
         "The existing scalar APIs retain their historical names and legacy behavior."
       ],
       "required_next_evidence": [
-        "Review, commit, and push the WP-GATE-0.7 execution implementation, then rerun the planning-only manifest on that exact commit.",
-        "Create and review a separate calibration-only authorization record bound to that exact commit, then execute and consolidate the complete 144-cell matrix.",
-        "Verify the frozen selected policy on fresh instances before any new protected holdout."
+        "Freeze the post-audit v2 execution commit and generate its exact execution manifest.",
+        "Create and review a separate calibration-only authorization record bound to that commit and manifest, then execute and consolidate Stage B and Stage A.",
+        "Verify any frozen selected policy on fresh instances before a separately authorized protected holdout."
       ],
       "decision_review": {
         "trigger": "Completed fresh calibration and verification artifact",
-        "current_action": "Keep all legacy defaults unchanged; review and freeze WP-GATE-0.7 before creating an explicit commit-bound calibration authorization."
+        "current_action": "Keep all legacy defaults unchanged; close the WP-GATE-0.15 audit, freeze the resulting v2 execution commit, and require an explicit commit-and-manifest-bound calibration authorization."
       },
       "related_claims": [
         "E0-PHASE-CAUSAL-001",
         "E0-PRODUCT-LEAN-001"
       ],
       "last_verified": {
-        "date": "2026-07-31",
-        "commit": "19cc50c",
-        "result": "WP-GATE-0.7 adds a commit-bound external authorization record, a deterministic 144-cell by 20-task calibration matrix, one-cell-per-job execution, latest-attempt selection without fallback, and complete gated consolidation. Validation used synthetic records only; no operational authorization was created and no calibration, verification, or holdout outcome was observed."
+        "date": "2026-08-04",
+        "commit": "a699c0e",
+        "result": "WP-GATE-0.8 selected gate_disabled within the confounded v1 scope; WP-GATE-0.9 and 0.10 isolated the timing problem; WP-GATE-0.11 through 0.15 froze and implemented a corrected but still unauthorized and unexecuted v2 calibration path."
+      }
+    },
+    {
+      "id": "E0-OVERRIDE-GATE-CAL-V1-001",
+      "kind": "empirical",
+      "statement": "In the frozen E0-OVERRIDE-GATE-CAL-INSTANCE-v1 calibration, no active candidate was eligible and the preregistered fail-closed selection was gate_disabled; the run does not establish a portable threshold because its timeout labels combine parent and branch-instrumentation work.",
+      "status": "mixed_internal",
+      "replication": "same_repo",
+      "data_origin": "synthetic_designed",
+      "scope": "WP-GATE-0.8; 2,880 calibration shards from GitHub Actions run 30631675731 on the frozen v1 instance. Verification and protected holdout remained closed.",
+      "work_packages": [
+        "WP-GATE-0.8"
+      ],
+      "sources": [
+        {
+          "path": "docs/E0_OVERRIDE_GATE_CALIBRATION_RESULT_v1.md",
+          "role": "scoped result, provenance, counts, interpretation, and limitations"
+        },
+        {
+          "path": "artifacts/override_gate/E0-OVERRIDE-GATE-CAL-INSTANCE-v1/calibration/run_30631675731/manifest.json",
+          "role": "retained aggregate counts, hashes, and selected policy"
+        },
+        {
+          "path": "artifacts/override_gate/E0-OVERRIDE-GATE-CAL-INSTANCE-v1/calibration/run_30631675731/selection_report.json",
+          "role": "complete candidate eligibility and fail-closed selection report"
+        },
+        {
+          "path": "docs/E0_OVERRIDE_GATE_AUDIT_WP_GATE_0_15.md",
+          "role": "externally supplied integrity and consistency review recorded by WP-GATE-0.16"
+        }
+      ],
+      "commands": [
+        "python -m json.tool artifacts/override_gate/E0-OVERRIDE-GATE-CAL-INSTANCE-v1/calibration/run_30631675731/manifest.json",
+        "python -m json.tool artifacts/override_gate/E0-OVERRIDE-GATE-CAL-INSTANCE-v1/calibration/run_30631675731/selection_report.json"
+      ],
+      "raw_artifacts": [
+        "GitHub Actions run 30631675731",
+        "artifacts/override_gate/E0-OVERRIDE-GATE-CAL-INSTANCE-v1/calibration/run_30631675731/override-gate-calibration-evidence-attempt-1.zip"
+      ],
+      "limitations": [
+        "The result is scoped to the frozen four-family, three-scale, horizon-3 synthetic calibration instance.",
+        "Of 2,880 shards, 2,116 were labeled algorithm_timeout and only 764 completed; the v1 deadline enclosed both parent work and paired diagnostic branches.",
+        "The mechanically binding gate_disabled fallback is not evidence that disabling the gate is globally optimal.",
+        "No verification or protected-holdout outcome was observed."
+      ],
+      "required_next_evidence": [
+        "Use a fresh versioned calibration whose branch-free parent timing is separated from paired safety instrumentation.",
+        "Require a new commit-bound authorization before fresh calibration and a separate authorization after verification before protected holdout."
+      ],
+      "related_claims": [
+        "E0-OVERRIDE-GATE-001",
+        "E0-OVERRIDE-GATE-TIMING-001",
+        "E0-OVERRIDE-GATE-V2-READY-001"
+      ],
+      "last_verified": {
+        "date": "2026-08-04",
+        "commit": "a699c0e",
+        "result": "Audit rechecked retained hashes and counts: 2,116 timeouts plus 764 completions equal 2,880 shards; gate_disabled remains the scoped v1 selection, with its timing confound disclosed."
+      }
+    },
+    {
+      "id": "E0-OVERRIDE-GATE-TIMING-001",
+      "kind": "empirical_diagnosis",
+      "statement": "The dominant v1 calibration timeout pattern is materially confounded by synchronous paired-branch instrumentation; separating branch-free Stage-B parents from sampled Stage-A branches preserves parent replay in the bounded development cases and is required for a clean calibration design.",
+      "status": "supported_internal",
+      "replication": "same_repo",
+      "data_origin": "synthetic_designed",
+      "scope": "WP-GATE-0.9 and WP-GATE-0.10 development-only pilots, including one seed and N=100, N=500, and N=1000 bounded separation cases; no fresh calibration split.",
+      "work_packages": [
+        "WP-GATE-0.9",
+        "WP-GATE-0.10"
+      ],
+      "sources": [
+        {
+          "path": "docs/E0_OVERRIDE_GATE_DEVELOPMENT_PILOT_v1.md",
+          "role": "timing-confound diagnosis and stage-separation evidence"
+        },
+        {
+          "path": "artifacts/override_gate/development/wp_gate_0_9/diagnosis.json",
+          "role": "machine-readable parent-versus-paired timing diagnosis"
+        },
+        {
+          "path": "artifacts/override_gate/development/wp_gate_0_10/diagnosis.json",
+          "role": "machine-readable Stage-A/Stage-B separation and replay checks"
+        },
+        {
+          "path": "docs/E0_OVERRIDE_GATE_AUDIT_WP_GATE_0_15.md",
+          "role": "externally supplied series audit recorded by WP-GATE-0.16"
+        }
+      ],
+      "commands": [
+        "python -m pytest e0_controller/test_override_gate_development_pilot.py e0_controller/test_override_gate_v2_development.py -q -p no:cacheprovider",
+        "python -m json.tool artifacts/override_gate/development/wp_gate_0_9/diagnosis.json",
+        "python -m json.tool artifacts/override_gate/development/wp_gate_0_10/diagnosis.json"
+      ],
+      "raw_artifacts": [
+        "artifacts/override_gate/development/wp_gate_0_9/pilot.json",
+        "artifacts/override_gate/development/wp_gate_0_9/pilot_budget40.json",
+        "artifacts/override_gate/development/wp_gate_0_10/pilot.json"
+      ],
+      "limitations": [
+        "The pilots are development-only and were designed inside this repository.",
+        "Replay equality in three bounded disabled-control cases does not prove equality for every candidate and domain.",
+        "Nine harmful zero-margin overrides are a scoped mechanism observation, not a calibrated threshold result."
+      ],
+      "required_next_evidence": [
+        "Execute the frozen v2 calibration only after its execution commit, manifest, and external authorization are fixed.",
+        "Retain separate parent and branch deadlines and treat unresolved Stage-A evidence as ineligible rather than as a parent timeout."
+      ],
+      "related_claims": [
+        "E0-OVERRIDE-GATE-CAL-V1-001",
+        "E0-OVERRIDE-GATE-V2-READY-001"
+      ],
+      "last_verified": {
+        "date": "2026-08-04",
+        "commit": "a699c0e",
+        "result": "Audit accepted the timeout diagnosis and the v2 design response; the retained development artifacts remain explicit about their non-calibration scope."
+      }
+    },
+    {
+      "id": "E0-OVERRIDE-GATE-V2-READY-001",
+      "kind": "repository_fact",
+      "statement": "The frozen Override-Gate calibration v2 contract has a complete calibration-only execution layer behind a commit-, manifest-, digest-, workflow-, and confirmation-bound external authorization gate, but no operational authorization or v2 outcome exists.",
+      "status": "supported_internal",
+      "replication": "executable",
+      "data_origin": "not_applicable",
+      "scope": "WP-GATE-0.11 through WP-GATE-0.15: frozen v2 design, no-outcome pipeline, killable workers, authorization validator, and manual calibration-only workflow.",
+      "work_packages": [
+        "WP-GATE-0.11",
+        "WP-GATE-0.12",
+        "WP-GATE-0.13",
+        "WP-GATE-0.14",
+        "WP-GATE-0.15"
+      ],
+      "sources": [
+        {
+          "path": "docs/E0_OVERRIDE_GATE_CALIBRATION_INSTANCE_v2.json",
+          "role": "immutable machine-readable v2 experiment contract"
+        },
+        {
+          "path": "docs/E0_OVERRIDE_GATE_CALIBRATION_PREREGISTRATION_v2.md",
+          "role": "human-readable frozen design and post-freeze correction record"
+        },
+        {
+          "path": "docs/E0_OVERRIDE_GATE_CALIBRATION_AUTHORIZATION_v2.md",
+          "role": "external authorization schema, validator boundary, and non-operational template"
+        },
+        {
+          "path": "docs/E0_OVERRIDE_GATE_CALIBRATION_EXECUTION_v2.md",
+          "role": "locked execution, manifest, attempt, consolidation, and workflow contract"
+        },
+        {
+          "path": ".github/workflows/override-gate-calibration-v2-execute.yml",
+          "role": "manual authorization-gated Stage-B/Stage-A matrix workflow"
+        },
+        {
+          "path": "artifacts/override_gate/development/wp_gate_0_15/dry-run.json",
+          "role": "no-outcome execution-layer review record"
+        },
+        {
+          "path": "docs/E0_OVERRIDE_GATE_AUDIT_WP_GATE_0_15.md",
+          "role": "externally supplied freeze, authorization, test, and secret-boundary audit"
+        }
+      ],
+      "commands": [
+        "python -m json.tool docs/E0_OVERRIDE_GATE_CALIBRATION_INSTANCE_v2.json",
+        "python -m json.tool docs/E0_OVERRIDE_GATE_CALIBRATION_PROTOCOL_v2.json",
+        "python -m pytest e0_controller -k override_gate_calibration_v2 -q -p no:cacheprovider",
+        "python -m e0_controller.override_gate_calibration_v2_execution dry-run"
+      ],
+      "raw_artifacts": [
+        "artifacts/override_gate/development/wp_gate_0_11/sampling_cap4_pilot.json",
+        "artifacts/override_gate/development/wp_gate_0_12/dry_run.json",
+        "artifacts/override_gate/development/wp_gate_0_13/pilot.json",
+        "artifacts/override_gate/development/wp_gate_0_14/dry-run.json",
+        "artifacts/override_gate/development/wp_gate_0_15/dry-run.json"
+      ],
+      "limitations": [
+        "Implementation and no-outcome synthetic validation do not establish a useful threshold.",
+        "No execution manifest is yet bound to a declared final execution commit.",
+        "The committed authorization template is deliberately non-operational and no fresh v2 calibration domain has been instantiated.",
+        "Verification and protected holdout remain unauthorized and unread."
+      ],
+      "required_next_evidence": [
+        "Freeze the post-audit execution commit and generate its complete execution manifest.",
+        "Obtain and validate a separate explicit calibration-only authorization bound to that exact commit and manifest.",
+        "Run and consolidate the complete v2 calibration before considering verification; protected holdout requires a later separate authorization."
+      ],
+      "related_claims": [
+        "E0-OVERRIDE-GATE-001",
+        "E0-OVERRIDE-GATE-CAL-V1-001",
+        "E0-OVERRIDE-GATE-TIMING-001"
+      ],
+      "last_verified": {
+        "date": "2026-08-04",
+        "commit": "a699c0e",
+        "result": "Audit verified frozen-instance integrity, real authorization checks, absence of an operational record, 318 passing Override-Gate tests, and 7,166 collected tests in 181 files. No v2 outcome exists."
       }
     },
     {
