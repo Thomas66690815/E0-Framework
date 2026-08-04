@@ -1,0 +1,22 @@
+{
+  "artifact_kind": "development_full_environment",
+  "logical_cpu_count": 4,
+  "machine": "x86_64",
+  "not_g1_result": true,
+  "packages": {
+    "numpy": "2.5.1",
+    "pytest": null,
+    "scipy": "1.18.0"
+  },
+  "platform": "Linux-6.17.0-1020-azure-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "protocol_id": "E0-G1-v1",
+  "python_implementation": "CPython",
+  "python_version": "3.12.13",
+  "timer": {
+    "implementation": "time.perf_counter",
+    "monotonic": true,
+    "resolution_seconds": 1e-09
+  },
+  "total_physical_memory_bytes": 16766423040
+}

@@ -1,0 +1,81 @@
+{
+  "artifact_kind": "development_full_manifest",
+  "counts": {
+    "completed_replicates": 1560,
+    "evaluation_episode_records": 31200,
+    "infrastructure_failures": 0,
+    "planned_replicates": 1560,
+    "valid_negative_replicates": 3
+  },
+  "files": {
+    "environment.json": {
+      "sha256": "3342ab3d376957b7aa350e6ddc9de7f273866e73968fdd8ab1bf093e78921544"
+    },
+    "episodes.jsonl.gz": {
+      "sha256": "df0e9e953d6b9805b4492ce92182291b451586f3c87e2631720286c5fc57fad9"
+    },
+    "frozen_configs.json": {
+      "sha256": "f5671de8c805af9e893904ec223e7e7948d2d2fe6bd8cae21eb1ef9d3859c5ca"
+    },
+    "raw_runs.jsonl": {
+      "sha256": "29fa862ce8109a40e33395f402b1a8b89d2d7e2eb04c6cd85ca87e95beec5d64"
+    },
+    "summary.json": {
+      "sha256": "cb14df01206b5d4e1618bb07cc22b261b2aa5325e4ee251557736fd1d178417d"
+    }
+  },
+  "generated_at_utc": "2026-07-30T09:31:04.919668+00:00",
+  "generator_version": "1.0",
+  "holdout_accessed": false,
+  "holdout_execution_started": false,
+  "not_g1_result": true,
+  "primary_control_selected": "A_HIST",
+  "protocol_id": "E0-G1-v1",
+  "protocol_sha256": "e1017c197346e2176a6ddefb5e9d6a24cf140b59d80c7b7615265a4d8a1e3bbd",
+  "scope_note": "Full development data and frozen control selection only. No holdout access and no Gate G1 result.",
+  "selection": {
+    "adaptation_episodes": 10,
+    "evaluation_episodes": 20,
+    "families": [
+      "decoy_dag",
+      "nonstationary_parallel",
+      "trap_grid_v2",
+      "wall_grid"
+    ],
+    "generator_seeds": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "methods": [
+      "A_HIST",
+      "B_INCOHERENT",
+      "C_THETA_ZERO",
+      "D_U1_PHASE",
+      "E_FULL_GEOMETRY",
+      "Q_LEARNING",
+      "UCB1_EDGE",
+      "RANDOM_RESTART_GREEDY",
+      "MEMORYLESS_GREEDY",
+      "EPSILON_GREEDY",
+      "UNIFORM_RANDOM",
+      "A_STAR",
+      "D_STAR_LITE"
+    ],
+    "scales": [
+      100,
+      500,
+      1000
+    ]
+  },
+  "source_commit": "3990b5dbd4195b6d4f3dd21bd4a48b0bb0efaa12",
+  "source_dirty": false,
+  "split": "development"
+}

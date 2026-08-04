@@ -1,0 +1,227 @@
+{
+  "ablation_configs": {
+    "config_version": "1.0",
+    "frozen_before_holdout": true,
+    "frozen_on": "2026-07-28",
+    "holdout_execution_started": false,
+    "information_access": {
+      "A_HIST_note": "Receives the shared representation but performs no lookahead.",
+      "hidden_from_A_to_E": [
+        "outcome probabilities",
+        "future keyed outcomes",
+        "nonstationary switch",
+        "oracle cost",
+        "other methods' observations"
+      ],
+      "shared_by_A_to_E": "static topology and edge delta/base resistance, local actions, and own observed outcomes"
+    },
+    "methods": {
+      "A_HIST": {
+        "aggregation": "none",
+        "implementation": "Historized effective-tension greedy with multiplicative recent-state penalty.",
+        "lookahead": false,
+        "phase": "none"
+      },
+      "B_INCOHERENT": {
+        "aggregation": "sum(exp(-2*S(path)))",
+        "implementation": "Non-coherent sum of per-path intensities over the common bounded path family.",
+        "lookahead": true,
+        "phase": "none"
+      },
+      "C_THETA_ZERO": {
+        "aggregation": "abs(sum(exp(-S(path))))**2",
+        "implementation": "Coherent positive-real path mass over the common bounded path family.",
+        "lookahead": true,
+        "phase": "theta_forced_zero"
+      },
+      "D_U1_PHASE": {
+        "aggregation": "abs(sum(exp(-S(path) + i*theta(path))))**2",
+        "implementation": "Manual U(1) superposition using structural_geometry.theta over the common bounded path family.",
+        "lookahead": true,
+        "phase": "U1"
+      },
+      "E_FULL_GEOMETRY": {
+        "aggregation": "structural_geometry.influence_map",
+        "implementation": "Direct lean.structural_geometry.influence_map call; returned paths are checked against the B-D family.",
+        "lookahead": true,
+        "phase": "full_structural_geometry"
+      }
+    },
+    "primary_control_selection": {
+      "candidates": [
+        "A_HIST",
+        "B_INCOHERENT",
+        "C_THETA_ZERO"
+      ],
+      "selected": null,
+      "status": "pending WP-2.4 development raw-data execution and preregistered selection rule; must be frozen before holdout"
+    },
+    "protocol_id": "E0-G1-v1",
+    "protocol_sha256": "e1017c197346e2176a6ddefb5e9d6a24cf140b59d80c7b7615265a4d8a1e3bbd",
+    "selection_rule": "Protocol constants and existing E0 defaults fixed globally without holdout access; no family-specific or scale-specific tuning.",
+    "shared": {
+      "candidate_order": "lexicographic",
+      "failure_rule": "FAILURE consumes one interaction, leaves position at source, and is inscribed in historization.",
+      "field_mapping": {
+        "cost": "delta * (base_resistance + clipped_historization_correction)",
+        "weight": "delta"
+      },
+      "historization": {
+        "delta_max": 3.0,
+        "lambda_f": 0.2,
+        "lambda_s": 0.15,
+        "rho": 0.9
+      },
+      "max_imbalance": 3.0,
+      "max_paths_per_decision": 100000,
+      "min_confidence": 0.85,
+      "override_rule": "Override historized/revisit greedy only on disagreement, confidence >= 0.85, path-count imbalance <= 3.0, and no path-cap hit.",
+      "path_cap_rule": "Stop the episode decision, mark path_cap_hit, and assign primary score 0.0.",
+      "path_geometry": "simple",
+      "path_horizon": 3,
+      "revisit": {
+        "alpha": 2.0,
+        "recent_k": 3,
+        "reset": "episode_boundary"
+      },
+      "tie_breaker": "lexicographically smallest action"
+    },
+    "work_package": "WP-2.3"
+  },
+  "ablation_execution_config_sha256": "8741234e7343444e549de35e619712f7b9fb783158f8a006265d37377648303f",
+  "artifact_kind": "development_frozen_configs",
+  "baseline_config_sha256": "b1d1b81d93841de717fb3ac144390ce84f3f7e128ff4ce15344a1f5ee94c88a8",
+  "baseline_configs": {
+    "audit": {
+      "bfs": "Not a preregistered method. Retained only as a unit-cost oracle to verify A* and D* Lite path optimality.",
+      "legacy_benchmark_gridworld_astar": "Algorithmic idea retained, but replaced by a protocol adapter with explicit map-information labeling and FAILURE replanning.",
+      "legacy_benchmark_sota": "Not reused: single-episode Q-learning and inconsistent FAILURE movement do not satisfy E0-G1-v1.",
+      "upper_reference_exclusion": "A_STAR and D_STAR_LITE are excluded from the G1-B comparator because they receive full topology."
+    },
+    "config_version": "1.0",
+    "frozen_before_holdout": true,
+    "frozen_on": "2026-07-28",
+    "holdout_execution_started": false,
+    "methods": {
+      "A_STAR": {
+        "category": "map_informed_upper_references",
+        "implementation_note": "Full static topology, no hidden outcome probabilities. Zero heuristic is admissible for all heterogeneous state IDs and makes optimality cross-checkable against BFS.",
+        "parameters": {
+          "edge_cost": "one_environment_interaction",
+          "failed_edge_handling": "block_for_current_episode_and_replan",
+          "heuristic": "zero"
+        }
+      },
+      "D_STAR_LITE": {
+        "category": "map_informed_upper_references",
+        "implementation_note": "D* Lite incremental replanning over full static topology, with observed failed edges changed to infinite cost for the current episode. Hidden outcome schedules are not exposed.",
+        "parameters": {
+          "edge_cost": "one_environment_interaction",
+          "failed_edge_handling": "incremental_cost_infinity_for_current_episode",
+          "heuristic": "zero"
+        }
+      },
+      "EPSILON_GREEDY": {
+        "category": "diagnostic",
+        "implementation_note": "Fixed-epsilon local exploration without learned values.",
+        "parameters": {
+          "epsilon": 0.2
+        }
+      },
+      "MEMORYLESS_GREEDY": {
+        "category": "diagnostic",
+        "implementation_note": "Deterministic argmin of local delta times base resistance; lexicographic tie-break; no learning state.",
+        "parameters": {}
+      },
+      "Q_LEARNING": {
+        "category": "competitive_G1_B",
+        "implementation_note": "Tabular off-policy Q-learning; epsilon decays linearly by protocol episode while learning continues during evaluation.",
+        "parameters": {
+          "discount_factor": 0.95,
+          "epsilon_end": 0.05,
+          "epsilon_start": 0.2,
+          "learning_rate": 0.3,
+          "reward_failure": -1.0,
+          "reward_goal": 1.0,
+          "reward_step": -0.01
+        }
+      },
+      "RANDOM_RESTART_GREEDY": {
+        "category": "competitive_G1_B",
+        "implementation_note": "Project operationalization: each protocol episode is a position restart; randomized exploration and persistent path penalties vary greedy restarts. No free within-episode teleport is allowed.",
+        "parameters": {
+          "failed_episode_credit_penalty": 0.25,
+          "immediate_failure_penalty": 1.0,
+          "restart_exploration_probability": 0.1,
+          "success_penalty_decay": 0.9
+        }
+      },
+      "UCB1_EDGE": {
+        "category": "competitive_G1_B",
+        "implementation_note": "Project operationalization: outgoing edges are arms and receive bounded Monte-Carlo episode reward. This adapts UCB1 to delayed path credit; it is not claimed as a canonical graph UCB procedure.",
+        "parameters": {
+          "exploration_coefficient": 1.4142135623730951,
+          "reward": "binary_episode_goal"
+        }
+      },
+      "UNIFORM_RANDOM": {
+        "category": "diagnostic",
+        "implementation_note": "Uniform choice among currently outgoing edges.",
+        "parameters": {}
+      }
+    },
+    "protocol_id": "E0-G1-v1",
+    "protocol_sha256": "e1017c197346e2176a6ddefb5e9d6a24cf140b59d80c7b7615265a4d8a1e3bbd",
+    "references": {
+      "A_STAR": {
+        "citation": "Hart, Nilsson, and Raphael (1968), A Formal Basis for the Heuristic Determination of Minimum Cost Paths",
+        "doi": "10.1109/TSSC.1968.300136"
+      },
+      "D_STAR_LITE": {
+        "citation": "Koenig and Likhachev (2002), D* Lite",
+        "url": "https://publications.ri.cmu.edu/d-lite"
+      },
+      "Q_LEARNING": {
+        "citation": "Watkins and Dayan (1992), Q-learning",
+        "doi": "10.1007/BF00992698"
+      },
+      "UCB1_EDGE": {
+        "citation": "Auer, Cesa-Bianchi, and Fischer (2002), Finite-time Analysis of the Multiarmed Bandit Problem",
+        "doi": "10.1023/A:1013689704352"
+      }
+    },
+    "selection_rule": "Literature-informed global defaults fixed without holdout access; no per-family or per-scale tuning.",
+    "work_package": "WP-2.2"
+  },
+  "frozen_before_holdout": true,
+  "holdout_execution_started": false,
+  "primary_control_selection": {
+    "criterion": "highest pooled mean success_adjusted_efficiency",
+    "data": "development only",
+    "holdout_accessed": false,
+    "ranking": [
+      {
+        "median_wall_time_ms": 8797.096720500002,
+        "method": "A_HIST",
+        "pooled_mean_success_adjusted_efficiency": 0.20833333333333334,
+        "replicates": 120
+      },
+      {
+        "median_wall_time_ms": 28250.607919000002,
+        "method": "B_INCOHERENT",
+        "pooled_mean_success_adjusted_efficiency": 0.20833333333333334,
+        "replicates": 120
+      },
+      {
+        "median_wall_time_ms": 32245.822984500002,
+        "method": "C_THETA_ZERO",
+        "pooled_mean_success_adjusted_efficiency": 0.20833333333333334,
+        "replicates": 120
+      }
+    ],
+    "selected": "A_HIST",
+    "tie_breaker": "lower median wall_time_ms, then lexical ID"
+  },
+  "protocol_id": "E0-G1-v1",
+  "protocol_sha256": "e1017c197346e2176a6ddefb5e9d6a24cf140b59d80c7b7615265a4d8a1e3bbd"
+}

@@ -92,28 +92,91 @@
         {
           "path": "e0_controller/benchmark_sota.py",
           "role": "small-domain standard baseline comparison"
+        },
+        {
+          "path": "docs/E0_G1_DEVELOPMENT_RESULT_v1.md",
+          "role": "WP-2.4 full-budget development comparison against fair baselines"
         }
       ],
       "commands": [
         "python reproduce.py",
         "python -m e0_controller.benchmark_sota --json"
       ],
-      "raw_artifacts": [],
+      "raw_artifacts": [
+        "artifacts/g1/E0-G1-v1/development/run_30526724307/"
+      ],
       "limitations": [
         "The '6x confirmed' count has no six-item independent evidence mapping.",
         "River City contains a stale-memory case where historization hurts.",
         "No independent adoption or replication establishes general product value.",
-        "Mechanism dominance has not been measured by a complete causal ablation."
+        "Mechanism dominance within E0 is now measured by the WP-2.4 causal ablation (all five variants score identically), but that same run shows A_HIST below the fair baseline median in three of four development families and below uniform random overall; the advantage concentrates in wall_grid."
       ],
       "related_claims": [
         "E0-HIST-TRAPS-001",
         "E0-OVERLAY-C185-001",
+        "E0-PRODUCT-LEAN-001",
+        "E0-G1-DEV-BASELINES-001"
+      ],
+      "last_verified": {
+        "date": "2026-08-04",
+        "commit": "2f7cabb",
+        "result": "Within E0, historization dominance is confirmed: the WP-2.4 ablation scores all five E0 variants identically and A_HIST is the fastest. External competitiveness is contradicted at development level in three of four preregistered families."
+      }
+    },
+    {
+      "id": "E0-G1-DEV-BASELINES-001",
+      "kind": "empirical",
+      "statement": "On the preregistered E0-G1-v1 development split, historization-only A_HIST is not competitive with the per-instance median of fairly trained Q-learning, UCB1-edge, and random-restart-greedy: overall success-adjusted efficiency 0.208 versus 0.407 (paired difference -0.199, 95% CI [-0.206, -0.192], goal rate -27.8pp), with only wall_grid qualifying under the preregistered family criteria (+0.260, 95% CI [+0.248, +0.272]).",
+      "status": "supported_internal",
+      "replication": "same_repo",
+      "data_origin": "synthetic_designed",
+      "scope": "WP-2.4 development seeds 0-9 only; 1,560 replicates over four families, three scales, and 13 methods from GitHub Actions run 30526724307. Development diagnostic, explicitly not a Gate-G1 result; the holdout remains unopened.",
+      "work_packages": [
+        "WP-2.4"
+      ],
+      "sources": [
+        {
+          "path": "docs/E0_G1_DEVELOPMENT_RESULT_v1.md",
+          "role": "retained provenance, diagnostics, criteria application, and consequences"
+        },
+        {
+          "path": "docs/research/E0_DECISION_BENCHMARK_v1.md",
+          "role": "workflow-generated development report committed byte-identically"
+        },
+        {
+          "path": "artifacts/g1/E0-G1-v1/development/run_30526724307/summary.json",
+          "role": "machine-readable diagnostics derived solely from raw_runs.jsonl"
+        }
+      ],
+      "commands": [
+        "python -m json.tool artifacts/g1/E0-G1-v1/development/run_30526724307/manifest.json",
+        "python -m json.tool artifacts/g1/E0-G1-v1/development/run_30526724307/summary.json"
+      ],
+      "raw_artifacts": [
+        "GitHub Actions run 30526724307 (g1-development-evidence, expires 2026-08-13)",
+        "artifacts/g1/E0-G1-v1/development/run_30526724307/raw_runs.jsonl",
+        "artifacts/g1/E0-G1-v1/development/run_30526724307/episodes.jsonl.gz"
+      ],
+      "limitations": [
+        "Development seeds only; the preregistered gate is defined on the unopened holdout.",
+        "Four designed synthetic families at N in {100, 500, 1000}; no real-world domain.",
+        "A_HIST still beats memoryless greedy and epsilon-greedy, and wins wall_grid clearly; non-competitiveness is family-dependent, not uniform.",
+        "Uniform random outscoring A_HIST overall reflects the low goal rates of the designed families for edge-local methods."
+      ],
+      "required_next_evidence": [
+        "USER DECISION: either close G1-v1 with the holdout permanently unopened, or execute the one-time preregistered holdout run to produce a formal gate result.",
+        "If lean packages are repositioned, document trade-offs against these baselines instead of superiority claims."
+      ],
+      "related_claims": [
+        "E0-HIST-DOMINANCE-001",
+        "E0-HIST-TRAPS-001",
+        "E0-PHASE-CAUSAL-001",
         "E0-PRODUCT-LEAN-001"
       ],
       "last_verified": {
-        "date": "2026-07-28",
-        "commit": "87ff88d",
-        "result": "Retained as a strategic hypothesis; removed as an unqualified fact."
+        "date": "2026-08-04",
+        "commit": "2f7cabb",
+        "result": "Bundle SHA-256 values verified against the in-artifact manifest after download; 1,560/1,560 replicates complete with zero infrastructure failures; diagnostics read from summary.json unchanged."
       }
     },
     {

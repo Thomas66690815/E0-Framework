@@ -31,12 +31,12 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "WP-GATE-0.15",
-    "latest_commit_hash": "a699c0e",
-    "latest_commit_msg": "WP-GATE-0.15: add locked v2 execution layer",
+    "latest_commit": "WP-GATE-0.16",
+    "latest_commit_hash": "2f7cabb",
+    "latest_commit_msg": "WP-GATE-0.16: close audit findings",
     "test_count": 7166,
     "test_failures": 0,
-    "ci_status": "G1 development run 30526724307 successful; Override-Gate v2 execution not authorized or dispatched",
+    "ci_status": "G1 development run 30526724307 successful; its evidence bundle is verified and retained in-repo since C332. Override-Gate v2 execution not authorized or dispatched",
     "module_count": "181 test files; non-test taxonomy not recounted in WP-GATE-0.15",
     "line_count": "~36000 production, ~133000 total",
     "lean_packages": "lean/reliability_memory (15 acceptance tests) + lean/structural_geometry (37 tests), 0 failures",
@@ -309,20 +309,21 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "ARC-N / Gate G1 evidence closure and Override-Gate calibration. G1-v1 is development-negative with its holdout unopened; WP-GATE-0.15 implements the corrected v2 calibration execution layer behind an external authorization boundary.",
-    "arc_status": "C329-C331 diagnosed and repaired G1 development scaling, completed 1560/1560 records with 3 valid algorithmic timeouts and 0 infrastructure failures, and established that the confidence gate blocked every lookahead override. WP-GATE-0.8 then produced the scoped gate_disabled v1 calibration result; WP-GATE-0.9/0.10 exposed its timing confound; WP-GATE-0.11-0.15 froze and implemented a fresh v2 design without observing v2 outcomes.",
+    "current_arc": "ARC-N / Gate G1 evidence closure. C332 retained the verified WP-2.4 bundle before artifact expiry and reported all three development diagnostics: G1-A neutral (0.0), phase attribution 0.0, and G1-B not competitive (-0.199 overall; wall_grid exception +0.260). The Override-Gate v2 execution layer is parked behind its authorization boundary.",
+    "arc_status": "C329-C331 diagnosed and repaired G1 development scaling, completed 1560/1560 records with 3 valid algorithmic timeouts and 0 infrastructure failures, and established that the confidence gate blocked every lookahead override. WP-GATE-0.8 produced the scoped gate_disabled v1 calibration result; WP-GATE-0.9/0.10 exposed its timing confound; WP-GATE-0.11-0.16 froze, implemented, and audited a fresh v2 design without observing v2 outcomes. C332 closed WP-2.4 by retaining run 30526724307 and surfacing its previously unreported G1-B baseline diagnostic.",
     "arc_thesis": "Lean packages are product candidates, not empirically proven products. e0_controller remains the research carrier through G1; UI/session/layers 5-14 remain frozen. Every strategic claim maps to an Evidence Ledger ID and every commit to a Work Package. No repository split before Gate G1 plus WP-1.1 packaging evidence.",
     "previous_arc_summary": "ARC-L (C313-C319): adoption surface — AGENT_REFERENCE.md, AGENT_BUILDER_GUIDE.md, lean/reliability_memory (C315-lean), lean/structural_geometry (C319), GAME_AI.md, README measured-results overhaul. Clone spike traced via GitHub traffic API to the geometry chain (code search). Earlier: ARC-E DifferenzPort (C288-C290), ARC-D E1 impact historization (C285-C287), Trajectory Arc (C277-C283).",
-    "key_result": "G1-v1 development selected A_HIST as the simpler control and found no E_FULL_GEOMETRY advantage, no executed overrides, and no phase-active decisions; the protected holdout remains unread. Override-Gate v1 mechanically selected gate_disabled but cannot cleanly rank thresholds because 2116/2880 timeout labels include branch instrumentation. Corrected v2 calibration is implemented but still unauthorized and unexecuted.",
+    "key_result": "G1-v1 development selected A_HIST as the simpler control and found no E_FULL_GEOMETRY advantage, no executed overrides, and no phase-active decisions; the protected holdout remains unread. The G1-B development diagnostic, first reported in C332, shows A_HIST not competitive with the fair baseline median: 0.208 vs 0.407 success-adjusted efficiency (-0.199, 95% CI [-0.206, -0.192]), beaten even by uniform random overall, with wall_grid (+0.260) as the sole qualifying family. Override-Gate v1 mechanically selected gate_disabled but cannot cleanly rank thresholds because 2116/2880 timeout labels include branch instrumentation. Corrected v2 calibration is implemented but parked, unauthorized, and unexecuted.",
     "open_threads": [
-      "WP-GATE-0.16: record the external audit, close Ledger and preregistration provenance gaps, and update this bootstrap without changing the frozen v2 instance or observing outcomes.",
-      "After WP-GATE-0.16 review: declare the exact v2 execution commit, generate its execution manifest, and obtain a separate explicit calibration-only authorization before dispatch.",
-      "G1-v1 lifecycle: retain the development-negative result and leave its protected holdout unopened; any G1-v2 requires a new calibration split, phase-excitation criterion, and fresh holdout seeds.",
+      "USER DECISION — G1-v1 holdout lifecycle: close the gate on development evidence with the holdout permanently unopened, or authorize the one-time preregistered holdout run (~4,680 replicates, roughly 3x development compute) for a formal gate result. See docs/E0_G1_DEVELOPMENT_RESULT_v1.md.",
+      "Repositioning per the preregistered G1-B rule (Umsetzungsplan): document the lean packages as a lightweight, explainable, training-free alternative with trade-offs against Q-learning/UCB1/RRG; no superiority claims. Feeds WP-5.1 README claims-to-ledger rewrite.",
+      "Override-Gate v2 execution PARKED: the declare-commit/manifest/authorization path in E0_OVERRIDE_GATE_CALIBRATION_EXECUTION_v2.md stays valid but is not a priority while the lookahead it gates is causally inactive and non-competitive.",
+      "Local main is 9+ commits ahead of origin/main; pushing WP-GATE-0.8 through C332 requires explicit user authorization.",
       "F3 branching boundary (b>=3) and F4 non-Markov limit: confirmed structural limits (C272). Improvement work FROZEN until after G1 — report honestly, do not engineer around them before the gate.",
       "GT-8 Partial Residual Trap: documented, unresolved, deferred until after G1 (only relevant if the framework core continues as a product).",
       "Quality score weights (P8 12.1) are heuristic — frozen until after G1."
     ],
-    "next_commit_id": "WP-GATE-0.16",
+    "next_commit_id": "C333",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
@@ -438,8 +439,8 @@
       "holdout_execution_started": false,
       "G1_A_geometry": "E_FULL_GEOMETRY versus a development-selected simpler equal-interaction control; family and overall thresholds, phase attribution, N=1000 scale checks, and compute caps are fixed in E0-G1-v1.",
       "G1_B_vs_baselines": "A_HIST versus the per-instance median of fairly trained Q-learning, UCB1-edge, and random-restart-greedy under the E0-G1-v1 adaptation/evaluation budget.",
-      "status": "DEVELOPMENT-NEGATIVE — holdout not started and should remain unopened for G1-v1",
-      "result": "Development only: E_FULL_GEOMETRY minus A_HIST mean difference 0.0; 3 algorithmic timeouts, 0 infrastructure failures, 0 path-cap hits, 0 overrides, and no interfering or wrapped phase decision. This is not a holdout Gate-G1 result."
+      "status": "DEVELOPMENT-NEGATIVE on both prongs — holdout not started; lifecycle (close unopened vs. one-time holdout run) is an open USER DECISION",
+      "result": "Development only: G1-A — E_FULL_GEOMETRY minus A_HIST mean difference 0.0; 3 algorithmic timeouts, 0 infrastructure failures, 0 path-cap hits, 0 overrides, and no interfering or wrapped phase decision. G1-B (first reported in C332) — A_HIST versus the competitive baseline median is -0.199 overall [95% CI -0.206, -0.192], goal rate -27.8pp; only wall_grid (+0.260) meets the preregistered family criteria. Neither is a holdout Gate-G1 result. See docs/E0_G1_DEVELOPMENT_RESULT_v1.md."
     },
     "non_goals_until_g1": [
       "new layers or new mechanisms in layers 5-14",
