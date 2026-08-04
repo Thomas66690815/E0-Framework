@@ -102,6 +102,13 @@ implemented. The execution commit is intentionally still unfrozen because the
 production runner and workflow do not yet exist. No operational authorization
 record was created. See `E0_OVERRIDE_GATE_CALIBRATION_AUTHORIZATION_v2.md`.
 
+## WP-GATE-0.15 follow-up
+
+The development mechanics now have an authorization-gated calibration-only
+production implementation and a separate Stage-B/Stage-A workflow. No
+production cell was executed. See
+`E0_OVERRIDE_GATE_CALIBRATION_EXECUTION_v2.md`.
+
 ## Evidence
 
 - implementation: `e0_controller/override_gate_calibration_v2_workers.py`

@@ -294,3 +294,14 @@ holdout closed.
 No operational authorization record, execution manifest, or outcome workflow
 is present. Therefore calibration remains technically and procedurally
 blocked. See `E0_OVERRIDE_GATE_CALIBRATION_AUTHORIZATION_v2.md`.
+
+## WP-GATE-0.15 locked execution layer
+
+The full v2 calibration-only runner and manual GitHub workflow are implemented
+behind the WP-GATE-0.14 validator. Stage B must finish and consolidate before
+outcome-blind Stage-A sampling and exact replay. Attempts are immutable and
+only the newest complete attempt may consolidate.
+
+No execution manifest, external authorization, workflow dispatch, fresh
+domain, outcome, or threshold result exists yet. See
+`E0_OVERRIDE_GATE_CALIBRATION_EXECUTION_v2.md`.

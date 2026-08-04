@@ -30,6 +30,7 @@ GENERATOR_VERSION = "1.0"
 PROTOCOL_PATH = Path(__file__).resolve().parents[1] / "docs" / "E0_G1_PROTOCOL_v1.json"
 DEVELOPMENT_SEED_NAMESPACE = "g1_v1_development"
 CALIBRATION_SEED_NAMESPACE = "override_gate_calibration"
+V2_CALIBRATION_SEED_NAMESPACE = "override_gate_calibration_v2"
 
 
 class HoldoutAccessError(ValueError):
@@ -92,6 +93,14 @@ def _validate_seed_namespace(seed: int, namespace: str) -> None:
         if seed not in seeds_for_split("calibration"):
             raise HoldoutAccessError(
                 f"Seed {seed} is not in the override-gate calibration split"
+            )
+        return
+    if namespace == V2_CALIBRATION_SEED_NAMESPACE:
+        from .override_gate_calibration_v2 import seeds_for_split_v2
+
+        if seed not in seeds_for_split_v2("calibration"):
+            raise HoldoutAccessError(
+                f"Seed {seed} is not in the override-gate v2 calibration split"
             )
         return
     raise HoldoutAccessError(f"Unknown or protected seed namespace {namespace!r}")
@@ -223,9 +232,13 @@ class G1DomainInstance:
 
     @property
     def run_id(self) -> str:
-        if self.seed_namespace == CALIBRATION_SEED_NAMESPACE:
+        if self.seed_namespace in {
+            CALIBRATION_SEED_NAMESPACE,
+            V2_CALIBRATION_SEED_NAMESPACE,
+        }:
+            version = "v2-" if self.seed_namespace == V2_CALIBRATION_SEED_NAMESPACE else ""
             return (
-                f"gate-cal-{self.family}-N{self.target_node_count}-"
+                f"gate-{version}cal-{self.family}-N{self.target_node_count}-"
                 f"s{self.generator_seed:04d}"
             )
         return f"dev-{self.family}-N{self.target_node_count}-s{self.generator_seed:04d}"

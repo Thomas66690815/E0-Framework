@@ -136,7 +136,7 @@ def test_v2_protocol_is_inert_and_contains_no_authorization():
     )
     protocol = json.loads(path.read_text(encoding="utf-8"))
     assert protocol["status"] == (
-        "frozen_design_authorization_validator_implemented_not_authorized"
+        "frozen_design_execution_layer_implemented_not_authorized"
     )
     assert protocol["authorization_record_present"] is False
     assert protocol["calibration_execution_authorized"] is False
@@ -147,13 +147,15 @@ def test_v2_protocol_is_inert_and_contains_no_authorization():
     assert status["immutable_instance_validator"] == "implemented"
     assert status["stage_a_sampler"] == "implemented_not_executed"
     assert status["stage_a_branch_runner"] == (
-        "development_worker_implemented_production_not_implemented"
+        "authorization_gated_production_implemented_not_executed"
     )
     assert status["stage_b_runner"] == (
-        "development_worker_implemented_production_not_implemented"
+        "authorization_gated_production_implemented_not_executed"
     )
     assert status["v2_statistics"] == "implemented_with_synthetic_records_only"
-    assert status["v2_distributed_workflow"] == "planning_only"
+    assert status["v2_distributed_workflow"] == (
+        "manual_authorization_gated_not_dispatched"
+    )
     assert status["v2_authorization_gate"] == (
         "validator_implemented_no_operational_record"
     )

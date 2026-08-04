@@ -1,8 +1,8 @@
 {
   "protocol_id": "E0-OVERRIDE-GATE-CAL-v2",
   "schema_version": "2.0",
-  "status": "frozen_design_authorization_validator_implemented_not_authorized",
-  "work_package": "WP-GATE-0.14",
+  "status": "frozen_design_execution_layer_implemented_not_authorized",
+  "work_package": "WP-GATE-0.15",
   "authority": "docs/E0_OVERRIDE_GATE_POLICY_v1.md",
   "frozen_instance": "docs/E0_OVERRIDE_GATE_CALIBRATION_INSTANCE_v2.json",
   "preregistration": "docs/E0_OVERRIDE_GATE_CALIBRATION_PREREGISTRATION_v2.md",
@@ -27,10 +27,10 @@
   "implementation_status": {
     "immutable_instance_validator": "implemented",
     "stage_a_sampler": "implemented_not_executed",
-    "stage_a_branch_runner": "development_worker_implemented_production_not_implemented",
-    "stage_b_runner": "development_worker_implemented_production_not_implemented",
+    "stage_a_branch_runner": "authorization_gated_production_implemented_not_executed",
+    "stage_b_runner": "authorization_gated_production_implemented_not_executed",
     "v2_statistics": "implemented_with_synthetic_records_only",
-    "v2_distributed_workflow": "planning_only",
+    "v2_distributed_workflow": "manual_authorization_gated_not_dispatched",
     "v2_authorization_gate": "validator_implemented_no_operational_record"
   },
   "required_execution_order": [

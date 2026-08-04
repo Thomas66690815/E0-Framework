@@ -173,13 +173,31 @@ def validate_stage_a_calibration_records(
             raise ValueError("Stage-A calibration must remain not_gate_result=true")
         if record.get("infrastructure_failure") is not False:
             raise ValueError("Infrastructure-invalid Stage-A cells must be rerun")
+        stage_b_parent = stage_b_by_identity[identity]
+        skipped = record.get("stage_a_skipped_due_stage_b_valid_negative") is True
+        if skipped:
+            if int(stage_b_parent.get("algorithm_timeout_count", 0)) != 1:
+                raise ValueError("Stage-A skip requires a Stage-B algorithm timeout")
+            if record.get("parent_replay_trace_match") is not False:
+                raise ValueError("Skipped Stage-A replay cannot claim a trace match")
+            if any(
+                record.get(field) not in (0, [], None)
+                for field in (
+                    "sampling_frame_override_count",
+                    "sample_count",
+                    "paired_decisions",
+                    "unresolved_count",
+                )
+            ):
+                raise ValueError("Skipped Stage-A record must contain no samples")
+            continue
         if record.get("parent_replay_trace_match") is not True:
             raise ValueError("Stage-A replay must match its Stage-B parent")
         frame = _nonnegative_integer(
             record.get("sampling_frame_override_count"),
             "sampling_frame_override_count",
         )
-        if frame != int(stage_b_by_identity[identity]["executed_override_count"]):
+        if frame != int(stage_b_parent["executed_override_count"]):
             raise ValueError("Stage-A sampling frame differs from Stage-B overrides")
         sample_count = _nonnegative_integer(record.get("sample_count"), "sample_count")
         expected_samples = min(frame, 4)

@@ -84,6 +84,14 @@ from that exact commit. Its no-outcome review must precede both the execution
 commit freeze and any external authorization act. Verification and protected
 holdout remain separate later authorizations.
 
+## WP-GATE-0.15 follow-up
+
+The complete calibration-only production layer and manual authorization-gated
+workflow are now implemented but have not been executed. The WP-GATE-0.15
+commit may become the candidate execution commit only after review; an external
+execution manifest and authorization still do not exist. See
+`E0_OVERRIDE_GATE_CALIBRATION_EXECUTION_v2.md`.
+
 ## Evidence
 
 - implementation:

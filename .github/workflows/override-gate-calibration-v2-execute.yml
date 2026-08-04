@@ -1,0 +1,321 @@
+name: Override Gate Calibration v2 Execute
+
+on:
+  workflow_dispatch:
+    inputs:
+      execution_commit:
+        description: Full reviewed execution commit
+        required: true
+        type: string
+      execution_manifest_sha256:
+        description: Byte SHA-256 of the external execution manifest
+        required: true
+        type: string
+      execution_manifest_record:
+        description: Complete execution-manifest JSON
+        required: true
+        type: string
+      authorization_sha256:
+        description: Canonical SHA-256 of the external authorization record
+        required: true
+        type: string
+      authorization_record:
+        description: Complete external calibration-only authorization JSON
+        required: true
+        type: string
+      confirmation:
+        description: Independent calibration-only confirmation
+        required: true
+        type: choice
+        options:
+          - AUTHORIZE_E0_OVERRIDE_GATE_V2_CALIBRATION_ONLY
+
+permissions:
+  contents: read
+
+concurrency:
+  group: override-gate-v2-calibration-${{ inputs.execution_commit }}
+  cancel-in-progress: false
+
+env:
+  BOUNDARY_DIR: artifacts/override_gate/v2-boundary
+  STAGE_B_DOWNLOADS: artifacts/override_gate/v2-stage-b-downloads
+  STAGE_A_DOWNLOADS: artifacts/override_gate/v2-stage-a-downloads
+  CONSOLIDATED_DIR: artifacts/override_gate/v2-consolidated
+  WORKFLOW_FILE: .github/workflows/override-gate-calibration-v2-execute.yml
+
+jobs:
+  authorize:
+    name: Validate external boundary and freeze both matrices
+    runs-on: ubuntu-24.04
+    outputs:
+      stage_b_matrix: ${{ steps.matrix.outputs.stage_b_matrix }}
+      stage_a_matrix: ${{ steps.matrix.outputs.stage_a_matrix }}
+    env:
+      AUTHORIZATION_RECORD: ${{ inputs.authorization_record }}
+      EXECUTION_MANIFEST_RECORD: ${{ inputs.execution_manifest_record }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Require the exact checked-out execution commit
+        shell: bash
+        run: test "$GITHUB_SHA" = "${{ inputs.execution_commit }}"
+
+      - name: Materialize the exact external records
+        shell: bash
+        run: |
+          mkdir -p "$BOUNDARY_DIR"
+          printf '%s\n' "$AUTHORIZATION_RECORD" > "$BOUNDARY_DIR/authorization.json"
+          printf '%s\n' "$EXECUTION_MANIFEST_RECORD" > "$BOUNDARY_DIR/execution-manifest.json"
+
+      - name: Install frozen runtime and tests
+        run: python -m pip install -e ".[science]" pytest
+
+      - name: Validate authorization before any matrix or domain
+        run: |
+          python -m e0_controller.override_gate_calibration_v2_execution \
+            validate-authorization \
+            --authorization "$BOUNDARY_DIR/authorization.json" \
+            --authorization-sha256 "${{ inputs.authorization_sha256 }}" \
+            --execution-commit "$GITHUB_SHA" \
+            --execution-manifest "$BOUNDARY_DIR/execution-manifest.json" \
+            --execution-manifest-sha256 "${{ inputs.execution_manifest_sha256 }}" \
+            --outcome-workflow "$WORKFLOW_FILE" \
+            --confirmation "${{ inputs.confirmation }}" \
+            --output "$BOUNDARY_DIR/validation.json"
+
+      - name: Run no-outcome execution-boundary tests
+        run: |
+          python -m pytest \
+            e0_controller/test_override_gate_calibration_v2.py \
+            e0_controller/test_override_gate_calibration_v2_authorization.py \
+            e0_controller/test_override_gate_calibration_v2_execution.py \
+            -q -p no:cacheprovider
+
+      - name: Emit separate authorized matrices
+        id: matrix
+        shell: bash
+        run: |
+          common=(
+            --authorization "$BOUNDARY_DIR/authorization.json"
+            --authorization-sha256 "${{ inputs.authorization_sha256 }}"
+            --execution-commit "$GITHUB_SHA"
+            --execution-manifest "$BOUNDARY_DIR/execution-manifest.json"
+            --execution-manifest-sha256 "${{ inputs.execution_manifest_sha256 }}"
+            --outcome-workflow "$WORKFLOW_FILE"
+            --confirmation "${{ inputs.confirmation }}"
+          )
+          stage_b="$(python -m e0_controller.override_gate_calibration_v2_execution matrix "${common[@]}" --stage stage_b_closed_loop_parent)"
+          stage_a="$(python -m e0_controller.override_gate_calibration_v2_execution matrix "${common[@]}" --stage stage_a_paired_evidence)"
+          echo "stage_b_matrix=$stage_b" >> "$GITHUB_OUTPUT"
+          echo "stage_a_matrix=$stage_a" >> "$GITHUB_OUTPUT"
+
+      - name: Retain exact validated boundary
+        uses: actions/upload-artifact@v4
+        with:
+          name: override-gate-v2-execution-boundary
+          path: ${{ env.BOUNDARY_DIR }}
+          if-no-files-found: error
+          retention-days: 14
+
+  stage_b:
+    name: Stage B cell ${{ matrix.cell_index }}
+    needs: authorize
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix: ${{ fromJSON(needs.authorize.outputs.stage_b_matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e ".[science]"
+      - uses: actions/download-artifact@v4
+        with:
+          name: override-gate-v2-execution-boundary
+          path: ${{ env.BOUNDARY_DIR }}
+      - name: Execute one complete branch-free Stage-B cell
+        run: |
+          python -m e0_controller.override_gate_calibration_v2_execution \
+            run-stage-b-cell \
+            --authorization "$BOUNDARY_DIR/authorization.json" \
+            --authorization-sha256 "${{ inputs.authorization_sha256 }}" \
+            --execution-commit "$GITHUB_SHA" \
+            --execution-manifest "$BOUNDARY_DIR/execution-manifest.json" \
+            --execution-manifest-sha256 "${{ inputs.execution_manifest_sha256 }}" \
+            --outcome-workflow "$WORKFLOW_FILE" \
+            --confirmation "${{ inputs.confirmation }}" \
+            --cell-index "${{ matrix.cell_index }}" \
+            --run-attempt "${{ github.run_attempt }}" \
+            --workers 4 \
+            --output artifacts/override_gate/v2-stage-b-cell
+      - name: Retain immutable Stage-B attempt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gate-v2-stage-b-cell-${{ matrix.cell_index }}-attempt-${{ github.run_attempt }}
+          path: artifacts/override_gate/v2-stage-b-cell
+          if-no-files-found: warn
+          compression-level: 9
+          retention-days: 14
+
+  consolidate_stage_b:
+    name: Consolidate latest complete Stage-B attempts
+    needs: stage_b
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e ".[science]"
+      - uses: actions/download-artifact@v4
+        with:
+          name: override-gate-v2-execution-boundary
+          path: ${{ env.BOUNDARY_DIR }}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: gate-v2-stage-b-cell-*-attempt-*
+          path: ${{ env.STAGE_B_DOWNLOADS }}
+      - name: Fail closed and consolidate Stage B
+        run: |
+          python -m e0_controller.override_gate_calibration_v2_execution \
+            consolidate \
+            --authorization "$BOUNDARY_DIR/authorization.json" \
+            --authorization-sha256 "${{ inputs.authorization_sha256 }}" \
+            --execution-commit "$GITHUB_SHA" \
+            --execution-manifest "$BOUNDARY_DIR/execution-manifest.json" \
+            --execution-manifest-sha256 "${{ inputs.execution_manifest_sha256 }}" \
+            --outcome-workflow "$WORKFLOW_FILE" \
+            --confirmation "${{ inputs.confirmation }}" \
+            --stage stage_b_closed_loop_parent \
+            --input "$STAGE_B_DOWNLOADS" \
+            --output "$CONSOLIDATED_DIR/stage-b.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: override-gate-v2-stage-b-consolidated
+          path: ${{ env.CONSOLIDATED_DIR }}/stage-b.json
+          if-no-files-found: error
+          compression-level: 9
+          retention-days: 14
+
+  stage_a:
+    name: Stage A cell ${{ matrix.cell_index }}
+    needs: [authorize, consolidate_stage_b]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix: ${{ fromJSON(needs.authorize.outputs.stage_a_matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e ".[science]"
+      - uses: actions/download-artifact@v4
+        with:
+          name: override-gate-v2-execution-boundary
+          path: ${{ env.BOUNDARY_DIR }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: override-gate-v2-stage-b-consolidated
+          path: ${{ env.CONSOLIDATED_DIR }}
+      - name: Execute exact sampled Stage-A cell
+        run: |
+          timeout --signal=TERM --kill-after=10s 3600s \
+          python -m e0_controller.override_gate_calibration_v2_execution \
+            run-stage-a-cell \
+            --authorization "$BOUNDARY_DIR/authorization.json" \
+            --authorization-sha256 "${{ inputs.authorization_sha256 }}" \
+            --execution-commit "$GITHUB_SHA" \
+            --execution-manifest "$BOUNDARY_DIR/execution-manifest.json" \
+            --execution-manifest-sha256 "${{ inputs.execution_manifest_sha256 }}" \
+            --outcome-workflow "$WORKFLOW_FILE" \
+            --confirmation "${{ inputs.confirmation }}" \
+            --cell-index "${{ matrix.cell_index }}" \
+            --run-attempt "${{ github.run_attempt }}" \
+            --workers 4 \
+            --stage-b-consolidation "$CONSOLIDATED_DIR/stage-b.json" \
+            --output artifacts/override_gate/v2-stage-a-cell
+      - name: Retain immutable Stage-A attempt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gate-v2-stage-a-cell-${{ matrix.cell_index }}-attempt-${{ github.run_attempt }}
+          path: artifacts/override_gate/v2-stage-a-cell
+          if-no-files-found: warn
+          compression-level: 9
+          retention-days: 14
+
+  consolidate_and_select:
+    name: Consolidate Stage A and apply the frozen joint rule
+    needs: stage_a
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e ".[science]"
+      - uses: actions/download-artifact@v4
+        with:
+          name: override-gate-v2-execution-boundary
+          path: ${{ env.BOUNDARY_DIR }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: override-gate-v2-stage-b-consolidated
+          path: ${{ env.CONSOLIDATED_DIR }}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: gate-v2-stage-a-cell-*-attempt-*
+          path: ${{ env.STAGE_A_DOWNLOADS }}
+      - name: Consolidate latest complete Stage-A attempts
+        run: |
+          python -m e0_controller.override_gate_calibration_v2_execution \
+            consolidate \
+            --authorization "$BOUNDARY_DIR/authorization.json" \
+            --authorization-sha256 "${{ inputs.authorization_sha256 }}" \
+            --execution-commit "$GITHUB_SHA" \
+            --execution-manifest "$BOUNDARY_DIR/execution-manifest.json" \
+            --execution-manifest-sha256 "${{ inputs.execution_manifest_sha256 }}" \
+            --outcome-workflow "$WORKFLOW_FILE" \
+            --confirmation "${{ inputs.confirmation }}" \
+            --stage stage_a_paired_evidence \
+            --input "$STAGE_A_DOWNLOADS" \
+            --output "$CONSOLIDATED_DIR/stage-a.json"
+      - name: Apply frozen joint Stage-A and Stage-B selection
+        run: |
+          python -m e0_controller.override_gate_calibration_v2_execution \
+            select \
+            --authorization "$BOUNDARY_DIR/authorization.json" \
+            --authorization-sha256 "${{ inputs.authorization_sha256 }}" \
+            --execution-commit "$GITHUB_SHA" \
+            --execution-manifest "$BOUNDARY_DIR/execution-manifest.json" \
+            --execution-manifest-sha256 "${{ inputs.execution_manifest_sha256 }}" \
+            --outcome-workflow "$WORKFLOW_FILE" \
+            --confirmation "${{ inputs.confirmation }}" \
+            --stage-b "$CONSOLIDATED_DIR/stage-b.json" \
+            --stage-a "$CONSOLIDATED_DIR/stage-a.json" \
+            --output "$CONSOLIDATED_DIR/selection.json"
+      - name: Upload calibration evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: override-gate-v2-calibration-evidence-attempt-${{ github.run_attempt }}
+          path: ${{ env.CONSOLIDATED_DIR }}
+          if-no-files-found: warn
+          compression-level: 9
+          retention-days: 14

@@ -298,7 +298,7 @@ def test_cli_emits_template_and_no_outcome_dry_run(tmp_path):
 
 def test_protocol_and_review_evidence_digests_are_frozen():
     assert protocol_file_sha256() == (
-        "8cf978f6df7390e11297a4b00715dd2ce3c75ca4a542299dc53e5c1a917fe76d"
+        "8beb24a156c46a430292b56ee1b08cb9067136077a6bbef170950617f0f50774"
     )
     assert WP_GATE_0_13_EVIDENCE_SHA256 == (
         "467de7f261a9b8feaac2a212fbce9acec68c8a36cc09654c0d2f2cfcf0293ba2"

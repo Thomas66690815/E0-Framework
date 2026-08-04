@@ -10,6 +10,8 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import signal
+from contextlib import contextmanager
 from dataclasses import dataclass, replace
 from typing import AbstractSet, Any, Dict, List, Mapping, Optional, Tuple
 
@@ -28,6 +30,7 @@ from .g1_domains import (
     BUILDERS,
     CALIBRATION_SEED_NAMESPACE,
     DEVELOPMENT_SEED_NAMESPACE,
+    V2_CALIBRATION_SEED_NAMESPACE,
     G1DomainInstance,
     G1EpisodeExecutor,
     validate_domain,
@@ -38,6 +41,33 @@ from .primitives import Edge, Outcome
 
 CALIBRATION_SPLIT = "calibration"
 METHOD_ID = "E_FULL_GEOMETRY"
+
+
+class PairedBranchTimeoutError(TimeoutError):
+    """One v2 paired branch exceeded its independent algorithm deadline."""
+
+
+@contextmanager
+def _paired_branch_deadline(seconds: Optional[float]):
+    if seconds is None or not hasattr(signal, "SIGALRM"):
+        yield
+        return
+    if seconds <= 0:
+        raise ValueError("Paired branch timeout must be positive")
+
+    def alarm_handler(signum: int, frame: Any) -> None:
+        raise PairedBranchTimeoutError(
+            f"Paired branch exceeded {seconds} seconds"
+        )
+
+    previous = signal.getsignal(signal.SIGALRM)
+    signal.signal(signal.SIGALRM, alarm_handler)
+    signal.setitimer(signal.ITIMER_REAL, seconds)
+    try:
+        yield
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0.0)
+        signal.signal(signal.SIGALRM, previous)
 
 
 @dataclass
@@ -568,6 +598,7 @@ def run_instrumented_episode(
     collect_paired_branches: bool = True,
     max_paired_branches: Optional[int] = None,
     paired_branch_decision_keys: Optional[AbstractSet[Tuple[int, int]]] = None,
+    paired_branch_timeout_seconds: Optional[float] = None,
 ) -> InstrumentedEpisodeResult:
     """Run one parent episode and branch every common-guard disagreement.
 
@@ -585,9 +616,13 @@ def run_instrumented_episode(
     )
     if budget <= 0:
         raise ValueError("interaction_budget must be positive")
+    branch_diagnostic_namespaces = {
+        DEVELOPMENT_SEED_NAMESPACE,
+        V2_CALIBRATION_SEED_NAMESPACE,
+    }
     if (
         not collect_paired_branches
-        and domain.seed_namespace != DEVELOPMENT_SEED_NAMESPACE
+        and domain.seed_namespace not in branch_diagnostic_namespaces
     ):
         raise PermissionError(
             "Parent-only branch suppression is development-diagnostic only"
@@ -603,12 +638,12 @@ def run_instrumented_episode(
             raise ValueError(
                 "max_paired_branches requires paired branch collection"
             )
-        if domain.seed_namespace != DEVELOPMENT_SEED_NAMESPACE:
+        if domain.seed_namespace not in branch_diagnostic_namespaces:
             raise PermissionError(
                 "Paired-branch caps are development-diagnostic only"
             )
     if paired_branch_decision_keys is not None:
-        if domain.seed_namespace != DEVELOPMENT_SEED_NAMESPACE:
+        if domain.seed_namespace not in branch_diagnostic_namespaces:
             raise PermissionError(
                 "Exact paired-branch selection is development-diagnostic only"
             )
@@ -631,6 +666,13 @@ def run_instrumented_episode(
             )
     else:
         normalized_keys = None
+    if paired_branch_timeout_seconds is not None:
+        if domain.seed_namespace != V2_CALIBRATION_SEED_NAMESPACE:
+            raise PermissionError("Independent branch deadlines are v2 calibration-only")
+        if normalized_keys is None:
+            raise ValueError("Branch deadlines require exact paired-decision keys")
+        if float(paired_branch_timeout_seconds) <= 0.0:
+            raise ValueError("Paired branch timeout must be positive")
     adapter = CalibrationEFullAdapter(
         domain,
         policy,
@@ -683,28 +725,30 @@ def run_instrumented_episode(
             and policy.max_path_imbalance is not None
             and record.path_imbalance <= float(policy.max_path_imbalance)
         ):
-            greedy = _rollout_branch(
-                domain,
-                adapter_snapshot,
-                executor_snapshot,
-                episode_index,
-                episode_snapshot,
-                record.greedy_action,
-                first_is_override=False,
-                budget=budget,
-                disabled_policy=disabled_policy,
-            )
-            lookahead = _rollout_branch(
-                domain,
-                adapter_snapshot,
-                executor_snapshot,
-                episode_index,
-                episode_snapshot,
-                record.preferred_action,
-                first_is_override=True,
-                budget=budget,
-                disabled_policy=disabled_policy,
-            )
+            with _paired_branch_deadline(paired_branch_timeout_seconds):
+                greedy = _rollout_branch(
+                    domain,
+                    adapter_snapshot,
+                    executor_snapshot,
+                    episode_index,
+                    episode_snapshot,
+                    record.greedy_action,
+                    first_is_override=False,
+                    budget=budget,
+                    disabled_policy=disabled_policy,
+                )
+            with _paired_branch_deadline(paired_branch_timeout_seconds):
+                lookahead = _rollout_branch(
+                    domain,
+                    adapter_snapshot,
+                    executor_snapshot,
+                    episode_index,
+                    episode_snapshot,
+                    record.preferred_action,
+                    first_is_override=True,
+                    budget=budget,
+                    disabled_policy=disabled_policy,
+                )
             paired.append(
                 PairedDecisionEvidence(
                     state_hash=state_hash,

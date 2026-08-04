@@ -158,6 +158,15 @@ production execution layer and outcome workflow remain absent, no execution
 commit is frozen and the validator cannot currently be satisfied by repository
 artifacts. See `E0_OVERRIDE_GATE_CALIBRATION_AUTHORIZATION_v2.md`.
 
+## WP-GATE-0.15 locked execution follow-up
+
+The calibration-only production runners, execution-manifest generator,
+separate Stage-B/Stage-A distribution, immutable attempts, no-fallback
+consolidation, joint selection command, and manual workflow are implemented.
+All fresh-domain paths require the WP-GATE-0.14 external boundary first. No
+authorization or execution manifest exists, and no fresh domain was built. See
+`E0_OVERRIDE_GATE_CALIBRATION_EXECUTION_v2.md`.
+
 ## Evidence
 
 - `artifacts/override_gate/development/wp_gate_0_12/dry_run.json`

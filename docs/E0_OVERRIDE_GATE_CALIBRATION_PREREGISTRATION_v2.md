@@ -215,6 +215,19 @@ authorization record exists, and calibration remains prohibited. See
 `E0_OVERRIDE_GATE_CALIBRATION_WORKERS_v2.md` and
 `E0_OVERRIDE_GATE_CALIBRATION_AUTHORIZATION_v2.md`.
 
+## WP-GATE-0.15 implementation status
+
+The complete calibration-only execution and distribution layer is implemented
+behind the external authorization boundary. It contains the separate 144-cell
+Stage-B and 132-cell Stage-A workflow, frozen deadlines, exact sampled replay,
+immutable attempts, latest-attempt/no-fallback consolidation, and joint
+selection.
+
+No execution commit has yet been declared externally, no execution manifest or
+authorization record exists, and the workflow has not been dispatched. No
+fresh-split outcome was observed. See
+`E0_OVERRIDE_GATE_CALIBRATION_EXECUTION_v2.md`.
+
 ## Evidence
 
 - `docs/E0_OVERRIDE_GATE_CALIBRATION_PROTOCOL_v2.json`

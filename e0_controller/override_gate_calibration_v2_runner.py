@@ -375,8 +375,11 @@ def validate_artifact_record(kind: str, record: Mapping[str, Any]) -> None:
             raise ValueError("Stage-A artifact has wrong stage")
         if int(record["sample_count"]) > 4:
             raise ValueError("Stage-A sample cap exceeded")
-        if record["parent_replay_trace_match"] is not True:
+        skipped = record.get("stage_a_skipped_due_stage_b_valid_negative") is True
+        if not skipped and record["parent_replay_trace_match"] is not True:
             raise ValueError("Stage-A parent replay must match Stage B")
+        if skipped and record["parent_replay_trace_match"] is not False:
+            raise ValueError("Skipped Stage-A replay cannot claim a trace match")
         if record.get("instrumentation_time_is_parent_performance") is not False:
             raise ValueError("Stage-A time cannot be parent performance")
     elif split != "calibration":
