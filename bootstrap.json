@@ -31,10 +31,10 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C335",
-    "latest_commit_hash": "2687a5e",
-    "latest_commit_msg": "C335: draft closure paper (WP-5.2)",
-    "test_count": 7166,
+    "latest_commit": "C336",
+    "latest_commit_hash": "aeb0a53",
+    "latest_commit_msg": "C336: preregister reliability_memory decision experiment (WP-6.1)",
+    "test_count": 7188,
     "test_failures": 0,
     "ci_status": "G1 development run 30526724307 successful; its evidence bundle is verified and retained in-repo since C332. Override-Gate v2 execution not authorized or dispatched",
     "module_count": "181 test files; non-test taxonomy not recounted in WP-GATE-0.15",
@@ -317,7 +317,7 @@
     "open_threads": [
       "WP-5.1 COMPLETE C334: README rewritten claims-to-ledger, negative G1 result up front, geometry marked research-frozen, AGI blueprint archived.",
       "WP-5.2 DRAFT COMPLETE C335: closure paper docs/papers/PAPER11_CLOSURE_MANUSCRIPT_v1.md. SUBMISSION IS A USER DECISION (venue candidates: arXiv cs.AI + negative-results/reproducibility workshop).",
-      "WP-6.1 COMPLETE C336: E0-WP6-RELMEM-v1 preregistered (docs/E0_WP6_RELIABILITY_MEMORY_PREREGISTRATION_v1.md). USER REVIEW required before WP-6.2 implementation and execution; losing to the sticky heuristic in R1 is an explicit FAIL; PASS -> maintained library, FAIL -> full archive.",
+      "WP-6 design USER-APPROVED 2026-08-05; WP-6.2a COMPLETE C337 (harness + 22 contract tests, no outcomes). WP-6.2b: declare C337 as execution commit, run all 360 replicates, retain artifacts, report PASS/FAIL, execute the corresponding closure end.",
       "Override-Gate v2 permanently parked per closure record; no execution commit, authorization, or dispatch under this closure.",
       "Local main is 10+ commits ahead of origin/main; pushing WP-GATE-0.8 through the closure arc requires explicit user authorization.",
       "F3/F4 structural limits are final for this repository and are reported in the closure paper; no engineering-around work.",
