@@ -31,9 +31,9 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C334",
-    "latest_commit_hash": "8f9bd8a",
-    "latest_commit_msg": "C334: rewrite README claims-to-ledger (WP-5.1)",
+    "latest_commit": "C335",
+    "latest_commit_hash": "2687a5e",
+    "latest_commit_msg": "C335: draft closure paper (WP-5.2)",
     "test_count": 7166,
     "test_failures": 0,
     "ci_status": "G1 development run 30526724307 successful; its evidence bundle is verified and retained in-repo since C332. Override-Gate v2 execution not authorized or dispatched",
@@ -309,7 +309,7 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "ARC-O / closure arc (USER DECISION 2026-08-05). C333 closed Gate G1-v1 negative on development evidence with the holdout permanently unopened. Remaining steps: WP-5.1 README repositioning (C334), WP-5.2 closure paper (C335), WP-6.1 preregistration of the final reliability_memory decision experiment (C336), WP-6.2 execution after user review.",
+    "current_arc": "ARC-O / closure arc (USER DECISION 2026-08-05). C333 closed Gate G1-v1 negative; C334 repositioned the README; C335 drafted the closure paper; C336 preregistered E0-WP6-RELMEM-v1. WAITING ON USER: (1) review of the WP-6 preregistration before WP-6.2 implementation/execution, (2) paper submission decision, (3) push authorization for the 14 unpushed commits.",
     "arc_status": "C332 closed WP-2.4 by retaining run 30526724307 and surfacing its previously unreported G1-B baseline diagnostic. C333 recorded the user's closure decision: Gate G1-v1 CLOSED-NEGATIVE on development evidence, holdout permanently unopened, geometry in research freeze (P4b), WP-2.5 closed unexecuted, Override-Gate v2 permanently parked. The closure arc now runs WP-5.1, WP-5.2, WP-6.1/6.2.",
     "arc_thesis": "Lean packages are product candidates, not empirically proven products. e0_controller remains the research carrier through G1; UI/session/layers 5-14 remain frozen. Every strategic claim maps to an Evidence Ledger ID and every commit to a Work Package. No repository split before Gate G1 plus WP-1.1 packaging evidence.",
     "previous_arc_summary": "ARC-L (C313-C319): adoption surface — AGENT_REFERENCE.md, AGENT_BUILDER_GUIDE.md, lean/reliability_memory (C315-lean), lean/structural_geometry (C319), GAME_AI.md, README measured-results overhaul. Clone spike traced via GitHub traffic API to the geometry chain (code search). Earlier: ARC-E DifferenzPort (C288-C290), ARC-D E1 impact historization (C285-C287), Trajectory Arc (C277-C283).",
@@ -317,13 +317,13 @@
     "open_threads": [
       "WP-5.1 COMPLETE C334: README rewritten claims-to-ledger, negative G1 result up front, geometry marked research-frozen, AGI blueprint archived.",
       "WP-5.2 DRAFT COMPLETE C335: closure paper docs/papers/PAPER11_CLOSURE_MANUSCRIPT_v1.md. SUBMISSION IS A USER DECISION (venue candidates: arXiv cs.AI + negative-results/reproducibility workshop).",
-      "WP-6.1 (C336): preregister the final reliability_memory decision experiment (LLM agent with persistent tool-reliability memory vs. without); WP-6.2 execution only after user review of the preregistration.",
+      "WP-6.1 COMPLETE C336: E0-WP6-RELMEM-v1 preregistered (docs/E0_WP6_RELIABILITY_MEMORY_PREREGISTRATION_v1.md). USER REVIEW required before WP-6.2 implementation and execution; losing to the sticky heuristic in R1 is an explicit FAIL; PASS -> maintained library, FAIL -> full archive.",
       "Override-Gate v2 permanently parked per closure record; no execution commit, authorization, or dispatch under this closure.",
       "Local main is 10+ commits ahead of origin/main; pushing WP-GATE-0.8 through the closure arc requires explicit user authorization.",
       "F3/F4 structural limits are final for this repository and are reported in the closure paper; no engineering-around work.",
       "GT-8 Partial Residual Trap: documented, unresolved; relevant only if the WP-6 experiment keeps reliability_memory alive as a maintained library."
     ],
-    "next_commit_id": "C334",
+    "next_commit_id": "C337",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",
