@@ -164,8 +164,8 @@
         "Uniform random outscoring A_HIST overall reflects the low goal rates of the designed families for edge-local methods."
       ],
       "required_next_evidence": [
-        "USER DECISION: either close G1-v1 with the holdout permanently unopened, or execute the one-time preregistered holdout run to produce a formal gate result.",
-        "If lean packages are repositioned, document trade-offs against these baselines instead of superiority claims."
+        "RESOLVED 2026-08-05: the user chose closure; G1-v1 is closed on development evidence with the holdout permanently unopened (E0-GATE-G1-CLOSURE-001).",
+        "Repositioning documents trade-offs against these baselines instead of superiority claims (WP-5.1)."
       ],
       "related_claims": [
         "E0-HIST-DOMINANCE-001",
@@ -177,6 +177,47 @@
         "date": "2026-08-04",
         "commit": "2f7cabb",
         "result": "Bundle SHA-256 values verified against the in-artifact manifest after download; 1,560/1,560 replicates complete with zero infrastructure failures; diagnostics read from summary.json unchanged."
+      }
+    },
+    {
+      "id": "E0-GATE-G1-CLOSURE-001",
+      "kind": "decision",
+      "statement": "Gate G1-v1 is closed negative on development evidence by user decision of 2026-08-05: the geometry stack enters research freeze (P4b), the protected holdout stays permanently unopened, WP-2.5 is closed unexecuted, and Override-Gate v2 is permanently parked. The closure arc delivers repositioning (WP-5.1), a closure paper (WP-5.2), and one final preregistered reliability_memory decision experiment (WP-6.x).",
+      "status": "decision",
+      "replication": "not_applicable",
+      "data_origin": "governance",
+      "scope": "Repository-wide strategic closure of the E0-G1-v1 program; not an empirical holdout result.",
+      "work_packages": [
+        "C333"
+      ],
+      "sources": [
+        {
+          "path": "docs/E0_G1_CLOSURE_v1.md",
+          "role": "closure decision, basis, consequences, and closure arc plan"
+        },
+        {
+          "path": "docs/E0_G1_DEVELOPMENT_RESULT_v1.md",
+          "role": "development evidence the decision rests on"
+        }
+      ],
+      "commands": [],
+      "raw_artifacts": [
+        "artifacts/g1/E0-G1-v1/development/run_30526724307/"
+      ],
+      "limitations": [
+        "The closure is a strategic decision on development evidence; no preregistered holdout PASS/FAIL exists for E0-G1-v1.",
+        "The reliability_memory product hypothesis remains open until the WP-6 experiment reports."
+      ],
+      "related_claims": [
+        "E0-G1-DEV-BASELINES-001",
+        "E0-PHASE-CAUSAL-001",
+        "E0-HIST-DOMINANCE-001",
+        "E0-PRODUCT-LEAN-001"
+      ],
+      "last_verified": {
+        "date": "2026-08-05",
+        "commit": "687194d",
+        "result": "Closure recorded; holdout_accessed remains false in every retained artifact."
       }
     },
     {
