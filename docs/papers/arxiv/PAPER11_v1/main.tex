@@ -1,0 +1,444 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1.1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
+
+\newcommand{\Ez}{$E_0$}
+
+\title{When Structure Is Not Enough: A Preregistered Negative Evaluation\\
+of a Training-Free Navigation Framework}
+\author{Thomas Wehner\thanks{Developed and evaluated in a human--AI
+collaboration; the AI systems involved are not authors. The collaboration
+process, including its governance mechanisms, is described in
+Section~\ref{sec:method}. Contact: repository issue tracker,
+\url{https://github.com/Thomas66690815/E0-Framework}.}}
+\date{August 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We report the preregistered evaluation and closure of \Ez{}, a training-free
+structural navigation framework built on two mechanisms: \emph{historization}
+(persistent success/failure traces that modulate edge resistance) and a
+\emph{geometric interference layer} (an exact discrete Helmholtz
+decomposition inducing a $U(1)$ connection, path phases, and an
+amplitude-based lookahead). Across 1{,}560 preregistered replicates on four
+designed domain families at three scales under equal interaction budgets, we
+find: (1)~the complete geometric stack contributes exactly $0.0$ over plain
+historization --- a mechanism-level diagnosis shows the interference layer is
+causally inactive at the action boundary; (2)~historization-only navigation
+is not competitive with fairly trained standard baselines (success-adjusted
+efficiency $0.208$ vs.\ $0.407$ for the per-instance median of tabular
+Q-learning, UCB1, and random-restart greedy; paired difference $-0.199$,
+95\,\% CI $[-0.206, -0.192]$); (3)~the single exception is a family of
+wall-structured trap domains, where failure memory beats the baseline median
+by $+0.260$ $[+0.248, +0.272]$. A separately preregistered calibration of
+the framework's confidence-gated override selected \texttt{gate\_disabled}:
+no threshold met its eligibility criteria. A final preregistered experiment
+then tested the one surviving mechanism in its intended role --- persistent
+tool-reliability memory for budget-constrained agents --- and passed:
+$+48$--$54\,\%$ completed tasks over memoryless selection, with the honest
+bound that a stateless sticky heuristic captures most of the stationary
+value and the memory's real differentiator is recovery under drift. We
+describe the preregistration, fair-baseline, causal-ablation, and
+evidence-ledger methodology that produced these conclusions inside the same
+repository that had strong incentives to avoid them, and we argue that the
+mechanistic \emph{why} of the null result --- a conjunction of gating,
+phase-regime degeneracy, and an implementation equivalence --- is more
+informative than the null itself.
+\end{abstract}
+
+\section{Introduction}
+
+\Ez{} began as an ambitious research program: derive learning, forgetting,
+lookahead, and self-reflection from a single structural axiom, with no
+probabilities, no training data, and no free parameters at the foundation.
+Over 330 numbered commits it grew to ${\sim}36{,}000$ lines of production
+code, 7{,}166 tests, and fourteen integrated layers.
+
+This paper is not about that ambition. It is about what happened when the
+program was forced to answer one question under preregistered rules:
+\emph{does any of it beat the obvious alternatives under equal conditions?}
+
+The honest answer is: mostly no, narrowly yes. We consider both halves of
+that answer, and the machinery that extracted it, to be the program's actual
+contribution. Negative results of this kind are rarely published with full
+raw data, a frozen preregistration, causal ablations, and a mechanism-level
+diagnosis of \emph{why} the flagship mechanism cannot act. This paper
+provides all four.
+
+Contributions:
+\begin{enumerate}
+  \item \textbf{A preregistered negative result} for a training-free
+    structural navigation framework against fairly trained baselines, with
+    all raw data retained (Section~\ref{sec:results2}).
+  \item \textbf{A causal-ablation design} (five variants sharing one
+    operationalization) that localizes all measured behavior in a single
+    mechanism (Sections~\ref{sec:design} and~\ref{sec:results1}).
+  \item \textbf{A mechanism diagnosis} explaining the exact conjunction that
+    keeps the interference layer inert (Section~\ref{sec:why}).
+  \item \textbf{A scoped positive finding}: edge-local failure memory wins
+    where failures are persistent and structural
+    (Section~\ref{sec:perfamily}).
+  \item \textbf{A methodological account} of preregistration, evidence
+    ledgers, and external audit inside a small human--AI research
+    collaboration (Section~\ref{sec:method}).
+  \item \textbf{An honestly bounded positive closure}: a final preregistered
+    experiment on the surviving mechanism's intended use case, passed with
+    its caveats made mandatory documentation (Section~\ref{sec:survives}).
+\end{enumerate}
+
+\section{The system under test}
+
+\subsection{Historization}
+
+\Ez{} represents a domain as a landscape of states and edges. Each edge
+carries a difference $\Delta$ and a resistance $R$. The controller greedily
+minimizes structural burden $S_{\mathrm{eff}} = \Delta \cdot
+R_{\mathrm{eff}}$. After each transition the outcome is \emph{inscribed}:
+successes ($U$) reduce effective resistance, failures ($F$) raise it, with
+decay. This is the entire learning mechanism: no value function, no reward
+propagation, no training phase. Credit assignment is strictly edge-local.
+
+\subsection{The geometric layer}
+
+The framework's distinctive construction: every flow field on a graph splits
+uniquely (discrete Helmholtz) into a gradient part and a rotational part,
+solved exactly via a graph-Laplacian system. The rotational component
+induces a connection $\omega$, hence path phases $\Theta$, holonomy, and
+curvature. A lookahead layer sums complex amplitudes $\Psi = e^{-S} \cdot
+e^{i\Theta}$ over forward path families; interference is meant to
+concentrate support on goal-reaching actions. A confidence-gated override
+lets this layer replace the greedy choice when its margin is large.
+
+To our knowledge the decomposition-induced phase is novel in this context
+(quantum walks and Projective Simulation interfere amplitudes on graphs but
+do not derive the phase from an orthogonal field decomposition). Novelty, as
+Section~\ref{sec:results2} shows, is not value.
+
+\section{Preregistered design}\label{sec:design}
+
+The full protocol (\texttt{E0-G1-v1}) was frozen before any full-budget run,
+including domains, splits, budgets, ablations, metrics, statistics, and
+error rules. Key elements:
+
+\begin{itemize}
+  \item \textbf{Domain families (4):} \texttt{wall\_grid} (walls, dead ends,
+    traps), \texttt{trap\_grid\_v2} (dense trap structure),
+    \texttt{decoy\_dag} (attractive decoy paths),
+    \texttt{nonstationary\_parallel} (mid-run executor switches).
+  \item \textbf{Scales:} $N \in \{100, 500, 1000\}$ states; exact-$N$
+    generators.
+  \item \textbf{Splits:} development seeds 0--9 (implementation checks,
+    control selection); holdout seeds 1000--1029, never opened.
+  \item \textbf{Budgets:} identical interaction and episode budgets for
+    every method; 10 adaptation $+$ 20 evaluation episodes per replicate;
+    hard per-episode (60\,s) and per-replicate (1{,}800\,s) deadlines in
+    killable subprocesses.
+  \item \textbf{Causal ablations (5):} \texttt{A\_HIST} (historization
+    only), \texttt{B\_INCOHERENT} (amplitudes without phase coherence),
+    \texttt{C\_THETA\_ZERO} (coherent, phase forced to zero),
+    \texttt{D\_U1\_PHASE} ($U(1)$ phase active), \texttt{E\_FULL\_GEOMETRY}
+    (full stack). All five share one frozen operationalization, path family,
+    and override rule, so any outcome difference is attributable to the
+    ablated component.
+  \item \textbf{Baselines (8, fairly configured):} tabular Q-learning,
+    UCB1-edge, random-restart greedy (the three \emph{competitive}
+    comparators, combined per instance as their median), plus
+    $\varepsilon$-greedy, memoryless greedy, uniform random, and
+    map-informed A*/D*-Lite as upper references excluded from the
+    comparator.
+  \item \textbf{Statistics:} per-instance pairing, stratified cluster
+    bootstrap (10{,}000 resamples), fixed seeds, preregistered family-level
+    criteria and aggregation rules.
+\end{itemize}
+
+Execution: GitHub Actions, 240 deterministic batches, atomic per-replicate
+shards, fail-closed consolidation; 1{,}560/1{,}560 replicates completed,
+zero infrastructure failures, three valid algorithmic timeouts (all
+\texttt{E\_FULL\_GEOMETRY}). The consolidated bundle (raw runs, 31{,}200
+evaluation episodes, frozen configs, environment, manifest with SHA-256 file
+digests) is retained in-repository.
+
+\section{Results I: the geometry is causally inert}\label{sec:results1}
+
+Every geometry variant scores identically to plain historization
+(Table~\ref{tab:geometry}).
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lrr}
+\toprule
+Comparison & Mean difference & 95\,\% CI \\
+\midrule
+\texttt{E\_FULL\_GEOMETRY} $-$ \texttt{A\_HIST} (overall, every family) & $0.000$ & $[0.000, 0.000]$ \\
+\texttt{D\_U1\_PHASE} $-$ \texttt{C\_THETA\_ZERO} (phase attribution) & $0.000$ & $[0.000, 0.000]$ \\
+\bottomrule
+\end{tabular}
+\caption{Causal ablation outcomes; paired stratified bootstrap.}
+\label{tab:geometry}
+\end{table}
+
+This is not approximate equality; across all 17{,}929{,}640 persisted
+evaluation decisions of the B--E variants there is not a single executed
+override, not a single interfering or wrapped phase regime, and not a single
+divergent selected action. The only measured difference is cost: the
+full-geometry variants spend 139--146\,s median wall-time per replicate
+against 8.8\,s for \texttt{A\_HIST} --- a ${\sim}16\times$ compute overhead
+for byte-identical outcomes.
+
+\section{Results II: historization alone is not competitive}\label{sec:results2}
+
+\subsection{Overall}
+
+Success-adjusted efficiency (primary metric), development split, 120 paired
+instances (Table~\ref{tab:methods}).
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lrrr}
+\toprule
+Method & Efficiency & Goal rate & Median wall-time \\
+\midrule
+A*/D*-Lite (map-informed reference) & 0.875 & 0.875 & 0.2--0.3\,s \\
+Random-restart greedy & 0.464 & 0.538 & 3.5\,s \\
+UCB1-edge & 0.393 & 0.396 & 3.2\,s \\
+Q-learning (tabular) & 0.385 & 0.771 & 4.3\,s \\
+Uniform random & 0.273 & 0.349 & 4.3\,s \\
+\textbf{A\_HIST (historization only)} & \textbf{0.208} & \textbf{0.208} & 8.8\,s \\
+$\varepsilon$-greedy & 0.158 & 0.158 & 6.7\,s \\
+Memoryless greedy & 0.125 & 0.125 & 7.2\,s \\
+\bottomrule
+\end{tabular}
+\caption{Method aggregates over the full development matrix.}
+\label{tab:methods}
+\end{table}
+
+\texttt{A\_HIST} vs.\ the competitive baseline median: $-0.199$
+$[-0.206, -0.192]$, goal rate $-27.8$ percentage points. That uniform random
+outperforms the framework overall is the kind of sentence a project only
+writes down if its rules force it to; our rules forced it, and the number is
+real. (It reflects the low goal rates of edge-local methods on decoy- and
+nonstationary-dominated families, where random restarts escape what
+inscribed penalties do not.)
+
+\subsection{Per family: the niche is real}\label{sec:perfamily}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lrrl}
+\toprule
+Family & \texttt{A\_HIST} $-$ median & 95\,\% CI & Verdict \\
+\midrule
+\texttt{decoy\_dag} & $-0.763$ & $[-0.780, -0.744]$ & decisive loss \\
+\texttt{nonstationary\_parallel} & $-0.283$ & $[-0.295, -0.270]$ & decisive loss \\
+\texttt{trap\_grid\_v2} & $-0.008$ & $[-0.021, 0.000]$ & both fail (${\sim}0$) \\
+\texttt{wall\_grid} & $\mathbf{+0.260}$ & $[+0.248, +0.272]$ & \textbf{clear win} \\
+\bottomrule
+\end{tabular}
+\caption{Family-level comparison against the fair baseline median.}
+\label{tab:family}
+\end{table}
+
+One of four families meets the preregistered competitiveness bar; the gate
+required three. But the \texttt{wall\_grid} result is a clean, replicable
+positive: where failure is \emph{persistent and structural} --- walls and
+dead ends that stay walls and dead ends --- cheap edge-local failure memory
+beats trained baselines that must rediscover the same dead ends across
+episodes. Where failure is \emph{misleading} (decoys) or \emph{transient}
+(nonstationarity), inscribed penalties are at best useless and at worst
+poison.
+
+\subsection{The override gate calibrates to ``off''}\label{sec:gate}
+
+Independently of the gate experiment, the confidence-gated override was
+given its own preregistered calibration (2{,}880 tasks, 12 candidate
+policies, clustered bootstrap, Holm-corrected eligibility across 77
+constraints). Outcome: no active candidate was eligible; the preregistered
+fail-closed selection was \texttt{gate\_disabled}. A caveat we discovered
+afterwards and report openly: 73\,\% of calibration replicates hit a timeout
+whose label conflated parent computation with diagnostic branch
+instrumentation, so the calibration cannot cleanly rank thresholds; it can
+only support ``no threshold met the criteria as measured.''
+
+\subsection{Confirmed structural limits}
+
+Two limits established earlier by falsification benchmarks stand: dense
+branching ($b \geq 3$) defeats the penalty mechanism combinatorially (F3),
+and non-Markov dependencies cannot be learned because credit assignment is
+edge-local (F4) --- the system avoids the trap but cannot acquire the
+required sequence.
+
+\section{Why the interference layer cannot act}\label{sec:why}
+
+The neutral result in Section~\ref{sec:results1} is not a tie between active
+mechanisms; it is a conjunction of three blockers, each independently
+sufficient on these domains:
+
+\begin{enumerate}
+  \item \textbf{The gate never opens.} The preregistered override threshold
+    is $0.85$; the maximum conflict confidence ever observed when lookahead
+    disagreed with greedy was $0.42$ (probe over 9{,}600 decisions).
+    High-confidence states exist, but only when lookahead already
+    \emph{agrees} with greedy --- precisely when an override changes
+    nothing. The threshold lies outside the support of the conflict
+    distribution.
+  \item \textbf{The phase never leaves the gradient regime.} All
+    4{,}482{,}410 evaluation decisions per variant sit in the gradient
+    regime; circulation on these families is too weak to produce interfering
+    or wrapped phases. No circulation $\Rightarrow$ no phase $\Rightarrow$
+    interference degenerates to plain summation (consistent with an earlier
+    finding that at typical weights interference is purely constructive;
+    destructive cancellation needs phase gaps ${\approx}\,\pi$, outside the
+    stable ranking range).
+  \item \textbf{An implementation equivalence.} For the current
+    influence-map construction, the packaged E path is mathematically
+    equivalent to D, so even a phase-active regime would not separate the
+    top two variants.
+\end{enumerate}
+
+The general lesson: a mechanism can be mathematically real, correctly
+implemented, fully tested --- and still \emph{causally unreachable} under
+the system's own operating conditions. Only a causal ablation run at full
+budget, not unit tests and not demos, exposes this.
+
+\section{Method: making a repository falsify itself}\label{sec:method}
+
+The interesting engineering problem was not statistical but institutional:
+the same collaboration that spent months building the geometry had to be
+able to kill it. Mechanisms that made this work:
+
+\begin{itemize}
+  \item \textbf{Preregistration with freezes.} Domains, budgets, criteria,
+    statistics, and seeds frozen before full-budget execution; post-freeze
+    edits require labeled errata (one occurred, and an external audit caught
+    its missing label).
+  \item \textbf{Fair baselines with an audit trail.} Every baseline
+    configuration frozen and audited; map-informed methods explicitly
+    excluded from the comparator; the embarrassing baselines (uniform
+    random, memoryless greedy) included.
+  \item \textbf{An evidence ledger.} Every strategic claim maps to a ledger
+    entry with status, sources, limitations, and raw artifacts; claims are
+    downgraded in place when contradicted.
+  \item \textbf{Split discipline.} Development seeds for selection, a
+    holdout that was never opened --- and, at closure, the honest refusal to
+    open it merely to ceremonialize a conclusion the development data had
+    already fixed.
+  \item \textbf{Hard execution boundaries.} Killable per-episode and
+    per-replicate deadlines after a first pilot showed unbounded timeouts
+    silently corrupting attribution; the aborted pilot was quarantined as
+    engineering-only evidence.
+  \item \textbf{External audit.} An independent review verified hash chains,
+    freeze integrity, count consistency, and authorization boundaries, and
+    surfaced the one unreported result in the pipeline (the baseline
+    comparison in Section~\ref{sec:results2}), which was then retained and
+    reported before its CI artifact expired.
+\end{itemize}
+
+We also name the anti-pattern we had to resist: \textbf{infrastructure
+regress} --- answering every ambiguous or unwelcome measurement by building
+a more rigorous measurement apparatus instead of drawing the available
+conclusion. The override-gate line (Section~\ref{sec:gate}) consumed sixteen
+commits of exemplary methodology to calibrate a knob on a mechanism that
+Section~\ref{sec:results1} shows never fires. Rigor was necessary; more
+rigor was not the missing ingredient --- a decision was.
+
+\section{Limitations}
+
+\begin{itemize}
+  \item All results are on designed synthetic families; the strong
+    \texttt{wall\_grid} claim has not been validated on an external domain.
+  \item The gate was closed on development evidence; no holdout PASS/FAIL
+    exists. We report this as a strategic closure, not a formal gate
+    outcome.
+  \item Single implementation, single research group; no independent
+    replication. The full raw data, frozen configs, and environment
+    manifests are retained to make replication cheap.
+  \item The baseline set is standard but not exhaustive; no deep-RL or
+    LLM-based navigation baselines were included (they violate the
+    equal-budget, training-free comparison frame).
+  \item The final experiment (Section~\ref{sec:survives}) models tool
+    failure as seeded Bernoulli processes; no production tool ecosystem was
+    measured, and no LLM was in the loop by design.
+\end{itemize}
+
+\section{What survives: the final experiment}\label{sec:survives}
+
+A ${\sim}600$-line, dependency-free failure-memory library
+(\texttt{reliability\_memory}) embodies the one mechanism that carried all
+measured behavior. Its remaining product hypothesis --- that an agent which
+persistently remembers \emph{which tools and paths fail} outperforms the
+same agent without memory, in settings where no training budget exists ---
+is deliberately \emph{not} addressed by the experiments above, whose
+baselines received training budgets. We closed the program with one
+preregistered decision experiment on this hypothesis (protocol
+\texttt{E0-WP6-RELMEM-v1}; design frozen and externally approved before
+implementation; shipped defaults, no tuning; the library bound by SHA-256).
+
+Setup: simulated tool ecosystems --- tasks of five steps, four redundant
+tools per step, 1{,}000 calls per replicate --- in three regimes: persistent
+failure structure (R1), mid-run drift (R2), and task-type-dependent
+reliability (R3). Four arms: the memory store, memoryless uniform selection,
+a stateless \emph{sticky} heuristic (``keep the tool that last worked''),
+and an oracle upper reference; 30 paired seeds per regime,
+10{,}000-resample paired bootstrap. Losing to the sticky one-liner in R1 was
+preregistered as failure.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lrrrr}
+\toprule
+Regime & Memory & No memory & Sticky & Oracle \\
+\midrule
+R1 persistent & \textbf{125.9} & 85.1 & 122.8 & 153.3 \\
+R2 drift & \textbf{124.2} & 80.9 & 118.3 & 148.0 \\
+R3 context & 85.0 & 76.9 & \textbf{105.2} & 139.3 \\
+\bottomrule
+\end{tabular}
+\caption{Final experiment: completed tasks per 1{,}000 tool calls.}
+\label{tab:wp6}
+\end{table}
+
+The verdict under the frozen criteria is \textbf{PASS}: $+48.0\,\%$ over
+memoryless selection in R1 (95\,\% CI of the absolute difference
+$[+35.3, +46.8]$), $+53.5\,\%$ in R2, $+10.5\,\%$ in R3, and a positive CI
+against sticky in R1 ($+3.2$ $[+1.4, +4.9]$). The honest bounds are part of
+the result: in stationary regimes the sticky heuristic captures most of the
+achievable value (memory's edge is only $+2.6\,\%$, a mandatory caveat now
+permanent in the library's documentation); the memory's real differentiator
+is \emph{drift}, where decaying traces recover and a last-success pointer
+does not ($+5.0\,\%$ over sticky, CI $[+3.9, +8.0]$); and where reliability
+depends on task context, a context-keyed sticky heuristic beat the
+deliberately context-free store by $19.2\,\%$ --- the state key must carry
+the context. The program therefore ends with a small maintained tool whose
+claims are exactly as large as its evidence, and no larger.
+
+\section{Conclusion}
+
+We set out to derive intelligent navigation from structure alone and built
+the apparatus to test whether we had. We had not: the geometric layer is
+causally inert on its own benchmark, and the memory mechanism alone loses to
+thirty-year-old baselines everywhere except the one environment class whose
+failure structure matches its assumptions. The same apparatus, pointed at
+the surviving mechanism's actual use case, returned a scoped positive with
+its caveats attached. We consider the preregistered negative, its
+mechanistic explanation, the honestly bounded positive, and the
+demonstration that a small research program can be made to falsify itself,
+to be worth more than the framework was.
+
+\section*{Data availability}
+
+All raw runs, episode records, frozen configurations, environment manifests,
+and SHA-256 manifests are public:
+\texttt{artifacts/g1/E0-G1-v1/development/run\_30526724307/} (gate
+experiment) and \texttt{artifacts/wp6/E0-WP6-RELMEM-v1/} (final experiment)
+in \url{https://github.com/Thomas66690815/E0-Framework}. Evidence ledger:
+\texttt{docs/E0\_EVIDENCE\_LEDGER\_v1.json}. Closure record:
+\texttt{docs/E0\_G1\_CLOSURE\_v1.md}.
+
+\end{document}

@@ -2,9 +2,9 @@
 
 **Thomas Wehner** (with AI collaborators)
 
-**Draft v1 — 2026-08-05 — WP-5.2 (C335). Submission is a pending user
-decision; venue candidates: arXiv (cs.AI) plus a negative-results or
-reproducibility workshop.**
+**v2 — 2026-08-05 — WP-5.2 (C335, updated C339 with the executed WP-6
+result). Cleared for arXiv (cs.AI) submission by user decision of
+2026-08-05.**
 
 ---
 
@@ -27,7 +27,12 @@ random-restart greedy; paired difference −0.199, 95 % CI [−0.206, −0.192])
 failure memory beats the baseline median by +0.260 [+0.248, +0.272]. A
 separately preregistered calibration of the framework's confidence-gated
 override selected `gate_disabled`: no threshold met its eligibility criteria.
-We describe the preregistration, fair-baseline, causal-ablation, and
+A final preregistered experiment then tested the one surviving mechanism in
+its intended role — persistent tool-reliability memory for budget-constrained
+agents — and passed: +48–54 % completed tasks over memoryless selection, with
+the honest bound that a stateless sticky heuristic captures most of the
+stationary value and the memory's real differentiator is recovery under
+drift. We describe the preregistration, fair-baseline, causal-ablation, and
 evidence-ledger methodology that produced these conclusions inside the same
 repository that had strong incentives to avoid them, and we argue that the
 mechanistic *why* of the null result — a conjunction of gating, phase-regime
@@ -68,6 +73,9 @@ Contributions:
    failures are persistent and structural (§5.2).
 5. **A methodological account** of preregistration, evidence ledgers, and
    external audit inside a small human–AI research collaboration (§7).
+6. **An honestly bounded positive closure**: a final preregistered
+   experiment on the surviving mechanism's intended use case, passed with
+   its caveats made mandatory documentation (§9).
 
 ## 2. The system under test
 
@@ -289,17 +297,51 @@ was.
 - The baseline set is standard but not exhaustive; no deep-RL or LLM-based
   navigation baselines were included (they violate the equal-budget,
   training-free comparison frame).
+- The final experiment (§9) models tool failure as seeded Bernoulli
+  processes; no production tool ecosystem was measured, and no LLM was in
+  the loop by design.
 
-## 9. What survives
+## 9. What survives — the final experiment
 
 A ~600-line, dependency-free failure-memory library (`reliability_memory`)
-embodying the one mechanism that carried all measured behavior. Its
-remaining product hypothesis — that an agent which persistently remembers
-*which tools and paths fail* outperforms the same agent without memory, in
-settings where no training budget exists — is deliberately *not* addressed
-by the experiments above (whose baselines received training budgets). It is
-the subject of one final preregistered experiment, after which this program
-ends either with a small honest tool or with a complete negative record.
+embodies the one mechanism that carried all measured behavior. Its remaining
+product hypothesis — that an agent which persistently remembers *which tools
+and paths fail* outperforms the same agent without memory, in settings where
+no training budget exists — is deliberately *not* addressed by the
+experiments above, whose baselines received training budgets. We closed the
+program with one preregistered decision experiment on this hypothesis
+(protocol `E0-WP6-RELMEM-v1`; design frozen and externally approved before
+implementation; shipped defaults, no tuning; the library bound by SHA-256).
+
+Setup: simulated tool ecosystems — tasks of five steps, four redundant tools
+per step, 1,000 calls per replicate — in three regimes: persistent failure
+structure (R1), mid-run drift (R2), and task-type-dependent reliability
+(R3). Four arms: the memory store, memoryless uniform selection, a stateless
+*sticky* heuristic ("keep the tool that last worked"), and an oracle upper
+reference; 30 paired seeds per regime, 10,000-resample paired bootstrap.
+Losing to the sticky one-liner in R1 was preregistered as failure.
+
+Results (completed tasks per 1,000 calls):
+
+| Regime | Memory | No memory | Sticky | Oracle |
+|---|---:|---:|---:|---:|
+| R1 persistent | **125.9** | 85.1 | 122.8 | 153.3 |
+| R2 drift | **124.2** | 80.9 | 118.3 | 148.0 |
+| R3 context | 85.0 | 76.9 | **105.2** | 139.3 |
+
+The verdict under the frozen criteria is **PASS**: +48.0 % over memoryless
+selection in R1 (95 % CI of the absolute difference [+35.3, +46.8]), +53.5 %
+in R2, +10.5 % in R3, and a positive CI against sticky in R1 (+3.2
+[+1.4, +4.9]). The honest bounds are part of the result: in stationary
+regimes the sticky heuristic captures most of the achievable value (memory's
+edge is only +2.6 %, a mandatory caveat now permanent in the library's
+documentation); the memory's real differentiator is *drift*, where decaying
+traces recover and a last-success pointer does not (+5.0 % over sticky, CI
+[+3.9, +8.0]); and where reliability depends on task context, a
+context-keyed sticky heuristic beat the deliberately context-free store by
+19.2 % — the state key must carry the context. The program therefore ends
+with a small maintained tool whose claims are exactly as large as its
+evidence, and no larger.
 
 ## 10. Conclusion
 
@@ -307,10 +349,12 @@ We set out to derive intelligent navigation from structure alone and built
 the apparatus to test whether we had. We had not: the geometric layer is
 causally inert on its own benchmark, and the memory mechanism alone loses to
 thirty-year-old baselines everywhere except the one environment class whose
-failure structure matches its assumptions. We consider the preregistered
-negative, its mechanistic explanation, and the demonstration that a small
-research program can be made to falsify itself, to be worth more than the
-framework was.
+failure structure matches its assumptions. The same apparatus, pointed at
+the surviving mechanism's actual use case, returned a scoped positive with
+its caveats attached. We consider the preregistered negative, its
+mechanistic explanation, the honestly bounded positive, and the
+demonstration that a small research program can be made to falsify itself,
+to be worth more than the framework was.
 
 ---
 
@@ -318,6 +362,6 @@ framework was.
 
 All raw runs, episode records, frozen configurations, environment manifests,
 and SHA-256 manifests: `artifacts/g1/E0-G1-v1/development/run_30526724307/`
-in the public repository. Evidence ledger:
-`docs/E0_EVIDENCE_LEDGER_v1.json`. Closure record:
-`docs/E0_G1_CLOSURE_v1.md`.
+(Gate G1) and `artifacts/wp6/E0-WP6-RELMEM-v1/` (final experiment) in the
+public repository. Evidence ledger: `docs/E0_EVIDENCE_LEDGER_v1.json`.
+Closure record: `docs/E0_G1_CLOSURE_v1.md`.

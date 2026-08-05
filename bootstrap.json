@@ -31,9 +31,9 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C337",
-    "latest_commit_hash": "16929d4",
-    "latest_commit_msg": "C337: implement WP-6 decision-experiment harness (WP-6.2a)",
+    "latest_commit": "C338",
+    "latest_commit_hash": "b7c693f",
+    "latest_commit_msg": "C338: execute WP-6 decision experiment - PASS (WP-6.2b)",
     "test_count": 7188,
     "test_failures": 0,
     "ci_status": "G1 development run 30526724307 successful; its evidence bundle is verified and retained in-repo since C332. Override-Gate v2 execution not authorized or dispatched",
@@ -316,7 +316,7 @@
     "key_result": "G1-v1 development selected A_HIST as the simpler control and found no E_FULL_GEOMETRY advantage, no executed overrides, and no phase-active decisions; the protected holdout remains unread. The G1-B development diagnostic, first reported in C332, shows A_HIST not competitive with the fair baseline median: 0.208 vs 0.407 success-adjusted efficiency (-0.199, 95% CI [-0.206, -0.192]), beaten even by uniform random overall, with wall_grid (+0.260) as the sole qualifying family. Override-Gate v1 mechanically selected gate_disabled but cannot cleanly rank thresholds because 2116/2880 timeout labels include branch instrumentation. Corrected v2 calibration is implemented but parked, unauthorized, and unexecuted.",
     "open_threads": [
       "WP-5.1 COMPLETE C334: README rewritten claims-to-ledger, negative G1 result up front, geometry marked research-frozen, AGI blueprint archived.",
-      "WP-5.2 DRAFT COMPLETE C335: closure paper docs/papers/PAPER11_CLOSURE_MANUSCRIPT_v1.md. SUBMISSION IS A USER DECISION (venue candidates: arXiv cs.AI + negative-results/reproducibility workshop).",
+      "WP-5.2 v2 COMPLETE C339: closure paper updated with the executed WP-6 result; arXiv LaTeX source at docs/papers/arxiv/PAPER11_v1/main.tex. Submission to arXiv cs.AI USER-APPROVED 2026-08-05; upload runs through the user's arXiv account (assistant cannot authenticate).",
       "WP-6 COMPLETE C338: E0-WP6-RELMEM-v1 executed at commit 16929d4e, verdict PASS; mandatory sticky note applied to lean/E0_LEAN_CORE.md and README; reliability_memory is the maintained library. Future changes to the lean package require honoring the frozen object-under-test hashes or a protocol v2.",
       "Override-Gate v2 permanently parked per closure record; no execution commit, authorization, or dispatch under this closure.",
       "F3/F4 structural limits are final for this repository and are reported in the closure paper; no engineering-around work.",
