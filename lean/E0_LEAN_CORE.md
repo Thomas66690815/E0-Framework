@@ -6,13 +6,29 @@ context** from outcomes, and adapts how fast it forgets to the volatility of the
 This is the distilled kernel of the [E₀ Framework](https://github.com/Thomas66690815/E0-Framework).
 The full framework is ~36k LOC across 81 modules (amplitude/quantum interference, dream-mode
 cross-domain transfer, multiverse coupling, perception/UI). **None of that is here.** The
-framework's own bootstrap states the design principle that justifies this reduction:
-
-> *"Historization is the dominant mechanism — other features add incremental value."*
-> — confirmed 6×, contradicted 0× (E₀ `bootstrap.json`, working principles)
+reduction is justified by measurement, not preference: the framework's preregistered causal
+ablation scored all five E₀ variants identically — historization carries all measured
+behavior (`E0-HIST-DOMINANCE-001` in the Evidence Ledger).
 
 So we keep only the dominant mechanism and the two refinements that make it better than naive
 memory: **doubt that decays with staleness** and **forgetting that adapts to volatility**.
+
+## Measured value — and its honest bounds (E0-WP6-RELMEM-v1)
+
+A preregistered decision experiment (3 regimes × 30 paired seeds, shipped defaults,
+frozen criteria; `docs/E0_WP6_RELIABILITY_MEMORY_RESULT_v1.md`) measured, in completed
+tasks per 1,000 tool calls:
+
+- **vs. no memory:** +48 % (stationary), +54 % (drifting), +11 % (context-shifted) —
+  all with 95 % CIs clear of zero.
+- **vs. a stateless sticky heuristic** ("keep the tool that last worked"): only
+  **+2.6 %** in stationary regimes — **a sticky one-liner captures most of the value
+  when tool reliability never changes.** The library's real differentiator is
+  **drift**: when reliabilities shift mid-run, decaying traces recover and sticky does
+  not (+5.0 %, CI [+3.9, +8.0]).
+- **Key your state with context.** Where reliability depends on task context, a
+  context-keyed sticky heuristic beat the context-free store by 19 %. If your tools
+  behave differently per task type, put the task type into the state key.
 
 ---
 

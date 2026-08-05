@@ -1,0 +1,360 @@
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 0, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 607, "tasks_completed": 121, "wasted_calls": 312}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 1, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 530, "tasks_completed": 106, "wasted_calls": 371}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 2, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 432, "tasks_completed": 86, "wasted_calls": 579}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 3, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 556, "tasks_completed": 111, "wasted_calls": 331}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 4, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 655, "tasks_completed": 131, "wasted_calls": 259}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 5, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 806, "tasks_completed": 161, "wasted_calls": 94}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 6, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 532, "tasks_completed": 106, "wasted_calls": 380}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 7, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 894, "tasks_completed": 178, "wasted_calls": 42}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 8, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 926, "tasks_completed": 185, "wasted_calls": 17}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 9, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 681, "tasks_completed": 136, "wasted_calls": 150}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 10, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 605, "tasks_completed": 121, "wasted_calls": 277}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 11, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 618, "tasks_completed": 123, "wasted_calls": 286}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 12, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 280, "tasks_completed": 56, "wasted_calls": 818}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 13, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 725, "tasks_completed": 145, "wasted_calls": 131}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 14, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 684, "tasks_completed": 136, "wasted_calls": 132}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 15, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 584, "tasks_completed": 116, "wasted_calls": 282}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 16, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 603, "tasks_completed": 120, "wasted_calls": 237}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 17, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 393, "tasks_completed": 78, "wasted_calls": 654}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 18, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 609, "tasks_completed": 121, "wasted_calls": 248}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 19, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 727, "tasks_completed": 145, "wasted_calls": 64}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 20, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 905, "tasks_completed": 181, "wasted_calls": 46}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 21, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 657, "tasks_completed": 131, "wasted_calls": 267}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 22, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 648, "tasks_completed": 129, "wasted_calls": 272}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 23, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 537, "tasks_completed": 107, "wasted_calls": 379}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 24, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 596, "tasks_completed": 119, "wasted_calls": 248}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 25, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 794, "tasks_completed": 158, "wasted_calls": 83}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 26, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 480, "tasks_completed": 96, "wasted_calls": 582}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 27, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 438, "tasks_completed": 87, "wasted_calls": 460}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 28, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 853, "tasks_completed": 170, "wasted_calls": 49}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 29, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 590, "tasks_completed": 118, "wasted_calls": 314}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 0, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 435, "tasks_completed": 87, "wasted_calls": 536}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 1, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 385, "tasks_completed": 77, "wasted_calls": 622}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 2, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 367, "tasks_completed": 73, "wasted_calls": 624}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 3, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 396, "tasks_completed": 79, "wasted_calls": 574}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 4, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 404, "tasks_completed": 80, "wasted_calls": 568}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 5, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 526, "tasks_completed": 105, "wasted_calls": 391}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 6, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 362, "tasks_completed": 72, "wasted_calls": 582}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 7, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 513, "tasks_completed": 102, "wasted_calls": 480}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 8, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 534, "tasks_completed": 106, "wasted_calls": 381}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 9, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 503, "tasks_completed": 100, "wasted_calls": 420}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 10, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 413, "tasks_completed": 82, "wasted_calls": 600}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 11, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 426, "tasks_completed": 85, "wasted_calls": 596}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 12, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 232, "tasks_completed": 46, "wasted_calls": 854}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 13, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 415, "tasks_completed": 83, "wasted_calls": 528}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 14, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 446, "tasks_completed": 89, "wasted_calls": 481}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 15, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 323, "tasks_completed": 64, "wasted_calls": 667}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 16, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 380, "tasks_completed": 76, "wasted_calls": 587}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 17, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 343, "tasks_completed": 68, "wasted_calls": 714}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 18, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 401, "tasks_completed": 80, "wasted_calls": 514}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 19, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 537, "tasks_completed": 107, "wasted_calls": 273}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 20, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 579, "tasks_completed": 115, "wasted_calls": 429}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 21, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 476, "tasks_completed": 95, "wasted_calls": 516}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 22, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 445, "tasks_completed": 89, "wasted_calls": 544}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 23, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 346, "tasks_completed": 69, "wasted_calls": 661}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 24, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 435, "tasks_completed": 87, "wasted_calls": 474}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 25, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 552, "tasks_completed": 110, "wasted_calls": 362}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 26, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 340, "tasks_completed": 68, "wasted_calls": 754}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 27, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 311, "tasks_completed": 62, "wasted_calls": 683}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 28, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 604, "tasks_completed": 120, "wasted_calls": 328}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 29, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 381, "tasks_completed": 76, "wasted_calls": 634}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 0, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 832, "tasks_completed": 166, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 1, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 689, "tasks_completed": 137, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 2, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 587, "tasks_completed": 117, "wasted_calls": 443}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 3, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 741, "tasks_completed": 148, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 4, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 820, "tasks_completed": 164, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 5, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 861, "tasks_completed": 172, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 6, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 752, "tasks_completed": 150, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 7, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 949, "tasks_completed": 189, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 8, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 948, "tasks_completed": 189, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 9, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 768, "tasks_completed": 153, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 10, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 784, "tasks_completed": 156, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 11, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 756, "tasks_completed": 151, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 12, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 470, "tasks_completed": 94, "wasted_calls": 702}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 13, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 830, "tasks_completed": 166, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 14, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 779, "tasks_completed": 155, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 15, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 719, "tasks_completed": 143, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 16, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 763, "tasks_completed": 152, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 17, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 526, "tasks_completed": 105, "wasted_calls": 430}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 18, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 780, "tasks_completed": 156, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 19, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 762, "tasks_completed": 152, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 20, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 944, "tasks_completed": 188, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 21, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 848, "tasks_completed": 169, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 22, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 848, "tasks_completed": 169, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 23, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 797, "tasks_completed": 159, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 24, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 779, "tasks_completed": 155, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 25, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 844, "tasks_completed": 168, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 26, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 561, "tasks_completed": 112, "wasted_calls": 522}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 27, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 673, "tasks_completed": 134, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 28, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 888, "tasks_completed": 177, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 29, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 765, "tasks_completed": 153, "wasted_calls": 0}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 0, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 632, "tasks_completed": 126, "wasted_calls": 288}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 1, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 511, "tasks_completed": 102, "wasted_calls": 394}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 2, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 437, "tasks_completed": 87, "wasted_calls": 588}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 3, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 571, "tasks_completed": 114, "wasted_calls": 314}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 4, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 635, "tasks_completed": 127, "wasted_calls": 275}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 5, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 771, "tasks_completed": 154, "wasted_calls": 125}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 6, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 527, "tasks_completed": 105, "wasted_calls": 418}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 7, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 853, "tasks_completed": 170, "wasted_calls": 88}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 8, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 894, "tasks_completed": 178, "wasted_calls": 46}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 9, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 653, "tasks_completed": 130, "wasted_calls": 200}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 10, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 578, "tasks_completed": 115, "wasted_calls": 320}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 11, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 583, "tasks_completed": 116, "wasted_calls": 322}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 12, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 283, "tasks_completed": 56, "wasted_calls": 814}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 13, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 697, "tasks_completed": 139, "wasted_calls": 182}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 14, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 669, "tasks_completed": 133, "wasted_calls": 146}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 15, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 587, "tasks_completed": 117, "wasted_calls": 283}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 16, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 543, "tasks_completed": 108, "wasted_calls": 356}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 17, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 401, "tasks_completed": 80, "wasted_calls": 665}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 18, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 595, "tasks_completed": 119, "wasted_calls": 305}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 19, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 702, "tasks_completed": 140, "wasted_calls": 82}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 20, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 858, "tasks_completed": 171, "wasted_calls": 100}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 21, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 704, "tasks_completed": 140, "wasted_calls": 227}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 22, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 648, "tasks_completed": 129, "wasted_calls": 263}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 23, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 541, "tasks_completed": 108, "wasted_calls": 398}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 24, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 576, "tasks_completed": 115, "wasted_calls": 281}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 25, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 729, "tasks_completed": 145, "wasted_calls": 159}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 26, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 470, "tasks_completed": 94, "wasted_calls": 599}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 27, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 437, "tasks_completed": 87, "wasted_calls": 468}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 28, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 823, "tasks_completed": 164, "wasted_calls": 72}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 29, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R1_persistent", "successes": 574, "tasks_completed": 114, "wasted_calls": 326}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 0, "pre_drift_level": 0.08, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 59, "regime": "R2_drift", "successes": 201, "tasks_completed": 40, "wasted_calls": 815}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 1, "pre_drift_level": 0.66, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 78, "regime": "R2_drift", "successes": 727, "tasks_completed": 145, "wasted_calls": 187}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 2, "pre_drift_level": 0.84, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 56, "regime": "R2_drift", "successes": 812, "tasks_completed": 162, "wasted_calls": 114}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 3, "pre_drift_level": 0.72, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": false, "recovery_calls": 500, "regime": "R2_drift", "successes": 567, "tasks_completed": 113, "wasted_calls": 379}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 4, "pre_drift_level": 0.6, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 88, "regime": "R2_drift", "successes": 525, "tasks_completed": 105, "wasted_calls": 401}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 5, "pre_drift_level": 0.6, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 54, "regime": "R2_drift", "successes": 651, "tasks_completed": 130, "wasted_calls": 259}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 6, "pre_drift_level": 0.52, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 68, "regime": "R2_drift", "successes": 560, "tasks_completed": 112, "wasted_calls": 427}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 7, "pre_drift_level": 0.98, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 922, "tasks_completed": 184, "wasted_calls": 35}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 8, "pre_drift_level": 1.0, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": false, "recovery_calls": 500, "regime": "R2_drift", "successes": 733, "tasks_completed": 146, "wasted_calls": 177}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 9, "pre_drift_level": 0.64, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 115, "regime": "R2_drift", "successes": 646, "tasks_completed": 129, "wasted_calls": 264}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 10, "pre_drift_level": 0.88, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 86, "regime": "R2_drift", "successes": 816, "tasks_completed": 163, "wasted_calls": 107}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 11, "pre_drift_level": 0.72, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": false, "recovery_calls": 500, "regime": "R2_drift", "successes": 512, "tasks_completed": 102, "wasted_calls": 334}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 12, "pre_drift_level": 0.94, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 276, "regime": "R2_drift", "successes": 741, "tasks_completed": 148, "wasted_calls": 220}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 13, "pre_drift_level": 0.66, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 662, "tasks_completed": 132, "wasted_calls": 179}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 14, "pre_drift_level": 0.52, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 194, "regime": "R2_drift", "successes": 526, "tasks_completed": 105, "wasted_calls": 429}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 15, "pre_drift_level": 0.26, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 549, "tasks_completed": 109, "wasted_calls": 461}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 16, "pre_drift_level": 0.96, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": false, "recovery_calls": 500, "regime": "R2_drift", "successes": 647, "tasks_completed": 129, "wasted_calls": 354}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 17, "pre_drift_level": 0.34, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 533, "tasks_completed": 106, "wasted_calls": 384}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 18, "pre_drift_level": 0.86, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": false, "recovery_calls": 500, "regime": "R2_drift", "successes": 493, "tasks_completed": 98, "wasted_calls": 458}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 19, "pre_drift_level": 0.3, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 333, "tasks_completed": 66, "wasted_calls": 769}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 20, "pre_drift_level": 0.42, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 562, "tasks_completed": 112, "wasted_calls": 313}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 21, "pre_drift_level": 0.5, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 59, "regime": "R2_drift", "successes": 520, "tasks_completed": 104, "wasted_calls": 420}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 22, "pre_drift_level": 0.58, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 795, "tasks_completed": 159, "wasted_calls": 90}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 23, "pre_drift_level": 0.32, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 578, "tasks_completed": 115, "wasted_calls": 350}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 24, "pre_drift_level": 0.48, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 640, "tasks_completed": 128, "wasted_calls": 222}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 25, "pre_drift_level": 0.48, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 674, "tasks_completed": 134, "wasted_calls": 229}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 26, "pre_drift_level": 0.78, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 836, "tasks_completed": 167, "wasted_calls": 79}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 27, "pre_drift_level": 0.92, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": false, "recovery_calls": 500, "regime": "R2_drift", "successes": 595, "tasks_completed": 119, "wasted_calls": 417}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 28, "pre_drift_level": 0.6, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 593, "tasks_completed": 118, "wasted_calls": 365}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 29, "pre_drift_level": 0.6, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 730, "tasks_completed": 146, "wasted_calls": 161}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 0, "pre_drift_level": 0.06, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 56, "regime": "R2_drift", "successes": 181, "tasks_completed": 36, "wasted_calls": 861}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 1, "pre_drift_level": 0.52, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 275, "regime": "R2_drift", "successes": 433, "tasks_completed": 86, "wasted_calls": 522}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 2, "pre_drift_level": 0.36, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 437, "tasks_completed": 87, "wasted_calls": 558}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 3, "pre_drift_level": 0.38, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 97, "regime": "R2_drift", "successes": 380, "tasks_completed": 76, "wasted_calls": 605}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 4, "pre_drift_level": 0.46, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 349, "tasks_completed": 69, "wasted_calls": 632}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 5, "pre_drift_level": 0.52, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 274, "regime": "R2_drift", "successes": 423, "tasks_completed": 84, "wasted_calls": 596}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 6, "pre_drift_level": 0.38, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 72, "regime": "R2_drift", "successes": 359, "tasks_completed": 71, "wasted_calls": 655}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 7, "pre_drift_level": 0.56, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 585, "tasks_completed": 117, "wasted_calls": 350}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 8, "pre_drift_level": 0.48, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 197, "regime": "R2_drift", "successes": 416, "tasks_completed": 83, "wasted_calls": 563}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 9, "pre_drift_level": 0.48, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 114, "regime": "R2_drift", "successes": 396, "tasks_completed": 79, "wasted_calls": 626}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 10, "pre_drift_level": 0.5, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 576, "tasks_completed": 115, "wasted_calls": 371}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 11, "pre_drift_level": 0.52, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": false, "recovery_calls": 500, "regime": "R2_drift", "successes": 372, "tasks_completed": 74, "wasted_calls": 526}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 12, "pre_drift_level": 0.5, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 196, "regime": "R2_drift", "successes": 423, "tasks_completed": 84, "wasted_calls": 637}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 13, "pre_drift_level": 0.4, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 446, "tasks_completed": 89, "wasted_calls": 511}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 14, "pre_drift_level": 0.52, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 203, "regime": "R2_drift", "successes": 404, "tasks_completed": 80, "wasted_calls": 578}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 15, "pre_drift_level": 0.1, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 334, "tasks_completed": 66, "wasted_calls": 707}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 16, "pre_drift_level": 0.42, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 121, "regime": "R2_drift", "successes": 361, "tasks_completed": 72, "wasted_calls": 700}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 17, "pre_drift_level": 0.32, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 421, "tasks_completed": 84, "wasted_calls": 559}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 18, "pre_drift_level": 0.62, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": false, "recovery_calls": 500, "regime": "R2_drift", "successes": 393, "tasks_completed": 78, "wasted_calls": 597}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 19, "pre_drift_level": 0.24, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 273, "tasks_completed": 54, "wasted_calls": 809}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 20, "pre_drift_level": 0.36, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 398, "tasks_completed": 79, "wasted_calls": 553}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 21, "pre_drift_level": 0.48, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 405, "tasks_completed": 81, "wasted_calls": 569}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 22, "pre_drift_level": 0.4, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 479, "tasks_completed": 95, "wasted_calls": 487}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 23, "pre_drift_level": 0.24, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 410, "tasks_completed": 82, "wasted_calls": 552}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 24, "pre_drift_level": 0.3, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 389, "tasks_completed": 77, "wasted_calls": 550}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 25, "pre_drift_level": 0.42, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 460, "tasks_completed": 92, "wasted_calls": 520}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 26, "pre_drift_level": 0.5, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 477, "tasks_completed": 95, "wasted_calls": 478}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 27, "pre_drift_level": 0.46, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 378, "regime": "R2_drift", "successes": 392, "tasks_completed": 78, "wasted_calls": 655}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 28, "pre_drift_level": 0.32, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 362, "tasks_completed": 72, "wasted_calls": 646}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 29, "pre_drift_level": 0.32, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 461, "tasks_completed": 92, "wasted_calls": 470}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 0, "pre_drift_level": 0.1, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 57, "regime": "R2_drift", "successes": 231, "tasks_completed": 46, "wasted_calls": 774}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 1, "pre_drift_level": 0.84, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 864, "tasks_completed": 172, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 2, "pre_drift_level": 0.94, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 907, "tasks_completed": 181, "wasted_calls": 1}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 3, "pre_drift_level": 0.88, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 156, "regime": "R2_drift", "successes": 785, "tasks_completed": 157, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 4, "pre_drift_level": 0.7, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 606, "tasks_completed": 121, "wasted_calls": 257}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 5, "pre_drift_level": 0.88, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 111, "regime": "R2_drift", "successes": 811, "tasks_completed": 162, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 6, "pre_drift_level": 0.84, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 89, "regime": "R2_drift", "successes": 703, "tasks_completed": 140, "wasted_calls": 210}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 7, "pre_drift_level": 1.0, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 953, "tasks_completed": 190, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 8, "pre_drift_level": 1.0, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 253, "regime": "R2_drift", "successes": 851, "tasks_completed": 170, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 9, "pre_drift_level": 0.86, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 79, "regime": "R2_drift", "successes": 816, "tasks_completed": 163, "wasted_calls": 1}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 10, "pre_drift_level": 0.94, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 81, "regime": "R2_drift", "successes": 896, "tasks_completed": 179, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 11, "pre_drift_level": 0.8, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 134, "regime": "R2_drift", "successes": 695, "tasks_completed": 139, "wasted_calls": 1}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 12, "pre_drift_level": 0.94, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 67, "regime": "R2_drift", "successes": 871, "tasks_completed": 174, "wasted_calls": 1}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 13, "pre_drift_level": 0.74, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 775, "tasks_completed": 155, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 14, "pre_drift_level": 0.74, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 193, "regime": "R2_drift", "successes": 661, "tasks_completed": 132, "wasted_calls": 234}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 15, "pre_drift_level": 0.5, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 759, "tasks_completed": 151, "wasted_calls": 231}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 16, "pre_drift_level": 0.96, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": false, "recovery_calls": 500, "regime": "R2_drift", "successes": 788, "tasks_completed": 157, "wasted_calls": 232}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 17, "pre_drift_level": 0.5, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 649, "tasks_completed": 129, "wasted_calls": 244}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 18, "pre_drift_level": 0.9, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": false, "recovery_calls": 500, "regime": "R2_drift", "successes": 678, "tasks_completed": 135, "wasted_calls": 223}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 19, "pre_drift_level": 0.44, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 427, "tasks_completed": 85, "wasted_calls": 702}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 20, "pre_drift_level": 0.54, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 706, "tasks_completed": 141, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 21, "pre_drift_level": 0.48, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 631, "tasks_completed": 126, "wasted_calls": 253}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 22, "pre_drift_level": 0.64, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 846, "tasks_completed": 169, "wasted_calls": 1}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 23, "pre_drift_level": 0.44, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 683, "tasks_completed": 136, "wasted_calls": 215}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 24, "pre_drift_level": 0.68, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 787, "tasks_completed": 157, "wasted_calls": 1}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 25, "pre_drift_level": 0.64, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 789, "tasks_completed": 157, "wasted_calls": 1}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 26, "pre_drift_level": 0.88, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 891, "tasks_completed": 178, "wasted_calls": 1}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 27, "pre_drift_level": 0.94, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": false, "recovery_calls": 500, "regime": "R2_drift", "successes": 672, "tasks_completed": 134, "wasted_calls": 361}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 28, "pre_drift_level": 0.62, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 698, "tasks_completed": 139, "wasted_calls": 200}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 29, "pre_drift_level": 0.68, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 821, "tasks_completed": 164, "wasted_calls": 1}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 0, "pre_drift_level": 0.08, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 63, "regime": "R2_drift", "successes": 211, "tasks_completed": 42, "wasted_calls": 817}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 1, "pre_drift_level": 0.74, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 111, "regime": "R2_drift", "successes": 654, "tasks_completed": 130, "wasted_calls": 249}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 2, "pre_drift_level": 0.84, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 54, "regime": "R2_drift", "successes": 799, "tasks_completed": 159, "wasted_calls": 141}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 3, "pre_drift_level": 0.66, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 148, "regime": "R2_drift", "successes": 595, "tasks_completed": 119, "wasted_calls": 334}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 4, "pre_drift_level": 0.6, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 511, "tasks_completed": 102, "wasted_calls": 419}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 5, "pre_drift_level": 0.78, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 252, "regime": "R2_drift", "successes": 656, "tasks_completed": 131, "wasted_calls": 285}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 6, "pre_drift_level": 0.68, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 254, "regime": "R2_drift", "successes": 531, "tasks_completed": 106, "wasted_calls": 456}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 7, "pre_drift_level": 1.0, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 188, "regime": "R2_drift", "successes": 878, "tasks_completed": 175, "wasted_calls": 55}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 8, "pre_drift_level": 1.0, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": false, "recovery_calls": 500, "regime": "R2_drift", "successes": 721, "tasks_completed": 144, "wasted_calls": 194}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 9, "pre_drift_level": 0.62, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 99, "regime": "R2_drift", "successes": 619, "tasks_completed": 123, "wasted_calls": 316}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 10, "pre_drift_level": 0.94, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 163, "regime": "R2_drift", "successes": 799, "tasks_completed": 159, "wasted_calls": 112}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 11, "pre_drift_level": 0.74, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": false, "recovery_calls": 500, "regime": "R2_drift", "successes": 487, "tasks_completed": 97, "wasted_calls": 345}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 12, "pre_drift_level": 0.8, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 405, "regime": "R2_drift", "successes": 674, "tasks_completed": 134, "wasted_calls": 298}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 13, "pre_drift_level": 0.74, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 58, "regime": "R2_drift", "successes": 617, "tasks_completed": 123, "wasted_calls": 248}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 14, "pre_drift_level": 0.28, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 481, "tasks_completed": 96, "wasted_calls": 448}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 15, "pre_drift_level": 0.36, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 521, "tasks_completed": 104, "wasted_calls": 493}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 16, "pre_drift_level": 0.88, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": false, "recovery_calls": 500, "regime": "R2_drift", "successes": 582, "tasks_completed": 116, "wasted_calls": 426}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 17, "pre_drift_level": 0.34, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 503, "tasks_completed": 100, "wasted_calls": 429}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 18, "pre_drift_level": 0.74, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": false, "recovery_calls": 500, "regime": "R2_drift", "successes": 523, "tasks_completed": 104, "wasted_calls": 440}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 19, "pre_drift_level": 0.34, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 322, "tasks_completed": 64, "wasted_calls": 775}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 20, "pre_drift_level": 0.4, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 551, "tasks_completed": 110, "wasted_calls": 305}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 21, "pre_drift_level": 0.46, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 521, "tasks_completed": 104, "wasted_calls": 436}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 22, "pre_drift_level": 0.5, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 731, "tasks_completed": 146, "wasted_calls": 161}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 23, "pre_drift_level": 0.4, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 554, "tasks_completed": 110, "wasted_calls": 372}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 24, "pre_drift_level": 0.48, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 603, "tasks_completed": 120, "wasted_calls": 269}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 25, "pre_drift_level": 0.66, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 658, "tasks_completed": 131, "wasted_calls": 250}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 26, "pre_drift_level": 0.66, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 756, "tasks_completed": 151, "wasted_calls": 146}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 27, "pre_drift_level": 0.84, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": false, "recovery_calls": 500, "regime": "R2_drift", "successes": 542, "tasks_completed": 108, "wasted_calls": 465}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 28, "pre_drift_level": 0.5, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 518, "tasks_completed": 103, "wasted_calls": 457}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 29, "pre_drift_level": 0.52, "protocol_id": "E0-WP6-RELMEM-v1", "recovered": true, "recovery_calls": 50, "regime": "R2_drift", "successes": 685, "tasks_completed": 137, "wasted_calls": 192}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 0, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 368, "tasks_completed": 73, "wasted_calls": 634}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 1, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 494, "tasks_completed": 98, "wasted_calls": 475}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 2, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 252, "tasks_completed": 50, "wasted_calls": 747}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 3, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 444, "tasks_completed": 88, "wasted_calls": 596}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 4, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 461, "tasks_completed": 92, "wasted_calls": 497}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 5, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 280, "tasks_completed": 56, "wasted_calls": 715}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 6, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 438, "tasks_completed": 87, "wasted_calls": 560}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 7, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 343, "tasks_completed": 68, "wasted_calls": 680}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 8, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 473, "tasks_completed": 94, "wasted_calls": 459}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 9, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 316, "tasks_completed": 63, "wasted_calls": 701}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 10, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 404, "tasks_completed": 80, "wasted_calls": 555}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 11, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 369, "tasks_completed": 73, "wasted_calls": 606}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 12, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 440, "tasks_completed": 88, "wasted_calls": 513}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 13, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 381, "tasks_completed": 76, "wasted_calls": 684}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 14, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 405, "tasks_completed": 81, "wasted_calls": 661}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 15, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 431, "tasks_completed": 86, "wasted_calls": 628}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 16, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 440, "tasks_completed": 88, "wasted_calls": 522}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 17, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 507, "tasks_completed": 101, "wasted_calls": 433}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 18, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 459, "tasks_completed": 91, "wasted_calls": 507}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 19, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 684, "tasks_completed": 136, "wasted_calls": 273}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 20, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 353, "tasks_completed": 70, "wasted_calls": 616}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 21, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 356, "tasks_completed": 71, "wasted_calls": 649}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 22, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 281, "tasks_completed": 56, "wasted_calls": 695}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 23, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 570, "tasks_completed": 114, "wasted_calls": 325}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 24, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 588, "tasks_completed": 117, "wasted_calls": 264}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 25, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 395, "tasks_completed": 79, "wasted_calls": 545}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 26, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 481, "tasks_completed": 96, "wasted_calls": 449}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 27, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 390, "tasks_completed": 78, "wasted_calls": 584}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 28, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 583, "tasks_completed": 116, "wasted_calls": 319}
+{"arm": "MEMORY", "calls": 1000, "generator_seed": 29, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 423, "tasks_completed": 84, "wasted_calls": 556}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 0, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 317, "tasks_completed": 63, "wasted_calls": 706}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 1, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 421, "tasks_completed": 84, "wasted_calls": 551}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 2, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 250, "tasks_completed": 50, "wasted_calls": 763}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 3, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 396, "tasks_completed": 79, "wasted_calls": 667}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 4, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 366, "tasks_completed": 73, "wasted_calls": 663}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 5, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 273, "tasks_completed": 54, "wasted_calls": 742}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 6, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 427, "tasks_completed": 85, "wasted_calls": 587}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 7, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 357, "tasks_completed": 71, "wasted_calls": 694}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 8, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 433, "tasks_completed": 86, "wasted_calls": 530}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 9, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 316, "tasks_completed": 63, "wasted_calls": 727}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 10, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 401, "tasks_completed": 80, "wasted_calls": 592}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 11, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 361, "tasks_completed": 72, "wasted_calls": 617}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 12, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 462, "tasks_completed": 92, "wasted_calls": 514}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 13, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 360, "tasks_completed": 72, "wasted_calls": 691}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 14, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 371, "tasks_completed": 74, "wasted_calls": 705}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 15, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 408, "tasks_completed": 81, "wasted_calls": 647}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 16, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 368, "tasks_completed": 73, "wasted_calls": 600}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 17, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 461, "tasks_completed": 92, "wasted_calls": 473}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 18, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 407, "tasks_completed": 81, "wasted_calls": 591}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 19, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 540, "tasks_completed": 108, "wasted_calls": 433}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 20, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 323, "tasks_completed": 64, "wasted_calls": 665}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 21, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 326, "tasks_completed": 65, "wasted_calls": 674}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 22, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 265, "tasks_completed": 53, "wasted_calls": 719}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 23, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 475, "tasks_completed": 95, "wasted_calls": 473}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 24, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 487, "tasks_completed": 97, "wasted_calls": 446}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 25, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 393, "tasks_completed": 78, "wasted_calls": 561}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 26, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 429, "tasks_completed": 85, "wasted_calls": 505}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 27, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 332, "tasks_completed": 66, "wasted_calls": 701}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 28, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 466, "tasks_completed": 93, "wasted_calls": 467}
+{"arm": "NO_MEMORY", "calls": 1000, "generator_seed": 29, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 396, "tasks_completed": 79, "wasted_calls": 605}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 0, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 681, "tasks_completed": 136, "wasted_calls": 208}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 1, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 764, "tasks_completed": 152, "wasted_calls": 160}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 2, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 391, "tasks_completed": 78, "wasted_calls": 581}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 3, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 686, "tasks_completed": 137, "wasted_calls": 221}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 4, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 704, "tasks_completed": 140, "wasted_calls": 226}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 5, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 562, "tasks_completed": 112, "wasted_calls": 333}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 6, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 646, "tasks_completed": 129, "wasted_calls": 371}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 7, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 558, "tasks_completed": 111, "wasted_calls": 480}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 8, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 826, "tasks_completed": 165, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 9, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 543, "tasks_completed": 108, "wasted_calls": 443}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 10, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 746, "tasks_completed": 149, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 11, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 689, "tasks_completed": 137, "wasted_calls": 161}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 12, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 829, "tasks_completed": 165, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 13, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 603, "tasks_completed": 120, "wasted_calls": 438}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 14, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 690, "tasks_completed": 138, "wasted_calls": 305}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 15, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 658, "tasks_completed": 131, "wasted_calls": 343}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 16, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 717, "tasks_completed": 143, "wasted_calls": 176}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 17, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 843, "tasks_completed": 168, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 18, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 716, "tasks_completed": 143, "wasted_calls": 190}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 19, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 889, "tasks_completed": 177, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 20, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 618, "tasks_completed": 123, "wasted_calls": 215}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 21, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 698, "tasks_completed": 139, "wasted_calls": 168}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 22, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 386, "tasks_completed": 77, "wasted_calls": 558}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 23, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 887, "tasks_completed": 177, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 24, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 858, "tasks_completed": 171, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 25, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 673, "tasks_completed": 134, "wasted_calls": 147}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 26, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 786, "tasks_completed": 157, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 27, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 727, "tasks_completed": 145, "wasted_calls": 160}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 28, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 842, "tasks_completed": 168, "wasted_calls": 0}
+{"arm": "ORACLE", "calls": 1000, "generator_seed": 29, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 749, "tasks_completed": 149, "wasted_calls": 0}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 0, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 478, "tasks_completed": 95, "wasted_calls": 493}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 1, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 634, "tasks_completed": 126, "wasted_calls": 337}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 2, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 286, "tasks_completed": 57, "wasted_calls": 702}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 3, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 520, "tasks_completed": 104, "wasted_calls": 467}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 4, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 465, "tasks_completed": 93, "wasted_calls": 505}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 5, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 329, "tasks_completed": 65, "wasted_calls": 644}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 6, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 532, "tasks_completed": 106, "wasted_calls": 495}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 7, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 379, "tasks_completed": 75, "wasted_calls": 654}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 8, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 638, "tasks_completed": 127, "wasted_calls": 274}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 9, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 331, "tasks_completed": 66, "wasted_calls": 685}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 10, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 574, "tasks_completed": 114, "wasted_calls": 315}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 11, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 469, "tasks_completed": 93, "wasted_calls": 494}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 12, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 708, "tasks_completed": 141, "wasted_calls": 189}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 13, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 428, "tasks_completed": 85, "wasted_calls": 610}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 14, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 480, "tasks_completed": 96, "wasted_calls": 571}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 15, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 529, "tasks_completed": 105, "wasted_calls": 485}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 16, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 521, "tasks_completed": 104, "wasted_calls": 445}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 17, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 676, "tasks_completed": 135, "wasted_calls": 226}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 18, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 594, "tasks_completed": 118, "wasted_calls": 353}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 19, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 781, "tasks_completed": 156, "wasted_calls": 140}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 20, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 429, "tasks_completed": 85, "wasted_calls": 513}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 21, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 473, "tasks_completed": 94, "wasted_calls": 461}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 22, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 341, "tasks_completed": 68, "wasted_calls": 620}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 23, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 733, "tasks_completed": 146, "wasted_calls": 166}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 24, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 693, "tasks_completed": 138, "wasted_calls": 170}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 25, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 488, "tasks_completed": 97, "wasted_calls": 419}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 26, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 645, "tasks_completed": 129, "wasted_calls": 229}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 27, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 492, "tasks_completed": 98, "wasted_calls": 472}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 28, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 666, "tasks_completed": 133, "wasted_calls": 248}
+{"arm": "STICKY", "calls": 1000, "generator_seed": 29, "protocol_id": "E0-WP6-RELMEM-v1", "regime": "R3_context", "successes": 535, "tasks_completed": 107, "wasted_calls": 394}

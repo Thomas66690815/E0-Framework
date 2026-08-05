@@ -31,9 +31,9 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C336",
-    "latest_commit_hash": "aeb0a53",
-    "latest_commit_msg": "C336: preregister reliability_memory decision experiment (WP-6.1)",
+    "latest_commit": "C337",
+    "latest_commit_hash": "16929d4",
+    "latest_commit_msg": "C337: implement WP-6 decision-experiment harness (WP-6.2a)",
     "test_count": 7188,
     "test_failures": 0,
     "ci_status": "G1 development run 30526724307 successful; its evidence bundle is verified and retained in-repo since C332. Override-Gate v2 execution not authorized or dispatched",
@@ -309,7 +309,7 @@
   },
   "active_context": {
     "_comment": "Our working memory. What we're doing now and why. Replace after each arc completion.",
-    "current_arc": "ARC-O / closure arc (USER DECISION 2026-08-05). C333 closed Gate G1-v1 negative; C334 repositioned the README; C335 drafted the closure paper; C336 preregistered E0-WP6-RELMEM-v1. WAITING ON USER: (1) review of the WP-6 preregistration before WP-6.2 implementation/execution, (2) paper submission decision, (3) push authorization for the 14 unpushed commits.",
+    "current_arc": "ARC-O / closure arc COMPLETE (C333-C338). Gate G1-v1 closed negative; README repositioned; closure paper drafted; E0-WP6-RELMEM-v1 preregistered, user-approved, executed: VERDICT PASS -> maintained-library branch. Push of WP-GATE-0.8 through C338 authorized by the user on 2026-08-05. REMAINING USER DECISION: closure-paper submission (WP-5.2).",
     "arc_status": "C332 closed WP-2.4 by retaining run 30526724307 and surfacing its previously unreported G1-B baseline diagnostic. C333 recorded the user's closure decision: Gate G1-v1 CLOSED-NEGATIVE on development evidence, holdout permanently unopened, geometry in research freeze (P4b), WP-2.5 closed unexecuted, Override-Gate v2 permanently parked. The closure arc now runs WP-5.1, WP-5.2, WP-6.1/6.2.",
     "arc_thesis": "Lean packages are product candidates, not empirically proven products. e0_controller remains the research carrier through G1; UI/session/layers 5-14 remain frozen. Every strategic claim maps to an Evidence Ledger ID and every commit to a Work Package. No repository split before Gate G1 plus WP-1.1 packaging evidence.",
     "previous_arc_summary": "ARC-L (C313-C319): adoption surface — AGENT_REFERENCE.md, AGENT_BUILDER_GUIDE.md, lean/reliability_memory (C315-lean), lean/structural_geometry (C319), GAME_AI.md, README measured-results overhaul. Clone spike traced via GitHub traffic API to the geometry chain (code search). Earlier: ARC-E DifferenzPort (C288-C290), ARC-D E1 impact historization (C285-C287), Trajectory Arc (C277-C283).",
@@ -317,13 +317,12 @@
     "open_threads": [
       "WP-5.1 COMPLETE C334: README rewritten claims-to-ledger, negative G1 result up front, geometry marked research-frozen, AGI blueprint archived.",
       "WP-5.2 DRAFT COMPLETE C335: closure paper docs/papers/PAPER11_CLOSURE_MANUSCRIPT_v1.md. SUBMISSION IS A USER DECISION (venue candidates: arXiv cs.AI + negative-results/reproducibility workshop).",
-      "WP-6 design USER-APPROVED 2026-08-05; WP-6.2a COMPLETE C337 (harness + 22 contract tests, no outcomes). WP-6.2b: declare C337 as execution commit, run all 360 replicates, retain artifacts, report PASS/FAIL, execute the corresponding closure end.",
+      "WP-6 COMPLETE C338: E0-WP6-RELMEM-v1 executed at commit 16929d4e, verdict PASS; mandatory sticky note applied to lean/E0_LEAN_CORE.md and README; reliability_memory is the maintained library. Future changes to the lean package require honoring the frozen object-under-test hashes or a protocol v2.",
       "Override-Gate v2 permanently parked per closure record; no execution commit, authorization, or dispatch under this closure.",
-      "Local main is 10+ commits ahead of origin/main; pushing WP-GATE-0.8 through the closure arc requires explicit user authorization.",
       "F3/F4 structural limits are final for this repository and are reported in the closure paper; no engineering-around work.",
       "GT-8 Partial Residual Trap: documented, unresolved; relevant only if the WP-6 experiment keeps reliability_memory alive as a maintained library."
     ],
-    "next_commit_id": "C337",
+    "next_commit_id": "C339",
     "working_principles": [
       {
         "principle": "E₀ = Skeleton (structure/judgment/memory), LLM = Muscle (generation/exploration)",

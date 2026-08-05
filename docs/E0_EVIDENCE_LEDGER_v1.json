@@ -206,7 +206,7 @@
       ],
       "limitations": [
         "The closure is a strategic decision on development evidence; no preregistered holdout PASS/FAIL exists for E0-G1-v1.",
-        "The reliability_memory product hypothesis remains open until the WP-6 experiment reports."
+        "RESOLVED 2026-08-05: the WP-6 experiment reported PASS (E0-WP6-RELMEM-001); the closure arc ends in the maintained-library branch."
       ],
       "related_claims": [
         "E0-G1-DEV-BASELINES-001",
@@ -218,6 +218,58 @@
         "date": "2026-08-05",
         "commit": "687194d",
         "result": "Closure recorded; holdout_accessed remains false in every retained artifact."
+      }
+    },
+    {
+      "id": "E0-WP6-RELMEM-001",
+      "kind": "empirical",
+      "statement": "Under the preregistered E0-WP6-RELMEM-v1 protocol, reliability_memory with shipped defaults completes +48.0% more tasks per 1,000 tool calls than memoryless selection in stationary regimes (95% CI [+35.3, +46.8] absolute), +53.5% under drift, and +10.5% under context shift; against a stateless sticky heuristic its edge is +2.6% stationary and +5.0% (CI [+3.9, +8.0] absolute) under drift, while a context-keyed sticky heuristic beats the context-free store by 19.2% in context-dependent regimes. Verdict per frozen criteria: PASS.",
+      "status": "supported_internal",
+      "replication": "executable",
+      "data_origin": "synthetic_designed",
+      "scope": "Simulated Bernoulli tool ecosystems (3 regimes x 30 paired seeds x 4 arms x 1,000 calls); execution commit 16929d4e (C337); deterministic replay verified byte-identical.",
+      "work_packages": [
+        "WP-6.1",
+        "WP-6.2"
+      ],
+      "sources": [
+        {
+          "path": "docs/E0_WP6_RELIABILITY_MEMORY_RESULT_v1.md",
+          "role": "result report, criteria application, honest bounds, consequence"
+        },
+        {
+          "path": "docs/E0_WP6_RELIABILITY_MEMORY_PREREGISTRATION_v1.md",
+          "role": "frozen design, arms, seeds, and decision criteria"
+        },
+        {
+          "path": "artifacts/wp6/E0-WP6-RELMEM-v1/summary.json",
+          "role": "machine-readable comparisons and verdict"
+        }
+      ],
+      "commands": [
+        "py -3 -m e0_controller.wp6_relmem_experiment run --output artifacts/wp6/rerun --execution-commit 16929d4e9926f610f723264b155fc08b9c6be884",
+        "py -3 -m pytest e0_controller/test_wp6_relmem_experiment.py -q"
+      ],
+      "raw_artifacts": [
+        "artifacts/wp6/E0-WP6-RELMEM-v1/raw_runs.jsonl",
+        "artifacts/wp6/E0-WP6-RELMEM-v1/manifest.json"
+      ],
+      "limitations": [
+        "Simulated Bernoulli tools model persistent endpoint failure; no production system was measured.",
+        "In stationary regimes a stateless sticky heuristic captures most of the value (mandatory documentation note applied).",
+        "The context-free state key leaves measured value on the table in context-dependent regimes; context keying is documented guidance, untested under this protocol.",
+        "PASS supports the scoped memory claim only; it revives no Gate-G1 claim."
+      ],
+      "related_claims": [
+        "E0-GATE-G1-CLOSURE-001",
+        "E0-G1-DEV-BASELINES-001",
+        "E0-HIST-DOMINANCE-001",
+        "E0-PRODUCT-LEAN-001"
+      ],
+      "last_verified": {
+        "date": "2026-08-05",
+        "commit": "16929d4",
+        "result": "360/360 replicates, deterministic re-run byte-identical, object-under-test hashes verified, verdict PASS with sticky documentation note."
       }
     },
     {

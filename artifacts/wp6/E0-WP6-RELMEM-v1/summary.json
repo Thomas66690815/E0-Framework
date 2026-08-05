@@ -1,0 +1,106 @@
+{
+  "comparisons": {
+    "R1_persistent": {
+      "MEMORY_vs_NO_MEMORY": {
+        "bootstrap_resamples": 10000,
+        "bootstrap_seed": 20260805,
+        "ci95_lower": 35.266666666666666,
+        "ci95_upper": 46.8,
+        "control_mean": 85.06666666666666,
+        "mean_difference": 40.866666666666674,
+        "paired_units": 30,
+        "relative_lift": 0.4804075235109719,
+        "treatment_mean": 125.93333333333334
+      },
+      "MEMORY_vs_STICKY": {
+        "bootstrap_resamples": 10000,
+        "bootstrap_seed": 20260805,
+        "ci95_lower": 1.4333333333333333,
+        "ci95_upper": 4.9,
+        "control_mean": 122.76666666666667,
+        "mean_difference": 3.1666666666666714,
+        "paired_units": 30,
+        "relative_lift": 0.02579418951941356,
+        "treatment_mean": 125.93333333333334
+      }
+    },
+    "R2_drift": {
+      "MEMORY_vs_NO_MEMORY": {
+        "above_hard_floor": true,
+        "bootstrap_resamples": 10000,
+        "bootstrap_seed": 20260805,
+        "ci95_lower": 37.03333333333333,
+        "ci95_upper": 49.6,
+        "control_mean": 80.9,
+        "mean_difference": 43.3,
+        "non_inferior": true,
+        "paired_units": 30,
+        "relative_lift": 0.5352286773794808,
+        "treatment_mean": 124.2
+      },
+      "MEMORY_vs_STICKY": {
+        "bootstrap_resamples": 10000,
+        "bootstrap_seed": 20260805,
+        "ci95_lower": 3.8666666666666667,
+        "ci95_upper": 8.000833333333322,
+        "control_mean": 118.26666666666667,
+        "mean_difference": 5.933333333333337,
+        "paired_units": 30,
+        "relative_lift": 0.05016910935738447,
+        "treatment_mean": 124.2
+      }
+    },
+    "R3_context": {
+      "MEMORY_vs_NO_MEMORY": {
+        "above_hard_floor": true,
+        "bootstrap_resamples": 10000,
+        "bootstrap_seed": 20260805,
+        "ci95_lower": 5.366666666666666,
+        "ci95_upper": 10.933333333333334,
+        "control_mean": 76.93333333333334,
+        "mean_difference": 8.066666666666663,
+        "non_inferior": true,
+        "paired_units": 30,
+        "relative_lift": 0.10485268630849215,
+        "treatment_mean": 85.0
+      },
+      "MEMORY_vs_STICKY": {
+        "bootstrap_resamples": 10000,
+        "bootstrap_seed": 20260805,
+        "ci95_lower": -24.1,
+        "ci95_upper": -16.466666666666665,
+        "control_mean": 105.2,
+        "mean_difference": -20.200000000000003,
+        "paired_units": 30,
+        "relative_lift": -0.19201520912547532,
+        "treatment_mean": 85.0
+      }
+    }
+  },
+  "criteria": {
+    "c1_r1_beats_no_memory_lift10": true,
+    "c2_r1_beats_sticky": true,
+    "c3_stress_non_inferiority": true,
+    "sticky_doc_note_required": true
+  },
+  "mandatory_notes": [
+    "A stateless sticky heuristic captures most of the value; the library documentation must say so."
+  ],
+  "method_means": {
+    "R1_persistent:MEMORY": 125.93333333333334,
+    "R1_persistent:NO_MEMORY": 85.06666666666666,
+    "R1_persistent:ORACLE": 153.3,
+    "R1_persistent:STICKY": 122.76666666666667,
+    "R2_drift:MEMORY": 124.2,
+    "R2_drift:NO_MEMORY": 80.9,
+    "R2_drift:ORACLE": 147.96666666666667,
+    "R2_drift:STICKY": 118.26666666666667,
+    "R3_context:MEMORY": 85.0,
+    "R3_context:NO_MEMORY": 76.93333333333334,
+    "R3_context:ORACLE": 139.3,
+    "R3_context:STICKY": 105.2
+  },
+  "primary_metric": "tasks_completed_per_1000_calls",
+  "protocol_id": "E0-WP6-RELMEM-v1",
+  "verdict": "PASS"
+}

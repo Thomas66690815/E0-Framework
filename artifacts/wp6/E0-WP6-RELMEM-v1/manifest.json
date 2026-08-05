@@ -1,0 +1,22 @@
+{
+  "artifact_kind": "wp6_relmem_decision_manifest",
+  "counts": {
+    "arms": 4,
+    "calls_per_replicate": 1000,
+    "regimes": 3,
+    "replicates": 360,
+    "seeds": 30
+  },
+  "execution_commit": "16929d4e9926f610f723264b155fc08b9c6be884",
+  "files": {
+    "raw_runs.jsonl": "6074669d27e9bec0a35bb5bb369f499dba90591601e176227b8cec6b309a56ef",
+    "summary.json": "1aa81fbd06a87a674954a0bec3692adb78f7fabba5de2ad9822f288af6075a68"
+  },
+  "object_under_test_sha256": {
+    "primitives.py": "a9fc89095947c80e12f2500298921f3c1f859a2fda9e39c7b643d74da81bf035",
+    "store.py": "d054493bdaa02a540452f5bc3ae0ea615032491488ac22b3d89e4e47f7469be8",
+    "traces.py": "7a32b4754861fc802bfd740359032b087cb1bbb05ab33b0949ebd0ffb351888a"
+  },
+  "protocol_id": "E0-WP6-RELMEM-v1",
+  "verdict": "PASS"
+}

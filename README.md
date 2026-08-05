@@ -29,9 +29,15 @@ is research-frozen, no superiority claims are made anywhere in this
 repository, and every empirical claim maps to an entry in the
 [Evidence Ledger](docs/E0_EVIDENCE_LEDGER_v1.json). What remains actively
 maintained is small and honest: [`lean/reliability_memory`](lean/E0_LEAN_CORE.md),
-a training-free, explainable failure-memory (~600 LOC, zero dependencies),
-whose remaining product hypothesis is being tested in one final preregistered
-experiment.
+a training-free, explainable failure-memory (~600 LOC, zero dependencies).
+Its final preregistered decision experiment
+([result](docs/E0_WP6_RELIABILITY_MEMORY_RESULT_v1.md)) **passed**: +48–54 %
+completed tasks over memoryless tool selection, with two honest caveats that
+are part of the library's permanent documentation — in *stationary* regimes a
+stateless sticky heuristic captures most of that value (memory's edge there
+is only +2.6 %; its real differentiator is recovery under drift), and where
+tool reliability depends on task context, the state key must include that
+context.
 
 If you are here for the negative result and the method — preregistration,
 fair baselines, causal ablations, evidence ledger, external audit — start
