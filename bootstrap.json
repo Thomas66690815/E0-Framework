@@ -31,9 +31,9 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C333",
-    "latest_commit_hash": "a4ffd15",
-    "latest_commit_msg": "C333: close Gate G1-v1 negative on development evidence",
+    "latest_commit": "C334",
+    "latest_commit_hash": "8f9bd8a",
+    "latest_commit_msg": "C334: rewrite README claims-to-ledger (WP-5.1)",
     "test_count": 7166,
     "test_failures": 0,
     "ci_status": "G1 development run 30526724307 successful; its evidence bundle is verified and retained in-repo since C332. Override-Gate v2 execution not authorized or dispatched",
@@ -316,7 +316,7 @@
     "key_result": "G1-v1 development selected A_HIST as the simpler control and found no E_FULL_GEOMETRY advantage, no executed overrides, and no phase-active decisions; the protected holdout remains unread. The G1-B development diagnostic, first reported in C332, shows A_HIST not competitive with the fair baseline median: 0.208 vs 0.407 success-adjusted efficiency (-0.199, 95% CI [-0.206, -0.192]), beaten even by uniform random overall, with wall_grid (+0.260) as the sole qualifying family. Override-Gate v1 mechanically selected gate_disabled but cannot cleanly rank thresholds because 2116/2880 timeout labels include branch instrumentation. Corrected v2 calibration is implemented but parked, unauthorized, and unexecuted.",
     "open_threads": [
       "WP-5.1 COMPLETE C334: README rewritten claims-to-ledger, negative G1 result up front, geometry marked research-frozen, AGI blueprint archived.",
-      "WP-5.2 (C335): short closure paper — historization mechanism, F3/F4 limits, G1 design and negative result. Submission is a USER DECISION.",
+      "WP-5.2 DRAFT COMPLETE C335: closure paper docs/papers/PAPER11_CLOSURE_MANUSCRIPT_v1.md. SUBMISSION IS A USER DECISION (venue candidates: arXiv cs.AI + negative-results/reproducibility workshop).",
       "WP-6.1 (C336): preregister the final reliability_memory decision experiment (LLM agent with persistent tool-reliability memory vs. without); WP-6.2 execution only after user review of the preregistration.",
       "Override-Gate v2 permanently parked per closure record; no execution commit, authorization, or dispatch under this closure.",
       "Local main is 10+ commits ahead of origin/main; pushing WP-GATE-0.8 through the closure arc requires explicit user authorization.",
