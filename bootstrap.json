@@ -31,9 +31,9 @@
     "api_key": ".env file in workspace root (OPENAI_API_KEY) — do NOT ask, just use it"
   },
   "state": {
-    "latest_commit": "C332",
-    "latest_commit_hash": "687194d",
-    "latest_commit_msg": "C332: retain G1 development evidence and report baseline diagnostic",
+    "latest_commit": "C333",
+    "latest_commit_hash": "a4ffd15",
+    "latest_commit_msg": "C333: close Gate G1-v1 negative on development evidence",
     "test_count": 7166,
     "test_failures": 0,
     "ci_status": "G1 development run 30526724307 successful; its evidence bundle is verified and retained in-repo since C332. Override-Gate v2 execution not authorized or dispatched",
@@ -315,7 +315,7 @@
     "previous_arc_summary": "ARC-L (C313-C319): adoption surface — AGENT_REFERENCE.md, AGENT_BUILDER_GUIDE.md, lean/reliability_memory (C315-lean), lean/structural_geometry (C319), GAME_AI.md, README measured-results overhaul. Clone spike traced via GitHub traffic API to the geometry chain (code search). Earlier: ARC-E DifferenzPort (C288-C290), ARC-D E1 impact historization (C285-C287), Trajectory Arc (C277-C283).",
     "key_result": "G1-v1 development selected A_HIST as the simpler control and found no E_FULL_GEOMETRY advantage, no executed overrides, and no phase-active decisions; the protected holdout remains unread. The G1-B development diagnostic, first reported in C332, shows A_HIST not competitive with the fair baseline median: 0.208 vs 0.407 success-adjusted efficiency (-0.199, 95% CI [-0.206, -0.192]), beaten even by uniform random overall, with wall_grid (+0.260) as the sole qualifying family. Override-Gate v1 mechanically selected gate_disabled but cannot cleanly rank thresholds because 2116/2880 timeout labels include branch instrumentation. Corrected v2 calibration is implemented but parked, unauthorized, and unexecuted.",
     "open_threads": [
-      "WP-5.1 (C334): README claims-to-ledger rewrite, lean packages repositioned as lightweight/explainable/training-free alternatives with documented trade-offs against Q-learning/UCB1/RRG, AGI blueprint to _archive. No superiority claims.",
+      "WP-5.1 COMPLETE C334: README rewritten claims-to-ledger, negative G1 result up front, geometry marked research-frozen, AGI blueprint archived.",
       "WP-5.2 (C335): short closure paper — historization mechanism, F3/F4 limits, G1 design and negative result. Submission is a USER DECISION.",
       "WP-6.1 (C336): preregister the final reliability_memory decision experiment (LLM agent with persistent tool-reliability memory vs. without); WP-6.2 execution only after user review of the preregistration.",
       "Override-Gate v2 permanently parked per closure record; no execution commit, authorization, or dispatch under this closure.",

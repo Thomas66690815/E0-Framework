@@ -8,6 +8,39 @@
 
 ---
 
+## Project status: closed research program (2026-08)
+
+This repository ran its own preregistered decision experiment — **Gate G1** —
+and reports the result honestly: **negative**.
+
+- The geometry/interference stack (path amplitudes, U(1) phase, override
+  gate) contributes **exactly 0.0** over plain historization on the
+  preregistered domain families. The mechanism is causally inactive at the
+  action boundary ([diagnosis](docs/E0_G1_MECHANISM_DIAGNOSIS_v1.md)).
+- Historization-only navigation is **not competitive** with fairly trained
+  standard baselines (Q-learning, UCB1, random-restart greedy) under equal
+  budgets: 0.208 vs. 0.407 success-adjusted efficiency overall. It wins
+  clearly on one of four families (`wall_grid`, +0.260) — trap-heavy,
+  wall-structured domains with persistent dead ends
+  ([full result](docs/E0_G1_DEVELOPMENT_RESULT_v1.md)).
+
+Consequences ([closure record](docs/E0_G1_CLOSURE_v1.md)): the geometry stack
+is research-frozen, no superiority claims are made anywhere in this
+repository, and every empirical claim maps to an entry in the
+[Evidence Ledger](docs/E0_EVIDENCE_LEDGER_v1.json). What remains actively
+maintained is small and honest: [`lean/reliability_memory`](lean/E0_LEAN_CORE.md),
+a training-free, explainable failure-memory (~600 LOC, zero dependencies),
+whose remaining product hypothesis is being tested in one final preregistered
+experiment.
+
+If you are here for the negative result and the method — preregistration,
+fair baselines, causal ablations, evidence ledger, external audit — start
+with the [closure record](docs/E0_G1_CLOSURE_v1.md). The raw data of the
+decision experiment is retained under
+`artifacts/g1/E0-G1-v1/development/run_30526724307/`.
+
+---
+
 ## What is E₀?
 
 E₀ is a **difference-reduction system**. It starts from one axiom:
@@ -123,6 +156,10 @@ trace = ctrl.run("A", goal="GOAL")
 # Overrides greedy on the first step. No FAILURE needed.
 ```
 
+Note: this illustrates the mechanism on a toy landscape. On the preregistered
+G1 families the amplitude layer never fired and added nothing measurable —
+see the project status section above.
+
 ### Interactive browser session
 
 E₀ includes a full interactive environment for exploring, learning, and querying its knowledge landscape:
@@ -195,7 +232,10 @@ people who don't need the full framework. They are independent, and they compose
 
 #### Reliability Memory
 
-The dominant E₀ mechanism (Historization, confirmed 6×), for external agent builders:
+The dominant E₀ mechanism (Historization — the WP-2.4 causal ablation scores
+all five E₀ variants identically, so this mechanism carries all measured E₀
+behavior; see `E0-HIST-DOMINANCE-001` in the Evidence Ledger), for external
+agent builders:
 
 ```python
 from reliability_memory import ReliabilityStore
@@ -214,10 +254,18 @@ What it deliberately excludes: amplitude/SU(2), dream mode, multiverse, self-gra
 
 #### Structural Geometry
 
+> **Research-frozen (Gate G1, 2026-08).** This package is mathematically
+> sound and fully tested, but the preregistered decision experiment measured
+> **no practical value**: the interference mechanism never changes an action
+> on the tested families (contribution exactly 0.0, causally inactive). It is
+> kept importable and reproducible as a research artifact; it carries no
+> product claim. See the [closure record](docs/E0_G1_CLOSURE_v1.md).
+
 The navigation-field half: the Helmholtz split, the connection it induces, and the
-complex-valued influence map built on top. This is the layer that has no prior art —
-quantum walks and Projective Simulation cover interference on graphs, but not the
-orthogonal field decomposition that produces the phase in the first place.
+complex-valued influence map built on top. The construction is novel as far as we
+know — quantum walks and Projective Simulation cover interference on graphs, but not
+the orthogonal field decomposition that produces the phase in the first place.
+Novelty, however, is not value; the measurement above is the finding.
 
 ```python
 from structural_geometry import NavField, influence_map, circulation_ratio, phase_regime
@@ -237,7 +285,8 @@ agent.step_to(report.decide())  # gated: interference only when the margin is la
 What it includes: exact per-component Helmholtz decomposition (pure-Python Cholesky and
 conjugate-gradient solvers, no numpy), `circulation_ratio`, connection ω / phase Θ / holonomy /
 curvature, `phase_regime` regime diagnostics, complex path amplitudes, the per-move influence
-map, and the empirically validated override gate.
+map, and the override gate (note: the preregistered calibration selected `gate_disabled` —
+no threshold met the eligibility criteria; see `E0-OVERRIDE-GATE-CAL-V1-001` in the ledger).
 
 What it deliberately excludes: historization, the controller loop, SU(2) transport and the
 quantum walk, dream mode, multiverse, entropy, sleep–wake, self-graph, perception/UI.
@@ -373,6 +422,35 @@ E₀ monitors its own components through a Self-Graph. If the amplitude layer's 
 
 ## Measured results
 
+### The decision experiment — Gate G1 (2026-08): negative
+
+The most important measurement in this repository. Four preregistered domain
+families × three scales × 10 development seeds × 13 methods, equal
+interaction budgets, frozen configurations, fair training for the baselines
+(1,560 replicates, raw data retained in-repo):
+
+| Method | Success-adj. efficiency | Goal rate | Median wall-time |
+|---|---:|---:|---:|
+| A\* / D\*-Lite (map-informed upper reference) | 0.875 | 0.875 | 0.2–0.3 s |
+| Random-restart greedy | 0.464 | 0.538 | 3.5 s |
+| Q-learning (tabular, fairly trained) | 0.385 | 0.771 | 4.3 s |
+| UCB1-edge | 0.393 | 0.396 | 3.2 s |
+| Uniform random | 0.273 | 0.349 | 4.3 s |
+| **E₀ A_HIST (historization only)** | **0.208** | **0.208** | 8.8 s |
+| E₀ full geometry (D/E variants) | 0.208 | 0.208 | 139–146 s |
+| Memoryless greedy | 0.125 | 0.125 | 7.2 s |
+
+Two findings: the geometry variants are byte-identical to plain historization
+in outcome while costing 16× the compute, and historization-only is not
+competitive with the trained baselines overall. The honest exception:
+on `wall_grid` (walls, traps, persistent dead ends) A_HIST beats the baseline
+median by +0.260 [95 % CI +0.248, +0.272] — failure memory works exactly
+where failures are persistent and structural. Full analysis:
+[E0_G1_DEVELOPMENT_RESULT_v1.md](docs/E0_G1_DEVELOPMENT_RESULT_v1.md).
+
+The older internal results below predate Gate G1 and remain accurate within
+their stated scopes.
+
 ### Multi-agent congestion — 20 agents, 1000 ticks, grid city with chokepoints
 
 Vehicles navigate a grid with capacity-limited intersections. Each agent has its own
@@ -431,6 +509,8 @@ These are not bugs — they are empirically verified architectural boundaries (C
 |-------|-------------|----------|
 | **F3 — Dense branching** | Complete tree with branching factor ≥ 3 | Both E₀ and greedy fail; combinatorial explosion exceeds the penalty mechanism |
 | **F4 — Non-Markov dependencies** | Transition success depends on a non-adjacent prior edge | E₀ learns to avoid the trap but cannot learn the required sequence; credit assignment is edge-local |
+| **G1-A — Geometry neutrality** | Preregistered causal ablation, 4 families × 3 scales | Full geometry minus historization = 0.0 everywhere; lookahead causally inactive at the action boundary |
+| **G1-B — Baseline gap** | Fairly trained Q-learning/UCB1/RRG median, equal budgets | Historization-only loses overall (−0.199); competitive only on `wall_grid` |
 
 **Confirmed strengths** (same benchmark):
 
@@ -507,7 +587,11 @@ These invariants hold throughout the codebase and must not be violated by extens
 | Domain structure | Manually labeled | Community detection from R_eff (emergent) |
 | External input | Ad hoc integration | Universal DifferenzPort protocol |
 | Human-in-the-loop | Manual override only | Domain Studio: recommend → human confirms → inscribed as outcome |
-| Known limits | Rarely stated | Empirically confirmed (F3, F4) |
+| Known limits | Rarely stated | Empirically confirmed (F3, F4, G1-A, G1-B) |
+
+This table describes design differences, not measured advantages. Where the
+designs were compared under preregistered, equal-budget conditions, the
+conventional methods won overall (see Gate G1 above).
 
 ---
 
@@ -515,12 +599,14 @@ These invariants hold throughout the codebase and must not be violated by extens
 
 | | |
 |---|---|
-| **Tests** | 6720 passed, 0 failures |
+| **Lifecycle** | Closure arc: Gate G1 closed negative; geometry research-frozen; reliability_memory in final product evaluation |
+| **Tests** | 7,166 collected across 181 files (last full run: 6,840, 0 failures) |
 | **Production modules** | 81 |
 | **Demos** | 17 |
 | **Python** | 3.11+ |
 | **CI** | GitHub Actions (3.11, 3.12, 3.13) |
 | **Canon** | Stable (155 lines, never changes) |
+| **Evidence** | Every empirical claim maps to [E0_EVIDENCE_LEDGER_v1.json](docs/E0_EVIDENCE_LEDGER_v1.json) |
 
 ---
 
@@ -547,6 +633,9 @@ E0-Framework/
 
 | Document | Purpose |
 |----------|---------|
+| [E0_G1_CLOSURE_v1.md](docs/E0_G1_CLOSURE_v1.md) | The closure record: decision, basis, consequences |
+| [E0_G1_DEVELOPMENT_RESULT_v1.md](docs/E0_G1_DEVELOPMENT_RESULT_v1.md) | The decision experiment: provenance, diagnostics, criteria |
+| [E0_EVIDENCE_LEDGER_v1.json](docs/E0_EVIDENCE_LEDGER_v1.json) | Claim-by-claim evidence status |
 | [GAME_AI.md](GAME_AI.md) | E₀ for game and simulation developers — vocabulary map, benchmarks, entry points |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | 14-layer model, core formulas, navigation guide |
 | [E0_MATH_IMPL_MAPPING_v1.md](docs/E0_MATH_IMPL_MAPPING_v1.md) | Every formula → exact code location |
